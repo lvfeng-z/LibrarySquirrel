@@ -5,7 +5,7 @@ const insert = () => {
   window.api.insertTag(tag1)
 }
 const query = () => {
-  let a = window.api.queryTag()
+  const a = window.api.queryTag()
   console.log(a)
 }
 </script>
