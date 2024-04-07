@@ -56,7 +56,7 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
-  ipcMain.handle('TagService-insertTag', (event, args) => {
+  ipcMain.handle('TagService-insertTag', (_event, args) => {
     TagService.insertTag(args)
   })
 
