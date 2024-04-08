@@ -30,9 +30,9 @@ tables:
         poi_name text
       );
 
-  - name: poi_target
+  - name: re_poi_target
     sql: |
-      create table if not exists poi_target (
+      create table if not exists re_poi_target (
         id          integer not null
         constraint poi_target_pk
         primary key autoincrement,
@@ -96,21 +96,41 @@ tables:
         constraint works_pk
         primary key autoincrement,
         file_path        text,
+        set_id           integer,
         site_id          integer,
         site_works_id    text,
         site_works_name  text,
         site_author_id   text,
         site_upload_time text,
+        site_update_time text,
         nick_name        text,
         local_author     integer,
-        download_time    integer,
+        download_time    text,
         download_status  smallint,
         download_task_id integer
       );
 
-  - name: works_tag
+  - name: works_set
     sql: |
-      create table if not exists works_tag (
+      create table if not exists works_set (
+        id               integer not null
+        constraint works_pk
+        primary key autoincrement,
+        set_name         text,
+        site_id          integer,
+        site_works_id    text,
+        site_works_name  text,
+        site_author_id   text,
+        site_upload_time text,
+        site_update_time text,
+        nick_name        text,
+        local_author     integer,
+        create_time      text
+      );
+
+  - name: re_works_tag
+    sql: |
+      create table if not exists re_works_tag (
         id          integer not null
         constraint works_tag_pk
         primary key autoincrement,

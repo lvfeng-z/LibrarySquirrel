@@ -1,5 +1,5 @@
 import { db } from '../util/DatabaseUtil'
-import Tag from '../../models/Tag'
+import TagSite from '../../models/TagSite'
 
 // 查询
 export function query() {
@@ -14,7 +14,7 @@ export function query() {
   })
 }
 
-export function baseInsert(tag: Tag) {
+export function baseInsert(tag: TagSite) {
   const query = 'INSERT INTO tag (id, tag_source, name, base_tag) VALUES (?, ?, ?, ?)'
   db.run(query, [tag.id, tag.tag_source, tag.name, tag.base_tag], (err) => {
     if (err) {
