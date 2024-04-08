@@ -4,39 +4,39 @@
 
 export default class WorksSet {
   id: string
-  set_name: string
-  site_id: number
-  site_works_id: string
-  site_works_name: string
-  site_author_id: string
-  site_upload_time: string
-  site_update_time: string
-  nick_name: string
-  local_author: number
-  create_time: number
+  setName: string
+  siteId: number
+  siteWorksId: string
+  siteWorksName: string
+  siteAuthorId: string
+  siteUploadTime: string
+  siteUpdateTime: string
+  nickName: string
+  localAuthor: number
+  createTime: number
   constructor(
     id: string,
-    set_name: string,
-    site_id: number,
-    site_works_id: string,
-    site_works_name: string,
-    site_author_id: string,
-    site_upload_time: string,
-    site_update_time: string,
-    nick_name: string,
-    local_author: number,
-    create_time: number
+    setName: string,
+    siteId: number,
+    siteWorksId: string,
+    siteWorksName: string,
+    siteAuthorId: string,
+    siteUploadTime: string,
+    siteUpdateTime: string,
+    nickName: string,
+    localAuthor: number,
+    createTime: number
   ) {
     this.id = id
-    this.set_name = set_name
-    this.site_id = site_id
-    this.site_works_id = site_works_id
-    this.site_works_name = site_works_name
-    this.site_author_id = site_author_id
-    this.site_upload_time = site_upload_time
-    this.site_update_time = site_update_time
-    this.nick_name = nick_name
-    this.local_author = local_author
-    this.create_time = create_time
+    this.setName = setName
+    this.siteId = siteId
+    this.siteWorksId = siteWorksId
+    this.siteWorksName = siteWorksName
+    this.siteAuthorId = siteAuthorId
+    this.siteUploadTime = siteUploadTime
+    this.siteUpdateTime = siteUpdateTime
+    this.nickName = nickName
+    this.localAuthor = localAuthor
+    this.createTime = createTime
   }
 }
