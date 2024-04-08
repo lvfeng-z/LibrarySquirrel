@@ -1,6 +1,12 @@
+#build
 node_modules
 dist
 out
 .DS_Store
 *.log*
+
+#database
 database
+
+#idea
+.idea
