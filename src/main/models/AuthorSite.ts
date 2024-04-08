@@ -4,24 +4,24 @@
 
 export default class AuthorSite {
   id: string
-  site_id: number
-  site_author_id: string
-  site_author_name: string
+  siteId: number
+  siteAuthorId: string
+  siteAuthorName: string
   introduce: string
-  local_author_id: number
+  localAuthorId: number
   constructor(
     id: string,
-    site_id: number,
-    site_author_id: string,
-    site_author_name: string,
+    siteId: number,
+    siteAuthorId: string,
+    siteAuthorName: string,
     introduce: string,
-    local_author_id: number
+    localAuthorId: number
   ) {
     this.id = id
-    this.site_id = site_id
-    this.site_author_id = site_author_id
-    this.site_author_name = site_author_name
+    this.siteId = siteId
+    this.siteAuthorId = siteAuthorId
+    this.siteAuthorName = siteAuthorName
     this.introduce = introduce
-    this.local_author_id = local_author_id
+    this.localAuthorId = localAuthorId
   }
 }

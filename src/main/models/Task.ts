@@ -4,24 +4,24 @@
 
 export default class Task {
   id: number
-  site_id: number
-  works_id: number
+  siteId: number
+  worksId: number
   url: string
-  create_time: number
+  createTime: number
   status: number
   constructor(
     id: number,
-    site_id: number,
-    works_id: number,
+    siteId: number,
+    worksId: number,
     url: string,
-    create_time: number,
+    createTime: number,
     status: number
   ) {
     this.id = id
-    this.site_id = site_id
-    this.works_id = works_id
+    this.siteId = siteId
+    this.worksId = worksId
     this.url = url
-    this.create_time = create_time
+    this.createTime = createTime
     this.status = status
   }
 }

@@ -3,13 +3,13 @@
  */
 export default class Site {
   id: string
-  site_name: string
-  site_domain: string
-  site_homepage: string
-  constructor(id: string, site_name: string, site_domain: string, site_homepage: string) {
+  siteName: string
+  siteDomain: string
+  siteHomepage: string
+  constructor(id: string, siteName: string, siteDomain: string, siteHomepage: string) {
     this.id = id
-    this.site_name = site_name
-    this.site_domain = site_domain
-    this.site_homepage = site_homepage
+    this.siteName = siteName
+    this.siteDomain = siteDomain
+    this.siteHomepage = siteHomepage
   }
 }
