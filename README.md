@@ -1,4 +1,4 @@
-# prework
+# CollectionsManager
 
 An Electron application with Vue and TypeScript
 

@@ -1,5 +1,5 @@
 {
-  "name": "prework",
+  "name": "collections-manager",
   "version": "1.0.0",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
@@ -24,6 +24,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "better-sqlite3": "^9.4.5",
     "electron-updater": "^6.1.7",
     "element-plus": "^2.6.1",
     "sqlite3": "^5.1.7"
