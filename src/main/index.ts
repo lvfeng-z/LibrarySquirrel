@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import InitializeDatabase from './database/initialize/InitializeDatabase'
 import { exposeService } from './service/ServiceExposer'
 import { ConnectionPool, POOL_CONFIG } from './database/ConnectionPool'
+import logUtil from './util/LogUtil'
 
 function createWindow(): void {
   // Create the browser window.
@@ -51,8 +52,13 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  // 配置日志输出
+  logUtil.setLogPath()
+
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
   // 初始化数据库
   InitializeDatabase.InitializeDB().then(() => {
     global.connectionPool = new ConnectionPool(POOL_CONFIG)
@@ -62,7 +68,7 @@ app.whenReady().then(() => {
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
+    // On macOS, it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
@@ -77,5 +83,5 @@ app.on('window-all-closed', () => {
   }
 })
 
-// In this file you can include the rest of your app"s specific main process
+// In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.

@@ -4,6 +4,8 @@ import yaml from 'js-yaml'
 import FileSysUtil from '../../util/FileSysUtil'
 import Database from 'better-sqlite3'
 import DataBaseConstant from '../../constant/DataBaseConstant'
+import logUtil from '../../util/LogUtil'
+import createDataTables from './createDataTables.yml?asset'
 
 /**
  * @Description: 初始化数据表
@@ -18,26 +20,30 @@ async function InitializeDB() {
   const options = {}
   const tempDB = new Database(dbPath + DataBaseConstant.DB_FILE_NAME, options)
   tempDB.close()
+  logUtil.info('InitializeDataBase', '已创建数据库文件')
 
+  // 创建数据表
   // 读取当前数据库的数据表
-  let currentTables: string[]
-  DB.listAllDataTables().then(async (tableNames) => {
-    currentTables = tableNames
-
+  DB.listAllDataTables().then((currentTables) => {
+    let tableNameSqls: { tables: { name: string; sql: string }[] }
     // 读取初始化yml
-    const yamlContent = await fs.promises.readFile(
-      './src/main/database/initialize/createDataTables.yml',
-      'utf-8'
-    )
-    const tableNameSqls: { tables: { name: string; sql: string }[] } = yaml.load(yamlContent)
+    try {
+      const yamlContent = fs.readFileSync(createDataTables, 'utf-8')
+      tableNameSqls = yaml.load(yamlContent)
+    } catch (e) {
+      logUtil.error('InitializeDataBase', String(e))
+      throw e
+    }
 
     // 对于当前数据库中不存在的数据表，进行创建
     tableNameSqls.tables.forEach((tableNameSql) => {
       if (!currentTables.includes(tableNameSql.name)) {
         try {
           DB.connectDatabase().exec(tableNameSql.sql)
+          logUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
         } catch (e) {
-          console.error(e)
+          logUtil.error('InitializeDataBase', String(e))
+          throw e
         }
       }
     })
