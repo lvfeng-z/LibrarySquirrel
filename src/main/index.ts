@@ -2,13 +2,11 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { createDataTable } from './database/initialize/Database'
-import TagService from './service/TagService'
+import InitializeDatabase from './database/initialize/InitializeDatabase'
+import { exposeService } from './service/ServiceExposer'
+import { ConnectionPool, POOL_CONFIG } from './database/ConnectionPool'
 
 function createWindow(): void {
-  // 初始化数据库
-  createDataTable()
-
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -53,11 +51,12 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
-
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
-  ipcMain.handle('TagService-insertTag', (_event, args) => {
-    TagService.insertTag(args)
+  // 初始化数据库
+  InitializeDatabase.InitializeDB().then(() => {
+    global.connectionPool = new ConnectionPool(POOL_CONFIG)
+    exposeService()
   })
 
   createWindow()

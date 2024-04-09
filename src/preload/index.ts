@@ -4,7 +4,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   insertTag: (args) => {
-    ipcRenderer.send('TagService-insertTag', args)
+    ipcRenderer.invoke('TagService-insertTag', args)
   },
   queryTag: (args) => {
     ipcRenderer.invoke('TagService-queryTag', args)

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const insert = () => {
-  const tag1 = { id: null, tag_source: 'aryion', name: 'vore', base_tag: 0 }
-  console.log(tag1)
+  const tag1 = { id: null, localTagName: 'aryion', baseLocalTagId: 0 }
   window.api.insertTag(tag1)
 }
 const query = () => {
