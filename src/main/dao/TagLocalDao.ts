@@ -7,6 +7,7 @@ async function insertTagLocal(tagLocal: TagLocal) {
       'insert into tag_local (id, local_tag_name, base_local_tag_id) values (@id, @localTagName, @baseLocalTagId)'
     )
     .run(tagLocal)
+  global.connectionPool.release(statement)
 }
 
 export default {
