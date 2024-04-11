@@ -4,8 +4,9 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      insertTag: function
-      queryTag: function
+      tagLocalInsert: function
+      tagLocalQuery: function
+      tagLocalGetSelectList: function
     }
   }
 }
