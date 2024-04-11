@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-let loading: boolean = false
+let loading = false
 const selectedList = ref('')
-let tagSelectList = []
+const tagSelectList = ref('')
+
 const insert = () => {
   const tag1 = { id: null, localTagName: 'aryion', baseLocalTagId: 0 }
   window.api.tagLocalInsert(tag1)
@@ -11,9 +12,7 @@ const insert = () => {
 const getTagSelectList = async (keyword) => {
   loading = true
   try {
-    const result = window.api.tagLocalGetSelectList(keyword)
-    console.log(result)
-    tagSelectList = result
+    tagSelectList.value = await window.api.tagLocalGetSelectList(keyword)
   } catch (e) {
     console.log(e)
   } finally {
@@ -23,6 +22,16 @@ const getTagSelectList = async (keyword) => {
 </script>
 
 <template>
+  <div class="flex content-center items-center mb-4 justify-between">
+    <h3 class="text-lg">title</h3>
+    <el-button
+      icon="close"
+      plain
+      circle
+      type="default"
+      class="w-8 h-8 relative -right-4 -top-2 shadow-md focus:shadow-none focus:outline-none"
+    ></el-button>
+  </div>
   <el-select
     v-model="selectedList"
     multiple
