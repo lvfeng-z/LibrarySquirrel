@@ -9,7 +9,7 @@ async function query(tagLocal: TagLocal): Promise<TagLocal[]> {
   return await TagLocalDao.queryTagLocal(tagLocal)
 }
 
-async function getSelectList(keyword: string) {
+function getSelectList(keyword: string) {
   return TagLocalDao.getSelectList(keyword)
 }
 
