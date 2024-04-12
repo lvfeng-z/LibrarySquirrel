@@ -60,7 +60,7 @@ function closeFloatPage() {
       </el-select>
       <el-button @click="insert">插入</el-button>
       <el-button @click="getTagSelectList">查询</el-button>
-      <el-button @click="showFloatPage('TagManage')">打开标签管理页 </el-button>
+      <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
     </div>
     <div v-if="pageState.floatPage" class="floatPage">
       <TagManage v-if="pageState.showTagManagePage" @close-float-page="closeFloatPage"></TagManage>

@@ -2,14 +2,14 @@
   <BaseFloatPage>
     <div class="container">
       <div class="left">
-<!--        <SearchList remote-search-fn="" data=""></SearchList>-->
+        <SearchList remote-search-fn="" data=""></SearchList>
       </div>
       <div class="right">
         <div class="right-top">
-<!--          <SearchList remote-search-fn="" data=""></SearchList>-->
+          <SearchList remote-search-fn="" data=""></SearchList>
         </div>
         <div class="right-bottom">
-<!--          <SearchList remote-search-fn="" data=""></SearchList>-->
+          <SearchList remote-search-fn="" data=""></SearchList>
         </div>
       </div>
     </div>
@@ -24,27 +24,28 @@ import SearchList from '../components/SearchList.vue'
 <style>
 .container {
   display: flex;
-  height: 100vh; /* 调整为所需的容器高度 */
+  height: 100%; /* 调整为所需的容器高度 */
 }
 
 .left {
   flex: 1;
-  border: 1px solid red; /* 仅为示例，可删除或更改边框样式 */
+  height: 100%;
 }
 
 .right {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .right-top {
   flex: 1;
-  border: 1px solid blue; /* 仅为示例，可删除或更改边框样式 */
+  height: 100%;
 }
 
 .right-bottom {
   flex: 1;
-  border: 1px solid green; /* 仅为示例，可删除或更改边框样式 */
+  height: 100%;
 }
 </style>

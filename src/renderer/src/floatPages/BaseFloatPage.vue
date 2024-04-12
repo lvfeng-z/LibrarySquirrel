@@ -1,17 +1,13 @@
 <template>
   <div class="BaseFloatPage">
-    <div class="top-bar">
-      <div>
-        <el-button
-          class="close-button"
-          circle
-          icon="close"
-          color="#b54747"
-          @click="closeSelf"
-        ></el-button>
-      </div>
-    </div>
-    <div class="main-space">
+    <el-button
+      class="close-button"
+      circle
+      icon="close"
+      color="#b54747"
+      @click="closeSelf"
+    ></el-button>
+    <div class="content">
       <slot />
     </div>
   </div>
@@ -25,6 +21,7 @@ function closeSelf() {
 
 <style>
 .BaseFloatPage {
+  display: flex;
   top: 0;
   left: 0;
   right: 0;
@@ -32,17 +29,17 @@ function closeSelf() {
   width: 100%;
   height: 100%;
   background: white;
+  justify-content: center;
+  align-items: center;
 }
 
-.top-bar {
-  height: 10%;
-}
-
-.main-space {
-  height: auto;
+.content {
+  height: 90%;
+  width: 90%;
 }
 
 .close-button {
+  position: absolute;
   top: 16px;
   right: 16px;
   margin: 0;
