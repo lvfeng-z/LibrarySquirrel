@@ -66,9 +66,13 @@ export default defineComponent({
 .search-list {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 .result-list {
   margin-top: 16px;
+  width: 100%;
+  height: 100%;
 }
 </style>
