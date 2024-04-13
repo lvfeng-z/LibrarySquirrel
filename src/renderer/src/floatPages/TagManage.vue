@@ -2,23 +2,25 @@
   <BaseFloatPage>
     <div class="container">
       <div class="left">
-        <SearchList remote-search-fn="" data=""></SearchList>
+        <SearchList :title="'本地tag'" :multi-select="false" :search-api="api1"></SearchList>
       </div>
       <div class="right">
         <div class="right-top">
-          <SearchList remote-search-fn="" data=""></SearchList>
+          <SearchList :multi-select="true" :search-api="api1"></SearchList>
         </div>
         <div class="right-bottom">
-          <SearchList remote-search-fn="" data=""></SearchList>
+          <SearchList :multi-select="true" :search-api="api1"></SearchList>
         </div>
       </div>
     </div>
   </BaseFloatPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseFloatPage from './BaseFloatPage.vue'
 import SearchList from '../components/SearchList.vue'
+
+const api1 = window.api.tagLocalGetSelectList
 </script>
 
 <style>
