@@ -12,7 +12,7 @@
     </div>
   </div>
 </template>
-<script setup>
+<script setup lang="ts">
 const emits = defineEmits(['close-float-page'])
 function closeSelf() {
   emits('close-float-page')
@@ -34,8 +34,8 @@ function closeSelf() {
 }
 
 .content {
-  height: 90%;
-  width: 90%;
+  height: calc(100% - 100px);
+  width: calc(100% - 100px);
 }
 
 .close-button {
