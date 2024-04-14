@@ -2,7 +2,7 @@
  * 站点标签
  */
 
-export default class TagSite {
+export default class SiteTag {
   /**
    * 主键
    */
@@ -31,13 +31,13 @@ export default class TagSite {
    * 站点标签对应的本地标签id
    */
   localTagId: number
-  constructor(tagSite: TagSite) {
-    this.id = tagSite.id
-    this.siteId = tagSite.siteId
-    this.siteTagId = tagSite.siteTagId
-    this.siteTagName = tagSite.siteTagName
-    this.baseSiteTagId = tagSite.baseSiteTagId
-    this.description = tagSite.description
-    this.localTagId = tagSite.localTagId
+  constructor(siteTag: SiteTag) {
+    this.id = siteTag.id
+    this.siteId = siteTag.siteId
+    this.siteTagId = siteTag.siteTagId
+    this.siteTagName = siteTag.siteTagName
+    this.baseSiteTagId = siteTag.baseSiteTagId
+    this.description = siteTag.description
+    this.localTagId = siteTag.localTagId
   }
 }

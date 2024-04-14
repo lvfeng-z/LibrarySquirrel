@@ -2,7 +2,7 @@
  * 本地标签
  */
 
-export default class TagLocal {
+export default class LocalTag {
   /**
    * 主键
    */
@@ -15,9 +15,9 @@ export default class TagLocal {
    * 上级标签id
    */
   baseLocalTagId: number | null | undefined
-  constructor(tagLocal: TagLocal) {
-    this.id = tagLocal.id
-    this.localTagName = tagLocal.localTagName
-    this.baseLocalTagId = tagLocal.baseLocalTagId
+  constructor(localTag: LocalTag) {
+    this.id = localTag.id
+    this.localTagName = localTag.localTagName
+    this.baseLocalTagId = localTag.baseLocalTagId
   }
 }
