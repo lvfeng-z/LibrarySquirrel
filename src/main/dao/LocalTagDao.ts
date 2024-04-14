@@ -1,6 +1,7 @@
 import LocalTag from '../models/LocalTag'
 import SelectVO from '../models/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
+import LocalTagQueryDTO from '../models/queryDTO/SiteTagQueryDTO'
 
 async function insert(localTag: LocalTag) {
   const connection = await global.connectionPool.acquire()
@@ -45,22 +46,31 @@ async function query(localTag: LocalTag): Promise<LocalTag[]> {
   }
 }
 
-async function getSelectList(keyword: string): Promise<SelectVO[]> {
+async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
+  console.log('LocalTagDao.ts', queryDTO)
   const connection = await global.connectionPool.acquire()
   try {
     return new Promise((resolve) => {
-      let results: SelectVO[]
-      let sql: string
+      const selectFrom = 'select id as value, local_tag_name as label from local_tag'
+      let where = ''
+      const columns: string[] = []
+      const values: string[] = []
 
-      if (StringUtil.isNotBlank(keyword)) {
-        sql =
-          'select id as value, local_tag_name as label, base_local_tag_id as rootId from local_tag where local_tag_name like ?'
-        results = connection.prepare(sql).all('%' + keyword + '%')
-      } else {
-        sql =
-          'select id as value, local_tag_name as label, base_local_tag_id as rootId from local_tag'
-        results = connection.prepare(sql).all()
+      if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
+        columns.push('local_tag_name like ?')
+        values.push('%' + queryDTO.keyword + '%')
       }
+
+      if (columns.length == 1) {
+        where = ' where ' + columns.toString()
+      } else if (columns.length > 1) {
+        where = ' where ' + columns.join(' and ')
+      }
+
+      const sql: string = selectFrom + where
+
+      const results = connection.prepare(sql).all(values)
+
       resolve(results)
     })
   } finally {
