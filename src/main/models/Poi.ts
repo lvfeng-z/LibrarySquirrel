@@ -6,11 +6,11 @@ export default class Poi {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
   /**
    * 兴趣点名称
    */
-  poiName: string
+  poiName: string | undefined | null
   constructor(poi: Poi) {
     this.id = poi.id
     this.poiName = poi.poiName

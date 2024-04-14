@@ -5,55 +5,55 @@ export default class Works {
   /**
    * 主键
    */
-  id: number //主键
+  id: number | undefined | null
   /**
    * 文件存储路径
    */
-  filePath: string //文件存储路径
+  filePath: string | undefined | null
   /**
    * 作品来源站点id
    */
-  siteId: number //作品来源站点id
+  siteId: number | undefined | null
   /**
    * 站点中作品的id
    */
-  siteWorksId: string //作品在站点的id
+  siteWorksId: string | undefined | null
   /**
    * 站点中作品的作者id
    */
-  siteAuthorId: string //作品在站点的作者id
+  siteAuthorId: string | undefined | null
   /**
    * 站点中作品的上传时间
    */
-  siteUploadTime: string //作品在站点的上传时间
+  siteUploadTime: string | undefined | null
   /**
    * 站点这种作品最后修改的时间
    */
-  siteUpdateTime: string //作品在站点最后修改的时间
+  siteUpdateTime: string | undefined | null
   /**
    * 作品别称
    */
-  nickName: string //作品别称
+  nickName: string | undefined | null
   /**
    * 在本地作品的作者id
    */
-  localAuthorId: number //作品在本地的作者id
+  localAuthorId: number | undefined | null
   /**
    * 收录时间
    */
-  includeTime: string
+  includeTime: string | undefined | null
   /**
    * 收录方式（0：本地导入，1：站点下载）
    */
-  includeMode: number
+  includeMode: number | undefined | null
   /**
    * 下载状态
    */
-  downloadStatus: number //下载状态
+  downloadStatus: number | undefined | null
   /**
    * 下载任务id
    */
-  downloadTaskId: number //下载任务id
+  downloadTaskId: number | undefined | null
 
   constructor(works: Works) {
     this.id = works.id

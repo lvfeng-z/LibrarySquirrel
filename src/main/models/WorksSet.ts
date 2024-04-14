@@ -6,47 +6,47 @@ export default class WorksSet {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
   /**
    * 集合名称
    */
-  setName: string
+  setName: string | undefined | null
   /**
    * 集合来源站点id
    */
-  siteId: number
+  siteId: number | undefined | null
   /**
    * 集合在站点的id
    */
-  siteWorksId: string
+  siteWorksId: string | undefined | null
   /**
    * 集合在站点的名称
    */
-  siteWorksName: string
+  siteWorksName: string | undefined | null
   /**
    * 集合在站点的作者id
    */
-  siteAuthorId: string
+  siteAuthorId: string | undefined | null
   /**
    * 集合在站点的上传时间
    */
-  siteUploadTime: string
+  siteUploadTime: string | undefined | null
   /**
    * 集合在站点最后更新的时间
    */
-  siteUpdateTime: string
+  siteUpdateTime: string | undefined | null
   /**
    * 别名
    */
-  nickName: string
+  nickName: string | undefined | null
   /**
    * 集合在本地的作者
    */
-  localAuthorId: number
+  localAuthorId: number | undefined | null
   /**
    * 创建时间
    */
-  createTime: number
+  createTime: number | undefined | null
   constructor(worksSet: WorksSet) {
     this.id = worksSet.id
     this.setName = worksSet.setName

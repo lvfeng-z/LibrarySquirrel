@@ -5,19 +5,19 @@ export default class RePoiTarget {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
   /**
    * 兴趣点id
    */
-  poiId: number
+  poiId: number | undefined | null
   /**
    * 目标id
    */
-  targetId: number
+  targetId: number | undefined | null
   /**
    * 目标类型
    */
-  targetType: string
+  targetType: string | undefined | null
   constructor(rePoiTarget: RePoiTarget) {
     this.id = rePoiTarget.id
     this.poiId = rePoiTarget.poiId

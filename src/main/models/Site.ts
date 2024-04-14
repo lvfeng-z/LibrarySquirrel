@@ -5,19 +5,19 @@ export default class Site {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
   /**
    * 站点名称
    */
-  siteName: string
+  siteName: string | undefined | null
   /**
    * 站点域名
    */
-  siteDomain: string
+  siteDomain: string | undefined | null
   /**
    * 站点主页
    */
-  siteHomepage: string
+  siteHomepage: string | undefined | null
   constructor(site: Site) {
     this.id = site.id
     this.siteName = site.siteName
