@@ -9,9 +9,12 @@ declare global {
       localTagQuery: function
       localTagGetSelectList: function
 
+      // SiteService
+      siteInsert: function
+      siteGetSelectList: function
+
       // SiteTagService
       siteTagInsert: function
-      siteTagQuery: function
       siteTagGetSelectList: function
     }
   }

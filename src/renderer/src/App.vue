@@ -10,20 +10,18 @@ const pageState = reactive({
   showTagManagePage: false
 })
 
-const insert = () => {
-  const tag1 = { id: null, localTagName: 'aryion', baseLocalTagId: 0 }
-  window.api.tagLocalInsert(tag1)
-}
-const getTagSelectList = async (keyword) => {
+async function getTagSelectList(keyword) {
   loading = true
   try {
-    tagSelectList.value = await window.api.tagLocalGetSelectList(keyword)
+    const params = { keyword: keyword }
+    tagSelectList.value = await window.api.localTagGetSelectList(params)
   } catch (e) {
     console.log(e)
   } finally {
     loading = false
   }
 }
+
 function showFloatPage(pageName) {
   pageState.floatPage = true
   switch (pageName) {
@@ -58,8 +56,6 @@ function closeFloatPage() {
           :value="item.value"
         ></el-option>
       </el-select>
-      <el-button @click="insert">插入</el-button>
-      <el-button @click="getTagSelectList">查询</el-button>
       <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
     </div>
     <div v-if="pageState.floatPage" class="floatPage">
