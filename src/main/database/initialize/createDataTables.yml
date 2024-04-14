@@ -1,18 +1,18 @@
 tables:
-  - name: author_local
+  - name: local_author
     sql: |
-     create table if not exists author_local (
+     create table if not exists local_author (
        id                integer not null
-       constraint author_local_pk
+       constraint local_author_pk
        primary key autoincrement,
        local_author_name text
      );
 
-  - name: author_site
+  - name: site_author
     sql: |
-     create table if not exists author_site (
+     create table if not exists site_author (
        id                      integer not null
-       constraint author_site_pk
+       constraint site_author_pk
        primary key autoincrement,
        site_id                 integer,
        site_author_id          text,
@@ -53,21 +53,21 @@ tables:
         site_homepage text
       );
 
-  - name: tag_local
+  - name: local_tag
     sql: |
-      create table if not exists tag_local (
+      create table if not exists local_tag (
         id                integer not null
-        constraint tag_local_pk
+        constraint local_tag_pk
         primary key autoincrement,
         local_tag_name    text,
         base_local_tag_id integer
       );
 
-  - name: tag_site
+  - name: site_tag
     sql: |
-      create table if not exists tag_site (
+      create table if not exists site_tag (
         id               integer not null
-        constraint tag_site_pk
+        constraint site_tag_pk
         primary key autoincrement,
         site_id          integer,
         site_tag_id      text,

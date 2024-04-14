@@ -3,14 +3,23 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  tagLocalInsert: (args) => {
-    ipcRenderer.invoke('tagLocal-insert', args)
+  // LocalTagService
+  localTagInsert: (args) => {
+    return ipcRenderer.invoke('localTag-insert', args)
   },
-  tagLocalQuery: (args) => {
-    ipcRenderer.invoke('tagLocal-query', args)
+  localTagQuery: (args) => {
+    return ipcRenderer.invoke('localTag-query', args)
   },
-  tagLocalGetSelectList: (args) => {
-    return ipcRenderer.invoke('tagLocal-getSelectList', args)
+  localTagGetSelectList: (args) => {
+    return ipcRenderer.invoke('localTag-getSelectList', args)
+  },
+
+  // SiteTagService
+  siteTagInsert: (args) => {
+    return ipcRenderer.invoke('siteTag-insert', args)
+  },
+  siteTagGetSelectList: (args) => {
+    return ipcRenderer.invoke('siteTag-getSelectList', args)
   }
 }
 

@@ -2,7 +2,7 @@
  * 站点作者
  */
 
-export default class AuthorSite {
+export default class SiteAuthor {
   /**
    * 主键
    */
@@ -31,13 +31,13 @@ export default class AuthorSite {
    * 站点作者在本地对应的作者id
    */
   localAuthorId: number
-  constructor(authorSite: AuthorSite) {
-    this.id = authorSite.id
-    this.siteId = authorSite.siteId
-    this.siteAuthorId = authorSite.siteAuthorId
-    this.siteAuthorName = authorSite.siteAuthorName
-    this.siteAuthorNameBefore = authorSite.siteAuthorNameBefore
-    this.introduce = authorSite.introduce
-    this.localAuthorId = authorSite.localAuthorId
+  constructor(siteAuthor: SiteAuthor) {
+    this.id = siteAuthor.id
+    this.siteId = siteAuthor.siteId
+    this.siteAuthorId = siteAuthor.siteAuthorId
+    this.siteAuthorName = siteAuthor.siteAuthorName
+    this.siteAuthorNameBefore = siteAuthor.siteAuthorNameBefore
+    this.introduce = siteAuthor.introduce
+    this.localAuthorId = siteAuthor.localAuthorId
   }
 }
