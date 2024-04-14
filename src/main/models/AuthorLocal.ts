@@ -3,10 +3,17 @@
  */
 
 export default class AuthorLocal {
+  /**
+   * 主键
+   */
   id: string
-  localAuthorName: string //作者名称
-  constructor(id: string, localAuthorName: string) {
-    this.id = id
-    this.localAuthorName = localAuthorName
+
+  /**
+   * 作者名称
+   */
+  localAuthorName: string
+  constructor(authorLocal: AuthorLocal) {
+    this.id = authorLocal.id
+    this.localAuthorName = authorLocal.localAuthorName
   }
 }

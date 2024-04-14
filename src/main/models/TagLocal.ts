@@ -3,12 +3,21 @@
  */
 
 export default class TagLocal {
+  /**
+   * 主键
+   */
   id: number | null | undefined
+  /**
+   * 本地标签名称
+   */
   localTagName: string | null | undefined
+  /**
+   * 上级标签id
+   */
   baseLocalTagId: number | null | undefined
-  constructor(id: number, localTagName: string, baseLocalTagId: number) {
-    this.id = id
-    this.localTagName = localTagName
-    this.baseLocalTagId = baseLocalTagId
+  constructor(tagLocal: TagLocal) {
+    this.id = tagLocal.id
+    this.localTagName = tagLocal.localTagName
+    this.baseLocalTagId = tagLocal.baseLocalTagId
   }
 }

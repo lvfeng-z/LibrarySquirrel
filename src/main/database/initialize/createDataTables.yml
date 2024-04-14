@@ -11,14 +11,15 @@ tables:
   - name: author_site
     sql: |
      create table if not exists author_site (
-       id               integer not null
+       id                      integer not null
        constraint author_site_pk
        primary key autoincrement,
-       site_id          integer,
-       site_author_id   text,
-       site_author_name text,
-       introduce        text,
-       local_author_id  integer
+       site_id                 integer,
+       site_author_id          text,
+       site_author_name        text,
+       site_author_name_before text,
+       introduce               text,
+       local_author_id         integer
      );
 
   - name: poi
@@ -104,8 +105,9 @@ tables:
         site_upload_time text,
         site_update_time text,
         nick_name        text,
-        local_author     integer,
-        download_time    text,
+        local_author_id     integer,
+        include_time     text,
+        include_mode     integer,
         download_status  smallint,
         download_task_id integer
       );
@@ -124,7 +126,7 @@ tables:
         site_upload_time text,
         site_update_time text,
         nick_name        text,
-        local_author     integer,
+        local_author_id     integer,
         create_time      text
       );
 

@@ -3,40 +3,61 @@
  */
 
 export default class WorksSet {
+  /**
+   * 主键
+   */
   id: string
+  /**
+   * 集合名称
+   */
   setName: string
+  /**
+   * 集合来源站点id
+   */
   siteId: number
+  /**
+   * 集合在站点的id
+   */
   siteWorksId: string
+  /**
+   * 集合在站点的名称
+   */
   siteWorksName: string
+  /**
+   * 集合在站点的作者id
+   */
   siteAuthorId: string
+  /**
+   * 集合在站点的上传时间
+   */
   siteUploadTime: string
+  /**
+   * 集合在站点最后更新的时间
+   */
   siteUpdateTime: string
+  /**
+   * 别名
+   */
   nickName: string
-  localAuthor: number
+  /**
+   * 集合在本地的作者
+   */
+  localAuthorId: number
+  /**
+   * 创建时间
+   */
   createTime: number
-  constructor(
-    id: string,
-    setName: string,
-    siteId: number,
-    siteWorksId: string,
-    siteWorksName: string,
-    siteAuthorId: string,
-    siteUploadTime: string,
-    siteUpdateTime: string,
-    nickName: string,
-    localAuthor: number,
-    createTime: number
-  ) {
-    this.id = id
-    this.setName = setName
-    this.siteId = siteId
-    this.siteWorksId = siteWorksId
-    this.siteWorksName = siteWorksName
-    this.siteAuthorId = siteAuthorId
-    this.siteUploadTime = siteUploadTime
-    this.siteUpdateTime = siteUpdateTime
-    this.nickName = nickName
-    this.localAuthor = localAuthor
-    this.createTime = createTime
+  constructor(worksSet: WorksSet) {
+    this.id = worksSet.id
+    this.setName = worksSet.setName
+    this.siteId = worksSet.siteId
+    this.siteWorksId = worksSet.siteWorksId
+    this.siteWorksName = worksSet.siteWorksName
+    this.siteAuthorId = worksSet.siteAuthorId
+    this.siteUploadTime = worksSet.siteUploadTime
+    this.siteUpdateTime = worksSet.siteUpdateTime
+    this.nickName = worksSet.nickName
+    this.localAuthorId = worksSet.localAuthorId
+    this.createTime = worksSet.createTime
   }
 }
