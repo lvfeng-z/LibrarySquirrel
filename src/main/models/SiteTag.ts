@@ -6,31 +6,31 @@ export default class SiteTag {
   /**
    * 主键
    */
-  id: number
+  id: number | undefined | null
   /**
    * 标签来源站点id
    */
-  siteId: number
+  siteId: number | undefined | null
   /**
    * 站点中标签的id
    */
-  siteTagId: string
+  siteTagId: string | undefined | null
   /**
    * 站点中标签的名称
    */
-  siteTagName: string
+  siteTagName: string | undefined | null
   /**
    * 上级标签id
    */
-  baseSiteTagId: string
+  baseSiteTagId: string | undefined | null
   /**
    * 描述
    */
-  description: string
+  description: string | undefined | null
   /**
    * 站点标签对应的本地标签id
    */
-  localTagId: number
+  localTagId: number | undefined | null
   constructor(siteTag: SiteTag) {
     this.id = siteTag.id
     this.siteId = siteTag.siteId

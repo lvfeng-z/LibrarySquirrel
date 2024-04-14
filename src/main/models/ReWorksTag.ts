@@ -5,27 +5,27 @@ export default class ReWorksTag {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
   /**
    * 作品id
    */
-  worksId: number
+  worksId: number | undefined | null
   /**
    * 标签id
    */
-  tagId: string
+  tagId: string | undefined | null
   /**
    * 标签类型（true：本地，false：站点）
    */
-  tagType: boolean
+  tagType: boolean | undefined | null
   /**
    * 标签来源站点id
    */
-  tagSiteId: number
+  tagSiteId: number | undefined | null
   /**
    * 创建时间
    */
-  createTime: string
+  createTime: string | undefined | null
   constructor(reWorksTag: ReWorksTag) {
     this.id = reWorksTag.id
     this.worksId = reWorksTag.worksId

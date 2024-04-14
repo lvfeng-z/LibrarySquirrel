@@ -6,31 +6,31 @@ export default class SiteAuthor {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
   /**
    * 作者来源站点id
    */
-  siteId: number
+  siteId: number | undefined | null
   /**
    * 站点中作者的id
    */
-  siteAuthorId: string
+  siteAuthorId: string | undefined | null
   /**
    * 站点中作者的名称
    */
-  siteAuthorName: string
+  siteAuthorName: string | undefined | null
   /**
    * 站点中作者的曾用名
    */
-  siteAuthorNameBefore: string[]
+  siteAuthorNameBefore: string[] | undefined | null
   /**
    * 介绍
    */
-  introduce: string
+  introduce: string | undefined | null
   /**
    * 站点作者在本地对应的作者id
    */
-  localAuthorId: number
+  localAuthorId: number | undefined | null
   constructor(siteAuthor: SiteAuthor) {
     this.id = siteAuthor.id
     this.siteId = siteAuthor.siteId

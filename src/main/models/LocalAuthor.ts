@@ -6,12 +6,12 @@ export default class LocalAuthor {
   /**
    * 主键
    */
-  id: string
+  id: string | undefined | null
 
   /**
    * 作者名称
    */
-  localAuthorName: string
+  localAuthorName: string | undefined | null
   constructor(localAuthor: LocalAuthor) {
     this.id = localAuthor.id
     this.localAuthorName = localAuthor.localAuthorName
