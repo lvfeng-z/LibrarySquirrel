@@ -2,14 +2,38 @@
   <BaseFloatPage>
     <div class="container">
       <div class="left">
-        <SearchList :title="'本地tag'" :multi-select="false" :search-api="api1"></SearchList>
+        <SearchList
+          :title="'本地tag'"
+          :multi-select="false"
+          :search-api="apis.localTagGetSelectList"
+          input-keyword="keyword"
+          @selection-change="localTagListChange"
+        ></SearchList>
       </div>
       <div class="right">
         <div class="right-top">
-          <SearchList :multi-select="true" :search-api="api1"></SearchList>
+          <SearchList
+            :title="'对应站点tag'"
+            :multi-select="true"
+            :search-api="apis.siteTagGetSelectList"
+            input-keyword="keyword"
+            :parent-params="localTagSelected"
+            :select-list="true"
+            :select-list-search-api="apis.siteGetSelectList"
+            select-keyword="sites"
+          ></SearchList>
         </div>
         <div class="right-bottom">
-          <SearchList :multi-select="true" :search-api="api1"></SearchList>
+          <SearchList
+            :title="'可选站点tag'"
+            :multi-select="true"
+            :search-api="apis.siteTagGetSelectList"
+            input-keyword="keyword"
+            :parent-params="localTagSelected"
+            :select-list="true"
+            :select-list-search-api="apis.siteGetSelectList"
+            select-keyword="sites"
+          ></SearchList>
         </div>
       </div>
     </div>
@@ -19,8 +43,19 @@
 <script setup lang="ts">
 import BaseFloatPage from './BaseFloatPage.vue'
 import SearchList from '../components/SearchList.vue'
+import { reactive, ref } from 'vue'
 
-const api1 = window.api.tagLocalGetSelectList
+const localTagSelected = ref({})
+
+const apis = reactive({
+  localTagGetSelectList: window.api.localTagGetSelectList,
+  siteTagGetSelectList: window.api.siteTagGetSelectList,
+  siteGetSelectList: window.api.siteGetSelectList
+})
+
+function localTagListChange(selection: string) {
+  localTagSelected.value = { localTagId: selection }
+}
 </script>
 
 <style>

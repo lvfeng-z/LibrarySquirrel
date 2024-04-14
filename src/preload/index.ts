@@ -14,6 +14,14 @@ const api = {
     return ipcRenderer.invoke('localTag-getSelectList', args)
   },
 
+  // SiteService
+  siteInsert: (args) => {
+    return ipcRenderer.invoke('site-insert', args)
+  },
+  siteGetSelectList: (args) => {
+    return ipcRenderer.invoke('site-getSelectList', args)
+  },
+
   // SiteTagService
   siteTagInsert: (args) => {
     return ipcRenderer.invoke('siteTag-insert', args)
