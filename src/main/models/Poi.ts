@@ -3,10 +3,16 @@
  */
 
 export default class Poi {
+  /**
+   * 主键
+   */
   id: string
-  poiName: string //兴趣点名称
-  constructor(id: string, poiName: string) {
-    this.id = id
-    this.poiName = poiName
+  /**
+   * 兴趣点名称
+   */
+  poiName: string
+  constructor(poi: Poi) {
+    this.id = poi.id
+    this.poiName = poi.poiName
   }
 }
