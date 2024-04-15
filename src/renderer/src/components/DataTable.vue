@@ -45,13 +45,18 @@
           </template>
           <template #default>
             <el-dropdown>
-              <el-button :icon="props.operationButton.icon">
+              <el-button
+                :icon="props.operationButton.icon"
+                @click="buttonClicked(props.operationButton.code)"
+              >
                 {{ props.operationButton.label }}
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <template v-for="item in props.operationDropdown" :key="item.code">
-                    <el-dropdown-item :icon="item.icon">{{ item.label }}</el-dropdown-item>
+                    <el-dropdown-item :icon="item.icon" @click="buttonClicked(item.code)">
+                      {{ item.label }}
+                    </el-dropdown-item>
                   </template>
                 </el-dropdown-menu>
               </template>
@@ -105,9 +110,12 @@ function selectionChange(newSelectedList) {
   selectDataList.value = newSelectedList
   emits('selectionChange', selectDataList.value)
 }
+function buttonClicked(code: string) {
+  emits('buttonClicked', code)
+}
 
 // 事件
-const emits = defineEmits(['selectionChange'])
+const emits = defineEmits(['selectionChange', 'buttonClicked'])
 </script>
 
 <style scoped>
