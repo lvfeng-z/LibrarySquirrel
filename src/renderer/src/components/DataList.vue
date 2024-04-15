@@ -1,7 +1,7 @@
 <template>
   <div class="data-list">
     <div class="data-list-wrapper">
-      <el-table :data="props.data" :selectable="props.selectable">
+      <el-table :data="props.data" :selectable="props.selectable" @selection-change="selectionChange">
         <el-table-column
           v-if="props.selectable"
           type="selection"
@@ -32,13 +32,29 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 const props = defineProps<{
-  selectable: boolean
-  multiSelect: boolean
-  thead: dataListThead[]
-  data: []
+  selectable: boolean // 列表是否可选择
+  multiSelect: boolean // 列表是否多选
+  thead: dataListThead[] // 表头信息
+  data: [] // 数据
 }>()
+
+// 表头信息类型
 type dataListThead = { name: string; label: string; dataType: string; hide: boolean }
+
+// 变量
+const selectDataList = ref([])
+
+// 方法
+function selectionChange(newSelectedList) {
+  selectDataList.value = newSelectedList
+  emits('selectionChange', selectDataList.value)
+}
+
+// 事件
+const emits = defineEmits(['selectionChange'])
 </script>
 
 <style scoped>
