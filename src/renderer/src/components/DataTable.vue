@@ -43,18 +43,28 @@
           <template #header>
             <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
           </template>
-          <template #default>
+          <template #default="{ row }">
             <el-dropdown>
               <el-button
                 :icon="props.operationButton.icon"
-                @click="buttonClicked(props.operationButton.code)"
+                @click="
+                  buttonClicked({ id: row[props.keyOfData], code: props.operationButton.code })
+                "
               >
                 {{ props.operationButton.label }}
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <template v-for="item in props.operationDropdown" :key="item.code">
-                    <el-dropdown-item :icon="item.icon" @click="buttonClicked(item.code)">
+                    <el-dropdown-item
+                      :icon="item.icon"
+                      @click="
+                        buttonClicked({
+                          id: row[props.keyOfData],
+                          code: item.code
+                        })
+                      "
+                    >
                       {{ item.label }}
                     </el-dropdown-item>
                   </template>
@@ -90,6 +100,12 @@ export interface OperationItem {
   code: string
 }
 
+// 操作点击返回类型
+export interface OperationResponse {
+  id: string
+  code: string
+}
+
 // props
 const props = defineProps<{
   selectable: boolean // 列表是否可选择
@@ -110,8 +126,8 @@ function selectionChange(newSelectedList) {
   selectDataList.value = newSelectedList
   emits('selectionChange', selectDataList.value)
 }
-function buttonClicked(code: string) {
-  emits('buttonClicked', code)
+function buttonClicked(operationResponse: OperationResponse) {
+  emits('buttonClicked', operationResponse)
 }
 
 // 事件
