@@ -10,6 +10,7 @@
           key-of-data="test1"
           :operation-button="operationButton"
           :operation-dropdown="operationDropDown"
+          @button-clicked="buttonClicked"
         ></DataTable>
       </div>
       <div class="right">
@@ -118,6 +119,9 @@ const operationDropDown: OperationItem[] = [
   { label: '编辑', icon: 'edit', code: 'edit' },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
+function buttonClicked(code) {
+  console.log('buttonClicked(code)', code)
+}
 </script>
 
 <style>
