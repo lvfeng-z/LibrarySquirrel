@@ -1,7 +1,7 @@
 <template>
   <div class="search-list">
     <div class="search-list-wrapper">
-      <el-row>
+      <el-row class="search-list-toolbar">
         <el-col :span="selectList ? 18 : 24">
           <el-input
             v-model="inputText"
@@ -128,15 +128,23 @@ function selectionChange() {
 }
 
 .search-list-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: calc(100% - 10px);
   height: calc(100% - 10px);
-  display: flex;
   flex-direction: column;
 }
 
+.search-list-toolbar {
+  width: 100%;
+}
+
 .result-list {
-  margin-top: 16px;
+  margin-top: 5px;
   width: 100%;
   height: 100%;
+  border: 1.5px solid lightgrey;
+  border-radius: 3px;
 }
 </style>

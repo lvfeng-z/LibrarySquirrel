@@ -2,13 +2,7 @@
   <BaseFloatPage>
     <div class="container">
       <div class="left">
-        <SearchList
-          :title="'本地tag'"
-          :multi-select="false"
-          :search-api="apis.localTagGetSelectList"
-          input-keyword="keyword"
-          @selection-change="localTagListChange"
-        ></SearchList>
+        <DataTable :data="data" :thead="thead" :multi-select="false" :selectable="true"></DataTable>
       </div>
       <div class="right">
         <div class="right-top">
@@ -42,6 +36,7 @@
 
 <script setup lang="ts">
 import BaseFloatPage from './BaseFloatPage.vue'
+import DataTable from '../components/DataList.vue'
 import SearchList from '../components/SearchList.vue'
 import { reactive, ref } from 'vue'
 
@@ -56,6 +51,51 @@ const apis = reactive({
 function localTagListChange(selection: string) {
   localTagSelected.value = { localTagId: selection }
 }
+
+//test
+
+const thead = ref([
+  {
+    name: 'test1',
+    label: '测试1',
+    type: 'string',
+    hide: false
+  },
+  {
+    name: 'test2',
+    label: '测试2',
+    type: 'string',
+    hide: false
+  },
+  {
+    name: 'test3',
+    label: '测试3',
+    type: 'string',
+    hide: false
+  }
+])
+const data = ref([
+  {
+    test1: '1asdfasd',
+    test2: '2dasfasdf',
+    test3: '3ddfazvx'
+  },
+  {
+    test1: '1asdfasd',
+    test2: '2dasfasdf',
+    test3: '3ddfazvx'
+  },
+  {
+    test1: '1asdfasd',
+    test2: '2dasfasdf',
+    test3: '3ddfazvx'
+  },
+  {
+    test1: '1asdfasd',
+    test2: '2dasfasdf',
+    test3: '3ddfazvx'
+  }
+])
 </script>
 
 <style>
