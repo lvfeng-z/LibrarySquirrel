@@ -2,7 +2,15 @@
   <BaseFloatPage>
     <div class="container">
       <div class="left">
-        <DataTable :data="data" :thead="thead" :multi-select="false" :selectable="true"></DataTable>
+        <DataTable
+          :data="data"
+          :thead="thead"
+          :multi-select="true"
+          :selectable="true"
+          key-of-data="test1"
+          :operation-button="operationButton"
+          :operation-dropdown="operationDropDown"
+        ></DataTable>
       </div>
       <div class="right">
         <div class="right-top">
@@ -36,9 +44,9 @@
 
 <script setup lang="ts">
 import BaseFloatPage from './BaseFloatPage.vue'
-import DataTable from '../components/DataList.vue'
+import DataTable, { Thead, OperationItem } from '../components/DataTable.vue'
 import SearchList from '../components/SearchList.vue'
-import { reactive, ref } from 'vue'
+import { reactive, Ref, ref, UnwrapRef } from 'vue'
 
 const localTagSelected = ref({})
 
@@ -48,54 +56,68 @@ const apis = reactive({
   siteGetSelectList: window.api.siteGetSelectList
 })
 
-function localTagListChange(selection: string) {
-  localTagSelected.value = { localTagId: selection }
-}
+// function localTagListChange(selection: string) {
+//   localTagSelected.value = { localTagId: selection }
+// }
 
 //test
-
-const thead = ref([
+const thead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     name: 'test1',
     label: '测试1',
-    type: 'string',
-    hide: false
+    dataType: 'string',
+    hide: false,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center'
   },
   {
     name: 'test2',
     label: '测试2',
-    type: 'string',
-    hide: false
+    dataType: 'string',
+    hide: false,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center'
   },
   {
     name: 'test3',
     label: '测试3',
-    type: 'string',
-    hide: false
+    dataType: 'string',
+    hide: false,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center'
   }
 ])
 const data = ref([
   {
-    test1: '1asdfasd',
+    test1: '1asdfssd',
     test2: '2dasfasdf',
     test3: '3ddfazvx'
   },
   {
-    test1: '1asdfasd',
+    test1: '1asdfddsd',
     test2: '2dasfasdf',
     test3: '3ddfazvx'
   },
   {
-    test1: '1asdfasd',
+    test1: '1asdfffasd',
     test2: '2dasfasdf',
     test3: '3ddfazvx'
   },
   {
-    test1: '1asdfasd',
+    test1: '1asdfaaasd',
     test2: '2dasfasdf',
     test3: '3ddfazvx'
   }
 ])
+
+const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
+const operationDropDown: OperationItem[] = [
+  { label: '编辑', icon: 'edit', code: 'edit' },
+  { label: '删除', icon: 'delete', code: 'delete' }
+]
 </script>
 
 <style>
