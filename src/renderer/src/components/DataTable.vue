@@ -41,7 +41,7 @@
             </el-table-column>
           </template>
         </template>
-        <el-table-column label="操作" align="center">
+        <el-table-column align="center">
           <template #header>
             <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
           </template>
@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
+//todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 // 类型
 // 表头
 export interface Thead {
