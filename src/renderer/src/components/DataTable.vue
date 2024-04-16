@@ -29,7 +29,9 @@
               :key="index"
               :prop="item.name"
               :label="item.label"
+              :width="item.width"
               :align="item.dataAlign"
+              :show-overflow-tooltip="item.overHide"
             >
               <template #header>
                 <div :style="{ textAlign: item.headerAlign }">
@@ -88,9 +90,11 @@ export interface Thead {
   label: string // 标题名称
   dataType: string // 数据类型
   hide: boolean // 是否隐藏
+  width?: number // 数据列宽度
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
+  overHide?: boolean //列超出长度时是否省略
 }
 
 // 操作栏按钮或下拉菜单按钮
@@ -111,7 +115,7 @@ const props = defineProps<{
   selectable: boolean // 列表是否可选择
   multiSelect: boolean // 列表是否多选
   thead: Thead[] // 表头信息
-  keyOfData: string
+  keyOfData: string // 数据的唯一标识
   data: unknown[] // 数据
   operationButton: OperationItem // 操作列按钮的文本、图标和代号
   operationDropdown?: OperationItem[] // 操作列下拉菜单的文本、图标和代号（数组）
@@ -152,5 +156,6 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
 
 .data-list-table {
   height: 100%;
+  width: 100%;
 }
 </style>
