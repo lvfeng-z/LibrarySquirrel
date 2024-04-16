@@ -1,17 +1,27 @@
+<script setup lang="ts">
+import BaseFloatPage from './BaseFloatPage.vue'
+import SearchList from '../components/SearchList.vue'
+import SearchTable from '../components/SearchTable.vue'
+import { reactive, ref } from 'vue'
+
+const localTagSelected = ref({})
+
+const apis = reactive({
+  localTagGetSelectList: window.api.localTagGetSelectList,
+  siteTagGetSelectList: window.api.siteTagGetSelectList,
+  siteGetSelectList: window.api.siteGetSelectList
+})
+
+// function localTagListChange(selection: string) {
+//   localTagSelected.value = { localTagId: selection }
+// }
+</script>
+
 <template>
   <BaseFloatPage>
     <div class="container">
       <div class="left">
-        <DataTable
-          :data="data"
-          :thead="thead"
-          :multi-select="true"
-          :selectable="true"
-          key-of-data="test1"
-          :operation-button="operationButton"
-          :operation-dropdown="operationDropDown"
-          @button-clicked="buttonClicked"
-        ></DataTable>
+        <SearchTable> </SearchTable>
       </div>
       <div class="right">
         <div class="right-top">
@@ -43,87 +53,6 @@
   </BaseFloatPage>
 </template>
 
-<script setup lang="ts">
-import BaseFloatPage from './BaseFloatPage.vue'
-import DataTable, { Thead, OperationItem } from '../components/DataTable.vue'
-import SearchList from '../components/SearchList.vue'
-import { reactive, Ref, ref, UnwrapRef } from 'vue'
-
-const localTagSelected = ref({})
-
-const apis = reactive({
-  localTagGetSelectList: window.api.localTagGetSelectList,
-  siteTagGetSelectList: window.api.siteTagGetSelectList,
-  siteGetSelectList: window.api.siteGetSelectList
-})
-
-// function localTagListChange(selection: string) {
-//   localTagSelected.value = { localTagId: selection }
-// }
-
-//test
-const thead: Ref<UnwrapRef<Thead[]>> = ref([
-  {
-    name: 'test1',
-    label: '测试1',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center'
-  },
-  {
-    name: 'test2',
-    label: '测试2',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center'
-  },
-  {
-    name: 'test3',
-    label: '测试3',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center'
-  }
-])
-const data = ref([
-  {
-    test1: '1asdfssd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1asdfddsd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1asdfffasd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1asdfaaasd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  }
-])
-
-const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
-const operationDropDown: OperationItem[] = [
-  { label: '编辑', icon: 'edit', code: 'edit' },
-  { label: '删除', icon: 'delete', code: 'delete' }
-]
-function buttonClicked(code) {
-  console.log('buttonClicked(code)', code)
-}
-</script>
-
 <style>
 .container {
   display: flex;
@@ -132,6 +61,7 @@ function buttonClicked(code) {
 
 .left {
   flex: 1;
+  width: 50%;
   height: 100%;
 }
 
@@ -139,6 +69,7 @@ function buttonClicked(code) {
   flex: 1;
   display: flex;
   flex-direction: column;
+  width: 50%;
   height: 100%;
 }
 
