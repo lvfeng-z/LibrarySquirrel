@@ -83,7 +83,7 @@ export class ConnectionPool {
    * @param connection
    */
   public release(connection: Connection) {
-    // 如果等待队列不为空，从等待队列中取第一个分配链接，否则改链接状态设置为空闲，并开启超时定时器
+    // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开启超时定时器
     if (this.connectionQueue.length > 0) {
       const request = this.connectionQueue.shift()
       if (request) {
@@ -102,7 +102,7 @@ export class ConnectionPool {
   }
 
   /**
-   * 创建一个新链接返回，并将其加入链接数组中
+   * 创建一个新链接返回
    */
   private createConnection(): Connection {
     return new Connection(this.config.databasePath)
