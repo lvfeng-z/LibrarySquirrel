@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import SearchToolbar from './SearchToolbar.vue'
+import SearchToolbar, { SearchBox } from './SearchToolbar.vue'
 import DataTable, { Thead, OperationItem, OperationResponse } from './DataTable.vue'
 import { ref, Ref, UnwrapRef } from 'vue'
 
-//test
+// 方法
+function buttonClicked(code: OperationResponse) {
+  console.log('buttonClicked(code)', code)
+}
+
+// test
+
+// <DataTable>
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     name: 'test1',
@@ -121,21 +128,32 @@ const data = ref([
     test3: '3ddfazvx'
   }
 ])
-
 const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
 const operationDropDown: OperationItem[] = [
   { label: '编辑', icon: 'edit', code: 'edit' },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
-function buttonClicked(code: OperationResponse) {
-  console.log('buttonClicked(code)', code)
-}
+// <SearchToolbar>
+const mainSearchBoxes = ref([
+  {
+    name: 'test1',
+    label: '字段1',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
+  }
+])
+const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([])
 </script>
 
 <template>
   <div class="search-table">
     <div class="search-table-toolbar">
-      <SearchToolbar> </SearchToolbar>
+      <SearchToolbar
+        :drop-down-search-boxes="dropDownSearchBoxes"
+        :main-search-boxes="mainSearchBoxes"
+      >
+      </SearchToolbar>
     </div>
     <div class="search-table-data-table">
       <DataTable
