@@ -21,40 +21,44 @@ const props = defineProps<{
 }>()
 
 // 变量
-const searchButtonSpan = ref(3)
-const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([])
-const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([])
+const searchButtonSpan = ref(3) // 查询按钮的span
+const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
+const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 下拉搜索框中元素的列表
+const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false)
 
 // 方法
 // 处理主搜索栏和下拉搜索框
 function calculateSpan() {
   let spanRest = 24 - searchButtonSpan.value
   for (const searchBox of props.mainSearchBoxes) {
+    // 不更改props属性
+    const tempSearchBox = JSON.parse(JSON.stringify(searchBox))
+
     if (spanRest > 0) {
       // 先减去输入框的长度
-      if (searchBox.inputSpan == undefined) {
-        searchBox.inputSpan = 5
-        spanRest -= searchBox.inputSpan
+      if (tempSearchBox.inputSpan == undefined) {
+        tempSearchBox.inputSpan = 5
+        spanRest -= tempSearchBox.inputSpan
       } else {
-        spanRest -= searchBox.inputSpan
+        spanRest -= tempSearchBox.inputSpan
       }
 
       // 再减去已定义的字段名长度
-      if (searchBox.tagSpan == undefined) {
-        searchBox.tagSpan = 2
-        spanRest -= searchBox.tagSpan
+      if (tempSearchBox.tagSpan == undefined) {
+        tempSearchBox.tagSpan = 2
+        spanRest -= tempSearchBox.tagSpan
       } else {
-        spanRest -= searchBox.tagSpan
+        spanRest -= tempSearchBox.tagSpan
       }
 
       // 空间不足就放进dropDownSearchBoxes
       if (spanRest < 0) {
-        innerDropDownSearchBoxes.value.push(searchBox)
+        innerDropDownSearchBoxes.value.push(tempSearchBox)
       } else {
-        innerMainSearchBoxes.value.push(searchBox)
+        innerMainSearchBoxes.value.push(tempSearchBox)
       }
     } else {
-      innerDropDownSearchBoxes.value.push(searchBox)
+      innerDropDownSearchBoxes.value.push(tempSearchBox)
     }
   }
 
@@ -64,6 +68,14 @@ function calculateSpan() {
       '主搜索栏长度不足以容纳所有mainSearchBoxes元素，不能容纳的元素以被移动至dropDownSearchBoxes'
     )
   }
+
+  const tempDropDownSearchBoxes = JSON.parse(JSON.stringify(props.dropDownSearchBoxes))
+  innerDropDownSearchBoxes.value.push(...tempDropDownSearchBoxes)
+}
+
+// 展示下拉搜索框
+function showDropdown() {
+  showDropdownFlag.value = !showDropdownFlag.value
 }
 
 // onBeforeMount
@@ -78,16 +90,33 @@ onBeforeMount(() => {
       <el-row>
         <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
           <el-col :span="item.tagSpan">
-            <el-tag size="large">{{ item.label }}</el-tag>
+            <el-tag :key="index" size="large">{{ item.label }}</el-tag>
           </el-col>
           <el-col :span="item.inputSpan">
             <el-input></el-input>
           </el-col>
         </template>
         <el-col :span="searchButtonSpan" style="margin-left: auto">
-          <el-button>搜索</el-button>
+          <el-dropdown>
+            <el-button>搜索</el-button>
+            <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="showDropdown">更多选项</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </el-col>
       </el-row>
+      <div v-show="showDropdownFlag" class="search-toolbar-dropdown">
+        <el-row>
+          <el-col span="3">
+            <el-tag size="large">test3123</el-tag>
+          </el-col>
+          <el-col span="3">
+            <el-input></el-input>
+          </el-col>
+        </el-row>
+      </div>
     </div>
   </div>
 </template>
@@ -108,5 +137,23 @@ onBeforeMount(() => {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+}
+
+.search-toolbar-dropdown {
+  top: calc(100% + 10px); /* 调整为与搜索框底部对齐 */
+  width: 100%; /* 调整宽度以适应屏幕 */
+  background-color: white; /* 可视化调整，可按需自定义 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 可视化调整，可按需自定义 */
+  z-index: 1; /* 确保下拉框位于其他元素之上 */
+}
+
+/* 为 .search-toolbar-dropdown 添加动画效果（可选） */
+.search-toolbar-dropdown-enter-active,
+.search-toolbar-dropdown-leave-active {
+  transition: opacity 0.3s;
+}
+.search-toolbar-dropdown-enter-from,
+.search-toolbar-dropdown-leave-to {
+  opacity: 0;
 }
 </style>

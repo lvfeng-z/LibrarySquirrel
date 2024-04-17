@@ -141,9 +141,38 @@ const mainSearchBoxes = ref([
     inputType: 'input',
     dataType: 'text',
     placeholder: ''
+  },
+  {
+    name: 'test2',
+    label: '字段2',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
+  },
+  {
+    name: 'test3',
+    label: '字段3',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
+  },
+  {
+    name: 'test4',
+    label: '字段4',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
   }
 ])
-const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([])
+const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
+  {
+    name: 'test5',
+    label: '字段5',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
+  }
+])
 </script>
 
 <template>
