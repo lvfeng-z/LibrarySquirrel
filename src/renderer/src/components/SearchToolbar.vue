@@ -20,6 +20,11 @@ const props = defineProps<{
   dropDownSearchBoxes: SearchBox[]
 }>()
 
+// onBeforeMount
+onBeforeMount(() => {
+  calculateSpan()
+})
+
 // 变量
 const searchButtonSpan = ref(3) // 查询按钮的span
 const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
@@ -77,11 +82,6 @@ function calculateSpan() {
 function showDropdown() {
   showDropdownFlag.value = !showDropdownFlag.value
 }
-
-// onBeforeMount
-onBeforeMount(() => {
-  calculateSpan()
-})
 </script>
 
 <template>
@@ -97,7 +97,11 @@ onBeforeMount(() => {
               <el-input></el-input>
             </el-col>
           </template>
-          <el-col :span="searchButtonSpan" style="margin-left: auto">
+          <el-col
+            class="search-toolbar-search-button"
+            :span="searchButtonSpan"
+            style="margin-left: auto"
+          >
             <el-dropdown>
               <el-button>搜索</el-button>
               <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
@@ -157,5 +161,10 @@ onBeforeMount(() => {
 .search-toolbar-dropdown-enter-from,
 .search-toolbar-dropdown-leave-to {
   opacity: 0;
+}
+
+.search-toolbar-search-button {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
