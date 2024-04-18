@@ -2,7 +2,7 @@
   <div class="side-menu">
     <el-menu :default-openeds="['1']" class="el-menu-vertical-demo" :collapse="isCollapsed">
       <div class="aside-control-button" @click.once="toggleAside">
-        <i class="el-icon-caret-left">{{ isCollapsed ? '>' : '<' }}</i>
+        <label class="el-icon-caret-left">{{ isCollapsed ? '>' : '<' }}</label>
       </div>
       <slot name="default"></slot>
     </el-menu>
@@ -27,19 +27,20 @@ function toggleAside() {
   width: 25px;
   height: 80px;
   background-color: rgba(232, 232, 232, 0.53);
-  right: -25px;
+  right: -22px;
   top: 45%;
   /*perspective：对元素进行透视操作*/
   /*rotateX：以y轴（横轴）进行旋转（前后仰俯）
   画个梯形出来*/
-  transform: perspective(2em) rotateY(50deg);
+  transform: perspective(2em) rotateY(58deg);
   text-align: center;
   line-height: 80px;
   color: #909399;
-  z-index: 1145;
+  background-color: #a6cc9d;
+  z-index: 1;
 }
 .aside-control-button:hover {
-  background-color: #ecf5ff;
+  background-color: #d0ffc5;
 }
 .side-menu {
   height: 100%;
