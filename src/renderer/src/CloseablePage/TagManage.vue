@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseFloatPage from './BaseFloatPage.vue'
+import BaseCloseablePage from './BaseCloseablePage.vue'
 import SearchList from '../components/SearchList.vue'
 import SearchTable from '../components/SearchTable.vue'
 import { reactive, ref } from 'vue'
@@ -18,7 +18,7 @@ const apis = reactive({
 </script>
 
 <template>
-  <BaseFloatPage>
+  <BaseCloseablePage>
     <div class="container">
       <div class="left">
         <SearchTable> </SearchTable>
@@ -50,7 +50,7 @@ const apis = reactive({
         </div>
       </div>
     </div>
-  </BaseFloatPage>
+  </BaseCloseablePage>
 </template>
 
 <style>

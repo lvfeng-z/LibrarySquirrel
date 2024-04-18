@@ -6,7 +6,7 @@ function closeSelf() {
 </script>
 
 <template>
-  <div class="BaseFloatPage">
+  <div class="BaseCloseablePage">
     <el-button
       class="close-button"
       circle
@@ -21,7 +21,7 @@ function closeSelf() {
 </template>
 
 <style>
-.BaseFloatPage {
+.BaseCloseablePage {
   display: flex;
   top: 0;
   left: 0;
