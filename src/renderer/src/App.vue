@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import TagManage from './floatPages/TagManage.vue'
 import SideMenu from './components/SideMenu.vue'
 
-let loading = false
-const selectedList = ref()
-const tagSelectList = ref()
+// 变量
+let loading = false // 主菜单栏加载中开关
+const selectedList = ref() // 主搜索栏选中列表
+const tagSelectList = ref() // 主搜索栏选择项列表
 const pageState = reactive({
   floatPage: false,
   showTagManagePage: false
-})
+}) // 悬浮页面开关
+const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
 
+// 方法
 async function getTagSelectList(keyword) {
   loading = true
   try {
@@ -62,7 +65,7 @@ function closeFloatPage() {
       <TagManage v-if="pageState.showTagManagePage" @close-float-page="closeFloatPage"></TagManage>
     </div>
     <div class="sideMenu">
-      <SideMenu>
+      <SideMenu :menu-mode="sideMenuMode">
         <template #default>
           <el-sub-menu index="1">
             <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
