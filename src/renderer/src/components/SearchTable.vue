@@ -177,24 +177,26 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
 
 <template>
   <div class="search-table">
-    <div class="search-table-toolbar">
-      <SearchToolbar
-        :drop-down-search-boxes="dropDownSearchBoxes"
-        :main-search-boxes="mainSearchBoxes"
-      >
-      </SearchToolbar>
-    </div>
-    <div class="search-table-data-table">
-      <DataTable
-        :data="data"
-        :thead="thead"
-        :multi-select="true"
-        :selectable="true"
-        key-of-data="test1"
-        :operation-button="operationButton"
-        :operation-dropdown="operationDropDown"
-        @button-clicked="buttonClicked"
-      ></DataTable>
+    <div class="search-table-wrapper inset-box-centering">
+      <div class="search-table-toolbar">
+        <SearchToolbar
+          :drop-down-search-boxes="dropDownSearchBoxes"
+          :main-search-boxes="mainSearchBoxes"
+        >
+        </SearchToolbar>
+      </div>
+      <div class="search-table-data-table rounded-borders">
+        <DataTable
+          :data="data"
+          :thead="thead"
+          :multi-select="true"
+          :selectable="true"
+          key-of-data="test1"
+          :operation-button="operationButton"
+          :operation-dropdown="operationDropDown"
+          @button-clicked="buttonClicked"
+        ></DataTable>
+      </div>
     </div>
   </div>
 </template>

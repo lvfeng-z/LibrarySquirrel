@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import Element from 'element-plus'
 import 'element-plus/dist/index.css'
+import './style/inset-box-centering.css'
+import './style/rounded-borders.css'
 import { elementIconRegister } from './plugins/elementIcon'
 
 const app = createApp(App)
