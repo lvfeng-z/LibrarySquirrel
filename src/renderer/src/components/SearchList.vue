@@ -1,6 +1,6 @@
 <template>
   <div class="search-list">
-    <div class="search-list-wrapper">
+    <div class="search-list-wrapper inset-box-centering">
       <el-row class="search-list-toolbar">
         <el-col :span="selectList ? 18 : 24">
           <el-input
@@ -28,7 +28,7 @@
           </el-select>
         </el-col>
       </el-row>
-      <div class="result-list">
+      <div class="result-list rounded-borders">
         <el-checkbox-group v-if="multiSelect" v-model="checkboxSelected">
           <el-checkbox
             v-for="(item, index) in filteredItems"
@@ -127,15 +127,6 @@ function selectionChange() {
   height: 100%;
 }
 
-.search-list-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
-  flex-direction: column;
-}
-
 .search-list-toolbar {
   width: 100%;
 }
@@ -144,7 +135,5 @@ function selectionChange() {
   margin-top: 5px;
   width: 100%;
   height: 100%;
-  border: 1.5px solid lightgrey;
-  border-radius: 3px;
 }
 </style>
