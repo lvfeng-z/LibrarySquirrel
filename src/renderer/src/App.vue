@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
-import TagManage from './floatPages/TagManage.vue'
-import SideMenu from './components/SideMenu.vue'
+import TagManage from './CloseablePage/TagManage.vue'
+import SideMenuHorizontal from './components/SideMenuHorizontal.vue'
+import { CollectionTag } from '@element-plus/icons-vue'
 
 // 变量
 let loading = false // 主菜单栏加载中开关
 const selectedList = ref() // 主搜索栏选中列表
 const tagSelectList = ref() // 主搜索栏选择项列表
 const pageState = reactive({
+  mainPage: true,
   floatPage: false,
   showTagManagePage: false
 }) // 悬浮页面开关
@@ -28,6 +30,7 @@ async function getTagSelectList(keyword) {
 
 function showFloatPage(pageName) {
   pageState.floatPage = true
+  pageState.mainPage = false
   switch (pageName) {
     case 'TagManage':
       pageState.showTagManagePage = true
@@ -39,70 +42,85 @@ function closeFloatPage() {
   Object.keys(pageState).forEach((key) => {
     pageState[key] = false
   })
+  pageState.mainPage = true
 }
 </script>
 
 <template>
   <div class="ui">
-    <div class="mainPage">
-      <el-select
-        v-model="selectedList"
-        multiple
-        filterable
-        remote
-        :remote-method="getTagSelectList"
-        :loading="loading"
-      >
-        <el-option
-          v-for="item in tagSelectList"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
-        ></el-option>
-      </el-select>
-    </div>
-    <div v-if="pageState.floatPage" class="floatPage">
-      <TagManage v-if="pageState.showTagManagePage" @close-float-page="closeFloatPage"></TagManage>
-    </div>
     <div class="sideMenu">
-      <SideMenu :menu-mode="sideMenuMode">
+      <SideMenuHorizontal :menu-mode="sideMenuMode">
         <template #default>
           <el-sub-menu index="1">
-            <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
+            <template #title>
+              <el-icon><CollectionTag /></el-icon>
+              <span>标签</span>
+            </template>
+            <el-menu-item index="1-1" @click="showFloatPage('TagManage')">本地标签</el-menu-item>
+            <el-menu-item index="1-2" @click="pageState.mainPage = !pageState.mainPage"
+              >站点标签</el-menu-item
+            >
           </el-sub-menu>
+          <el-sub-menu index="2"></el-sub-menu>
+          <el-sub-menu index="3"></el-sub-menu>
         </template>
-      </SideMenu>
+      </SideMenuHorizontal>
+    </div>
+    <div class="mainSpace">
+      <div v-show="pageState.mainPage" class="mainSpace-wrapper inset-box-centering">
+        <div class="mainSpace-searchbar">
+          <el-select
+            v-model="selectedList"
+            multiple
+            filterable
+            remote
+            :remote-method="getTagSelectList"
+            :loading="loading"
+          >
+            <el-option
+              v-for="item in tagSelectList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            ></el-option>
+          </el-select>
+        </div>
+        <div class="mainSpace-works-space"></div>
+      </div>
+      <div v-if="pageState.floatPage" class="floatPage">
+        <TagManage
+          v-if="pageState.showTagManagePage"
+          @close-float-page="closeFloatPage"
+        ></TagManage>
+      </div>
     </div>
   </div>
 </template>
 
 <style>
 .ui {
+  display: flex;
   width: 100%;
   height: 100%;
 }
-.mainPage {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.mainSpace {
   width: 100%;
   height: 100%;
+  flex-grow: 1;
   background: #f2f2f2;
 }
 .floatPage {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
   height: 100%;
 }
 .sideMenu {
-  position: absolute;
   height: 100%;
   z-index: 1;
+}
+.mainSpace-searchbar {
+  width: 100%;
+}
+.mainSpace-works-space {
+  width: 100%;
 }
 </style>
