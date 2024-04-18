@@ -29,7 +29,7 @@ onBeforeMount(() => {
 const searchButtonSpan = ref(3) // 查询按钮的span
 const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
 const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 下拉搜索框中元素的列表
-const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false)
+const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 暂时废弃
 
 // 方法
 // 处理主搜索栏和下拉搜索框
@@ -113,6 +113,7 @@ function showDropdown() {
           </el-col>
         </el-row>
       </div>
+      <div class="sideMenu"></div>
       <div v-show="showDropdownFlag" class="search-toolbar-dropdown">
         <el-row>
           <el-col :span="3">
@@ -153,7 +154,7 @@ function showDropdown() {
   z-index: 1; /* 确保下拉框位于其他元素之上 */
 }
 
-/* 为 .search-toolbar-dropdown 添加动画效果（可选） */
+/* 为 .search-toolbar-dropdown 添加动画效果（可选）
 .search-toolbar-dropdown-enter-active,
 .search-toolbar-dropdown-leave-active {
   transition: opacity 0.3s;
@@ -162,9 +163,15 @@ function showDropdown() {
 .search-toolbar-dropdown-leave-to {
   opacity: 0;
 }
+ */
 
 .search-toolbar-search-button {
   display: flex;
   justify-content: flex-end;
+}
+.sideMenu {
+  position: absolute;
+  height: 100%;
+  z-index: 1;
 }
 </style>
