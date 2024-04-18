@@ -1,6 +1,6 @@
 <template>
   <div class="side-menu">
-    <el-menu :default-openeds="['1']" class="el-menu-vertical-demo" :collapse="isCollapsed">
+    <el-menu class="side-menu-main" :collapse="isCollapsed">
       <div class="aside-control-button" @click.once="toggleAside">
         <label class="el-icon-caret-left">{{ isCollapsed ? '>' : '<' }}</label>
       </div>
@@ -12,8 +12,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+// 变量
 const isCollapsed = ref(true)
 
+// 方法
 function toggleAside() {
   isCollapsed.value = !isCollapsed.value
 
@@ -27,7 +29,7 @@ function toggleAside() {
   width: 25px;
   height: 80px;
   background-color: rgba(232, 232, 232, 0.53);
-  right: -22px;
+  right: -23px;
   top: 45%;
   /*perspective：对元素进行透视操作*/
   /*rotateX：以y轴（横轴）进行旋转（前后仰俯）
@@ -37,7 +39,6 @@ function toggleAside() {
   line-height: 80px;
   color: #909399;
   background-color: #a6cc9d;
-  z-index: 1;
 }
 .aside-control-button:hover {
   background-color: #d0ffc5;
@@ -45,12 +46,12 @@ function toggleAside() {
 .side-menu {
   height: 100%;
 }
-.el-menu-vertical-demo {
-  width: 0;
+.side-menu-main {
+  width: 65px;
   height: 100%;
   min-height: calc(88.3vh);
 }
-.el-menu-vertical-demo:not(.el-menu--collapse) {
+.side-menu-main:not(.el-menu--collapse) {
   width: 200px;
   height: 100%;
 }
