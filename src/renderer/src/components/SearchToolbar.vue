@@ -87,32 +87,34 @@ onBeforeMount(() => {
 <template>
   <div class="search-toolbar">
     <div class="search-toolbar-wrapper">
-      <el-row>
-        <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
-          <el-col :span="item.tagSpan">
-            <el-tag :key="index" size="large">{{ item.label }}</el-tag>
+      <div class="search-toolbar-main">
+        <el-row>
+          <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
+            <el-col :span="item.tagSpan">
+              <el-tag :key="index" size="large">{{ item.label }}</el-tag>
+            </el-col>
+            <el-col :span="item.inputSpan">
+              <el-input></el-input>
+            </el-col>
+          </template>
+          <el-col :span="searchButtonSpan" style="margin-left: auto">
+            <el-dropdown>
+              <el-button>搜索</el-button>
+              <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="showDropdown">更多选项</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </el-col>
-          <el-col :span="item.inputSpan">
-            <el-input></el-input>
-          </el-col>
-        </template>
-        <el-col :span="searchButtonSpan" style="margin-left: auto">
-          <el-dropdown>
-            <el-button>搜索</el-button>
-            <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="showDropdown">更多选项</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </el-col>
-      </el-row>
+        </el-row>
+      </div>
       <div v-show="showDropdownFlag" class="search-toolbar-dropdown">
         <el-row>
-          <el-col span="3">
+          <el-col :span="3">
             <el-tag size="large">test3123</el-tag>
           </el-col>
-          <el-col span="3">
+          <el-col :span="3">
             <el-input></el-input>
           </el-col>
         </el-row>
