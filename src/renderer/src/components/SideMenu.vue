@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const isCollapsed = ref(false)
+const isCollapsed = ref(true)
 
 function toggleAside() {
   isCollapsed.value = !isCollapsed.value
