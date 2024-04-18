@@ -64,7 +64,7 @@ function closeFloatPage() {
     <div class="sideMenu">
       <SideMenu>
         <template #default>
-          <el-sub-menu>
+          <el-sub-menu index="1">
             <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
           </el-sub-menu>
         </template>
