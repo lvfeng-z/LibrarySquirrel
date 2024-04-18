@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import TagManage from './floatPages/TagManage.vue'
+import SideMenu from './components/SideMenu.vue'
 
 let loading = false
 const selectedList = ref()
@@ -56,20 +57,24 @@ function closeFloatPage() {
           :value="item.value"
         ></el-option>
       </el-select>
-      <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
     </div>
     <div v-if="pageState.floatPage" class="floatPage">
       <TagManage v-if="pageState.showTagManagePage" @close-float-page="closeFloatPage"></TagManage>
+    </div>
+    <div class="sideMenu">
+      <SideMenu>
+        <template #default>
+          <el-sub-menu>
+            <el-button @click="showFloatPage('TagManage')">打开标签管理页</el-button>
+          </el-sub-menu>
+        </template>
+      </SideMenu>
     </div>
   </div>
 </template>
 
 <style>
 .ui {
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
   height: 100%;
 }
@@ -81,6 +86,7 @@ function closeFloatPage() {
   bottom: 0;
   width: 100%;
   height: 100%;
+  background: #f2f2f2;
 }
 .floatPage {
   position: absolute;
@@ -90,5 +96,10 @@ function closeFloatPage() {
   bottom: 0;
   width: 100%;
   height: 100%;
+}
+.sideMenu {
+  position: absolute;
+  height: 100%;
+  z-index: 1;
 }
 </style>
