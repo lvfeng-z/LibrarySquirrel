@@ -1,3 +1,10 @@
+<script setup lang="ts">
+const emits = defineEmits(['close-float-page'])
+function closeSelf() {
+  emits('close-float-page')
+}
+</script>
+
 <template>
   <div class="BaseFloatPage">
     <el-button
@@ -12,12 +19,6 @@
     </div>
   </div>
 </template>
-<script setup lang="ts">
-const emits = defineEmits(['close-float-page'])
-function closeSelf() {
-  emits('close-float-page')
-}
-</script>
 
 <style>
 .BaseFloatPage {
