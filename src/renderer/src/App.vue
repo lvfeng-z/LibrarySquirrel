@@ -114,10 +114,15 @@ function closeFloatPage() {
 .sideMenu {
   height: 100%;
 }
+.mainSpace-wrapper {
+  display: flex;
+  flex-direction: column;
+}
 .mainSpace-searchbar {
   width: 100%;
 }
 .mainSpace-works-space {
   width: 100%;
+  height: 100%;
 }
 </style>
