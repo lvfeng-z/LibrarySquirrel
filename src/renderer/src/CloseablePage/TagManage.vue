@@ -21,32 +21,38 @@ const apis = reactive({
   <BaseCloseablePage>
     <div class="container">
       <div class="left">
-        <SearchTable> </SearchTable>
+        <div class="inset-center-box">
+          <SearchTable></SearchTable>
+        </div>
       </div>
       <div class="right">
         <div class="right-top">
-          <SearchList
-            :title="'对应站点tag'"
-            :multi-select="true"
-            :search-api="apis.siteTagGetSelectList"
-            input-keyword="keyword"
-            :parent-params="localTagSelected"
-            :select-list="true"
-            :select-list-search-api="apis.siteGetSelectList"
-            select-keyword="sites"
-          ></SearchList>
+          <div class="inset-center-box">
+            <SearchList
+              :title="'对应站点tag'"
+              :multi-select="true"
+              :search-api="apis.siteTagGetSelectList"
+              input-keyword="keyword"
+              :parent-params="localTagSelected"
+              :select-list="true"
+              :select-list-search-api="apis.siteGetSelectList"
+              select-keyword="sites"
+            ></SearchList>
+          </div>
         </div>
         <div class="right-bottom">
-          <SearchList
-            :title="'可选站点tag'"
-            :multi-select="true"
-            :search-api="apis.siteTagGetSelectList"
-            input-keyword="keyword"
-            :parent-params="localTagSelected"
-            :select-list="true"
-            :select-list-search-api="apis.siteGetSelectList"
-            select-keyword="sites"
-          ></SearchList>
+          <div class="inset-center-box">
+            <SearchList
+              :title="'可选站点tag'"
+              :multi-select="true"
+              :search-api="apis.siteTagGetSelectList"
+              input-keyword="keyword"
+              :parent-params="localTagSelected"
+              :select-list="true"
+              :select-list-search-api="apis.siteGetSelectList"
+              select-keyword="sites"
+            ></SearchList>
+          </div>
         </div>
       </div>
     </div>
@@ -56,7 +62,11 @@ const apis = reactive({
 <style>
 .container {
   display: flex;
-  height: 100%; /* 调整为所需的容器高度 */
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 .left {
@@ -72,10 +82,12 @@ const apis = reactive({
 }
 
 .right-top {
-  height: 100%;
+  width: 100%;
+  height: 50%;
 }
 
 .right-bottom {
-  height: 100%;
+  width: 100%;
+  height: 50%;
 }
 </style>

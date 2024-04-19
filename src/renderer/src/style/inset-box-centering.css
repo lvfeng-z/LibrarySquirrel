@@ -1,8 +1,0 @@
-.inset-box-centering {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
-  flex-direction: column;
-}
