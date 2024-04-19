@@ -1,29 +1,70 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { Ref, ref, UnwrapRef } from 'vue'
 
 // 变量
-const isCollapsed = ref(true)
+const isCollapsed: Ref<UnwrapRef<boolean>> = ref(true)
+const disappear: Ref<UnwrapRef<boolean>> = ref(true)
+const states = ref(0)
 
 // 方法
-function toggleAside(status: boolean) {
-  isCollapsed.value = status
+function expand() {
+  if (states.value >= 2) {
+    states.value = 0
+  } else {
+    states.value++
+  }
+  handleStates()
+}
 
-  // 如果需要在其他地方同步更新菜单状态，可以考虑使用事件总线（EventBus）、Vuex状态管理或组件通信方式
+function shrink() {
+  if (states.value <= 0) {
+    states.value = 2
+  } else {
+    states.value--
+  }
+  handleStates()
+}
+
+function handleStates() {
+  switch (states.value) {
+    case 0:
+      disappear.value = true
+      isCollapsed.value = true
+      break
+    case 1:
+      disappear.value = false
+      isCollapsed.value = true
+      break
+    case 2:
+      disappear.value = false
+      isCollapsed.value = false
+      break
+    default:
+      states.value = 0
+      disappear.value = true
+      isCollapsed.value = true
+  }
 }
 </script>
 
 <template>
-  <div class="side-menu">
+  <div
+    :class="{
+      'side-menu': true,
+      'side-menu-disappear': disappear,
+      'side-menu-show': !disappear
+    }"
+  >
     <el-menu class="side-menu-main" :collapse="isCollapsed">
       <div class="side-menu-button-wrapper">
         <div class="side-menu-button-wrapper-upper">
-          <div class="side-menu-button-upper side-menu-button" @click.once="toggleAside(false)"></div>
+          <div class="side-menu-button-upper side-menu-button" @click="expand"></div>
         </div>
         <div class="side-menu-button-wrapper-lower">
-          <div class="side-menu-button-lower side-menu-button" @click.once="toggleAside(true)"></div>
+          <div class="side-menu-button-lower side-menu-button" @click="shrink"></div>
         </div>
       </div>
-      <slot name="default"></slot>
+      <slot v-if="!disappear" name="default"></slot>
     </el-menu>
   </div>
 </template>
@@ -31,11 +72,17 @@ function toggleAside(status: boolean) {
 <style scoped>
 .side-menu {
   height: 100%;
+  transition: width 0.1s ease;
 }
 .side-menu-main {
-  width: 63px;
+  width: 100%;
   height: 100%;
-  min-height: calc(88.3vh);
+}
+.side-menu-disappear {
+  width: 0;
+}
+.side-menu-show {
+  width: 63px;
 }
 .side-menu-main:not(.el-menu--collapse) {
   width: 200px;
@@ -44,13 +91,13 @@ function toggleAside(status: boolean) {
 .side-menu-button-wrapper {
   position: absolute;
   width: 20px;
-  height: 102px;
+  height: 62px;
   right: -20px;
   top: calc(50% - 51px);
 }
 .side-menu-button-wrapper-upper {
-  width: 20px;
-  height: 51px;
+  width: 15px;
+  height: 31px;
   right: -20px;
   top: 45%;
   overflow: hidden; /* 隐藏超出边界的部分 */
@@ -59,13 +106,13 @@ function toggleAside(status: boolean) {
 }
 .side-menu-button-upper {
   width: 40px;
-  height: 100px;
+  height: 60px;
   border-radius: 100% / 100%;
-  background-color: darkgrey;
+  background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
 }
 .side-menu-button-wrapper-lower {
-  width: 20px;
-  height: 51px;
+  width: 15px;
+  height: 31px;
   right: -20px;
   top: 45%;
   overflow: hidden; /* 隐藏超出边界的部分 */
@@ -77,9 +124,9 @@ function toggleAside(status: boolean) {
 }
 .side-menu-button-lower {
   width: 40px;
-  height: 100px;
+  height: 60px;
   border-radius: 100% / 100%;
-  background-color: darkgrey;
+  background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
 }
 .side-menu-button:hover {
   background-color: lavender;
