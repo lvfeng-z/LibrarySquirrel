@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import SearchToolbar, { SearchBox } from './SearchToolbar.vue'
+import SearchToolbar from './SearchToolbar.vue'
 import DataTable, { Thead, OperationItem, OperationResponse } from './DataTable.vue'
 import { ref, Ref, UnwrapRef } from 'vue'
+import { SearchBox } from './common/SearchBox'
 
 // 方法
 function buttonClicked(code: OperationResponse) {
@@ -177,43 +178,46 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
 
 <template>
   <div class="search-table">
-    <div class="search-table-wrapper inset-box-centering">
-      <div class="search-table-toolbar">
-        <SearchToolbar
-          :drop-down-search-boxes="dropDownSearchBoxes"
-          :main-search-boxes="mainSearchBoxes"
-        >
-        </SearchToolbar>
-      </div>
-      <div class="search-table-data-table rounded-borders">
-        <DataTable
-          :data="data"
-          :thead="thead"
-          :multi-select="true"
-          :selectable="true"
-          key-of-data="test1"
-          :operation-button="operationButton"
-          :operation-dropdown="operationDropDown"
-          @button-clicked="buttonClicked"
-        ></DataTable>
-      </div>
+    <div class="search-table-toolbar">
+      <SearchToolbar
+        :drop-down-search-boxes="dropDownSearchBoxes"
+        :main-search-boxes="mainSearchBoxes"
+      >
+      </SearchToolbar>
+    </div>
+    <div class="search-table-data-table rounded-borders">
+      <DataTable
+        :data="data"
+        :thead="thead"
+        :multi-select="true"
+        :selectable="true"
+        key-of-data="test1"
+        :operation-button="operationButton"
+        :operation-dropdown="operationDropDown"
+        @button-clicked="buttonClicked"
+      ></DataTable>
     </div>
   </div>
 </template>
 
 <style scoped>
 .search-table {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   width: 100%;
+  height: 100%;
 }
 
 .search-table-toolbar {
-  height: 100px;
+  height: 32px;
   width: 100%;
 }
 
 .search-table-data-table {
-  height: calc(100% - 100px);
+  height: calc(100% - 37px);
   width: 100%;
+  margin-top: 5px;
 }
 </style>

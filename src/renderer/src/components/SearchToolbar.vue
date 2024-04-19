@@ -2,17 +2,8 @@
 // 类型
 // 搜索项
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-
-export interface SearchBox {
-  name: string // 字段名
-  label: string // 标题名称
-  inputType: string // 输入组件类型
-  dataType: string // 数据类型
-  placeholder: string // 占位符
-  inputSpan?: number // 输入组件宽度
-  tagSpan?: number // 名称tag宽度
-  showLabel?: boolean // 是否展示标题
-}
+import { SearchBox } from './common/SearchBox'
+import DropdownTable from './DropdownTable.vue'
 
 // props
 const props = defineProps<{
@@ -88,7 +79,7 @@ function showDropdown() {
   <div class="search-toolbar">
     <div class="search-toolbar-wrapper">
       <div class="search-toolbar-main">
-        <el-row>
+        <el-row class="search-toolbar-main-row">
           <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
             <el-col :span="item.tagSpan">
               <el-tag :key="index" size="large">{{ item.label }}</el-tag>
@@ -113,16 +104,10 @@ function showDropdown() {
           </el-col>
         </el-row>
       </div>
-      <div class="sideMenu z-layer-1"></div>
-      <div v-show="showDropdownFlag" class="search-toolbar-dropdown z-layer-1">
-        <el-row>
-          <el-col :span="3">
-            <el-tag size="large">test3123</el-tag>
-          </el-col>
-          <el-col :span="3">
-            <el-input></el-input>
-          </el-col>
-        </el-row>
+    </div>
+    <div class="dropdown-menu-wrapper z-layer-2">
+      <div class="dropdown-menu">
+        <DropdownTable :search-boxes="[]"></DropdownTable>
       </div>
     </div>
   </div>
@@ -130,46 +115,26 @@ function showDropdown() {
 
 <style scoped>
 .search-toolbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.search-toolbar-wrapper {
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
+  height: calc(32px + 10px);
   display: flex;
   flex-direction: column;
-  align-items: stretch;
 }
 
-.search-toolbar-dropdown {
-  top: calc(100% + 10px); /* 调整为与搜索框底部对齐 */
-  width: 100%; /* 调整宽度以适应屏幕 */
-  background-color: white; /* 可视化调整，可按需自定义 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 可视化调整，可按需自定义 */
+.search-toolbar-main-row {
+  width: 100%;
 }
-
-/* 为 .search-toolbar-dropdown 添加动画效果（可选）
-.search-toolbar-dropdown-enter-active,
-.search-toolbar-dropdown-leave-active {
-  transition: opacity 0.3s;
-}
-.search-toolbar-dropdown-enter-from,
-.search-toolbar-dropdown-leave-to {
-  opacity: 0;
-}
- */
 
 .search-toolbar-search-button {
   display: flex;
   justify-content: flex-end;
 }
-.sideMenu {
-  position: absolute;
-  height: 100%;
+.dropdown-menu-wrapper {
+  height: 0;
+  width: 100%;
+}
+.dropdown-menu {
+  width: 100%;
+  height: auto;
 }
 </style>
