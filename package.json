@@ -22,7 +22,7 @@
     "watch": "electron-vite dev --watch"
   },
   "engines": {
-    "node": "20.12.1"
+    "node": "20.12.2"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
