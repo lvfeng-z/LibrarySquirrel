@@ -113,8 +113,8 @@ function showDropdown() {
           </el-col>
         </el-row>
       </div>
-      <div class="sideMenu"></div>
-      <div v-show="showDropdownFlag" class="search-toolbar-dropdown">
+      <div class="sideMenu z-layer-1"></div>
+      <div v-show="showDropdownFlag" class="search-toolbar-dropdown z-layer-1">
         <el-row>
           <el-col :span="3">
             <el-tag size="large">test3123</el-tag>
@@ -151,7 +151,6 @@ function showDropdown() {
   width: 100%; /* 调整宽度以适应屏幕 */
   background-color: white; /* 可视化调整，可按需自定义 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 可视化调整，可按需自定义 */
-  z-index: 1; /* 确保下拉框位于其他元素之上 */
 }
 
 /* 为 .search-toolbar-dropdown 添加动画效果（可选）
@@ -172,6 +171,5 @@ function showDropdown() {
 .sideMenu {
   position: absolute;
   height: 100%;
-  z-index: 1;
 }
 </style>

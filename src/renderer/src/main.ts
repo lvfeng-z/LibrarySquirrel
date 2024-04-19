@@ -4,6 +4,7 @@ import Element from 'element-plus'
 import 'element-plus/dist/index.css'
 import './style/inset-box-centering.css'
 import './style/rounded-borders.css'
+import './style/z-axis-layers.css'
 import { elementIconRegister } from './plugins/elementIcon'
 
 const app = createApp(App)

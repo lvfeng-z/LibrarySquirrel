@@ -38,8 +38,8 @@ function closeSelf() {
 }
 
 .content {
-  height: calc(100% - 100px);
-  width: calc(100% - 100px);
+  height: calc(100% - 90px);
+  width: calc(100% - 90px);
 }
 
 .close-button {
@@ -47,6 +47,5 @@ function closeSelf() {
   top: 16px;
   right: 16px;
   margin: 0;
-  z-index: 1; /* 确保关闭按钮在层级上位于其他元素之上 */
 }
 </style>
