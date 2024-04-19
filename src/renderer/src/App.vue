@@ -48,7 +48,7 @@ function closeFloatPage() {
 
 <template>
   <div class="ui">
-    <div class="sideMenu">
+    <div class="sideMenu z-layer-2">
       <SideMenuHorizontal :menu-mode="sideMenuMode">
         <template #default>
           <el-sub-menu index="1">
@@ -57,9 +57,7 @@ function closeFloatPage() {
               <span>标签</span>
             </template>
             <el-menu-item index="1-1" @click="showFloatPage('TagManage')">本地标签</el-menu-item>
-            <el-menu-item index="1-2" @click="pageState.mainPage = !pageState.mainPage"
-              >站点标签</el-menu-item
-            >
+            <el-menu-item index="1-2">站点标签</el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="2"></el-sub-menu>
           <el-sub-menu index="3"></el-sub-menu>
@@ -107,7 +105,7 @@ function closeFloatPage() {
   width: 100%;
   height: 100%;
   flex-grow: 1;
-  background: #f2f2f2;
+  background: ivory;
 }
 .floatPage {
   width: 100%;
@@ -115,7 +113,6 @@ function closeFloatPage() {
 }
 .sideMenu {
   height: 100%;
-  z-index: 1;
 }
 .mainSpace-searchbar {
   width: 100%;

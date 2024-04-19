@@ -60,13 +60,11 @@ const apis = reactive({
 }
 
 .left {
-  flex: 1;
   width: 50%;
   height: 100%;
 }
 
 .right {
-  flex: 1;
   display: flex;
   flex-direction: column;
   width: 50%;
@@ -74,12 +72,10 @@ const apis = reactive({
 }
 
 .right-top {
-  flex: 1;
   height: 100%;
 }
 
 .right-bottom {
-  flex: 1;
   height: 100%;
 }
 </style>
