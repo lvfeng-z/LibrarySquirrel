@@ -150,8 +150,6 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
 .data-list-wrapper {
   width: calc(100% - 10px);
   height: calc(100% - 10px);
-  display: flex;
-  flex-direction: column;
 }
 
 .data-list-table {
