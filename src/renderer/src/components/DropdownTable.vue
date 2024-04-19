@@ -88,7 +88,7 @@ function changeState() {
 </template>
 
 <style scoped>
-.dropdown-table{
+.dropdown-table {
   width: 100%;
   position: relative;
 }
