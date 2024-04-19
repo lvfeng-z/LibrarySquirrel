@@ -1,5 +1,8 @@
 <script setup lang="ts">
+// 事件
 const emits = defineEmits(['close-float-page'])
+
+// 方法
 function closeSelf() {
   emits('close-float-page')
 }
