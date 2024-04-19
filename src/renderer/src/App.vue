@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import TagManage from './CloseablePage/TagManage.vue'
-import SideMenuHorizontal from './components/SideMenuHorizontal.vue'
+import SideMenu from './components/SideMenu.vue'
 import { CollectionTag } from '@element-plus/icons-vue'
 
 // 变量
@@ -49,7 +49,7 @@ function closeFloatPage() {
 <template>
   <div class="ui">
     <div class="sideMenu z-layer-2">
-      <SideMenuHorizontal :menu-mode="sideMenuMode">
+      <SideMenu :menu-mode="sideMenuMode">
         <template #default>
           <el-sub-menu index="1">
             <template #title>
@@ -62,7 +62,7 @@ function closeFloatPage() {
           <el-sub-menu index="2"></el-sub-menu>
           <el-sub-menu index="3"></el-sub-menu>
         </template>
-      </SideMenuHorizontal>
+      </SideMenu>
     </div>
     <div class="mainSpace">
       <div v-show="pageState.mainPage" class="mainSpace-wrapper inset-box-centering">
