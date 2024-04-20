@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { SearchBox } from './common/SearchBox'
-import { Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 
 // props
 const props = defineProps<{
-  searchBoxes: SearchBox[]
+  searchBoxes: SearchBox[] // SearchBox数组
 }>()
 
+// onBeforeMount
+onBeforeMount(() => {
+  calculateSpan()
+})
+
 // 变量
-const closed: Ref<UnwrapRef<boolean>> = ref(true)
+const closed: Ref<UnwrapRef<boolean>> = ref(true) // 开关状态
+const searchBoxInRow: Ref<UnwrapRef<SearchBox[][]>> = ref([]) // searchBox分行数组
+const dropdownTableHeight = ref(0) // 弃用 所有行占用的高度
+const formData = ref({})
 
 // 方法
 // 开启/关闭下拉表单
@@ -16,51 +24,57 @@ function changeState() {
   closed.value = !closed.value
 }
 
-// 处理主搜索栏和下拉搜索框
-// function calculateSpan() {
-//   let spanRest = 24 - searchButtonSpan.value
-//   for (const searchBox of props.mainSearchBoxes) {
-//     // 不更改props属性
-//     const tempSearchBox = JSON.parse(JSON.stringify(searchBox))
-//
-//     if (spanRest > 0) {
-//       // 先减去输入框的长度
-//       if (tempSearchBox.inputSpan == undefined) {
-//         tempSearchBox.inputSpan = 5
-//         spanRest -= tempSearchBox.inputSpan
-//       } else {
-//         spanRest -= tempSearchBox.inputSpan
-//       }
-//
-//       // 再减去已定义的字段名长度
-//       if (tempSearchBox.tagSpan == undefined) {
-//         tempSearchBox.tagSpan = 2
-//         spanRest -= tempSearchBox.tagSpan
-//       } else {
-//         spanRest -= tempSearchBox.tagSpan
-//       }
-//
-//       // 空间不足就放进dropDownSearchBoxes
-//       if (spanRest < 0) {
-//         innerDropDownSearchBoxes.value.push(tempSearchBox)
-//       } else {
-//         innerMainSearchBoxes.value.push(tempSearchBox)
-//       }
-//     } else {
-//       innerDropDownSearchBoxes.value.push(tempSearchBox)
-//     }
-//   }
-//
-//   // 长度不相等，说明有元素被放进dropDownSearchBoxes
-//   if (innerMainSearchBoxes.value.length != props.mainSearchBoxes.length) {
-//     console.debug(
-//       '主搜索栏长度不足以容纳所有mainSearchBoxes元素，不能容纳的元素以被移动至dropDownSearchBoxes'
-//     )
-//   }
-//
-//   const tempDropDownSearchBoxes = JSON.parse(JSON.stringify(props.dropDownSearchBoxes))
-//   innerDropDownSearchBoxes.value.push(...tempDropDownSearchBoxes)
-// }
+// 处理searchBox布局
+function calculateSpan() {
+  // 一行的高度
+  const rowHeight = 42
+  let height = 0
+  // 用于计算当前行在插入box之后还剩多少span
+  let spanRest = 24
+  // 临时用于储存行信息的数组
+  let tempRow: SearchBox[] = []
+  searchBoxInRow.value.push(tempRow)
+  height += rowHeight
+
+  // 遍历box数组，处理如何分布这些box
+  for (const searchBox of props.searchBoxes) {
+    // 储存当前box的长度
+    let boxSpan = 0
+    // 不更改props属性
+    const tempSearchBox: SearchBox = JSON.parse(JSON.stringify(searchBox))
+    // 未设置tag长度则设置为2
+    if (tempSearchBox.tagSpan == undefined) {
+      tempSearchBox.tagSpan = 2
+    }
+    // 未设置input长度则设置为6
+    if (tempSearchBox.inputSpan == undefined) {
+      tempSearchBox.inputSpan = 4
+    }
+
+    // 判断是否能够容纳此box
+    boxSpan += tempSearchBox.tagSpan + tempSearchBox.inputSpan
+    spanRest -= boxSpan
+
+    // 能容纳则放进tempRow，否则tempRow指向新空数组，再放进tempRow
+    if (spanRest >= 0) {
+      tempRow.push(tempSearchBox)
+    } else {
+      tempRow = []
+      searchBoxInRow.value.push(tempRow)
+      height += rowHeight
+      tempRow.push(tempSearchBox)
+      spanRest = 24 - boxSpan
+    }
+  }
+
+  // 计算完的高度赋值
+  dropdownTableHeight.value = height
+}
+
+// test
+function test() {
+  console.log(formData.value)
+}
 </script>
 
 <template>
@@ -69,17 +83,31 @@ function changeState() {
       :class="{
         'dropdown-table-main': true,
         'dropdown-table-main-open': !closed,
-        'dropdown-table-main-close': closed
+        'dropdown-table-main-close': closed,
+        'inset-center-box':
+          !closed /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
       }"
     >
-      <el-row>
-        <el-col :span="2">
-          <el-tag size="large">测试1</el-tag>
-        </el-col>
-        <el-col :span="5">
-          <el-input size="large"></el-input>
-        </el-col>
-      </el-row>
+      <el-scrollbar class="dropdown-table-rows">
+        <el-form v-model="formData" @input="test">
+          <template v-for="(boxRow, boxRowindex) in searchBoxInRow" :key="boxRowindex">
+            <el-row class="dropdown-toolbar-row">
+              <template v-for="(item, index) in boxRow" :key="index">
+                <el-col class="dropdown-toolbar-label" :span="item.tagSpan">
+                  <el-tag :key="index" size="large">
+                    <span>{{ item.label }}</span>
+                  </el-tag>
+                </el-col>
+                <el-col class="dropdown-toolbar-input" :span="item.inputSpan">
+                  <el-form-item>
+                    <el-input v-model="formData[item.name]"></el-input>
+                  </el-form-item>
+                </el-col>
+              </template>
+            </el-row>
+          </template>
+        </el-form>
+      </el-scrollbar>
     </div>
     <div class="dropdown-table-button-wrapper z-layer-2">
       <div class="dropdown-table-button" @click="changeState"></div>
@@ -93,15 +121,26 @@ function changeState() {
   position: relative;
 }
 .dropdown-table-main {
-  width: 100%;
   transition: height 0.1s ease;
   overflow: hidden;
 }
 .dropdown-table-main-open {
-  height: 500px;
+  height: 105px;
 }
 .dropdown-table-main-close {
   height: 0;
+}
+.dropdown-toolbar-row {
+  height: 32px;
+  margin-top: 3px;
+}
+.dropdown-toolbar-label {
+  display: flex;
+  justify-content: flex-end;
+}
+.dropdown-toolbar-input {
+  display: flex;
+  justify-content: flex-start;
 }
 .dropdown-table-button-wrapper {
   display: grid;
@@ -117,5 +156,9 @@ function changeState() {
   height: 30px;
   border-radius: 100% / 100%;
   background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
+}
+.dropdown-table-rows {
+  flex-direction: column;
+  width: 100%;
 }
 </style>
