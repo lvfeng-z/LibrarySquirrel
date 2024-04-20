@@ -4,6 +4,7 @@ import Element from 'element-plus'
 import 'element-plus/dist/index.css'
 import './style/inset-center-box.css'
 import './style/rounded-borders.css'
+import './style/scroll-text.css'
 import './style/z-axis-layers.css'
 import { elementIconRegister } from './plugins/elementIcon'
 
