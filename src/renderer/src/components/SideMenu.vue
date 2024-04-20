@@ -1,32 +1,44 @@
 <script setup lang="ts">
-import { Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+// props
+const props = defineProps<{
+  defaultActive: string[]
+  states?: number
+}>()
+
+// onBeforeMount
+onBeforeMount(() => {
+  if (props.states != undefined) {
+    innerStates.value = props.states
+  }
+})
 
 // 变量
 const isCollapsed: Ref<UnwrapRef<boolean>> = ref(true)
-const disappear: Ref<UnwrapRef<boolean>> = ref(true)
-const states = ref(0)
+const disappear: Ref<UnwrapRef<boolean>> = ref(false)
+const innerStates: Ref<UnwrapRef<number>> = ref(1)
 
 // 方法
 function expand() {
-  if (states.value >= 2) {
-    states.value = 0
+  if (innerStates.value >= 2) {
+    innerStates.value = 0
   } else {
-    states.value++
+    innerStates.value++
   }
   handleStates()
 }
 
 function shrink() {
-  if (states.value <= 0) {
-    states.value = 2
+  if (innerStates.value <= 0) {
+    innerStates.value = 2
   } else {
-    states.value--
+    innerStates.value--
   }
   handleStates()
 }
 
 function handleStates() {
-  switch (states.value) {
+  switch (innerStates.value) {
     case 0:
       disappear.value = true
       isCollapsed.value = true
@@ -40,7 +52,7 @@ function handleStates() {
       isCollapsed.value = false
       break
     default:
-      states.value = 0
+      innerStates.value = 0
       disappear.value = true
       isCollapsed.value = true
   }
@@ -55,7 +67,7 @@ function handleStates() {
       'side-menu-show': !disappear
     }"
   >
-    <el-menu class="side-menu-main" :collapse="isCollapsed">
+    <el-menu :default-openeds="defaultActive" class="side-menu-main" :collapse="isCollapsed">
       <div class="side-menu-button-wrapper">
         <div class="side-menu-button-wrapper-upper">
           <div class="side-menu-button-upper side-menu-button" @click="expand"></div>
