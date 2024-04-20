@@ -10,8 +10,8 @@ import logUtil from './util/LogUtil'
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1600,
+    height: 1000,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
