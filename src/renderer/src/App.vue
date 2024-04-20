@@ -2,7 +2,7 @@
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import TagManage from './CloseablePage/TagManage.vue'
 import SideMenu from './components/SideMenu.vue'
-import { CollectionTag } from '@element-plus/icons-vue'
+import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 
 // 变量
 let loading = false // 主菜单栏加载中开关
@@ -48,8 +48,9 @@ function closeFloatPage() {
 
 <template>
   <div class="ui">
-    <div class="sideMenu z-layer-2">
-      <SideMenu :menu-mode="sideMenuMode">
+    <!-- 为了不被TagManage中的dropdownTable的2层z轴遮挡，此处为3层z轴 -->
+    <div class="sideMenu z-layer-3">
+      <SideMenu :menu-mode="sideMenuMode" :default-active="['1-1']">
         <template #default>
           <el-sub-menu index="1">
             <template #title>
@@ -59,8 +60,38 @@ function closeFloatPage() {
             <el-menu-item index="1-1" @click="showFloatPage('TagManage')">本地标签</el-menu-item>
             <el-menu-item index="1-2">站点标签</el-menu-item>
           </el-sub-menu>
-          <el-sub-menu index="2"></el-sub-menu>
-          <el-sub-menu index="3"></el-sub-menu>
+          <el-sub-menu index="2">
+            <template #title>
+              <el-icon><User /></el-icon>
+              <span>作者</span>
+            </template>
+            <el-menu-item index="2-1" @click="showFloatPage('TagManage')">本地作者</el-menu-item>
+            <el-menu-item index="2-2">站点作者</el-menu-item>
+          </el-sub-menu>
+          <el-sub-menu index="3">
+            <template #title>
+              <el-icon><Star /></el-icon>
+              <span>兴趣点</span>
+            </template>
+          </el-sub-menu>
+          <el-sub-menu index="4">
+            <template #title>
+              <el-icon><Link /></el-icon>
+              <span>站点</span>
+            </template>
+          </el-sub-menu>
+          <el-sub-menu index="5">
+            <template #title>
+              <el-icon><List /></el-icon>
+              <span>任务</span>
+            </template>
+          </el-sub-menu>
+          <el-sub-menu index="6">
+            <template #title>
+              <el-icon><Setting /></el-icon>
+              <span>设置</span>
+            </template>
+          </el-sub-menu>
         </template>
       </SideMenu>
     </div>
