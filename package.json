@@ -19,7 +19,7 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
-    "watch": "electron-vite dev --watch"
+    "watch": "chcp 65001 & electron-vite dev --watch"
   },
   "engines": {
     "node": "20.12.2"
