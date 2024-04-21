@@ -9,11 +9,10 @@ export function exposeService() {
   ipcMain.handle('localTag-insert', (_event, args) => {
     LocalTagService.insert(args)
   })
-  ipcMain.handle('localTag-query', (_event, args) => {
-    LocalTagService.query(args)
+  ipcMain.handle('localTag-query', async (_event, args) => {
+    return await LocalTagService.query(args)
   })
   ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
-    console.log('ServiceExposer.ts', args)
     return await LocalTagService.getSelectList(args)
   })
 
