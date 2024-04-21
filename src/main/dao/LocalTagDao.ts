@@ -1,7 +1,7 @@
 import LocalTag from '../models/LocalTag'
 import SelectVO from '../models/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
-import LocalTagQueryDTO from '../models/queryDTO/SiteTagQueryDTO'
+import LocalTagQueryDTO from '../models/queryDTO/LocalTagQueryDTO'
 
 async function insert(localTag: LocalTag) {
   const connection = await global.connectionPool.acquire()
@@ -16,21 +16,26 @@ async function insert(localTag: LocalTag) {
   }
 }
 
-async function query(localTag: LocalTag): Promise<LocalTag[]> {
+async function query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
   const connection = await global.connectionPool.acquire()
   try {
     return new Promise((resolve) => {
-      const selectFrom = 'select * from local_tag'
+      const selectFrom =
+        'select id, local_tag_name as localTagName, base_local_tag_id as baseLocalTagId from local_tag'
       let where: string = ''
       const columns: string[] = []
-      if (localTag.id != undefined) {
-        columns.push('id = ' + localTag.id)
+      const values: unknown[] = []
+      if (queryDTO.id != undefined) {
+        columns.push(' id = ?')
+        values.push(queryDTO.id)
       }
-      if (localTag.baseLocalTagId != undefined) {
-        columns.push('base_local_tag_id = ' + localTag.baseLocalTagId)
+      if (queryDTO.baseLocalTagId != undefined) {
+        columns.push(' base_local_tag_id = ?')
+        values.push(queryDTO.baseLocalTagId)
       }
-      if (localTag.localTagName != undefined && localTag.localTagName != '') {
-        columns.push('local_tag_name = ' + localTag.localTagName)
+      if (queryDTO.localTagName != undefined && queryDTO.localTagName != '') {
+        columns.push('local_tag_name like ?')
+        values.push('%' + queryDTO.localTagName + '%')
       }
 
       if (columns.length == 1) {
@@ -39,7 +44,7 @@ async function query(localTag: LocalTag): Promise<LocalTag[]> {
         where = ' where ' + columns.join(' and ')
       }
       const sql = selectFrom + where
-      resolve(connection.prepare(sql).all())
+      resolve(connection.prepare(sql).all(values))
     })
   } finally {
     global.connectionPool.release(connection)
