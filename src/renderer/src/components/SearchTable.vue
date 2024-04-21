@@ -1,179 +1,43 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import DataTable, { Thead, OperationItem, OperationResponse } from './DataTable.vue'
-import { ref, Ref, UnwrapRef } from 'vue'
+import DataTable from './DataTable.vue'
+import { Ref, ref, UnwrapRef } from 'vue'
 import { SearchBox } from './common/SearchBox'
+import { OperationItem } from './common/OperationItem'
+import { Thead } from './common/Thead'
+import { OperationResponse } from './common/OperationResponse'
+
+// props
+const props = defineProps<{
+  keyOfData: string
+  mainSearchBoxes: SearchBox[]
+  dropDownSearchBoxes: SearchBox[]
+  operationButton: OperationItem
+  operationDropDown: OperationItem[]
+  thead: Thead[]
+  searchApi: (args: object) => Promise<never>
+}>()
+
+// 变量
+const searchToolbarParams = ref({}) // 搜索栏参数
+const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
 
 // 方法
-function buttonClicked(code: OperationResponse) {
+// 处理DataTable按钮点击
+function handleDataTableButtonClicked(code: OperationResponse) {
   console.log('buttonClicked(code)', code)
 }
 
-// test
+// 处理SearchToolbar参数变化
+function handleSearchToolbarParamsChanged(params: object) {
+  searchToolbarParams.value = JSON.parse(JSON.stringify(params))
+}
 
-// <DataTable>
-const thead: Ref<UnwrapRef<Thead[]>> = ref([
-  {
-    name: 'test1',
-    label: '测试1',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center',
-    overHide: true
-  },
-  {
-    name: 'test2',
-    label: '测试2',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center',
-    overHide: true
-  },
-  {
-    name: 'test3',
-    label: '测试3',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center'
-  },
-  {
-    name: 'test4',
-    label: '测试4',
-    dataType: 'string',
-    hide: false,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center'
-  }
-])
-const data = ref([
-  {
-    test1: '1asdfssd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1asdfddsd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1asdfffasd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1asdfaaasd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1cvaere',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1badt',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1athdsaf',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1vfhdty',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1hjiovnm',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1yudgnfdhd',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1vbetyjsnh',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1bsrrjvywj',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1./,;.,',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1 5飞洒啊发撒',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  },
-  {
-    test1: '1；。】【；。/;,.]/[,.][/;,.];/[,.]/[;,.][/;,.][/;,.][/,];[./,[]/;,.[]',
-    test2: '2dasfasdf',
-    test3: '3ddfazvx'
-  }
-])
-const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
-const operationDropDown: OperationItem[] = [
-  { label: '编辑', icon: 'edit', code: 'edit' },
-  { label: '删除', icon: 'delete', code: 'delete' }
-]
-// <SearchToolbar>
-const mainSearchBoxes = ref([
-  {
-    name: 'test1',
-    label: '字段1',
-    inputType: 'input',
-    dataType: 'text',
-    placeholder: ''
-  },
-  {
-    name: 'test2',
-    label: '字段2',
-    inputType: 'input',
-    dataType: 'text',
-    placeholder: ''
-  },
-  {
-    name: 'test3',
-    label: '字段3',
-    inputType: 'input',
-    dataType: 'text',
-    placeholder: ''
-  },
-  {
-    name: 'test4',
-    label: '字段4',
-    inputType: 'input',
-    dataType: 'text',
-    placeholder: ''
-  }
-])
-const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
-  {
-    name: 'test5',
-    label: '字段5',
-    inputType: 'input',
-    dataType: 'text',
-    placeholder: ''
-  }
-])
+// 处理搜索按钮点击事件
+async function handleSearchButtonClicked() {
+  const params = { ...searchToolbarParams.value }
+  data.value = await props.searchApi(params)
+}
 </script>
 
 <template>
@@ -182,6 +46,8 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
       <SearchToolbar
         :drop-down-search-boxes="dropDownSearchBoxes"
         :main-search-boxes="mainSearchBoxes"
+        @params-changed="handleSearchToolbarParamsChanged"
+        @search-button-clicked="handleSearchButtonClicked"
       >
       </SearchToolbar>
     </div>
@@ -191,10 +57,10 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
         :thead="thead"
         :multi-select="true"
         :selectable="true"
-        key-of-data="test1"
+        :key-of-data="keyOfData"
         :operation-button="operationButton"
         :operation-dropdown="operationDropDown"
-        @button-clicked="buttonClicked"
+        @button-clicked="handleDataTableButtonClicked"
       ></DataTable>
     </div>
   </div>

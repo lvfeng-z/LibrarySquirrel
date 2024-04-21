@@ -4,6 +4,7 @@
       <el-table
         class="data-list-table"
         :data="props.data"
+        :row-key="keyOfData"
         :selectable="props.selectable"
         @selection-change="selectionChange"
       >
@@ -82,33 +83,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { OperationItem } from './common/OperationItem'
+import { Thead } from './common/Thead'
+import { OperationResponse } from './common/OperationResponse'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
-// 类型
-// 表头
-export interface Thead {
-  name: string // 字段名
-  label: string // 标题名称
-  dataType: string // 数据类型
-  hide: boolean // 是否隐藏
-  width?: number // 数据列宽度
-  headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
-  headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
-  dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
-  overHide?: boolean //列超出长度时是否省略
-}
-
-// 操作栏按钮或下拉菜单按钮
-export interface OperationItem {
-  label: string
-  icon: string
-  code: string
-}
-
-// 操作点击返回类型
-export interface OperationResponse {
-  id: string
-  code: string
-}
 
 // props
 const props = defineProps<{
@@ -126,7 +104,7 @@ const selectDataList = ref([])
 const currentFactor = ref('')
 
 // 方法
-function selectionChange(newSelectedList) {
+function selectionChange(newSelectedList: []) {
   selectDataList.value = newSelectedList
   emits('selectionChange', selectDataList.value)
 }
