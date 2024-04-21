@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { SearchBox } from './common/SearchBox'
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
 const props = defineProps<{
@@ -91,14 +92,18 @@ function test() {
       <el-scrollbar class="dropdown-table-rows">
         <el-form v-model="formData" @input="test">
           <template v-for="(boxRow, boxRowindex) in searchBoxInRow" :key="boxRowindex">
-            <el-row class="dropdown-toolbar-row">
+            <el-row class="dropdown-table-row">
               <template v-for="(item, index) in boxRow" :key="index">
-                <el-col class="dropdown-toolbar-label" :span="item.tagSpan">
-                  <el-tag :key="index" size="large">
-                    <span>{{ item.label }}</span>
-                  </el-tag>
+                <el-col class="dropdown-table-label" :span="item.tagSpan">
+                  <div
+                    :key="boxRowindex + '-' + index"
+                    class="dropdown-table-label-scroll-text-wrapper el-tag-mimic"
+                    style="width: 100%"
+                  >
+                    <ScrollTextBox>{{ item.label }}</ScrollTextBox>
+                  </div>
                 </el-col>
-                <el-col class="dropdown-toolbar-input" :span="item.inputSpan">
+                <el-col class="dropdown-table-input" :span="item.inputSpan">
                   <el-form-item>
                     <el-input v-model="formData[item.name]"></el-input>
                   </el-form-item>
@@ -130,15 +135,16 @@ function test() {
 .dropdown-table-main-close {
   height: 0;
 }
-.dropdown-toolbar-row {
+.dropdown-table-row {
   height: 32px;
   margin-top: 3px;
 }
-.dropdown-toolbar-label {
+.dropdown-table-label {
+  height: 100%;
   display: flex;
   justify-content: flex-end;
 }
-.dropdown-toolbar-input {
+.dropdown-table-input {
   display: flex;
   justify-content: flex-start;
 }
