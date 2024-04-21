@@ -15,6 +15,9 @@ onBeforeMount(() => {
   calculateSpan()
 })
 
+// 事件
+const emits = defineEmits(['paramsChanged', 'searchButtonClicked'])
+
 // 变量
 const searchButtonSpan = ref(3) // 查询按钮的span
 const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
@@ -71,23 +74,33 @@ function showDropdown() {
   showDropdownFlag.value = !showDropdownFlag.value
 }
 
-// //
-// function handleGetParams() {
-//   emits('paramsChanged')
-// }
-//
-// // 事件
-// const emits = defineEmits(['getParams'])
-// test
-function test() {
-  console.log(formData.value)
+// 用户输入改变时，发送paramsChanged事件
+function handleParamsChanged() {
+  emits('paramsChanged', formData.value)
+}
+
+// 处理dropDownMenu参数改变
+function handleDropDownMenuParamsChanged(dropDownMenuParams: object) {
+  Object.assign(formData.value, dropDownMenuParams)
+  handleParamsChanged()
+}
+
+// 处理搜索按钮点击事件
+function handleSearchButtonClicked() {
+  emits('searchButtonClicked')
+}
+
+// 处理input清除事件
+function handleInputClear(paramName: string) {
+  delete formData.value[paramName]
+  handleParamsChanged()
 }
 </script>
 
 <template>
   <div class="search-toolbar">
-    <div class="search-toolbar-main" style="">
-      <el-form v-model="formData" @input="test">
+    <div class="search-toolbar-main">
+      <el-form :model="formData" @input="handleParamsChanged">
         <el-row class="search-toolbar-main-row">
           <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
             <el-col class="search-toolbar-label" :span="item.tagSpan">
@@ -100,8 +113,8 @@ function test() {
               </div>
             </el-col>
             <el-col class="search-toolbar-input" :span="item.inputSpan">
-              <el-form-item>
-                <el-input v-model="formData[item.name]"></el-input>
+              <el-form-item class="search-toolbar-input-form-item">
+                <el-input v-model="formData[item.name]" :clearable="true" @clear="handleInputClear(item.name)"></el-input>
               </el-form-item>
             </el-col>
           </template>
@@ -111,7 +124,7 @@ function test() {
             style="margin-left: auto"
           >
             <el-dropdown>
-              <el-button>搜索</el-button>
+              <el-button @click="handleSearchButtonClicked">搜索</el-button>
               <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="showDropdown">更多选项</el-dropdown-item>
@@ -125,7 +138,10 @@ function test() {
     <!-- 为了不被el-table内置的2层z轴遮挡，此处为2层z轴 -->
     <div class="dropdown-menu-wrapper z-layer-2">
       <div class="dropdown-menu rounded-borders">
-        <DropdownTable :search-boxes="innerDropDownSearchBoxes"></DropdownTable>
+        <DropdownTable
+          :search-boxes="innerDropDownSearchBoxes"
+          @params-changed="handleDropDownMenuParamsChanged"
+        ></DropdownTable>
       </div>
     </div>
   </div>
@@ -155,6 +171,9 @@ function test() {
 .search-toolbar-input {
   display: flex;
   justify-content: flex-start;
+}
+.search-toolbar-input-form-item {
+  width: 100%;
 }
 .dropdown-menu-wrapper {
   display: flex;

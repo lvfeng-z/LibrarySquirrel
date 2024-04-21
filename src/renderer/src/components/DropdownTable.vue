@@ -13,6 +13,9 @@ onBeforeMount(() => {
   calculateSpan()
 })
 
+// 事件
+const emits = defineEmits(['paramsChanged'])
+
 // 变量
 const closed: Ref<UnwrapRef<boolean>> = ref(true) // 开关状态
 const searchBoxInRow: Ref<UnwrapRef<SearchBox[][]>> = ref([]) // searchBox分行数组
@@ -72,9 +75,9 @@ function calculateSpan() {
   dropdownTableHeight.value = height
 }
 
-// test
-function test() {
-  console.log(formData.value)
+// 用户输入改变时，发送paramsChanged事件
+function handleParamsChanged() {
+  emits('paramsChanged', formData.value)
 }
 </script>
 
@@ -90,7 +93,7 @@ function test() {
       }"
     >
       <el-scrollbar class="dropdown-table-rows">
-        <el-form v-model="formData" @input="test">
+        <el-form v-model="formData" @input="handleParamsChanged">
           <template v-for="(boxRow, boxRowindex) in searchBoxInRow" :key="boxRowindex">
             <el-row class="dropdown-table-row">
               <template v-for="(item, index) in boxRow" :key="index">
