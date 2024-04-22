@@ -2,16 +2,16 @@
   0% {
     transform: translateX(0);
   }
-  20% {
+  15% {
     transform: translateX(50%);
   }
-  30% {
+  25% {
     transform: translateX(50%);
   }
-  70% {
+  75% {
     transform: translateX(-50%);
   }
-  80% {
+  85% {
     transform: translateX(-50%);
   }
   100% {
