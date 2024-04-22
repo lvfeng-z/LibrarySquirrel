@@ -6,6 +6,7 @@ import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../components/common/OperationItem'
 import { Thead } from '../components/common/Thead'
 import { SearchBox } from '../components/common/SearchBox'
+import { OperationResponse } from '../components/common/OperationResponse'
 
 // 变量
 const localTagSelected = ref({})
@@ -52,8 +53,8 @@ const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
     label: '名称',
     inputType: 'input',
     dataType: 'text',
-    placeholder: '',
-    inputSpan: 19
+    placeholder: '输入本地标签的名称查询',
+    inputSpan: 16
   }
 ])
 const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
@@ -62,8 +63,7 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
     label: '基础标签id',
     inputType: 'input',
     dataType: 'text',
-    placeholder: '',
-    inputSpan: 19
+    placeholder: ''
   }
 ])
 const apis = reactive({
@@ -74,7 +74,15 @@ const apis = reactive({
 })
 
 // 方法
-//
+// 处理新增按钮点击事件
+function handleCreateButtonClicked() {
+  console.log('handleCreateButtonClicked')
+}
+// 处理数据行按钮点击事件
+function handleRowButtonClicked(op: OperationResponse) {
+  console.log('handleRowButtonClicked', op)
+}
+
 // function localTagListChange(selection: string) {
 //   localTagSelected.value = { localTagId: selection }
 // }
@@ -86,13 +94,16 @@ const apis = reactive({
       <div class="left">
         <div class="inset-center-box">
           <SearchTable
-            key-of-data="value"
+            key-of-data="id"
+            :create-button="true"
             :operation-button="operationButton"
             :operation-drop-down="operationDropDown"
             :thead="localTagThead"
             :main-search-boxes="mainSearchBoxes"
             :drop-down-search-boxes="dropDownSearchBoxes"
             :search-api="apis.localTagQuery"
+            @create-button-clicked="handleCreateButtonClicked"
+            @row-button-clicked="handleRowButtonClicked"
           ></SearchTable>
         </div>
       </div>
