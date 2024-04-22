@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import SearchList from '../components/SearchList.vue'
 import SearchTable from '../components/SearchTable.vue'
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../components/common/OperationItem'
 import { Thead } from '../components/common/Thead'
 import { SearchBox } from '../components/common/SearchBox'
 import { OperationResponse } from '../components/common/OperationResponse'
+import ExchangeBox from '../components/ExchangeBox.vue'
 
 // 变量
-const localTagSelected = ref({})
+const localTagSelected = ref()
 const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' } // searchTable的props.operationButton
 const operationDropDown: OperationItem[] = [
   { label: '编辑', icon: 'edit', code: 'edit' },
@@ -46,7 +46,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: true
   }
-])
+]) // 本地标签SearchTable的表头
 const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
   {
     name: 'localTagName',
@@ -56,7 +56,7 @@ const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
     placeholder: '输入本地标签的名称查询',
     inputSpan: 16
   }
-])
+]) // 本地标签SearchTable的mainSearchBoxes
 const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
   {
     name: 'baseLocalTagId',
@@ -65,27 +65,41 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
     dataType: 'text',
     placeholder: ''
   }
-])
+]) // 本地标签SearchTable的dropDownSearchBoxes
+const exchangeBoxMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
+  {
+    name: 'localTagName',
+    label: '名称',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: '输入本地标签的名称查询',
+    inputSpan: 16
+  }
+]) // 站点标签ExchangeBox的mainSearchBoxes
 const apis = reactive({
   localTagQuery: window.api.localTagQuery,
   localTagGetSelectList: window.api.localTagGetSelectList,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteGetSelectList: window.api.siteGetSelectList
-})
+}) // 接口
 
 // 方法
 // 处理新增按钮点击事件
 function handleCreateButtonClicked() {
-  console.log('handleCreateButtonClicked')
+  console.log('TagManage.vue.handleCreateButtonClicked')
 }
 // 处理数据行按钮点击事件
 function handleRowButtonClicked(op: OperationResponse) {
-  console.log('handleRowButtonClicked', op)
+  console.log('TagManage.vue.handleRowButtonClicked', op)
 }
-
-// function localTagListChange(selection: string) {
-//   localTagSelected.value = { localTagId: selection }
-// }
+// 处理被选中的LocalTag改变的事件
+function handleLocalTagSelectionChange(selections: object[]) {
+  if (selections.length > 0) {
+    localTagSelected.value = selections[0]
+  } else {
+    localTagSelected.value = null
+  }
+}
 </script>
 
 <template>
@@ -102,39 +116,24 @@ function handleRowButtonClicked(op: OperationResponse) {
             :main-search-boxes="mainSearchBoxes"
             :drop-down-search-boxes="dropDownSearchBoxes"
             :search-api="apis.localTagQuery"
+            :multi-select="false"
+            :selectable="true"
             @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
+            @selection-change="handleLocalTagSelectionChange"
           ></SearchTable>
         </div>
       </div>
       <div class="right">
-        <div class="right-top">
-          <div class="inset-center-box">
-            <SearchList
-              :title="'对应站点tag'"
-              :multi-select="true"
-              :search-api="apis.siteTagGetSelectList"
-              input-keyword="keyword"
-              :parent-params="localTagSelected"
-              :select-list="true"
-              :select-list-search-api="apis.siteGetSelectList"
-              select-keyword="sites"
-            ></SearchList>
-          </div>
-        </div>
-        <div class="right-bottom">
-          <div class="inset-center-box">
-            <SearchList
-              :title="'可选站点tag'"
-              :multi-select="true"
-              :search-api="apis.siteTagGetSelectList"
-              input-keyword="keyword"
-              :parent-params="localTagSelected"
-              :select-list="true"
-              :select-list-search-api="apis.siteGetSelectList"
-              select-keyword="sites"
-            ></SearchList>
-          </div>
+        <div class="inset-center-box">
+          <ExchangeBox
+            :upper-drop-down-search-boxes="[]"
+            :upper-main-search-boxes="exchangeBoxMainSearchBoxes"
+            :upper-search-api="apis.siteTagGetSelectList"
+            :lower-drop-down-search-boxes="[]"
+            :lower-main-search-boxes="exchangeBoxMainSearchBoxes"
+            :lower-search-api="apis.siteTagGetSelectList"
+          ></ExchangeBox>
         </div>
       </div>
     </div>
@@ -161,15 +160,5 @@ function handleRowButtonClicked(op: OperationResponse) {
   flex-direction: column;
   width: 50%;
   height: 100%;
-}
-
-.right-top {
-  width: 100%;
-  height: 50%;
-}
-
-.right-bottom {
-  width: 100%;
-  height: 50%;
 }
 </style>
