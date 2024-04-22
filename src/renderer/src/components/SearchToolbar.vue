@@ -5,10 +5,16 @@ import DropdownTable from './DropdownTable.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
-const props = defineProps<{
-  mainSearchBoxes: SearchBox[]
-  dropDownSearchBoxes: SearchBox[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    mainSearchBoxes: SearchBox[]
+    dropDownSearchBoxes: SearchBox[]
+    createButton?: boolean
+  }>(),
+  {
+    createButton: false
+  }
+)
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -16,19 +22,19 @@ onBeforeMount(() => {
 })
 
 // 事件
-const emits = defineEmits(['paramsChanged', 'searchButtonClicked'])
+const emits = defineEmits(['paramsChanged', 'searchButtonClicked', 'createButtonClicked'])
 
 // 变量
-const searchButtonSpan = ref(3) // 查询按钮的span
+const barButtonSpan = ref(3) // 查询和新增按钮的span
 const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
 const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 下拉搜索框中元素的列表
-const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 暂时废弃
+const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框开关
 const formData = ref({})
 
 // 方法
 // 处理主搜索栏和下拉搜索框
 function calculateSpan() {
-  let spanRest = 24 - searchButtonSpan.value
+  let spanRest = 24 - (props.createButton ? barButtonSpan.value * 2 : barButtonSpan.value)
   for (const searchBox of props.mainSearchBoxes) {
     // 储存当前box的长度
     let boxSpan = 0
@@ -90,6 +96,10 @@ function handleSearchButtonClicked() {
   emits('searchButtonClicked')
 }
 
+// 处理新增按钮点击事件
+function handleCreateButtonClicked() {
+  emits('createButtonClicked')
+}
 // 处理input清除事件
 function handleInputClear(paramName: string) {
   delete formData.value[paramName]
@@ -102,6 +112,9 @@ function handleInputClear(paramName: string) {
     <div class="search-toolbar-main">
       <el-form :model="formData" @input="handleParamsChanged">
         <el-row class="search-toolbar-main-row">
+          <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
+            <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+          </el-col>
           <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
             <el-col class="search-toolbar-label" :span="item.tagSpan">
               <div
@@ -114,15 +127,16 @@ function handleInputClear(paramName: string) {
             </el-col>
             <el-col class="search-toolbar-input" :span="item.inputSpan">
               <el-form-item class="search-toolbar-input-form-item">
-                <el-input v-model="formData[item.name]" :clearable="true" @clear="handleInputClear(item.name)"></el-input>
+                <el-input
+                  v-model="formData[item.name]"
+                  :clearable="true"
+                  :placeholder="item.placeholder"
+                  @clear="handleInputClear(item.name)"
+                ></el-input>
               </el-form-item>
             </el-col>
           </template>
-          <el-col
-            class="search-toolbar-search-button"
-            :span="searchButtonSpan"
-            style="margin-left: auto"
-          >
+          <el-col class="search-toolbar-search-button" :span="barButtonSpan">
             <el-dropdown>
               <el-button @click="handleSearchButtonClicked">搜索</el-button>
               <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
@@ -162,6 +176,7 @@ function handleInputClear(paramName: string) {
 .search-toolbar-search-button {
   display: flex;
   justify-content: flex-end;
+  margin-left: auto;
 }
 .search-toolbar-label {
   height: 100%;
