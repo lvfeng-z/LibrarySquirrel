@@ -10,6 +10,8 @@ import { OperationResponse } from './common/OperationResponse'
 // props
 const props = withDefaults(
   defineProps<{
+    selectable: boolean // 列表是否可选择
+    multiSelect: boolean // 列表是否多选
     keyOfData: string
     mainSearchBoxes: SearchBox[]
     dropDownSearchBoxes: SearchBox[]
@@ -25,7 +27,7 @@ const props = withDefaults(
 )
 
 // 事件
-const emits = defineEmits(['createButtonClicked', 'rowButtonClicked'])
+const emits = defineEmits(['createButtonClicked', 'rowButtonClicked', 'selectionChange'])
 
 // 变量
 const searchToolbarParams = ref({}) // 搜索栏参数
@@ -49,6 +51,10 @@ async function handleSearchButtonClicked() {
 function handleDataTableButtonClicked(operationResponse: OperationResponse) {
   emits('rowButtonClicked', operationResponse)
 }
+// 处理DataTable选中项改变
+function handleDataTableSelectionChange(selections: []) {
+  emits('selectionChange', selections)
+}
 </script>
 
 <template>
@@ -68,12 +74,13 @@ function handleDataTableButtonClicked(operationResponse: OperationResponse) {
       <DataTable
         :data="data"
         :thead="thead"
-        :selectable="true"
-        :multi-select="true"
+        :selectable="selectable"
+        :multi-select="multiSelect"
         :key-of-data="keyOfData"
         :operation-button="operationButton"
         :operation-dropdown="operationDropDown"
         @button-clicked="handleDataTableButtonClicked"
+        @selection-change="handleDataTableSelectionChange"
       ></DataTable>
     </div>
   </div>
