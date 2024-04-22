@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
-import TagManage from './CloseablePage/TagManage.vue'
+import TagManage from './closeablePage/TagManage.vue'
 import SideMenu from './components/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 
