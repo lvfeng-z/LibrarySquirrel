@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { Ref, ref, UnwrapRef } from 'vue'
+import { OperationItem } from './common/OperationItem'
+import { Thead } from './common/Thead'
+import { OperationResponse } from './common/OperationResponse'
+//todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
+
+// props
+const props = defineProps<{
+  selectable: boolean // 列表是否可选择
+  multiSelect: boolean // 列表是否多选
+  thead: Thead[] // 表头信息
+  keyOfData: string // 数据的唯一标识
+  data: unknown[] // 数据
+  operationButton: OperationItem // 操作列按钮的文本、图标和代号
+  operationDropdown?: OperationItem[] // 操作列下拉菜单的文本、图标和代号（数组）
+}>()
+
+// 变量
+const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
+const currentFactor: Ref<UnwrapRef<object>> = ref({})
+
+// 方法
+function handleSelectionChange(newSelectedList: object[]) {
+  selectDataList.value = newSelectedList
+  emits('selectionChange', selectDataList.value)
+}
+function handleRowButtonClicked(operationResponse: OperationResponse) {
+  emits('buttonClicked', operationResponse)
+}
+
+// 事件
+const emits = defineEmits(['selectionChange', 'buttonClicked'])
+</script>
+
 <template>
   <div class="data-table">
     <div class="data-list-wrapper">
@@ -6,7 +41,7 @@
         :data="props.data"
         :row-key="keyOfData"
         :selectable="props.selectable"
-        @selection-change="selectionChange"
+        @selection-change="handleSelectionChange"
       >
         <el-table-column
           v-if="props.selectable && props.multiSelect"
@@ -17,9 +52,9 @@
         <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
           <template #default="{ row }">
             <el-radio
-              v-model="currentFactor"
+              v-model="currentFactor[props.keyOfData]"
               :value="row[props.keyOfData]"
-              @change="selectionChange(row)"
+              @change="handleSelectionChange([row])"
               >{{ '' }}
             </el-radio>
           </template>
@@ -51,7 +86,10 @@
               <el-button
                 :icon="props.operationButton.icon"
                 @click="
-                  buttonClicked({ id: row[props.keyOfData], code: props.operationButton.code })
+                  handleRowButtonClicked({
+                    id: row[props.keyOfData],
+                    code: props.operationButton.code
+                  })
                 "
               >
                 {{ props.operationButton.label }}
@@ -62,7 +100,7 @@
                     <el-dropdown-item
                       :icon="item.icon"
                       @click="
-                        buttonClicked({
+                        handleRowButtonClicked({
                           id: row[props.keyOfData],
                           code: item.code
                         })
@@ -80,41 +118,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { OperationItem } from './common/OperationItem'
-import { Thead } from './common/Thead'
-import { OperationResponse } from './common/OperationResponse'
-//todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
-
-// props
-const props = defineProps<{
-  selectable: boolean // 列表是否可选择
-  multiSelect: boolean // 列表是否多选
-  thead: Thead[] // 表头信息
-  keyOfData: string // 数据的唯一标识
-  data: unknown[] // 数据
-  operationButton: OperationItem // 操作列按钮的文本、图标和代号
-  operationDropdown?: OperationItem[] // 操作列下拉菜单的文本、图标和代号（数组）
-}>()
-
-// 变量
-const selectDataList = ref([])
-const currentFactor = ref('')
-
-// 方法
-function selectionChange(newSelectedList: []) {
-  selectDataList.value = newSelectedList
-  emits('selectionChange', selectDataList.value)
-}
-function buttonClicked(operationResponse: OperationResponse) {
-  emits('buttonClicked', operationResponse)
-}
-
-// 事件
-const emits = defineEmits(['selectionChange', 'buttonClicked'])
-</script>
 
 <style scoped>
 .data-table {
