@@ -1,4 +1,5 @@
 .rounded-borders {
   border: 1.5px solid lightgrey;
-  border-radius: 3px;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
