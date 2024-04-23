@@ -36,7 +36,6 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   if (upperOrLower) {
     const params = { ...upperSearchToolbarParams.value }
     upperData.value = await props.upperSearchApi(params)
-    console.log(upperData.value)
   } else {
     const params = { ...lowerSearchToolbarParams.value }
     lowerData.value = await props.lowerSearchApi(params)
@@ -75,15 +74,16 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
     <div class="exchange-box-middle">
       <div class="exchange-box-middle-operation">
         <div class="exchange-box-middle-confirm">
-          <el-button class="exchange-box-middle-confirm-button"></el-button>
+          <el-button class="exchange-box-middle-confirm-button" type="primary">确认</el-button>
         </div>
         <div class="exchange-box-middle-clear">
-          <el-button class="exchange-box-middle-clear-button"></el-button>
+          <el-button class="exchange-box-middle-clear-button" type="info">清空</el-button>
         </div>
       </div>
       <div class="exchange-box-middle-buffer">
-        <div class="exchange-box-middle-buffer-upper"></div>
-        <div class="exchange-box-middle-buffer-lower"></div>
+        <div class="exchange-box-middle-buffer-upper rounded-borders">
+        </div>
+        <div class="exchange-box-middle-buffer-lower rounded-borders"></div>
       </div>
     </div>
     <div class="exchange-box-lower">
@@ -135,6 +135,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   width: 64px;
   height: 100%;
   writing-mode: vertical-lr;
+  background-color: #fdfdfd;
 }
 .exchange-box-upper-main {
   display: flex;
@@ -150,6 +151,8 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   width: 100%;
   height: calc(100% - 32px);
   background-color: #fdfdfd;
+  border-bottom-style: hidden;
+  border-left-style: hidden;
 }
 .exchange-box-upper-data-checkbox {
   width: 100%;
@@ -189,14 +192,26 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   height: 100%;
 }
 .exchange-box-middle-buffer-upper {
+  position: relative;
   width: 50%;
   height: 100%;
   background-color: #fdfdfd;
+  border-top-color: #e8e8e8;
+  border-top-style: dashed;
+  border-bottom-style: dotted;
+  border-left-style: hidden;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 .exchange-box-middle-buffer-lower {
   width: 50%;
   height: 100%;
   background-color: #f6f6f6;
+  border-bottom-color: #e8e8e8;
+  border-top-style: dotted;
+  border-bottom-style: dashed;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 .exchange-box-lower {
   display: flex;
@@ -210,6 +225,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   width: 64px;
   height: 100%;
   writing-mode: vertical-lr;
+  background-color: #f6f6f6;
 }
 .exchange-box-lower-main {
   display: flex;
@@ -225,6 +241,8 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   width: 100%;
   height: calc(100% - 32px);
   background-color: #f6f6f6;
+  border-top-style: hidden;
+  border-left-style: hidden;
 }
 .exchange-box-lower-data-checkbox {
   width: 100%;
