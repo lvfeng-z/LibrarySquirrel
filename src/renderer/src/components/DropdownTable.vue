@@ -53,8 +53,8 @@ function calculateSpan() {
     // 不更改props属性
     const tempSearchBox: SearchBox = JSON.parse(JSON.stringify(searchBox))
     // 未设置tag长度则设置为2
-    if (tempSearchBox.tagSpan == undefined) {
-      tempSearchBox.tagSpan = 2
+    if (tempSearchBox.labelSpan == undefined) {
+      tempSearchBox.labelSpan = 2
     }
     // 未设置input长度则设置为6
     if (tempSearchBox.inputSpan == undefined) {
@@ -62,7 +62,7 @@ function calculateSpan() {
     }
 
     // 判断是否能够容纳此box
-    boxSpan += tempSearchBox.tagSpan + tempSearchBox.inputSpan
+    boxSpan += tempSearchBox.labelSpan + tempSearchBox.inputSpan
     spanRest -= boxSpan
 
     // 能容纳则放进tempRow，否则tempRow指向新空数组，再放进tempRow
@@ -103,7 +103,7 @@ function handleParamsChanged() {
           <template v-for="(boxRow, boxRowindex) in searchBoxInRow" :key="boxRowindex">
             <el-row class="dropdown-table-row">
               <template v-for="(item, index) in boxRow" :key="index">
-                <el-col class="dropdown-table-label" :span="item.tagSpan">
+                <el-col class="dropdown-table-label" :span="item.labelSpan">
                   <div
                     :key="boxRowindex + '-' + index"
                     class="dropdown-table-label-scroll-text-wrapper el-tag-mimic"

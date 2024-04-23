@@ -43,10 +43,16 @@ function calculateSpan() {
     // 不更改props属性
     const tempSearchBox: SearchBox = JSON.parse(JSON.stringify(searchBox))
 
+    // 未设置是否展示标题，则默认为false，labelSpan设为0
+    if (tempSearchBox.showLabel == undefined) {
+      tempSearchBox.showLabel = false
+      tempSearchBox.labelSpan = 0
+    }
+
     if (spanRest > 0) {
       // 未设置tag长度则设置为2
-      if (tempSearchBox.tagSpan == undefined) {
-        tempSearchBox.tagSpan = 2
+      if (tempSearchBox.labelSpan == undefined) {
+        tempSearchBox.labelSpan = 2
       }
       // 未设置input长度则设置为5
       if (tempSearchBox.inputSpan == undefined) {
@@ -54,7 +60,7 @@ function calculateSpan() {
       }
 
       // 判断是否能够容纳此box，空间不足就放进dropDownSearchBoxes
-      boxSpan += tempSearchBox.tagSpan + tempSearchBox.inputSpan
+      boxSpan += tempSearchBox.labelSpan + tempSearchBox.inputSpan
       spanRest -= boxSpan
       if (spanRest < 0) {
         innerDropDownSearchBoxes.value.push(tempSearchBox)
@@ -124,7 +130,7 @@ function handleInputClear(paramName: string) {
             <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
           </el-col>
           <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
-            <el-col class="search-toolbar-label" :span="item.tagSpan">
+            <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
               <div
                 :key="index"
                 class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
