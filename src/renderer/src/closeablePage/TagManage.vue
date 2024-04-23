@@ -111,7 +111,7 @@ function handleLocalTagSelectionChange(selections: object[]) {
   <BaseCloseablePage>
     <div class="container">
       <div class="left">
-        <div class="inset-center-box">
+        <div class="margin-box">
           <SearchTable
             key-of-data="id"
             :create-button="true"
@@ -130,7 +130,7 @@ function handleLocalTagSelectionChange(selections: object[]) {
         </div>
       </div>
       <div class="right">
-        <div class="inset-center-box">
+        <div class="margin-box">
           <ExchangeBox
             :upper-drop-down-search-boxes="[]"
             :upper-main-search-boxes="exchangeBoxMainSearchBoxes"
