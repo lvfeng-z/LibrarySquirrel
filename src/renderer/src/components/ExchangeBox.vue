@@ -47,7 +47,9 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 <template>
   <div class="exchange-box">
     <div class="exchange-box-upper">
-      <div class="exchange-box-upper-name"></div>
+      <div class="exchange-box-upper-name rounded-borders">
+        <el-text>已绑定站点标签</el-text>
+      </div>
       <div class="exchange-box-upper-main">
         <div class="exchange-box-upper-toolbar z-layer-1">
           <SearchToolbar
@@ -59,20 +61,25 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
           >
           </SearchToolbar>
         </div>
-        <div class="exchange-box-upper-data">
-          <el-checkbox-group v-model="upperSelected">
-            <el-checkbox v-for="(item, index) in upperData" :key="index" :value="item.value">
-              <el-tag>{{ item.label }}</el-tag>
-            </el-checkbox>
-          </el-checkbox-group>
+        <div class="exchange-box-upper-data rounded-borders">
+          <div class="margin-box">
+            <el-checkbox-group v-model="upperSelected" class="exchange-box-upper-data-checkbox">
+              <el-checkbox v-for="(item, index) in upperData" :key="index" :value="item.value">
+                <el-tag>{{ item.label }}</el-tag>
+              </el-checkbox>
+            </el-checkbox-group>
+          </div>
         </div>
       </div>
     </div>
     <div class="exchange-box-middle">
       <div class="exchange-box-middle-operation">
-        <div class="exchange-box-middle-confirm"></div>
-
-        <div class="exchange-box-middle-clear"></div>
+        <div class="exchange-box-middle-confirm">
+          <el-button class="exchange-box-middle-confirm-button"></el-button>
+        </div>
+        <div class="exchange-box-middle-clear">
+          <el-button class="exchange-box-middle-clear-button"></el-button>
+        </div>
       </div>
       <div class="exchange-box-middle-buffer">
         <div class="exchange-box-middle-buffer-upper"></div>
@@ -80,11 +87,13 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
       </div>
     </div>
     <div class="exchange-box-lower">
-      <div class="exchange-box-lower-name"></div>
+      <div class="exchange-box-lower-name rounded-borders">
+        <el-text>未绑定站点标签</el-text>
+      </div>
       <div class="exchange-box-lower-main">
-        <div class="exchange-box-lower-data">
+        <div class="exchange-box-lower-data rounded-borders">
           <div class="margin-box">
-            <el-checkbox-group v-model="lowerSelected">
+            <el-checkbox-group v-model="lowerSelected" class="exchange-box-lower-data-checkbox">
               <el-checkbox v-for="(item, index) in lowerData" :key="index" :value="item.value">
                 <el-tag>{{ item.label }}</el-tag>
               </el-checkbox>
@@ -121,9 +130,11 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   height: 40%;
 }
 .exchange-box-upper-name {
+  display: flex;
+  justify-content: center;
   width: 64px;
   height: 100%;
-  background-color: #92d5c6;
+  writing-mode: vertical-lr;
 }
 .exchange-box-upper-main {
   display: flex;
@@ -138,7 +149,10 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 .exchange-box-upper-data {
   width: 100%;
   height: calc(100% - 32px);
-  background-color: #ededed;
+  background-color: #fdfdfd;
+}
+.exchange-box-upper-data-checkbox {
+  width: 100%;
 }
 .exchange-box-middle {
   display: flex;
@@ -146,15 +160,27 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   width: 100%;
   height: 20%;
 }
+.exchange-box-middle-operation {
+  display: flex;
+  flex-direction: column;
+  width: 64px;
+  height: 100%;
+}
 .exchange-box-middle-confirm {
   width: 64px;
   height: 50%;
-  background-color: #42d392;
+}
+.exchange-box-middle-confirm-button {
+  width: 100%;
+  height: 100%;
+}
+.exchange-box-middle-clear-button {
+  width: 100%;
+  height: 100%;
 }
 .exchange-box-middle-clear {
   width: 64px;
   height: 50%;
-  background-color: orange;
 }
 .exchange-box-middle-buffer {
   display: flex;
@@ -165,12 +191,12 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 .exchange-box-middle-buffer-upper {
   width: 50%;
   height: 100%;
-  background-color: #ededed;
+  background-color: #fdfdfd;
 }
 .exchange-box-middle-buffer-lower {
   width: 50%;
   height: 100%;
-  background-color: #dadada;
+  background-color: #f6f6f6;
 }
 .exchange-box-lower {
   display: flex;
@@ -179,9 +205,11 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   height: 40%;
 }
 .exchange-box-lower-name {
+  display: flex;
+  justify-content: center;
   width: 64px;
   height: 100%;
-  background-color: #92d5c6;
+  writing-mode: vertical-lr;
 }
 .exchange-box-lower-main {
   display: flex;
@@ -196,6 +224,9 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 .exchange-box-lower-data {
   width: 100%;
   height: calc(100% - 32px);
-  background-color: #dadada;
+  background-color: #f6f6f6;
+}
+.exchange-box-lower-data-checkbox {
+  width: 100%;
 }
 </style>
