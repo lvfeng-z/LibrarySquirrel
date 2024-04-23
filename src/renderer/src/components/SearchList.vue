@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, UnwrapRef } from 'vue'
-import { SelectOptionItem } from './common/SelectOption'
+import { SelectOption } from './common/SelectOption'
 
 const props = defineProps<{
   multiSelect: boolean
@@ -73,8 +73,8 @@ const inputText = ref('')
 const checkboxSelected = ref([])
 const radioSelected = ref(null)
 const selectListSelected = ref([])
-const selectListItems: Ref<UnwrapRef<SelectOptionItem[]>> = ref([])
-const filteredItems: Ref<UnwrapRef<SelectOptionItem[]>> = ref([])
+const selectListItems: Ref<UnwrapRef<SelectOption[]>> = ref([])
+const filteredItems: Ref<UnwrapRef<SelectOption[]>> = ref([])
 
 // 查询主列表
 async function handleSearch() {
