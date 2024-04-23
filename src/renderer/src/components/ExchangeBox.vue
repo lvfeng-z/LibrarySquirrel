@@ -45,12 +45,12 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
     <div class="exchange-box-upper">
       <div class="exchange-box-upper-name"></div>
       <div class="exchange-box-upper-main">
-        <div class="exchange-box-upper-toolbar">
+        <div class="exchange-box-upper-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
             :drop-down-search-boxes="[]"
             :main-search-boxes="[]"
-            @search-button-clicked="handleSearchButtonClicked(true)"
+            @search-button-clicked="handleSearchButtonClicked(false)"
             @params-changed="handleUpperSearchToolbarParamsChanged"
           >
           </SearchToolbar>
@@ -69,11 +69,12 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
       <div class="exchange-box-lower-name"></div>
       <div class="exchange-box-lower-main">
         <div class="exchange-box-lower-data"></div>
-        <div class="exchange-box-lower-toolbar">
+        <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
             :drop-down-search-boxes="[]"
             :main-search-boxes="[]"
+            :reverse="true"
             @search-button-clicked="handleSearchButtonClicked(false)"
             @params-changed="handleLowerSearchToolbarParamsChanged"
           >
