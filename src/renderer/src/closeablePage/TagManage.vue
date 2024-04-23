@@ -10,11 +10,14 @@ import ExchangeBox from '../components/ExchangeBox.vue'
 
 // 变量
 const localTagSelected = ref()
-const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' } // searchTable的props.operationButton
+// 本地标签SearchTable的operationButton
+const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
+// 本地标签SearchTable的operationDropDown
 const operationDropDown: OperationItem[] = [
   { label: '编辑', icon: 'edit', code: 'edit' },
   { label: '删除', icon: 'delete', code: 'delete' }
-] // searchTable的props.operationDropDown
+]
+// 本地标签SearchTable的表头
 const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     name: 'id',
@@ -46,7 +49,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: true
   }
-]) // 本地标签SearchTable的表头
+])
+// 本地标签SearchTable的mainSearchBoxes
 const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
   {
     name: 'localTagName',
@@ -55,7 +59,8 @@ const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
     placeholder: '输入本地标签的名称查询',
     inputSpan: 18
   }
-]) // 本地标签SearchTable的mainSearchBoxes
+])
+// 本地标签SearchTable的dropDownSearchBoxes
 const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
   {
     name: 'baseLocalTagId',
@@ -64,23 +69,24 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
     dataType: 'text',
     placeholder: ''
   }
-]) // 本地标签SearchTable的dropDownSearchBoxes
+])
+// 站点标签ExchangeBox的mainSearchBoxes
 const exchangeBoxMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
   {
-    name: 'localTagName',
-    label: '名称',
+    name: 'keyword',
     inputType: 'input',
     dataType: 'text',
-    placeholder: '输入本地标签的名称查询',
-    inputSpan: 16
+    placeholder: '输入站点标签的名称查询',
+    inputSpan: 21
   }
-]) // 站点标签ExchangeBox的mainSearchBoxes
+])
+// 接口
 const apis = reactive({
   localTagQuery: window.api.localTagQuery,
   localTagGetSelectList: window.api.localTagGetSelectList,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteGetSelectList: window.api.siteGetSelectList
-}) // 接口
+})
 
 // 方法
 // 处理新增按钮点击事件

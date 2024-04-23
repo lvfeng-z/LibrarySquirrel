@@ -2,6 +2,7 @@
 import SearchToolbar from './SearchToolbar.vue'
 import { SearchBox } from './common/SearchBox'
 import { Ref, ref, UnwrapRef } from 'vue'
+import { SelectOption } from './common/SelectOption'
 
 // props
 const props = defineProps<{
@@ -16,8 +17,10 @@ const props = defineProps<{
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperData: Ref<UnwrapRef<unknown[]>> = ref([]) // upper的数据
-const lowerData: Ref<UnwrapRef<unknown[]>> = ref([]) // lower的数据
+const upperData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upper的数据
+const lowerData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lower的数据
+const upperSelected: Ref<UnwrapRef<SelectOption>[]> = ref([]) // upper被选中的数据
+const lowerSelected: Ref<UnwrapRef<SelectOption>[]> = ref([]) // lower被选中的数据
 
 // 方法
 // 处理SearchToolbar参数变化
@@ -33,6 +36,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   if (upperOrLower) {
     const params = { ...upperSearchToolbarParams.value }
     upperData.value = await props.upperSearchApi(params)
+    console.log(upperData.value)
   } else {
     const params = { ...lowerSearchToolbarParams.value }
     lowerData.value = await props.lowerSearchApi(params)
@@ -48,18 +52,28 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
         <div class="exchange-box-upper-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
-            :drop-down-search-boxes="[]"
-            :main-search-boxes="[]"
-            @search-button-clicked="handleSearchButtonClicked(false)"
+            :drop-down-search-boxes="upperDropDownSearchBoxes"
+            :main-search-boxes="upperMainSearchBoxes"
+            @search-button-clicked="handleSearchButtonClicked(true)"
             @params-changed="handleUpperSearchToolbarParamsChanged"
           >
           </SearchToolbar>
         </div>
-        <div class="exchange-box-upper-data"></div>
+        <div class="exchange-box-upper-data">
+          <el-checkbox-group v-model="upperSelected">
+            <el-checkbox v-for="(item, index) in upperData" :key="index" :value="item.value">
+              <el-tag>{{ item.label }}</el-tag>
+            </el-checkbox>
+          </el-checkbox-group>
+        </div>
       </div>
     </div>
     <div class="exchange-box-middle">
-      <div class="exchange-box-middle-confirm"></div>
+      <div class="exchange-box-middle-operation">
+        <div class="exchange-box-middle-confirm"></div>
+
+        <div class="exchange-box-middle-clear"></div>
+      </div>
       <div class="exchange-box-middle-buffer">
         <div class="exchange-box-middle-buffer-upper"></div>
         <div class="exchange-box-middle-buffer-lower"></div>
@@ -68,12 +82,20 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
     <div class="exchange-box-lower">
       <div class="exchange-box-lower-name"></div>
       <div class="exchange-box-lower-main">
-        <div class="exchange-box-lower-data"></div>
+        <div class="exchange-box-lower-data">
+          <div class="inset-center-box">
+            <el-checkbox-group v-model="lowerSelected">
+              <el-checkbox v-for="(item, index) in lowerData" :key="index" :value="item.value">
+                <el-tag>{{ item.label }}</el-tag>
+              </el-checkbox>
+            </el-checkbox-group>
+          </div>
+        </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
-            :drop-down-search-boxes="[]"
-            :main-search-boxes="[]"
+            :drop-down-search-boxes="lowerDropDownSearchBoxes"
+            :main-search-boxes="lowerMainSearchBoxes"
             :reverse="true"
             @search-button-clicked="handleSearchButtonClicked(false)"
             @params-changed="handleLowerSearchToolbarParamsChanged"
@@ -126,8 +148,13 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 }
 .exchange-box-middle-confirm {
   width: 64px;
-  height: 100%;
-  background-color: crimson;
+  height: 50%;
+  background-color: #42d392;
+}
+.exchange-box-middle-clear {
+  width: 64px;
+  height: 50%;
+  background-color: orange;
 }
 .exchange-box-middle-buffer {
   display: flex;
