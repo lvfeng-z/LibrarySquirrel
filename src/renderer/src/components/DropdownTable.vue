@@ -4,9 +4,15 @@ import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
-const props = defineProps<{
-  searchBoxes: SearchBox[] // SearchBox数组
-}>()
+const props = withDefaults(
+  defineProps<{
+    searchBoxes: SearchBox[] // SearchBox数组
+    reverse?: boolean
+  }>(),
+  {
+    reverse: false
+  }
+)
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -117,7 +123,14 @@ function handleParamsChanged() {
         </el-form>
       </el-scrollbar>
     </div>
-    <div class="dropdown-table-button-wrapper z-layer-2">
+    <div
+      :class="{
+        'dropdown-table-button-wrapper': true,
+        'dropdown-table-button-wrapper-normal': !reverse,
+        'dropdown-table-button-wrapper-reverse': reverse,
+        'z-layer-2': true
+      }"
+    >
       <div class="dropdown-table-button" @click="changeState"></div>
     </div>
   </div>
@@ -152,13 +165,19 @@ function handleParamsChanged() {
   justify-content: flex-start;
 }
 .dropdown-table-button-wrapper {
-  display: grid;
-  align-content: end;
   position: absolute;
   left: calc(50% - 40px);
   width: 80px;
   height: 13px;
   overflow: hidden;
+}
+.dropdown-table-button-wrapper-normal {
+  display: grid;
+  align-content: end;
+  top: 100%;
+}
+.dropdown-table-button-wrapper-reverse {
+  top: -13px;
 }
 .dropdown-table-button {
   width: 80px;

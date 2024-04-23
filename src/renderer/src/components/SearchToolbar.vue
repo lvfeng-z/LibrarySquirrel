@@ -10,9 +10,11 @@ const props = withDefaults(
     mainSearchBoxes: SearchBox[]
     dropDownSearchBoxes: SearchBox[]
     createButton?: boolean
+    reverse?: boolean
   }>(),
   {
-    createButton: false
+    createButton: false,
+    reverse: false
   }
 )
 
@@ -108,7 +110,13 @@ function handleInputClear(paramName: string) {
 </script>
 
 <template>
-  <div class="search-toolbar">
+  <div
+    :class="{
+      'search-toolbar': true,
+      'search-toolbar-normal': !reverse,
+      'search-toolbar-reverse': reverse
+    }"
+  >
     <div class="search-toolbar-main">
       <el-form :model="formData" @input="handleParamsChanged">
         <el-row class="search-toolbar-main-row">
@@ -149,10 +157,10 @@ function handleInputClear(paramName: string) {
         </el-row>
       </el-form>
     </div>
-    <!-- 为了不被el-table内置的2层z轴遮挡，此处为2层z轴 -->
-    <div class="dropdown-menu-wrapper z-layer-2">
+    <div class="dropdown-menu-wrapper">
       <div class="dropdown-menu rounded-borders">
         <DropdownTable
+          :reverse="reverse"
           :search-boxes="innerDropDownSearchBoxes"
           @params-changed="handleDropDownMenuParamsChanged"
         ></DropdownTable>
@@ -164,10 +172,16 @@ function handleInputClear(paramName: string) {
 <style scoped>
 .search-toolbar {
   width: 100%;
-  height: calc(32px + 10px);
+  height: calc(32px);
   display: flex;
   flex-direction: column;
   align-content: center;
+}
+.search-toolbar-normal {
+  flex-direction: column;
+}
+.search-toolbar-reverse {
+  flex-direction: column-reverse;
 }
 .search-toolbar-main-row {
   height: 32px;
