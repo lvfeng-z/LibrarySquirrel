@@ -4,11 +4,13 @@
 export default class SelectVO {
   value: string | null | undefined
   label: string | null | undefined
+  secondaryLabel: string | null | undefined
   rootId: string | null | undefined
   extraData: object | null | undefined
   constructor(selectVO: SelectVO) {
     this.value = selectVO.value
     this.label = selectVO.label
+    this.secondaryLabel = selectVO.secondaryLabel
     this.rootId = selectVO.rootId
     this.extraData = selectVO.extraData
   }
