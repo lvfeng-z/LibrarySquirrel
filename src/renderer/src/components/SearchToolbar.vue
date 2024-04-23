@@ -31,7 +31,8 @@ const barButtonSpan = ref(3) // 查询和新增按钮的span
 const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
 const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 下拉搜索框中元素的列表
 const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框开关
-const formData = ref({})
+const dropdownState: Ref<UnwrapRef<boolean>> = ref(false) // 下拉框开关状态
+const formData = ref({}) // 查询参数
 
 // 方法
 // 处理主搜索栏和下拉搜索框
@@ -81,11 +82,14 @@ function calculateSpan() {
 
   const tempDropDownSearchBoxes = JSON.parse(JSON.stringify(props.dropDownSearchBoxes))
   innerDropDownSearchBoxes.value.push(...tempDropDownSearchBoxes)
+
+  // 下拉菜单中有内容则显示下拉菜单，否则不显示
+  showDropdownFlag.value = innerDropDownSearchBoxes.value.length > 0;
 }
 
 // 展示下拉搜索框
-function showDropdown() {
-  showDropdownFlag.value = !showDropdownFlag.value
+function handleDropdownState(state: boolean) {
+  dropdownState.value = state
 }
 
 // 用户输入改变时，发送paramsChanged事件
@@ -155,7 +159,7 @@ function handleInputClear(paramName: string) {
               <el-button @click="handleSearchButtonClicked">搜索</el-button>
               <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="showDropdown">更多选项</el-dropdown-item>
+                  <el-dropdown-item @click="handleDropdownState(true)">更多选项</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -163,13 +167,14 @@ function handleInputClear(paramName: string) {
         </el-row>
       </el-form>
     </div>
-    <div class="dropdown-menu-wrapper">
+    <div v-if="showDropdownFlag" class="dropdown-menu-wrapper">
       <div class="dropdown-menu rounded-borders">
         <DropdownTable
+          :state="dropdownState"
           :reverse="reverse"
           :search-boxes="innerDropDownSearchBoxes"
-          @params-changed="handleDropDownMenuParamsChanged"
-        ></DropdownTable>
+          @params-changed="handleDropDownMenuParamsChanged">
+        </DropdownTable>
       </div>
     </div>
   </div>
