@@ -1,4 +1,4 @@
-.inset-center-box {
+.margin-box {
   display: flex;
   width: calc(100% - 10px);
   height: calc(100% - 10px);

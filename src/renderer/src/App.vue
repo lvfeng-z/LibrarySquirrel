@@ -96,7 +96,7 @@ function closeFloatPage() {
       </SideMenu>
     </div>
     <div class="mainSpace">
-      <div v-show="pageState.mainPage" class="mainSpace-wrapper inset-center-box">
+      <div v-show="pageState.mainPage" class="mainSpace-wrapper margin-box">
         <div class="mainSpace-searchbar">
           <el-select
             v-model="selectedList"

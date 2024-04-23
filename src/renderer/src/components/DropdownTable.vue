@@ -104,7 +104,7 @@ function handleParamsChanged() {
         'dropdown-table-main': true,
         'dropdown-table-main-open': state,
         'dropdown-table-main-close': !state,
-        'inset-center-box':
+        'margin-box':
           state /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
       }"
     >

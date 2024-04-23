@@ -83,7 +83,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
       <div class="exchange-box-lower-name"></div>
       <div class="exchange-box-lower-main">
         <div class="exchange-box-lower-data">
-          <div class="inset-center-box">
+          <div class="margin-box">
             <el-checkbox-group v-model="lowerSelected">
               <el-checkbox v-for="(item, index) in lowerData" :key="index" :value="item.value">
                 <el-tag>{{ item.label }}</el-tag>
