@@ -19,8 +19,10 @@ const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
 const upperData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lower的数据
-const upperSelected: Ref<UnwrapRef<SelectOption>[]> = ref([]) // upper被选中的数据
-const lowerSelected: Ref<UnwrapRef<SelectOption>[]> = ref([]) // lower被选中的数据
+const upperBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upperBuffer的数据
+const upperBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // upperBuffer的数据Id
+const lowerBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lowerBuffer的数据
+const lowerBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
 
 // 方法
 // 处理SearchToolbar参数变化
@@ -35,11 +37,57 @@ function handleLowerSearchToolbarParamsChanged(params: object) {
 async function handleSearchButtonClicked(upperOrLower: boolean) {
   if (upperOrLower) {
     const params = { ...upperSearchToolbarParams.value }
-    upperData.value = await props.upperSearchApi(params)
+    const newData: [] = await props.upperSearchApi(params)
+    // 过滤掉upperBufferId已包含的数据
+    upperData.value = newData.filter((item: SelectOption) => {
+      return !upperBufferId.value.has(item.value)
+    })
   } else {
     const params = { ...lowerSearchToolbarParams.value }
-    lowerData.value = await props.lowerSearchApi(params)
+    const newData: [] = await props.lowerSearchApi(params)
+    // 过滤掉lowerBufferId已包含的数据
+    lowerData.value = newData.filter((item: SelectOption) => {
+      return !lowerBufferId.value.has(item.value)
+    })
   }
+}
+// 处理checkBox选中变化事件
+// 处理check-tag点击事件
+function handleCheckTagClick(
+  tag: SelectOption,
+  type: 'upperData' | 'upperBuffer' | 'lowerData' | 'lowerBuffer'
+) {
+  switch (type) {
+    case 'upperData':
+      exchange(upperData.value, upperBufferData.value, tag)
+      upperBufferId.value.add(tag.value)
+      break
+    case 'upperBuffer':
+      exchange(upperBufferData.value, upperData.value, tag)
+      if (upperBufferId.value.has(tag.value)) {
+        upperBufferId.value.delete(tag.value)
+      }
+      break
+    case 'lowerData':
+      exchange(lowerData.value, lowerBufferData.value, tag)
+      lowerBufferId.value.add(tag.value)
+      break
+    case 'lowerBuffer':
+      exchange(lowerBufferData.value, lowerData.value, tag)
+      if (lowerBufferId.value.has(tag.value)) {
+        lowerBufferId.value.delete(tag.value)
+      }
+      break
+    default:
+      break
+  }
+}
+function exchange(source: SelectOption[], target: SelectOption[], item: SelectOption) {
+  const index = source.indexOf(item)
+  if (index !== -1) {
+    source.splice(index, 1)
+  }
+  target.push(item)
 }
 </script>
 
@@ -60,30 +108,73 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
           >
           </SearchToolbar>
         </div>
-        <div class="exchange-box-upper-data rounded-borders">
-          <div class="margin-box">
-            <el-checkbox-group v-model="upperSelected" class="exchange-box-upper-data-checkbox">
-              <el-checkbox v-for="(item, index) in upperData" :key="index" :value="item.value">
-                <el-tag>{{ item.label }}</el-tag>
-              </el-checkbox>
-            </el-checkbox-group>
-          </div>
+        <div class="exchange-box-upper-data rounded-borders margin-box">
+          <el-scrollbar>
+            <el-row>
+              <template v-for="item in upperData" :key="item.value">
+                <div class="exchange-box-upperLower-data-item">
+                  <el-check-tag
+                    :checked="true"
+                    type="primary"
+                    @change="handleCheckTagClick(item, 'upperData')"
+                  >
+                    {{ item.label }}
+                  </el-check-tag>
+                </div>
+              </template>
+            </el-row>
+          </el-scrollbar>
         </div>
       </div>
     </div>
     <div class="exchange-box-middle">
       <div class="exchange-box-middle-operation">
         <div class="exchange-box-middle-confirm">
-          <el-button class="exchange-box-middle-confirm-button" type="primary">确认</el-button>
+          <el-check-tag :checked="true" class="exchange-box-middle-confirm-button" type="primary"
+            >确认
+          </el-check-tag>
         </div>
         <div class="exchange-box-middle-clear">
-          <el-button class="exchange-box-middle-clear-button" type="info">清空</el-button>
+          <el-check-tag :checked="false" class="exchange-box-middle-clear-button" type="info"
+            >清空</el-check-tag
+          >
         </div>
       </div>
       <div class="exchange-box-middle-buffer">
         <div class="exchange-box-middle-buffer-upper rounded-borders">
+          <el-scrollbar>
+            <el-row>
+              <template v-for="item in upperBufferData" :key="item.id">
+                <div class="exchange-box-upperLower-data-item">
+                  <el-check-tag
+                    :checked="true"
+                    type="warning"
+                    @change="handleCheckTagClick(item, 'upperBuffer')"
+                  >
+                    {{ item.label }}
+                  </el-check-tag>
+                </div>
+              </template>
+            </el-row>
+          </el-scrollbar>
         </div>
-        <div class="exchange-box-middle-buffer-lower rounded-borders"></div>
+        <div class="exchange-box-middle-buffer-lower rounded-borders">
+          <el-scrollbar>
+            <el-row>
+              <template v-for="item in lowerBufferData" :key="item.id">
+                <div class="exchange-box-upperLower-data-item">
+                  <el-check-tag
+                    :checked="true"
+                    type="warning"
+                    @change="handleCheckTagClick(item, 'lowerBuffer')"
+                  >
+                    {{ item.label }}
+                  </el-check-tag>
+                </div>
+              </template>
+            </el-row>
+          </el-scrollbar>
+        </div>
       </div>
     </div>
     <div class="exchange-box-lower">
@@ -91,14 +182,22 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
         <el-text>未绑定站点标签</el-text>
       </div>
       <div class="exchange-box-lower-main">
-        <div class="exchange-box-lower-data rounded-borders">
-          <div class="margin-box">
-            <el-checkbox-group v-model="lowerSelected" class="exchange-box-lower-data-checkbox">
-              <el-checkbox v-for="(item, index) in lowerData" :key="index" :value="item.value">
-                <el-tag>{{ item.label }}</el-tag>
-              </el-checkbox>
-            </el-checkbox-group>
-          </div>
+        <div class="exchange-box-lower-data rounded-borders margin-box">
+          <el-scrollbar class="exchange-box-lower-data-scroll">
+            <el-row class="exchange-box-lower-data-scroll-row">
+              <template v-for="item in lowerData" :key="item.id">
+                <div class="exchange-box-upperLower-data-item">
+                  <el-check-tag
+                    class="exchange-box-upperLower-data-item-tag"
+                    :checked="true"
+                    type="danger"
+                    @change="handleCheckTagClick(item, 'lowerData')"
+                    >{{ item.label }}
+                  </el-check-tag>
+                </div>
+              </template>
+            </el-row>
+          </el-scrollbar>
         </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
@@ -154,8 +253,10 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   border-bottom-style: hidden;
   border-left-style: hidden;
 }
-.exchange-box-upper-data-checkbox {
-  width: 100%;
+.exchange-box-upperLower-data-item {
+  margin: 1px;
+  word-break: break-all;
+  word-wrap: break-word;
 }
 .exchange-box-middle {
   display: flex;
@@ -176,10 +277,18 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 .exchange-box-middle-confirm-button {
   width: 100%;
   height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
 }
 .exchange-box-middle-clear-button {
   width: 100%;
   height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
 }
 .exchange-box-middle-clear {
   width: 64px;
@@ -243,8 +352,5 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   background-color: #f6f6f6;
   border-top-style: hidden;
   border-left-style: hidden;
-}
-.exchange-box-lower-data-checkbox {
-  width: 100%;
 }
 </style>
