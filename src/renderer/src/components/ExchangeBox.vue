@@ -14,6 +14,9 @@ const props = defineProps<{
   lowerSearchApi: (args: object) => Promise<never>
 }>()
 
+// 事件
+const emits = defineEmits(['exchangeConfirm'])
+
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
@@ -82,12 +85,24 @@ function handleCheckTagClick(
       break
   }
 }
+// 元素由source移动至target
 function exchange(source: SelectOption[], target: SelectOption[], item: SelectOption) {
   const index = source.indexOf(item)
   if (index !== -1) {
     source.splice(index, 1)
   }
   target.push(item)
+}
+// 处理确认交换事件
+function handleExchangeConfirm() {
+  emits('exchangeConfirm', upperBufferData.value, lowerBufferData.value)
+}
+// 处理清空按钮点击
+function handleClearButtonClicked() {
+  upperData.value.push(...upperBufferData.value)
+  upperBufferData.value = []
+  lowerData.value.push(...lowerBufferData.value)
+  lowerBufferData.value = []
 }
 </script>
 
@@ -130,12 +145,20 @@ function exchange(source: SelectOption[], target: SelectOption[], item: SelectOp
     <div class="exchange-box-middle">
       <div class="exchange-box-middle-operation">
         <div class="exchange-box-middle-confirm">
-          <el-check-tag :checked="true" class="exchange-box-middle-confirm-button" type="primary"
+          <el-check-tag
+            :checked="true"
+            class="exchange-box-middle-confirm-button"
+            type="primary"
+            @click="handleExchangeConfirm"
             >确认
           </el-check-tag>
         </div>
         <div class="exchange-box-middle-clear">
-          <el-check-tag :checked="false" class="exchange-box-middle-clear-button" type="info"
+          <el-check-tag
+            :checked="false"
+            class="exchange-box-middle-clear-button"
+            type="info"
+            @click="handleClearButtonClicked"
             >清空</el-check-tag
           >
         </div>
