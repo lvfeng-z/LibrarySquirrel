@@ -44,7 +44,7 @@ function calculateSpan() {
     // 不更改props属性
     const tempSearchBox: SearchBox = JSON.parse(JSON.stringify(searchBox))
 
-    // 未设置是否展示标题，则默认为false，labelSpan设为0
+    // 未设置是否展示标题，默认为false，labelSpan设为0
     if (tempSearchBox.showLabel == undefined) {
       tempSearchBox.showLabel = false
       tempSearchBox.labelSpan = 0
@@ -84,7 +84,7 @@ function calculateSpan() {
   innerDropDownSearchBoxes.value.push(...tempDropDownSearchBoxes)
 
   // 下拉菜单中有内容则显示下拉菜单，否则不显示
-  showDropdownFlag.value = innerDropDownSearchBoxes.value.length > 0;
+  showDropdownFlag.value = innerDropDownSearchBoxes.value.length > 0
 }
 
 // 展示下拉搜索框
@@ -173,7 +173,8 @@ function handleInputClear(paramName: string) {
           :state="dropdownState"
           :reverse="reverse"
           :search-boxes="innerDropDownSearchBoxes"
-          @params-changed="handleDropDownMenuParamsChanged">
+          @params-changed="handleDropDownMenuParamsChanged"
+        >
         </DropdownTable>
       </div>
     </div>

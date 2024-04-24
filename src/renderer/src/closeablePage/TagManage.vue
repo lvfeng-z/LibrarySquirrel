@@ -25,7 +25,6 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     dataType: 'string',
     hide: false,
     headerAlign: 'center',
-    headerTagType: 'success',
     dataAlign: 'center',
     overHide: true
   },
@@ -35,7 +34,6 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     dataType: 'string',
     hide: false,
     headerAlign: 'center',
-    headerTagType: 'success',
     dataAlign: 'center',
     overHide: true
   },
