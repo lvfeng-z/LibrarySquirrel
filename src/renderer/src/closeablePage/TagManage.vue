@@ -103,6 +103,11 @@ function handleLocalTagSelectionChange(selections: object[]) {
     localTagSelected.value = null
   }
 }
+// 处理站点标签ExchangeBox确认交换的事件
+function handleExchangeBoxConfirm(bound, unBound) {
+  console.log('TagManage.vue.handleExchangeBoxConfirm', bound)
+  console.log('TagManage.vue.handleExchangeBoxConfirm', unBound)
+}
 </script>
 
 <template>
@@ -136,6 +141,7 @@ function handleLocalTagSelectionChange(selections: object[]) {
             :lower-drop-down-search-boxes="[]"
             :lower-main-search-boxes="exchangeBoxMainSearchBoxes"
             :lower-search-api="apis.siteTagGetSelectList"
+            @exchange-confirm="handleExchangeBoxConfirm"
           ></ExchangeBox>
         </div>
       </div>
