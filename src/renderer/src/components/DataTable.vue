@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from './common/OperationItem'
 import { Thead } from './common/Thead'
 import { OperationResponse } from './common/OperationResponse'
@@ -16,11 +16,30 @@ const props = defineProps<{
   operationDropdown?: OperationItem[] // 操作列下拉菜单的文本、图标和代号（数组）
 }>()
 
+// onBeforeMount
+onBeforeMount(() => {
+  initializeThead()
+})
+
 // 变量
 const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
 const currentFactor: Ref<UnwrapRef<object>> = ref({})
+const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 
 // 方法
+// 初始化表头
+function initializeThead() {
+  props.thead.forEach((item) => {
+    const tempThead = JSON.parse(JSON.stringify(item))
+
+    // 未设置表头tag样式，默认为info
+    if (tempThead.headerTagType == undefined) {
+      tempThead.headerTagType = 'info'
+    }
+
+    innerThead.value.push(tempThead)
+  })
+}
 function handleSelectionChange(newSelectedList: object[]) {
   selectDataList.value = newSelectedList
   emits('selectionChange', selectDataList.value)
@@ -59,7 +78,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
             </el-radio>
           </template>
         </el-table-column>
-        <template v-for="(item, index) in props.thead">
+        <template v-for="(item, index) in innerThead">
           <template v-if="!item.hide">
             <el-table-column
               :key="index"
