@@ -23,6 +23,9 @@ const api = {
   },
 
   // SiteTagService
+  siteTagSave: (args) => {
+    return ipcRenderer.invoke('siteTag-save', args)
+  },
   siteTagInsert: (args) => {
     return ipcRenderer.invoke('siteTag-insert', args)
   },

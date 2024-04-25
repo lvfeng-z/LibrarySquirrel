@@ -25,6 +25,9 @@ export function exposeService() {
   })
 
   // SiteTagService
+  ipcMain.handle('siteTag-save', (_event, args) => {
+    SiteTagService.save(args)
+  })
   ipcMain.handle('siteTag-insert', (_event, args) => {
     SiteTagService.insert(args)
   })
