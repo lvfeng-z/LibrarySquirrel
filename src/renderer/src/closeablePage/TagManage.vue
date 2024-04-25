@@ -83,13 +83,15 @@ const apis = reactive({
   localTagQuery: window.api.localTagQuery,
   localTagGetSelectList: window.api.localTagGetSelectList,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
+  siteTagSave: window.api.siteTagSave,
   siteGetSelectList: window.api.siteGetSelectList
 })
 
 // 方法
 // 处理新增按钮点击事件
-function handleCreateButtonClicked() {
+async function handleCreateButtonClicked() {
   console.log('TagManage.vue.handleCreateButtonClicked')
+  const result = await apis.siteTagSave({ site_tag_id: '5641321', site_tag_name: 'female prey' })
 }
 // 处理数据行按钮点击事件
 function handleRowButtonClicked(op: OperationResponse) {
