@@ -1,4 +1,4 @@
-import Connection from 'better-sqlite3'
+import Database from 'better-sqlite3'
 import DatabaseUtil from '../util/DatabaseUtil'
 import DataBaseConstant from '../constant/DataBaseConstant'
 import LogUtil from '../util/LogUtil'
@@ -16,11 +16,11 @@ interface ConnectionPoolConfig {
   databasePath: string
 }
 
-type WaitingRequest = { resolve: (connection: Connection) => void }
+type WaitingRequest = { resolve: (connection: Database) => void }
 
 export class ConnectionPool {
   private config: ConnectionPoolConfig
-  private connections: Connection[] // 链接列表
+  private connections: Database[] // 链接列表
   private connectionExtra: { state: boolean; timeoutId?: NodeJS.Timeout }[] // 链接额外数据列表
   private connectionQueue: WaitingRequest[] // 等待队列
 
@@ -37,7 +37,7 @@ export class ConnectionPool {
   /**
    * 获取连接
    */
-  public async acquire(): Promise<Connection> {
+  public async acquire(): Promise<Database> {
     return new Promise((resolve, reject) => {
       try {
         let firstIdleIndex = -1
@@ -82,7 +82,7 @@ export class ConnectionPool {
    * 释放链接
    * @param connection
    */
-  public release(connection: Connection) {
+  public release(connection: Database) {
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开启超时定时器
     if (this.connectionQueue.length > 0) {
       const request = this.connectionQueue.shift()
@@ -104,8 +104,8 @@ export class ConnectionPool {
   /**
    * 创建一个新链接返回
    */
-  private createConnection(): Connection {
-    return new Connection(this.config.databasePath)
+  private createConnection(): Database {
+    return new Database(this.config.databasePath)
   }
 
   /**
@@ -113,7 +113,7 @@ export class ConnectionPool {
    * @param connection
    * @private
    */
-  private setupIdleTimeout(connection: Connection) {
+  private setupIdleTimeout(connection: Database) {
     const idleTimeoutMilliseconds = this.config.idleTimeout
     const index = this.connections.indexOf(connection)
     // 超时定时器回调关闭链接函数
@@ -134,7 +134,7 @@ export class ConnectionPool {
    * @param index 连接在connections数组中的索引
    */
 
-  private closeConnection(connection: Connection, index: number) {
+  private closeConnection(connection: Database, index: number) {
     // 关闭链接后清理定时器
     clearTimeout(this.connectionExtra[index].timeoutId)
     this.connections[index].timeoutId = null
