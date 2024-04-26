@@ -7,6 +7,7 @@ import { Thead } from '../components/common/Thead'
 import { SearchBox } from '../components/common/SearchBox'
 import { OperationResponse } from '../components/common/OperationResponse'
 import ExchangeBox from '../components/ExchangeBox.vue'
+import { SelectOption } from '../components/common/SelectOption'
 
 // 变量
 const localTagSelected = ref()
@@ -84,6 +85,7 @@ const apis = reactive({
   localTagGetSelectList: window.api.localTagGetSelectList,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteTagSave: window.api.siteTagSave,
+  siteTagUpdateById: window.api.siteTagUpdateById,
   siteGetSelectList: window.api.siteGetSelectList
 })
 
@@ -91,7 +93,8 @@ const apis = reactive({
 // 处理新增按钮点击事件
 async function handleCreateButtonClicked() {
   console.log('TagManage.vue.handleCreateButtonClicked')
-  const result = await apis.siteTagSave({ site_tag_id: '5641321', site_tag_name: 'female prey' })
+  const result = await apis.siteTagSave({ siteTagId: '16413221', siteTagName: 'giantness' })
+  console.log(result)
 }
 // 处理数据行按钮点击事件
 function handleRowButtonClicked(op: OperationResponse) {
@@ -106,7 +109,14 @@ function handleLocalTagSelectionChange(selections: object[]) {
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件
-function handleExchangeBoxConfirm(bound, unBound) {
+async function handleExchangeBoxConfirm(unBound: SelectOption, bound: SelectOption) {
+  for (const item: SelectOption of bound) {
+    const temp = {
+      id: item.value,
+      local_tag_id: localTagSelected.value['id']
+    }
+    apis.siteTagUpdateById(temp)
+  }
   console.log('TagManage.vue.handleExchangeBoxConfirm', bound)
   console.log('TagManage.vue.handleExchangeBoxConfirm', unBound)
 }
