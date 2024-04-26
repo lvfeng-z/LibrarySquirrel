@@ -8,6 +8,7 @@ import { SearchBox } from '../common/SearchBox'
 import { OperationResponse } from '../common/OperationResponse'
 import ExchangeBox from '../ExchangeBox.vue'
 import { SelectOption } from '../common/SelectOption'
+import { parseApiResponse } from '../../util/ApiUtil'
 
 // 变量
 const localTagSelected = ref()
@@ -86,6 +87,7 @@ const apis = reactive({
   siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteTagSave: window.api.siteTagSave,
   siteTagUpdateById: window.api.siteTagUpdateById,
+  siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
   siteGetSelectList: window.api.siteGetSelectList
 })
 
@@ -110,13 +112,10 @@ function handleLocalTagSelectionChange(selections: object[]) {
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
-  for (const item of bound) {
-    const temp = {
-      id: item.value,
-      local_tag_id: localTagSelected.value['id']
-    }
-    console.log(apis.siteTagUpdateById(temp))
-  }
+  const boundIds = bound.map((item) => item.value)
+  apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
+  const unBoundIds = unBound.map((item) => item.value)
+  parseApiResponse(await apis.siteTagUpdateBindLocalTag(null, unBoundIds), true)
 }
 </script>
 
