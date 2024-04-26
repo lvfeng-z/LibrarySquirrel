@@ -109,16 +109,14 @@ function handleLocalTagSelectionChange(selections: object[]) {
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件
-async function handleExchangeBoxConfirm(unBound: SelectOption, bound: SelectOption) {
-  for (const item: SelectOption of bound) {
+async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
+  for (const item of bound) {
     const temp = {
       id: item.value,
       local_tag_id: localTagSelected.value['id']
     }
-    apis.siteTagUpdateById(temp)
+    console.log(apis.siteTagUpdateById(temp))
   }
-  console.log('TagManage.vue.handleExchangeBoxConfirm', bound)
-  console.log('TagManage.vue.handleExchangeBoxConfirm', unBound)
 }
 </script>
 
