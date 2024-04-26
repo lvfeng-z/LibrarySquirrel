@@ -1,17 +1,15 @@
 import Connection from 'better-sqlite3'
+import { PageModel } from '../models/utilModels/PageModel'
+import StringUtil from '../util/StringUtil'
 
-type PrimaryKey<T> = keyof T & (string | number)
+type PrimaryKey = string | number
 
 // 基础数据操作接口
 export interface BaseDao<T> {
-  save(entity: T): Promise<void>
-  updateById(id: PrimaryKey<T>, updateData: Partial<T>): Promise<void>
-  deleteById(id: PrimaryKey<T>): Promise<void>
-  selectPage(
-    page: number,
-    limit: number,
-    query?: Partial<T>
-  ): Promise<{ items: T[]; total: number }>
+  save(entity: T): Promise<number | string>
+  updateById(id: PrimaryKey, updateData: Partial<T>): Promise<void>
+  deleteById(id: PrimaryKey): Promise<void>
+  selectPage(page: PageModel<T>): Promise<PageModel<T>>
 }
 
 // 抽象基类，实现基本的CRUD方法
@@ -22,34 +20,32 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
     this.tableName = tableName
   }
 
-  async save(entity: T): Promise<void> {
+  async save(entity: Partial<T>): Promise<number | string> {
     const connection = await this.acquire()
     try {
-      const keys = Object.keys(entity as Record<string, unknown>)
+      const keys = Object.keys(entity).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = keys.map((item) => `@${item}`)
 
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-      await connection.prepare(sql).run(entity)
+      return await connection.prepare(sql).run(entity).lastInsertRowid
     } finally {
       await this.release(connection)
     }
   }
 
-  async updateById(id: PrimaryKey<T>, updateData: Partial<T>): Promise<void> {
+  async updateById(id: PrimaryKey, updateData: Partial<T>): Promise<void> {
     const connection = await this.acquire()
     try {
-      const setClauses = Object.entries(updateData)
-        .map(([key, value]) => `"${key}" = '${String(value)}'`)
-        .join(', ')
-
+      const keys = Object.keys(updateData).map((key) => StringUtil.camelToSnakeCase(key))
+      const setClauses = keys.map((item) => `${item} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      await connection.run(sql)
+      await connection.prepare(sql).run(updateData)
     } finally {
       await this.release(connection)
     }
   }
 
-  async deleteById(id: PrimaryKey<T>): Promise<void> {
+  async deleteById(id: PrimaryKey): Promise<void> {
     const connection = await this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
@@ -59,16 +55,12 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
     }
   }
 
-  async selectPage(
-    page: number,
-    limit: number,
-    query?: Partial<T>
-  ): Promise<{ items: T[]; total: number }> {
+  async selectPage(page: PageModel<T>): Promise<PageModel<T>> {
     const connection = await this.acquire()
     try {
       let whereClause = ''
-      if (query) {
-        const conditions = Object.entries(query)
+      if (page.query) {
+        const conditions = Object.entries(page.query)
           .map(([key, value]) => `"${key}" = '${String(value)}'`)
           .join(' AND ')
 
@@ -77,19 +69,19 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
 
       const countSql = `SELECT COUNT(*) AS total FROM "${this.tableName}" ${whereClause}`
       const countResult = await connection.get(countSql)
-      const total = countResult.total
+      page.pageNumber = countResult.total
 
-      const offset = (page - 1) * limit
+      const offset = (page.pageNumber - 1) * page.pageSize
       const selectSql = `
         SELECT *
         FROM "${this.tableName}"
         ${whereClause}
-        LIMIT ${limit} OFFSET ${offset}
+        LIMIT ${page.pageSize} OFFSET ${offset}
       `
       const rows = await connection.all(selectSql)
 
-      const items = rows.map((row) => this.rowToObject(row))
-      return { items, total }
+      page.data = rows.map((row) => this.rowToObject(row))
+      return page
     } finally {
       await this.release(connection)
     }
