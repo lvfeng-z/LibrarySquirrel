@@ -25,11 +25,11 @@ export function exposeService() {
   })
 
   // SiteTagService
-  ipcMain.handle('siteTag-save', (_event, args) => {
-    SiteTagService.save(args)
+  ipcMain.handle('siteTag-save', async (_event, args) => {
+    return await SiteTagService.save(args)
   })
-  ipcMain.handle('siteTag-insert', (_event, args) => {
-    SiteTagService.insert(args)
+  ipcMain.handle('siteTag-updateById', async (_event, args) => {
+    return await SiteTagService.updateById(args)
   })
   ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
     return await SiteTagService.getSelectList(args)

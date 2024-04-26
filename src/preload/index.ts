@@ -26,8 +26,8 @@ const api = {
   siteTagSave: (args) => {
     return ipcRenderer.invoke('siteTag-save', args)
   },
-  siteTagInsert: (args) => {
-    return ipcRenderer.invoke('siteTag-insert', args)
+  siteTagUpdateById: (args) => {
+    return ipcRenderer.invoke('siteTag-updateById', args)
   },
   siteTagGetSelectList: (args) => {
     return ipcRenderer.invoke('siteTag-getSelectList', args)
