@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import SearchTable from '../components/SearchTable.vue'
+import SearchTable from '../SearchTable.vue'
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
-import { OperationItem } from '../components/common/OperationItem'
-import { Thead } from '../components/common/Thead'
-import { SearchBox } from '../components/common/SearchBox'
-import { OperationResponse } from '../components/common/OperationResponse'
-import ExchangeBox from '../components/ExchangeBox.vue'
-import { SelectOption } from '../components/common/SelectOption'
+import { OperationItem } from '../common/OperationItem'
+import { Thead } from '../common/Thead'
+import { SearchBox } from '../common/SearchBox'
+import { OperationResponse } from '../common/OperationResponse'
+import ExchangeBox from '../ExchangeBox.vue'
+import { SelectOption } from '../common/SelectOption'
 
 // 变量
 const localTagSelected = ref()
