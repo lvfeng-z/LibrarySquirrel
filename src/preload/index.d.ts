@@ -16,6 +16,7 @@ declare global {
       // SiteTagService
       siteTagSave: function
       siteTagUpdateById: function
+      siteTagUpdateBindLocalTag: function
       siteTagGetSelectList: function
     }
   }
