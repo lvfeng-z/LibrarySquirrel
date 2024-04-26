@@ -8,10 +8,12 @@ export class ApiUtil {
     this.data = undefined
   }
 
-  public response(data: unknown) {
-    this.success = true
-    this.data = data
-    return this
+  public static response(data: unknown) {
+    const response = new ApiUtil()
+    response.success = true
+    response.msg = '操作成功'
+    response.data = data
+    return response
   }
 
   public setMsg(msg: string) {
@@ -19,9 +21,18 @@ export class ApiUtil {
     return this
   }
 
-  public error(msg: string) {
-    this.success = false
-    this.msg = msg
-    return this
+  public static error(msg: string) {
+    const response = new ApiUtil()
+    response.success = false
+    response.msg = msg
+    return response
+  }
+
+  public static check(state: boolean) {
+    if (state) {
+      return this.response(undefined).setMsg('操作成功')
+    } else {
+      return this.error('主进程错误')
+    }
   }
 }
