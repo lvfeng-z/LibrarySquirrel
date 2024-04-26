@@ -7,8 +7,8 @@ type PrimaryKey = string | number
 // 基础数据操作接口
 export interface BaseDao<T> {
   save(entity: T): Promise<number | string>
-  updateById(id: PrimaryKey, updateData: Partial<T>): Promise<void>
-  deleteById(id: PrimaryKey): Promise<void>
+  updateById(id: PrimaryKey, updateData: Partial<T>): Promise<number>
+  deleteById(id: PrimaryKey): Promise<number>
   selectPage(page: PageModel<T>): Promise<PageModel<T>>
 }
 
@@ -24,8 +24,7 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
     const connection = await this.acquire()
     try {
       const keys = Object.keys(entity).map((key) => StringUtil.camelToSnakeCase(key))
-      const valueKeys = keys.map((item) => `@${item}`)
-
+      const valueKeys = Object.keys(entity).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
       return await connection.prepare(sql).run(entity).lastInsertRowid
     } finally {
@@ -33,23 +32,23 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
     }
   }
 
-  async updateById(id: PrimaryKey, updateData: Partial<T>): Promise<void> {
+  async updateById(id: PrimaryKey, updateData: Partial<T>): Promise<number> {
     const connection = await this.acquire()
     try {
       const keys = Object.keys(updateData).map((key) => StringUtil.camelToSnakeCase(key))
-      const setClauses = keys.map((item) => `${item} = @${item}`)
+      const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      await connection.prepare(sql).run(updateData)
+      return await connection.prepare(sql).run(updateData).changes
     } finally {
       await this.release(connection)
     }
   }
 
-  async deleteById(id: PrimaryKey): Promise<void> {
+  async deleteById(id: PrimaryKey): Promise<number> {
     const connection = await this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      await connection.run(sql)
+      return await connection.prepare(sql).run().changes
     } finally {
       await this.release(connection)
     }
