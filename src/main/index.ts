@@ -4,7 +4,6 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import InitializeDatabase from './database/initialize/InitializeDatabase'
 import { exposeService } from './service/ServiceExposer'
-import { ConnectionPool, POOL_CONFIG } from './database/ConnectionPool'
 import logUtil from './util/LogUtil'
 
 function createWindow(): void {
@@ -61,7 +60,6 @@ app.whenReady().then(() => {
 
   // 初始化数据库
   InitializeDatabase.InitializeDB().then(() => {
-    global.connectionPool = new ConnectionPool(POOL_CONFIG)
     exposeService()
   })
 
