@@ -2,10 +2,10 @@
 import SearchToolbar from './SearchToolbar.vue'
 import DataTable from './DataTable.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
-import { SearchBox } from '../../util/model/SearchBox'
-import { OperationItem } from '../../util/model/OperationItem'
-import { Thead } from '../../util/model/Thead'
-import { OperationResponse } from '../../util/model/OperationResponse'
+import { SearchBox } from '../../utils/model/SearchBox'
+import { OperationItem } from '../../utils/model/OperationItem'
+import { Thead } from '../../utils/model/Thead'
+import { OperationResponse } from '../../utils/model/OperationResponse'
 
 // props
 const props = withDefaults(

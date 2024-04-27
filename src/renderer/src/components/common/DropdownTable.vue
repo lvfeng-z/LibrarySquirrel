@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SearchBox } from '../../util/model/SearchBox'
+import { SearchBox } from '../../utils/model/SearchBox'
 import { onBeforeMount, Ref, ref, UnwrapRef, watch } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 

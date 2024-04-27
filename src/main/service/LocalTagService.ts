@@ -1,7 +1,7 @@
-import LocalTag from '../models/LocalTag'
+import LocalTag from '../model/LocalTag'
 import LocalTagDao from '../dao/LocalTagDao'
-import LocalTagQueryDTO from '../models/queryDTO/LocalTagQueryDTO'
-import SelectVO from '../models/utilModels/SelectVO'
+import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
+import SelectVO from '../model/utilModels/SelectVO'
 
 async function insert(localTag: LocalTag) {
   await LocalTagDao.insert(localTag)

@@ -1,5 +1,5 @@
-import SiteTag from '../models/SiteTag'
-import SiteTagQueryDTO from '../models/queryDTO/SiteTagQueryDTO'
+import SiteTag from '../model/SiteTag'
+import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 import { SiteTagDao } from '../dao/SiteTagDao'
 import { ApiUtil } from '../util/ApiUtil'
 import LogUtil from '../util/LogUtil'

@@ -1,6 +1,6 @@
-import Site from '../models/Site'
+import Site from '../model/Site'
 import SiteDao from '../dao/SiteDao'
-import SiteQueryDTO from '../models/queryDTO/SiteQueryDTO'
+import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
 
 async function insert(site: Site) {
   await SiteDao.insert(site)

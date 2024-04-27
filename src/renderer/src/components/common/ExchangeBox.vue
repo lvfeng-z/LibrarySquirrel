@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import { SearchBox } from '../../util/model/SearchBox'
+import { SearchBox } from '../../utils/model/SearchBox'
 import { Ref, ref, UnwrapRef } from 'vue'
-import { SelectOption } from '../../util/model/SelectOption'
+import { SelectOption } from '../../utils/model/SelectOption'
 
 // props
 const props = defineProps<{
