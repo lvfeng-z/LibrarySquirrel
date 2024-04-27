@@ -1,7 +1,7 @@
 import { AbstractBaseDao } from './BaseDao'
-import SiteTag from '../models/SiteTag'
-import SiteTagQueryDTO from '../models/queryDTO/SiteTagQueryDTO'
-import SelectVO from '../models/utilModels/SelectVO'
+import SiteTag from '../model/SiteTag'
+import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
+import SelectVO from '../model/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
 
 export class SiteTagDao extends AbstractBaseDao<SiteTag> {

@@ -1,7 +1,7 @@
-import LocalTag from '../models/LocalTag'
-import SelectVO from '../models/utilModels/SelectVO'
+import LocalTag from '../model/LocalTag'
+import SelectVO from '../model/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
-import LocalTagQueryDTO from '../models/queryDTO/LocalTagQueryDTO'
+import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
 
 async function insert(localTag: LocalTag) {
   const connection = await global.connectionPool.acquire()

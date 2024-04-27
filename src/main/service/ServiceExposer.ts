@@ -1,6 +1,6 @@
 import LocalTagService from './LocalTagService'
 import { ipcMain } from 'electron'
-import SelectVO from '../models/utilModels/SelectVO'
+import SelectVO from '../model/utilModels/SelectVO'
 import SiteTagService from './SiteTagService'
 import SiteService from './SiteService'
 

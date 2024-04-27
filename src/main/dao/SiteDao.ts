@@ -1,7 +1,7 @@
-import Site from '../models/Site'
-import SelectVO from '../models/utilModels/SelectVO'
+import Site from '../model/Site'
+import SelectVO from '../model/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
-import SiteQueryDTO from '../models/queryDTO/SiteQueryDTO'
+import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
 
 async function insert(site: Site) {
   const connection = await global.connectionPool.acquire()

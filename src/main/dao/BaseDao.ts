@@ -1,5 +1,5 @@
 import Connection from 'better-sqlite3'
-import { PageModel } from '../models/utilModels/PageModel'
+import { PageModel } from '../model/utilModels/PageModel'
 import StringUtil from '../util/StringUtil'
 
 type PrimaryKey = string | number

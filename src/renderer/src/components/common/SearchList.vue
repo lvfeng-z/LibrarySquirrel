@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, UnwrapRef } from 'vue'
-import { SelectOption } from '../../util/model/SelectOption'
+import { SelectOption } from '../../utils/model/SelectOption'
 
 const props = defineProps<{
   multiSelect: boolean
