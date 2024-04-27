@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-import { SearchBox } from './common/SearchBox'
+import { SearchBox } from '../../util/model/SearchBox'
 import DropdownTable from './DropdownTable.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
