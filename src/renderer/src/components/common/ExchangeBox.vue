@@ -17,7 +17,7 @@ const props = defineProps<{
 // 事件
 const emits = defineEmits(['exchangeConfirm'])
 
-// 暴露ref
+// 暴露
 defineExpose({
   refreshData
 })
