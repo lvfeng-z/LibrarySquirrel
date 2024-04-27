@@ -24,7 +24,7 @@ async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[
   if (siteTagIds.length > 0) {
     return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
   } else {
-    return true
+    return ApiUtil.check(true)
   }
 }
 
