@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-import { OperationItem } from './common/OperationItem'
-import { Thead } from './common/Thead'
-import { OperationResponse } from './common/OperationResponse'
+import { OperationItem } from '../../util/model/OperationItem'
+import { Thead } from '../../util/model/Thead'
+import { OperationResponse } from '../../util/model/OperationResponse'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
 
 // props
