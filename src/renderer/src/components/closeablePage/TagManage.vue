@@ -8,9 +8,10 @@ import { SearchBox } from '../../utils/model/SearchBox'
 import { OperationResponse } from '../../utils/model/OperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../utils/model/SelectOption'
-import { parseApiResponse } from '../../utils/function/ApiUtil'
+import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/function/ApiUtil'
 
 // 变量
+const siteTagExchangeBox = ref()
 const localTagSelected = ref()
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
@@ -113,9 +114,13 @@ function handleLocalTagSelectionChange(selections: object[]) {
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
   const boundIds = bound.map((item) => item.value)
-  apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
+  const upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
   const unBoundIds = unBound.map((item) => item.value)
-  parseApiResponse(await apis.siteTagUpdateBindLocalTag(null, unBoundIds), true)
+  const lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
+  apiResponseMsgNoSuccess(lowerResponse)
+  if (apiResponseCheck(lowerResponse) && apiResponseCheck(upperResponse)) {
+    await siteTagExchangeBox.value.refreshData()
+  }
 }
 </script>
 
@@ -144,6 +149,7 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
       <div class="right">
         <div class="margin-box">
           <ExchangeBox
+            ref="siteTagExchangeBox"
             :upper-drop-down-search-boxes="[]"
             :upper-main-search-boxes="exchangeBoxMainSearchBoxes"
             :upper-search-api="apis.siteTagGetSelectList"
