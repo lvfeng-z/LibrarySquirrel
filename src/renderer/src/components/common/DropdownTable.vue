@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SearchBox } from '../../util/model/SearchBox'
-import { onBeforeMount, Ref, ref, UnwrapRef, watch } from "vue";
+import { onBeforeMount, Ref, ref, UnwrapRef, watch } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
@@ -24,7 +24,7 @@ onBeforeMount(() => {
 const emits = defineEmits(['paramsChanged'])
 
 // 变量
-const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
+const innerState: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 const searchBoxInRow: Ref<UnwrapRef<SearchBox[][]>> = ref([]) // searchBox分行数组
 const dropdownTableHeight = ref(0) // 弃用 所有行占用的高度
 const formData = ref({})
@@ -34,14 +34,14 @@ const formData = ref({})
 watch(
   () => props.state,
   (newValue) => {
-    state.value = newValue;
+    innerState.value = newValue
   }
-);
+)
 
 // 方法
 // 开启/关闭下拉表单
 function changeState() {
-  state.value = !state.value
+  innerState.value = !innerState.value
 }
 
 // 处理searchBox布局
@@ -102,10 +102,10 @@ function handleParamsChanged() {
     <div
       :class="{
         'dropdown-table-main': true,
-        'dropdown-table-main-open': state,
-        'dropdown-table-main-close': !state,
+        'dropdown-table-main-open': innerState,
+        'dropdown-table-main-close': !innerState,
         'margin-box':
-          state /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
+          innerState /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
       }"
     >
       <el-scrollbar class="dropdown-table-rows">
