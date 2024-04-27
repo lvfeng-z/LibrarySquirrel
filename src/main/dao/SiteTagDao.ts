@@ -36,14 +36,14 @@ export class SiteTagDao extends AbstractBaseDao<SiteTag> {
     }
   }
 
-  // public async getSiteTagWithLocalTag(queryDTO: SiteTagQueryDTO) {
-  //   const connection = await global.connectionPool.acquire()
-  //   try {
-  //
-  //   } finally {
-  //     global.connectionPool
-  //   }
-  // }
+  public async getSiteTagWithLocalTag(queryDTO: SiteTagQueryDTO) {
+    const db = super.acquire()
+    try {
+      console.log(queryDTO)
+    } finally {
+      db.release()
+    }
+  }
 
   public async getSelectList(queryDTO: SiteTagQueryDTO): Promise<SelectVO[]> {
     const db = super.acquire()
