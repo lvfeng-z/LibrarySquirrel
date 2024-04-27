@@ -21,7 +21,11 @@ async function updateById(siteTag: SiteTag) {
 
 async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
   const dao = new SiteTagDao()
-  return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
+  if (siteTagIds.length > 0) {
+    return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
+  } else {
+    return true
+  }
 }
 
 function getSelectList(queryDTO: SiteTagQueryDTO) {
