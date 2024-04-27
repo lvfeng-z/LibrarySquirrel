@@ -17,6 +17,11 @@ const props = defineProps<{
 // 事件
 const emits = defineEmits(['exchangeConfirm'])
 
+// 暴露ref
+defineExpose({
+  refreshData
+})
+
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
@@ -54,7 +59,6 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
     })
   }
 }
-// 处理checkBox选中变化事件
 // 处理check-tag点击事件
 function handleCheckTagClick(
   tag: SelectOption,
@@ -103,6 +107,17 @@ function handleClearButtonClicked() {
   upperBufferData.value = []
   lowerData.value.push(...lowerBufferData.value)
   lowerBufferData.value = []
+}
+// 刷新内容
+async function refreshData() {
+  upperBufferData.value = []
+  lowerBufferData.value = []
+
+  const upperParams = { ...upperSearchToolbarParams.value }
+  upperData.value = await props.upperSearchApi(upperParams)
+
+  const lowerParams = { ...lowerSearchToolbarParams.value }
+  lowerData.value = await props.lowerSearchApi(lowerParams)
 }
 </script>
 
