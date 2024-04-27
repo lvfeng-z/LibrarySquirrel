@@ -2,24 +2,32 @@ import LocalTag from '../model/LocalTag'
 import SelectVO from '../model/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
+import { AbstractBaseDao } from './BaseDao'
 
-async function insert(localTag: LocalTag) {
-  const connection = await global.connectionPool.acquire()
-  try {
-    connection
-      .prepare(
-        'insert into local_tag (id, local_tag_name, base_local_tag_id) values (@id, @localTagName, @baseLocalTagId)'
-      )
-      .run(localTag)
-  } finally {
-    global.connectionPool.release(connection)
+export class LocalTagDao extends AbstractBaseDao<LocalTag> {
+  constructor() {
+    super('local_tag', 'LocalTagDao')
   }
-}
+  protected getPrimaryKeyColumnName(): string {
+    return 'id'
+  }
 
-async function query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
-  const connection = await global.connectionPool.acquire()
-  try {
-    return new Promise((resolve) => {
+  public async insert(localTag: LocalTag) {
+    const db = super.acquire()
+    try {
+      ;(
+        await db.prepare(
+          'insert into local_tag (id, local_tag_name, base_local_tag_id) values (@id, @localTagName, @baseLocalTagId)'
+        )
+      ).run(localTag)
+    } finally {
+      db.release()
+    }
+  }
+
+  public async query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
+    const db = super.acquire()
+    try {
       const selectFrom =
         'select id, local_tag_name as localTagName, base_local_tag_id as baseLocalTagId from local_tag'
       let where: string = ''
@@ -44,18 +52,15 @@ async function query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
         where = ' where ' + columns.join(' and ')
       }
       const sql = selectFrom + where
-      resolve(connection.prepare(sql).all(values))
-    })
-  } finally {
-    global.connectionPool.release(connection)
+      return (await db.prepare(sql)).all(values) as LocalTag[]
+    } finally {
+      db.release()
+    }
   }
-}
 
-async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
-  console.log('LocalTagDao.ts', queryDTO)
-  const connection = await global.connectionPool.acquire()
-  try {
-    return new Promise((resolve) => {
+  public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
+    const db = super.acquire()
+    try {
       const selectFrom = 'select id as value, local_tag_name as label from local_tag'
       let where = ''
       const columns: string[] = []
@@ -74,17 +79,9 @@ async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
 
       const sql: string = selectFrom + where
 
-      const results = connection.prepare(sql).all(values)
-
-      resolve(results)
-    })
-  } finally {
-    global.connectionPool.release(connection)
+      return (await db.prepare(sql)).all(values) as SelectVO[]
+    } finally {
+      db.release()
+    }
   }
-}
-
-export default {
-  insert,
-  query,
-  getSelectList
 }

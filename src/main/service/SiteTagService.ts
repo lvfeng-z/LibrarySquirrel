@@ -28,9 +28,13 @@ async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[
   }
 }
 
-function getSelectList(queryDTO: SiteTagQueryDTO) {
+// function getBoundOrUnboundInLocalTag(localTagId: number, state: boolean) {
+//   if ()
+// }
+
+async function getSelectList(queryDTO: SiteTagQueryDTO) {
   const dao = new SiteTagDao()
-  return dao.getSelectList(queryDTO)
+  return await dao.getSelectList(queryDTO)
 }
 
 export default {

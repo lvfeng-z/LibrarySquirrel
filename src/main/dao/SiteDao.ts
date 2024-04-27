@@ -2,24 +2,33 @@ import Site from '../model/Site'
 import SelectVO from '../model/utilModels/SelectVO'
 import StringUtil from '../util/StringUtil'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
+import { DB } from '../database/DB'
+import { AbstractBaseDao } from './BaseDao'
 
-async function insert(site: Site) {
-  const connection = await global.connectionPool.acquire()
-  try {
-    connection
-      .prepare(
-        'insert into site (id, site_name, site_domain, site_homepage) values (@id, @siteName, @siteDomain, @siteHomepage)'
-      )
-      .run(site)
-  } finally {
-    global.connectionPool.release(connection)
+export class SiteDao extends AbstractBaseDao<Site> {
+  constructor() {
+    super('site', 'SiteDao')
   }
-}
+  protected getPrimaryKeyColumnName(): string {
+    return 'id'
+  }
 
-async function getSelectList(queryDTO: SiteQueryDTO): Promise<SelectVO[]> {
-  const connection = await global.connectionPool.acquire()
-  try {
-    return new Promise((resolve) => {
+  public async insert(site: Site) {
+    const db = new DB('SiteDao')
+    try {
+      ;(
+        await db.prepare(
+          'insert into site (id, site_name, site_domain, site_homepage) values (@id, @siteName, @siteDomain, @siteHomepage)'
+        )
+      ).run(site)
+    } finally {
+      db.release()
+    }
+  }
+
+  public async getSelectList(queryDTO: SiteQueryDTO): Promise<SelectVO[]> {
+    const db = new DB('SiteDao')
+    try {
       const selectFrom = 'select id as value, site_name as label from site'
       let where = ''
       const columns: string[] = []
@@ -37,16 +46,9 @@ async function getSelectList(queryDTO: SiteQueryDTO): Promise<SelectVO[]> {
       }
 
       const sql: string = selectFrom + where
-      const results = connection.prepare(sql).all(values)
-
-      resolve(results)
-    })
-  } finally {
-    global.connectionPool.release(connection)
+      return (await db.prepare(sql)).all(values) as SelectVO[]
+    } finally {
+      db.release()
+    }
   }
-}
-
-export default {
-  insert,
-  getSelectList
 }

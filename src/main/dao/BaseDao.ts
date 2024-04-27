@@ -1,6 +1,6 @@
-import Connection from 'better-sqlite3'
 import { PageModel } from '../model/utilModels/PageModel'
 import StringUtil from '../util/StringUtil'
+import { DB } from '../database/DB'
 
 type PrimaryKey = string | number
 
@@ -15,47 +15,49 @@ export interface BaseDao<T> {
 // 抽象基类，实现基本的CRUD方法
 export abstract class AbstractBaseDao<T> implements BaseDao<T> {
   protected tableName: string
+  private readonly childClassName: string
 
-  protected constructor(tableName: string) {
+  protected constructor(tableName: string, childClassName: string) {
     this.tableName = tableName
+    this.childClassName = childClassName
   }
 
   async save(entity: Partial<T>): Promise<number | string> {
-    const connection = await this.acquire()
+    const db = this.acquire()
     try {
       const keys = Object.keys(entity).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = Object.keys(entity).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-      return await connection.prepare(sql).run(entity).lastInsertRowid
+      return (await db.prepare(sql)).run(entity).lastInsertRowid as number
     } finally {
-      await this.release(connection)
+      db.release()
     }
   }
 
   async updateById(id: PrimaryKey, updateData: Partial<T>): Promise<number> {
-    const connection = await this.acquire()
+    const db = this.acquire()
     try {
       const keys = Object.keys(updateData).map((key) => StringUtil.camelToSnakeCase(key))
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return await connection.prepare(sql).run(updateData).changes
+      return (await db.prepare(sql)).run(updateData).changes
     } finally {
-      await this.release(connection)
+      db.release()
     }
   }
 
   async deleteById(id: PrimaryKey): Promise<number> {
-    const connection = await this.acquire()
+    const db = this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return await connection.prepare(sql).run().changes
+      return (await db.prepare(sql)).run().changes
     } finally {
-      await this.release(connection)
+      db.release()
     }
   }
 
   async selectPage(page: PageModel<T>): Promise<PageModel<T>> {
-    const connection = await this.acquire()
+    const db = this.acquire()
     try {
       let whereClause = ''
       if (page.query) {
@@ -67,7 +69,7 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
       }
 
       const countSql = `SELECT COUNT(*) AS total FROM "${this.tableName}" ${whereClause}`
-      const countResult = await connection.get(countSql)
+      const countResult = (await db.prepare(countSql)).get() as { total: number }
       page.pageNumber = countResult.total
 
       const offset = (page.pageNumber - 1) * page.pageSize
@@ -77,12 +79,12 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
         ${whereClause}
         LIMIT ${page.pageSize} OFFSET ${offset}
       `
-      const rows = await connection.all(selectSql)
+      const rows = (await db.prepare(selectSql)).all()
 
-      page.data = rows.map((row) => this.rowToObject(row))
+      page.data = rows.map((row) => this.rowToObject(row as Record<string, unknown>))
       return page
     } finally {
-      await this.release(connection)
+      db.release()
     }
   }
 
@@ -94,11 +96,7 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
     return row as T
   }
 
-  private async acquire() {
-    return await global.connectionPool.acquire()
-  }
-
-  private async release(connection: Connection) {
-    global.connectionPool.release(connection)
+  protected acquire() {
+    return new DB(this.childClassName)
   }
 }
