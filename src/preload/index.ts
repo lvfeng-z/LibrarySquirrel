@@ -32,6 +32,9 @@ const api = {
   siteTagUpdateBindLocalTag: (localTagId: string | null, siteTagIds: string[]) => {
     return ipcRenderer.invoke('siteTag-updateBindLocalTag', localTagId, siteTagIds)
   },
+  siteTagGetBoundOrUnboundInLocalTag: (args) => {
+    return ipcRenderer.invoke('siteTag-getBoundOrUnboundInLocalTag', args)
+  },
   siteTagGetSelectList: (args) => {
     return ipcRenderer.invoke('siteTag-getSelectList', args)
   }
