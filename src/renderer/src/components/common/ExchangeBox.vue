@@ -6,12 +6,16 @@ import { SelectOption } from '../../utils/model/SelectOption'
 
 // props
 const props = defineProps<{
-  upperMainSearchBoxes: SearchBox[]
-  upperDropDownSearchBoxes: SearchBox[]
-  lowerMainSearchBoxes: SearchBox[]
-  lowerDropDownSearchBoxes: SearchBox[]
-  upperSearchApi: (args: object) => Promise<never>
-  lowerSearchApi: (args: object) => Promise<never>
+  upperTitle: string // upper的标题
+  lowerTitle: string // lower的标题
+  upperMainSearchBoxes: SearchBox[] // upper的SearchToolbar的主菜单参数
+  upperDropDownSearchBoxes: SearchBox[] // upper的SearchToolbar的下拉菜单参数
+  lowerMainSearchBoxes: SearchBox[] // lower的SearchToolbar的主菜单参数
+  lowerDropDownSearchBoxes: SearchBox[] // lower的SearchToolbar的下拉菜单参数
+  upperSearchApi: (args: object) => Promise<never> // upper的接口
+  lowerSearchApi: (args: object) => Promise<never> // lower的接口
+  upperApiStaticParams: object // upper的接口固定参数
+  lowerApiStaticParams: object // lower的接口固定参数
 }>()
 
 // 事件
@@ -44,14 +48,14 @@ function handleLowerSearchToolbarParamsChanged(params: object) {
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked(upperOrLower: boolean) {
   if (upperOrLower) {
-    const params = { ...upperSearchToolbarParams.value }
+    const params = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
     const newData: [] = await props.upperSearchApi(params)
     // 过滤掉upperBufferId已包含的数据
     upperData.value = newData.filter((item: SelectOption) => {
       return !upperBufferId.value.has(item.value)
     })
   } else {
-    const params = { ...lowerSearchToolbarParams.value }
+    const params = { ...lowerSearchToolbarParams.value, ...props.lowerApiStaticParams }
     const newData: [] = await props.lowerSearchApi(params)
     // 过滤掉lowerBufferId已包含的数据
     lowerData.value = newData.filter((item: SelectOption) => {
@@ -125,7 +129,7 @@ async function refreshData() {
   <div class="exchange-box">
     <div class="exchange-box-upper">
       <div class="exchange-box-upper-name rounded-borders">
-        <el-text>已绑定站点标签</el-text>
+        <el-text>{{ upperTitle }}</el-text>
       </div>
       <div class="exchange-box-upper-main">
         <div class="exchange-box-upper-toolbar z-layer-1">
@@ -217,7 +221,7 @@ async function refreshData() {
     </div>
     <div class="exchange-box-lower">
       <div class="exchange-box-lower-name rounded-borders">
-        <el-text>未绑定站点标签</el-text>
+        <el-text>{{ lowerTitle }}</el-text>
       </div>
       <div class="exchange-box-lower-main">
         <div class="exchange-box-lower-data rounded-borders margin-box">
