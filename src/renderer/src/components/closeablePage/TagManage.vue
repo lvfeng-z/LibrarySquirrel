@@ -12,7 +12,7 @@ import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/function/
 
 // 变量
 const siteTagExchangeBox = ref()
-const localTagSelected = ref()
+const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
 // 本地标签SearchTable的operationDropDown
@@ -89,7 +89,8 @@ const apis = reactive({
   siteTagSave: window.api.siteTagSave,
   siteTagUpdateById: window.api.siteTagUpdateById,
   siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
-  siteGetSelectList: window.api.siteGetSelectList
+  siteGetSelectList: window.api.siteGetSelectList,
+  siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
 })
 
 // 方法
@@ -108,7 +109,7 @@ function handleLocalTagSelectionChange(selections: object[]) {
   if (selections.length > 0) {
     localTagSelected.value = selections[0]
   } else {
-    localTagSelected.value = null
+    localTagSelected.value = {}
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件
@@ -150,12 +151,16 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
         <div class="margin-box">
           <ExchangeBox
             ref="siteTagExchangeBox"
+            upper-title=""
             :upper-drop-down-search-boxes="[]"
             :upper-main-search-boxes="exchangeBoxMainSearchBoxes"
-            :upper-search-api="apis.siteTagGetSelectList"
+            :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+            :upper-api-static-params="{ localTagId: localTagSelected.id, state: true }"
+            lower-title=""
             :lower-drop-down-search-boxes="[]"
             :lower-main-search-boxes="exchangeBoxMainSearchBoxes"
-            :lower-search-api="apis.siteTagGetSelectList"
+            :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+            :lower-api-static-params="{ localTagId: localTagSelected.id, state: false }"
             @exchange-confirm="handleExchangeBoxConfirm"
           ></ExchangeBox>
         </div>
