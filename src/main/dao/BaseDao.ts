@@ -88,6 +88,20 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
     }
   }
 
+  protected getWhereClauses(queryConditions: Partial<T>): Record<string, string> {
+    const whereClauses: Record<string, string> = {}
+    if (queryConditions) {
+      Object.entries(queryConditions).forEach(([key, value]) => {
+        if (value !== undefined) {
+          const snakeCaseKey = StringUtil.camelToSnakeCase(key)
+          whereClauses[key] = `"${snakeCaseKey}" = @${key}`
+        }
+      })
+    }
+
+    return whereClauses
+  }
+
   protected abstract getPrimaryKeyColumnName(): string
 
   protected rowToObject(row: Record<string, unknown>): T {
