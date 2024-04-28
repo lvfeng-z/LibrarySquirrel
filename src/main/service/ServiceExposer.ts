@@ -37,6 +37,12 @@ export function exposeService() {
       return await SiteTagService.updateBindLocalTag(localTagId, siteTagIds)
     }
   )
+  ipcMain.handle(
+    'siteTag-getBoundOrUnboundInLocalTag',
+    async (_event, params: { localTagId: number | undefined; state: boolean | undefined }) => {
+      return await SiteTagService.getBoundOrUnboundInLocalTag(params)
+    }
+  )
   ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
     return await SiteTagService.getSelectList(args)
   })
