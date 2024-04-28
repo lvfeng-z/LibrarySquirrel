@@ -6,6 +6,10 @@ export class SiteTagDTO extends SiteTag {
 
   constructor(siteTagDTO: SiteTagDTO) {
     super(siteTagDTO)
-    this.localTag = siteTagDTO.localTag
+    if (typeof siteTagDTO.localTag == 'string') {
+      this.localTag = JSON.parse(siteTagDTO.localTag)
+    } else {
+      this.localTag = siteTagDTO.localTag
+    }
   }
 }
