@@ -109,13 +109,17 @@ function handleExchangeConfirm() {
 function handleClearButtonClicked() {
   upperData.value.push(...upperBufferData.value)
   upperBufferData.value = []
+  upperBufferId.value.clear()
   lowerData.value.push(...lowerBufferData.value)
   lowerBufferData.value = []
+  lowerBufferId.value.clear()
 }
 // 刷新内容
 async function refreshData() {
   upperBufferData.value = []
+  upperBufferId.value.clear()
   lowerBufferData.value = []
+  lowerBufferId.value.clear()
 
   const upperParams = { ...upperSearchToolbarParams.value }
   upperData.value = await props.upperSearchApi(upperParams)
