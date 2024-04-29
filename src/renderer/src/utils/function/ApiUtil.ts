@@ -6,7 +6,6 @@ export function apiResponseCheck(response: {
   data: unknown
 }): boolean {
   if (response) {
-    console.log('ApiUtil.ts success', !!response?.success)
     return !!response?.success
   } else {
     return false
