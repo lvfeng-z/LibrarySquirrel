@@ -19,10 +19,9 @@ async function updateById(siteTag: SiteTag) {
     return ApiUtil.error('')
   }
 }
-// todo 渲染进程传入null时，此处变成undefined
 async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
   const dao = new SiteTagDao()
-  if (localTagId != undefined) {
+  if (localTagId !== undefined) {
     if (siteTagIds != undefined && siteTagIds.length > 0) {
       return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
     } else {
