@@ -49,16 +49,9 @@ export class ConnectionPool {
             // 分配之前清除超时定时器
             clearTimeout(this.connectionExtra[index].timeoutId)
             this.connectionExtra[index].timeoutId = undefined
-            LogUtil.debug(
-              'ConnectionPool',
-              '由于链接复用，清除' +
-                index +
-                '号链接的原有定时器，timeoutId=' +
-                this.connectionExtra[index].timeoutId
-            )
+            LogUtil.debug('ConnectionPool', `${index}号链接复用，清除定时器`)
             this.connectionExtra[index].state = false
             resolve(this.connections[index] as Database.Database)
-            LogUtil.debug('ConnectionPool', '复用' + index + '号链接')
             return
           }
         }
