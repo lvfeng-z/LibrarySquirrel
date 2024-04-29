@@ -171,6 +171,7 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
             :lower-main-search-boxes="exchangeBoxMainSearchBoxes"
             :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
             :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
+            required-static-params="localTagId"
             @exchange-confirm="handleExchangeBoxConfirm"
           ></ExchangeBox>
         </div>
