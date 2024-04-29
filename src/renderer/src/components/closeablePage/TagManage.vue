@@ -9,6 +9,7 @@ import { OperationResponse } from '../../utils/model/OperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../utils/model/SelectOption'
 import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/function/ApiUtil'
+import { ApiResponse } from '../../utils/model/ApiResponse'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
@@ -123,10 +124,21 @@ async function handleLocalTagSelectionChange(selections: object[]) {
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
-  const boundIds = bound.map((item) => item.value)
-  const upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
-  const unBoundIds = unBound.map((item) => item.value)
-  const lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
+  let upperResponse: ApiResponse
+  if (bound && bound.length > 0) {
+    const boundIds = bound.map((item) => item.value)
+    upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
+  } else {
+    upperResponse = { success: true, msg: '', data: undefined }
+  }
+  let lowerResponse: ApiResponse
+  if (unBound && unBound.length > 0) {
+    const unBoundIds = unBound.map((item) => item.value)
+    lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
+  } else {
+    lowerResponse = { success: true, msg: '', data: undefined }
+  }
+  apiResponseMsgNoSuccess(upperResponse)
   apiResponseMsgNoSuccess(lowerResponse)
   if (apiResponseCheck(lowerResponse) && apiResponseCheck(upperResponse)) {
     siteTagExchangeBox.value.refreshData()
