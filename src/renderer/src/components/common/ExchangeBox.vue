@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
 import { SearchBox } from '../../utils/model/SearchBox'
-import { Ref, ref, UnwrapRef } from 'vue'
+import { computed, Ref, ref, UnwrapRef } from 'vue'
 import { SelectOption } from '../../utils/model/SelectOption'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/function/ApiUtil'
 import { ApiResponse } from '../../utils/model/ApiResponse'
@@ -18,6 +18,7 @@ const props = defineProps<{
   lowerSearchApi: (args: object) => Promise<never> // lower的接口
   upperApiStaticParams: object // upper的接口固定参数
   lowerApiStaticParams: object // lower的接口固定参数
+  requiredStaticParams: string // 必备的固定参数，固定参数中，此参数为undefined时禁用搜索按钮
 }>()
 
 // 事件
@@ -37,6 +38,12 @@ const upperBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upperBuffer�
 const upperBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lowerBuffer的数据
 const lowerBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
+const searchButtonDisabled = computed(() => {
+  return !(
+    Object.prototype.hasOwnProperty.call(props.upperApiStaticParams, props.requiredStaticParams) &&
+    props.upperApiStaticParams[props.requiredStaticParams] != undefined
+  )
+}) // 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
 
 // 方法
 // 处理SearchToolbar参数变化
@@ -164,6 +171,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
             :create-button="false"
             :drop-down-search-boxes="upperDropDownSearchBoxes"
             :main-search-boxes="upperMainSearchBoxes"
+            :search-button-disabled="searchButtonDisabled"
             @search-button-clicked="handleSearchButtonClicked(true)"
             @params-changed="handleUpperSearchToolbarParamsChanged"
           >
@@ -274,6 +282,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
             :drop-down-search-boxes="lowerDropDownSearchBoxes"
             :main-search-boxes="lowerMainSearchBoxes"
             :reverse="true"
+            :search-button-disabled="searchButtonDisabled"
             @search-button-clicked="handleSearchButtonClicked(false)"
             @params-changed="handleLowerSearchToolbarParamsChanged"
           >
