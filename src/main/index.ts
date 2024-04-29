@@ -52,8 +52,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 配置日志输出
-  logUtil.setLogPath()
+  // 配置日志设置
+  logUtil.initializeLogSetting()
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))

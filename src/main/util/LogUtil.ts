@@ -20,13 +20,15 @@ function error(module: string, msg: string) {
   log.error(module, ':', msg)
 }
 
-function setLogPath() {
+function initializeLogSetting() {
   let logPath: string
   const NODE_ENV = process.env.NODE_ENV
   if (NODE_ENV == 'development') {
     logPath = path.join(app.getAppPath(), LogConstant.LOG_PATH)
   } else {
     logPath = path.join(path.dirname(app.getPath('exe')), LogConstant.LOG_PATH)
+    log.transports.file.level = 'info' // 设置文件日志的级别为 info 或更高
+    log.transports.console.level = 'info' // 设置控制台日志的级别为 info 或更高
   }
 
   FileSysUtil.createDirIfNotExists(logPath)
@@ -39,5 +41,5 @@ export default {
   debug,
   warn,
   error,
-  setLogPath
+  initializeLogSetting
 }
