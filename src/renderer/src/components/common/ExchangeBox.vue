@@ -3,6 +3,8 @@ import SearchToolbar from './SearchToolbar.vue'
 import { SearchBox } from '../../utils/model/SearchBox'
 import { Ref, ref, UnwrapRef } from 'vue'
 import { SelectOption } from '../../utils/model/SelectOption'
+import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/function/ApiUtil'
+import { ApiResponse } from '../../utils/model/ApiResponse'
 
 // props
 const props = defineProps<{
@@ -47,20 +49,20 @@ function handleLowerSearchToolbarParamsChanged(params: object) {
 }
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked(upperOrLower: boolean) {
-  if (upperOrLower) {
-    const params = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
-    const newData: [] = await props.upperSearchApi(params)
-    // 过滤掉upperBufferId已包含的数据
-    upperData.value = newData.filter((item: SelectOption) => {
-      return !upperBufferId.value.has(item.value)
-    })
-  } else {
-    const params = { ...lowerSearchToolbarParams.value, ...props.lowerApiStaticParams }
-    const newData: [] = await props.lowerSearchApi(params)
-    // 过滤掉lowerBufferId已包含的数据
-    lowerData.value = newData.filter((item: SelectOption) => {
-      return !lowerBufferId.value.has(item.value)
-    })
+  const newData = await requestApiAndGetData(upperOrLower)
+
+  if (newData) {
+    if (upperOrLower) {
+      // 过滤掉upperBufferId已包含的数据
+      upperData.value = newData.filter((item: SelectOption) => {
+        return !upperBufferId.value.has(item.value)
+      })
+    } else {
+      // 过滤掉lowerBufferId已包含的数据
+      lowerData.value = newData.filter((item: SelectOption) => {
+        return !lowerBufferId.value.has(item.value)
+      })
+    }
   }
 }
 // 处理check-tag点击事件
@@ -115,17 +117,38 @@ function handleClearButtonClicked() {
   lowerBufferId.value.clear()
 }
 // 刷新内容
-async function refreshData() {
+function refreshData() {
   upperBufferData.value = []
   upperBufferId.value.clear()
   lowerBufferData.value = []
   lowerBufferId.value.clear()
 
-  const upperParams = { ...upperSearchToolbarParams.value }
-  upperData.value = await props.upperSearchApi(upperParams)
+  requestApiAndGetData(true).then((response) => {
+    upperData.value = response == undefined ? [] : response
+  })
+  requestApiAndGetData(false).then((response) => {
+    lowerData.value = response == undefined ? [] : response
+  })
+}
+// 请求查询接口
+async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
+  let response: ApiResponse
+  if (upperOrLower) {
+    const params = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
+    response = await props.upperSearchApi(params)
+  } else {
+    const params = { ...lowerSearchToolbarParams.value, ...props.lowerApiStaticParams }
+    response = await props.lowerSearchApi(params)
+  }
 
-  const lowerParams = { ...lowerSearchToolbarParams.value }
-  lowerData.value = await props.lowerSearchApi(lowerParams)
+  let newData: SelectOption[]
+  if (apiResponseCheck(response)) {
+    newData = apiResponseGetData(response) as SelectOption[]
+    return newData
+  } else {
+    apiResponseMsg(response)
+    return undefined
+  }
 }
 </script>
 
