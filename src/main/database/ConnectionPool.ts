@@ -6,7 +6,7 @@ import LogUtil from '../util/LogUtil'
 // 定义连接池配置
 export const POOL_CONFIG = {
   maxConnections: 10, // 最大连接数
-  idleTimeout: 30000, // 连接空闲超时时间（毫秒）
+  idleTimeout: 1000, // 连接空闲超时时间（毫秒）
   databasePath: DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
 }
 
@@ -70,6 +70,10 @@ export class ConnectionPool {
           return
         } else {
           this.connectionQueue.push({ resolve })
+          LogUtil.debug(
+            'ConnectionPool',
+            `连接池已满，当前等待队列+1，当前长度为：${this.connectionQueue.length}`
+          )
         }
       } catch (e) {
         LogUtil.error('ConnectionPool', '分配数据库连接时出现未知错误！' + String(e))
@@ -89,15 +93,16 @@ export class ConnectionPool {
       if (request) {
         LogUtil.debug(
           'ConnectionPool',
-          this.connections.indexOf(connection) + '号链接在释放时被复用'
+          this.connections.indexOf(connection) +
+            `号链接在释放时被复用，当前等待队列长度为：${this.connectionQueue.length}`
         )
         request.resolve(connection)
       }
     } else {
       const index = this.connections.indexOf(connection)
       this.connectionExtra[index].state = true
-      this.setupIdleTimeout(connection)
-      LogUtil.debug('ConnectionPool', this.connections.indexOf(connection) + '号链接已释放')
+      LogUtil.debug('ConnectionPool', `${this.connections.indexOf(connection)}号链接已释放`)
+      this.setupIdleTimeout(index)
     }
   }
 
@@ -110,49 +115,39 @@ export class ConnectionPool {
 
   /**
    * 设置空闲连接超时
-   * @param connection
+   * @param index
    * @private
    */
-  private setupIdleTimeout(connection: Database.Database) {
+  private setupIdleTimeout(index: number) {
     const idleTimeoutMilliseconds = this.config.idleTimeout
-    const index = this.connections.indexOf(connection)
     // 超时定时器回调关闭链接函数
     const timeoutHandler = () => {
-      this.closeConnection(connection, index)
+      this.closeConnection(index)
     }
     // 将定时器ID与连接关联，便于后续清理
     this.connectionExtra[index].timeoutId = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
     LogUtil.debug(
       'ConnectionPool',
-      index + '号链接已设置定时器，timeoutId=' + this.connectionExtra[index].timeoutId
+      `${index}号链接已设置定时器，timeoutId=${this.connectionExtra[index].timeoutId}`
     )
   }
 
   /**
    * 关闭指定的连接并更新连接池状态
-   * @param connection 待关闭的连接
+   *
    * @param index 连接在connections数组中的索引
    */
 
-  private closeConnection(connection: Database.Database, index: number) {
+  private closeConnection(index: number) {
     // 关闭链接后清理定时器
     clearTimeout(this.connectionExtra[index].timeoutId)
     this.connectionExtra[index].timeoutId = undefined
-    LogUtil.debug(
-      'ConnectionPool',
-      '链接关闭，清除' +
-        index +
-        '号链接的定时器，timeoutId=' +
-        this.connectionExtra[index].timeoutId
-    )
+    LogUtil.debug('ConnectionPool', `${index}号链接的定时器被清除`)
     // 关闭数据库连接
-    connection.close()
+    this.connections[index].close()
     // 更新连接状态和连接列表
     this.connectionExtra[index].state = false
     this.connections[index] = undefined
-    LogUtil.debug(
-      'ConnectionPool',
-      index + '号链接已超时关闭，timeoutId=' + this.connectionExtra[index].timeoutId
-    )
+    LogUtil.debug('ConnectionPool', `${index}号链接已超时关闭`)
   }
 }
