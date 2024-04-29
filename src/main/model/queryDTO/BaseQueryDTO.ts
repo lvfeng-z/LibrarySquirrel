@@ -3,4 +3,8 @@ export class BaseQueryDTO {
   constructor(baseQueryDTO: BaseQueryDTO) {
     this.keyword = baseQueryDTO.keyword
   }
+
+  public getLikeValue() {
+    return '%' + this.keyword + '%'
+  }
 }
