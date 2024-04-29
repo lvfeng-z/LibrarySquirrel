@@ -155,12 +155,12 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
             :upper-drop-down-search-boxes="[]"
             :upper-main-search-boxes="exchangeBoxMainSearchBoxes"
             :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-            :upper-api-static-params="{ localTagId: localTagSelected.id, state: true }"
+            :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
             lower-title=""
             :lower-drop-down-search-boxes="[]"
             :lower-main-search-boxes="exchangeBoxMainSearchBoxes"
             :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-            :lower-api-static-params="{ localTagId: localTagSelected.id, state: false }"
+            :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
             @exchange-confirm="handleExchangeBoxConfirm"
           ></ExchangeBox>
         </div>

@@ -22,7 +22,7 @@ async function updateById(siteTag: SiteTag) {
 
 async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
   const dao = new SiteTagDao()
-  if (siteTagIds.length > 0) {
+  if (siteTagIds != undefined && siteTagIds.length > 0) {
     return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
   } else {
     return ApiUtil.check(true)
@@ -31,20 +31,15 @@ async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[
 
 /**
  * 查询本地标签绑定或未绑定的站点标签
- * @param params localTagId 本地标签id，state 是否绑定（true：绑定的，false：未绑定的）
+ * @param queryDTO
  */
-async function getBoundOrUnboundInLocalTag(params: {
-  localTagId: number | undefined
-  state: boolean | undefined
-}) {
-  const queryDTO = new SiteTagQueryDTO({
-    keyword: undefined,
-    localTagId: params.localTagId,
-    bound: params.state
-  })
+async function getBoundOrUnboundInLocalTag(queryDTO: SiteTagQueryDTO) {
+  // 传入的参数没有经过构造函数，导致需要的方法和属性不完整，在此重建
+  queryDTO = new SiteTagQueryDTO(queryDTO)
+
   const dao = new SiteTagDao()
   const results = await dao.getSiteTagWithLocalTag(queryDTO)
-  return results.map(
+  const response = results.map(
     (result) =>
       new SelectVO({
         extraData: undefined,
@@ -54,6 +49,7 @@ async function getBoundOrUnboundInLocalTag(params: {
         value: String(result.id)
       })
   )
+  return ApiUtil.response(response)
 }
 
 async function getSelectList(queryDTO: SiteTagQueryDTO) {

@@ -3,6 +3,7 @@ import { ipcMain } from 'electron'
 import SelectVO from '../model/utilModels/SelectVO'
 import SiteTagService from './SiteTagService'
 import SiteService from './SiteService'
+import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 
 export function exposeService() {
   // LocalTagService
@@ -39,8 +40,8 @@ export function exposeService() {
   )
   ipcMain.handle(
     'siteTag-getBoundOrUnboundInLocalTag',
-    async (_event, params: { localTagId: number | undefined; state: boolean | undefined }) => {
-      return await SiteTagService.getBoundOrUnboundInLocalTag(params)
+    async (_event, queryDTO: SiteTagQueryDTO) => {
+      return await SiteTagService.getBoundOrUnboundInLocalTag(queryDTO)
     }
   )
   ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
