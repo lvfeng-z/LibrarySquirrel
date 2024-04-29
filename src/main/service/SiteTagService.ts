@@ -22,10 +22,15 @@ async function updateById(siteTag: SiteTag) {
 
 async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
   const dao = new SiteTagDao()
-  if (siteTagIds != undefined && siteTagIds.length > 0) {
-    return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
+  if (localTagId != undefined) {
+    if (siteTagIds != undefined && siteTagIds.length > 0) {
+      return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
+    } else {
+      return ApiUtil.check(true)
+    }
   } else {
-    return ApiUtil.check(true)
+    LogUtil.error('SiteTagService', 'localTagId意外为undefined')
+    return ApiUtil.error('localTagId意外为undefined')
   }
 }
 
