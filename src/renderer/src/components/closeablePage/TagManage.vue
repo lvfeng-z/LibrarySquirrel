@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
 import SearchTable from '../common/SearchTable.vue'
-import { reactive, Ref, ref, UnwrapRef } from 'vue'
+import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../../utils/model/OperationItem'
 import { Thead } from '../../utils/model/Thead'
 import { SearchBox } from '../../utils/model/SearchBox'
@@ -10,7 +10,13 @@ import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../utils/model/SelectOption'
 import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/function/ApiUtil'
 
+onMounted(() => {
+  localTagSearchTable.value.handleSearchButtonClicked()
+})
+
 // 变量
+// localTagSearchTable子组件
+const localTagSearchTable = ref()
 const siteTagExchangeBox = ref()
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
@@ -97,7 +103,7 @@ const apis = reactive({
 // 处理新增按钮点击事件
 async function handleCreateButtonClicked() {
   console.log('TagManage.vue.handleCreateButtonClicked')
-  const result = await apis.siteTagSave({ siteTagId: '16413221', siteTagName: 'giantness' })
+  const result = await apis.siteTagSave({ siteTagId: '16413221', siteTagName: 'giantess' })
   console.log(result)
 }
 // 处理数据行按钮点击事件
@@ -105,9 +111,12 @@ function handleRowButtonClicked(op: OperationResponse) {
   console.log('TagManage.vue.handleRowButtonClicked', op)
 }
 // 处理被选中的LocalTag改变的事件
-function handleLocalTagSelectionChange(selections: object[]) {
+async function handleLocalTagSelectionChange(selections: object[]) {
   if (selections.length > 0) {
     localTagSelected.value = selections[0]
+    // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
+    await nextTick()
+    siteTagExchangeBox.value.refreshData()
   } else {
     localTagSelected.value = {}
   }
@@ -120,7 +129,7 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
   const lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
   apiResponseMsgNoSuccess(lowerResponse)
   if (apiResponseCheck(lowerResponse) && apiResponseCheck(upperResponse)) {
-    await siteTagExchangeBox.value.refreshData()
+    siteTagExchangeBox.value.refreshData()
   }
 }
 </script>
@@ -131,6 +140,7 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
       <div class="left">
         <div class="margin-box">
           <SearchTable
+            ref="localTagSearchTable"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"

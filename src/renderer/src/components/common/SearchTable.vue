@@ -29,6 +29,11 @@ const props = withDefaults(
 // 事件
 const emits = defineEmits(['createButtonClicked', 'rowButtonClicked', 'selectionChange'])
 
+// 暴露
+defineExpose({
+  handleSearchButtonClicked
+})
+
 // 变量
 const searchToolbarParams = ref({}) // 搜索栏参数
 const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据

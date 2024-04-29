@@ -27,7 +27,7 @@ onBeforeMount(() => {
 const emits = defineEmits(['paramsChanged', 'searchButtonClicked', 'createButtonClicked'])
 
 // 变量
-const dropDownTable = ref() // DropDownTable组件的ref
+const dropDownTable = ref() // DropDownTable子组件的ref
 const barButtonSpan = ref(3) // 查询和新增按钮的span
 const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
 const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 下拉搜索框中元素的列表
