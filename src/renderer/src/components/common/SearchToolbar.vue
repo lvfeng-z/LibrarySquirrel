@@ -11,10 +11,12 @@ const props = withDefaults(
     dropDownSearchBoxes: SearchBox[]
     createButton?: boolean
     reverse?: boolean
+    searchButtonDisabled?: boolean
   }>(),
   {
     createButton: false,
-    reverse: false
+    reverse: false,
+    searchButtonDisabled: false
   }
 )
 
@@ -156,7 +158,9 @@ function handleInputClear(paramName: string) {
           </template>
           <el-col class="search-toolbar-search-button" :span="barButtonSpan">
             <el-dropdown>
-              <el-button @click="handleSearchButtonClicked">搜索</el-button>
+              <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
+                搜索
+              </el-button>
               <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="handleDropdownTable">更多选项</el-dropdown-item>
