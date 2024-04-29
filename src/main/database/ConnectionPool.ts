@@ -137,7 +137,10 @@ export class ConnectionPool {
     this.connectionExtra[index].timeoutId = undefined
     LogUtil.debug('ConnectionPool', `${index}号链接的定时器被清除`)
     // 关闭数据库连接
-    this.connections[index].close()
+    const tempConnection = this.connections[index]
+    if (tempConnection) {
+      tempConnection.close()
+    }
     // 更新连接状态和连接列表
     this.connectionExtra[index].state = false
     this.connections[index] = undefined
