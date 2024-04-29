@@ -19,7 +19,7 @@ async function updateById(siteTag: SiteTag) {
     return ApiUtil.error('')
   }
 }
-
+// todo 渲染进程传入null时，此处变成undefined
 async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
   const dao = new SiteTagDao()
   if (localTagId != undefined) {
