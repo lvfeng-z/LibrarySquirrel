@@ -42,28 +42,38 @@ export class SiteTagDao extends AbstractBaseDao<SiteTag> {
     try {
       const selectClause =
         "select t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId, json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag " +
-        'from site_tag t1 inner join local_tag t2 on t1.local_tag_id = t2.id'
-      const whereClauses = super.getWhereClauses(queryDTO)
+        'from site_tag t1 left join local_tag t2 on t1.local_tag_id = t2.id'
+      const whereClauses = super.getWhereClauses(queryDTO, 't1')
 
-      // 删除用于标识localTagId运算符的属性
+      // 删除用于标识localTagId运算符的属性生成的子句
       delete whereClauses.bound
       // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
       if (!queryDTO.bound && Object.prototype.hasOwnProperty.call(whereClauses, 'localTagId')) {
-        whereClauses.localTagId = 'local_tag_id != @localTagId'
+        whereClauses.localTagId = '(t1.local_tag_id != @localTagId or t1.local_tag_id is null)'
+      }
+
+      // 处理keyword
+      if (Object.prototype.hasOwnProperty.call(whereClauses, 'keyword')) {
+        whereClauses.keyword = 't1.site_tag_name like @keyword'
+        queryDTO.keyword = queryDTO.getLikeValue()
       }
 
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
+      // 拼接sql语句
       let statement = selectClause
       if (whereClauseArray.length > 0) {
         statement +=
           ' where ' +
           (whereClauseArray.length > 1 ? whereClauseArray.join(' and ') : whereClauseArray[0])
       }
+
+      // 查询
       const results: SiteTagDTO[] = (await db.prepare(statement)).all({
         ...queryDTO
       }) as SiteTagDTO[]
 
+      // 利用构造方法处理localTag的JSON字符串
       return results.map((result) => new SiteTagDTO(result))
     } finally {
       db.release()
