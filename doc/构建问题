@@ -1,0 +1,4 @@
+1.sqlite3使用的python版本为3.12
+2.sqlite3使用的vs的sdk版本为Windows 10 SDK (10.0.20348.0)
+3.运行yarn时，gyp构建sqlite3报错：gyp ERR! find VS - does not match this Visual Studio Command Prompt
+  应该使用管理员身份运行yarn
