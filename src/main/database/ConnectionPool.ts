@@ -6,7 +6,7 @@ import LogUtil from '../util/LogUtil'
 // 定义连接池配置
 export const POOL_CONFIG = {
   maxConnections: 10, // 最大连接数
-  idleTimeout: 1000, // 连接空闲超时时间（毫秒）
+  idleTimeout: 30000, // 连接空闲超时时间（毫秒）
   databasePath: DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
 }
 
