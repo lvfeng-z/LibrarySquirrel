@@ -47,6 +47,8 @@ export class DB {
    * 释放连接
    */
   public release() {
-    global.connectionPool.release(this.connection)
+    if (this.connection != undefined) {
+      global.connectionPool.release(this.connection)
+    }
   }
 }
