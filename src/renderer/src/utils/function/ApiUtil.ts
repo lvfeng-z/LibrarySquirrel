@@ -1,7 +1,7 @@
 import { ElMessage } from 'element-plus'
 import { ApiResponse } from '../model/ApiResponse'
 
-export function apiResponseCheck(response: ApiResponse): boolean {
+export function apiResponseCheck(response: ApiResponse | undefined): boolean {
   if (response) {
     return !!response?.success
   } else {
@@ -9,7 +9,7 @@ export function apiResponseCheck(response: ApiResponse): boolean {
   }
 }
 
-export function apiResponseGetData(response: ApiResponse): unknown | undefined {
+export function apiResponseGetData(response: ApiResponse | undefined): unknown | undefined {
   if (response) {
     if (response?.data) {
       return response.data
@@ -21,7 +21,7 @@ export function apiResponseGetData(response: ApiResponse): unknown | undefined {
   }
 }
 
-export function apiResponseMsg(response: ApiResponse): void {
+export function apiResponseMsg(response: ApiResponse | undefined): void {
   if (response?.success) {
     if (response?.msg) {
       ElMessage({
@@ -40,7 +40,7 @@ export function apiResponseMsg(response: ApiResponse): void {
   }
 }
 
-export function apiResponseMsgNoSuccess(response: ApiResponse): void {
+export function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void {
   if (response?.success) {
     if (response?.msg) {
       ElMessage({
