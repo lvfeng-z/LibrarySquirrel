@@ -44,16 +44,17 @@ async function InitializeDB() {
     // 对于当前数据库中不存在的数据表，进行创建
     if (tableNameSqlStatements.tables.length > 0) {
       const db = new DB('InitializeDatabase')
-      for (const tableNameSql of tableNameSqlStatements.tables) {
-        if (!currentTables.includes(tableNameSql.name)) {
-          try {
+      try {
+        for (const tableNameSql of tableNameSqlStatements.tables) {
+          if (!currentTables.includes(tableNameSql.name)) {
             ;(await db.prepare(tableNameSql.sql)).run()
             logUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
-          } catch (e) {
-            logUtil.error('InitializeDataBase', String(e))
-            throw e
           }
         }
+      } catch (e) {
+        logUtil.error('InitializeDataBase', String(e))
+      } finally {
+        db.release()
       }
     }
   })
