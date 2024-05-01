@@ -118,7 +118,7 @@ function handleParamsChanged() {
                   </div>
                 </el-col>
                 <el-col class="dropdown-table-input" :span="item.inputSpan">
-                  <el-form-item>
+                  <el-form-item class="dropdown-table-input-form-item">
                     <el-input v-model="formData[item.name]"></el-input>
                   </el-form-item>
                 </el-col>
@@ -167,7 +167,11 @@ function handleParamsChanged() {
 }
 .dropdown-table-input {
   display: flex;
+  width: 100%;
   justify-content: flex-start;
+}
+.dropdown-table-input-form-item {
+  width: 100%;
 }
 .dropdown-table-button-wrapper {
   position: absolute;
