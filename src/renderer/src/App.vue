@@ -10,7 +10,7 @@ const selectedList = ref() // 主搜索栏选中列表
 const tagSelectList = ref() // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
-  floatPage: false,
+  closeablePage: false,
   showTagManagePage: false
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
@@ -29,7 +29,7 @@ async function getTagSelectList(keyword) {
 }
 
 function showFloatPage(pageName) {
-  pageState.floatPage = true
+  pageState.closeablePage = true
   pageState.mainPage = false
   switch (pageName) {
     case 'TagManage':
@@ -39,9 +39,7 @@ function showFloatPage(pageName) {
 }
 
 function closeFloatPage() {
-  Object.keys(pageState).forEach((key) => {
-    pageState[key] = false
-  })
+  Object.keys(pageState).forEach((key) => (pageState[key] = false))
   pageState.mainPage = true
 }
 </script>
@@ -96,8 +94,8 @@ function closeFloatPage() {
       </SideMenu>
     </div>
     <div class="mainSpace">
-      <div v-show="pageState.mainPage" class="mainSpace-wrapper margin-box">
-        <div class="mainSpace-searchbar">
+      <div v-show="pageState.mainPage" class="mainPage margin-box">
+        <div class="mainPage-searchbar">
           <el-select
             v-model="selectedList"
             multiple
@@ -114,9 +112,9 @@ function closeFloatPage() {
             ></el-option>
           </el-select>
         </div>
-        <div class="mainSpace-works-space"></div>
+        <div class="mainPage-works-space"></div>
       </div>
-      <div v-if="pageState.floatPage" class="floatPage">
+      <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage
           v-if="pageState.showTagManagePage"
           @close-float-page="closeFloatPage"
@@ -145,14 +143,14 @@ function closeFloatPage() {
 .sideMenu {
   height: 100%;
 }
-.mainSpace-wrapper {
+.mainPage {
   display: flex;
   flex-direction: column;
 }
-.mainSpace-searchbar {
+.mainPage-searchbar {
   width: 100%;
 }
-.mainSpace-works-space {
+.mainPage-works-space {
   width: 100%;
   height: 100%;
 }
