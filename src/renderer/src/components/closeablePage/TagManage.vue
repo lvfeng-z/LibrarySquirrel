@@ -10,6 +10,7 @@ import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../utils/model/SelectOption'
 import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/function/ApiUtil'
 import { ApiResponse } from '../../utils/model/ApiResponse'
+import BaseFormDialog from '../common/BaseFormDialog.vue'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
@@ -18,7 +19,9 @@ onMounted(() => {
 // 变量
 // localTagSearchTable子组件
 const localTagSearchTable = ref()
+// siteTagExchangeBox子组件
 const siteTagExchangeBox = ref()
+// 被选中的本地标签
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
@@ -76,6 +79,27 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     inputType: 'input',
     dataType: 'text',
     placeholder: ''
+  },
+  {
+    name: 'baseLocalTagId',
+    label: '基础标签id',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
+  },
+  {
+    name: 'baseLocalTagId',
+    label: '基础标签id',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
+  },
+  {
+    name: 'baseLocalTagId',
+    label: '基础标签id',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: ''
   }
 ])
 // 站点标签ExchangeBox的mainInputBoxes
@@ -88,6 +112,8 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 21
   }
 ])
+// 本地标签dialog的状态（true：显示，false：隐藏）
+const localTagDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 接口
 const apis = reactive({
   localTagQuery: window.api.localTagQuery,
@@ -103,9 +129,7 @@ const apis = reactive({
 // 方法
 // 处理新增按钮点击事件
 async function handleCreateButtonClicked() {
-  console.log('TagManage.vue.handleCreateButtonClicked')
-  const result = await apis.siteTagSave({ siteTagId: '16413221', siteTagName: 'giantess' })
-  console.log(result)
+  localTagDialogState.value = true
 }
 // 处理数据行按钮点击事件
 function handleRowButtonClicked(op: OperationResponse) {
@@ -190,6 +214,7 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
       </div>
     </div>
   </BaseCloseablePage>
+  <BaseFormDialog v-if="localTagDialogState" :input-boxes="dropDownInputBoxes" />
 </template>
 
 <style>
