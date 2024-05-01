@@ -4,7 +4,7 @@ import SearchTable from '../common/SearchTable.vue'
 import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../../utils/model/OperationItem'
 import { Thead } from '../../utils/model/Thead'
-import { SearchBox } from '../../utils/model/SearchBox'
+import { InputBox } from '../../utils/model/InputBox'
 import { OperationResponse } from '../../utils/model/OperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../utils/model/SelectOption'
@@ -58,8 +58,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   }
 ])
-// 本地标签SearchTable的mainSearchBoxes
-const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
+// 本地标签SearchTable的mainInputBoxes
+const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'localTagName',
     inputType: 'input',
@@ -68,8 +68,8 @@ const mainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
     inputSpan: 18
   }
 ])
-// 本地标签SearchTable的dropDownSearchBoxes
-const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
+// 本地标签SearchTable的dropDownInputBoxes
+const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
@@ -78,8 +78,8 @@ const dropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([
     placeholder: ''
   }
 ])
-// 站点标签ExchangeBox的mainSearchBoxes
-const exchangeBoxMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref<SearchBox[]>([
+// 站点标签ExchangeBox的mainInputBoxes
+const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
     inputType: 'input',
@@ -158,8 +158,8 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
             :operation-button="operationButton"
             :operation-drop-down="operationDropDown"
             :thead="localTagThead"
-            :main-search-boxes="mainSearchBoxes"
-            :drop-down-search-boxes="dropDownSearchBoxes"
+            :main-input-boxes="mainInputBoxes"
+            :drop-down-input-boxes="dropDownInputBoxes"
             :search-api="apis.localTagQuery"
             :multi-select="false"
             :selectable="true"
@@ -174,13 +174,13 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
           <ExchangeBox
             ref="siteTagExchangeBox"
             upper-title=""
-            :upper-drop-down-search-boxes="[]"
-            :upper-main-search-boxes="exchangeBoxMainSearchBoxes"
+            :upper-drop-down-input-boxes="[]"
+            :upper-main-input-boxes="exchangeBoxMainInputBoxes"
             :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
             :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
             lower-title=""
-            :lower-drop-down-search-boxes="[]"
-            :lower-main-search-boxes="exchangeBoxMainSearchBoxes"
+            :lower-drop-down-input-boxes="[]"
+            :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
             :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
             required-static-params="localTagId"

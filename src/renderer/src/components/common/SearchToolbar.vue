@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-import { SearchBox } from '../../utils/model/SearchBox'
+import { InputBox } from '../../utils/model/InputBox'
 import DropdownTable from './DropdownTable.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
 const props = withDefaults(
   defineProps<{
-    mainSearchBoxes: SearchBox[]
-    dropDownSearchBoxes: SearchBox[]
+    mainInputBoxes: InputBox[]
+    dropDownInputBoxes: InputBox[]
     createButton?: boolean
     reverse?: boolean
     searchButtonDisabled?: boolean
@@ -31,8 +31,8 @@ const emits = defineEmits(['paramsChanged', 'searchButtonClicked', 'createButton
 // 变量
 const dropDownTable = ref() // DropDownTable子组件的ref
 const barButtonSpan = ref(3) // 查询和新增按钮的span
-const innerMainSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 主搜索栏中元素的列表
-const innerDropDownSearchBoxes: Ref<UnwrapRef<SearchBox[]>> = ref([]) // 下拉搜索框中元素的列表
+const innerMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 主搜索栏中元素的列表
+const innerDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 下拉搜索框中元素的列表
 const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框开关
 const formData = ref({}) // 查询参数
 
@@ -40,53 +40,53 @@ const formData = ref({}) // 查询参数
 // 处理主搜索栏和下拉搜索框
 function calculateSpan() {
   let spanRest = 24 - (props.createButton ? barButtonSpan.value * 2 : barButtonSpan.value)
-  for (const searchBox of props.mainSearchBoxes) {
+  for (const inputBox of props.mainInputBoxes) {
     // 储存当前box的长度
     let boxSpan = 0
     // 不更改props属性
-    const tempSearchBox: SearchBox = JSON.parse(JSON.stringify(searchBox))
+    const tempInputBox: InputBox = JSON.parse(JSON.stringify(inputBox))
 
     // 未设置是否展示标题，默认为false，labelSpan设为0
-    if (tempSearchBox.showLabel == undefined) {
-      tempSearchBox.showLabel = false
-      tempSearchBox.labelSpan = 0
+    if (tempInputBox.showLabel == undefined) {
+      tempInputBox.showLabel = false
+      tempInputBox.labelSpan = 0
     }
 
     if (spanRest > 0) {
       // 未设置tag长度则设置为2
-      if (tempSearchBox.labelSpan == undefined) {
-        tempSearchBox.labelSpan = 2
+      if (tempInputBox.labelSpan == undefined) {
+        tempInputBox.labelSpan = 2
       }
       // 未设置input长度则设置为5
-      if (tempSearchBox.inputSpan == undefined) {
-        tempSearchBox.inputSpan = 5
+      if (tempInputBox.inputSpan == undefined) {
+        tempInputBox.inputSpan = 5
       }
 
-      // 判断是否能够容纳此box，空间不足就放进dropDownSearchBoxes
-      boxSpan += tempSearchBox.labelSpan + tempSearchBox.inputSpan
+      // 判断是否能够容纳此box，空间不足就放进dropDownInputBoxes
+      boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
       spanRest -= boxSpan
       if (spanRest < 0) {
-        innerDropDownSearchBoxes.value.push(tempSearchBox)
+        innerDropDownInputBoxes.value.push(tempInputBox)
       } else {
-        innerMainSearchBoxes.value.push(tempSearchBox)
+        innerMainInputBoxes.value.push(tempInputBox)
       }
     } else {
-      innerDropDownSearchBoxes.value.push(tempSearchBox)
+      innerDropDownInputBoxes.value.push(tempInputBox)
     }
   }
 
-  // 长度不相等，说明有元素被放进dropDownSearchBoxes
-  if (innerMainSearchBoxes.value.length != props.mainSearchBoxes.length) {
+  // 长度不相等，说明有元素被放进dropDownInputBoxes
+  if (innerMainInputBoxes.value.length != props.mainInputBoxes.length) {
     console.debug(
-      '主搜索栏长度不足以容纳所有mainSearchBoxes元素，不能容纳的元素以被移动至dropDownSearchBoxes'
+      '主搜索栏长度不足以容纳所有mainInputBoxes元素，不能容纳的元素以被移动至dropDownInputBoxes'
     )
   }
 
-  const tempDropDownSearchBoxes = JSON.parse(JSON.stringify(props.dropDownSearchBoxes))
-  innerDropDownSearchBoxes.value.push(...tempDropDownSearchBoxes)
+  const tempDropDownInputBoxes = JSON.parse(JSON.stringify(props.dropDownInputBoxes))
+  innerDropDownInputBoxes.value.push(...tempDropDownInputBoxes)
 
   // 下拉菜单中有内容则显示下拉菜单，否则不显示
-  showDropdownFlag.value = innerDropDownSearchBoxes.value.length > 0
+  showDropdownFlag.value = innerDropDownInputBoxes.value.length > 0
 }
 
 // 展示下拉搜索框
@@ -135,7 +135,7 @@ function handleInputClear(paramName: string) {
           <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
             <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
           </el-col>
-          <template v-for="(item, index) in innerMainSearchBoxes" :key="index">
+          <template v-for="(item, index) in innerMainInputBoxes" :key="index">
             <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
               <div
                 :key="index"
@@ -161,7 +161,7 @@ function handleInputClear(paramName: string) {
               <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
                 搜索
               </el-button>
-              <template v-if="innerDropDownSearchBoxes.length > 0" #dropdown>
+              <template v-if="innerDropDownInputBoxes.length > 0" #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="handleDropdownTable">更多选项</el-dropdown-item>
                 </el-dropdown-menu>
@@ -176,7 +176,7 @@ function handleInputClear(paramName: string) {
         <DropdownTable
           ref="dropDownTable"
           :reverse="reverse"
-          :search-boxes="innerDropDownSearchBoxes"
+          :input-boxes="innerDropDownInputBoxes"
           @params-changed="handleDropDownMenuParamsChanged"
         >
         </DropdownTable>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { SearchBox } from '../../utils/model/SearchBox'
+import { InputBox } from '../../utils/model/InputBox'
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
 const props = withDefaults(
   defineProps<{
-    searchBoxes: SearchBox[] // SearchBox数组
-    reverse?: boolean
+    inputBoxes: InputBox[] // InputBox数组
+    reverse?: boolean // 是否翻转DropDownTable（true：翻转，false：不翻转）
   }>(),
   {
     reverse: false
@@ -29,7 +29,7 @@ defineExpose({
 
 // 变量
 const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
-const searchBoxInRow: Ref<UnwrapRef<SearchBox[][]>> = ref([]) // searchBox分行数组
+const inputBoxInRow: Ref<UnwrapRef<InputBox[][]>> = ref([]) // InputBox分行数组
 const dropdownTableHeight = ref(0) // 弃用 所有行占用的高度
 const formData = ref({})
 
@@ -39,7 +39,7 @@ function changeState() {
   state.value = !state.value
 }
 
-// 处理searchBox布局
+// 处理InputBox布局
 function calculateSpan() {
   // 一行的高度
   const rowHeight = 42
@@ -47,37 +47,37 @@ function calculateSpan() {
   // 用于计算当前行在插入box之后还剩多少span
   let spanRest = 24
   // 临时用于储存行信息的数组
-  let tempRow: SearchBox[] = []
-  searchBoxInRow.value.push(tempRow)
+  let tempRow: InputBox[] = []
+  inputBoxInRow.value.push(tempRow)
   height += rowHeight
 
   // 遍历box数组，处理如何分布这些box
-  for (const searchBox of props.searchBoxes) {
+  for (const inputBox of props.inputBoxes) {
     // 储存当前box的长度
     let boxSpan = 0
     // 不更改props属性
-    const tempSearchBox: SearchBox = JSON.parse(JSON.stringify(searchBox))
+    const tempInputBox: InputBox = JSON.parse(JSON.stringify(inputBox))
     // 未设置tag长度则设置为2
-    if (tempSearchBox.labelSpan == undefined) {
-      tempSearchBox.labelSpan = 2
+    if (tempInputBox.labelSpan == undefined) {
+      tempInputBox.labelSpan = 2
     }
     // 未设置input长度则设置为6
-    if (tempSearchBox.inputSpan == undefined) {
-      tempSearchBox.inputSpan = 4
+    if (tempInputBox.inputSpan == undefined) {
+      tempInputBox.inputSpan = 4
     }
 
     // 判断是否能够容纳此box
-    boxSpan += tempSearchBox.labelSpan + tempSearchBox.inputSpan
+    boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
     spanRest -= boxSpan
 
     // 能容纳则放进tempRow，否则tempRow指向新空数组，再放进tempRow
     if (spanRest >= 0) {
-      tempRow.push(tempSearchBox)
+      tempRow.push(tempInputBox)
     } else {
       tempRow = []
-      searchBoxInRow.value.push(tempRow)
+      inputBoxInRow.value.push(tempRow)
       height += rowHeight
-      tempRow.push(tempSearchBox)
+      tempRow.push(tempInputBox)
       spanRest = 24 - boxSpan
     }
   }
@@ -105,7 +105,7 @@ function handleParamsChanged() {
     >
       <el-scrollbar class="dropdown-table-rows">
         <el-form v-model="formData" @input="handleParamsChanged">
-          <template v-for="(boxRow, boxRowindex) in searchBoxInRow" :key="boxRowindex">
+          <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
             <el-row class="dropdown-table-row">
               <template v-for="(item, index) in boxRow" :key="index">
                 <el-col class="dropdown-table-label" :span="item.labelSpan">

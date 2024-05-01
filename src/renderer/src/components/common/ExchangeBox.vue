@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import { SearchBox } from '../../utils/model/SearchBox'
+import { InputBox } from '../../utils/model/InputBox'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
 import { SelectOption } from '../../utils/model/SelectOption'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/function/ApiUtil'
@@ -10,10 +10,10 @@ import { ApiResponse } from '../../utils/model/ApiResponse'
 const props = defineProps<{
   upperTitle: string // upper的标题
   lowerTitle: string // lower的标题
-  upperMainSearchBoxes: SearchBox[] // upper的SearchToolbar的主菜单参数
-  upperDropDownSearchBoxes: SearchBox[] // upper的SearchToolbar的下拉菜单参数
-  lowerMainSearchBoxes: SearchBox[] // lower的SearchToolbar的主菜单参数
-  lowerDropDownSearchBoxes: SearchBox[] // lower的SearchToolbar的下拉菜单参数
+  upperMainInputBoxes: InputBox[] // upper的SearchToolbar的主菜单参数
+  upperDropDownInputBoxes: InputBox[] // upper的SearchToolbar的下拉菜单参数
+  lowerMainInputBoxes: InputBox[] // lower的SearchToolbar的主菜单参数
+  lowerDropDownInputBoxes: InputBox[] // lower的SearchToolbar的下拉菜单参数
   upperSearchApi: (args: object) => Promise<never> // upper的接口
   lowerSearchApi: (args: object) => Promise<never> // lower的接口
   upperApiStaticParams: object // upper的接口固定参数
@@ -169,8 +169,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
         <div class="exchange-box-upper-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
-            :drop-down-search-boxes="upperDropDownSearchBoxes"
-            :main-search-boxes="upperMainSearchBoxes"
+            :drop-down-input-boxes="upperDropDownInputBoxes"
+            :main-input-boxes="upperMainInputBoxes"
             :search-button-disabled="searchButtonDisabled"
             @search-button-clicked="handleSearchButtonClicked(true)"
             @params-changed="handleUpperSearchToolbarParamsChanged"
@@ -279,8 +279,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
-            :drop-down-search-boxes="lowerDropDownSearchBoxes"
-            :main-search-boxes="lowerMainSearchBoxes"
+            :drop-down-input-boxes="lowerDropDownInputBoxes"
+            :main-input-boxes="lowerMainInputBoxes"
             :reverse="true"
             :search-button-disabled="searchButtonDisabled"
             @search-button-clicked="handleSearchButtonClicked(false)"
