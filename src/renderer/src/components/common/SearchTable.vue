@@ -2,7 +2,7 @@
 import SearchToolbar from './SearchToolbar.vue'
 import DataTable from './DataTable.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
-import { SearchBox } from '../../utils/model/SearchBox'
+import { InputBox } from '../../utils/model/InputBox'
 import { OperationItem } from '../../utils/model/OperationItem'
 import { Thead } from '../../utils/model/Thead'
 import { OperationResponse } from '../../utils/model/OperationResponse'
@@ -13,8 +13,8 @@ const props = withDefaults(
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
     keyOfData: string
-    mainSearchBoxes: SearchBox[]
-    dropDownSearchBoxes: SearchBox[]
+    mainInputBoxes: InputBox[]
+    dropDownInputBoxes: InputBox[]
     operationButton: OperationItem
     operationDropDown: OperationItem[]
     thead: Thead[]
@@ -68,8 +68,8 @@ function handleDataTableSelectionChange(selections: []) {
     <div class="search-table-toolbar z-layer-2">
       <SearchToolbar
         :create-button="createButton"
-        :drop-down-search-boxes="dropDownSearchBoxes"
-        :main-search-boxes="mainSearchBoxes"
+        :drop-down-input-boxes="dropDownInputBoxes"
+        :main-input-boxes="mainInputBoxes"
         @create-button-clicked="handleCreateButtonClicked"
         @search-button-clicked="handleSearchButtonClicked"
         @params-changed="handleSearchToolbarParamsChanged"

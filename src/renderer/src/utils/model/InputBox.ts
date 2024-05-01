@@ -1,4 +1,4 @@
-export interface SearchBox {
+export interface InputBox {
   name: string // 字段名
   inputType: string // 输入组件类型
   dataType: string // 数据类型
