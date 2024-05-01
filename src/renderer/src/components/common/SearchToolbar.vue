@@ -129,59 +129,55 @@ function handleInputClear(paramName: string) {
       'search-toolbar-reverse': reverse
     }"
   >
-    <div class="search-toolbar-main">
-      <el-form :model="formData" @input="handleParamsChanged">
-        <el-row class="search-toolbar-main-row">
-          <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
-            <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+    <el-form class="search-toolbar-main" :model="formData" @input="handleParamsChanged">
+      <el-row class="search-toolbar-main-row">
+        <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
+          <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+        </el-col>
+        <template v-for="(item, index) in innerMainInputBoxes" :key="index">
+          <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
+            <div
+              :key="index"
+              class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
+              style="width: 100%"
+            >
+              <ScrollTextBox>{{ item.label }}</ScrollTextBox>
+            </div>
           </el-col>
-          <template v-for="(item, index) in innerMainInputBoxes" :key="index">
-            <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
-              <div
-                :key="index"
-                class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
-                style="width: 100%"
-              >
-                <ScrollTextBox>{{ item.label }}</ScrollTextBox>
-              </div>
-            </el-col>
-            <el-col class="search-toolbar-input" :span="item.inputSpan">
-              <el-form-item class="search-toolbar-input-form-item">
-                <el-input
-                  v-model="formData[item.name]"
-                  :clearable="true"
-                  :placeholder="item.placeholder"
-                  @clear="handleInputClear(item.name)"
-                ></el-input>
-              </el-form-item>
-            </el-col>
-          </template>
-          <el-col class="search-toolbar-search-button" :span="barButtonSpan">
-            <el-dropdown>
-              <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
-                搜索
-              </el-button>
-              <template v-if="innerDropDownInputBoxes.length > 0" #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleDropdownTable">更多选项</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+          <el-col class="search-toolbar-input" :span="item.inputSpan">
+            <el-form-item class="search-toolbar-input-form-item">
+              <el-input
+                v-model="formData[item.name]"
+                :clearable="true"
+                :placeholder="item.placeholder"
+                @clear="handleInputClear(item.name)"
+              ></el-input>
+            </el-form-item>
           </el-col>
-        </el-row>
-      </el-form>
-    </div>
-    <div v-if="showDropdownFlag" class="dropdown-menu-wrapper">
-      <div class="dropdown-menu rounded-borders">
-        <DropdownTable
-          ref="dropDownTable"
-          :reverse="reverse"
-          :input-boxes="innerDropDownInputBoxes"
-          @params-changed="handleDropDownMenuParamsChanged"
-        >
-        </DropdownTable>
-      </div>
-    </div>
+        </template>
+        <el-col class="search-toolbar-search-button" :span="barButtonSpan">
+          <el-dropdown>
+            <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
+              搜索
+            </el-button>
+            <template v-if="innerDropDownInputBoxes.length > 0" #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleDropdownTable">更多选项</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </el-col>
+      </el-row>
+    </el-form>
+    <DropdownTable
+      v-if="showDropdownFlag"
+      ref="dropDownTable"
+      class="dropdown-menu rounded-borders"
+      :reverse="reverse"
+      :input-boxes="innerDropDownInputBoxes"
+      @params-changed="handleDropDownMenuParamsChanged"
+    >
+    </DropdownTable>
   </div>
 </template>
 
@@ -218,13 +214,6 @@ function handleInputClear(paramName: string) {
   justify-content: flex-start;
 }
 .search-toolbar-input-form-item {
-  width: 100%;
-}
-.dropdown-menu-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   width: 100%;
 }
 .dropdown-menu {
