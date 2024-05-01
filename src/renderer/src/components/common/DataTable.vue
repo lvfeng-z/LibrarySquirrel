@@ -53,106 +53,89 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
 </script>
 
 <template>
-  <div class="data-table">
-    <div class="data-list-wrapper">
-      <el-table
-        class="data-list-table"
-        :data="props.data"
-        :row-key="keyOfData"
-        :selectable="props.selectable"
-        @selection-change="handleSelectionChange"
-      >
+  <el-table
+    class="data-table"
+    :data="props.data"
+    :row-key="keyOfData"
+    :selectable="props.selectable"
+    @selection-change="handleSelectionChange"
+  >
+    <el-table-column
+      v-if="props.selectable && props.multiSelect"
+      type="selection"
+      width="30"
+      :reserve-selection="props.multiSelect"
+    />
+    <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
+      <template #default="{ row }">
+        <el-radio
+          v-model="currentFactor[props.keyOfData]"
+          :value="row[props.keyOfData]"
+          @change="handleSelectionChange([row])"
+          >{{ '' }}
+        </el-radio>
+      </template>
+    </el-table-column>
+    <template v-for="(item, index) in innerThead">
+      <template v-if="!item.hide">
         <el-table-column
-          v-if="props.selectable && props.multiSelect"
-          type="selection"
-          width="30"
-          :reserve-selection="props.multiSelect"
-        />
-        <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
-          <template #default="{ row }">
-            <el-radio
-              v-model="currentFactor[props.keyOfData]"
-              :value="row[props.keyOfData]"
-              @change="handleSelectionChange([row])"
-              >{{ '' }}
-            </el-radio>
-          </template>
-        </el-table-column>
-        <template v-for="(item, index) in innerThead">
-          <template v-if="!item.hide">
-            <el-table-column
-              :key="index"
-              :prop="item.name"
-              :label="item.label"
-              :width="item.width"
-              :align="item.dataAlign"
-              :show-overflow-tooltip="item.overHide"
-            >
-              <template #header>
-                <div :style="{ textAlign: item.headerAlign }">
-                  <el-tag size="default" :type="item.headerTagType">{{ item.label }}</el-tag>
-                </div>
-              </template>
-            </el-table-column>
-          </template>
-        </template>
-        <el-table-column align="center">
+          :key="index"
+          :prop="item.name"
+          :label="item.label"
+          :width="item.width"
+          :align="item.dataAlign"
+          :show-overflow-tooltip="item.overHide"
+        >
           <template #header>
-            <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
-          </template>
-          <template #default="{ row }">
-            <el-dropdown>
-              <el-button
-                :icon="props.operationButton.icon"
-                @click="
-                  handleRowButtonClicked({
-                    id: row[props.keyOfData],
-                    code: props.operationButton.code
-                  })
-                "
-              >
-                {{ props.operationButton.label }}
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <template v-for="item in props.operationDropdown" :key="item.code">
-                    <el-dropdown-item
-                      :icon="item.icon"
-                      @click="
-                        handleRowButtonClicked({
-                          id: row[props.keyOfData],
-                          code: item.code
-                        })
-                      "
-                    >
-                      {{ item.label }}
-                    </el-dropdown-item>
-                  </template>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div :style="{ textAlign: item.headerAlign }">
+              <el-tag size="default" :type="item.headerTagType">{{ item.label }}</el-tag>
+            </div>
           </template>
         </el-table-column>
-      </el-table>
-    </div>
-  </div>
+      </template>
+    </template>
+    <el-table-column align="center">
+      <template #header>
+        <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
+      </template>
+      <template #default="{ row }">
+        <el-dropdown>
+          <el-button
+            :icon="props.operationButton.icon"
+            @click="
+              handleRowButtonClicked({
+                id: row[props.keyOfData],
+                code: props.operationButton.code
+              })
+            "
+          >
+            {{ props.operationButton.label }}
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <template v-for="item in props.operationDropdown" :key="item.code">
+                <el-dropdown-item
+                  :icon="item.icon"
+                  @click="
+                    handleRowButtonClicked({
+                      id: row[props.keyOfData],
+                      code: item.code
+                    })
+                  "
+                >
+                  {{ item.label }}
+                </el-dropdown-item>
+              </template>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </template>
+    </el-table-column>
+  </el-table>
 </template>
 
 <style scoped>
 .data-table {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-}
-
-.data-list-wrapper {
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
-}
-
-.data-list-table {
   height: 100%;
   width: 100%;
 }
