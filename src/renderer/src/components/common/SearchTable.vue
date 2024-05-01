@@ -65,17 +65,16 @@ function handleDataTableSelectionChange(selections: []) {
 <template>
   <div class="search-table">
     <!-- 为了不被el-table内置的2层z轴遮挡，此处为2层z轴 -->
-    <div class="search-table-toolbar z-layer-2">
-      <SearchToolbar
-        :create-button="createButton"
-        :drop-down-input-boxes="dropDownInputBoxes"
-        :main-input-boxes="mainInputBoxes"
-        @create-button-clicked="handleCreateButtonClicked"
-        @search-button-clicked="handleSearchButtonClicked"
-        @params-changed="handleSearchToolbarParamsChanged"
-      >
-      </SearchToolbar>
-    </div>
+    <SearchToolbar
+      class="search-table-toolbar z-layer-2"
+      :create-button="createButton"
+      :drop-down-input-boxes="dropDownInputBoxes"
+      :main-input-boxes="mainInputBoxes"
+      @create-button-clicked="handleCreateButtonClicked"
+      @search-button-clicked="handleSearchButtonClicked"
+      @params-changed="handleSearchToolbarParamsChanged"
+    >
+    </SearchToolbar>
     <div class="search-table-data-table rounded-borders">
       <DataTable
         :data="data"
