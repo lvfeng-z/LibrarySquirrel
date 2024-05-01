@@ -112,6 +112,17 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 21
   }
 ])
+// 站点标签ExchangeBox的DropDownInputBoxes
+const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
+  {
+    name: 'keyword',
+    inputType: 'input',
+    dataType: 'text',
+    placeholder: '输入站点标签的名称查询',
+    label: '名111111111称',
+    inputSpan: 10
+  }
+])
 // 本地标签dialog的状态（true：显示，false：隐藏）
 const localTagDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 接口
@@ -172,53 +183,57 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
 
 <template>
   <BaseCloseablePage>
-    <div class="container">
-      <div class="left">
-        <div class="margin-box">
-          <SearchTable
-            ref="localTagSearchTable"
-            key-of-data="id"
-            :create-button="true"
-            :operation-button="operationButton"
-            :operation-drop-down="operationDropDown"
-            :thead="localTagThead"
-            :main-input-boxes="mainInputBoxes"
-            :drop-down-input-boxes="dropDownInputBoxes"
-            :search-api="apis.localTagQuery"
-            :multi-select="false"
-            :selectable="true"
-            @create-button-clicked="handleCreateButtonClicked"
-            @row-button-clicked="handleRowButtonClicked"
-            @selection-change="handleLocalTagSelectionChange"
-          ></SearchTable>
+    <template #default>
+      <div class="tag-manage-container">
+        <div class="tag-manage-left">
+          <div class="margin-box">
+            <SearchTable
+              ref="localTagSearchTable"
+              key-of-data="id"
+              :create-button="true"
+              :operation-button="operationButton"
+              :operation-drop-down="operationDropDown"
+              :thead="localTagThead"
+              :main-input-boxes="mainInputBoxes"
+              :drop-down-input-boxes="dropDownInputBoxes"
+              :search-api="apis.localTagQuery"
+              :multi-select="false"
+              :selectable="true"
+              @create-button-clicked="handleCreateButtonClicked"
+              @row-button-clicked="handleRowButtonClicked"
+              @selection-change="handleLocalTagSelectionChange"
+            ></SearchTable>
+          </div>
+        </div>
+        <div class="tag-manage-right">
+          <div class="margin-box">
+            <ExchangeBox
+              ref="siteTagExchangeBox"
+              upper-title=""
+              :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
+              :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+              :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+              :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
+              lower-title=""
+              :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
+              :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+              :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+              :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
+              required-static-params="localTagId"
+              @exchange-confirm="handleExchangeBoxConfirm"
+            ></ExchangeBox>
+          </div>
         </div>
       </div>
-      <div class="right">
-        <div class="margin-box">
-          <ExchangeBox
-            ref="siteTagExchangeBox"
-            upper-title=""
-            :upper-drop-down-input-boxes="[]"
-            :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-            :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
-            lower-title=""
-            :lower-drop-down-input-boxes="[]"
-            :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-            :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
-            required-static-params="localTagId"
-            @exchange-confirm="handleExchangeBoxConfirm"
-          ></ExchangeBox>
-        </div>
-      </div>
-    </div>
+    </template>
+    <template #dialog>
+      <BaseFormDialog v-model="localTagDialogState" :input-boxes="exchangeBoxDropDownInputBoxes" />
+    </template>
   </BaseCloseablePage>
-  <BaseFormDialog v-if="localTagDialogState" :input-boxes="dropDownInputBoxes" />
 </template>
 
 <style>
-.container {
+.tag-manage-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -227,12 +242,12 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
   height: 100%;
 }
 
-.left {
+.tag-manage-left {
   width: 50%;
   height: 100%;
 }
 
-.right {
+.tag-manage-right {
   display: flex;
   flex-direction: column;
   width: 50%;
