@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import BaseFormDialog from './BaseFormDialog.vue'
+import BaseFormDialog from '../common/BaseFormDialog.vue'
 </script>
 
 <template>
-  <BaseFormDialog>
+  <BaseFormDialog :input-boxes="[]">
     <template #default>
       <el-row></el-row>
     </template>
