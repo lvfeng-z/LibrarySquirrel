@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { InputBox } from '../../utils/model/InputBox'
-import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, Ref, ref, UnwrapRef, warn } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
@@ -70,8 +70,10 @@ function calculateSpan() {
     boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
     spanRest -= boxSpan
 
-    // 能容纳则放进tempRow，否则tempRow指向新空数组，再放进tempRow
-    if (spanRest >= 0) {
+    // 如果boxSpan超过24，能容纳则放进tempRow，否则tempRow指向新空数组，再放进tempRow
+    if (boxSpan > 24) {
+      warn(`DropDownTable中，${tempInputBox.name}这一inputBox已经被隐藏，因为占用span超过24`)
+    } else if (spanRest >= 0) {
       tempRow.push(tempInputBox)
     } else {
       tempRow = []
