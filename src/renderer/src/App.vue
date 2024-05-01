@@ -115,10 +115,7 @@ function closeFloatPage() {
         <div class="mainPage-works-space"></div>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
-        <TagManage
-          v-if="pageState.showTagManagePage"
-          @close-float-page="closeFloatPage"
-        ></TagManage>
+        <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage"></TagManage>
       </div>
     </div>
   </div>
