@@ -1,11 +1,12 @@
 import { PageModel } from '../model/utilModels/PageModel'
 import StringUtil from '../util/StringUtil'
 import { DB } from '../database/DB'
+import BaseModel from '../model/BaseModel'
 
 type PrimaryKey = string | number
 
 // 基础数据操作接口
-export interface BaseDao<T> {
+export interface BaseDao<T extends BaseModel> {
   save(entity: T): Promise<number | string>
   updateById(id: PrimaryKey, updateData: Partial<T>): Promise<number>
   deleteById(id: PrimaryKey): Promise<number>
@@ -13,7 +14,7 @@ export interface BaseDao<T> {
 }
 
 // 抽象基类，实现基本的CRUD方法
-export abstract class AbstractBaseDao<T> implements BaseDao<T> {
+export abstract class AbstractBaseDao<T extends BaseModel> implements BaseDao<T> {
   protected tableName: string
   private readonly childClassName: string
 
@@ -25,6 +26,10 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
   async save(entity: Partial<T>): Promise<number | string> {
     const db = this.acquire()
     try {
+      // 设置createTime和updateTime
+      entity.createTime = String(Date.now())
+      entity.updateTime = String(Date.now())
+
       const keys = Object.keys(entity).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = Object.keys(entity).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
@@ -37,6 +42,9 @@ export abstract class AbstractBaseDao<T> implements BaseDao<T> {
   async updateById(id: PrimaryKey, updateData: Partial<T>): Promise<number> {
     const db = this.acquire()
     try {
+      // 设置createTime和updateTime
+      updateData.updateTime = String(Date.now())
+
       const keys = Object.keys(updateData).map((key) => StringUtil.camelToSnakeCase(key))
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`

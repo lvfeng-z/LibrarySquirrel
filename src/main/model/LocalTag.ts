@@ -1,8 +1,9 @@
 /**
  * 本地标签
  */
+import BaseModel from './BaseModel'
 
-export default class LocalTag {
+export default class LocalTag extends BaseModel{
   /**
    * 主键
    */
@@ -16,6 +17,7 @@ export default class LocalTag {
    */
   baseLocalTagId: number | null | undefined
   constructor(localTag: LocalTag) {
+    super(localTag)
     this.id = localTag.id
     this.localTagName = localTag.localTagName
     this.baseLocalTagId = localTag.baseLocalTagId
