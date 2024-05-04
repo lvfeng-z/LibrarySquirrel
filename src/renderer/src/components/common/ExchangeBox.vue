@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import { InputBox } from '../../utils/model/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import { SelectOption } from '../../utils/model/SelectOption'
-import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/function/ApiUtil'
-import { ApiResponse } from '../../utils/model/ApiResponse'
+import { SelectOption } from '../../model/util/SelectOption'
+import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
+import { ApiResponse } from '../../model/util/ApiResponse'
 
 // props
 const props = defineProps<{

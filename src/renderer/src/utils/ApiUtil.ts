@@ -1,5 +1,5 @@
 import { ElMessage } from 'element-plus'
-import { ApiResponse } from '../model/ApiResponse'
+import { ApiResponse } from '../model/util/ApiResponse'
 
 export function apiResponseCheck(response: ApiResponse | undefined): boolean {
   if (response) {
