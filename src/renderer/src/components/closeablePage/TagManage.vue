@@ -2,15 +2,15 @@
 import BaseCloseablePage from './BaseCloseablePage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
-import { OperationItem } from '../../utils/model/OperationItem'
-import { Thead } from '../../utils/model/Thead'
-import { InputBox } from '../../utils/model/InputBox'
-import { OperationResponse } from '../../utils/model/OperationResponse'
+import { OperationItem } from '../../model/util/OperationItem'
+import { Thead } from '../../model/util/Thead'
+import { InputBox } from '../../model/util/InputBox'
+import { OperationResponse } from '../../model/util/OperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
-import { SelectOption } from '../../utils/model/SelectOption'
-import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/function/ApiUtil'
-import { ApiResponse } from '../../utils/model/ApiResponse'
-import BaseFormDialog from '../common/BaseFormDialog.vue'
+import { SelectOption } from '../../model/util/SelectOption'
+import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/ApiUtil'
+import { ApiResponse } from '../../model/util/ApiResponse'
+import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
@@ -65,8 +65,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'localTagName',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: '输入本地标签的名称查询',
     inputSpan: 18
   }
@@ -76,38 +75,36 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: ''
   },
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: ''
   },
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: ''
   },
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: ''
   }
 ])
+// 本地标签dialog的状态（true：显示，false：隐藏）
+const localTagDialogState: Ref<UnwrapRef<boolean>> = ref(false)
+// 本地标签formDialog的inputBoxes
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: '输入站点标签的名称查询',
     inputSpan: 21
   }
@@ -116,15 +113,12 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
-    inputType: 'input',
-    dataType: 'text',
+    inputType: 'text',
     placeholder: '输入站点标签的名称查询',
     label: '名111111111称',
     inputSpan: 10
   }
 ])
-// 本地标签dialog的状态（true：显示，false：隐藏）
-const localTagDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 接口
 const apis = reactive({
   localTagQuery: window.api.localTagQuery,
@@ -227,7 +221,12 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
       </div>
     </template>
     <template #dialog>
-      <BaseFormDialog v-model="localTagDialogState" :input-boxes="exchangeBoxDropDownInputBoxes" />
+      <LocalTagDialog
+        v-model="localTagDialogState"
+        align-center
+        destroy-on-close
+        @form-data-changed="console.log('sfaafs')"
+      ></LocalTagDialog>
     </template>
   </BaseCloseablePage>
 </template>
