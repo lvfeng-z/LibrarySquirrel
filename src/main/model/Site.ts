@@ -1,7 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 站点
  */
-export default class Site {
+export default class Site extends BaseModel {
   /**
    * 主键
    */
@@ -18,7 +20,9 @@ export default class Site {
    * 站点主页
    */
   siteHomepage: string | undefined | null
+
   constructor(site: Site) {
+    super(site)
     this.id = site.id
     this.siteName = site.siteName
     this.siteDomain = site.siteDomain

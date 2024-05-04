@@ -1,7 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 作品-标签关联表
  */
-export default class ReWorksTag {
+export default class ReWorksTag extends BaseModel {
   /**
    * 主键
    */
@@ -26,7 +28,9 @@ export default class ReWorksTag {
    * 创建时间
    */
   createTime: string | undefined | null
+
   constructor(reWorksTag: ReWorksTag) {
+    super(reWorksTag)
     this.id = reWorksTag.id
     this.worksId = reWorksTag.worksId
     this.tagId = reWorksTag.tagId

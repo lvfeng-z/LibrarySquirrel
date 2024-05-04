@@ -1,7 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 兴趣点-目标关联表
  */
-export default class RePoiTarget {
+export default class RePoiTarget extends BaseModel {
   /**
    * 主键
    */
@@ -18,7 +20,9 @@ export default class RePoiTarget {
    * 目标类型
    */
   targetType: string | undefined | null
+
   constructor(rePoiTarget: RePoiTarget) {
+    super(rePoiTarget)
     this.id = rePoiTarget.id
     this.poiId = rePoiTarget.poiId
     this.targetId = rePoiTarget.targetId

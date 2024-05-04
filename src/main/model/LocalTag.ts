@@ -1,9 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 本地标签
  */
-import BaseModel from './BaseModel'
-
-export default class LocalTag extends BaseModel{
+export default class LocalTag extends BaseModel {
   /**
    * 主键
    */

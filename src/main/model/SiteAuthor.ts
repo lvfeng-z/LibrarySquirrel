@@ -1,8 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 站点作者
  */
-
-export default class SiteAuthor {
+export default class SiteAuthor extends BaseModel {
   /**
    * 主键
    */
@@ -31,7 +32,9 @@ export default class SiteAuthor {
    * 站点作者在本地对应的作者id
    */
   localAuthorId: number | undefined | null
+
   constructor(siteAuthor: SiteAuthor) {
+    super(siteAuthor)
     this.id = siteAuthor.id
     this.siteId = siteAuthor.siteId
     this.siteAuthorId = siteAuthor.siteAuthorId
