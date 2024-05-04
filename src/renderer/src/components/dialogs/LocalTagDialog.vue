@@ -3,7 +3,13 @@ import BaseFormDialog from '../common/BaseFormDialog.vue'
 </script>
 
 <template>
-  <BaseFormDialog :input-boxes="[]"> </BaseFormDialog>
+  <BaseFormDialog>
+    <template #default>
+      <el-row>
+        <el-col></el-col>
+      </el-row>
+    </template>
+  </BaseFormDialog>
 </template>
 
 <style scoped></style>
