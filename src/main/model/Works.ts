@@ -1,7 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 作品
  */
-export default class Works {
+export default class Works extends BaseModel {
   /**
    * 主键
    */
@@ -56,6 +58,7 @@ export default class Works {
   downloadTaskId: number | undefined | null
 
   constructor(works: Works) {
+    super(works)
     this.id = works.id
     this.filePath = works.filePath
     this.siteId = works.siteId

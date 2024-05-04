@@ -1,8 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 站点标签
  */
-
-export default class SiteTag {
+export default class SiteTag extends BaseModel {
   /**
    * 主键
    */
@@ -31,7 +32,9 @@ export default class SiteTag {
    * 站点标签对应的本地标签id
    */
   localTagId: number | undefined | null
+
   constructor(siteTag: SiteTag) {
+    super(siteTag)
     this.id = siteTag.id
     this.siteId = siteTag.siteId
     this.siteTagId = siteTag.siteTagId

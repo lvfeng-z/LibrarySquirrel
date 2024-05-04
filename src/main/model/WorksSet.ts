@@ -1,8 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 作品集合
  */
-
-export default class WorksSet {
+export default class WorksSet extends BaseModel {
   /**
    * 主键
    */
@@ -43,11 +44,9 @@ export default class WorksSet {
    * 集合在本地的作者
    */
   localAuthorId: number | undefined | null
-  /**
-   * 创建时间
-   */
-  createTime: number | undefined | null
+
   constructor(worksSet: WorksSet) {
+    super(worksSet)
     this.id = worksSet.id
     this.setName = worksSet.setName
     this.siteId = worksSet.siteId

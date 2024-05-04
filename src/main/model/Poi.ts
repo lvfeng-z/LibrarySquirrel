@@ -1,8 +1,9 @@
+import BaseModel from './BaseModel'
+
 /**
  * 兴趣点
  */
-
-export default class Poi {
+export default class Poi extends BaseModel {
   /**
    * 主键
    */
@@ -12,6 +13,7 @@ export default class Poi {
    */
   poiName: string | undefined | null
   constructor(poi: Poi) {
+    super(poi)
     this.id = poi.id
     this.poiName = poi.poiName
   }
