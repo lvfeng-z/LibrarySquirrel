@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InputBox } from '../../utils/model/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import ScrollTextBox from './ScrollTextBox.vue'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import BaseFormDialog from './BaseFormDialog.vue'
@@ -70,7 +70,7 @@ function calculateSpan() {
 </script>
 
 <template>
-  <BaseFormDialog>
+  <BaseFormDialog :initial-form-data="formData">
     <template #default>
       <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
         <el-row class="dialog-form-row">

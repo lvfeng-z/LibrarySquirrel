@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InputBox } from '../../utils/model/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import { onBeforeMount, Ref, ref, UnwrapRef, warn } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
