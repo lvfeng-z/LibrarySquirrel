@@ -5,7 +5,9 @@ tables:
        id                integer not null
        constraint local_author_pk
        primary key autoincrement,
-       local_author_name text
+       local_author_name text,
+       create_time       text,
+       update_time       text
      );
 
   - name: site_author
@@ -19,16 +21,20 @@ tables:
        site_author_name        text,
        site_author_name_before text,
        introduce               text,
-       local_author_id         integer
+       local_author_id         integer,
+       create_time             text,
+       update_time             text
      );
 
   - name: poi
     sql: |
       create table if not exists poi (
-        id       integer not null
+        id                integer not null
         constraint poi_pk
         primary key autoincrement,
-        poi_name text
+        poi_name text,
+        create_time       text,
+        update_time       text
       );
 
   - name: re_poi_target
@@ -39,7 +45,9 @@ tables:
         primary key autoincrement,
         poi_id      integer,
         target_id   integer,
-        target_type text
+        target_type text,
+        create_time text,
+        update_time text
       );
 
   - name: site
@@ -50,7 +58,9 @@ tables:
         primary key autoincrement,
         site_name     text,
         site_domain   text,
-        site_homepage text
+        site_homepage text,
+        create_time   text,
+        update_time   text
       );
 
   - name: local_tag
@@ -60,7 +70,9 @@ tables:
         constraint local_tag_pk
         primary key autoincrement,
         local_tag_name    text,
-        base_local_tag_id integer
+        base_local_tag_id integer,
+        create_time       text,
+        update_time       text
       );
 
   - name: site_tag
@@ -74,7 +86,9 @@ tables:
         site_tag_name    text,
         base_site_tag_id text,
         description      text,
-        local_tag_id     integer
+        local_tag_id     integer,
+        create_time      text,
+        update_time      text
       );
 
   - name: task
@@ -87,6 +101,7 @@ tables:
         works_id    integer,
         url         text,
         create_time text,
+        update_time text,
         status      smallint
       );
 
@@ -105,11 +120,13 @@ tables:
         site_upload_time text,
         site_update_time text,
         nick_name        text,
-        local_author_id     integer,
+        local_author_id  integer,
         include_time     text,
         include_mode     integer,
         download_status  smallint,
-        download_task_id integer
+        download_task_id integer,
+        create_time      text,
+        update_time      text
       );
 
   - name: works_set
@@ -126,8 +143,9 @@ tables:
         site_upload_time text,
         site_update_time text,
         nick_name        text,
-        local_author_id     integer,
-        create_time      text
+        local_author_id  integer,
+        create_time      text,
+        update_time      text
       );
 
   - name: re_works_tag
@@ -140,5 +158,6 @@ tables:
         tag_id      text,
         tag_type    boolean,
         tag_site_id integer,
-        create_time text
+        create_time text,
+        update_time text
       );
