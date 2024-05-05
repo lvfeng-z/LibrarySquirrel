@@ -5,12 +5,13 @@ import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { InputBox } from '../../model/util/InputBox'
-import { OperationResponse } from '../../model/util/OperationResponse'
+import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../model/util/SelectOption'
 import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
 import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
+import { DialogMode } from '../../model/util/DialogMode'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
@@ -21,13 +22,15 @@ onMounted(() => {
 const localTagSearchTable = ref()
 // siteTagExchangeBox子组件
 const siteTagExchangeBox = ref()
+// localTagDialog子组件
+const localTagDialog = ref()
 // 被选中的本地标签
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
-const operationButton: OperationItem = { label: '查看', icon: 'view', code: 'view' }
+const operationButton: OperationItem = { label: '查看', icon: 'view', code: DialogMode.VIEW }
 // 本地标签SearchTable的operationDropDown
 const operationDropDown: OperationItem[] = [
-  { label: '编辑', icon: 'edit', code: 'edit' },
+  { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 本地标签SearchTable的表头
@@ -53,6 +56,16 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     name: 'baseLocalTagId',
     label: '上级标签内部id',
+    dataType: 'string',
+    hide: false,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
+    name: 'createTime',
+    label: '创建时间',
     dataType: 'string',
     hide: false,
     headerAlign: 'center',
@@ -97,9 +110,8 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     placeholder: ''
   }
 ])
-// 本地标签dialog的状态（true：显示，false：隐藏）
-const localTagDialogState: Ref<UnwrapRef<boolean>> = ref(false)
-// 本地标签formDialog的inputBoxes
+// 本地标签弹窗的mode
+const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
@@ -132,15 +144,31 @@ const apis = reactive({
 })
 
 // 方法
-// 处理新增按钮点击事件
+// 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
-  localTagDialogState.value = true
+  localTagDialogMode.value = DialogMode.NEW
+  localTagDialog.value.handleDialog(true)
 }
-// 处理数据行按钮点击事件
-function handleRowButtonClicked(op: OperationResponse) {
-  console.log('TagManage.vue.handleRowButtonClicked', op)
+// 处理本地标签数据行按钮点击事件
+function handleRowButtonClicked(op: DataTableOperationResponse) {
+  switch (op.code) {
+    case DialogMode.VIEW:
+      localTagDialogMode.value = DialogMode.VIEW
+      localTagDialog.value.handleDialog(true, op.data)
+      break
+    case DialogMode.EDIT:
+      localTagDialogMode.value = DialogMode.EDIT
+      localTagDialog.value.handleDialog(true, op.data)
+      break
+    case 'delete':
+      localTagDialogMode.value = DialogMode.EDIT
+      localTagDialog.value.handleDialog(true, op.data)
+      break
+    default:
+      break
+  }
 }
-// 处理被选中的LocalTag改变的事件
+// 处理被选中的本地标签改变的事件
 async function handleLocalTagSelectionChange(selections: object[]) {
   if (selections.length > 0) {
     localTagSelected.value = selections[0]
@@ -150,6 +178,10 @@ async function handleLocalTagSelectionChange(selections: object[]) {
   } else {
     localTagSelected.value = {}
   }
+}
+// 处理本地标签弹窗请求成功事件
+function handleDialogRequestSuccess() {
+  localTagSearchTable.value.handleSearchButtonClicked()
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
@@ -222,10 +254,11 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
     </template>
     <template #dialog>
       <LocalTagDialog
-        v-model="localTagDialogState"
+        ref="localTagDialog"
         align-center
         destroy-on-close
-        @form-data-changed="console.log('sfaafs')"
+        :mode="localTagDialogMode"
+        @request-success="handleDialogRequestSuccess"
       ></LocalTagDialog>
     </template>
   </BaseCloseablePage>
