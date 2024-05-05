@@ -11,6 +11,7 @@ export interface BaseDao<T extends BaseModel> {
   updateById(id: PrimaryKey, updateData: Partial<T>): Promise<number>
   deleteById(id: PrimaryKey): Promise<number>
   selectPage(page: PageModel<T>): Promise<PageModel<T>>
+  getById(id: PrimaryKey): Promise<T>
 }
 
 // 抽象基类，实现基本的CRUD方法
@@ -91,6 +92,21 @@ export abstract class AbstractBaseDao<T extends BaseModel> implements BaseDao<T>
 
       page.data = rows.map((row) => this.rowToObject(row as Record<string, unknown>))
       return page
+    } finally {
+      db.release()
+    }
+  }
+
+  async getById(id: PrimaryKey): Promise<T> {
+    const db = this.acquire()
+    try {
+      const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
+      const originResult = (await db.prepare(statement)).get({ id: id }) as object
+      const result = {}
+      Object.entries(originResult).forEach(([key, value]) => {
+        result[StringUtil.snakeToCamelCase(key)] = value
+      })
+      return result as T
     } finally {
       db.release()
     }
