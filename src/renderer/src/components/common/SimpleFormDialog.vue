@@ -3,8 +3,10 @@ import { InputBox } from '../../model/util/InputBox'
 import ScrollTextBox from './ScrollTextBox.vue'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import BaseFormDialog from './BaseFormDialog.vue'
+import { DialogMode } from '../../model/util/DialogMode'
 // props
 const props = defineProps<{
+  mode: DialogMode
   inputBoxes?: InputBox[] // InputBox数组
 }>()
 
@@ -70,7 +72,7 @@ function calculateSpan() {
 </script>
 
 <template>
-  <BaseFormDialog :initial-form-data="formData">
+  <BaseFormDialog :initial-form-data="formData" :mode="props.mode">
     <template #default>
       <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
         <el-row class="dialog-form-row">
