@@ -30,7 +30,7 @@ export class ApiUtil {
 
   public static check(state: boolean) {
     if (state) {
-      return this.response(undefined).setMsg('操作成功')
+      return this.response(undefined)
     } else {
       return this.error('主进程错误')
     }
