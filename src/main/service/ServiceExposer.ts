@@ -7,11 +7,17 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 
 export function exposeService() {
   // LocalTagService
-  ipcMain.handle('localTag-save', (_event, args) => {
-    LocalTagService.save(args)
+  ipcMain.handle('localTag-save', async (_event, args) => {
+    return await LocalTagService.save(args)
+  })
+  ipcMain.handle('localTag-updateById', async (_event, args) => {
+    return await LocalTagService.updateById(args)
   })
   ipcMain.handle('localTag-query', async (_event, args) => {
     return await LocalTagService.query(args)
+  })
+  ipcMain.handle('localTag-getById', async (_event, args) => {
+    return await LocalTagService.getById(args)
   })
   ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
     return await LocalTagService.getSelectList(args)

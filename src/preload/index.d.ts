@@ -6,7 +6,9 @@ declare global {
     api: {
       // LocalTagService
       localTagSave: function
+      localTagUpdateById: function
       localTagQuery: function
+      localTagGetById: function
       localTagGetSelectList: function
 
       // SiteService
