@@ -46,7 +46,7 @@ export abstract class AbstractBaseDao<T extends BaseModel> implements BaseDao<T>
       // 设置createTime和updateTime
       updateData.updateTime = String(Date.now())
 
-      const keys = Object.keys(updateData).map((key) => StringUtil.camelToSnakeCase(key))
+      const keys = Object.keys(updateData)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
       return (await db.prepare(sql)).run(updateData).changes
