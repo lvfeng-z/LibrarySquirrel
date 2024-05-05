@@ -22,6 +22,14 @@ export function apiResponseGetData(response: ApiResponse | undefined): unknown |
 }
 
 export function apiResponseMsg(response: ApiResponse | undefined): void {
+  if (response === undefined) {
+    ElMessage({
+      message: '无响应',
+      type: 'warning'
+    })
+    return
+  }
+
   if (response?.success) {
     if (response?.msg) {
       ElMessage({
@@ -41,6 +49,14 @@ export function apiResponseMsg(response: ApiResponse | undefined): void {
 }
 
 export function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void {
+  if (response === undefined) {
+    ElMessage({
+      message: '无响应',
+      type: 'warning'
+    })
+    return
+  }
+
   if (response?.success) {
     if (response?.msg) {
       ElMessage({
