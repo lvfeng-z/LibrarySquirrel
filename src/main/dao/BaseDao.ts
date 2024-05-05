@@ -100,7 +100,7 @@ export abstract class AbstractBaseDao<T extends BaseModel> implements BaseDao<T>
     const whereClauses: Record<string, string> = {}
     if (queryConditions) {
       Object.entries(queryConditions).forEach(([key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && value !== '') {
           const snakeCaseKey = StringUtil.camelToSnakeCase(key)
           whereClauses[key] =
             alias == undefined
