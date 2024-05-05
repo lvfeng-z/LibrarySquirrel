@@ -7,8 +7,8 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 
 export function exposeService() {
   // LocalTagService
-  ipcMain.handle('localTag-insert', (_event, args) => {
-    LocalTagService.insert(args)
+  ipcMain.handle('localTag-save', (_event, args) => {
+    LocalTagService.save(args)
   })
   ipcMain.handle('localTag-query', async (_event, args) => {
     return await LocalTagService.query(args)

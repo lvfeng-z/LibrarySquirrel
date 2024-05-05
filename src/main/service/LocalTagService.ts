@@ -3,9 +3,9 @@ import { LocalTagDao } from '../dao/LocalTagDao'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
 import SelectVO from '../model/utilModels/SelectVO'
 
-async function insert(localTag: LocalTag) {
+async function save(localTag: LocalTag) {
   const dao = new LocalTagDao()
-  await dao.insert(localTag)
+  await dao.save(localTag)
 }
 
 async function query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
@@ -19,7 +19,7 @@ async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
 }
 
 export default {
-  insert,
+  save,
   query,
   getSelectList
 }

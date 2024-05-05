@@ -5,7 +5,7 @@ declare global {
     electron: ElectronAPI
     api: {
       // LocalTagService
-      localTagInsert: function
+      localTagSave: function
       localTagQuery: function
       localTagGetSelectList: function
 

@@ -12,19 +12,6 @@ export class LocalTagDao extends AbstractBaseDao<LocalTag> {
     return 'id'
   }
 
-  public async insert(localTag: LocalTag) {
-    const db = super.acquire()
-    try {
-      ;(
-        await db.prepare(
-          'insert into local_tag (id, local_tag_name, base_local_tag_id) values (@id, @localTagName, @baseLocalTagId)'
-        )
-      ).run(localTag)
-    } finally {
-      db.release()
-    }
-  }
-
   public async query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
     const db = super.acquire()
     try {
