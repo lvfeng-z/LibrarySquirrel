@@ -7,8 +7,14 @@ const api = {
   localTagSave: (args) => {
     return ipcRenderer.invoke('localTag-save', args)
   },
+  localTagUpdateById: (args) => {
+    return ipcRenderer.invoke('localTag-updateById', args)
+  },
   localTagQuery: (args) => {
     return ipcRenderer.invoke('localTag-query', args)
+  },
+  localTagGetById: (args) => {
+    return ipcRenderer.invoke('localTag-getById', args)
   },
   localTagGetSelectList: (args) => {
     return ipcRenderer.invoke('localTag-getSelectList', args)
