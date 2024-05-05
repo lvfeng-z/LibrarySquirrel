@@ -2,7 +2,7 @@
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
-import { OperationResponse } from '../../model/util/OperationResponse'
+import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
 
 // props
@@ -44,7 +44,7 @@ function handleSelectionChange(newSelectedList: object[]) {
   selectDataList.value = newSelectedList
   emits('selectionChange', selectDataList.value)
 }
-function handleRowButtonClicked(operationResponse: OperationResponse) {
+function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
 }
 
@@ -105,7 +105,8 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
             @click="
               handleRowButtonClicked({
                 id: row[props.keyOfData],
-                code: props.operationButton.code
+                code: props.operationButton.code,
+                data: row
               })
             "
           >
@@ -119,7 +120,8 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
                   @click="
                     handleRowButtonClicked({
                       id: row[props.keyOfData],
-                      code: item.code
+                      code: item.code,
+                      data: row
                     })
                   "
                 >

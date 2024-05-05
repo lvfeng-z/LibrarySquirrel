@@ -5,7 +5,7 @@ import { Ref, ref, UnwrapRef } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
-import { OperationResponse } from '../../model/util/OperationResponse'
+import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 
 // props
 const props = withDefaults(
@@ -53,7 +53,7 @@ async function handleSearchButtonClicked() {
   data.value = await props.searchApi(params)
 }
 // 处理DataTable按钮点击
-function handleDataTableButtonClicked(operationResponse: OperationResponse) {
+function handleDataTableButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('rowButtonClicked', operationResponse)
 }
 // 处理DataTable选中项改变
