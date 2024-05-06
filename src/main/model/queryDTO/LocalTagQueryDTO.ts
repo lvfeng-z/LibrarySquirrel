@@ -6,10 +6,6 @@ import { BaseQueryDTO } from './BaseQueryDTO'
 
 export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
-   * 主键
-   */
-  id: number | null | undefined
-  /**
    * 本地标签名称
    */
   localTagName: string | null | undefined
