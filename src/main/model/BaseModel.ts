@@ -10,12 +10,12 @@ export default class BaseModel {
   /**
    * 创建时间
    */
-  createTime: string | null | undefined
+  createTime: number | null | undefined
 
   /**
    * 更新时间
    */
-  updateTime: string | null | undefined
+  updateTime: number | null | undefined
 
   constructor(baseModel: BaseModel) {
     this.id = baseModel.id

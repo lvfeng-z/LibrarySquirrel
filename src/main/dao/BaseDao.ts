@@ -28,8 +28,8 @@ export abstract class AbstractBaseDao<T extends BaseModel> implements BaseDao<T>
     const db = this.acquire()
     try {
       // 设置createTime和updateTime
-      entity.createTime = String(Date.now())
-      entity.updateTime = String(Date.now())
+      entity.createTime = Date.now()
+      entity.updateTime = Date.now()
 
       const keys = Object.keys(entity).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = Object.keys(entity).map((item) => `@${item}`)
@@ -44,7 +44,7 @@ export abstract class AbstractBaseDao<T extends BaseModel> implements BaseDao<T>
     const db = this.acquire()
     try {
       // 设置createTime和updateTime
-      updateData.updateTime = String(Date.now())
+      updateData.updateTime = Date.now()
 
       const keys = Object.keys(updateData)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
