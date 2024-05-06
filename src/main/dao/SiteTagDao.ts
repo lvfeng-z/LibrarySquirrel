@@ -1,11 +1,11 @@
 import { AbstractBaseDao } from './BaseDao'
 import SiteTag from '../model/SiteTag'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
-import SelectVO from '../model/utilModels/SelectVO'
+import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
 import { SiteTagDTO } from '../model/dto/SiteTagDTO'
 
-export class SiteTagDao extends AbstractBaseDao<SiteTag> {
+export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
   constructor() {
@@ -55,7 +55,7 @@ export class SiteTagDao extends AbstractBaseDao<SiteTag> {
       // 处理keyword
       if (Object.prototype.hasOwnProperty.call(whereClauses, 'keyword')) {
         whereClauses.keyword = 't1.site_tag_name like @keyword'
-        queryDTO.keyword = queryDTO.getLikeValue()
+        queryDTO.keyword = queryDTO.getKeywordLikeString()
       }
 
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
@@ -80,7 +80,7 @@ export class SiteTagDao extends AbstractBaseDao<SiteTag> {
     }
   }
 
-  public async getSelectList(queryDTO: SiteTagQueryDTO): Promise<SelectVO[]> {
+  public async getSelectList(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
     const db = super.acquire()
     try {
       const selectFrom = 'select id as value, site_tag_name as label from site_tag'
@@ -108,7 +108,7 @@ export class SiteTagDao extends AbstractBaseDao<SiteTag> {
       }
 
       const sql: string = selectFrom + where
-      return (await db.prepare(sql)).all(values) as SelectVO[]
+      return (await db.prepare(sql)).all(values) as SelectItem[]
     } finally {
       db.release()
     }
