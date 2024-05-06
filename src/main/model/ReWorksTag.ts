@@ -5,10 +5,6 @@ import BaseModel from './BaseModel'
  */
 export default class ReWorksTag extends BaseModel {
   /**
-   * 主键
-   */
-  id: string | undefined | null
-  /**
    * 作品id
    */
   worksId: number | undefined | null
@@ -24,10 +20,6 @@ export default class ReWorksTag extends BaseModel {
    * 标签来源站点id
    */
   tagSiteId: number | undefined | null
-  /**
-   * 创建时间
-   */
-  createTime: string | undefined | null
 
   constructor(reWorksTag: ReWorksTag) {
     super(reWorksTag)

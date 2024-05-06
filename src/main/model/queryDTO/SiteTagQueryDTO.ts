@@ -6,10 +6,6 @@ import { BaseQueryDTO } from './BaseQueryDTO'
 
 export default class SiteTagQueryDTO extends BaseQueryDTO {
   /**
-   * 主键
-   */
-  id?: number | undefined | null
-  /**
    * 标签来源站点id
    */
   siteId?: number | undefined | null
