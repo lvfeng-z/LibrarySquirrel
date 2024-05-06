@@ -10,6 +10,9 @@ export function exposeService() {
   ipcMain.handle('localTag-save', async (_event, args) => {
     return await LocalTagService.save(args)
   })
+  ipcMain.handle('localTag-deleteById', async (_event, args) => {
+    return await LocalTagService.deleteById(args)
+  })
   ipcMain.handle('localTag-updateById', async (_event, args) => {
     return await LocalTagService.updateById(args)
   })
@@ -24,10 +27,10 @@ export function exposeService() {
   })
 
   // SiteService
-  ipcMain.handle('site-insert', (_event, args) => {
-    SiteService.insert(args)
+  ipcMain.handle('site-insert', async (_event, args) => {
+    return await SiteService.save(args)
   })
-  ipcMain.handle('site-getSelectList', async (_event, args): Promise<SelectVO[]> => {
+  ipcMain.handle('site-getSelectList', async (_event, args) => {
     return await SiteService.getSelectList(args)
   })
 

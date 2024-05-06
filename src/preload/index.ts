@@ -7,6 +7,9 @@ const api = {
   localTagSave: (args) => {
     return ipcRenderer.invoke('localTag-save', args)
   },
+  localTagDeleteById: (args) => {
+    return ipcRenderer.invoke('localTag-deleteById', args)
+  },
   localTagUpdateById: (args) => {
     return ipcRenderer.invoke('localTag-updateById', args)
   },
