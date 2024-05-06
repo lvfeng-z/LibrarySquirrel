@@ -1,18 +1,19 @@
 import Site from '../model/Site'
 import { SiteDao } from '../dao/SiteDao'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
+import { ApiUtil } from '../util/ApiUtil'
 
-async function insert(site: Site) {
+async function save(site: Site) {
   const dao = new SiteDao()
-  await dao.insert(site)
+  return ApiUtil.response(await dao.save(site))
 }
 
-function getSelectList(queryDTO: SiteQueryDTO) {
+async function getSelectList(queryDTO: SiteQueryDTO) {
   const dao = new SiteDao()
-  return dao.getSelectList(queryDTO)
+  return ApiUtil.response(await dao.getSelectList(queryDTO))
 }
 
 export default {
-  insert,
+  save,
   getSelectList
 }
