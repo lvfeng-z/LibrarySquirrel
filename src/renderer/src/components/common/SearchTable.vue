@@ -6,23 +6,27 @@ import { InputBox } from '../../model/util/InputBox'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
+import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
+import { PageCondition } from '../../model/util/PageCondition'
 
 // props
 const props = withDefaults(
   defineProps<{
+    mainInputBoxes: InputBox[] // 主搜索框的inputBox
+    dropDownInputBoxes: InputBox[] // 下拉搜索栏的inputBox
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
-    keyOfData: string
-    mainInputBoxes: InputBox[]
-    dropDownInputBoxes: InputBox[]
-    operationButton: OperationItem
-    operationDropDown: OperationItem[]
-    thead: Thead[]
-    searchApi: (args: object) => Promise<never>
-    createButton?: boolean
+    keyOfData: string // 数据的唯一标识
+    operationButton: OperationItem // 数据行的操作按钮
+    operationDropDown: OperationItem[] // 数据行的下拉操作按钮
+    thead: Thead[] // 表头
+    searchApi: (args: object) => Promise<never> // 查询接口
+    pageCondition?: PageCondition<object> // 查询配置
+    createButton?: boolean // 是否展示新增按钮
   }>(),
   {
-    createButton: false
+    createButton: false,
+    pageCondition: () => new PageCondition<object>()
   }
 )
 
@@ -49,8 +53,15 @@ function handleSearchToolbarParamsChanged(params: object) {
 }
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked() {
-  const params = { ...searchToolbarParams.value }
-  data.value = await props.searchApi(params)
+  const pageCondition: PageCondition<object> = JSON.parse(JSON.stringify(props.pageCondition))
+  pageCondition.query = { ...searchToolbarParams.value }
+  const response = await props.searchApi(pageCondition)
+  if (apiResponseCheck(response)) {
+    const page = apiResponseGetData(response) as PageCondition<object>
+    data.value = page.data
+  } else {
+    apiResponseMsg(response)
+  }
 }
 // 处理DataTable按钮点击
 function handleDataTableButtonClicked(operationResponse: DataTableOperationResponse) {
