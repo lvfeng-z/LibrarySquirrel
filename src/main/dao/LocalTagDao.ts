@@ -1,10 +1,11 @@
 import LocalTag from '../model/LocalTag'
-import SelectVO from '../model/utilModels/SelectVO'
+import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
 import { AbstractBaseDao } from './BaseDao'
+import { PageModel } from '../model/utilModels/PageModel'
 
-export class LocalTagDao extends AbstractBaseDao<LocalTag> {
+export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
   constructor() {
     super('local_tag', 'LocalTagDao')
   }
@@ -12,40 +13,49 @@ export class LocalTagDao extends AbstractBaseDao<LocalTag> {
     return 'id'
   }
 
-  public async query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
+  public async queryPage(
+    page: PageModel<LocalTagQueryDTO, LocalTag>
+  ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     const db = super.acquire()
     try {
       const selectFrom =
         'select id, local_tag_name as localTagName, base_local_tag_id as baseLocalTagId from local_tag'
-      let where: string = ''
+      let whereClauses: string = ''
       const columns: string[] = []
-      const values: unknown[] = []
-      if (queryDTO.id != undefined) {
-        columns.push(' id = ?')
-        values.push(queryDTO.id)
-      }
-      if (queryDTO.baseLocalTagId != undefined) {
-        columns.push(' base_local_tag_id = ?')
-        values.push(queryDTO.baseLocalTagId)
-      }
-      if (queryDTO.localTagName != undefined && queryDTO.localTagName != '') {
-        columns.push('local_tag_name like ?')
-        values.push('%' + queryDTO.localTagName + '%')
+      if (page.query) {
+        if (page.query.id != undefined) {
+          columns.push('id = @id')
+        }
+        if (page.query.baseLocalTagId != undefined) {
+          columns.push('base_local_tag_id = @baseLocalTagId')
+        }
+        if (page.query.localTagName != undefined && page.query.localTagName != '') {
+          columns.push('local_tag_name like @localTagName')
+        }
+        if (page.query.keyword != undefined && page.query.keyword != '') {
+          columns.push('local_tag_name like @keyword')
+          const temp = new LocalTagQueryDTO(page.query as LocalTagQueryDTO)
+          page.query.keyword = temp.getKeywordLikeString()
+        }
       }
 
       if (columns.length == 1) {
-        where = ' where ' + columns.toString()
+        whereClauses = ' where ' + columns.toString()
       } else if (columns.length > 1) {
-        where = ' where ' + columns.join(' and ')
+        whereClauses = ' where ' + columns.join(' and ')
       }
-      const sql = selectFrom + where
-      return (await db.prepare(sql)).all(values) as LocalTag[]
+
+      let sql = selectFrom + whereClauses
+      sql = await this.pager(sql, whereClauses, page)
+
+      page.data = (await db.prepare(sql)).all(page.query) as LocalTag[]
+      return page
     } finally {
       db.release()
     }
   }
 
-  public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
+  public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
     const db = super.acquire()
     try {
       const selectFrom = 'select id as value, local_tag_name as label from local_tag'
@@ -66,7 +76,7 @@ export class LocalTagDao extends AbstractBaseDao<LocalTag> {
 
       const sql: string = selectFrom + where
 
-      return (await db.prepare(sql)).all(values) as SelectVO[]
+      return (await db.prepare(sql)).all(values) as SelectItem[]
     } finally {
       db.release()
     }
