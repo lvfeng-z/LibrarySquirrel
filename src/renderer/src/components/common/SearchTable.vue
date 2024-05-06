@@ -41,6 +41,8 @@ defineExpose({
 // 变量
 const searchToolbarParams = ref({}) // 搜索栏参数
 const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
+const pageNumber = ref(1) // 当前页码
+const pageSize = ref(10) // 页面大小
 
 // 方法
 // 处理新增按钮点击事件
@@ -86,8 +88,9 @@ function handleDataTableSelectionChange(selections: []) {
       @params-changed="handleSearchToolbarParamsChanged"
     >
     </SearchToolbar>
-    <div class="search-table-data-table rounded-borders">
+    <div class="search-table-data rounded-borders">
       <DataTable
+        class="search-table-data-table"
         :data="data"
         :thead="thead"
         :selectable="selectable"
@@ -98,6 +101,16 @@ function handleDataTableSelectionChange(selections: []) {
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
       ></DataTable>
+      <el-scrollbar class="search-table-data-pagination-scroll">
+        <el-pagination
+          v-model:current-page="pageNumber"
+          v-model:page-size="pageSize"
+          class="search-table-data-pagination"
+          layout="sizes, prev, pager, next, jumper"
+          :page-sizes="[100, 200, 300, 400]"
+          :total="1000"
+        />
+      </el-scrollbar>
     </div>
   </div>
 </template>
@@ -111,15 +124,31 @@ function handleDataTableSelectionChange(selections: []) {
   width: 100%;
   height: 100%;
 }
-
 .search-table-toolbar {
   height: 32px;
   width: 100%;
 }
-
-.search-table-data-table {
+.search-table-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   height: calc(100% - 37px);
   width: 100%;
   margin-top: 5px;
+}
+.search-table-data-table {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+.search-table-data-pagination-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  width: 100%;
+}
+.search-table-data-pagination {
+  height: auto;
+  width: 100%;
 }
 </style>
