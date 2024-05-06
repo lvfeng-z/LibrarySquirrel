@@ -3,7 +3,7 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 import { SiteTagDao } from '../dao/SiteTagDao'
 import { ApiUtil } from '../util/ApiUtil'
 import LogUtil from '../util/LogUtil'
-import SelectVO from '../model/utilModels/SelectVO'
+import SelectItem from '../model/utilModels/SelectItem'
 
 async function save(siteTag: SiteTag) {
   const dao = new SiteTagDao()
@@ -45,7 +45,7 @@ async function getBoundOrUnboundInLocalTag(queryDTO: SiteTagQueryDTO) {
   const results = await dao.getSiteTagWithLocalTag(queryDTO)
   const response = results.map(
     (result) =>
-      new SelectVO({
+      new SelectItem({
         extraData: undefined,
         label: result.siteTagName,
         rootId: result.baseSiteTagId,

@@ -1,6 +1,6 @@
 import LocalTagService from './LocalTagService'
 import { ipcMain } from 'electron'
-import SelectVO from '../model/utilModels/SelectVO'
+import SelectItem from '../model/utilModels/SelectItem'
 import SiteTagService from './SiteTagService'
 import SiteService from './SiteService'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
@@ -16,13 +16,13 @@ export function exposeService() {
   ipcMain.handle('localTag-updateById', async (_event, args) => {
     return await LocalTagService.updateById(args)
   })
-  ipcMain.handle('localTag-query', async (_event, args) => {
-    return await LocalTagService.query(args)
+  ipcMain.handle('localTag-queryPage', async (_event, args) => {
+    return await LocalTagService.queryPage(args)
   })
   ipcMain.handle('localTag-getById', async (_event, args) => {
     return await LocalTagService.getById(args)
   })
-  ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
+  ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
     return await LocalTagService.getSelectList(args)
   })
 
@@ -53,7 +53,7 @@ export function exposeService() {
       return await SiteTagService.getBoundOrUnboundInLocalTag(queryDTO)
     }
   )
-  ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectVO[]> => {
+  ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
     return await SiteTagService.getSelectList(args)
   })
 }
