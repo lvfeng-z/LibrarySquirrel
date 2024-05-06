@@ -18,8 +18,7 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
   ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     const db = super.acquire()
     try {
-      const selectFrom =
-        'select id, local_tag_name as localTagName, base_local_tag_id as baseLocalTagId from local_tag'
+      const selectFrom = 'select * from local_tag'
       let whereClauses: string = ''
       const columns: string[] = []
       if (page.query) {
@@ -48,7 +47,7 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
       let sql = selectFrom + whereClauses
       sql = await this.pager(sql, whereClauses, page)
 
-      page.data = (await db.prepare(sql)).all(page.query) as LocalTag[]
+      page.data = this.getResultTypeDataList((await db.prepare(sql)).all(page.query) as [])
       return page
     } finally {
       db.release()
