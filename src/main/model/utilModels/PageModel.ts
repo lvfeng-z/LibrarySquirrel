@@ -1,13 +1,35 @@
-export class PageModel<T> {
+export class PageModel<Query, Result> {
+  /**
+   * 当前页码
+   */
   pageNumber: number
+  /**
+   * 分页大小
+   */
   pageSize: number
-  query?: Partial<T>
-  data: T[]
+  /**
+   * 总页数
+   */
+  pageCount: number
+  /**
+   * 数据总量
+   */
+  dataCount: number
+  /**
+   * 查询条件
+   */
+  query?: Partial<Query>
+  /**
+   * 数据
+   */
+  data: Result[]
 
-  constructor() {
-    this.pageNumber = 1
-    this.pageSize = 10
-    this.query = undefined
-    this.data = []
+  constructor(page?: PageModel<Query, Result>) {
+    this.pageNumber = page ? page.pageNumber : 1
+    this.pageSize = page ? page.pageSize : 10
+    this.pageCount = page ? page.pageCount : 0
+    this.dataCount = page ? page.dataCount : 0
+    this.query = page ? page.query : undefined
+    this.data = page ? page.data : []
   }
 }
