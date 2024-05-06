@@ -6,6 +6,7 @@ declare global {
     api: {
       // LocalTagService
       localTagSave: function
+      localTagDeleteById: function
       localTagUpdateById: function
       localTagQuery: function
       localTagGetById: function
