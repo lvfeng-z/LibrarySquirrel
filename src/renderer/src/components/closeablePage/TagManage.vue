@@ -8,7 +8,7 @@ import { InputBox } from '../../model/util/InputBox'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../model/util/SelectOption'
-import { apiResponseMsgNoSuccess, apiResponseCheck } from '../../utils/ApiUtil'
+import { apiResponseMsgNoSuccess, apiResponseCheck, apiResponseMsg } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
 import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
 import { DialogMode } from '../../model/util/DialogMode'
@@ -77,7 +77,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
 // 本地标签SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
-    name: 'localTagName',
+    name: 'keyword',
     inputType: 'text',
     placeholder: '输入本地标签的名称查询',
     inputSpan: 18
@@ -133,7 +133,8 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 ])
 // 接口
 const apis = reactive({
-  localTagQuery: window.api.localTagQuery,
+  localTagDeleteById: window.api.localTagDeleteById,
+  localTagQueryPage: window.api.localTagQueryPage,
   localTagGetSelectList: window.api.localTagGetSelectList,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteTagSave: window.api.siteTagSave,
@@ -161,8 +162,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse) {
       localTagDialog.value.handleDialog(true, op.data)
       break
     case 'delete':
-      localTagDialogMode.value = DialogMode.EDIT
-      localTagDialog.value.handleDialog(true, op.data)
+      deleteLocalTag(op.id)
       break
     default:
       break
@@ -182,6 +182,14 @@ async function handleLocalTagSelectionChange(selections: object[]) {
 // 处理本地标签弹窗请求成功事件
 function handleDialogRequestSuccess() {
   localTagSearchTable.value.handleSearchButtonClicked()
+}
+// 删除本地标签
+async function deleteLocalTag(id: string) {
+  const response = await apis.localTagDeleteById(id)
+  apiResponseMsg(response)
+  if (apiResponseCheck(response)) {
+    await localTagSearchTable.value.handleSearchButtonClicked()
+  }
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
@@ -222,7 +230,7 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
               :thead="localTagThead"
               :main-input-boxes="mainInputBoxes"
               :drop-down-input-boxes="dropDownInputBoxes"
-              :search-api="apis.localTagQuery"
+              :search-api="apis.localTagQueryPage"
               :multi-select="false"
               :selectable="true"
               @create-button-clicked="handleCreateButtonClicked"
