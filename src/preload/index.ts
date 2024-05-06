@@ -13,8 +13,8 @@ const api = {
   localTagUpdateById: (args) => {
     return ipcRenderer.invoke('localTag-updateById', args)
   },
-  localTagQuery: (args) => {
-    return ipcRenderer.invoke('localTag-query', args)
+  localTagQueryPage: (args) => {
+    return ipcRenderer.invoke('localTag-queryPage', args)
   },
   localTagGetById: (args) => {
     return ipcRenderer.invoke('localTag-getById', args)

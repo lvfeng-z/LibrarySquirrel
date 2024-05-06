@@ -1,8 +1,9 @@
 import LocalTag from '../model/LocalTag'
 import { LocalTagDao } from '../dao/LocalTagDao'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
-import SelectVO from '../model/utilModels/SelectVO'
+import SelectItem from '../model/utilModels/SelectItem'
 import { ApiUtil } from '../util/ApiUtil'
+import { PageModel } from '../model/utilModels/PageModel'
 
 /**
  * 新增
@@ -37,11 +38,11 @@ async function updateById(localTag: LocalTag) {
 
 /**
  * 查询
- * @param queryDTO
+ * @param page
  */
-async function query(queryDTO: LocalTagQueryDTO): Promise<LocalTag[]> {
+async function queryPage(page: PageModel<LocalTagQueryDTO, LocalTag>) {
   const dao = new LocalTagDao()
-  return await dao.query(queryDTO)
+  return ApiUtil.response(await dao.queryPage(page))
 }
 
 /**
@@ -57,7 +58,7 @@ async function getById(id: number) {
  * 获取SelectVO列表
  * @param queryDTO
  */
-async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectVO[]> {
+async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
   const dao = new LocalTagDao()
   return await dao.getSelectList(queryDTO)
 }
@@ -66,7 +67,7 @@ export default {
   save,
   deleteById,
   updateById,
-  query,
+  queryPage,
   getById,
   getSelectList
 }

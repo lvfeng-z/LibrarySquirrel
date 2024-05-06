@@ -8,7 +8,7 @@ declare global {
       localTagSave: function
       localTagDeleteById: function
       localTagUpdateById: function
-      localTagQuery: function
+      localTagQueryPage: function
       localTagGetById: function
       localTagGetSelectList: function
 
