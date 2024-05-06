@@ -172,7 +172,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     const db = this.acquire()
     try {
       // 查询数据总量，计算页码数量
-      const countSql = `SELECT COUNT(*) FROM "${this.tableName}" ${whereClause}`
+      const countSql = `SELECT COUNT(*) AS total FROM "${this.tableName}" ${whereClause}`
       const countResult = (await db.prepare(countSql)).get(page.query) as { total: number }
       page.dataCount = countResult.total
       page.pageCount = Math.ceil(countResult.total / page.pageSize)
