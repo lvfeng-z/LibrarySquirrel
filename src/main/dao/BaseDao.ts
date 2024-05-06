@@ -109,12 +109,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
       const rows = (await db.prepare(selectSql)).all(page.query) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
-      page.data = rows.map(
-        (row) =>
-          Object.fromEntries(
-            Object.entries(row).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
-          ) as Result
-      )
+      page.data = this.getResultTypeDataList(rows)
 
       return page
     } finally {
@@ -189,6 +184,20 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     } finally {
       db.release()
     }
+  }
+
+  /**
+   * 以元素的属性名为snakeCase格式的dataList为原型，返回一个Result类型的数组
+   * @param dataList
+   * @protected
+   */
+  protected getResultTypeDataList(dataList: object[]): Result[] {
+    return dataList.map(
+      (row) =>
+        Object.fromEntries(
+          Object.entries(row).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
+        ) as Result
+    )
   }
 
   protected abstract getPrimaryKeyColumnName(): string
