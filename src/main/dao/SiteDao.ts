@@ -1,11 +1,11 @@
 import Site from '../model/Site'
-import SelectVO from '../model/utilModels/SelectVO'
+import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
 import { DB } from '../database/DB'
 import { AbstractBaseDao } from './BaseDao'
 
-export class SiteDao extends AbstractBaseDao<Site> {
+export class SiteDao extends AbstractBaseDao<SiteQueryDTO, Site> {
   constructor() {
     super('site', 'SiteDao')
   }
@@ -13,20 +13,7 @@ export class SiteDao extends AbstractBaseDao<Site> {
     return 'id'
   }
 
-  public async insert(site: Site) {
-    const db = new DB('SiteDao')
-    try {
-      ;(
-        await db.prepare(
-          'insert into site (id, site_name, site_domain, site_homepage) values (@id, @siteName, @siteDomain, @siteHomepage)'
-        )
-      ).run(site)
-    } finally {
-      db.release()
-    }
-  }
-
-  public async getSelectList(queryDTO: SiteQueryDTO): Promise<SelectVO[]> {
+  public async getSelectList(queryDTO: SiteQueryDTO): Promise<SelectItem[]> {
     const db = new DB('SiteDao')
     try {
       const selectFrom = 'select id as value, site_name as label from site'
@@ -46,7 +33,7 @@ export class SiteDao extends AbstractBaseDao<Site> {
       }
 
       const sql: string = selectFrom + where
-      return (await db.prepare(sql)).all(values) as SelectVO[]
+      return (await db.prepare(sql)).all(values) as SelectItem[]
     } finally {
       db.release()
     }
