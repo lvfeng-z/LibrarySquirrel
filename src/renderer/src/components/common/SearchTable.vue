@@ -81,7 +81,7 @@ async function handleSearchButtonClicked() {
   const response = await props.searchApi(pageCondition)
   if (apiResponseCheck(response)) {
     const page = apiResponseGetData(response) as PageCondition<object>
-    data.value = page.data
+    data.value = page.data === undefined ? [] : page.data
     dataCount.value = page.dataCount
   } else {
     apiResponseMsg(response)
