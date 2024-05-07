@@ -31,7 +31,13 @@ const props = withDefaults(
 )
 
 // 事件
-const emits = defineEmits(['createButtonClicked', 'rowButtonClicked', 'selectionChange'])
+const emits = defineEmits([
+  'createButtonClicked',
+  'rowButtonClicked',
+  'selectionChange',
+  'pageNumberChanged',
+  'pageSizeChanged'
+])
 
 // 暴露
 defineExpose({
@@ -39,12 +45,20 @@ defineExpose({
 })
 
 // 变量
+// 数据栏
 const searchToolbarParams = ref({}) // 搜索栏参数
 const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
+// 分页栏
 const pageNumber = ref(1) // 当前页码
 const pageSize = ref(10) // 页面大小
+const pageSizes = ref([10, 20, 30, 50, 100]) // 可选页面大小
+// 2024-05-07 jumper会导致警告：ElementPlusError: [el-input] [API] label is about to be deprecated in version 2.8.0, please use aria-label instead.
+const layout = ref('sizes, prev, pager, next') // 分页栏组件
+const dataCount = ref(3) // 数据总量
+const pagerCount = ref(5) // 显示的分页按钮个数
 
 // 方法
+// 数据栏
 // 处理新增按钮点击事件
 function handleCreateButtonClicked() {
   emits('createButtonClicked')
@@ -55,12 +69,18 @@ function handleSearchToolbarParamsChanged(params: object) {
 }
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked() {
+  // 配置分页参数
   const pageCondition: PageCondition<object> = JSON.parse(JSON.stringify(props.pageCondition))
+  pageCondition.pageSize = pageSize.value
+  pageCondition.pageNumber = pageNumber.value
+  // 配置查询参数
   pageCondition.query = { ...searchToolbarParams.value }
+
   const response = await props.searchApi(pageCondition)
   if (apiResponseCheck(response)) {
     const page = apiResponseGetData(response) as PageCondition<object>
     data.value = page.data
+    dataCount.value = page.dataCount
   } else {
     apiResponseMsg(response)
   }
@@ -72,6 +92,15 @@ function handleDataTableButtonClicked(operationResponse: DataTableOperationRespo
 // 处理DataTable选中项改变
 function handleDataTableSelectionChange(selections: []) {
   emits('selectionChange', selections)
+}
+// 分页栏
+// 当前页变化
+function handlePageNumberChange() {
+  handleSearchButtonClicked()
+}
+// 页面大小变化
+function handlePageSizeChange() {
+  handleSearchButtonClicked()
 }
 </script>
 
@@ -101,16 +130,23 @@ function handleDataTableSelectionChange(selections: []) {
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
       ></DataTable>
-      <el-scrollbar class="search-table-data-pagination-scroll">
-        <el-pagination
-          v-model:current-page="pageNumber"
-          v-model:page-size="pageSize"
-          class="search-table-data-pagination"
-          layout="sizes, prev, pager, next, jumper"
-          :page-sizes="[100, 200, 300, 400]"
-          :total="1000"
-        />
-      </el-scrollbar>
+      <div class="search-table-data-pagination-scroll-wrapper">
+        <el-scrollbar class="search-table-data-pagination-scroll">
+          <div class="search-table-data-pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pageNumber"
+              v-model:page-size="pageSize"
+              class="search-table-data-pagination"
+              :layout="layout"
+              :page-sizes="pageSizes"
+              :pager-count="pagerCount"
+              :total="dataCount"
+              @current-change="handlePageNumberChange"
+              @size-change="handlePageSizeChange"
+            />
+          </div>
+        </el-scrollbar>
+      </div>
     </div>
   </div>
 </template>
@@ -138,17 +174,23 @@ function handleDataTableSelectionChange(selections: []) {
 }
 .search-table-data-table {
   flex-grow: 1;
-  overflow-y: auto;
+}
+.search-table-data-pagination-scroll-wrapper {
+  width: 100%;
+  height: auto;
 }
 .search-table-data-pagination-scroll {
+  height: auto;
+  width: 100%;
+}
+.search-table-data-pagination-wrapper {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: auto;
-  width: 100%;
 }
 .search-table-data-pagination {
   height: auto;
-  width: 100%;
+  width: auto;
 }
 </style>
