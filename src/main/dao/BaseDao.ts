@@ -5,7 +5,9 @@ import BaseModel from '../model/BaseModel'
 
 type PrimaryKey = string | number
 
-// 基础数据操作接口
+/**
+ * Dao接口，定义CRUD方法
+ */
 export interface BaseDao<Query extends BaseModel, Result> {
   save(entity: Query): Promise<number | string>
   deleteById(id: PrimaryKey): Promise<number>
@@ -14,7 +16,9 @@ export interface BaseDao<Query extends BaseModel, Result> {
   selectPage(page: PageModel<Query, Result>): Promise<PageModel<Query, Result>>
 }
 
-// 抽象基类，实现基本的CRUD方法
+/**
+ * 抽象Dao基类，实现基本的CRUD方法
+ */
 export abstract class AbstractBaseDao<Query extends BaseModel, Result>
   implements BaseDao<Query, Result>
 {
