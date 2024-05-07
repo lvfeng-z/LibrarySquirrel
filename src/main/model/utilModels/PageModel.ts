@@ -20,9 +20,13 @@ export class PageModel<Query, Result> {
    */
   query?: Partial<Query>
   /**
+   * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
+   */
+  sort?: [string, 'asc' | 'desc'][]
+  /**
    * 数据
    */
-  data: Result[]
+  data?: Result[]
 
   constructor(page?: PageModel<Query, Result>) {
     this.pageNumber = page ? page.pageNumber : 1
@@ -30,6 +34,7 @@ export class PageModel<Query, Result> {
     this.pageCount = page ? page.pageCount : 0
     this.dataCount = page ? page.dataCount : 0
     this.query = page ? page.query : undefined
+    this.sort = undefined
     this.data = page ? page.data : []
   }
 }
