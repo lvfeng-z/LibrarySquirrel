@@ -20,9 +20,13 @@ export class PageCondition<T> {
    */
   query?: Partial<T>
   /**
+   * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
+   */
+  sort?: [string, 'asc' | 'desc'][]
+  /**
    * 数据
    */
-  data: T[]
+  data?: T[]
 
   constructor() {
     this.pageNumber = 1
@@ -30,6 +34,7 @@ export class PageCondition<T> {
     this.pageCount = 0
     this.dataCount = 0
     this.query = undefined
+    this.sort = undefined
     this.data = []
   }
 }
