@@ -7,11 +7,11 @@ export default class TreeSelectNode {
   secondaryLabel: string | null | undefined
   children: TreeSelectNode | null | undefined
   extraData: object | null | undefined
-  constructor(treeSelectVO: TreeSelectNode) {
-    this.value = treeSelectVO.value
-    this.label = treeSelectVO.label
-    this.secondaryLabel = treeSelectVO.secondaryLabel
-    this.children = treeSelectVO.children
-    this.extraData = treeSelectVO.extraData
+  constructor(treeSelectNode: TreeSelectNode) {
+    this.value = treeSelectNode.value
+    this.label = treeSelectNode.label
+    this.secondaryLabel = treeSelectNode.secondaryLabel
+    this.children = treeSelectNode.children
+    this.extraData = treeSelectNode.extraData
   }
 }
