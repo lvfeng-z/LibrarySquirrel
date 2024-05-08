@@ -40,6 +40,7 @@ const formData: Ref<UnwrapRef<LocalTag>> = ref({
 const apis = reactive({
   localTagSave: window.api.localTagSave,
   localTagUpdateById: window.api.localTagUpdateById,
+  localTagGetTree: window.api.localTagGetTree,
   localTagGetById: window.api.localTagGetById
 })
 
@@ -77,6 +78,7 @@ async function handleDialog(newState: boolean, newFormData?: LocalTag) {
     } else {
       clearFormData()
     }
+    apis.localTagGetTree(0)
   } else {
     clearFormData()
   }
