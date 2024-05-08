@@ -5,6 +5,8 @@ import SelectItem from '../model/utilModels/SelectItem'
 import { ApiUtil } from '../util/ApiUtil'
 import { PageModel } from '../model/utilModels/PageModel'
 import LocalTagConstant from '../constant/LocalTagConstant'
+import TreeSelectNode from '../model/utilModels/TreeSelectNode'
+import TreeNode from '../model/utilModels/TreeNode'
 
 /**
  * 新增
@@ -64,8 +66,27 @@ async function getTree(rootId: number) {
     rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
   }
   const dao = new LocalTagDao()
-  const treeNodes = await dao.selectTreeNode(rootId)
-  return ApiUtil.response(treeNodes)
+
+  // 递归查询rootId的子节点
+  const localTags = await dao.selectTreeNode(rootId)
+  // 子节点转换为TreeSelectNode类型
+  const treeNodes = localTags.map((localTag) => {
+    const treeSelectNode = new TreeSelectNode()
+    treeSelectNode.children = []
+    treeSelectNode.extraData = undefined
+    treeSelectNode.id = localTag.id as number
+    treeSelectNode.label = localTag.localTagName
+    treeSelectNode.pid = localTag.baseLocalTagId as number
+    treeSelectNode.secondaryLabel = ''
+    treeSelectNode.value = String(localTag.id)
+    return treeSelectNode
+  })
+
+  // 递归生成树结构
+  const treeUtil = new TreeNode<TreeSelectNode>()
+  const tree = treeUtil.buildTree(treeNodes, rootId)
+
+  return ApiUtil.response(tree)
 }
 
 /**
