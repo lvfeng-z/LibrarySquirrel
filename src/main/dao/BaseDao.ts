@@ -166,7 +166,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     whereClause: string,
     page: PageModel<Query, Result>
   ): Promise<string> {
-    if (page.paging) {
+    if (page.paging === undefined || page.paging) {
       statement += ' ' + (await this.getPagingClause(whereClause, page))
     }
     return statement
