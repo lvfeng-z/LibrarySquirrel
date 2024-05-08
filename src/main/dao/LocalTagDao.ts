@@ -91,7 +91,7 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
   async selectTreeNode(rootId: number, depth?: number) {
     const db = super.acquire()
     try {
-      if (depth !== undefined && depth > 0) {
+      if (depth === undefined || depth < 0) {
         depth = 10
       }
       const statement = `WITH RECURSIVE treeNode AS
@@ -106,9 +106,8 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
            WHERE treeNode.level < @depth
          )
          SELECT * FROM treeNode`
-      const result = (await db.prepare(statement)).all({ rootId: rootId, depth: depth })
-      console.log('LocalTagDao.ts', result)
-      return result as LocalTag[]
+      const result = (await db.prepare(statement)).all({ rootId: rootId, depth: depth }) as object[]
+      return this.getResultTypeDataList(result)
     } finally {
       db.release()
     }
