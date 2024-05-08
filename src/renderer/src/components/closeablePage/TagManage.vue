@@ -228,6 +228,10 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
               :operation-button="operationButton"
               :operation-drop-down="operationDropDown"
               :thead="localTagThead"
+              :sort="[
+                ['updateTime', 'desc'],
+                ['createTime', 'desc']
+              ]"
               :main-input-boxes="mainInputBoxes"
               :drop-down-input-boxes="dropDownInputBoxes"
               :search-api="apis.localTagQueryPage"
