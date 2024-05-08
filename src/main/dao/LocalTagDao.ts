@@ -82,4 +82,35 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
       db.release()
     }
   }
+
+  /**
+   * 递归查询某个标签的子标签，默认查询深度为10
+   * @param rootId 根节点id
+   * @param depth 查询深度
+   */
+  async selectTreeNode(rootId: number, depth?: number) {
+    const db = super.acquire()
+    try {
+      if (depth !== undefined && depth > 0) {
+        depth = 10
+      }
+      const statement = `WITH RECURSIVE treeNode AS
+         (
+           SELECT *, 1 AS level
+           FROM local_tag
+           WHERE base_local_tag_id = @rootId
+           UNION ALL
+           SELECT local_tag.*, treeNode.level + 1 as level
+           FROM local_tag
+           JOIN treeNode ON local_tag.base_local_tag_id = treeNode.id
+           WHERE treeNode.level < @depth
+         )
+         SELECT * FROM treeNode`
+      const result = (await db.prepare(statement)).all({ rootId: rootId, depth: depth })
+      console.log('LocalTagDao.ts', result)
+      return result as LocalTag[]
+    } finally {
+      db.release()
+    }
+  }
 }

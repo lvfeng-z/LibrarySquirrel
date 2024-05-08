@@ -19,6 +19,9 @@ const api = {
   localTagGetById: (args) => {
     return ipcRenderer.invoke('localTag-getById', args)
   },
+  localTagGetTree: (args) => {
+    return ipcRenderer.invoke('localTag-getTree', args)
+  },
   localTagGetSelectList: (args) => {
     return ipcRenderer.invoke('localTag-getSelectList', args)
   },

@@ -22,6 +22,9 @@ export function exposeService() {
   ipcMain.handle('localTag-getById', async (_event, args) => {
     return await LocalTagService.getById(args)
   })
+  ipcMain.handle('localTag-getTree', async (_event, args) => {
+    return await LocalTagService.getTree(args)
+  })
   ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
     return await LocalTagService.getSelectList(args)
   })

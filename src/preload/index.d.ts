@@ -10,6 +10,7 @@ declare global {
       localTagUpdateById: function
       localTagQueryPage: function
       localTagGetById: function
+      localTagGetTree: function
       localTagGetSelectList: function
 
       // SiteService

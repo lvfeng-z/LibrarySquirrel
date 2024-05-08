@@ -4,6 +4,7 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
 import SelectItem from '../model/utilModels/SelectItem'
 import { ApiUtil } from '../util/ApiUtil'
 import { PageModel } from '../model/utilModels/PageModel'
+import LocalTagConstant from '../constant/LocalTagConstant'
 
 /**
  * 新增
@@ -55,7 +56,20 @@ async function getById(id: number) {
 }
 
 /**
- * 获取SelectVO列表
+ * 获取本地标签树形结构
+ * @param rootId
+ */
+async function getTree(rootId: number) {
+  if (rootId === undefined) {
+    rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
+  }
+  const dao = new LocalTagDao()
+  const treeNodes = await dao.selectTreeNode(rootId)
+  return ApiUtil.response(treeNodes)
+}
+
+/**
+ * 获取SelectItem列表
  * @param queryDTO
  */
 async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
@@ -69,5 +83,6 @@ export default {
   updateById,
   queryPage,
   getById,
+  getTree,
   getSelectList
 }
