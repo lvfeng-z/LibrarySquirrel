@@ -13,10 +13,14 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
    * 上级标签id
    */
   baseLocalTagId: number | null | undefined
-  constructor(localTagQueryDTO: LocalTagQueryDTO) {
+  constructor(localTagQueryDTO?: LocalTagQueryDTO) {
     super(localTagQueryDTO)
-    this.id = localTagQueryDTO.id
-    this.localTagName = localTagQueryDTO.localTagName
-    this.baseLocalTagId = localTagQueryDTO.baseLocalTagId
+    if (localTagQueryDTO === undefined) {
+      this.localTagName = undefined
+      this.baseLocalTagId = undefined
+    } else {
+      this.localTagName = localTagQueryDTO.localTagName
+      this.baseLocalTagId = localTagQueryDTO.baseLocalTagId
+    }
   }
 }
