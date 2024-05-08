@@ -1,3 +1,5 @@
+import { QuerySortOption } from './QuerySortOption'
+
 export class PageModel<Query, Result> {
   /**
    * 是否分页
@@ -26,7 +28,7 @@ export class PageModel<Query, Result> {
   /**
    * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
    */
-  sort?: [string, 'asc' | 'desc'][]
+  sort?: QuerySortOption[]
   /**
    * 数据
    */

@@ -113,11 +113,12 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
       }
 
       // 拼接查询语句
-      let selectSql = `SELECT * FROM "${this.tableName}" ${whereClause}`
-      selectSql = await this.pager(selectSql, whereClause, page)
+      let statement = `SELECT * FROM "${this.tableName}" ${whereClause}`
+      // 拼接排序和分页字句
+      statement = await this.sorterAndPager(statement, whereClause, page)
 
       // 查询
-      const rows = (await db.prepare(selectSql)).all(page.query) as object[]
+      const rows = (await db.prepare(statement)).all(page.query) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
       page.data = this.getResultTypeDataList(rows)
@@ -155,7 +156,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
   }
 
   /**
-   * 分页器（为第一个参数statement末端拼接分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
+   * 为查询语句附加分页字句（为第一个参数statement末端拼接分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
    * @param statement 需要分页的语句
    * @param whereClause 分页语句的where字句
    * @param page 分页配置
@@ -197,6 +198,58 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     } finally {
       db.release()
     }
+  }
+
+  /**
+   * 为查询语句附加排序字句（为第一个参数statement末端拼接排序字句并返回）
+   * @param statement 需要分页的语句
+   * @param page 排序配置
+   * @protected
+   */
+  protected sorter(statement: string, page: PageModel<Query, Result>): string {
+    if (page.paging === undefined || page.paging) {
+      statement += ' ' + this.getSortClause(page)
+    }
+    return statement
+  }
+
+  /**
+   * 获取排序字句
+   * @param page
+   * @protected
+   */
+  protected getSortClause(page: PageModel<Query, Result>): string {
+    let sortClauses: string = ''
+    if (page.sort !== undefined) {
+      sortClauses = page.sort
+        .filter((item) => item[1] === 'asc' || item[1] === 'desc')
+        .map((item) => {
+          item[0] = StringUtil.camelToSnakeCase(item[0])
+          return item.join(' ')
+        })
+        .join(',')
+    }
+    if (sortClauses !== '') {
+      sortClauses = 'ORDER BY ' + sortClauses
+    }
+    return sortClauses
+  }
+
+  /**
+   * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
+   * @param statement 需要分页的语句
+   * @param whereClause 分页语句的where字句
+   * @param page 排序配置
+   * @protected
+   */
+  protected async sorterAndPager(
+    statement: string,
+    whereClause: string,
+    page: PageModel<Query, Result>
+  ): Promise<string> {
+    statement = this.sorter(statement, page)
+    statement = await this.pager(statement, whereClause, page)
+    return statement
   }
 
   /**
