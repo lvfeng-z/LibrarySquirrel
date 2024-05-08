@@ -1,5 +1,9 @@
 export class PageModel<Query, Result> {
   /**
+   * 是否分页
+   */
+  paging: boolean
+  /**
    * 当前页码
    */
   pageNumber: number
@@ -29,6 +33,7 @@ export class PageModel<Query, Result> {
   data?: Result[]
 
   constructor(page?: PageModel<Query, Result>) {
+    this.paging = page ? page.paging : true
     this.pageNumber = page ? page.pageNumber : 1
     this.pageSize = page ? page.pageSize : 10
     this.pageCount = page ? page.pageCount : 0
