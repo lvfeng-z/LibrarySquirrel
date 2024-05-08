@@ -21,15 +21,12 @@ export default class TreeNode<T extends TreeNode<T>> {
    * @param rootPid 根节点id
    */
   buildTree(data: T[], rootPid: string | number | undefined): T[] {
-    const tree: T[] = []
+    let tree: T[] = []
 
-    // 遍历列表，构建映射表并收集根节点
-    data.forEach((item) => {
-      if (item.pid === rootPid) {
-        tree.push(item)
-      }
-    })
+    // 遍历列表，收集所有子节点
+    tree = [...data.filter((node) => node.pid === rootPid)]
 
+    // 递归每一个子节点的子节点
     tree.forEach((node) => {
       node.children = this.buildTree(data, node.id)
     })
