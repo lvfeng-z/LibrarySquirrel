@@ -92,10 +92,16 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
       // 生成where字句
       let whereClause = ''
       if (page.query) {
-        const conditions = Object.keys(page.query).map(
-          (key) => `"${StringUtil.camelToSnakeCase(key)}" = @${key}`
-        )
-
+        let conditions = Object.entries(page.query).map(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            return `"${StringUtil.camelToSnakeCase(key)}" = @${key}`
+          } else {
+            return undefined
+          }
+        })
+        // 去除undefined
+        conditions = conditions.filter((whereClause) => whereClause !== undefined)
+        // 根据长度不同分别生成不同字句
         if (conditions) {
           if (conditions.length == 1) {
             whereClause = `WHERE ${conditions.toString()}`
@@ -110,6 +116,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
       let selectSql = `SELECT * FROM "${this.tableName}" ${whereClause}`
       selectSql = await this.pager(selectSql, whereClause, page)
 
+      // 查询
       const rows = (await db.prepare(selectSql)).all(page.query) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
