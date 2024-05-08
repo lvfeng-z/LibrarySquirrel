@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
 import DataTable from './DataTable.vue'
-import { Ref, ref, UnwrapRef } from 'vue'
+import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
 import { PageCondition } from '../../model/util/PageCondition'
+import { QuerySortOption } from '../../model/util/QuerySortOption'
 
 // props
 const props = withDefaults(
@@ -20,6 +21,7 @@ const props = withDefaults(
     operationButton: OperationItem // 数据行的操作按钮
     operationDropDown: OperationItem[] // 数据行的下拉操作按钮
     thead: Thead[] // 表头
+    sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     pageCondition?: PageCondition<object> // 查询配置
     createButton?: boolean // 是否展示新增按钮
@@ -41,6 +43,14 @@ const emits = defineEmits([
   'pageSizeChanged'
 ])
 
+// onMounted
+onMounted(() => {
+  if (props.sort !== undefined) {
+    const tempSort = JSON.parse(JSON.stringify(props.sort))
+    innerSort.value = [...innerSort.value, ...tempSort]
+  }
+})
+
 // 暴露
 defineExpose({
   handleSearchButtonClicked
@@ -50,6 +60,7 @@ defineExpose({
 // 数据栏
 const searchToolbarParams = ref({}) // 搜索栏参数
 const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
+const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([])
 // 分页栏
 const pageNumber = ref(1) // 当前页码
 const innerPageSizes = ref(props.pageSizes) // 可选页面大小
@@ -75,6 +86,8 @@ async function handleSearchButtonClicked() {
   const pageCondition: PageCondition<object> = JSON.parse(JSON.stringify(props.pageCondition))
   pageCondition.pageSize = pageSize.value
   pageCondition.pageNumber = pageNumber.value
+  // 配置排序参数
+  pageCondition.sort = JSON.parse(JSON.stringify(innerSort.value))
   // 配置查询参数
   pageCondition.query = { ...searchToolbarParams.value }
 

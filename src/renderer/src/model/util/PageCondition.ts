@@ -1,3 +1,5 @@
+import { QuerySortOption } from './QuerySortOption'
+
 export class PageCondition<T> {
   /**
    * 当前页码
@@ -20,9 +22,9 @@ export class PageCondition<T> {
    */
   query?: Partial<T>
   /**
-   * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
+   * 排序字段
    */
-  sort?: [string, 'asc' | 'desc'][]
+  sort?: QuerySortOption[]
   /**
    * 数据
    */
