@@ -17,9 +17,15 @@ export default class BaseModel {
    */
   updateTime: number | null | undefined
 
-  constructor(baseModel: BaseModel) {
-    this.id = baseModel.id
-    this.createTime = baseModel.createTime
-    this.updateTime = baseModel.updateTime
+  constructor(baseModel?: BaseModel) {
+    if (baseModel === undefined) {
+      this.id = undefined
+      this.createTime = undefined
+      this.updateTime = undefined
+    } else {
+      this.id = baseModel.id
+      this.createTime = baseModel.createTime
+      this.updateTime = baseModel.updateTime
+    }
   }
 }
