@@ -18,7 +18,7 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
   ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     const db = super.acquire()
     try {
-      const selectFrom = 'select * from local_tag'
+      const selectClause = 'select * from local_tag'
       let whereClauses: string = ''
       const columns: string[] = []
       if (page.query) {
@@ -44,10 +44,12 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
         whereClauses = ' where ' + columns.join(' and ')
       }
 
-      let sql = selectFrom + whereClauses
-      sql = await this.pager(sql, whereClauses, page)
+      // 拼接查询语句
+      let statement = selectClause + whereClauses
+      // 拼接排序和分页字句
+      statement = await this.sorterAndPager(statement, whereClauses, page)
 
-      page.data = this.getResultTypeDataList((await db.prepare(sql)).all(page.query) as [])
+      page.data = this.getResultTypeDataList((await db.prepare(statement)).all(page.query) as [])
       return page
     } finally {
       db.release()
