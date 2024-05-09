@@ -112,4 +112,29 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
       db.release()
     }
   }
+
+  /**
+   * 递归查询某个标签的上级标签
+   * @param nodeId 节点id
+   */
+  async selectParentNode(nodeId: number) {
+    const db = super.acquire()
+    try {
+      const statement = `WITH RECURSIVE parentNode AS
+        (
+          SELECT *
+          FROM local_tag
+          WHERE id = @nodeId
+          UNION ALL
+          SELECT local_tag.*
+          FROM local_tag
+            JOIN parentNode ON local_tag.id = parentNode.base_local_tag_id
+        )
+        SELECT * FROM parentNode`
+      const result = (await db.prepare(statement)).all({ nodeId: nodeId }) as object[]
+      return this.getResultTypeDataList(result)
+    } finally {
+      db.release()
+    }
+  }
 }
