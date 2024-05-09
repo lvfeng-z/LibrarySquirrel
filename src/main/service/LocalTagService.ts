@@ -33,6 +33,9 @@ async function deleteById(id: number) {
 async function updateById(localTag: LocalTag) {
   const dao = new LocalTagDao()
   if (localTag.id) {
+    if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId === localTag.id) {
+      return ApiUtil.error('基础标签不能为自身')
+    }
     return ApiUtil.check((await dao.updateById(localTag.id, localTag)) > 0)
   } else {
     return ApiUtil.error('本地标签更新时，id意外为空')
@@ -78,7 +81,7 @@ async function getTree(rootId: number) {
     treeSelectNode.label = localTag.localTagName
     treeSelectNode.pid = localTag.baseLocalTagId as number
     treeSelectNode.secondaryLabel = ''
-    treeSelectNode.value = String(localTag.id)
+    treeSelectNode.value = localTag.id as number
     return treeSelectNode
   })
 
