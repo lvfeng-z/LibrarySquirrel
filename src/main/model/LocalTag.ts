@@ -16,10 +16,17 @@ export default class LocalTag extends BaseModel {
    * 上级标签id
    */
   baseLocalTagId: number | null | undefined
-  constructor(localTag: LocalTag) {
-    super(localTag)
-    this.id = localTag.id
-    this.localTagName = localTag.localTagName
-    this.baseLocalTagId = localTag.baseLocalTagId
+  constructor(localTag?: LocalTag) {
+    if (localTag === undefined) {
+      super()
+      this.id = undefined
+      this.localTagName = undefined
+      this.baseLocalTagId = undefined
+    } else {
+      super(localTag)
+      this.id = localTag.id
+      this.localTagName = localTag.localTagName
+      this.baseLocalTagId = localTag.baseLocalTagId
+    }
   }
 }
