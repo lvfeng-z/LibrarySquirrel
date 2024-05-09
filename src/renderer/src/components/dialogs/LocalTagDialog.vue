@@ -4,6 +4,8 @@ import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import LocalTag from '../../model/main/LocalTag'
 import { DialogMode } from '../../model/util/DialogMode'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
+import { ElTreeSelect } from 'element-plus'
+import TreeSelectNode from '../../model/util/TreeSelectNode'
 
 // props
 const props = withDefaults(
@@ -36,6 +38,8 @@ const formData: Ref<UnwrapRef<LocalTag>> = ref({
   createTime: undefined,
   updateTime: undefined
 })
+// 基础标签选择框数据
+const baseTagSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 // 接口
 const apis = reactive({
   localTagSave: window.api.localTagSave,
@@ -52,33 +56,51 @@ async function handleSaveButtonClicked() {
       const tempFormData = JSON.parse(JSON.stringify(formData.value))
       const response = await apis.localTagSave(tempFormData)
       if (apiResponseCheck(response)) {
-        apiResponseMsg(response)
         emits('requestSuccess')
+        await handleDialog(false)
       }
+      apiResponseMsg(response)
     }
     if (props.mode === DialogMode.EDIT) {
       const tempFormData = JSON.parse(JSON.stringify(formData.value))
       const response = await apis.localTagUpdateById(tempFormData)
       if (apiResponseCheck(response)) {
-        apiResponseMsg(response)
         emits('requestSuccess')
+        await handleDialog(false)
       }
+      apiResponseMsg(response)
     }
   }
-  await handleDialog(false)
 }
 // 开启、关闭弹窗
 async function handleDialog(newState: boolean, newFormData?: LocalTag) {
   if (newState) {
     if (newFormData) {
-      const response = await apis.localTagGetById(newFormData.id)
-      if (apiResponseCheck(response)) {
-        formData.value = apiResponseGetData(response) as LocalTag
+      // 请求标签详情接口
+      const localTagInfoResponse = await apis.localTagGetById(newFormData.id)
+      if (apiResponseCheck(localTagInfoResponse)) {
+        formData.value = apiResponseGetData(localTagInfoResponse) as LocalTag
+      }
+      // 请求本地标签树接口
+      const baseTagTreeResponse = await apis.localTagGetTree(0)
+      if (apiResponseCheck(baseTagTreeResponse)) {
+        // 创建临时的根节点，便于遍历整个树
+        let tempNode = new TreeSelectNode()
+        tempNode.children = apiResponseGetData(baseTagTreeResponse) as TreeSelectNode[]
+        // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
+        tempNode = new TreeSelectNode(tempNode)
+        // 绑定到临时根节点的子结点列表上
+        baseTagSelectData.value = tempNode.children as TreeSelectNode[]
+
+        // 查询当前标签对应的节点，并禁用
+        const self = tempNode.getNode(formData.value.id as number)
+        if (self !== undefined) {
+          self.disabled = true
+        }
       }
     } else {
       clearFormData()
     }
-    apis.localTagGetTree(0)
   } else {
     clearFormData()
   }
@@ -117,7 +139,11 @@ function clearFormData() {
       <el-row>
         <el-col>
           <el-form-item label="基础标签id">
-            <el-input v-model="formData.baseLocalTagId"></el-input>
+            <el-tree-select
+              v-model="formData.baseLocalTagId"
+              :check-strictly="true"
+              :data="baseTagSelectData"
+            ></el-tree-select>
           </el-form-item>
         </el-col>
       </el-row>
