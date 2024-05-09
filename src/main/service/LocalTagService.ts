@@ -7,7 +7,6 @@ import { PageModel } from '../model/utilModels/PageModel'
 import LocalTagConstant from '../constant/LocalTagConstant'
 import TreeSelectNode from '../model/utilModels/TreeSelectNode'
 import TreeNode from '../model/utilModels/TreeNode'
-import StringUtil from '../util/StringUtil'
 
 /**
  * 新增
@@ -16,7 +15,7 @@ import StringUtil from '../util/StringUtil'
 async function save(localTag: LocalTag) {
   const dao = new LocalTagDao()
   // 未设置基础标签id的话，默认设置为0
-  if (StringUtil.isBlank(localTag.baseLocalTagId)) {
+  if (localTag.baseLocalTagId === undefined) {
     localTag.baseLocalTagId = 0
   }
 
@@ -41,6 +40,25 @@ async function updateById(localTag: LocalTag) {
   if (localTag.id) {
     if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId === localTag.id) {
       return ApiUtil.error('基础标签不能为自身')
+    }
+
+    // 查询新上级节点的所有上级节点
+    if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId !== null) {
+      const parentTags = await dao.selectParentNode(localTag.baseLocalTagId)
+      const parentTagIds = parentTags.map((tag) => tag.id)
+      // 如果新的上级节点是原本的下级节点，则先把原本的下级节点移动至与本节点相同上级节点之下，再把本节点变成原下级节点的下级节点
+      if (parentTagIds.includes(localTag.id)) {
+        // 查询要修改的标签原本的数据
+        const old = await dao.getById(localTag.id)
+
+        const newBaseLocalTag = new LocalTag()
+        newBaseLocalTag.id = localTag.baseLocalTagId
+        newBaseLocalTag.baseLocalTagId = old.baseLocalTagId
+        const result = (await dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) <= 0
+        if (result) {
+          return ApiUtil.error('更新原下级节点时出错')
+        }
+      }
     }
     return ApiUtil.check((await dao.updateById(localTag.id, localTag)) > 0)
   } else {
