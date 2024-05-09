@@ -62,10 +62,16 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
       // 设置createTime和updateTime
       updateData.updateTime = Date.now()
 
-      const keys = Object.keys(updateData)
+      // 生成一个不包含值为undefined的属性的对象
+      const existingValue = Object.fromEntries(
+        Object.entries(updateData).filter((keyValue) => {
+          return keyValue[1] !== undefined
+        })
+      )
+      const keys = Object.keys(existingValue)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await db.prepare(sql)).run(updateData).changes
+      return (await db.prepare(sql)).run(existingValue).changes
     } finally {
       db.release()
     }
