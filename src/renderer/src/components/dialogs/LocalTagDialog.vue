@@ -81,25 +81,25 @@ async function handleDialog(newState: boolean, newFormData?: LocalTag) {
       if (apiResponseCheck(localTagInfoResponse)) {
         formData.value = apiResponseGetData(localTagInfoResponse) as LocalTag
       }
-      // 请求本地标签树接口
-      const baseTagTreeResponse = await apis.localTagGetTree(0)
-      if (apiResponseCheck(baseTagTreeResponse)) {
-        // 创建临时的根节点，便于遍历整个树
-        let tempNode = new TreeSelectNode()
-        tempNode.children = apiResponseGetData(baseTagTreeResponse) as TreeSelectNode[]
-        // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
-        tempNode = new TreeSelectNode(tempNode)
-        // 绑定到临时根节点的子结点列表上
-        baseTagSelectData.value = tempNode.children as TreeSelectNode[]
-
-        // 查询当前标签对应的节点，并禁用
-        const self = tempNode.getNode(formData.value.id as number)
-        if (self !== undefined) {
-          self.disabled = true
-        }
-      }
     } else {
       clearFormData()
+    }
+    // 请求本地标签树接口
+    const baseTagTreeResponse = await apis.localTagGetTree(0)
+    if (apiResponseCheck(baseTagTreeResponse)) {
+      // 创建临时的根节点，便于遍历整个树
+      let tempNode = new TreeSelectNode()
+      tempNode.children = apiResponseGetData(baseTagTreeResponse) as TreeSelectNode[]
+      // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
+      tempNode = new TreeSelectNode(tempNode)
+      // 绑定到临时根节点的子结点列表上
+      baseTagSelectData.value = tempNode.children as TreeSelectNode[]
+
+      // 查询当前标签对应的节点，并禁用
+      const self = tempNode.getNode(formData.value.id as number)
+      if (self !== undefined) {
+        self.disabled = true
+      }
     }
   } else {
     clearFormData()
