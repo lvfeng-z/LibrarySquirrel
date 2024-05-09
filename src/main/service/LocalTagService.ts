@@ -7,6 +7,7 @@ import { PageModel } from '../model/utilModels/PageModel'
 import LocalTagConstant from '../constant/LocalTagConstant'
 import TreeSelectNode from '../model/utilModels/TreeSelectNode'
 import TreeNode from '../model/utilModels/TreeNode'
+import StringUtil from '../util/StringUtil'
 
 /**
  * 新增
@@ -14,6 +15,11 @@ import TreeNode from '../model/utilModels/TreeNode'
  */
 async function save(localTag: LocalTag) {
   const dao = new LocalTagDao()
+  // 未设置基础标签id的话，默认设置为0
+  if (StringUtil.isBlank(localTag.baseLocalTagId)) {
+    localTag.baseLocalTagId = 0
+  }
+
   return ApiUtil.response(await dao.save(localTag))
 }
 
