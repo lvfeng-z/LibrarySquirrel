@@ -50,8 +50,8 @@ export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
 
       const selectClause = `select t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId,
                 json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site
-        from site_tag t1
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
+      const fromClause = `from site_tag t1
           left join local_tag t2 on t1.local_tag_id = t2.id
           left join site t3 on t1.site_id = t3.id`
       const whereClauses = super.getWhereClauses(page.query, 't1')
@@ -72,10 +72,10 @@ export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
       // 拼接sql语句
-      let statement = selectClause
+      let statement = selectClause + ' ' + fromClause
       const whereClause = super.splicingWhereClauses(whereClauseArray)
-      statement += whereClause
-      statement = await super.sorterAndPager(statement, whereClause, page)
+      statement += ' ' + whereClause
+      statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
       // 查询
       const results: SiteTagDTO[] = (await db.prepare(statement)).all({

@@ -21,6 +21,7 @@ async function updateById(siteTag: SiteTag) {
     return ApiUtil.error('')
   }
 }
+
 async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
   const dao = new SiteTagDao()
   if (localTagId !== undefined) {
@@ -41,6 +42,7 @@ async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[
  */
 async function getBoundOrUnboundInLocalTag(page: PageModel<SiteTagQueryDTO, SiteTag>) {
   // 使用构造函数创建对象，补充缺失的方法和属性
+  page = new PageModel(page)
   page.query = new SiteTagQueryDTO(page.query)
 
   const dao = new SiteTagDao()
@@ -56,7 +58,8 @@ async function getBoundOrUnboundInLocalTag(page: PageModel<SiteTagQueryDTO, Site
       })
   )
 
-  const newPage = new PageModel<SiteTagQueryDTO, SelectItem>()
+  const newPage = page.transform<SelectItem>()
+  newPage.data = selectItems
   return ApiUtil.response(newPage)
 }
 

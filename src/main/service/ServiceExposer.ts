@@ -5,6 +5,7 @@ import SiteTagService from './SiteTagService'
 import SiteService from './SiteService'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 import { PageModel } from '../model/utilModels/PageModel'
+import SiteTag from '../model/SiteTag'
 
 export function exposeService() {
   // LocalTagService
@@ -53,7 +54,7 @@ export function exposeService() {
   )
   ipcMain.handle(
     'siteTag-getBoundOrUnboundInLocalTag',
-    async (_event, page: PageModel<SiteTagQueryDTO, SelectItem>) => {
+    async (_event, page: PageModel<SiteTagQueryDTO, SiteTag>) => {
       return await SiteTagService.getBoundOrUnboundInLocalTag(page)
     }
   )
