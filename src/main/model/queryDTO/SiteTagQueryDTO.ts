@@ -41,16 +41,27 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
    */
   bound?: boolean | undefined | null
 
-  constructor(siteTagQueryDTO: SiteTagQueryDTO) {
-    super(siteTagQueryDTO)
-    this.id = siteTagQueryDTO.id
-    this.siteId = siteTagQueryDTO.siteId
-    this.siteTagId = siteTagQueryDTO.siteTagId
-    this.siteTagName = siteTagQueryDTO.siteTagName
-    this.baseSiteTagId = siteTagQueryDTO.baseSiteTagId
-    this.description = siteTagQueryDTO.description
-    this.localTagId = siteTagQueryDTO.localTagId
-    this.sites = siteTagQueryDTO.sites
-    this.bound = siteTagQueryDTO.bound
+  constructor(siteTagQueryDTO?: SiteTagQueryDTO) {
+    if (siteTagQueryDTO === undefined) {
+      super()
+      this.siteId = undefined
+      this.siteTagId = undefined
+      this.siteTagName = undefined
+      this.baseSiteTagId = undefined
+      this.description = undefined
+      this.localTagId = undefined
+      this.sites = undefined
+      this.bound = undefined
+    } else {
+      super(siteTagQueryDTO)
+      this.siteId = siteTagQueryDTO.siteId
+      this.siteTagId = siteTagQueryDTO.siteTagId
+      this.siteTagName = siteTagQueryDTO.siteTagName
+      this.baseSiteTagId = siteTagQueryDTO.baseSiteTagId
+      this.description = siteTagQueryDTO.description
+      this.localTagId = siteTagQueryDTO.localTagId
+      this.sites = siteTagQueryDTO.sites
+      this.bound = siteTagQueryDTO.bound
+    }
   }
 }
