@@ -29,14 +29,36 @@ function handleClicked(right: boolean) {
 </script>
 
 <template>
-  <div>
-    <el-check-tag :type="props.leftTagType" checked @change="handleClicked(false)">
+  <div class="double-check-tag">
+    <el-check-tag
+      class="double-check-tag-tag"
+      :type="props.leftTagType"
+      checked
+      @change="handleClicked(false)"
+    >
       {{ props.item.label }}
     </el-check-tag>
-    <el-check-tag :type="props.rightTagType" checked @change="handleClicked(true)">
+    <el-check-tag
+      class="double-check-tag-tag"
+      :type="props.rightTagType"
+      checked
+      @change="handleClicked(true)"
+    >
       {{ props.item.secondaryLabel }}
     </el-check-tag>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.double-check-tag {
+  display: flex;
+  flex-wrap: wrap; /* 允许换行 */
+  justify-content: space-between; /* 在一行时左右对齐，换行时每个标签独占一行 */
+}
+
+/* 使每个el-check-tag在容器允许的情况下自适应宽度 */
+.double-check-tag-tag {
+  flex-grow: 1; /* 自动填充可用空间 */
+  text-align: center; /* 文本居中，以应对可能的换行情况 */
+}
+</style>
