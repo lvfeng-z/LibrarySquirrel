@@ -34,7 +34,7 @@ export class PageModel<Query, Result> {
    */
   data?: Result[]
 
-  constructor(page?: PageModel<Query, Result | object>) {
+  constructor(page?: PageModel<Query, Result>) {
     if (page === undefined) {
       this.paging = true
       this.pageNumber = 1
@@ -52,9 +52,23 @@ export class PageModel<Query, Result> {
       this.dataCount = page.dataCount === undefined ? 0 : page.dataCount
       this.query = page.query === undefined ? undefined : page.query
       this.sort = page.sort === undefined ? undefined : page.sort
-      if (typeof page.data == Result.class) {
-        this.data = page.data === undefined ? [] : page.data
-      }
+      this.data = page.data === undefined ? [] : page.data
     }
+  }
+
+  /**
+   * 返回一个指定类型的PageModel
+   */
+  public transform<T>(): PageModel<Query, T> {
+    const result = new PageModel<Query, T>()
+    result.paging = this.paging
+    result.pageNumber = this.pageNumber
+    result.pageSize = this.pageSize
+    result.dataCount = this.dataCount
+    result.query = this.query
+    result.sort = this.sort
+    result.data = []
+
+    return result
   }
 }
