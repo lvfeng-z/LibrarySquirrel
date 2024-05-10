@@ -5,6 +5,7 @@ import { computed, Ref, ref, UnwrapRef } from 'vue'
 import { SelectOption } from '../../model/util/SelectOption'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
+import DoubleCheckTag from './DoubleCheckTag.vue'
 
 // props
 const props = defineProps<{
@@ -182,13 +183,12 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
             <el-row>
               <template v-for="item in upperData" :key="item.value">
                 <div class="exchange-box-upperLower-data-item">
-                  <el-check-tag
-                    :checked="true"
-                    type="primary"
-                    @change="handleCheckTagClick(item, 'upperData')"
+                  <double-check-tag
+                    :item="item"
+                    @left-clicked="handleCheckTagClick(item, 'upperData')"
+                    @right-clicked="handleCheckTagClick(item, 'upperData')"
                   >
-                    {{ item.label }}
-                  </el-check-tag>
+                  </double-check-tag>
                 </div>
               </template>
             </el-row>
@@ -223,13 +223,12 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
             <el-row>
               <template v-for="item in upperBufferData" :key="item.id">
                 <div class="exchange-box-upperLower-data-item">
-                  <el-check-tag
-                    :checked="true"
-                    type="warning"
-                    @change="handleCheckTagClick(item, 'upperBuffer')"
+                  <double-check-tag
+                    :item="item"
+                    @left-clicked="handleCheckTagClick(item, 'upperBuffer')"
+                    @right-clicked="handleCheckTagClick(item, 'upperBuffer')"
                   >
-                    {{ item.label }}
-                  </el-check-tag>
+                  </double-check-tag>
                 </div>
               </template>
             </el-row>
@@ -240,13 +239,12 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
             <el-row>
               <template v-for="item in lowerBufferData" :key="item.id">
                 <div class="exchange-box-upperLower-data-item">
-                  <el-check-tag
-                    :checked="true"
-                    type="warning"
-                    @change="handleCheckTagClick(item, 'lowerBuffer')"
+                  <double-check-tag
+                    :item="item"
+                    @left-clicked="handleCheckTagClick(item, 'lowerBuffer')"
+                    @right-clicked="handleCheckTagClick(item, 'lowerBuffer')"
                   >
-                    {{ item.label }}
-                  </el-check-tag>
+                  </double-check-tag>
                 </div>
               </template>
             </el-row>
@@ -264,13 +262,12 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
             <el-row class="exchange-box-lower-data-scroll-row">
               <template v-for="item in lowerData" :key="item.id">
                 <div class="exchange-box-upperLower-data-item">
-                  <el-check-tag
-                    class="exchange-box-upperLower-data-item-tag"
-                    :checked="true"
-                    type="danger"
-                    @change="handleCheckTagClick(item, 'lowerData')"
-                    >{{ item.label }}
-                  </el-check-tag>
+                  <double-check-tag
+                    :item="item"
+                    @left-clicked="handleCheckTagClick(item, 'lowerData')"
+                    @right-clicked="handleCheckTagClick(item, 'lowerData')"
+                  >
+                  </double-check-tag>
                 </div>
               </template>
             </el-row>
@@ -332,7 +329,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
   border-left-style: hidden;
 }
 .exchange-box-upperLower-data-item {
-  margin: 1px;
+  margin: 2px;
   word-break: break-all;
   word-wrap: break-word;
 }
