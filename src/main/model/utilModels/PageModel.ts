@@ -34,7 +34,7 @@ export class PageModel<Query, Result> {
    */
   data?: Result[]
 
-  constructor(page?: PageModel<Query, Result>) {
+  constructor(page?: PageModel<Query, Result | object>) {
     if (page === undefined) {
       this.paging = true
       this.pageNumber = 1
@@ -52,7 +52,9 @@ export class PageModel<Query, Result> {
       this.dataCount = page.dataCount === undefined ? 0 : page.dataCount
       this.query = page.query === undefined ? undefined : page.query
       this.sort = page.sort === undefined ? undefined : page.sort
-      this.data = page.data === undefined ? [] : page.data
+      if (typeof page.data == Result.class) {
+        this.data = page.data === undefined ? [] : page.data
+      }
     }
   }
 }

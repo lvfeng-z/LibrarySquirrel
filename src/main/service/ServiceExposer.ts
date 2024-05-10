@@ -4,6 +4,7 @@ import SelectItem from '../model/utilModels/SelectItem'
 import SiteTagService from './SiteTagService'
 import SiteService from './SiteService'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
+import { PageModel } from '../model/utilModels/PageModel'
 
 export function exposeService() {
   // LocalTagService
@@ -52,8 +53,8 @@ export function exposeService() {
   )
   ipcMain.handle(
     'siteTag-getBoundOrUnboundInLocalTag',
-    async (_event, queryDTO: SiteTagQueryDTO) => {
-      return await SiteTagService.getBoundOrUnboundInLocalTag(queryDTO)
+    async (_event, page: PageModel<SiteTagQueryDTO, SelectItem>) => {
+      return await SiteTagService.getBoundOrUnboundInLocalTag(page)
     }
   )
   ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {

@@ -4,6 +4,7 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
 import { SiteTagDTO } from '../model/dto/SiteTagDTO'
+import { PageModel } from '../model/utilModels/PageModel'
 
 export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -37,43 +38,48 @@ export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
     }
   }
 
-  public async getSiteTagWithLocalTag(queryDTO: SiteTagQueryDTO): Promise<SiteTagDTO[]> {
+  public async getSiteTagWithLocalTag(
+    page: PageModel<SiteTagQueryDTO, SiteTag>
+  ): Promise<SiteTagDTO[]> {
     const db = super.acquire()
     try {
+      // 没有查询参数，构建一个空的
+      if (page.query === undefined) {
+        page.query = new SiteTagQueryDTO()
+      }
+
       const selectClause = `select t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId,
                 json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site
         from site_tag t1
           left join local_tag t2 on t1.local_tag_id = t2.id
           left join site t3 on t1.site_id = t3.id`
-      const whereClauses = super.getWhereClauses(queryDTO, 't1')
+      const whereClauses = super.getWhereClauses(page.query, 't1')
 
       // 删除用于标识localTagId运算符的属性生成的子句
       delete whereClauses.bound
       // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
-      if (!queryDTO.bound && Object.prototype.hasOwnProperty.call(whereClauses, 'localTagId')) {
+      if (!page.query.bound && Object.prototype.hasOwnProperty.call(whereClauses, 'localTagId')) {
         whereClauses.localTagId = '(t1.local_tag_id != @localTagId or t1.local_tag_id is null)'
       }
 
       // 处理keyword
       if (Object.prototype.hasOwnProperty.call(whereClauses, 'keyword')) {
         whereClauses.keyword = 't1.site_tag_name like @keyword'
-        queryDTO.keyword = queryDTO.getKeywordLikeString()
+        page.query.keyword = page.query.getKeywordLikeString()
       }
 
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
       // 拼接sql语句
       let statement = selectClause
-      if (whereClauseArray.length > 0) {
-        statement +=
-          ' where ' +
-          (whereClauseArray.length > 1 ? whereClauseArray.join(' and ') : whereClauseArray[0])
-      }
+      const whereClause = super.splicingWhereClauses(whereClauseArray)
+      statement += whereClause
+      statement = await super.sorterAndPager(statement, whereClause, page)
 
       // 查询
       const results: SiteTagDTO[] = (await db.prepare(statement)).all({
-        ...queryDTO
+        ...page.query
       }) as SiteTagDTO[]
 
       // 利用构造方法处理localTag的JSON字符串

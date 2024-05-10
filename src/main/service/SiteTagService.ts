@@ -5,6 +5,7 @@ import { ApiUtil } from '../util/ApiUtil'
 import LogUtil from '../util/LogUtil'
 import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
+import { PageModel } from '../model/utilModels/PageModel'
 
 async function save(siteTag: SiteTag) {
   const dao = new SiteTagDao()
@@ -36,15 +37,15 @@ async function updateBindLocalTag(localTagId: string | null, siteTagIds: string[
 
 /**
  * 查询本地标签绑定或未绑定的站点标签
- * @param queryDTO
+ * @param page
  */
-async function getBoundOrUnboundInLocalTag(queryDTO: SiteTagQueryDTO) {
-  // 传入的参数没有经过构造函数，导致需要的方法和属性不完整，在此重建
-  queryDTO = new SiteTagQueryDTO(queryDTO)
+async function getBoundOrUnboundInLocalTag(page: PageModel<SiteTagQueryDTO, SiteTag>) {
+  // 使用构造函数创建对象，补充缺失的方法和属性
+  page.query = new SiteTagQueryDTO(page.query)
 
   const dao = new SiteTagDao()
-  const results = await dao.getSiteTagWithLocalTag(queryDTO)
-  const response = results.map(
+  const results = await dao.getSiteTagWithLocalTag(page)
+  const selectItems = results.map(
     (result) =>
       new SelectItem({
         extraData: undefined,
@@ -54,7 +55,9 @@ async function getBoundOrUnboundInLocalTag(queryDTO: SiteTagQueryDTO) {
         value: String(result.id)
       })
   )
-  return ApiUtil.response(response)
+
+  const newPage = new PageModel<SiteTagQueryDTO, SelectItem>()
+  return ApiUtil.response(newPage)
 }
 
 async function getSelectList(queryDTO: SiteTagQueryDTO) {

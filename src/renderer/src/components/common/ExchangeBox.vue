@@ -6,6 +6,7 @@ import { SelectOption } from '../../model/util/SelectOption'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
 import DoubleCheckTag from './DoubleCheckTag.vue'
+import { PageCondition } from '../../model/util/PageCondition'
 
 // props
 const props = defineProps<{
@@ -141,12 +142,14 @@ function refreshData() {
 // 请求查询接口
 async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
   let response: ApiResponse
+  const page = new PageCondition()
+  page.pageSize = 3
   if (upperOrLower) {
-    const params = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
-    response = await props.upperSearchApi(params)
+    page.query = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
+    response = await props.upperSearchApi(page)
   } else {
-    const params = { ...lowerSearchToolbarParams.value, ...props.lowerApiStaticParams }
-    response = await props.lowerSearchApi(params)
+    page.query = { ...lowerSearchToolbarParams.value, ...props.lowerApiStaticParams }
+    response = await props.lowerSearchApi(page)
   }
 
   let newData: SelectOption[]
