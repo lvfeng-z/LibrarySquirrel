@@ -3,6 +3,7 @@ import StringUtil from '../util/StringUtil'
 import { DB } from '../database/DB'
 import BaseModel from '../model/BaseModel'
 import { BaseQueryDTO } from '../model/queryDTO/BaseQueryDTO'
+import ObjectUtil from '../util/ObjectUtil'
 
 type PrimaryKey = string | number
 
@@ -64,11 +65,7 @@ export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends 
       updateData.updateTime = Date.now()
 
       // 生成一个不包含值为undefined的属性的对象
-      const existingValue = Object.fromEntries(
-        Object.entries(updateData).filter((keyValue) => {
-          return keyValue[1] !== undefined
-        })
-      )
+      const existingValue = ObjectUtil.nonUndefinedValue(updateData)
       const keys = Object.keys(existingValue)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
@@ -169,38 +166,48 @@ export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
-   * 为查询语句附加分页字句（为第一个参数statement末端拼接分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
+   * 为查询语句附加分页字句（为第一个参数statement末端拼接分页字句并返回，最后一个参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表）
    * @param statement 需要分页的语句
    * @param whereClause 分页语句的where字句
    * @param page 分页配置
+   * @param fromClause 分页语句的from子句
    * @protected
    */
   protected async pager(
     statement: string,
     whereClause: string,
-    page: PageModel<Query, Model>
+    page: PageModel<Query, Model>,
+    fromClause?: string
   ): Promise<string> {
     if (page.paging === undefined || page.paging) {
-      statement += ' ' + (await this.getPagingClause(whereClause, page))
+      statement += ' ' + (await this.getPagingClause(whereClause, page, fromClause))
     }
     return statement
   }
 
   /**
-   * 获取分页字句，并给参数page的dataCount和pageCount赋值）
+   * 获取分页字句，并给参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表
    * @param whereClause 需要分页的语句的where字句
    * @param page 分页配置
+   * @param fromClause 分页语句的from子句
    * @protected
    */
   protected async getPagingClause(
     whereClause: string,
-    page: PageModel<Query, Model>
+    page: PageModel<Query, Model>,
+    fromClause?: string
   ): Promise<string> {
     const db = this.acquire()
     try {
+      if (StringUtil.isBlank(fromClause)) {
+        fromClause = this.tableName
+      } else {
+        fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'from ')
+      }
       // 查询数据总量，计算页码数量
-      const countSql = `SELECT COUNT(*) AS total FROM "${this.tableName}" ${whereClause}`
-      const countResult = (await db.prepare(countSql)).get(page.query) as { total: number }
+      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(page.query)
+      const countSql = `SELECT COUNT(*) AS total FROM ${fromClause} ${whereClause}`
+      const countResult = (await db.prepare(countSql)).get(nonUndefinedValue) as { total: number }
       page.dataCount = countResult.total
       page.pageCount = Math.ceil(countResult.total / page.pageSize)
 
@@ -249,19 +256,21 @@ export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
-   * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
+   * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表）
    * @param statement 需要分页的语句
    * @param whereClause 分页语句的where字句
    * @param page 排序配置
+   * @param fromClause 分页语句的from子句
    * @protected
    */
   protected async sorterAndPager(
     statement: string,
     whereClause: string,
-    page: PageModel<Query, Model>
+    page: PageModel<Query, Model>,
+    fromClause?: string
   ): Promise<string> {
     statement = this.sorter(statement, page)
-    statement = await this.pager(statement, whereClause, page)
+    statement = await this.pager(statement, whereClause, page, fromClause)
     return statement
   }
 
