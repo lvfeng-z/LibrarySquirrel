@@ -99,24 +99,7 @@ export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends 
       // 生成where字句
       let whereClause = ''
       if (page.query) {
-        let conditions = Object.entries(page.query).map(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            return `"${StringUtil.camelToSnakeCase(key)}" = @${key}`
-          } else {
-            return undefined
-          }
-        })
-        // 去除undefined
-        conditions = conditions.filter((whereClause) => whereClause !== undefined)
-        // 根据长度不同分别生成不同字句
-        if (conditions) {
-          if (conditions.length == 1) {
-            whereClause = `WHERE ${conditions.toString()}`
-          }
-          if (conditions.length > 1) {
-            whereClause = `WHERE ${conditions.join(' AND ')}`
-          }
-        }
+        whereClause = this.getWhereClause(page.query)
       }
 
       // 拼接查询语句
@@ -137,10 +120,36 @@ export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
+   * 拼接where字句
+   * @protected
+   * @param whereClauses
+   */
+  protected splicingWhereClauses(whereClauses: string[]): string {
+    if (whereClauses.length > 0) {
+      return `where ${whereClauses.length > 1 ? whereClauses.join(' and ') : whereClauses[0]}`
+    } else {
+      return ''
+    }
+  }
+
+  /**
+   * 获取where字句
+   * @protected
+   * @param queryConditions
+   * @param alias
+   */
+  protected getWhereClause(queryConditions: Query, alias?: string): string {
+    const keyAndWhereClauses = this.getWhereClauses(queryConditions, alias)
+    const whereClauses = Object.entries(keyAndWhereClauses).map((item) => item[1])
+    return this.splicingWhereClauses(whereClauses)
+  }
+
+  /**
    * 获取where字句
    * @param queryConditions 查询条件
    * @param alias 所查询数据表的别名
    * @protected
+   * @return 属性名为键，where字句为值的Record对象
    */
   protected getWhereClauses(queryConditions: Query, alias?: string): Record<string, string> {
     const whereClauses: Record<string, string> = {}
