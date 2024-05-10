@@ -20,7 +20,7 @@ export class PageCondition<T> {
   /**
    * 查询条件
    */
-  query?: Partial<T>
+  query?: T
   /**
    * 排序字段
    */
