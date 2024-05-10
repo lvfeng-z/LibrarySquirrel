@@ -8,7 +8,7 @@ import { InputBox } from '../../model/util/InputBox'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import { SelectOption } from '../../model/util/SelectOption'
-import { apiResponseMsgNoSuccess, apiResponseCheck, apiResponseMsg } from '../../utils/ApiUtil'
+import { apiResponseCheck, apiResponseMsg, apiResponseMsgNoSuccess } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
 import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
 import { DialogMode } from '../../model/util/DialogMode'
@@ -247,12 +247,12 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
           <div class="margin-box">
             <ExchangeBox
               ref="siteTagExchangeBox"
-              upper-title=""
+              upper-title="已绑定站点标签"
               :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
               :upper-main-input-boxes="exchangeBoxMainInputBoxes"
               :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
               :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
-              lower-title=""
+              lower-title="可绑定站点标签"
               :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
               :lower-main-input-boxes="exchangeBoxMainInputBoxes"
               :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
