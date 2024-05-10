@@ -1,8 +1,8 @@
-function isBlank(input: string) {
+function isBlank(input: string | null | undefined): boolean {
   return !input || /^\s*$/.test(input)
 }
 
-function isNotBlank(input: string) {
+function isNotBlank(input: string | null | undefined) {
   return !isBlank(input)
 }
 
