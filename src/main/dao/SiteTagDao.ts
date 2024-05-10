@@ -40,9 +40,12 @@ export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
   public async getSiteTagWithLocalTag(queryDTO: SiteTagQueryDTO): Promise<SiteTagDTO[]> {
     const db = super.acquire()
     try {
-      const selectClause =
-        "select t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId, json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag " +
-        'from site_tag t1 left join local_tag t2 on t1.local_tag_id = t2.id'
+      const selectClause = `select t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId,
+                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site
+        from site_tag t1
+          left join local_tag t2 on t1.local_tag_id = t2.id
+          left join site t3 on t1.site_id = t3.id`
       const whereClauses = super.getWhereClauses(queryDTO, 't1')
 
       // 删除用于标识localTagId运算符的属性生成的子句

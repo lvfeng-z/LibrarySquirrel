@@ -4,6 +4,7 @@ import { SiteTagDao } from '../dao/SiteTagDao'
 import { ApiUtil } from '../util/ApiUtil'
 import LogUtil from '../util/LogUtil'
 import SelectItem from '../model/utilModels/SelectItem'
+import StringUtil from '../util/StringUtil'
 
 async function save(siteTag: SiteTag) {
   const dao = new SiteTagDao()
@@ -49,7 +50,7 @@ async function getBoundOrUnboundInLocalTag(queryDTO: SiteTagQueryDTO) {
         extraData: undefined,
         label: result.siteTagName,
         rootId: result.baseSiteTagId,
-        secondaryLabel: String(result.siteId),
+        secondaryLabel: StringUtil.isBlank(result.site.siteName) ? '?' : result.site.siteName,
         value: String(result.id)
       })
   )
