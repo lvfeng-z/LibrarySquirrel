@@ -143,7 +143,7 @@ function refreshData() {
 async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
   let response: ApiResponse
   const page = new PageCondition()
-  page.pageSize = 3
+  page.pageSize = 50
   if (upperOrLower) {
     page.query = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
     response = await props.upperSearchApi(page)
@@ -154,7 +154,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
 
   let newData: SelectOption[]
   if (apiResponseCheck(response)) {
-    newData = apiResponseGetData(response) as SelectOption[]
+    const page = apiResponseGetData(response) as PageCondition<SelectOption>
+    newData = page.data === undefined ? [] : page.data
     return newData
   } else {
     apiResponseMsg(response)
