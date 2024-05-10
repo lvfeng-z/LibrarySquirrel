@@ -2,25 +2,26 @@ import { PageModel } from '../model/utilModels/PageModel'
 import StringUtil from '../util/StringUtil'
 import { DB } from '../database/DB'
 import BaseModel from '../model/BaseModel'
+import { BaseQueryDTO } from '../model/queryDTO/BaseQueryDTO'
 
 type PrimaryKey = string | number
 
 /**
  * Dao接口，定义CRUD方法
  */
-export interface BaseDao<Query extends BaseModel, Result> {
-  save(entity: Query): Promise<number | string>
+export interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
+  save(entity: Model): Promise<number | string>
   deleteById(id: PrimaryKey): Promise<number>
-  updateById(id: PrimaryKey, updateData: Partial<Query>): Promise<number>
+  updateById(id: PrimaryKey, updateData: Model): Promise<number>
   getById(id: PrimaryKey): Promise<Query>
-  selectPage(page: PageModel<Query, Result>): Promise<PageModel<Query, Result>>
+  selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>>
 }
 
 /**
  * 抽象Dao基类，实现基本的CRUD方法
  */
-export abstract class AbstractBaseDao<Query extends BaseModel, Result>
-  implements BaseDao<Query, Result>
+export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseModel>
+  implements BaseDao<Query, Model>
 {
   protected tableName: string
   private readonly childClassName: string
@@ -30,7 +31,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     this.childClassName = childClassName
   }
 
-  async save(entity: Partial<Query>): Promise<number | string> {
+  async save(entity: Model): Promise<number | string> {
     const db = this.acquire()
     try {
       // 设置createTime和updateTime
@@ -56,7 +57,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     }
   }
 
-  async updateById(id: PrimaryKey, updateData: Partial<Query>): Promise<number> {
+  async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
     const db = this.acquire()
     try {
       // 设置createTime和updateTime
@@ -92,7 +93,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
     }
   }
 
-  async selectPage(page: PageModel<Query, Result>): Promise<PageModel<Query, Result>> {
+  async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
     const db = this.acquire()
     try {
       // 生成where字句
@@ -141,10 +142,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
    * @param alias 所查询数据表的别名
    * @protected
    */
-  protected getWhereClauses(
-    queryConditions: Partial<Query>,
-    alias?: string
-  ): Record<string, string> {
+  protected getWhereClauses(queryConditions: Query, alias?: string): Record<string, string> {
     const whereClauses: Record<string, string> = {}
     if (queryConditions) {
       Object.entries(queryConditions).forEach(([key, value]) => {
@@ -171,7 +169,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
   protected async pager(
     statement: string,
     whereClause: string,
-    page: PageModel<Query, Result>
+    page: PageModel<Query, Model>
   ): Promise<string> {
     if (page.paging === undefined || page.paging) {
       statement += ' ' + (await this.getPagingClause(whereClause, page))
@@ -187,7 +185,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
    */
   protected async getPagingClause(
     whereClause: string,
-    page: PageModel<Query, Result>
+    page: PageModel<Query, Model>
   ): Promise<string> {
     const db = this.acquire()
     try {
@@ -212,7 +210,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
    * @param page 排序配置
    * @protected
    */
-  protected sorter(statement: string, page: PageModel<Query, Result>): string {
+  protected sorter(statement: string, page: PageModel<Query, Model>): string {
     if (page.paging === undefined || page.paging) {
       statement += ' ' + this.getSortClause(page)
     }
@@ -224,7 +222,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
    * @param page
    * @protected
    */
-  protected getSortClause(page: PageModel<Query, Result>): string {
+  protected getSortClause(page: PageModel<Query, Model>): string {
     let sortClauses: string = ''
     if (page.sort !== undefined) {
       sortClauses = page.sort
@@ -251,7 +249,7 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
   protected async sorterAndPager(
     statement: string,
     whereClause: string,
-    page: PageModel<Query, Result>
+    page: PageModel<Query, Model>
   ): Promise<string> {
     statement = this.sorter(statement, page)
     statement = await this.pager(statement, whereClause, page)
@@ -263,12 +261,12 @@ export abstract class AbstractBaseDao<Query extends BaseModel, Result>
    * @param dataList
    * @protected
    */
-  protected getResultTypeDataList(dataList: object[]): Result[] {
+  protected getResultTypeDataList(dataList: object[]): Model[] {
     return dataList.map(
       (row) =>
         Object.fromEntries(
           Object.entries(row).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
-        ) as Result
+        ) as Model
     )
   }
 
