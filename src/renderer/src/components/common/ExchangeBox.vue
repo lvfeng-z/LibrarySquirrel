@@ -182,7 +182,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
           <el-scrollbar>
             <el-row>
               <template v-for="item in upperData" :key="item.value">
-                <div class="exchange-box-upperLower-data-item">
+                <div class="exchange-box-upperLower-data-item rounded-borders">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'upperData')"
@@ -222,7 +222,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
           <el-scrollbar>
             <el-row>
               <template v-for="item in upperBufferData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item">
+                <div class="exchange-box-upperLower-data-item rounded-borders">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'upperBuffer')"
@@ -238,7 +238,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
           <el-scrollbar>
             <el-row>
               <template v-for="item in lowerBufferData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item">
+                <div class="exchange-box-upperLower-data-item rounded-borders">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'lowerBuffer')"
@@ -261,7 +261,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
           <el-scrollbar class="exchange-box-lower-data-scroll">
             <el-row class="exchange-box-lower-data-scroll-row">
               <template v-for="item in lowerData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item">
+                <div class="exchange-box-upperLower-data-item rounded-borders">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'lowerData')"
@@ -332,6 +332,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
   margin: 2px;
   word-break: break-all;
   word-wrap: break-word;
+  border-width: 2px;
+  border-color: #c6f3ac;
 }
 .exchange-box-middle {
   display: flex;
