@@ -23,14 +23,14 @@
     "watch": "chcp 65001 & electron-vite dev --watch"
   },
   "engines": {
-    "node": "20.12.2"
+    "node": "20.13.1"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "@element-plus/icons-vue": "^2.3.1",
     "better-sqlite3": "^9.6.0",
-    "electron-log": "^5.1.2",
+    "electron-log": "^5.1.4",
     "electron-updater": "^6.1.8",
     "element-plus": "^2.7.2",
     "sqlite3": "^5.1.7"
@@ -45,15 +45,15 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/eslint-config-typescript": "^13.0.0",
-    "electron": "^30.0.2",
+    "electron": "^30.0.3",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.2.0",
     "eslint": "^8.56.0",
-    "eslint-plugin-vue": "^9.25.0",
+    "eslint-plugin-vue": "^9.26.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vue": "^3.4.27",
-    "vue-tsc": "^2.0.16"
+    "vue-tsc": "^2.0.17"
   }
 }
