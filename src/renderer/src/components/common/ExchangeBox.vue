@@ -34,8 +34,14 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
+const upperPageConfig: Ref<UnwrapRef<PageCondition<object>>> = ref(new PageCondition<object>()) // upper搜索栏分页参数
+const lowerPageConfig: Ref<UnwrapRef<PageCondition<object>>> = ref(new PageCondition<object>()) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lower的数据
+const upperScroll = ref() // upperDataScrollBar子组件
+const lowerScroll = ref() // lowerDataScrollBar子组件
+const upperLoading: Ref<boolean> = ref(false) // upper加载中
+const lowerLoading: Ref<boolean> = ref(false) // lower加载中
 const upperBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lowerBuffer的数据
@@ -129,8 +135,10 @@ function handleClearButtonClicked() {
 function refreshData() {
   upperBufferData.value = []
   upperBufferId.value.clear()
+  upperPageConfig.value = new PageCondition()
   lowerBufferData.value = []
   lowerBufferId.value.clear()
+  lowerPageConfig.value = new PageCondition()
 
   requestApiAndGetData(true).then((response) => {
     upperData.value = response == undefined ? [] : response
@@ -141,25 +149,89 @@ function refreshData() {
 }
 // 请求查询接口
 async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
-  let response: ApiResponse
-  const page = new PageCondition()
-  page.pageSize = 50
   if (upperOrLower) {
-    page.query = { ...upperSearchToolbarParams.value, ...props.upperApiStaticParams }
-    response = await props.upperSearchApi(page)
+    upperLoading.value = true
   } else {
-    page.query = { ...lowerSearchToolbarParams.value, ...props.lowerApiStaticParams }
-    response = await props.lowerSearchApi(page)
+    lowerLoading.value = true
   }
 
-  let newData: SelectOption[]
+  let response: ApiResponse
+  if (upperOrLower) {
+    upperPageConfig.value.query = {
+      ...upperSearchToolbarParams.value,
+      ...props.upperApiStaticParams
+    }
+    const tempPage = JSON.parse(JSON.stringify(upperPageConfig.value))
+    response = await props.upperSearchApi(tempPage)
+  } else {
+    lowerPageConfig.value.query = {
+      ...lowerSearchToolbarParams.value,
+      ...props.lowerApiStaticParams
+    }
+    const tempPage = JSON.parse(JSON.stringify(lowerPageConfig.value))
+    response = await props.lowerSearchApi(tempPage)
+  }
+
+  if (upperOrLower) {
+    upperLoading.value = false
+  } else {
+    lowerLoading.value = false
+  }
+
   if (apiResponseCheck(response)) {
     const page = apiResponseGetData(response) as PageCondition<SelectOption>
-    newData = page.data === undefined ? [] : page.data
-    return newData
+    if (upperOrLower) {
+      upperPageConfig.value = new PageCondition(page)
+    } else {
+      lowerPageConfig.value = new PageCondition(page)
+    }
+    return page.data === undefined ? [] : page.data
   } else {
     apiResponseMsg(response)
     return undefined
+  }
+}
+// 处理DataScroll滚动事件
+async function handleDataScroll(_event, upperOrLower: boolean) {
+  // 获得滚动条包裹的 ref 对象
+  let scrollWrapper
+  if (upperOrLower) {
+    scrollWrapper = upperScroll.value.wrapRef
+  } else {
+    scrollWrapper = lowerScroll.value.wrapRef
+  }
+
+  if (scrollWrapper) {
+    const scrollHeight = scrollWrapper.scrollHeight
+    const scrollTop = scrollWrapper.scrollTop
+    const height = scrollWrapper.clientHeight
+
+    // 判断是否滚动到底部
+    if (scrollTop + height >= scrollHeight) {
+      // 加载下一页数据
+      if (upperOrLower) {
+        upperPageConfig.value.pageNumber++
+      } else {
+        lowerPageConfig.value.pageNumber++
+      }
+
+      // 请求接口
+      const increment = await requestApiAndGetData(upperOrLower)
+      // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
+      if (increment !== undefined && increment !== null && increment.length > 0) {
+        if (upperOrLower) {
+          upperData.value = [...upperData.value, ...increment]
+        } else {
+          lowerData.value = [...lowerData.value, ...increment]
+        }
+      } else {
+        if (upperOrLower) {
+          upperPageConfig.value.pageNumber--
+        } else {
+          lowerPageConfig.value.pageNumber--
+        }
+      }
+    }
   }
 }
 </script>
@@ -183,7 +255,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
           </SearchToolbar>
         </div>
         <div class="exchange-box-upper-data rounded-borders margin-box">
-          <el-scrollbar>
+          <el-scrollbar ref="upperScroll" @scroll="handleDataScroll($event, true)">
             <el-row>
               <template v-for="item in upperData" :key="item.value">
                 <div class="exchange-box-upperLower-data-item rounded-borders">
@@ -197,6 +269,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
               </template>
             </el-row>
           </el-scrollbar>
+          <el-text v-if="upperLoading" class="loading-placeholder">加载中...</el-text>
         </div>
       </div>
     </div>
@@ -262,7 +335,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
       </div>
       <div class="exchange-box-lower-main">
         <div class="exchange-box-lower-data rounded-borders margin-box">
-          <el-scrollbar class="exchange-box-lower-data-scroll">
+          <el-scrollbar ref="lowerScroll" @scroll="handleDataScroll($event, false)">
             <el-row class="exchange-box-lower-data-scroll-row">
               <template v-for="item in lowerData" :key="item.id">
                 <div class="exchange-box-upperLower-data-item rounded-borders">
@@ -276,6 +349,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
               </template>
             </el-row>
           </el-scrollbar>
+          <el-text v-if="lowerLoading" class="loading-placeholder">加载中...</el-text>
         </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
@@ -428,6 +502,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
   height: 32px;
 }
 .exchange-box-lower-data {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: calc(100% - 32px);
   background-color: #f6f6f6;
