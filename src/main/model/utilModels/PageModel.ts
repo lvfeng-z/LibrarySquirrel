@@ -64,6 +64,7 @@ export class PageModel<Query, Result> {
     result.paging = this.paging
     result.pageNumber = this.pageNumber
     result.pageSize = this.pageSize
+    result.pageCount = this.pageCount
     result.dataCount = this.dataCount
     result.query = this.query
     result.sort = this.sort
