@@ -36,27 +36,27 @@ const operationDropDown: OperationItem[] = [
 // 本地标签SearchTable的表头
 const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
+    type: 'text',
     name: 'id',
     label: '内部id',
-    dataType: 'string',
     hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
   },
   {
+    type: 'text',
     name: 'localTagName',
     label: '名称',
-    dataType: 'string',
     hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
   },
   {
+    type: 'text',
     name: 'baseLocalTagId',
     label: '上级标签内部id',
-    dataType: 'string',
     hide: false,
     headerAlign: 'center',
     headerTagType: 'success',
@@ -64,9 +64,9 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   },
   {
+    type: 'text',
     name: 'createTime',
     label: '创建时间',
-    dataType: 'string',
     hide: false,
     headerAlign: 'center',
     headerTagType: 'success',
@@ -78,7 +78,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
-    inputType: 'text',
+    type: 'text',
     placeholder: '输入本地标签的名称查询',
     inputSpan: 18
   }
@@ -88,25 +88,25 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'text',
+    type: 'text',
     placeholder: ''
   },
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'text',
+    type: 'text',
     placeholder: ''
   },
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'text',
+    type: 'text',
     placeholder: ''
   },
   {
     name: 'baseLocalTagId',
     label: '基础标签id',
-    inputType: 'text',
+    type: 'text',
     placeholder: ''
   }
 ])
@@ -116,7 +116,7 @@ const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
-    inputType: 'text',
+    type: 'text',
     placeholder: '输入站点标签的名称查询',
     inputSpan: 21
   }
@@ -125,7 +125,7 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
-    inputType: 'text',
+    type: 'text',
     placeholder: '输入站点标签的名称查询',
     label: '名111111111称',
     inputSpan: 10

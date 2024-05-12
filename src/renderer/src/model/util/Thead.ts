@@ -1,8 +1,9 @@
 // DataTable的表头
-export interface Thead {
+import { CommonInputType } from './CommonInputType'
+
+export interface Thead extends CommonInputType {
   name: string // 字段名
   label: string // 标题名称
-  dataType: string // 数据类型
   hide: boolean // 是否隐藏
   width?: number // 数据列宽度
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
