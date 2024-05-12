@@ -40,8 +40,12 @@ const upperData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lower的数据
 const upperScroll = ref() // upperDataScrollBar子组件
 const lowerScroll = ref() // lowerDataScrollBar子组件
-const upperLoading: Ref<boolean> = ref(false) // upper加载中
-const lowerLoading: Ref<boolean> = ref(false) // lower加载中
+const upperLoadMore: Ref<boolean> = computed(() => {
+  return upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount
+}) // upper加载更多开关
+const lowerLoadMore: Ref<boolean> = computed(() => {
+  return lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount
+}) // lower加载更多开关
 const upperBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lowerBuffer的数据
@@ -62,8 +66,50 @@ function handleUpperSearchToolbarParamsChanged(params: object) {
 function handleLowerSearchToolbarParamsChanged(params: object) {
   lowerSearchToolbarParams.value = JSON.parse(JSON.stringify(params))
 }
+// 请求查询接口
+async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
+  // 请求api
+  let response: ApiResponse
+  if (upperOrLower) {
+    upperPageConfig.value.query = {
+      ...upperSearchToolbarParams.value,
+      ...props.upperApiStaticParams
+    }
+    const tempPage = JSON.parse(JSON.stringify(upperPageConfig.value))
+    response = await props.upperSearchApi(tempPage)
+  } else {
+    lowerPageConfig.value.query = {
+      ...lowerSearchToolbarParams.value,
+      ...props.lowerApiStaticParams
+    }
+    const tempPage = JSON.parse(JSON.stringify(lowerPageConfig.value))
+    response = await props.lowerSearchApi(tempPage)
+  }
+
+  // 解析并返回数据，同时把分页参数赋值给响应式变量
+  if (apiResponseCheck(response)) {
+    const page = apiResponseGetData(response) as PageCondition<SelectOption>
+    if (upperOrLower) {
+      upperPageConfig.value = new PageCondition(page)
+    } else {
+      lowerPageConfig.value = new PageCondition(page)
+    }
+    return page.data === undefined ? [] : page.data
+  } else {
+    apiResponseMsg(response)
+    return undefined
+  }
+}
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked(upperOrLower: boolean) {
+  // 点击搜索按钮后，分页和滚动条位置重置
+  if (upperOrLower) {
+    upperPageConfig.value = new PageCondition<object>()
+  } else {
+    lowerPageConfig.value = new PageCondition<object>()
+  }
+  resetScrollBarPosition(upperOrLower)
+
   const newData = await requestApiAndGetData(upperOrLower)
 
   if (newData) {
@@ -139,6 +185,7 @@ function refreshData() {
   lowerBufferData.value = []
   lowerBufferId.value.clear()
   lowerPageConfig.value = new PageCondition()
+  resetScrollBarPosition()
 
   requestApiAndGetData(true).then((response) => {
     upperData.value = response == undefined ? [] : response
@@ -147,48 +194,30 @@ function refreshData() {
     lowerData.value = response == undefined ? [] : response
   })
 }
-// 请求查询接口
-async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
+// 请求DataScroll下一页数据
+async function requestNextPage(upperOrLower: boolean) {
+  // 加载下一页数据
   if (upperOrLower) {
-    upperLoading.value = true
+    upperPageConfig.value.pageNumber++
   } else {
-    lowerLoading.value = true
+    lowerPageConfig.value.pageNumber++
   }
 
-  let response: ApiResponse
-  if (upperOrLower) {
-    upperPageConfig.value.query = {
-      ...upperSearchToolbarParams.value,
-      ...props.upperApiStaticParams
-    }
-    const tempPage = JSON.parse(JSON.stringify(upperPageConfig.value))
-    response = await props.upperSearchApi(tempPage)
-  } else {
-    lowerPageConfig.value.query = {
-      ...lowerSearchToolbarParams.value,
-      ...props.lowerApiStaticParams
-    }
-    const tempPage = JSON.parse(JSON.stringify(lowerPageConfig.value))
-    response = await props.lowerSearchApi(tempPage)
-  }
-
-  if (upperOrLower) {
-    upperLoading.value = false
-  } else {
-    lowerLoading.value = false
-  }
-
-  if (apiResponseCheck(response)) {
-    const page = apiResponseGetData(response) as PageCondition<SelectOption>
+  // 请求接口
+  const increment = await requestApiAndGetData(upperOrLower)
+  // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
+  if (increment !== undefined && increment !== null && increment.length > 0) {
     if (upperOrLower) {
-      upperPageConfig.value = new PageCondition(page)
+      upperData.value = [...upperData.value, ...increment]
     } else {
-      lowerPageConfig.value = new PageCondition(page)
+      lowerData.value = [...lowerData.value, ...increment]
     }
-    return page.data === undefined ? [] : page.data
   } else {
-    apiResponseMsg(response)
-    return undefined
+    if (upperOrLower) {
+      upperPageConfig.value.pageNumber--
+    } else {
+      lowerPageConfig.value.pageNumber--
+    }
   }
 }
 // 处理DataScroll滚动事件
@@ -208,30 +237,19 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
 
     // 判断是否滚动到底部
     if (scrollTop + height >= scrollHeight) {
-      // 加载下一页数据
-      if (upperOrLower) {
-        upperPageConfig.value.pageNumber++
-      } else {
-        lowerPageConfig.value.pageNumber++
-      }
-
-      // 请求接口
-      const increment = await requestApiAndGetData(upperOrLower)
-      // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
-      if (increment !== undefined && increment !== null && increment.length > 0) {
-        if (upperOrLower) {
-          upperData.value = [...upperData.value, ...increment]
-        } else {
-          lowerData.value = [...lowerData.value, ...increment]
-        }
-      } else {
-        if (upperOrLower) {
-          upperPageConfig.value.pageNumber--
-        } else {
-          lowerPageConfig.value.pageNumber--
-        }
-      }
+      await requestNextPage(upperOrLower)
     }
+  }
+}
+// 滚动条位置重置(移动至顶端)
+function resetScrollBarPosition(upperOrLower?: boolean) {
+  if (upperOrLower === undefined) {
+    upperScroll.value.setScrollTop(0)
+    lowerScroll.value.setScrollTop(0)
+  } else if (upperOrLower) {
+    upperScroll.value.setScrollTop(0)
+  } else {
+    lowerScroll.value.setScrollTop(0)
   }
 }
 </script>
@@ -268,8 +286,12 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
                 </div>
               </template>
             </el-row>
+            <el-row v-show="upperLoadMore">
+              <el-check-tag style="width: 100%" @click="requestNextPage(true)">
+                加载更多...
+              </el-check-tag>
+            </el-row>
           </el-scrollbar>
-          <el-text v-if="upperLoading" class="loading-placeholder">加载中...</el-text>
         </div>
       </div>
     </div>
@@ -348,8 +370,12 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
                 </div>
               </template>
             </el-row>
+            <el-row v-show="lowerLoadMore">
+              <el-check-tag style="width: 100%" @click="requestNextPage(false)">
+                加载更多...
+              </el-check-tag>
+            </el-row>
           </el-scrollbar>
-          <el-text v-if="lowerLoading" class="loading-placeholder">加载中...</el-text>
         </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
@@ -509,5 +535,6 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
   background-color: #f6f6f6;
   border-top-style: hidden;
   border-left-style: hidden;
+  transition: height 1s ease;
 }
 </style>
