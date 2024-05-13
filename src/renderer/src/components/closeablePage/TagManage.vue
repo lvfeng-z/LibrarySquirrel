@@ -37,15 +37,6 @@ const operationDropDown: OperationItem[] = [
 const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     type: 'text',
-    name: 'id',
-    label: '内部id',
-    hide: false,
-    headerAlign: 'center',
-    dataAlign: 'center',
-    overHide: true
-  },
-  {
-    type: 'text',
     name: 'localTagName',
     label: '名称',
     hide: false,
@@ -54,9 +45,9 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   },
   {
-    type: 'text',
+    type: 'selectTree',
     name: 'baseLocalTagId',
-    label: '上级标签内部id',
+    label: '上级标签',
     hide: false,
     headerAlign: 'center',
     headerTagType: 'success',
@@ -64,10 +55,11 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   },
   {
-    type: 'text',
+    type: 'datetime',
     name: 'createTime',
     label: '创建时间',
     hide: false,
+    width: 250,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
@@ -148,7 +140,7 @@ const apis = reactive({
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
-  localTagDialog.value.handleDialog(true)
+  await localTagDialog.value.handleDialog(true)
 }
 // 处理本地标签数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse) {
