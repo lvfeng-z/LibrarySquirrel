@@ -138,7 +138,7 @@ function clearFormData() {
       </el-row>
       <el-row>
         <el-col>
-          <el-form-item label="基础标签id">
+          <el-form-item label="基础标签">
             <el-tree-select
               v-model="formData.baseLocalTagId"
               :check-strictly="true"

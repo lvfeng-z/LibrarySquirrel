@@ -1,3 +1,13 @@
 export interface CommonInputType {
-  type: 'text' | 'date' | 'dateTime' | 'number' | 'textarea' | 'checkbox' | 'radio' | 'switch'
+  type:
+    | 'default'
+    | 'text'
+    | 'date'
+    | 'datetime'
+    | 'number'
+    | 'textarea'
+    | 'checkbox'
+    | 'radio'
+    | 'selectTree'
+    | 'switch'
 }

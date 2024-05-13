@@ -3,6 +3,7 @@ import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
+import CommonInputModule from './CommonInputModule.vue'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
 
 // props
@@ -91,10 +92,16 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
               <el-tag size="default" :type="item.headerTagType">{{ item.label }}</el-tag>
             </div>
           </template>
+          <template #default="scope">
+            <CommonInputModule
+              v-model:data="scope.row[item.name]"
+              :type="{ type: item.type }"
+            ></CommonInputModule>
+          </template>
         </el-table-column>
       </template>
     </template>
-    <el-table-column align="center">
+    <el-table-column fixed="right" align="center" width="104">
       <template #header>
         <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
       </template>
