@@ -19,6 +19,9 @@ onMounted(() => {
 // model
 const data = defineModel<unknown>('data', { default: undefined })
 
+// 事件
+const emits = defineEmits(['dataChanged'])
+
 // 变量
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
 
@@ -35,6 +38,10 @@ function handleBlur() {
     disabled.value = true
   }
 }
+// 处理数据改变事件
+function handleDataChange() {
+  emits('dataChanged')
+}
 </script>
 
 <template>
@@ -50,6 +57,7 @@ function handleBlur() {
       v-if="!disabled && (props.config.type === 'text' || props.config.type === 'textarea')"
       v-model="data"
       :type="props.config.type"
+      @change="handleDataChange"
     ></el-input>
     <el-input-number v-if="props.config.type === 'number'" v-model="data"></el-input-number>
     <!-- 这一层div用来防止date-picker宽度超出父组件 -->
