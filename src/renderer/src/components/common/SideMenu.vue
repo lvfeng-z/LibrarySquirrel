@@ -19,6 +19,7 @@ const disappear: Ref<UnwrapRef<boolean>> = ref(false)
 const innerStates: Ref<UnwrapRef<number>> = ref(1)
 
 // 方法
+// 展开
 function expand() {
   if (innerStates.value >= 2) {
     innerStates.value = 0
@@ -27,7 +28,7 @@ function expand() {
   }
   handleStates()
 }
-
+// 收起
 function shrink() {
   if (innerStates.value <= 0) {
     innerStates.value = 2
@@ -36,7 +37,7 @@ function shrink() {
   }
   handleStates()
 }
-
+// 处理状态改变
 function handleStates() {
   switch (innerStates.value) {
     case 0:
@@ -57,10 +58,17 @@ function handleStates() {
       isCollapsed.value = true
   }
 }
+// 处理点击外部区域
+function handleClickOutSide() {
+  if (innerStates.value == 2) {
+    shrink()
+  }
+}
 </script>
 
 <template>
   <div
+    v-click-out-side="handleClickOutSide"
     :class="{
       'side-menu': true,
       'side-menu-disappear': disappear,

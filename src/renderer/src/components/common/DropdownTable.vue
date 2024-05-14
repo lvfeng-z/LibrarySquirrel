@@ -35,8 +35,12 @@ const formData = ref({})
 
 // 方法
 // 开启/关闭下拉表单
-function changeState() {
-  state.value = !state.value
+function changeState(newState?: boolean) {
+  if (newState === undefined) {
+    state.value = !state.value
+  } else {
+    state.value = newState
+  }
 }
 
 // 处理InputBox布局
@@ -92,10 +96,16 @@ function calculateSpan() {
 function handleParamsChanged() {
   emits('paramsChanged', formData.value)
 }
+// 处理组件外部点击事件
+function handleClickOutSide() {
+  if (state.value) {
+    changeState(false)
+  }
+}
 </script>
 
 <template>
-  <div class="dropdown-table">
+  <div v-click-out-side="handleClickOutSide" class="dropdown-table">
     <div
       :class="{
         'dropdown-table-main': true,
@@ -138,7 +148,7 @@ function handleParamsChanged() {
         'z-layer-2': true
       }"
     >
-      <div class="dropdown-table-button" @click="changeState"></div>
+      <div class="dropdown-table-button" @click="changeState()"></div>
     </div>
   </div>
 </template>
