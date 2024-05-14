@@ -76,11 +76,12 @@ async function handleSaveButtonClicked() {
 async function handleDialog(newState: boolean, newFormData?: LocalTag) {
   if (newState) {
     if (newFormData) {
-      // 请求标签详情接口
-      const localTagInfoResponse = await apis.localTagGetById(newFormData.id)
-      if (apiResponseCheck(localTagInfoResponse)) {
-        formData.value = apiResponseGetData(localTagInfoResponse) as LocalTag
-      }
+      formData.value = newFormData
+      // // 请求标签详情接口
+      // const localTagInfoResponse = await apis.localTagGetById(newFormData.id)
+      // if (apiResponseCheck(localTagInfoResponse)) {
+      //   formData.value = apiResponseGetData(localTagInfoResponse) as LocalTag
+      // }
     } else {
       clearFormData()
     }

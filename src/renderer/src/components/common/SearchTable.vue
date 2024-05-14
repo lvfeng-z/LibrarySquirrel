@@ -18,8 +18,7 @@ const props = withDefaults(
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
     keyOfData: string // 数据的唯一标识
-    operationButton: OperationItem // 数据行的操作按钮
-    operationDropDown: OperationItem[] // 数据行的下拉操作按钮
+    operationButton: OperationItem[] // 数据行的操作按钮
     thead: Thead[] // 表头
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
@@ -40,7 +39,8 @@ const emits = defineEmits([
   'rowButtonClicked',
   'selectionChange',
   'pageNumberChanged',
-  'pageSizeChanged'
+  'pageSizeChanged',
+  'rowChanged'
 ])
 
 // onMounted
@@ -141,7 +141,6 @@ function handlePageSizeChange() {
         :multi-select="multiSelect"
         :key-of-data="keyOfData"
         :operation-button="operationButton"
-        :operation-dropdown="operationDropDown"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
       ></DataTable>

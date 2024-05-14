@@ -12,8 +12,7 @@ const props = defineProps<{
   multiSelect: boolean // 列表是否多选
   thead: Thead[] // 表头信息
   keyOfData: string // 数据的唯一标识
-  operationButton: OperationItem // 操作列按钮的文本、图标和代号
-  operationDropdown?: OperationItem[] // 操作列下拉菜单的文本、图标和代号（数组）
+  operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
 }>()
 
 // onBeforeMount
@@ -22,7 +21,7 @@ onBeforeMount(() => {
 })
 
 // model
-const data = defineModel<unknown[]>('tableData', {default: []})
+const data = defineModel<unknown[]>('tableData', { default: [] })
 
 // 变量
 const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
@@ -51,6 +50,10 @@ function handleSelectionChange(event: object[]) {
 // 处理操作按钮点击事件
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
+}
+// 处理行数据变化
+function handleRowChange(event) {
+  console.log(event)
 }
 
 // 事件
@@ -105,27 +108,45 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
         </el-table-column>
       </template>
     </template>
-    <el-table-column fixed="right" align="center" width="104">
+    <el-table-column
+      v-if="props.operationButton !== undefined && props.operationButton.length > 0"
+      fixed="right"
+      align="center"
+      width="104"
+    >
       <template #header>
         <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
       </template>
       <template #default="{ row }">
         <el-dropdown>
           <el-button
-            :icon="props.operationButton.icon"
+            :icon="
+              props.operationButton.filter((item) =>
+                item.rule === undefined ? true : item.rule(row)
+              )[0].icon
+            "
             @click="
               handleRowButtonClicked({
                 id: row[props.keyOfData],
-                code: props.operationButton.code,
+                code: props.operationButton[0].code,
                 data: row
               })
             "
           >
-            {{ props.operationButton.label }}
+            {{
+              props.operationButton.filter((item) =>
+                item.rule === undefined ? true : item.rule(row)
+              )[0].label
+            }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <template v-for="item in props.operationDropdown" :key="item.code">
+              <template
+                v-for="item in props.operationButton
+                  .filter((item) => (item.rule === undefined ? true : item.rule(row)))
+                  .slice(1)"
+                :key="item.code"
+              >
                 <el-dropdown-item
                   :icon="item.icon"
                   @click="

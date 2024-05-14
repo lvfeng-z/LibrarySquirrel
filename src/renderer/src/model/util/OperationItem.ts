@@ -3,4 +3,5 @@ export interface OperationItem {
   label: string
   icon: string
   code: string
+  rule?: (row: { dataTableRowEdited: boolean }) => boolean
 }

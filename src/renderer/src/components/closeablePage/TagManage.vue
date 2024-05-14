@@ -27,9 +27,8 @@ const localTagDialog = ref()
 // 被选中的本地标签
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
-const operationButton: OperationItem = { label: '查看', icon: 'view', code: DialogMode.VIEW }
-// 本地标签SearchTable的operationDropDown
-const operationDropDown: OperationItem[] = [
+const operationButton: OperationItem[] = [
+  { label: '查看', icon: 'view', code: DialogMode.VIEW, rule: (row) => row.dataTableRowEdited },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
@@ -224,7 +223,6 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
               key-of-data="id"
               :create-button="true"
               :operation-button="operationButton"
-              :operation-drop-down="operationDropDown"
               :thead="localTagThead"
               :sort="[
                 ['updateTime', 'desc'],
