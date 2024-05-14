@@ -37,7 +37,8 @@ const operationDropDown: OperationItem[] = [
 const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     type: 'text',
-    disabled: false,
+    defaultDisabled: true,
+    dblclickEnable: true,
     name: 'localTagName',
     label: '名称',
     hide: false,
@@ -48,7 +49,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   },
   {
     type: 'selectTree',
-    disabled: true,
+    defaultDisabled: true,
+    dblclickEnable: true,
     name: 'baseLocalTagId',
     label: '上级标签',
     hide: false,
@@ -59,7 +61,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   },
   {
     type: 'datetime',
-    disabled: true,
+    defaultDisabled: true,
     name: 'createTime',
     label: '创建时间',
     hide: false,
