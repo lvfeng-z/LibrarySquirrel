@@ -10,5 +10,6 @@ export interface CommonInputConfig {
     | 'radio'
     | 'selectTree'
     | 'switch'
-  disabled?: boolean
+  defaultDisabled?: boolean
+  dblclickEnable?: boolean
 }

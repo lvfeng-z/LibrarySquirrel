@@ -9,9 +9,10 @@ const props = defineProps<{
 
 // onMounted
 onMounted(() => {
-  innerConfig.value = JSON.parse(JSON.stringify(props.config))
-  if (innerConfig.value.disabled === undefined) {
-    innerConfig.value.disabled = false
+  if (props.config.defaultDisabled === undefined) {
+    disabled.value = false
+  } else {
+    disabled.value = props.config.defaultDisabled
   }
 })
 
@@ -19,47 +20,57 @@ onMounted(() => {
 const data = defineModel<unknown>('data', { default: undefined })
 
 // 变量
-const innerConfig: Ref<UnwrapRef<CommonInputConfig>> = ref({ type: 'default' })
+const disabled: Ref<UnwrapRef<boolean>> = ref(false)
+
+// 方法
+// 处理组件被双击事件
+function handleDblclick() {
+  if (props.config.dblclickEnable) {
+    disabled.value = false
+  }
+}
+// 处理失去焦点事件
+function handleBlur() {
+  if (props.config.defaultDisabled) {
+    disabled.value = true
+  }
+}
 </script>
 
 <template>
-  <span
-    v-if="
-      innerConfig.type === 'default' ||
-      (innerConfig.disabled && (innerConfig.type === 'text' || innerConfig.type === 'textarea'))
-    "
-    >{{ data }}</span
-  >
-  <el-input
-    v-if="!innerConfig.disabled && (innerConfig.type === 'text' || innerConfig.type === 'textarea')"
-    v-model="data"
-    :type="innerConfig.type"
-  ></el-input>
-  <el-input-number v-if="innerConfig.type === 'number'" v-model="data"></el-input-number>
-  <!-- 这一层div用来防止date-picker宽度超出父组件 -->
-  <div
-    v-if="innerConfig.type === 'date' || innerConfig.type === 'datetime'"
-    class="common-input-module-el-date-picker"
-  >
-    <el-date-picker
+  <div v-click-out-side="handleBlur" @dblclick="handleDblclick">
+    <span
+      v-if="
+        props.config.type === 'default' ||
+        (disabled && (props.config.type === 'text' || props.config.type === 'textarea'))
+      "
+      >{{ data }}</span
+    >
+    <el-input
+      v-if="!disabled && (props.config.type === 'text' || props.config.type === 'textarea')"
       v-model="data"
-      :type="innerConfig.type"
-      :disabled="innerConfig.disabled"
-    ></el-date-picker>
+      :type="props.config.type"
+    ></el-input>
+    <el-input-number v-if="props.config.type === 'number'" v-model="data"></el-input-number>
+    <!-- 这一层div用来防止date-picker宽度超出父组件 -->
+    <div
+      v-if="props.config.type === 'date' || props.config.type === 'datetime'"
+      class="common-input-module-el-date-picker"
+    >
+      <el-date-picker
+        v-model="data"
+        :type="props.config.type"
+        :disabled="disabled"
+      ></el-date-picker>
+    </div>
+    <el-checkbox-group
+      v-if="props.config.type === 'checkbox'"
+      :disabled="disabled"
+    ></el-checkbox-group>
+    <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
+    <el-tree-select v-if="props.config.type === 'selectTree'" :disabled="disabled"></el-tree-select>
+    <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
   </div>
-  <el-checkbox-group
-    v-if="innerConfig.type === 'checkbox'"
-    :disabled="innerConfig.disabled"
-  ></el-checkbox-group>
-  <el-radio-group
-    v-if="innerConfig.type === 'radio'"
-    :disabled="innerConfig.disabled"
-  ></el-radio-group>
-  <el-tree-select
-    v-if="innerConfig.type === 'selectTree'"
-    :disabled="innerConfig.disabled"
-  ></el-tree-select>
-  <el-switch v-if="innerConfig.type === 'switch'" :disabled="innerConfig.disabled"></el-switch>
 </template>
 
 <style scoped>

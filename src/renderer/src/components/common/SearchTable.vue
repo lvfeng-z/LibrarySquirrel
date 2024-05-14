@@ -134,8 +134,8 @@ function handlePageSizeChange() {
     </SearchToolbar>
     <div class="search-table-data rounded-borders">
       <DataTable
-        class="search-table-data-table"
         v-model:tableData="data"
+        class="search-table-data-table"
         :thead="thead"
         :selectable="selectable"
         :multi-select="multiSelect"
