@@ -95,7 +95,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
           <template #default="scope">
             <CommonInputModule
               v-model:data="scope.row[item.name]"
-              :type="{ type: item.type }"
+              :config="item"
             ></CommonInputModule>
           </template>
         </el-table-column>
