@@ -12,7 +12,6 @@ const props = defineProps<{
   multiSelect: boolean // 列表是否多选
   thead: Thead[] // 表头信息
   keyOfData: string // 数据的唯一标识
-  data: unknown[] // 数据
   operationButton: OperationItem // 操作列按钮的文本、图标和代号
   operationDropdown?: OperationItem[] // 操作列下拉菜单的文本、图标和代号（数组）
 }>()
@@ -21,6 +20,9 @@ const props = defineProps<{
 onBeforeMount(() => {
   initializeThead()
 })
+
+// model
+const data = defineModel<unknown[]>('tableData', {default: []})
 
 // 变量
 const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
@@ -31,7 +33,7 @@ const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 // 初始化表头
 function initializeThead() {
   props.thead.forEach((item) => {
-    const tempThead = JSON.parse(JSON.stringify(item))
+    const tempThead = JSON.parse(JSON.stringify(item)) as Thead
 
     // 未设置表头tag样式，默认为info
     if (tempThead.headerTagType == undefined) {
@@ -42,20 +44,13 @@ function initializeThead() {
   })
 }
 // 处理选中事件
-function handleSelectionChange(newSelectedList: object[]) {
-  selectDataList.value = newSelectedList
+function handleSelectionChange(event: object[]) {
+  selectDataList.value = event
   emits('selectionChange', selectDataList.value)
 }
 // 处理操作按钮点击事件
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
-}
-// 处理单元格双击事件
-function handleCellDblClick(row: any, column: any, cell: HTMLTableCellElement, event: Event) {
-  console.log('row', row)
-  console.log('cell', cell)
-  console.log('column', column)
-  console.log('event', event)
 }
 
 // 事件
@@ -65,11 +60,10 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
 <template>
   <el-table
     class="data-table"
-    :data="props.data"
+    :data="data"
     :row-key="keyOfData"
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
-    @cell-dblclick="handleCellDblClick"
   >
     <el-table-column
       v-if="props.selectable && props.multiSelect"
