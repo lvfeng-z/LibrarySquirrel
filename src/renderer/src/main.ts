@@ -7,6 +7,7 @@ import './styles/margin-box.css'
 import './styles/rounded-borders.css'
 import './styles/scroll-text.css'
 import './styles/z-axis-layers.css'
+import clickOutSide from './directives/clickOutSide'
 import scrollableText from './directives/scrollableText'
 import { elementIconRegister } from './plugins/elementIcon'
 
@@ -16,4 +17,6 @@ app.use(Element)
 elementIconRegister(app)
 // 注册溢出文字播放滚动动画的自定义指令
 app.directive('scrollable', scrollableText)
+// 注册点击外部事件的自定义指令
+app.directive('clickOutSide', clickOutSide)
 app.mount('#app')
