@@ -37,15 +37,18 @@ const operationDropDown: OperationItem[] = [
 const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     type: 'text',
+    disabled: false,
     name: 'localTagName',
     label: '名称',
     hide: false,
+    width: 150,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
   },
   {
     type: 'selectTree',
+    disabled: true,
     name: 'baseLocalTagId',
     label: '上级标签',
     hide: false,
@@ -56,10 +59,11 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   },
   {
     type: 'datetime',
+    disabled: true,
     name: 'createTime',
     label: '创建时间',
     hide: false,
-    width: 250,
+    width: 200,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',

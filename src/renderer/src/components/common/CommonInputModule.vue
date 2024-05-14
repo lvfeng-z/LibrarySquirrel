@@ -23,9 +23,15 @@ const innerConfig: Ref<UnwrapRef<CommonInputConfig>> = ref({ type: 'default' })
 </script>
 
 <template>
-  <span v-if="innerConfig.type === 'default'">{{ data }}</span>
+  <span
+    v-if="
+      innerConfig.type === 'default' ||
+      (innerConfig.disabled && (innerConfig.type === 'text' || innerConfig.type === 'textarea'))
+    "
+    >{{ data }}</span
+  >
   <el-input
-    v-if="innerConfig.type === 'text' || innerConfig.type === 'textarea'"
+    v-if="!innerConfig.disabled && (innerConfig.type === 'text' || innerConfig.type === 'textarea')"
     v-model="data"
     :type="innerConfig.type"
   ></el-input>

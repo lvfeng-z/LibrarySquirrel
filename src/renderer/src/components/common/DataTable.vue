@@ -41,12 +41,21 @@ function initializeThead() {
     innerThead.value.push(tempThead)
   })
 }
+// 处理选中事件
 function handleSelectionChange(newSelectedList: object[]) {
   selectDataList.value = newSelectedList
   emits('selectionChange', selectDataList.value)
 }
+// 处理操作按钮点击事件
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
+}
+// 处理单元格双击事件
+function handleCellDblClick(row: any, column: any, cell: HTMLTableCellElement, event: Event) {
+  console.log('row', row)
+  console.log('cell', cell)
+  console.log('column', column)
+  console.log('event', event)
 }
 
 // 事件
@@ -60,6 +69,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
     :row-key="keyOfData"
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
+    @cell-dblclick="handleCellDblClick"
   >
     <el-table-column
       v-if="props.selectable && props.multiSelect"
