@@ -1,6 +1,6 @@
-import { CommonInputType } from './CommonInputType'
+import { CommonInputConfig } from './CommonInputConfig'
 
-export interface InputBox extends CommonInputType {
+export interface InputBox extends CommonInputConfig {
   name: string // 字段名
   placeholder: string // 占位符
   show?: boolean // 是否展示本InputBox

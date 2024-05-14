@@ -1,4 +1,4 @@
-export interface CommonInputType {
+export interface CommonInputConfig {
   type:
     | 'default'
     | 'text'
@@ -10,4 +10,5 @@ export interface CommonInputType {
     | 'radio'
     | 'selectTree'
     | 'switch'
+  disabled?: boolean
 }

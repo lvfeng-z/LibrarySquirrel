@@ -1,7 +1,7 @@
 // DataTable的表头
-import { CommonInputType } from './CommonInputType'
+import { CommonInputConfig } from './CommonInputConfig'
 
-export interface Thead extends CommonInputType {
+export interface Thead extends CommonInputConfig {
   name: string // 字段名
   label: string // 标题名称
   hide: boolean // 是否隐藏
