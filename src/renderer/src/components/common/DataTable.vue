@@ -129,7 +129,9 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
             @click="
               handleRowButtonClicked({
                 id: row[props.keyOfData],
-                code: props.operationButton[0].code,
+                code: props.operationButton.filter((item) =>
+                  item.rule === undefined ? true : item.rule(row)
+                )[0].code,
                 data: row
               })
             "
