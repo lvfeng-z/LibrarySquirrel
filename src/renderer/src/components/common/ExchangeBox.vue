@@ -198,8 +198,14 @@ function refreshData() {
 async function requestNextPage(upperOrLower: boolean) {
   // 加载下一页数据
   if (upperOrLower) {
+    if (upperPageConfig.value.pageNumber >= upperPageConfig.value.pageCount) {
+      return
+    }
     upperPageConfig.value.pageNumber++
   } else {
+    if (lowerPageConfig.value.pageNumber >= lowerPageConfig.value.pageCount) {
+      return
+    }
     lowerPageConfig.value.pageNumber++
   }
 
