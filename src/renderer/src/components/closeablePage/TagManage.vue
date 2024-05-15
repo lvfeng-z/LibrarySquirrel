@@ -18,6 +18,19 @@ onMounted(() => {
 })
 
 // 变量
+// 接口
+const apis = reactive({
+  localTagDeleteById: window.api.localTagDeleteById,
+  localTagQueryPage: window.api.localTagQueryPage,
+  localTagGetSelectList: window.api.localTagGetSelectList,
+  localTagGetTree: window.api.localTagGetTree,
+  siteTagGetSelectList: window.api.siteTagGetSelectList,
+  siteTagSave: window.api.siteTagSave,
+  siteTagUpdateById: window.api.siteTagUpdateById,
+  siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
+  siteGetSelectList: window.api.siteGetSelectList,
+  siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
+})
 // localTagSearchTable子组件
 const localTagSearchTable = ref()
 // siteTagExchangeBox子组件
@@ -60,10 +73,13 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'baseLocalTagId',
     label: '上级标签',
     hide: false,
+    width: 150,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    overHide: true,
+    useApi: true,
+    api: apis.localTagGetTree
   },
   {
     type: 'datetime',
@@ -135,18 +151,6 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
     inputSpan: 10
   }
 ])
-// 接口
-const apis = reactive({
-  localTagDeleteById: window.api.localTagDeleteById,
-  localTagQueryPage: window.api.localTagQueryPage,
-  localTagGetSelectList: window.api.localTagGetSelectList,
-  siteTagGetSelectList: window.api.siteTagGetSelectList,
-  siteTagSave: window.api.siteTagSave,
-  siteTagUpdateById: window.api.siteTagUpdateById,
-  siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
-  siteGetSelectList: window.api.siteGetSelectList,
-  siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
-})
 
 // 方法
 // 处理本地标签新增按钮点击事件
