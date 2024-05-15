@@ -1,5 +1,6 @@
 // DataTable的表头
 import { CommonInputConfig } from './CommonInputConfig'
+import { ApiResponse } from './ApiResponse'
 
 export interface Thead extends CommonInputConfig {
   name: string // 字段名
@@ -11,5 +12,6 @@ export interface Thead extends CommonInputConfig {
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   overHide?: boolean //列超出长度时是否省略
   selectData?: [] // 选择框的数据
-  remoteSelectData?: boolean // 是否请求接口获得选择框数据
+  useApi?: boolean // 是否请求接口获得选择框数据
+  api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
 }

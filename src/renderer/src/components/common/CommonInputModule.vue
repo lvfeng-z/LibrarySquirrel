@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CommonInputConfig } from '../../model/util/CommonInputConfig'
 import { onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { ElTreeSelect } from 'element-plus'
 
 // props
 const props = defineProps<{
@@ -77,7 +78,14 @@ function handleDataChange() {
     ></el-checkbox-group>
     <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
     <el-select v-if="props.config.type === 'select'" :disabled="disabled"></el-select>
-    <el-tree-select v-if="props.config.type === 'selectTree'" :disabled="disabled" :data="props.config.selectData"></el-tree-select>
+    <el-tree-select
+      v-if="props.config.type === 'selectTree'"
+      v-model="data"
+      :check-strictly="true"
+      :disabled="disabled"
+      :data="props.config.selectData"
+      @change="handleDataChange"
+    ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
   </div>
 </template>

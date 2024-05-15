@@ -4,6 +4,7 @@ import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import CommonInputModule from './CommonInputModule.vue'
+import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -30,8 +31,8 @@ const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 
 // 方法
 // 初始化表头
-function initializeThead() {
-  props.thead.forEach((item) => {
+async function initializeThead() {
+  for (const item of props.thead) {
     const tempThead = JSON.parse(JSON.stringify(item)) as Thead
 
     // 未设置表头tag样式，默认为info
@@ -39,8 +40,16 @@ function initializeThead() {
       tempThead.headerTagType = 'info'
     }
 
+    // 请求接口并将响应值赋值给selectData，同时忽略接口报错
+    if (tempThead.useApi && item.api !== undefined) {
+      const response = await item.api()
+      if (apiResponseCheck(response)) {
+        tempThead.selectData = apiResponseGetData(response) as []
+      }
+    }
+
     innerThead.value.push(tempThead)
-  })
+  }
 }
 // 处理选中事件
 function handleSelectionChange(event: object[]) {
