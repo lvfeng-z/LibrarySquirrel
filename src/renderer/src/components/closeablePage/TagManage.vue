@@ -28,7 +28,14 @@ const localTagDialog = ref()
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem[] = [
-  { label: '查看', icon: 'view', code: DialogMode.VIEW, rule: (row) => row.dataTableRowEdited },
+  {
+    label: '保存',
+    icon: 'Checked',
+    buttonType: 'primary',
+    code: 'save',
+    rule: (row) => localTagSearchTable.value.changedRows.includes(row)
+  },
+  { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
