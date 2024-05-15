@@ -76,7 +76,8 @@ function handleDataChange() {
       :disabled="disabled"
     ></el-checkbox-group>
     <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
-    <el-tree-select v-if="props.config.type === 'selectTree'" :disabled="disabled"></el-tree-select>
+    <el-select v-if="props.config.type === 'select'" :disabled="disabled"></el-select>
+    <el-tree-select v-if="props.config.type === 'selectTree'" :disabled="disabled" :data="props.config.selectData"></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
   </div>
 </template>

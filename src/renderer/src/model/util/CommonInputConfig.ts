@@ -1,3 +1,5 @@
+import { SelectOption } from './SelectOption'
+
 export interface CommonInputConfig {
   type:
     | 'default'
@@ -8,8 +10,10 @@ export interface CommonInputConfig {
     | 'textarea'
     | 'checkbox'
     | 'radio'
+    | 'select'
     | 'selectTree'
     | 'switch'
   defaultDisabled?: boolean
   dblclickEnable?: boolean
+  selectData?: SelectOption[]
 }

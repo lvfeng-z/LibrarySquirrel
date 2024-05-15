@@ -4,7 +4,7 @@ import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import CommonInputModule from './CommonInputModule.vue'
-//todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略，分页功能
+//todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
 const props = defineProps<{
