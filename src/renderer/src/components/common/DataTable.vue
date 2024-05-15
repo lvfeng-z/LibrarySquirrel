@@ -52,12 +52,32 @@ function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
 }
 // 处理行数据变化
-function handleRowChange(event) {
-  console.log(event)
+function handleRowChange(row: object) {
+  emits('rowChanged', row)
+}
+// 获取操作栏按钮
+function getOperateButton(row): OperationItem {
+  if (props.operationButton !== undefined && props.operationButton.length > 0) {
+    return props.operationButton.filter((item) =>
+      item.rule === undefined ? true : item.rule(row)
+    )[0]
+  } else {
+    return { code: '', label: '', icon: '' }
+  }
+}
+// 获取操作栏下拉按钮
+function getOperateDropDownButton(row): OperationItem[] {
+  if (props.operationButton !== undefined && props.operationButton.length > 0) {
+    return props.operationButton
+      .filter((item) => (item.rule === undefined ? true : item.rule(row)))
+      .slice(1)
+  } else {
+    return [{ code: '', label: '', icon: '' }]
+  }
 }
 
 // 事件
-const emits = defineEmits(['selectionChange', 'buttonClicked'])
+const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
 </script>
 
 <template>
@@ -121,35 +141,21 @@ const emits = defineEmits(['selectionChange', 'buttonClicked'])
       <template #default="{ row }">
         <el-dropdown>
           <el-button
-            :icon="
-              props.operationButton.filter((item) =>
-                item.rule === undefined ? true : item.rule(row)
-              )[0].icon
-            "
+            :type="getOperateButton(row).buttonType"
+            :icon="getOperateButton(row).icon"
             @click="
               handleRowButtonClicked({
                 id: row[props.keyOfData],
-                code: props.operationButton.filter((item) =>
-                  item.rule === undefined ? true : item.rule(row)
-                )[0].code,
+                code: getOperateButton(row).code,
                 data: row
               })
             "
           >
-            {{
-              props.operationButton.filter((item) =>
-                item.rule === undefined ? true : item.rule(row)
-              )[0].label
-            }}
+            {{ getOperateButton(row).label }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <template
-                v-for="item in props.operationButton
-                  .filter((item) => (item.rule === undefined ? true : item.rule(row)))
-                  .slice(1)"
-                :key="item.code"
-              >
+              <template v-for="item in getOperateDropDownButton(row)" :key="item.code">
                 <el-dropdown-item
                   :icon="item.icon"
                   @click="

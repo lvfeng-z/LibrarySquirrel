@@ -39,8 +39,7 @@ const emits = defineEmits([
   'rowButtonClicked',
   'selectionChange',
   'pageNumberChanged',
-  'pageSizeChanged',
-  'rowChanged'
+  'pageSizeChanged'
 ])
 
 // onMounted
@@ -51,16 +50,12 @@ onMounted(() => {
   }
 })
 
-// 暴露
-defineExpose({
-  handleSearchButtonClicked
-})
-
 // 变量
 // 数据栏
 const searchToolbarParams = ref({}) // 搜索栏参数
 const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
-const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([])
+const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
+const changedRows: Ref<UnwrapRef<object[]>> = ref([]) // 已编辑的行
 // 分页栏
 const pageNumber = ref(1) // 当前页码
 const innerPageSizes = ref(props.pageSizes) // 可选页面大小
@@ -117,6 +112,16 @@ function handlePageNumberChange() {
 function handlePageSizeChange() {
   handleSearchButtonClicked()
 }
+// 处理编辑事件
+function handleRowChange(changedRow: object) {
+  changedRows.value.push(changedRow)
+}
+
+// 暴露
+defineExpose({
+  handleSearchButtonClicked,
+  changedRows
+})
 </script>
 
 <template>
@@ -143,6 +148,7 @@ function handlePageSizeChange() {
         :operation-button="operationButton"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
+        @row-changed="handleRowChange"
       ></DataTable>
       <div class="search-table-data-pagination-scroll-wrapper">
         <el-scrollbar class="search-table-data-pagination-scroll">
