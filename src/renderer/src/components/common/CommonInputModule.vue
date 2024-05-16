@@ -60,7 +60,7 @@ function handleDataChange() {
 </script>
 
 <template>
-  <div v-click-out-side="handleBlur" @dblclick="handleDblclick">
+  <div v-click-out-side="handleBlur" class="common-input-module" @dblclick="handleDblclick">
     <span
       v-if="
         props.config.type === 'default' ||
@@ -72,6 +72,7 @@ function handleDataChange() {
       v-if="!disabled && (props.config.type === 'text' || props.config.type === 'textarea')"
       v-model="data"
       :type="props.config.type"
+      clearable
       @change="handleDataChange"
     ></el-input>
     <el-input-number v-if="props.config.type === 'number'" v-model="data"></el-input-number>
@@ -105,6 +106,10 @@ function handleDataChange() {
 </template>
 
 <style scoped>
+.common-input-module {
+  display: flex;
+  align-items: center;
+}
 .common-input-module-el-date-picker {
   display: flex;
   width: 100%;
