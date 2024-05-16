@@ -22,7 +22,7 @@ export class LocalTagDao extends AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
       let whereClauses: string = ''
       const columns: string[] = []
       if (page.query) {
-        if (page.query.id != undefined) {
+        if (page.query.id != undefined && page.query.id !== '') {
           columns.push('id = @id')
         }
         if (page.query.baseLocalTagId != undefined) {
