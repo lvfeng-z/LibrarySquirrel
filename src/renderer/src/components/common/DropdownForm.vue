@@ -2,6 +2,7 @@
 import { InputBox } from '../../model/util/InputBox'
 import { onBeforeMount, Ref, ref, UnwrapRef, warn } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
+import CommonInput from './CommonInput.vue'
 
 // props
 const props = withDefaults(
@@ -125,7 +126,7 @@ function handleClickOutSide() {
                 </el-col>
                 <el-col class="dropdown-table-input" :span="item.inputSpan">
                   <el-form-item class="dropdown-table-input-form-item">
-                    <el-input v-model="formData[item.name]"></el-input>
+                    <common-input v-model:data="formData[item.name]" :config="item"></common-input>
                   </el-form-item>
                 </el-col>
               </template>
