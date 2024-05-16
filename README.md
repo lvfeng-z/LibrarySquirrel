@@ -24,7 +24,7 @@ $ git config --global core.autocrlf input
 ```bash
 $ yarn
 ```
-如果出现报错：gyp ERR! find VS - does not match this Visual Studio Command Prompt，可能需要管理员身份运行yarn
+如果出现报错：gyp ERR! find VS - does not match this Visual Studio Command Prompt，尝试使用x64 Native Tools Command Prompt for VS 2022执行yarn命令，或者自行激活Visual Studio的命令提示符环境再执行yarn命令
 ### 开发
 
 ```bash
