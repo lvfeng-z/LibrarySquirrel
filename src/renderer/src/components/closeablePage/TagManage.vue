@@ -100,7 +100,15 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     name: 'keyword',
     type: 'text',
     placeholder: '输入本地标签的名称查询',
-    inputSpan: 18
+    inputSpan: 10
+  },
+  {
+    name: 'baseTagId',
+    type: 'selectTree',
+    placeholder: '选择基础标签查询',
+    inputSpan: 8,
+    useApi: true,
+    api: apis.localTagGetTree
   }
 ])
 // 本地标签SearchTable的dropDownInputBoxes
