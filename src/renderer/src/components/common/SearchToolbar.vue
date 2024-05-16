@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
-import DropdownTable from './DropdownTable.vue'
+import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
@@ -29,10 +29,10 @@ onBeforeMount(() => {
 const emits = defineEmits(['paramsChanged', 'searchButtonClicked', 'createButtonClicked'])
 
 // 变量
-const dropDownTable = ref() // DropDownTable子组件的ref
+const dropDownForm = ref() // DropdownForm子组件
 const barButtonSpan = ref(3) // 查询和新增按钮的span
 const innerMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 主搜索栏中元素的列表
-const innerDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 下拉搜索框中元素的列表
+const innerDropdownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 下拉搜索框中元素的列表
 const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框开关
 const formData = ref({}) // 查询参数
 
@@ -66,12 +66,12 @@ function calculateSpan() {
       boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
       spanRest -= boxSpan
       if (spanRest < 0) {
-        innerDropDownInputBoxes.value.push(tempInputBox)
+        innerDropdownInputBoxes.value.push(tempInputBox)
       } else {
         innerMainInputBoxes.value.push(tempInputBox)
       }
     } else {
-      innerDropDownInputBoxes.value.push(tempInputBox)
+      innerDropdownInputBoxes.value.push(tempInputBox)
     }
   }
 
@@ -82,16 +82,16 @@ function calculateSpan() {
     )
   }
 
-  const tempDropDownInputBoxes = JSON.parse(JSON.stringify(props.dropDownInputBoxes))
-  innerDropDownInputBoxes.value.push(...tempDropDownInputBoxes)
+  const tempDropdownInputBoxes = JSON.parse(JSON.stringify(props.dropDownInputBoxes))
+  innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
 
   // 下拉菜单中有内容则显示下拉菜单，否则不显示
-  showDropdownFlag.value = innerDropDownInputBoxes.value.length > 0
+  showDropdownFlag.value = innerDropdownInputBoxes.value.length > 0
 }
 
 // 展示下拉搜索框
-function handleDropdownTable() {
-  dropDownTable.value.changeState()
+function handledropdownForm() {
+  dropDownForm.value.changeState()
 }
 
 // 用户输入改变时，发送paramsChanged事件
@@ -100,7 +100,7 @@ function handleParamsChanged() {
 }
 
 // 处理dropDownMenu参数改变
-function handleDropDownMenuParamsChanged(dropDownMenuParams: object) {
+function handleDropdownMenuParamsChanged(dropDownMenuParams: object) {
   Object.assign(formData.value, dropDownMenuParams)
   handleParamsChanged()
 }
@@ -160,24 +160,24 @@ function handleInputClear(paramName: string) {
             <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
               搜索
             </el-button>
-            <template v-if="innerDropDownInputBoxes.length > 0" #dropdown>
+            <template v-if="innerDropdownInputBoxes.length > 0" #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handleDropdownTable">更多选项</el-dropdown-item>
+                <el-dropdown-item @click="handledropdownForm">更多选项</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </el-col>
       </el-row>
     </el-form>
-    <DropdownTable
+    <DropdownForm
       v-if="showDropdownFlag"
-      ref="dropDownTable"
+      ref="dropDownForm"
       class="dropdown-menu rounded-borders"
       :reverse="reverse"
-      :input-boxes="innerDropDownInputBoxes"
-      @params-changed="handleDropDownMenuParamsChanged"
+      :input-boxes="innerDropdownInputBoxes"
+      @params-changed="handleDropdownMenuParamsChanged"
     >
-    </DropdownTable>
+    </DropdownForm>
   </div>
 </template>
 
@@ -199,7 +199,11 @@ function handleInputClear(paramName: string) {
   height: 32px;
   width: 100%;
 }
+.search-toolbar-create-button {
+  height: 100%;
+}
 .search-toolbar-search-button {
+  height: 100%;
   display: flex;
   justify-content: flex-end;
   margin-left: auto;
@@ -210,11 +214,17 @@ function handleInputClear(paramName: string) {
   justify-content: flex-end;
 }
 .search-toolbar-input {
+  height: 100%;
   display: flex;
   justify-content: flex-start;
 }
 .search-toolbar-input-form-item {
+  height: 100%;
   width: 100%;
+}
+.search-toolbar-input-form-item-input {
+  width: 100%;
+  height: 100%;
 }
 .dropdown-menu {
   width: 100%;
