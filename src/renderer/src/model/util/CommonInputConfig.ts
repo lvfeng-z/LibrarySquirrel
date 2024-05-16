@@ -1,4 +1,5 @@
 import { SelectOption } from './SelectOption'
+import { ApiResponse } from './ApiResponse'
 
 export interface CommonInputConfig {
   type:
@@ -12,8 +13,10 @@ export interface CommonInputConfig {
     | 'radio'
     | 'select'
     | 'selectTree'
-    | 'switch'
-  defaultDisabled?: boolean
-  dblclickEnable?: boolean
-  selectData?: SelectOption[]
+    | 'switch' // 类型
+  defaultDisabled?: boolean // 默认是否开启
+  dblclickEnable?: boolean // 是否可以双击启用
+  selectData?: SelectOption[] // 选择框数据
+  useApi?: boolean // 是否请求接口获得选择框数据
+  api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
 }
