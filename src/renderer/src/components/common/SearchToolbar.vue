@@ -3,7 +3,7 @@ import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
 import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
-import CommonInputModule from './CommonInputModule.vue'
+import CommonInput from './CommonInput.vue'
 
 // props
 const props = withDefaults(
@@ -149,11 +149,11 @@ function handleInputClear(paramName: string) {
           </el-col>
           <el-col class="search-toolbar-input" :span="item.inputSpan">
             <el-form-item class="search-toolbar-input-form-item">
-              <common-input-module
+              <common-input
                 v-model:data="formData[item.name]"
                 class="search-toolbar-input-form-item-input"
                 :config="item"
-              ></common-input-module>
+              ></common-input>
             </el-form-item>
           </el-col>
         </template>

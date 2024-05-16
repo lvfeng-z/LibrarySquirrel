@@ -3,7 +3,7 @@ import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { OperationItem } from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
-import CommonInputModule from './CommonInputModule.vue'
+import CommonInput from './CommonInput.vue'
 import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
@@ -34,7 +34,7 @@ const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 async function initializeThead() {
   for (const item of props.thead) {
     const tempThead = JSON.parse(JSON.stringify(item)) as Thead
-    // 阻止CommonInputModule组件请求接口
+    // 阻止CommonInput组件请求接口
     tempThead.useApi = false
     // 请求接口并将响应值赋值给selectData，同时忽略接口报错
     if (item.useApi && item.api !== undefined) {
@@ -130,11 +130,11 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
             </div>
           </template>
           <template #default="scope">
-            <CommonInputModule
+            <common-input
               v-model:data="scope.row[item.name]"
               :config="item"
               @data-changed="handleRowChange(scope.row)"
-            ></CommonInputModule>
+            ></common-input>
           </template>
         </el-table-column>
       </template>
