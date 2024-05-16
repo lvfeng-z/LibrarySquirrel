@@ -3,6 +3,7 @@ import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
 import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
+import CommonInputModule from './CommonInputModule.vue'
 
 // props
 const props = withDefaults(
@@ -45,6 +46,8 @@ function calculateSpan() {
     let boxSpan = 0
     // 不更改props属性
     const tempInputBox: InputBox = JSON.parse(JSON.stringify(inputBox))
+    // 补充由于JSON转换丢失的函数类型的属性api
+    tempInputBox.api = inputBox.api
 
     // 未设置是否展示标题，默认为false，labelSpan设为0
     if (tempInputBox.showLabel == undefined) {
@@ -90,7 +93,7 @@ function calculateSpan() {
 }
 
 // 展示下拉搜索框
-function handledropdownForm() {
+function handleDropdownForm() {
   dropDownForm.value.changeState()
 }
 
@@ -146,12 +149,11 @@ function handleInputClear(paramName: string) {
           </el-col>
           <el-col class="search-toolbar-input" :span="item.inputSpan">
             <el-form-item class="search-toolbar-input-form-item">
-              <el-input
-                v-model="formData[item.name]"
-                :clearable="true"
-                :placeholder="item.placeholder"
-                @clear="handleInputClear(item.name)"
-              ></el-input>
+              <common-input-module
+                v-model:data="formData[item.name]"
+                class="search-toolbar-input-form-item-input"
+                :config="item"
+              ></common-input-module>
             </el-form-item>
           </el-col>
         </template>
@@ -162,7 +164,7 @@ function handleInputClear(paramName: string) {
             </el-button>
             <template v-if="innerDropdownInputBoxes.length > 0" #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handledropdownForm">更多选项</el-dropdown-item>
+                <el-dropdown-item @click="handleDropdownForm">更多选项</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>

@@ -71,11 +71,16 @@ function handleDataChange() {
     <el-input
       v-if="!disabled && (props.config.type === 'text' || props.config.type === 'textarea')"
       v-model="data"
+      :placeholder="props.config.placeholder"
       :type="props.config.type"
       clearable
       @change="handleDataChange"
     ></el-input>
-    <el-input-number v-if="props.config.type === 'number'" v-model="data"></el-input-number>
+    <el-input-number
+      v-if="props.config.type === 'number'"
+      v-model="data"
+      :placeholder="props.config.placeholder"
+    ></el-input-number>
     <!-- 这一层div用来防止date-picker宽度超出父组件 -->
     <div
       v-if="props.config.type === 'date' || props.config.type === 'datetime'"
@@ -85,6 +90,7 @@ function handleDataChange() {
         v-model="data"
         :type="props.config.type"
         :disabled="disabled"
+        :placeholder="props.config.placeholder"
       ></el-date-picker>
     </div>
     <el-checkbox-group
@@ -92,13 +98,18 @@ function handleDataChange() {
       :disabled="disabled"
     ></el-checkbox-group>
     <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
-    <el-select v-if="props.config.type === 'select'" :disabled="disabled"></el-select>
+    <el-select
+      v-if="props.config.type === 'select'"
+      :disabled="disabled"
+      :placeholder="props.config.placeholder"
+    ></el-select>
     <el-tree-select
       v-if="props.config.type === 'selectTree'"
       v-model="data"
       :check-strictly="true"
       :disabled="disabled"
       :data="innerSelectData"
+      :placeholder="props.config.placeholder"
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
