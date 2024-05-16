@@ -2,6 +2,8 @@
 import { CommonInputConfig } from '../../model/util/CommonInputConfig'
 import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { ElTreeSelect } from 'element-plus'
+import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
+import { SelectOption } from '../../model/util/SelectOption'
 
 // props
 const props = defineProps<{
@@ -9,11 +11,22 @@ const props = defineProps<{
 }>()
 
 // onMounted
-onMounted(() => {
+onMounted(async () => {
+  // 处理默认开关状态
   if (props.config.defaultDisabled === undefined) {
     disabled.value = false
   } else {
     disabled.value = props.config.defaultDisabled
+  }
+
+  // 请求接口给selectData赋值
+  if (props.config.useApi && props.config.api !== undefined) {
+    const response = await props.config.api()
+    if (apiResponseCheck(response)) {
+      innerSelectData.value = apiResponseGetData(response) as SelectOption[]
+    }
+  } else if (props.config.selectData !== undefined) {
+    innerSelectData.value = JSON.parse(JSON.stringify(props.config.selectData)) as SelectOption[]
   }
 })
 
@@ -25,6 +38,7 @@ const emits = defineEmits(['dataChanged'])
 
 // 变量
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
+const innerSelectData: Ref<UnwrapRef<SelectOption[]>> = ref([])
 
 // 方法
 // 处理组件被双击事件
@@ -83,7 +97,7 @@ function handleDataChange() {
       v-model="data"
       :check-strictly="true"
       :disabled="disabled"
-      :data="props.config.selectData"
+      :data="innerSelectData"
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>

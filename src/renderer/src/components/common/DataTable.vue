@@ -34,18 +34,19 @@ const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 async function initializeThead() {
   for (const item of props.thead) {
     const tempThead = JSON.parse(JSON.stringify(item)) as Thead
-
-    // 未设置表头tag样式，默认为info
-    if (tempThead.headerTagType == undefined) {
-      tempThead.headerTagType = 'info'
-    }
-
+    // 阻止CommonInputModule组件请求接口
+    tempThead.useApi = false
     // 请求接口并将响应值赋值给selectData，同时忽略接口报错
-    if (tempThead.useApi && item.api !== undefined) {
+    if (item.useApi && item.api !== undefined) {
       const response = await item.api()
       if (apiResponseCheck(response)) {
         tempThead.selectData = apiResponseGetData(response) as []
       }
+    }
+
+    // 未设置表头tag样式，默认为info
+    if (tempThead.headerTagType == undefined) {
+      tempThead.headerTagType = 'info'
     }
 
     innerThead.value.push(tempThead)
