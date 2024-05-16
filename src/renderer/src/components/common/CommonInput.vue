@@ -31,7 +31,7 @@ onMounted(async () => {
 })
 
 // model
-const data = defineModel<unknown>('data', { default: undefined })
+const data = defineModel<unknown>('data', { default: undefined, required: true })
 
 // 事件
 const emits = defineEmits(['dataChanged'])

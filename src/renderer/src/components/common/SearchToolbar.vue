@@ -21,13 +21,16 @@ const props = withDefaults(
   }
 )
 
+// model
+const params = defineModel<object>('params', { default: {}, required: true }) // 查询参数
+
 // onBeforeMount
 onBeforeMount(() => {
   calculateSpan()
 })
 
 // 事件
-const emits = defineEmits(['paramsChanged', 'searchButtonClicked', 'createButtonClicked'])
+const emits = defineEmits(['searchButtonClicked', 'createButtonClicked'])
 
 // 变量
 const dropDownForm = ref() // DropdownForm子组件
@@ -35,7 +38,6 @@ const barButtonSpan = ref(3) // 查询和新增按钮的span
 const innerMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 主搜索栏中元素的列表
 const innerDropdownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 下拉搜索框中元素的列表
 const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框开关
-const formData = ref({}) // 查询参数
 
 // 方法
 // 处理主搜索栏和下拉搜索框
@@ -97,17 +99,6 @@ function handleDropdownForm() {
   dropDownForm.value.changeState()
 }
 
-// 用户输入改变时，发送paramsChanged事件
-function handleParamsChanged() {
-  emits('paramsChanged', formData.value)
-}
-
-// 处理dropDownMenu参数改变
-function handleDropdownMenuParamsChanged(dropDownMenuParams: object) {
-  Object.assign(formData.value, dropDownMenuParams)
-  handleParamsChanged()
-}
-
 // 处理搜索按钮点击事件
 function handleSearchButtonClicked() {
   emits('searchButtonClicked')
@@ -116,11 +107,6 @@ function handleSearchButtonClicked() {
 // 处理新增按钮点击事件
 function handleCreateButtonClicked() {
   emits('createButtonClicked')
-}
-// 处理input清除事件
-function handleInputClear(paramName: string) {
-  delete formData.value[paramName]
-  handleParamsChanged()
 }
 </script>
 
@@ -132,7 +118,7 @@ function handleInputClear(paramName: string) {
       'search-toolbar-reverse': reverse
     }"
   >
-    <el-form class="search-toolbar-main" :model="formData" @input="handleParamsChanged">
+    <el-form class="search-toolbar-main" :model="params">
       <el-row class="search-toolbar-main-row">
         <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
           <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
@@ -150,7 +136,7 @@ function handleInputClear(paramName: string) {
           <el-col class="search-toolbar-input" :span="item.inputSpan">
             <el-form-item class="search-toolbar-input-form-item">
               <common-input
-                v-model:data="formData[item.name]"
+                v-model:data="params[item.name]"
                 class="search-toolbar-input-form-item-input"
                 :config="item"
               ></common-input>
@@ -174,10 +160,10 @@ function handleInputClear(paramName: string) {
     <DropdownForm
       v-if="showDropdownFlag"
       ref="dropDownForm"
+      v-model:form-data="params"
       class="dropdown-menu rounded-borders"
       :reverse="reverse"
       :input-boxes="innerDropdownInputBoxes"
-      @params-changed="handleDropdownMenuParamsChanged"
     >
     </DropdownForm>
   </div>

@@ -14,13 +14,13 @@ const props = withDefaults(
   }
 )
 
+// model
+const formData = defineModel<object>('formData', { default: {}, required: true }) // 表单数据
+
 // onBeforeMount
 onBeforeMount(() => {
   calculateSpan()
 })
-
-// 事件
-const emits = defineEmits(['paramsChanged'])
 
 // 暴露
 defineExpose({
@@ -31,7 +31,6 @@ defineExpose({
 const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 const inputBoxInRow: Ref<UnwrapRef<InputBox[][]>> = ref([]) // InputBox分行数组
 const dropdownTableHeight = ref(0) // 弃用 所有行占用的高度
-const formData = ref({})
 
 // 方法
 // 开启/关闭下拉表单
@@ -91,11 +90,6 @@ function calculateSpan() {
   // 计算完的高度赋值
   dropdownTableHeight.value = height
 }
-
-// 用户输入改变时，发送paramsChanged事件
-function handleParamsChanged() {
-  emits('paramsChanged', formData.value)
-}
 // 处理组件外部点击事件
 function handleClickOutSide() {
   if (state.value) {
@@ -116,7 +110,7 @@ function handleClickOutSide() {
       }"
     >
       <el-scrollbar class="dropdown-table-rows">
-        <el-form v-model="formData" @input="handleParamsChanged">
+        <el-form v-model="formData">
           <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
             <el-row class="dropdown-table-row">
               <template v-for="(item, index) in boxRow" :key="index">

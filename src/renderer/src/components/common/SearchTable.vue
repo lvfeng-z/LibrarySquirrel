@@ -71,10 +71,6 @@ const pagerCount = ref(5) // 显示的分页按钮个数
 function handleCreateButtonClicked() {
   emits('createButtonClicked')
 }
-// 处理SearchToolbar参数变化
-function handleSearchToolbarParamsChanged(params: object) {
-  searchToolbarParams.value = JSON.parse(JSON.stringify(params))
-}
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked() {
   // 配置分页参数
@@ -128,13 +124,13 @@ defineExpose({
   <div class="search-table">
     <!-- 为了不被el-table内置的2层z轴遮挡，此处为2层z轴 -->
     <SearchToolbar
+      v-model:params="searchToolbarParams"
       class="search-table-toolbar z-layer-2"
       :create-button="createButton"
       :drop-down-input-boxes="dropDownInputBoxes"
       :main-input-boxes="mainInputBoxes"
       @create-button-clicked="handleCreateButtonClicked"
       @search-button-clicked="handleSearchButtonClicked"
-      @params-changed="handleSearchToolbarParamsChanged"
     >
     </SearchToolbar>
     <div class="search-table-data rounded-borders">

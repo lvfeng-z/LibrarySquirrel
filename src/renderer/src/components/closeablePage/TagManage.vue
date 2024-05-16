@@ -103,7 +103,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 10
   },
   {
-    name: 'baseTagId',
+    name: 'baseLocalTagId',
     type: 'selectTree',
     placeholder: '选择基础标签查询',
     inputSpan: 8,
@@ -114,28 +114,10 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 // 本地标签SearchTable的dropDownInputBoxes
 const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
-    name: 'baseLocalTagId',
-    label: '基础标签id',
+    name: 'id',
+    label: 'id',
     type: 'text',
-    placeholder: ''
-  },
-  {
-    name: 'baseLocalTagId',
-    label: '基础标签id',
-    type: 'text',
-    placeholder: ''
-  },
-  {
-    name: 'baseLocalTagId',
-    label: '基础标签id',
-    type: 'text',
-    placeholder: ''
-  },
-  {
-    name: 'baseLocalTagId',
-    label: '基础标签id',
-    type: 'text',
-    placeholder: ''
+    placeholder: '内部id'
   }
 ])
 // 本地标签弹窗的mode

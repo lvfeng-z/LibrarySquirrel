@@ -58,14 +58,6 @@ const searchButtonDisabled = computed(() => {
 }) // 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
 
 // 方法
-// 处理SearchToolbar参数变化
-function handleUpperSearchToolbarParamsChanged(params: object) {
-  upperSearchToolbarParams.value = JSON.parse(JSON.stringify(params))
-}
-// 处理SearchToolbar参数变化
-function handleLowerSearchToolbarParamsChanged(params: object) {
-  lowerSearchToolbarParams.value = JSON.parse(JSON.stringify(params))
-}
 // 请求查询接口
 async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
   // 请求api
@@ -273,8 +265,8 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
             :drop-down-input-boxes="upperDropDownInputBoxes"
             :main-input-boxes="upperMainInputBoxes"
             :search-button-disabled="searchButtonDisabled"
+            :params="upperSearchToolbarParams"
             @search-button-clicked="handleSearchButtonClicked(true)"
-            @params-changed="handleUpperSearchToolbarParamsChanged"
           >
           </SearchToolbar>
         </div>
@@ -390,8 +382,8 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
             :main-input-boxes="lowerMainInputBoxes"
             :reverse="true"
             :search-button-disabled="searchButtonDisabled"
+            :params="lowerSearchToolbarParams"
             @search-button-clicked="handleSearchButtonClicked(false)"
-            @params-changed="handleLowerSearchToolbarParamsChanged"
           >
           </SearchToolbar>
         </div>
