@@ -102,6 +102,7 @@ function handleDataChange() {
       v-if="props.config.type === 'select'"
       :disabled="disabled"
       :placeholder="props.config.placeholder"
+      clearable
     ></el-select>
     <el-tree-select
       v-if="props.config.type === 'selectTree'"
@@ -110,6 +111,7 @@ function handleDataChange() {
       :disabled="disabled"
       :data="innerSelectData"
       :placeholder="props.config.placeholder"
+      clearable
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>

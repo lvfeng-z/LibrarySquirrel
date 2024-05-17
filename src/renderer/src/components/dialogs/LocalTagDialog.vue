@@ -144,6 +144,7 @@ function clearFormData() {
               v-model="formData.baseLocalTagId"
               :check-strictly="true"
               :data="baseTagSelectData"
+              clearable
             ></el-tree-select>
           </el-form-item>
         </el-col>
