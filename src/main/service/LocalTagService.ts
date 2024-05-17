@@ -42,8 +42,12 @@ async function updateById(localTag: LocalTag) {
       return ApiUtil.error('基础标签不能为自身')
     }
 
+    if (localTag.baseLocalTagId === null) {
+      localTag.baseLocalTagId = 0
+    }
+
     // 查询新上级节点的所有上级节点
-    if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId !== null) {
+    if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId !== 0) {
       const parentTags = await dao.selectParentNode(localTag.baseLocalTagId)
       const parentTagIds = parentTags.map((tag) => tag.id)
       // 如果新的上级节点是原本的下级节点，则先把原本的下级节点移动至与本节点相同上级节点之下，再把本节点变成原下级节点的下级节点
