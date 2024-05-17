@@ -4,6 +4,7 @@ import { InputBox } from '../../model/util/InputBox'
 import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommonInput.vue'
+import lodash from 'lodash'
 
 // props
 const props = withDefaults(
@@ -47,7 +48,7 @@ function calculateSpan() {
     // 储存当前box的长度
     let boxSpan = 0
     // 不更改props属性
-    const tempInputBox: InputBox = JSON.parse(JSON.stringify(inputBox))
+    const tempInputBox: InputBox = lodash.cloneDeep(inputBox)
     // 补充由于JSON转换丢失的函数类型的属性api
     tempInputBox.api = inputBox.api
 
@@ -87,7 +88,7 @@ function calculateSpan() {
     )
   }
 
-  const tempDropdownInputBoxes = JSON.parse(JSON.stringify(props.dropDownInputBoxes))
+  const tempDropdownInputBoxes = lodash.cloneDeep(props.dropDownInputBoxes)
   innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
 
   // 下拉菜单中有内容则显示下拉菜单，否则不显示

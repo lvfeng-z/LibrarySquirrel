@@ -4,6 +4,7 @@ import ScrollTextBox from './ScrollTextBox.vue'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import BaseFormDialog from './BaseFormDialog.vue'
 import { DialogMode } from '../../model/util/DialogMode'
+import lodash from 'lodash'
 // props
 const props = defineProps<{
   mode: DialogMode
@@ -39,7 +40,7 @@ function calculateSpan() {
       // 储存当前box的长度
       let boxSpan = 0
       // 不更改props属性
-      const tempInputBox: InputBox = JSON.parse(JSON.stringify(inputBox))
+      const tempInputBox: InputBox = lodash.cloneDeep(inputBox)
       // 未设置tag长度则设置为2
       if (tempInputBox.labelSpan == undefined) {
         tempInputBox.labelSpan = 2

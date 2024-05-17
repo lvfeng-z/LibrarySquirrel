@@ -9,6 +9,7 @@ import { DataTableOperationResponse } from '../../model/util/DataTableOperationR
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
 import { PageCondition } from '../../model/util/PageCondition'
 import { QuerySortOption } from '../../model/util/QuerySortOption'
+import lodash from 'lodash'
 
 // props
 const props = withDefaults(
@@ -45,7 +46,7 @@ const emits = defineEmits([
 // onMounted
 onMounted(() => {
   if (props.sort !== undefined) {
-    const tempSort = JSON.parse(JSON.stringify(props.sort))
+    const tempSort = lodash.cloneDeep(props.sort)
     innerSort.value = [...innerSort.value, ...tempSort]
   }
 })
@@ -74,11 +75,11 @@ function handleCreateButtonClicked() {
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked() {
   // 配置分页参数
-  const pageCondition: PageCondition<object> = JSON.parse(JSON.stringify(props.pageCondition))
+  const pageCondition: PageCondition<object> = lodash.cloneDeep(props.pageCondition)
   pageCondition.pageSize = pageSize.value
   pageCondition.pageNumber = pageNumber.value
   // 配置排序参数
-  pageCondition.sort = JSON.parse(JSON.stringify(innerSort.value))
+  pageCondition.sort = lodash.cloneDeep(innerSort.value)
   // 配置查询参数
   pageCondition.query = { ...searchToolbarParams.value }
 

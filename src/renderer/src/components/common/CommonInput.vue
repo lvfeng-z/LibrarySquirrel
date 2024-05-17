@@ -4,6 +4,7 @@ import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { ElTreeSelect } from 'element-plus'
 import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
 import { SelectOption } from '../../model/util/SelectOption'
+import lodash from 'lodash'
 
 // props
 const props = defineProps<{
@@ -26,7 +27,7 @@ onMounted(async () => {
       innerSelectData.value = apiResponseGetData(response) as SelectOption[]
     }
   } else if (props.config.selectData !== undefined) {
-    innerSelectData.value = JSON.parse(JSON.stringify(props.config.selectData)) as SelectOption[]
+    innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectOption[]
   }
 })
 

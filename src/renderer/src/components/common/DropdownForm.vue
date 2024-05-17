@@ -3,6 +3,7 @@ import { InputBox } from '../../model/util/InputBox'
 import { onBeforeMount, Ref, ref, UnwrapRef, warn } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommonInput.vue'
+import lodash from 'lodash'
 
 // props
 const props = withDefaults(
@@ -60,7 +61,7 @@ function calculateSpan() {
     // 储存当前box的长度
     let boxSpan = 0
     // 不更改props属性
-    const tempInputBox: InputBox = JSON.parse(JSON.stringify(inputBox))
+    const tempInputBox: InputBox = lodash.cloneDeep(inputBox)
     // 未设置tag长度则设置为2
     if (tempInputBox.labelSpan == undefined) {
       tempInputBox.labelSpan = 2

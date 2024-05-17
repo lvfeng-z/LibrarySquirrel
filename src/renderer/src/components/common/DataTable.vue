@@ -5,6 +5,7 @@ import { Thead } from '../../model/util/Thead'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import CommonInput from './CommonInput.vue'
 import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
+import lodash from 'lodash'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -33,7 +34,7 @@ const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 // 初始化表头
 async function initializeThead() {
   for (const item of props.thead) {
-    const tempThead = JSON.parse(JSON.stringify(item)) as Thead
+    const tempThead = lodash.cloneDeep(item) as Thead
     // 阻止CommonInput组件请求接口
     tempThead.useApi = false
     // 请求接口并将响应值赋值给selectData，同时忽略接口报错

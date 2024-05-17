@@ -6,6 +6,7 @@ import { DialogMode } from '../../model/util/DialogMode'
 import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
 import { ElTreeSelect } from 'element-plus'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
+import lodash from 'lodash'
 
 // props
 const props = withDefaults(
@@ -53,7 +54,7 @@ const apis = reactive({
 async function handleSaveButtonClicked() {
   if (props.submitEnabled) {
     if (props.mode === DialogMode.NEW) {
-      const tempFormData = JSON.parse(JSON.stringify(formData.value))
+      const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localTagSave(tempFormData)
       if (apiResponseCheck(response)) {
         emits('requestSuccess')
@@ -62,7 +63,7 @@ async function handleSaveButtonClicked() {
       apiResponseMsg(response)
     }
     if (props.mode === DialogMode.EDIT) {
-      const tempFormData = JSON.parse(JSON.stringify(formData.value))
+      const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localTagUpdateById(tempFormData)
       if (apiResponseCheck(response)) {
         emits('requestSuccess')

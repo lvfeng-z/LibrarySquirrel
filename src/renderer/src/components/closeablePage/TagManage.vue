@@ -4,6 +4,7 @@ import BaseCloseablePage from './BaseCloseablePage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
+import lodash from 'lodash'
 import { apiResponseCheck, apiResponseMsg, apiResponseMsgNoSuccess } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
 import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
@@ -194,7 +195,8 @@ function handleDialogRequestSuccess() {
 }
 // 保存行数据编辑
 async function saveRowEdit(newData?: LocalTag) {
-  const tempData = JSON.parse(JSON.stringify(newData))
+  const tempData = lodash.cloneDeep(newData)
+
   const response = await apis.localTagUpdateById(tempData)
   apiResponseMsg(response)
   if (apiResponseCheck(response)) {

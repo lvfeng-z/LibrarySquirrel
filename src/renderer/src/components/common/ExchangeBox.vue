@@ -7,6 +7,7 @@ import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../util
 import { ApiResponse } from '../../model/util/ApiResponse'
 import DoubleCheckTag from './DoubleCheckTag.vue'
 import { PageCondition } from '../../model/util/PageCondition'
+import lodash from 'lodash'
 
 // props
 const props = defineProps<{
@@ -67,14 +68,14 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
       ...upperSearchToolbarParams.value,
       ...props.upperApiStaticParams
     }
-    const tempPage = JSON.parse(JSON.stringify(upperPageConfig.value))
+    const tempPage = lodash.cloneDeep(upperPageConfig.value)
     response = await props.upperSearchApi(tempPage)
   } else {
     lowerPageConfig.value.query = {
       ...lowerSearchToolbarParams.value,
       ...props.lowerApiStaticParams
     }
-    const tempPage = JSON.parse(JSON.stringify(lowerPageConfig.value))
+    const tempPage = lodash.cloneDeep(lowerPageConfig.value)
     response = await props.lowerSearchApi(tempPage)
   }
 
