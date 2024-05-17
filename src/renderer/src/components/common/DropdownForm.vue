@@ -126,7 +126,11 @@ function handleClickOutSide() {
                 </el-col>
                 <el-col class="dropdown-table-input" :span="item.inputSpan">
                   <el-form-item class="dropdown-table-input-form-item">
-                    <common-input v-model:data="formData[item.name]" :config="item"></common-input>
+                    <common-input
+                      v-model:data="formData[item.name]"
+                      class="search-toolbar-input-form-item-input"
+                      :config="item"
+                    ></common-input>
                   </el-form-item>
                 </el-col>
               </template>
@@ -173,12 +177,17 @@ function handleClickOutSide() {
   justify-content: flex-end;
 }
 .dropdown-table-input {
+  height: 100%;
   display: flex;
-  width: 100%;
   justify-content: flex-start;
 }
 .dropdown-table-input-form-item {
   width: 100%;
+  height: 100%;
+}
+.search-toolbar-input-form-item-input {
+  width: 100%;
+  height: 100%;
 }
 .dropdown-table-button-wrapper {
   position: absolute;

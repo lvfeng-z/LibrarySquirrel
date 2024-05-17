@@ -99,13 +99,13 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
     type: 'text',
-    placeholder: '输入本地标签的名称查询',
+    placeholder: '输入本地标签的名称',
     inputSpan: 10
   },
   {
     name: 'baseLocalTagId',
     type: 'selectTree',
-    placeholder: '选择基础标签查询',
+    placeholder: '选择上级标签',
     inputSpan: 8,
     useApi: true,
     api: apis.localTagGetTree
@@ -127,8 +127,14 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
     type: 'text',
-    placeholder: '输入站点标签的名称查询',
-    inputSpan: 21
+    placeholder: '输入站点标签名称',
+    inputSpan: 12
+  },
+  {
+    name: 'id',
+    type: 'selectTree',
+    placeholder: '选择站点',
+    inputSpan: 9
   }
 ])
 // 站点标签ExchangeBox的DropDownInputBoxes
@@ -136,9 +142,9 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
   {
     name: 'keyword',
     type: 'text',
-    placeholder: '输入站点标签的名称查询',
-    label: '名111111111称',
-    inputSpan: 10
+    placeholder: '输入id',
+    label: 'id',
+    inputSpan: 22
   }
 ])
 
