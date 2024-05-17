@@ -1,17 +1,18 @@
 <script setup lang="ts">
+import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import BaseCloseablePage from './BaseCloseablePage.vue'
 import SearchTable from '../common/SearchTable.vue'
-import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
-import { OperationItem } from '../../model/util/OperationItem'
-import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
-import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
 import ExchangeBox from '../common/ExchangeBox.vue'
-import { SelectOption } from '../../model/util/SelectOption'
+import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
 import { apiResponseCheck, apiResponseMsg, apiResponseMsgNoSuccess } from '../../utils/ApiUtil'
 import { ApiResponse } from '../../model/util/ApiResponse'
-import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
+import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
+import { Thead } from '../../model/util/Thead'
+import { InputBox } from '../../model/util/InputBox'
+import { SelectOption } from '../../model/util/SelectOption'
+import { OperationItem } from '../../model/util/OperationItem'
 import { DialogMode } from '../../model/util/DialogMode'
+import LocalTag from '../../model/main/LocalTag'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
@@ -21,6 +22,7 @@ onMounted(() => {
 // 接口
 const apis = reactive({
   localTagDeleteById: window.api.localTagDeleteById,
+  localTagUpdateById: window.api.localTagUpdateById,
   localTagQueryPage: window.api.localTagQueryPage,
   localTagGetSelectList: window.api.localTagGetSelectList,
   localTagGetTree: window.api.localTagGetTree,
@@ -157,6 +159,9 @@ async function handleCreateButtonClicked() {
 // 处理本地标签数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse) {
   switch (op.code) {
+    case 'save':
+      saveRowEdit(op.data as LocalTag)
+      break
     case DialogMode.VIEW:
       localTagDialogMode.value = DialogMode.VIEW
       localTagDialog.value.handleDialog(true, op.data)
@@ -186,6 +191,16 @@ async function handleLocalTagSelectionChange(selections: object[]) {
 // 处理本地标签弹窗请求成功事件
 function handleDialogRequestSuccess() {
   localTagSearchTable.value.handleSearchButtonClicked()
+}
+// 保存行数据编辑
+async function saveRowEdit(newData?: LocalTag) {
+  const tempData = JSON.parse(JSON.stringify(newData))
+  const response = await apis.localTagUpdateById(tempData)
+  apiResponseMsg(response)
+  if (apiResponseCheck(response)) {
+    const index = localTagSearchTable.value.changedRows.indexOf(newData)
+    localTagSearchTable.value.changedRows.splice(index, 1)
+  }
 }
 // 删除本地标签
 async function deleteLocalTag(id: string) {
