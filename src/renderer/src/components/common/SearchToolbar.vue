@@ -118,45 +118,43 @@ function handleCreateButtonClicked() {
       'search-toolbar-reverse': reverse
     }"
   >
-    <el-form class="search-toolbar-main" :model="params">
-      <el-row class="search-toolbar-main-row">
-        <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
-          <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+    <el-row class="search-toolbar-main-row">
+      <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
+        <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+      </el-col>
+      <template v-for="(item, index) in innerMainInputBoxes" :key="index">
+        <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
+          <div
+            :key="index"
+            class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
+            style="width: 100%"
+          >
+            <ScrollTextBox>{{ item.label }}</ScrollTextBox>
+          </div>
         </el-col>
-        <template v-for="(item, index) in innerMainInputBoxes" :key="index">
-          <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
-            <div
-              :key="index"
-              class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
-              style="width: 100%"
-            >
-              <ScrollTextBox>{{ item.label }}</ScrollTextBox>
-            </div>
-          </el-col>
-          <el-col class="search-toolbar-input" :span="item.inputSpan">
-            <el-form-item class="search-toolbar-input-form-item">
-              <common-input
-                v-model:data="params[item.name]"
-                class="search-toolbar-input-form-item-input"
-                :config="item"
-              ></common-input>
-            </el-form-item>
-          </el-col>
-        </template>
-        <el-col class="search-toolbar-search-button" :span="barButtonSpan">
-          <el-dropdown>
-            <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
-              搜索
-            </el-button>
-            <template v-if="innerDropdownInputBoxes.length > 0" #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="handleDropdownForm">更多选项</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+        <el-col class="search-toolbar-input" :span="item.inputSpan">
+          <el-form-item class="search-toolbar-input-form-item">
+            <common-input
+              v-model:data="params[item.name]"
+              class="search-toolbar-input-form-item-input"
+              :config="item"
+            ></common-input>
+          </el-form-item>
         </el-col>
-      </el-row>
-    </el-form>
+      </template>
+      <el-col class="search-toolbar-search-button" :span="barButtonSpan">
+        <el-dropdown>
+          <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
+            搜索
+          </el-button>
+          <template v-if="innerDropdownInputBoxes.length > 0" #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="handleDropdownForm">更多选项</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </el-col>
+    </el-row>
     <DropdownForm
       v-if="showDropdownFlag"
       ref="dropDownForm"
