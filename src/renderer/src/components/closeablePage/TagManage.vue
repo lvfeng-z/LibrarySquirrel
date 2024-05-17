@@ -86,8 +86,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     type: 'datetime',
     defaultDisabled: true,
-    name: 'createTime',
-    label: '创建时间',
+    name: 'updateTime',
+    label: '修改时间',
     hide: false,
     width: 200,
     headerAlign: 'center',
