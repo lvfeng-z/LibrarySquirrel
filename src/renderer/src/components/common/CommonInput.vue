@@ -60,7 +60,7 @@ function handleDataChange() {
 </script>
 
 <template>
-  <div v-click-out-side="handleBlur" class="common-input-module" @dblclick="handleDblclick">
+  <div v-click-out-side="handleBlur" class="common-input" @dblclick="handleDblclick">
     <span
       v-if="
         props.config.type === 'default' ||
@@ -84,7 +84,7 @@ function handleDataChange() {
     <!-- 这一层div用来防止date-picker宽度超出父组件 -->
     <div
       v-if="props.config.type === 'date' || props.config.type === 'datetime'"
-      class="common-input-module-el-date-picker"
+      class="common-input-el-date-picker"
     >
       <el-date-picker
         v-model="data"
@@ -117,11 +117,10 @@ function handleDataChange() {
 </template>
 
 <style scoped>
-.common-input-module {
-  display: flex;
-  align-items: center;
+.common-input {
+  display: grid;
 }
-.common-input-module-el-date-picker {
+.common-input-el-date-picker {
   display: flex;
   width: 100%;
 }
