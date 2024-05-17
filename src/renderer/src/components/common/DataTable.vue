@@ -143,7 +143,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
       v-if="props.operationButton !== undefined && props.operationButton.length > 0"
       fixed="right"
       align="center"
-      width="104"
+      min-width="104"
     >
       <template #header>
         <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
