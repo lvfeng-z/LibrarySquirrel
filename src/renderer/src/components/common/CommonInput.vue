@@ -57,6 +57,11 @@ function handleBlur() {
 function handleDataChange() {
   emits('dataChanged')
 }
+// 处理清空事件
+function handleClear() {
+  // 清空是将值设置为null，不是undefined，因为主进程中crud函数将undefined视为不对此属性进行更改，null更符合清空的定义
+  data.value = null
+}
 </script>
 
 <template>
@@ -113,6 +118,7 @@ function handleDataChange() {
       :placeholder="props.config.placeholder"
       clearable
       @change="handleDataChange"
+      @clear="handleClear"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
   </div>
