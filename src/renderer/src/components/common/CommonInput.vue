@@ -119,6 +119,8 @@ function handleDataChange() {
 <style scoped>
 .common-input {
   display: grid;
+  min-width: 10px;
+  min-height: 10px;
 }
 .common-input-el-date-picker {
   display: flex;
