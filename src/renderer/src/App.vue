@@ -3,8 +3,12 @@ import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import TagManage from './components/closeablePage/TagManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
+import DisplayCase from './components/common/DisplayCase.vue'
 
 // 变量
+const apis = {
+  testInsertLocalTag10W: window.api.testInsertLocalTag10W
+} // 接口
 let loading = false // 主菜单栏加载中开关
 const selectedList = ref() // 主搜索栏选中列表
 const tagSelectList = ref() // 主搜索栏选择项列表
@@ -41,6 +45,11 @@ function showFloatPage(pageName) {
 function closeFloatPage() {
   Object.keys(pageState).forEach((key) => (pageState[key] = false))
   pageState.mainPage = true
+}
+
+// test
+async function handleTest() {
+  await apis.testInsertLocalTag10W()
 }
 </script>
 
@@ -96,26 +105,35 @@ function closeFloatPage() {
     <div class="mainSpace">
       <div v-show="pageState.mainPage" class="mainPage margin-box">
         <div class="mainPage-searchbar">
-          <el-select
-            v-model="selectedList"
-            multiple
-            filterable
-            remote
-            :remote-method="getTagSelectList"
-            :loading="loading"
-          >
-            <el-option
-              v-for="item in tagSelectList"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            ></el-option>
-          </el-select>
+          <el-row>
+            <el-col :span="20">
+              <el-select
+                v-model="selectedList"
+                multiple
+                filterable
+                remote
+                :remote-method="getTagSelectList"
+                :loading="loading"
+              >
+                <el-option
+                  v-for="item in tagSelectList"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                ></el-option>
+              </el-select>
+            </el-col>
+            <el-col :span="1">
+              <el-button @click="handleTest"> 测试 </el-button>
+            </el-col>
+          </el-row>
         </div>
-        <div class="mainPage-works-space"></div>
+        <div class="mainPage-works-space">
+          <display-case></display-case>
+        </div>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
-        <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage"></TagManage>
+        <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
       </div>
     </div>
   </div>

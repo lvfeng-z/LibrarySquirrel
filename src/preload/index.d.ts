@@ -4,6 +4,9 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
+      // test
+      testInsertLocalTag10W: function
+
       // LocalTagService
       localTagSave: function
       localTagDeleteById: function

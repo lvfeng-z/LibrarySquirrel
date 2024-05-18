@@ -6,8 +6,14 @@ import SiteService from './SiteService'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 import { PageModel } from '../model/utilModels/PageModel'
 import SiteTag from '../model/SiteTag'
+import InsertLocalTag from '../test/InsertLocalTag'
 
 export function exposeService() {
+  // test
+  ipcMain.handle('test-insertLocalTag10W', async () => {
+    return await InsertLocalTag.insertLocalTag10W()
+  })
+
   // LocalTagService
   ipcMain.handle('localTag-save', async (_event, args) => {
     return await LocalTagService.save(args)

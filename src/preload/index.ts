@@ -3,6 +3,11 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
+  // test
+  testInsertLocalTag10W: (args) => {
+    return ipcRenderer.invoke('test-insertLocalTag10W', args)
+  },
+
   // LocalTagService
   localTagSave: (args) => {
     return ipcRenderer.invoke('localTag-save', args)
