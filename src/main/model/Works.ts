@@ -9,6 +9,10 @@ export default class Works extends BaseModel {
    */
   filePath: string | undefined | null
   /**
+   * 作品类型（0：图片，1：视频，2：文章）
+   */
+  worksType: number | undefined | null
+  /**
    * 作品来源站点id
    */
   siteId: number | undefined | null
@@ -65,6 +69,7 @@ export default class Works extends BaseModel {
     if (works === undefined) {
       super()
       this.filePath = undefined
+      this.worksType = undefined
       this.siteId = undefined
       this.siteWorksId = undefined
       this.siteWorksName = undefined
@@ -81,6 +86,7 @@ export default class Works extends BaseModel {
     } else {
       super(works)
       this.filePath = works.filePath
+      this.worksType = works.worksType
       this.siteId = works.siteId
       this.siteWorksId = works.siteWorksId
       this.siteWorksName = works.siteWorksName

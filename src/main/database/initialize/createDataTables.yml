@@ -111,13 +111,14 @@ tables:
         id               integer not null
         constraint works_pk
         primary key autoincrement,
+        works_type             integer,
         file_path             text,
         set_id                integer,
         site_id               integer,
         site_works_id         text,
         site_works_name       text,
         site_author_id        text,
-        site_work_description text
+        site_work_description text,
         site_upload_time      text,
         site_update_time      text,
         nick_name             text,
