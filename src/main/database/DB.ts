@@ -15,7 +15,12 @@ export class DB {
    * 调用者
    * @private
    */
-  private caller: string
+  private readonly caller: string
+  /**
+   * acquire请求的缓存，防止异步调用prepare方法时重复请求链接
+   * @private
+   */
+  private acquirePromise: Promise<BetterSqlite3.Database> | null = null
 
   constructor(caller: string) {
     if (StringUtil.isNotBlank(caller)) {
@@ -33,14 +38,12 @@ export class DB {
   }
 
   /**
-   * 请求链接
+   * prepare
    * @param statement
    */
   public async prepare(statement: string): Promise<BetterSqlite3.Statement> {
-    if (this.connection == undefined) {
-      this.connection = await global.connectionPool.acquire()
-    }
-    return (this.connection as BetterSqlite3.Database).prepare(statement)
+    const connectionPromise = this.acquire()
+    return connectionPromise.then((connection) => connection.prepare(statement))
   }
 
   /**
@@ -50,5 +53,23 @@ export class DB {
     if (this.connection != undefined) {
       global.connectionPool.release(this.connection)
     }
+  }
+
+  /**
+   * 请求链接
+   * @private
+   */
+  private async acquire(): Promise<BetterSqlite3.Database> {
+    if (this.connection != undefined) {
+      return this.connection
+    }
+    if (this.acquirePromise === null) {
+      this.acquirePromise = (async () => {
+        this.connection = (await global.connectionPool.acquire()) as BetterSqlite3.Database
+        this.acquirePromise = null
+        return this.connection
+      })()
+    }
+    return this.acquirePromise
   }
 }
