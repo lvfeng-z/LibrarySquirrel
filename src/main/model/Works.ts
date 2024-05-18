@@ -5,10 +5,6 @@ import BaseModel from './BaseModel'
  */
 export default class Works extends BaseModel {
   /**
-   * 主键
-   */
-  id: number | undefined | null
-  /**
    * 文件存储路径
    */
   filePath: string | undefined | null
@@ -49,28 +45,43 @@ export default class Works extends BaseModel {
    */
   includeMode: number | undefined | null
   /**
+   * 收录任务id
+   */
+  includeTaskId: number | undefined | null
+  /**
    * 下载状态
    */
   downloadStatus: number | undefined | null
-  /**
-   * 下载任务id
-   */
-  downloadTaskId: number | undefined | null
 
-  constructor(works: Works) {
-    super(works)
-    this.id = works.id
-    this.filePath = works.filePath
-    this.siteId = works.siteId
-    this.siteWorksId = works.siteWorksId
-    this.siteAuthorId = works.siteAuthorId
-    this.siteUploadTime = works.siteUploadTime
-    this.siteUpdateTime = works.siteUpdateTime
-    this.nickName = works.nickName
-    this.localAuthorId = works.localAuthorId
-    this.includeTime = works.includeTime
-    this.includeMode = works.includeMode
-    this.downloadStatus = works.downloadStatus
-    this.downloadTaskId = works.downloadTaskId
+  constructor(works?: Works) {
+    if (works === undefined) {
+      super()
+      this.filePath = undefined
+      this.siteId = undefined
+      this.siteWorksId = undefined
+      this.siteAuthorId = undefined
+      this.siteUploadTime = undefined
+      this.siteUpdateTime = undefined
+      this.nickName = undefined
+      this.localAuthorId = undefined
+      this.includeTime = undefined
+      this.includeMode = undefined
+      this.includeTaskId = undefined
+      this.downloadStatus = undefined
+    } else {
+      super(works)
+      this.filePath = works.filePath
+      this.siteId = works.siteId
+      this.siteWorksId = works.siteWorksId
+      this.siteAuthorId = works.siteAuthorId
+      this.siteUploadTime = works.siteUploadTime
+      this.siteUpdateTime = works.siteUpdateTime
+      this.nickName = works.nickName
+      this.localAuthorId = works.localAuthorId
+      this.includeTime = works.includeTime
+      this.includeMode = works.includeMode
+      this.includeTaskId = works.includeTaskId
+      this.downloadStatus = works.downloadStatus
+    }
   }
 }
