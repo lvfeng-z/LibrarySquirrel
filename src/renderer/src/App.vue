@@ -46,8 +46,8 @@ function closeFloatPage() {
 
 <template>
   <div class="ui">
-    <!-- 为了不被TagManage中的dropdownTable的2层z轴遮挡，此处为3层z轴 -->
-    <div class="sideMenu z-layer-3">
+    <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
+    <div class="sideMenu z-layer-4">
       <SideMenu :menu-mode="sideMenuMode" :default-active="['1-1']">
         <template #default>
           <el-sub-menu index="1">
