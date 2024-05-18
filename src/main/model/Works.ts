@@ -17,9 +17,17 @@ export default class Works extends BaseModel {
    */
   siteWorksId: string | undefined | null
   /**
+   * 站点中作品的名称
+   */
+  siteWorksName: string | undefined | null
+  /**
    * 站点中作品的作者id
    */
   siteAuthorId: string | undefined | null
+  /**
+   * 站点中作品的描述
+   */
+  siteWorkDescription: string | undefined | null
   /**
    * 站点中作品的上传时间
    */
@@ -59,7 +67,9 @@ export default class Works extends BaseModel {
       this.filePath = undefined
       this.siteId = undefined
       this.siteWorksId = undefined
+      this.siteWorksName = undefined
       this.siteAuthorId = undefined
+      this.siteWorkDescription = undefined
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
@@ -73,6 +83,8 @@ export default class Works extends BaseModel {
       this.filePath = works.filePath
       this.siteId = works.siteId
       this.siteWorksId = works.siteWorksId
+      this.siteWorksName = works.siteWorksName
+      this.siteWorkDescription = works.siteWorkDescription
       this.siteAuthorId = works.siteAuthorId
       this.siteUploadTime = works.siteUploadTime
       this.siteUpdateTime = works.siteUpdateTime
