@@ -1,10 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, protocol } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import InitializeDatabase from './database/initialize/InitializeDatabase'
 import { exposeService } from './service/ServiceExposer'
 import logUtil from './util/LogUtil'
+import fs from 'fs/promises'
+import FileSysUtil from './util/FileSysUtil'
 
 function createWindow(): void {
   // Create the browser window.
@@ -16,8 +18,7 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-      webSecurity: false
+      sandbox: false
     }
   })
 
@@ -39,6 +40,20 @@ function createWindow(): void {
   }
 }
 
+// 在ready之前注册一个自定义协议，用来加载本地文件
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'local-resource',
+    privileges: {
+      secure: true, // 设定此协议为安全协议,在 HTTPS 页面中通过此协议加载的资源不会引发混合内容警告
+      supportFetchAPI: true, // 允许此协议通过 Fetch API 被访问
+      standard: true, // 指示此协议应遵循Web标准，像HTTP/HTTPS一样工作
+      bypassCSP: true, // 允许此协议加载的资源绕过Content Security Policy (CSP) 的限制
+      stream: true // 允许通过此协议处理流式数据，应对大文件传输
+    }
+  }
+])
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -51,6 +66,18 @@ app.whenReady().then(() => {
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
+  })
+
+  // 如何响应前面的自定义协议的请求
+  protocol.handle('local-resource', async (request) => {
+    const decodedUrl = decodeURIComponent(
+      request.url.replace(new RegExp(`^local-resource:/`, 'i'), '')
+    )
+
+    const fullPath = process.platform === 'win32' ? FileSysUtil.convertPath(decodedUrl) : decodedUrl
+
+    const data = await fs.readFile(fullPath) // 异步读取文件
+    return new Response(data) // 返回文件
   })
 
   // 配置日志设置
