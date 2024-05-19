@@ -6,7 +6,7 @@ import { BaseQueryDTO } from './BaseQueryDTO'
 
 export default class WorksQueryDTO extends BaseQueryDTO {
   /**
-   * 文件存储路径
+   * 文件存储路径（文件相对于工作目录的相对路径）
    */
   filePath: string | undefined | null
   /**
