@@ -41,14 +41,14 @@ function createWindow(): void {
   }
 }
 
-//
-const store = new Store<never>()
-store.set('tst1', '3af')
+// 读取配置文件
+const store = new Store()
+store.set('workdir', 'F:/')
 
 // 在ready之前注册一个自定义协议，用来加载本地文件
 Electron.protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'local-resource',
+    scheme: 'workdir-resource',
     privileges: {
       secure: true, // 设定此协议为安全协议,在 HTTPS 页面中通过此协议加载的资源不会引发混合内容警告
       supportFetchAPI: true, // 允许此协议通过 Fetch API 被访问
@@ -74,9 +74,10 @@ Electron.app.whenReady().then(() => {
   })
 
   // 如何响应前面的自定义协议的请求
-  Electron.protocol.handle('local-resource', async (request) => {
+  Electron.protocol.handle('workdir-resource', async (request) => {
+    const workdir = store.get('workdir') as string
     const decodedUrl = decodeURIComponent(
-      request.url.replace(new RegExp(`^local-resource:/`, 'i'), '')
+      Path.join(workdir, request.url.replace(new RegExp(`^workdir-resource:/`, 'i'), ''))
     )
 
     const fullPath = process.platform === 'win32' ? FileSysUtil.convertPath(decodedUrl) : decodedUrl
