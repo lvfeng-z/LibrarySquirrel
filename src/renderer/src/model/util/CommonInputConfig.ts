@@ -1,7 +1,7 @@
-import { SelectOption } from './SelectOption'
-import { ApiResponse } from './ApiResponse'
+import SelectOption from './SelectOption'
+import ApiResponse from './ApiResponse'
 
-export interface CommonInputConfig {
+interface CommonInputConfig {
   type:
     | 'default'
     | 'text'
@@ -21,3 +21,5 @@ export interface CommonInputConfig {
   api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
   placeholder?: string // 占位符
 }
+
+export default CommonInputConfig

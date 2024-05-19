@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SelectOption } from '../../model/util/SelectOption'
+import SelectOption from '../../model/util/SelectOption'
 
 // props
 const props = withDefaults(

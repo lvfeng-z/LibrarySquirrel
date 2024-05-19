@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import { InputBox } from '../../model/util/InputBox'
+import InputBox from '../../model/util/InputBox'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import { SelectOption } from '../../model/util/SelectOption'
-import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
-import { ApiResponse } from '../../model/util/ApiResponse'
+import SelectOption from '../../model/util/SelectOption'
+import ApiUtil from '../../utils/ApiUtil'
+import ApiResponse from '../../model/util/ApiResponse'
 import DoubleCheckTag from './DoubleCheckTag.vue'
-import { PageCondition } from '../../model/util/PageCondition'
+import PageCondition from '../../model/util/PageCondition'
 import lodash from 'lodash'
 
 // props
@@ -80,8 +80,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
   }
 
   // 解析并返回数据，同时把分页参数赋值给响应式变量
-  if (apiResponseCheck(response)) {
-    const page = apiResponseGetData(response) as PageCondition<SelectOption>
+  if (ApiUtil.apiResponseCheck(response)) {
+    const page = ApiUtil.apiResponseGetData(response) as PageCondition<SelectOption>
     if (upperOrLower) {
       upperPageConfig.value = new PageCondition(page)
     } else {
@@ -89,7 +89,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
     }
     return page.data === undefined ? [] : page.data
   } else {
-    apiResponseMsg(response)
+    ApiUtil.apiResponseMsg(response)
     return undefined
   }
 }

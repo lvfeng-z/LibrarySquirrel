@@ -1,59 +1,59 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import Electron from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
   // test
   testInsertLocalTag10W: (args) => {
-    return ipcRenderer.invoke('test-insertLocalTag10W', args)
+    return Electron.ipcRenderer.invoke('test-insertLocalTag10W', args)
   },
 
   // LocalTagService
   localTagSave: (args) => {
-    return ipcRenderer.invoke('localTag-save', args)
+    return Electron.ipcRenderer.invoke('localTag-save', args)
   },
   localTagDeleteById: (args) => {
-    return ipcRenderer.invoke('localTag-deleteById', args)
+    return Electron.ipcRenderer.invoke('localTag-deleteById', args)
   },
   localTagUpdateById: (args) => {
-    return ipcRenderer.invoke('localTag-updateById', args)
+    return Electron.ipcRenderer.invoke('localTag-updateById', args)
   },
   localTagQueryPage: (args) => {
-    return ipcRenderer.invoke('localTag-queryPage', args)
+    return Electron.ipcRenderer.invoke('localTag-queryPage', args)
   },
   localTagGetById: (args) => {
-    return ipcRenderer.invoke('localTag-getById', args)
+    return Electron.ipcRenderer.invoke('localTag-getById', args)
   },
   localTagGetTree: (args) => {
-    return ipcRenderer.invoke('localTag-getTree', args)
+    return Electron.ipcRenderer.invoke('localTag-getTree', args)
   },
   localTagGetSelectList: (args) => {
-    return ipcRenderer.invoke('localTag-getSelectList', args)
+    return Electron.ipcRenderer.invoke('localTag-getSelectList', args)
   },
 
   // SiteService
   siteInsert: (args) => {
-    return ipcRenderer.invoke('site-insert', args)
+    return Electron.ipcRenderer.invoke('site-insert', args)
   },
   siteGetSelectList: (args) => {
-    return ipcRenderer.invoke('site-getSelectList', args)
+    return Electron.ipcRenderer.invoke('site-getSelectList', args)
   },
 
   // SiteTagService
   siteTagSave: (args) => {
-    return ipcRenderer.invoke('siteTag-save', args)
+    return Electron.ipcRenderer.invoke('siteTag-save', args)
   },
   siteTagUpdateById: (args) => {
-    return ipcRenderer.invoke('siteTag-updateById', args)
+    return Electron.ipcRenderer.invoke('siteTag-updateById', args)
   },
   siteTagUpdateBindLocalTag: (localTagId: string | null, siteTagIds: string[]) => {
-    return ipcRenderer.invoke('siteTag-updateBindLocalTag', localTagId, siteTagIds)
+    return Electron.ipcRenderer.invoke('siteTag-updateBindLocalTag', localTagId, siteTagIds)
   },
   siteTagGetBoundOrUnboundInLocalTag: (args) => {
-    return ipcRenderer.invoke('siteTag-getBoundOrUnboundInLocalTag', args)
+    return Electron.ipcRenderer.invoke('siteTag-getBoundOrUnboundInLocalTag', args)
   },
   siteTagGetSelectList: (args) => {
-    return ipcRenderer.invoke('siteTag-getSelectList', args)
+    return Electron.ipcRenderer.invoke('siteTag-getSelectList', args)
   }
 }
 
@@ -62,8 +62,8 @@ const api = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    Electron.contextBridge.exposeInMainWorld('electron', electronAPI)
+    Electron.contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }

@@ -2,9 +2,8 @@
 import BaseFormDialog from '../common/BaseFormDialog.vue'
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import LocalTag from '../../model/main/LocalTag'
-import { DialogMode } from '../../model/util/DialogMode'
-import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
-import { ElTreeSelect } from 'element-plus'
+import DialogMode from '../../model/util/DialogMode'
+import ApiUtil from '../../utils/ApiUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
 import lodash from 'lodash'
 
@@ -56,20 +55,20 @@ async function handleSaveButtonClicked() {
     if (props.mode === DialogMode.NEW) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localTagSave(tempFormData)
-      if (apiResponseCheck(response)) {
+      if (ApiUtil.apiResponseCheck(response)) {
         emits('requestSuccess')
         await handleDialog(false)
       }
-      apiResponseMsg(response)
+      ApiUtil.apiResponseMsg(response)
     }
     if (props.mode === DialogMode.EDIT) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localTagUpdateById(tempFormData)
-      if (apiResponseCheck(response)) {
+      if (ApiUtil.apiResponseCheck(response)) {
         emits('requestSuccess')
         await handleDialog(false)
       }
-      apiResponseMsg(response)
+      ApiUtil.apiResponseMsg(response)
     }
   }
 }
@@ -88,10 +87,10 @@ async function handleDialog(newState: boolean, newFormData?: LocalTag) {
     }
     // 请求本地标签树接口
     const baseTagTreeResponse = await apis.localTagGetTree(0)
-    if (apiResponseCheck(baseTagTreeResponse)) {
+    if (ApiUtil.apiResponseCheck(baseTagTreeResponse)) {
       // 创建临时的根节点，便于遍历整个树
       let tempNode = new TreeSelectNode()
-      tempNode.children = apiResponseGetData(baseTagTreeResponse) as TreeSelectNode[]
+      tempNode.children = ApiUtil.apiResponseGetData(baseTagTreeResponse) as TreeSelectNode[]
       // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
       tempNode = new TreeSelectNode(tempNode)
       // 绑定到临时根节点的子结点列表上

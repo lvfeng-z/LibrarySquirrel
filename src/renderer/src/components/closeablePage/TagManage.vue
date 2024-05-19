@@ -5,14 +5,14 @@ import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
 import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
 import lodash from 'lodash'
-import { apiResponseCheck, apiResponseMsg, apiResponseMsgNoSuccess } from '../../utils/ApiUtil'
-import { ApiResponse } from '../../model/util/ApiResponse'
-import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
-import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
-import { SelectOption } from '../../model/util/SelectOption'
-import { OperationItem } from '../../model/util/OperationItem'
-import { DialogMode } from '../../model/util/DialogMode'
+import ApiUtil from '../../utils/ApiUtil'
+import ApiResponse from '../../model/util/ApiResponse'
+import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
+import Thead from '../../model/util/Thead'
+import InputBox from '../../model/util/InputBox'
+import SelectOption from '../../model/util/SelectOption'
+import OperationItem from '../../model/util/OperationItem'
+import DialogMode from '../../model/util/DialogMode'
 import LocalTag from '../../model/main/LocalTag'
 
 onMounted(() => {
@@ -198,8 +198,8 @@ async function saveRowEdit(newData?: LocalTag) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localTagUpdateById(tempData)
-  apiResponseMsg(response)
-  if (apiResponseCheck(response)) {
+  ApiUtil.apiResponseMsg(response)
+  if (ApiUtil.apiResponseCheck(response)) {
     const index = localTagSearchTable.value.changedRows.indexOf(newData)
     localTagSearchTable.value.changedRows.splice(index, 1)
   }
@@ -207,8 +207,8 @@ async function saveRowEdit(newData?: LocalTag) {
 // 删除本地标签
 async function deleteLocalTag(id: string) {
   const response = await apis.localTagDeleteById(id)
-  apiResponseMsg(response)
-  if (apiResponseCheck(response)) {
+  ApiUtil.apiResponseMsg(response)
+  if (ApiUtil.apiResponseCheck(response)) {
     await localTagSearchTable.value.handleSearchButtonClicked()
   }
 }
@@ -228,9 +228,9 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
   }
-  apiResponseMsgNoSuccess(upperResponse)
-  apiResponseMsgNoSuccess(lowerResponse)
-  if (apiResponseCheck(lowerResponse) && apiResponseCheck(upperResponse)) {
+  ApiUtil.apiResponseMsgNoSuccess(upperResponse)
+  ApiUtil.apiResponseMsgNoSuccess(lowerResponse)
+  if (ApiUtil.apiResponseCheck(lowerResponse) && ApiUtil.apiResponseCheck(upperResponse)) {
     siteTagExchangeBox.value.refreshData()
   }
 }

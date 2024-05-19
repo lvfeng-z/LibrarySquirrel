@@ -1,7 +1,7 @@
 import { ElMessage } from 'element-plus'
-import { ApiResponse } from '../model/util/ApiResponse'
+import ApiResponse from '../model/util/ApiResponse'
 
-export function apiResponseCheck(response: ApiResponse | undefined): boolean {
+function apiResponseCheck(response: ApiResponse | undefined): boolean {
   if (response) {
     return !!response?.success
   } else {
@@ -9,7 +9,7 @@ export function apiResponseCheck(response: ApiResponse | undefined): boolean {
   }
 }
 
-export function apiResponseGetData(response: ApiResponse | undefined): unknown | undefined {
+function apiResponseGetData(response: ApiResponse | undefined): unknown | undefined {
   if (response) {
     if (response?.data) {
       return response.data
@@ -21,7 +21,7 @@ export function apiResponseGetData(response: ApiResponse | undefined): unknown |
   }
 }
 
-export function apiResponseMsg(response: ApiResponse | undefined): void {
+function apiResponseMsg(response: ApiResponse | undefined): void {
   if (response === undefined) {
     ElMessage({
       message: '无响应',
@@ -48,7 +48,7 @@ export function apiResponseMsg(response: ApiResponse | undefined): void {
   }
 }
 
-export function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void {
+function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void {
   if (response === undefined) {
     ElMessage({
       message: '无响应',
@@ -72,4 +72,11 @@ export function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void
       })
     }
   }
+}
+
+export default {
+  apiResponseCheck,
+  apiResponseGetData,
+  apiResponseMsg,
+  apiResponseMsgNoSuccess
 }

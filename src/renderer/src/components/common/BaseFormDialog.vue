@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { DialogMode } from '../../model/util/DialogMode'
+import DialogMode from '../../model/util/DialogMode'
 
 // props
 const props = defineProps<{

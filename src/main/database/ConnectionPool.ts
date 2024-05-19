@@ -147,3 +147,8 @@ export class ConnectionPool {
     LogUtil.debug('ConnectionPool', `${index}号链接已超时关闭`)
   }
 }
+
+export default {
+  ConnectionPool,
+  POOL_CONFIG
+}

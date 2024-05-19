@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { InputBox } from '../../model/util/InputBox'
+import InputBox from '../../model/util/InputBox'
 import ScrollTextBox from './ScrollTextBox.vue'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import BaseFormDialog from './BaseFormDialog.vue'
-import { DialogMode } from '../../model/util/DialogMode'
+import DialogMode from '../../model/util/DialogMode'
 import lodash from 'lodash'
 // props
 const props = defineProps<{

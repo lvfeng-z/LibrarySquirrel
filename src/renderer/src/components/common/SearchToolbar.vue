@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-import { InputBox } from '../../model/util/InputBox'
+import InputBox from '../../model/util/InputBox'
 import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommonInput.vue'

@@ -2,10 +2,10 @@ import Site from '../model/Site'
 import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
-import { DB } from '../database/DB'
-import { AbstractBaseDao } from './BaseDao'
+import DB from '../database/DB'
+import BaseDao from './BaseDao'
 
-export class SiteDao extends AbstractBaseDao<SiteQueryDTO, Site> {
+export default class SiteDao extends BaseDao.AbstractBaseDao<SiteQueryDTO, Site> {
   constructor() {
     super('site', 'SiteDao')
   }

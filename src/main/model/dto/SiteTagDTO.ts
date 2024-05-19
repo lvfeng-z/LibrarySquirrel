@@ -2,7 +2,7 @@ import SiteTag from '../SiteTag'
 import LocalTag from '../LocalTag'
 import Site from '../Site'
 
-export class SiteTagDTO extends SiteTag {
+export default class SiteTagDTO extends SiteTag {
   /**
    * 绑定的本地标签的实例
    */

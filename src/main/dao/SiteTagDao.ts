@@ -1,12 +1,12 @@
-import { AbstractBaseDao } from './BaseDao'
+import BaseDao from './BaseDao'
 import SiteTag from '../model/SiteTag'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
 import SelectItem from '../model/utilModels/SelectItem'
 import StringUtil from '../util/StringUtil'
-import { SiteTagDTO } from '../model/dto/SiteTagDTO'
-import { PageModel } from '../model/utilModels/PageModel'
+import SiteTagDTO from '../model/dto/SiteTagDTO'
+import PageModel from '../model/utilModels/PageModel'
 
-export class SiteTagDao extends AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
+export default class SiteTagDao extends BaseDao.AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
   constructor() {

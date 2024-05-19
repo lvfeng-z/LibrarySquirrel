@@ -1,6 +1,6 @@
-import { QuerySortOption } from './QuerySortOption'
+import QuerySortOption from './QuerySortOption'
 
-export class PageCondition<T> {
+export default class PageCondition<T> {
   /**
    * 当前页码
    */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 // props
 const props = defineProps<{
   defaultActive: string[]

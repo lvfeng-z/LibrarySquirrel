@@ -1,6 +1,8 @@
 // 作品类型
-export enum WORKS_TYPE {
+enum WorksType {
   'PICTURE',
   'VIDEO',
   'ARTICLE'
 }
+
+export default WorksType

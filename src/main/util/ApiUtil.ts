@@ -1,4 +1,4 @@
-export class ApiUtil {
+export default class ApiUtil {
   success: boolean | undefined
   msg: string | undefined
   data: unknown | undefined

@@ -1,4 +1,4 @@
-import { DB } from '../database/DB'
+import DB from '../database/DB'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')

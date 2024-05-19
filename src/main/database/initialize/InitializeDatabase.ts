@@ -6,8 +6,8 @@ import Database from 'better-sqlite3'
 import DataBaseConstant from '../../constant/DataBaseConstant'
 import logUtil from '../../util/LogUtil'
 import createDataTables from './createDataTables.yml?asset'
-import { ConnectionPool, POOL_CONFIG } from '../ConnectionPool'
-import { DB } from '../DB'
+import ConnectionPool from '../ConnectionPool'
+import DB from '../DB'
 
 /**
  * @Description: 初始化数据表
@@ -25,7 +25,7 @@ async function InitializeDB() {
   logUtil.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
-  global.connectionPool = new ConnectionPool(POOL_CONFIG)
+  global.connectionPool = new ConnectionPool.ConnectionPool(ConnectionPool.POOL_CONFIG)
   logUtil.info('InitializeDataBase', '已创建连接池实例')
 
   // 创建数据表

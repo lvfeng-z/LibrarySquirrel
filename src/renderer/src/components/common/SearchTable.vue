@@ -2,13 +2,13 @@
 import SearchToolbar from './SearchToolbar.vue'
 import DataTable from './DataTable.vue'
 import { onMounted, Ref, ref, UnwrapRef } from 'vue'
-import { InputBox } from '../../model/util/InputBox'
-import { OperationItem } from '../../model/util/OperationItem'
-import { Thead } from '../../model/util/Thead'
-import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
-import { apiResponseCheck, apiResponseGetData, apiResponseMsg } from '../../utils/ApiUtil'
-import { PageCondition } from '../../model/util/PageCondition'
-import { QuerySortOption } from '../../model/util/QuerySortOption'
+import InputBox from '../../model/util/InputBox'
+import OperationItem from '../../model/util/OperationItem'
+import Thead from '../../model/util/Thead'
+import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
+import ApiUtil from '../../utils/ApiUtil'
+import PageCondition from '../../model/util/PageCondition'
+import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
 
 // props
@@ -84,12 +84,12 @@ async function handleSearchButtonClicked() {
   pageCondition.query = { ...searchToolbarParams.value }
 
   const response = await props.searchApi(pageCondition)
-  if (apiResponseCheck(response)) {
-    const page = apiResponseGetData(response) as PageCondition<object>
+  if (ApiUtil.apiResponseCheck(response)) {
+    const page = ApiUtil.apiResponseGetData(response) as PageCondition<object>
     data.value = page.data === undefined ? [] : page.data
     dataCount.value = page.dataCount
   } else {
-    apiResponseMsg(response)
+    ApiUtil.apiResponseMsg(response)
   }
 }
 // 处理DataTable按钮点击

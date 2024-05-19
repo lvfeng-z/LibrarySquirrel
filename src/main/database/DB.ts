@@ -5,7 +5,7 @@ import StringUtil from '../util/StringUtil'
 /**
  * 数据库链接池封装
  */
-export class DB {
+export default class DB {
   /**
    * 数据库链接
    * @private

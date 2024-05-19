@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { CommonInputConfig } from '../../model/util/CommonInputConfig'
-import { onMounted, Ref, ref, UnwrapRef } from 'vue'
-import { ElTreeSelect } from 'element-plus'
-import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
-import { SelectOption } from '../../model/util/SelectOption'
+import CommonInputConfig from '../../model/util/CommonInputConfig'
+import { onMounted, ref, Ref, UnwrapRef } from 'vue'
+import ApiUtil from '../../utils/ApiUtil'
+import SelectOption from '../../model/util/SelectOption'
 import lodash from 'lodash'
 
 // props
@@ -23,8 +22,8 @@ onMounted(async () => {
   // 请求接口给selectData赋值
   if (props.config.useApi && props.config.api !== undefined) {
     const response = await props.config.api()
-    if (apiResponseCheck(response)) {
-      innerSelectData.value = apiResponseGetData(response) as SelectOption[]
+    if (ApiUtil.apiResponseCheck(response)) {
+      innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectOption[]
     }
   } else if (props.config.selectData !== undefined) {
     innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectOption[]

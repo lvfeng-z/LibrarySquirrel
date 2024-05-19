@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-import { OperationItem } from '../../model/util/OperationItem'
-import { Thead } from '../../model/util/Thead'
-import { DataTableOperationResponse } from '../../model/util/DataTableOperationResponse'
+import OperationItem from '../../model/util/OperationItem'
+import Thead from '../../model/util/Thead'
+import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import CommonInput from './CommonInput.vue'
-import { apiResponseCheck, apiResponseGetData } from '../../utils/ApiUtil'
+import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
@@ -40,8 +40,8 @@ async function initializeThead() {
     // 请求接口并将响应值赋值给selectData，同时忽略接口报错
     if (item.useApi && item.api !== undefined) {
       const response = await item.api()
-      if (apiResponseCheck(response)) {
-        tempThead.selectData = apiResponseGetData(response) as []
+      if (ApiUtil.apiResponseCheck(response)) {
+        tempThead.selectData = ApiUtil.apiResponseGetData(response) as []
       }
     }
 

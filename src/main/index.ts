@@ -1,23 +1,23 @@
-import { app, shell, BrowserWindow, ipcMain, protocol } from 'electron'
-import { join } from 'path'
+import Electron from 'electron'
+import Path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import InitializeDatabase from './database/initialize/InitializeDatabase'
-import { exposeService } from './service/ServiceExposer'
+import ServiceExposer from './service/ServiceExposer'
 import logUtil from './util/LogUtil'
 import fs from 'fs/promises'
 import FileSysUtil from './util/FileSysUtil'
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  const mainWindow = new Electron.BrowserWindow({
     width: 1280,
     height: 720,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: Path.join(__dirname, '../preload/index.mjs'),
       sandbox: false
     }
   })
@@ -27,7 +27,7 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    Electron.shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
@@ -36,12 +36,12 @@ function createWindow(): void {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(Path.join(__dirname, '../renderer/index.html'))
   }
 }
 
 // 在ready之前注册一个自定义协议，用来加载本地文件
-protocol.registerSchemesAsPrivileged([
+Electron.protocol.registerSchemesAsPrivileged([
   {
     scheme: 'local-resource',
     privileges: {
@@ -57,19 +57,19 @@ protocol.registerSchemesAsPrivileged([
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+Electron.app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
+  Electron.app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
   // 如何响应前面的自定义协议的请求
-  protocol.handle('local-resource', async (request) => {
+  Electron.protocol.handle('local-resource', async (request) => {
     const decodedUrl = decodeURIComponent(
       request.url.replace(new RegExp(`^local-resource:/`, 'i'), '')
     )
@@ -84,28 +84,28 @@ app.whenReady().then(() => {
   logUtil.initializeLogSetting()
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  Electron.ipcMain.on('ping', () => console.log('pong'))
 
   // 初始化数据库
   InitializeDatabase.InitializeDB().then(() => {
-    exposeService()
+    ServiceExposer.exposeService()
   })
 
   createWindow()
 
-  app.on('activate', function () {
+  Electron.app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (Electron.BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+Electron.app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
+    Electron.app.quit()
   }
 })
 

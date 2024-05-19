@@ -1,7 +1,7 @@
 // DataTable的表头
-import { CommonInputConfig } from './CommonInputConfig'
+import CommonInputConfig from './CommonInputConfig'
 
-export interface Thead extends CommonInputConfig {
+interface Thead extends CommonInputConfig {
   name: string // 字段名
   label: string // 标题名称
   hide: boolean // 是否隐藏
@@ -11,3 +11,5 @@ export interface Thead extends CommonInputConfig {
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   overHide?: boolean //列超出长度时是否省略
 }
+
+export default Thead

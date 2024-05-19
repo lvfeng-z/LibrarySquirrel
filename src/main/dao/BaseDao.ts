@@ -1,8 +1,8 @@
-import { PageModel } from '../model/utilModels/PageModel'
+import PageModel from '../model/utilModels/PageModel'
 import StringUtil from '../util/StringUtil'
-import { DB } from '../database/DB'
+import DB from '../database/DB'
 import BaseModel from '../model/BaseModel'
-import { BaseQueryDTO } from '../model/queryDTO/BaseQueryDTO'
+import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO'
 import ObjectUtil from '../util/ObjectUtil'
 
 type PrimaryKey = string | number
@@ -10,7 +10,7 @@ type PrimaryKey = string | number
 /**
  * Dao接口，定义CRUD方法
  */
-export interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
+interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
   save(entity: Model): Promise<number | string>
   deleteById(id: PrimaryKey): Promise<number>
   updateById(id: PrimaryKey, updateData: Model): Promise<number>
@@ -21,7 +21,7 @@ export interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
 /**
  * 抽象Dao基类，实现基本的CRUD方法
  */
-export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseModel>
+abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseModel>
   implements BaseDao<Query, Model>
 {
   protected tableName: string
@@ -293,4 +293,8 @@ export abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends 
   protected acquire() {
     return new DB(this.childClassName)
   }
+}
+
+export default {
+  AbstractBaseDao
 }

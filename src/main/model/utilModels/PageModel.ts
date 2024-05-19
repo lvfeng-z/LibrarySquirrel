@@ -1,6 +1,6 @@
-import { QuerySortOption } from './QuerySortOption'
+import QuerySortOption from './QuerySortOption'
 
-export class PageModel<Query, Result> {
+export default class PageModel<Query, Result> {
   /**
    * 是否分页
    */

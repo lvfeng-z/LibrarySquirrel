@@ -1,6 +1,6 @@
-import { CommonInputConfig } from './CommonInputConfig'
+import CommonInputConfig from './CommonInputConfig'
 
-export interface InputBox extends CommonInputConfig {
+interface InputBox extends CommonInputConfig {
   name: string // 字段名
   placeholder: string // 占位符
   show?: boolean // 是否展示本InputBox
@@ -10,3 +10,5 @@ export interface InputBox extends CommonInputConfig {
   labelSpan?: number // 标题宽度
   showLabel?: boolean // 是否展示标题
 }
+
+export default InputBox
