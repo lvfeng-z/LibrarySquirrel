@@ -1,8 +1,8 @@
 import log from 'electron-log'
 import path from 'path'
 import Electron from 'electron'
-import LogConstant from '../constant/LogConstant'
-import FileSysUtil from './FileSysUtil'
+import LogConstant from '../constant/LogConstant.ts'
+import FileSysUtil from './FileSysUtil.ts'
 
 function info(module: string, msg: string) {
   log.info(module, ':', msg)

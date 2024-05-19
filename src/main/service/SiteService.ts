@@ -1,7 +1,7 @@
-import Site from '../model/Site'
-import SiteDao from '../dao/SiteDao'
-import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
-import ApiUtil from '../util/ApiUtil'
+import Site from '../model/Site.ts'
+import SiteDao from '../dao/SiteDao.ts'
+import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
+import ApiUtil from '../util/ApiUtil.ts'
 
 async function save(site: Site) {
   const dao = new SiteDao()

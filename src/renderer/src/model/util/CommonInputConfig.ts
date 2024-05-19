@@ -1,5 +1,5 @@
-import SelectOption from './SelectOption'
-import ApiResponse from './ApiResponse'
+import SelectOption from './SelectOption.ts'
+import ApiResponse from './ApiResponse.ts'
 
 interface CommonInputConfig {
   type:

@@ -1,4 +1,4 @@
-import BaseModel from './BaseModel'
+import BaseModel from './BaseModel.ts'
 
 /**
  * 本地标签

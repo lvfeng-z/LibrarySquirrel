@@ -1,4 +1,4 @@
-import TreeNode from './TreeNode'
+import TreeNode from './TreeNode.ts'
 
 /**
  * 树形选择框选项

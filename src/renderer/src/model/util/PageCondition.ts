@@ -1,4 +1,4 @@
-import QuerySortOption from './QuerySortOption'
+import QuerySortOption from './QuerySortOption.ts'
 
 export default class PageCondition<T> {
   /**

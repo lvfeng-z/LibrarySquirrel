@@ -1,9 +1,9 @@
-import LocalTag from '../model/LocalTag'
-import SelectItem from '../model/utilModels/SelectItem'
-import StringUtil from '../util/StringUtil'
-import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
-import BaseDao from './BaseDao'
-import PageModel from '../model/utilModels/PageModel'
+import LocalTag from '../model/LocalTag.ts'
+import SelectItem from '../model/utilModels/SelectItem.ts'
+import StringUtil from '../util/StringUtil.ts'
+import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
+import BaseDao from './BaseDao.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
 
 export default class LocalTagDao extends BaseDao.AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
   constructor() {

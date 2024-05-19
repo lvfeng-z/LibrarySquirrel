@@ -1,7 +1,7 @@
-import DataBaseConstant from '../constant/DataBaseConstant'
+import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import path from 'path'
 import Electron from 'electron'
-import DB from '../database/DB'
+import DB from '../database/DB.ts'
 
 /**
  * 查询数据库所有数据表的名称

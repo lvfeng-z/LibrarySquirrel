@@ -1,4 +1,4 @@
-import BaseModel from '../BaseModel'
+import BaseModel from '../BaseModel.ts'
 
 export default class BaseQueryDTO extends BaseModel {
   keyword: string | undefined | null

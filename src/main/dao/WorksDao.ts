@@ -1,9 +1,9 @@
-import BaseDao from './BaseDao'
-import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO'
-import Works from '../model/Works'
-import PageModel from '../model/utilModels/PageModel'
-import WorksType from '../constant/WorksType'
-import LogUtil from '../util/LogUtil'
+import BaseDao from './BaseDao.ts'
+import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
+import Works from '../model/Works.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import WorksType from '../constant/WorksType.ts'
+import LogUtil from '../util/LogUtil.ts'
 
 export class WorksDao extends BaseDao.AbstractBaseDao<WorksQueryDTO, Works> {
   protected getPrimaryKeyColumnName(): string {

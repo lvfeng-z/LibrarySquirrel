@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
-import DatabaseUtil from '../util/DatabaseUtil'
-import DataBaseConstant from '../constant/DataBaseConstant'
-import LogUtil from '../util/LogUtil'
+import DatabaseUtil from '../util/DatabaseUtil.ts'
+import DataBaseConstant from '../constant/DataBaseConstant.ts'
+import LogUtil from '../util/LogUtil.ts'
 
 // 定义连接池配置
 export const POOL_CONFIG = {

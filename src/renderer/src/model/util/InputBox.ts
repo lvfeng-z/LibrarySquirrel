@@ -1,4 +1,4 @@
-import CommonInputConfig from './CommonInputConfig'
+import CommonInputConfig from './CommonInputConfig.ts'
 
 interface InputBox extends CommonInputConfig {
   name: string // 字段名

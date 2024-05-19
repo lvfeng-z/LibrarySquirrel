@@ -1,6 +1,6 @@
 import BetterSqlite3 from 'better-sqlite3'
-import LogUtil from '../util/LogUtil'
-import StringUtil from '../util/StringUtil'
+import LogUtil from '../util/LogUtil.ts'
+import StringUtil from '../util/StringUtil.ts'
 
 /**
  * 数据库链接池封装

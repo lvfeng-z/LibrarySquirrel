@@ -1,13 +1,13 @@
-import DataBaseUtil from '../../util/DatabaseUtil'
+import DataBaseUtil from '../../util/DatabaseUtil.ts'
 import * as fs from 'fs'
 import yaml from 'js-yaml'
-import FileSysUtil from '../../util/FileSysUtil'
+import FileSysUtil from '../../util/FileSysUtil.ts'
 import Database from 'better-sqlite3'
-import DataBaseConstant from '../../constant/DataBaseConstant'
-import logUtil from '../../util/LogUtil'
+import DataBaseConstant from '../../constant/DataBaseConstant.ts'
+import logUtil from '../../util/LogUtil.ts'
 import createDataTables from './createDataTables.yml?asset'
-import ConnectionPool from '../ConnectionPool'
-import DB from '../DB'
+import ConnectionPool from '../ConnectionPool.ts'
+import DB from '../DB.ts'
 
 /**
  * @Description: 初始化数据表

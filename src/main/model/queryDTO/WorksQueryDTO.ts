@@ -2,7 +2,7 @@
  * QueryDTO
  * 作品
  */
-import BaseQueryDTO from './BaseQueryDTO'
+import BaseQueryDTO from './BaseQueryDTO.ts'
 
 export default class WorksQueryDTO extends BaseQueryDTO {
   /**

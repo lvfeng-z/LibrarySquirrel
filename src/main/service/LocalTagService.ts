@@ -1,12 +1,12 @@
-import LocalTag from '../model/LocalTag'
-import LocalTagDao from '../dao/LocalTagDao'
-import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO'
-import SelectItem from '../model/utilModels/SelectItem'
-import ApiUtil from '../util/ApiUtil'
-import PageModel from '../model/utilModels/PageModel'
-import LocalTagConstant from '../constant/LocalTagConstant'
-import TreeSelectNode from '../model/utilModels/TreeSelectNode'
-import TreeNode from '../model/utilModels/TreeNode'
+import LocalTag from '../model/LocalTag.ts'
+import LocalTagDao from '../dao/LocalTagDao.ts'
+import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
+import SelectItem from '../model/utilModels/SelectItem.ts'
+import ApiUtil from '../util/ApiUtil.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import LocalTagConstant from '../constant/LocalTagConstant.ts'
+import TreeSelectNode from '../model/utilModels/TreeSelectNode.ts'
+import TreeNode from '../model/utilModels/TreeNode.ts'
 
 /**
  * 新增

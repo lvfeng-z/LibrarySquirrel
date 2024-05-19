@@ -1,5 +1,5 @@
 import fs from 'fs/promises'
-import logUtil from '../util/LogUtil'
+import logUtil from '../util/LogUtil.ts'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录

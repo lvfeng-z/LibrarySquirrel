@@ -7,8 +7,8 @@ import './styles/margin-box.css'
 import './styles/rounded-borders.css'
 import './styles/scroll-text.css'
 import './styles/z-axis-layers.css'
-import clickOutSide from './directives/clickOutSide'
-import scrollableText from './directives/scrollableText'
+import clickOutSide from './directives/clickOutSide.ts'
+import scrollableText from './directives/scrollableText.ts'
 import { elementIconRegister } from './plugins/elementIcon'
 
 const app = createApp(App)

@@ -2,7 +2,7 @@
  * QueryDTO
  * 站点标签
  */
-import BaseQueryDTO from './BaseQueryDTO'
+import BaseQueryDTO from './BaseQueryDTO.ts'
 
 export default class SiteTagQueryDTO extends BaseQueryDTO {
   /**

@@ -2,11 +2,12 @@ import Electron from 'electron'
 import Path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import InitializeDatabase from './database/initialize/InitializeDatabase'
-import ServiceExposer from './service/ServiceExposer'
-import logUtil from './util/LogUtil'
+import InitializeDatabase from './database/initialize/InitializeDatabase.js'
+import ServiceExposer from './service/ServiceExposer.js'
+import logUtil from './util/LogUtil.js'
 import fs from 'fs/promises'
-import FileSysUtil from './util/FileSysUtil'
+import FileSysUtil from './util/FileSysUtil.js'
+import Store from 'electron-store'
 
 function createWindow(): void {
   // Create the browser window.
@@ -39,6 +40,10 @@ function createWindow(): void {
     mainWindow.loadFile(Path.join(__dirname, '../renderer/index.html'))
   }
 }
+
+//
+const store = new Store<never>()
+store.set('tst1', '3af')
 
 // 在ready之前注册一个自定义协议，用来加载本地文件
 Electron.protocol.registerSchemesAsPrivileged([

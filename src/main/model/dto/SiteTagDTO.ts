@@ -1,6 +1,6 @@
-import SiteTag from '../SiteTag'
-import LocalTag from '../LocalTag'
-import Site from '../Site'
+import SiteTag from '../SiteTag.ts'
+import LocalTag from '../LocalTag.ts'
+import Site from '../Site.ts'
 
 export default class SiteTagDTO extends SiteTag {
   /**

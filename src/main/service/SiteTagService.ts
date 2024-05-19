@@ -1,11 +1,11 @@
-import SiteTag from '../model/SiteTag'
-import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
-import SiteTagDao from '../dao/SiteTagDao'
-import ApiUtil from '../util/ApiUtil'
-import LogUtil from '../util/LogUtil'
-import SelectItem from '../model/utilModels/SelectItem'
-import StringUtil from '../util/StringUtil'
-import PageModel from '../model/utilModels/PageModel'
+import SiteTag from '../model/SiteTag.ts'
+import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
+import SiteTagDao from '../dao/SiteTagDao.ts'
+import ApiUtil from '../util/ApiUtil.ts'
+import LogUtil from '../util/LogUtil.ts'
+import SelectItem from '../model/utilModels/SelectItem.ts'
+import StringUtil from '../util/StringUtil.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
 
 async function save(siteTag: SiteTag) {
   const dao = new SiteTagDao()

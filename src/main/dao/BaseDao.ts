@@ -1,9 +1,9 @@
-import PageModel from '../model/utilModels/PageModel'
-import StringUtil from '../util/StringUtil'
-import DB from '../database/DB'
-import BaseModel from '../model/BaseModel'
-import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO'
-import ObjectUtil from '../util/ObjectUtil'
+import PageModel from '../model/utilModels/PageModel.ts'
+import StringUtil from '../util/StringUtil.ts'
+import DB from '../database/DB.ts'
+import BaseModel from '../model/BaseModel.ts'
+import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
+import ObjectUtil from '../util/ObjectUtil.ts'
 
 type PrimaryKey = string | number
 

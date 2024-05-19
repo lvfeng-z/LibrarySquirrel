@@ -1,9 +1,9 @@
-import Site from '../model/Site'
-import SelectItem from '../model/utilModels/SelectItem'
-import StringUtil from '../util/StringUtil'
-import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO'
-import DB from '../database/DB'
-import BaseDao from './BaseDao'
+import Site from '../model/Site.ts'
+import SelectItem from '../model/utilModels/SelectItem.ts'
+import StringUtil from '../util/StringUtil.ts'
+import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
+import DB from '../database/DB.ts'
+import BaseDao from './BaseDao.ts'
 
 export default class SiteDao extends BaseDao.AbstractBaseDao<SiteQueryDTO, Site> {
   constructor() {

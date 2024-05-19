@@ -1,5 +1,5 @@
 // DataTable的表头
-import CommonInputConfig from './CommonInputConfig'
+import CommonInputConfig from './CommonInputConfig.ts'
 
 interface Thead extends CommonInputConfig {
   name: string // 字段名

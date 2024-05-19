@@ -1,12 +1,12 @@
-import LocalTagService from './LocalTagService'
+import LocalTagService from './LocalTagService.ts'
 import Electron from 'electron'
-import SelectItem from '../model/utilModels/SelectItem'
-import SiteTagService from './SiteTagService'
-import SiteService from './SiteService'
-import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO'
-import PageModel from '../model/utilModels/PageModel'
-import SiteTag from '../model/SiteTag'
-import InsertLocalTag from '../test/InsertLocalTag'
+import SelectItem from '../model/utilModels/SelectItem.ts'
+import SiteTagService from './SiteTagService.ts'
+import SiteService from './SiteService.ts'
+import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import SiteTag from '../model/SiteTag.ts'
+import InsertLocalTag from '../test/InsertLocalTag.ts'
 
 function exposeService() {
   // test

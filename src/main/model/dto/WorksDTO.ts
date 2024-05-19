@@ -1,5 +1,5 @@
-import Works from '../Works'
-import LocalAuthor from '../LocalAuthor'
+import Works from '../Works.ts'
+import LocalAuthor from '../LocalAuthor.ts'
 
 /**
  * 作品
