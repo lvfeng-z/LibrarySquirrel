@@ -1,9 +1,10 @@
 {
   "name": "collections-manager",
   "version": "1.0.0",
+  "type": "module",
   "description": "An Electron application with Vue and TypeScript",
-  "main": "./out/main/index.mjs",
-  "author": "example.com",
+  "main": "./out/main/index.js",
+  "author": "lvfeng",
   "homepage": "https://electron-vite.org",
   "license": "MPL-2.0",
   "scripts": {
@@ -31,7 +32,6 @@
     "@element-plus/icons-vue": "^2.3.1",
     "better-sqlite3": "^9.6.0",
     "electron-log": "^5.1.4",
-    "electron-store": "^9.0.0",
     "electron-updater": "^6.1.8",
     "element-plus": "^2.7.2",
     "sqlite3": "^5.1.7"
