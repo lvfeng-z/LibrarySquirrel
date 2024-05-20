@@ -1,5 +1,7 @@
+import Electron from 'electron'
 import fs from 'fs/promises'
 import logUtil from '../util/LogUtil.ts'
+import path from 'path'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -34,7 +36,22 @@ function convertPath(originalPath) {
   }
 }
 
+/**
+ * 获得应用当前的根目录
+ */
+function getRootDir(): string {
+  let root: string
+  const NODE_ENV = process.env.NODE_ENV
+  if (NODE_ENV == 'development') {
+    root = path.join(Electron.app.getAppPath())
+  } else {
+    root = path.join(path.dirname(Electron.app.getPath('exe')))
+  }
+  return root
+}
+
 export default {
   createDirIfNotExists,
-  convertPath
+  convertPath,
+  getRootDir
 }

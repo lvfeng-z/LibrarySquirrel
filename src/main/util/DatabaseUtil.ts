@@ -1,7 +1,7 @@
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import path from 'path'
-import Electron from 'electron'
 import DB from '../database/DB.ts'
+import FileSysUtil from './FileSysUtil.ts'
 
 /**
  * 查询数据库所有数据表的名称
@@ -23,14 +23,7 @@ async function listAllDataTables(): Promise<string[]> {
  * 获取数据库文件路径
  */
 function getDataBasePath() {
-  let dbPath: string
-  const NODE_ENV = process.env.NODE_ENV
-  if (NODE_ENV == 'development') {
-    dbPath = path.join(Electron.app.getAppPath(), DataBaseConstant.DB_PATH)
-  } else {
-    dbPath = path.join(path.dirname(Electron.app.getPath('exe')), DataBaseConstant.DB_PATH)
-  }
-  return dbPath
+  return path.join(FileSysUtil.getRootDir(), DataBaseConstant.DB_PATH)
 }
 
 export default {

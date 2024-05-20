@@ -5,7 +5,7 @@ import FileSysUtil from '../../util/FileSysUtil.ts'
 import Database from 'better-sqlite3'
 import DataBaseConstant from '../../constant/DataBaseConstant.ts'
 import logUtil from '../../util/LogUtil.ts'
-import createDataTables from './createDataTables.yml?asset'
+import createDataTables from '../../resources/database/createDataTables.yml?asset'
 import ConnectionPool from '../ConnectionPool.ts'
 import DB from '../DB.ts'
 
