@@ -10,7 +10,7 @@ import ConnectionPool from '../ConnectionPool.ts'
 import DB from '../DB.ts'
 
 /**
- * @Description: 初始化数据表
+ * @Description: 初始化数据库，同时创建一个全局连接池实例
  * @CreationDate 2023-05-10 13:44:48
  */
 async function InitializeDB() {
