@@ -4,6 +4,7 @@ import TagManage from './components/closeablePage/TagManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import DisplayCase from './components/common/DisplayCase.vue'
+import Settings from './components/closeablePage/Settings.vue'
 
 // 变量
 const apis = {
@@ -15,7 +16,8 @@ const tagSelectList = ref() // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
   closeablePage: false,
-  showTagManagePage: false
+  showTagManagePage: false,
+  showSettingsPage: false
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
 
@@ -38,6 +40,9 @@ function showFloatPage(pageName) {
   switch (pageName) {
     case 'TagManage':
       pageState.showTagManagePage = true
+      break
+    case 'Settings':
+      pageState.showSettingsPage = true
       break
   }
 }
@@ -98,6 +103,7 @@ async function handleTest() {
               <el-icon><Setting /></el-icon>
               <span>设置</span>
             </template>
+            <el-menu-item index="6-1" @click="showFloatPage('Settings')">设置</el-menu-item>
           </el-sub-menu>
         </template>
       </SideMenu>
@@ -134,6 +140,7 @@ async function handleTest() {
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
+        <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
   </div>

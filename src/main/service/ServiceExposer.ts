@@ -7,6 +7,7 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import SiteTag from '../model/SiteTag.ts'
 import InsertLocalTag from '../test/InsertLocalTag.ts'
+import SettingsService from './SettingsService.ts'
 
 function exposeService() {
   // test
@@ -35,6 +36,11 @@ function exposeService() {
   })
   Electron.ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
     return await LocalTagService.getSelectList(args)
+  })
+
+  //SettingsService
+  Electron.ipcMain.handle('settings-getSettings', () => {
+    return SettingsService.getSettings()
   })
 
   // SiteService

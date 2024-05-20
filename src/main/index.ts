@@ -1,13 +1,13 @@
 import Electron from 'electron'
 import Path from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import InitializeDatabase from './database/initialize/InitializeDatabase.js'
-import ServiceExposer from './service/ServiceExposer.js'
-import logUtil from './util/LogUtil.js'
+import InitializeDatabase from './database/initialize/InitializeDatabase.ts'
+import ServiceExposer from './service/ServiceExposer.ts'
+import logUtil from './util/LogUtil.ts'
 import fs from 'fs/promises'
-import FileSysUtil from './util/FileSysUtil.js'
-import Store from 'electron-store'
+import FileSysUtil from './util/FileSysUtil.ts'
+import SettingsUtil from './util/SettingsUtil.ts'
 
 function createWindow(): void {
   // Create the browser window.
@@ -41,9 +41,8 @@ function createWindow(): void {
   }
 }
 
-// 读取配置文件
-const store = new Store()
-store.set('workdir', 'F:/')
+// 初始化设置配置
+SettingsUtil.initializeSettingsConfig()
 
 // 在ready之前注册一个自定义协议，用来加载本地文件
 Electron.protocol.registerSchemesAsPrivileged([
@@ -75,7 +74,7 @@ Electron.app.whenReady().then(() => {
 
   // 如何响应前面的自定义协议的请求
   Electron.protocol.handle('workdir-resource', async (request) => {
-    const workdir = store.get('workdir') as string
+    const workdir = global.settings.get('workdir') as string
     const decodedUrl = decodeURIComponent(
       Path.join(workdir, request.url.replace(new RegExp(`^workdir-resource:/`, 'i'), ''))
     )

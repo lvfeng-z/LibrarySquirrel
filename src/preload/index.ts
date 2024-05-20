@@ -31,6 +31,11 @@ const api = {
     return Electron.ipcRenderer.invoke('localTag-getSelectList', args)
   },
 
+  // SettingsService
+  settingsGetSettings: () => {
+    return Electron.ipcRenderer.invoke('settings-getSettings', args)
+  },
+
   // SiteService
   siteInsert: (args) => {
     return Electron.ipcRenderer.invoke('site-insert', args)

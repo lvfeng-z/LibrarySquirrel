@@ -16,6 +16,9 @@ declare global {
       localTagGetTree: function
       localTagGetSelectList: function
 
+      // SettingsService
+      settingsGetSettings: function
+
       // SiteService
       siteInsert: function
       siteGetSelectList: function
