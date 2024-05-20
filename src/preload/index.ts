@@ -35,6 +35,9 @@ const api = {
   settingsGetSettings: () => {
     return Electron.ipcRenderer.invoke('settings-getSettings')
   },
+  settingsSaveSettings: () => {
+    return Electron.ipcRenderer.invoke('settings-saveSettings')
+  },
 
   // SiteService
   siteInsert: (args) => {

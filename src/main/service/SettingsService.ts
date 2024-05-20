@@ -12,9 +12,10 @@ function getSettings(): object {
 /**
  * 变更配置
  */
-function changeSettings() {
-
+function saveSettings(settings: object) {
+  global.settings.set(settings)
 }
 export default {
-  getSettings
+  getSettings,
+  saveSettings
 }
