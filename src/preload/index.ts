@@ -33,7 +33,7 @@ const api = {
 
   // SettingsService
   settingsGetSettings: () => {
-    return Electron.ipcRenderer.invoke('settings-getSettings', args)
+    return Electron.ipcRenderer.invoke('settings-getSettings')
   },
 
   // SiteService

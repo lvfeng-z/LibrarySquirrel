@@ -7,14 +7,16 @@ onMounted(() => {
 })
 
 // 变量
-const settings = ref()
+const settings = ref({ workdir: undefined })
 const apis = reactive({
-  settingsServiceGetSettings: window.api.settingsServiceGetSettings
+  settingsGetSettings: window.api.settingsGetSettings
 })
 
 // 方法
 function getSettings() {
-  settings.value = apis.settingsServiceGetWorkdir()
+  apis.settingsGetSettings().then((response) => {
+    settings.value = response
+  })
 }
 </script>
 

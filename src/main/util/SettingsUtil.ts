@@ -4,11 +4,11 @@ import LogUtil from './LogUtil.ts'
 
 function initializeSettingsConfig() {
   const settings = new Store()
-  global.settrings = settings
+  global.settings = settings
   if (!settings.get('initialized', false)) {
     try {
       settings.set(settingsTemplate)
-      settings.openInEditor()
+      settings.set('initialized', true)
     } catch (error) {
       settings.set('initialized', false)
       LogUtil.error('SettingsUtil', String(error))
