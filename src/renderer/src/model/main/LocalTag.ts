@@ -7,7 +7,6 @@ export default interface LocalTag {
    * 主键
    */
   id: number | null | undefined
-
   /**
    * 创建时间
    */

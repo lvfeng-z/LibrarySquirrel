@@ -8,6 +8,15 @@ export default interface LocalTag {
    */
   id: number | undefined | null
   /**
+   * 创建时间
+   */
+  createTime: number | null | undefined
+
+  /**
+   * 更新时间
+   */
+  updateTime: number | null | undefined
+  /**
    * 标签来源站点id
    */
   siteId: number | undefined | null
