@@ -2,7 +2,7 @@
  * 设置服务
  */
 
-import SettingsUtil from '../util/SettingsUtil'
+import SettingsUtil from '../util/SettingsUtil.ts'
 
 /**
  * 全量获取配置

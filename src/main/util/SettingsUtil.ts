@@ -18,6 +18,7 @@ function initializeSettingsConfig() {
  */
 function defaultSettings() {
   try {
+    global.settings.clear()
     global.settings.set(settingsTemplate)
     global.settings.set('initialized', true)
   } catch (error) {

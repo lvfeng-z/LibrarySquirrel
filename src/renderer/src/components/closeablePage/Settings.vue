@@ -29,21 +29,22 @@ function saveSettings() {
   const a = getChangedProperties(settings.value, oldSettings.value)
   apis.settingsSaveSettings(a)
 }
-// 获取已更改的设置
+// 递归获取已更改的设置
 function getChangedProperties(newVal: object, oldVal: object, root?: string) {
-  const changedProperties: { path: string; value: unknown }[] = []
+  let changedProperties: { path: string; value: unknown }[] = []
   for (const key of Object.keys(oldVal)) {
-    root = root === undefined ? key : root + '.' + key
+    const newRoot = root === undefined ? key : root + '.' + key
     if (Object.prototype.hasOwnProperty.call(newVal, key)) {
       if (typeof oldVal[key] === 'object') {
-        getChangedProperties(newVal[key], oldVal[key], root)
+        const children = getChangedProperties(newVal[key], oldVal[key], newRoot)
+        changedProperties = [...changedProperties, ...children]
       } else {
         if (oldVal[key] !== newVal[key]) {
-          changedProperties.push({ path: root, value: newVal[key] })
+          changedProperties.push({ path: newRoot, value: newVal[key] })
         }
       }
     } else {
-      changedProperties.push({ path: root, value: undefined })
+      changedProperties.push({ path: newRoot, value: undefined })
     }
   }
 
