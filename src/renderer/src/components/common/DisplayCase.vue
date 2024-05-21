@@ -4,12 +4,15 @@ import AuthorInfo from './AuthorInfo.vue'
 
 // props
 const props = defineProps<{
-  imageUrl?: string
+  imageUrl: string
 }>()
 </script>
 <template>
   <div class="display-case">
-    <el-image class="display-case-image-box" :src="`workdir-resource://${props.imageUrl}`"></el-image>
+    <el-image
+      class="display-case-image-box"
+      :src="`workdir-resource://workdir/${props.imageUrl}`"
+    ></el-image>
     <works-info class="display-case-works-info"></works-info>
     <author-info class="display-case-author-info"></author-info>
   </div>

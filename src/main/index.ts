@@ -76,7 +76,7 @@ Electron.app.whenReady().then(() => {
   Electron.protocol.handle('workdir-resource', async (request) => {
     const workdir = global.settings.get('workdir') as string
     const decodedUrl = decodeURIComponent(
-      Path.join(workdir, request.url.replace(new RegExp(`^workdir-resource:/`, 'i'), ''))
+      Path.join(workdir, request.url.replace(new RegExp(`^workdir-resource://workdir/`, 'i'), ''))
     )
 
     const fullPath = process.platform === 'win32' ? FileSysUtil.convertPath(decodedUrl) : decodedUrl
