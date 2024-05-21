@@ -9,13 +9,14 @@ onBeforeMount(() => {
 })
 
 // 变量
-const settings = ref({ workdir: '' })
-const oldSettings = ref()
 const apis = reactive({
   settingsGetSettings: window.api.settingsGetSettings,
   settingsSaveSettings: window.api.settingsSaveSettings,
   settingsResetSettings: window.api.settingsResetSettings
-})
+}) // 接口
+const activeName = [1] // 默认展开的折叠面板
+const settings = ref({ workdir: '' }) // 设置
+const oldSettings = ref() // 原设置
 
 // 方法
 // 加载设置
@@ -56,13 +57,19 @@ function resetSettings() {
 
 <template>
   <base-closeable-page>
-    <el-collapse>
-      <el-collapse-item :name="1">
-        <el-input v-model="settings.workdir"></el-input>
-      </el-collapse-item>
-    </el-collapse>
-    <el-button @click="saveSettings">保存</el-button>
-    <el-button @click="resetSettings">重置</el-button>
+    <el-scrollbar>
+      <el-collapse v-model="activeName">
+        <el-collapse-item title="工作目录" :name="1">
+          <el-input v-model="settings.workdir"></el-input>
+        </el-collapse-item>
+      </el-collapse>
+      <el-row>
+        <el-col :span="6">
+          <el-button type="primary" @click="saveSettings">保存</el-button>
+          <el-button type="danger" @click="resetSettings">重置</el-button>
+        </el-col>
+      </el-row>
+    </el-scrollbar>
   </base-closeable-page>
 </template>
 
