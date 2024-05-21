@@ -45,8 +45,8 @@ function exposeService() {
   Electron.ipcMain.handle('settings-saveSettings', (_event, args) => {
     return SettingsService.saveSettings(args)
   })
-  Electron.ipcMain.handle('settings-resetSettings', (_event, args) => {
-    return SettingsService.resetSettings(args)
+  Electron.ipcMain.handle('settings-resetSettings', () => {
+    return SettingsService.resetSettings()
   })
 
   // SiteService
