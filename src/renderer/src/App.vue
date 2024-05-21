@@ -3,8 +3,8 @@ import { reactive, Ref, ref, UnwrapRef } from 'vue'
 import TagManage from './components/closeablePage/TagManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
-import DisplayCase from './components/common/DisplayCase.vue'
 import Settings from './components/closeablePage/Settings.vue'
+import WorksCase from './components/common/WorksCase.vue'
 
 // 变量
 const apis = {
@@ -135,7 +135,12 @@ async function handleTest() {
           </el-row>
         </div>
         <div class="mainPage-works-space">
-          <display-case></display-case>
+          <works-case
+            :works-list="[
+              { id: 1, filePath: '1.png' },
+              { id: 2, filePath: '1.png' }
+            ]"
+          ></works-case>
         </div>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
