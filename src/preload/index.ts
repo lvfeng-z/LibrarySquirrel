@@ -35,8 +35,11 @@ const api = {
   settingsGetSettings: () => {
     return Electron.ipcRenderer.invoke('settings-getSettings')
   },
-  settingsSaveSettings: () => {
-    return Electron.ipcRenderer.invoke('settings-saveSettings')
+  settingsSaveSettings: (args) => {
+    return Electron.ipcRenderer.invoke('settings-saveSettings', args)
+  },
+  settingsResetSettings: (args) => {
+    return Electron.ipcRenderer.invoke('settings-resetSettings', args)
   },
 
   // SiteService

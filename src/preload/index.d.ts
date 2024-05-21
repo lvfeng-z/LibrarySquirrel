@@ -19,6 +19,7 @@ declare global {
       // SettingsService
       settingsGetSettings: function
       settingsSaveSettings: function
+      settingsResetSettings: function
 
       // SiteService
       siteInsert: function
