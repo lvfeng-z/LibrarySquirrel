@@ -137,8 +137,8 @@ async function handleTest() {
         <div class="mainPage-works-space">
           <works-case
             :works-list="[
-              { id: 1, filePath: '1.png' },
-              { id: 2, filePath: '1.png' }
+              { id: 1, filePath: '1.jpg' },
+              { id: 2, filePath: '2.jpg' }
             ]"
           ></works-case>
         </div>
