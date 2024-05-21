@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import WorksInfo from './worksInfo.vue'
-import AuthorInfo from './authorInfo.vue'
+import WorksInfo from './WorksInfo.vue'
+import AuthorInfo from './AuthorInfo.vue'
 </script>
 
 <template>
