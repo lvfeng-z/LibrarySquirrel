@@ -113,6 +113,7 @@ tables:
         primary key autoincrement,
         works_type             integer,
         file_path             text,
+        workdir               text,
         set_id                integer,
         site_id               integer,
         site_works_id         text,
