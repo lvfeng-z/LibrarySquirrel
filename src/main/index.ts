@@ -94,8 +94,8 @@ Electron.app.whenReady().then(() => {
       const data = await fs.readFile(fullPath) // 异步读取文件
       return new Response(data) // 返回文件
     } catch (error) {
-      LogUtil.error('Error handling protocol request:', error)
-      return new Response('main/index.ts', 'Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
+      LogUtil.error('Error handling protocol request:', String(error))
+      return new Response('Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
     }
   })
 
