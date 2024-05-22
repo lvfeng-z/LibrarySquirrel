@@ -24,12 +24,26 @@ interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
 abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseModel>
   implements BaseDao<Query, Model>
 {
+  /**
+   * 数据表名
+   * @protected
+   */
   protected tableName: string
+  /**
+   * 继承者类名
+   * @private
+   */
   private readonly childClassName: string
+  /**
+   * 封装数据库链接实例
+   * @private
+   */
+  private db: DB | undefined
 
   protected constructor(tableName: string, childClassName: string) {
     this.tableName = tableName
     this.childClassName = childClassName
+    this.db = undefined
   }
 
   async save(entity: Model): Promise<number | string> {
@@ -279,19 +293,22 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
    * @param dataList
    * @protected
    */
-  protected getResultTypeDataList(dataList: object[]): Model[] {
+  protected getResultTypeDataList<Result>(dataList: object[]): Result[] {
     return dataList.map(
       (row) =>
         Object.fromEntries(
           Object.entries(row).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
-        ) as Model
+        ) as Result
     )
   }
 
   protected abstract getPrimaryKeyColumnName(): string
 
   protected acquire() {
-    return new DB(this.childClassName)
+    if (this.db === undefined) {
+      this.db = new DB(this.childClassName)
+    }
+    return this.db
   }
 }
 
