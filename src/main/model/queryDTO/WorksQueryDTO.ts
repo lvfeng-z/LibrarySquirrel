@@ -38,7 +38,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   siteUploadTime: string | undefined | null
   /**
-   * 站点这种作品最后修改的时间
+   * 站点中作品最后修改的时间
    */
   siteUpdateTime: string | undefined | null
   /**
