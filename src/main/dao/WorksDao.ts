@@ -2,10 +2,14 @@ import BaseDao from './BaseDao.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/Works.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
-import LogUtil from '../util/LogUtil.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
+import lodash from 'lodash'
 
 export class WorksDao extends BaseDao.AbstractBaseDao<WorksQueryDTO, Works> {
+  constructor() {
+    super('works', 'WorksDao')
+  }
+
   protected getPrimaryKeyColumnName(): string {
     return 'id'
   }
@@ -14,8 +18,84 @@ export class WorksDao extends BaseDao.AbstractBaseDao<WorksQueryDTO, Works> {
    * 根据标签分页查询作品
    * @param page 查询参数
    */
-  public queryPageByTag(page: PageModel<WorksQueryDTO, WorksDTO>): PageModel<WorksQueryDTO, Works> {
-    LogUtil.debug('WorksDao', String(page))
-    return new PageModel<WorksQueryDTO, Works>()
+  public async queryPage(
+    page: PageModel<WorksQueryDTO, WorksDTO>
+  ): Promise<PageModel<WorksQueryDTO, WorksDTO>> {
+    let statement: string
+    const selectClause = `select t1.*, json_object('id', t3.id, 'localAuthorName', t3.local_author_name) as author`
+    const fromClause =
+      'from works t1 inner join re_works_tag t2 on t1.id = t2.works_id left join local_author t3 on t1.local_author_id = t3.id'
+    let whereClauses: string[]
+    if (page.query !== undefined) {
+      const baseProperties = lodash.cloneDeep(page.query)
+      // 去掉虚拟列
+      delete baseProperties.includeLocalTagIds
+      delete baseProperties.excludeLocalTagIds
+      delete baseProperties.includeSiteTagIds
+      delete baseProperties.excludeSiteTagIds
+      // 生成实际列的where子句
+      const propertiesWhereClauses = this.getWhereClauses(baseProperties, 't1')
+      whereClauses = Object.entries(propertiesWhereClauses).map((item) => item[1])
+
+      // 补充虚拟列的where子句
+      if (
+        page.query.includeLocalTagIds !== undefined &&
+        page.query.includeLocalTagIds !== null &&
+        page.query.includeLocalTagIds.length > 0
+      ) {
+        whereClauses.push(
+          `t2.tag_id in (${page.query.includeLocalTagIds.join()}) and t2.tag_type = 1`
+        )
+      }
+      if (
+        page.query.excludeLocalTagIds !== undefined &&
+        page.query.excludeLocalTagIds !== null &&
+        page.query.excludeLocalTagIds.length > 0
+      ) {
+        whereClauses.push(
+          `t2.tag_id not in (${page.query.excludeLocalTagIds.join()}) and t2.tag_type = 1`
+        )
+      }
+      if (
+        page.query.includeSiteTagIds !== undefined &&
+        page.query.includeSiteTagIds !== null &&
+        page.query.includeSiteTagIds.length > 0
+      ) {
+        whereClauses.push(
+          `t2.tag_id in (${page.query.includeSiteTagIds.join()}) and t2.tag_type = 0`
+        )
+      }
+      if (
+        page.query.excludeSiteTagIds !== undefined &&
+        page.query.excludeSiteTagIds !== null &&
+        page.query.excludeSiteTagIds.length > 0
+      ) {
+        whereClauses.push(
+          `t2.tag_id not in (${page.query.excludeSiteTagIds.join()}) and t2.tag_type = 0`
+        )
+      }
+
+      // 拼接where子句
+      const whereClause = this.splicingWhereClauses(whereClauses)
+
+      // 拼接语句
+      statement = selectClause.concat(' ', fromClause, ' ', whereClause)
+    } else {
+      // 拼接语句
+      statement = selectClause.concat(' ', fromClause)
+    }
+
+    // 排序和分页子句
+    statement = await this.sorterAndPager(statement, '', page, fromClause)
+
+    const db = this.acquire()
+    try {
+      page.data = this.getResultTypeDataList<WorksDTO>(
+        (await db.prepare(statement)).all(page.query) as []
+      )
+    } finally {
+      db.release()
+    }
+    return page
   }
 }

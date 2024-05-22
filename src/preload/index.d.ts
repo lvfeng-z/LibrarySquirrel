@@ -31,6 +31,9 @@ declare global {
       siteTagUpdateBindLocalTag: function
       siteTagGetBoundOrUnboundInLocalTag: function
       siteTagGetSelectList: function
+
+      // WorksService
+      worksQueryPage: function
     }
   }
 }

@@ -65,6 +65,11 @@ const api = {
   },
   siteTagGetSelectList: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-getSelectList', args)
+  },
+
+  // WorksService
+  worksQueryPage: (args) => {
+    return Electron.ipcRenderer.invoke('works-queryPage', args)
   }
 }
 

@@ -8,6 +8,8 @@ import PageModel from '../model/utilModels/PageModel.ts'
 import SiteTag from '../model/SiteTag.ts'
 import InsertLocalTag from '../test/InsertLocalTag.ts'
 import SettingsService from './SettingsService.ts'
+import WorksService from './WorksService.ts'
+import ApiUtil from '../util/ApiUtil.ts'
 
 function exposeService() {
   // test
@@ -78,6 +80,11 @@ function exposeService() {
   )
   Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
     return await SiteTagService.getSelectList(args)
+  })
+
+  // WorksService
+  Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
+    return await WorksService.queryPage(args)
   })
 }
 
