@@ -6,6 +6,23 @@ import BaseQueryDTO from './BaseQueryDTO.ts'
 
 export default class WorksQueryDTO extends BaseQueryDTO {
   /**
+   * 包含本地标签
+   */
+  includeLocalTagIds: string[] | number[] | null | undefined
+  /**
+   * 排除本地标签
+   */
+  excludeLocalTagIds: string[] | number[] | null | undefined
+  /**
+   * 包含站点标签
+   */
+  includeSiteTagIds: string[] | number[] | null | undefined
+  /**
+   * 排除站点标签
+   */
+  excludeSiteTagIds: string[] | number[] | null | undefined
+
+  /**
    * 文件存储路径（文件相对于工作目录的相对路径）
    */
   filePath: string | undefined | null
@@ -69,6 +86,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   constructor(worksQueryDTO?: WorksQueryDTO) {
     if (worksQueryDTO === undefined) {
       super()
+      this.includeLocalTagIds = undefined
+      this.excludeLocalTagIds = undefined
+      this.includeSiteTagIds = undefined
+      this.includeSiteTagIds = undefined
       this.filePath = undefined
       this.worksType = undefined
       this.siteId = undefined
@@ -86,6 +107,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.downloadStatus = undefined
     } else {
       super(worksQueryDTO)
+      this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
+      this.excludeLocalTagIds = worksQueryDTO.excludeLocalTagIds
+      this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
+      this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
       this.filePath = worksQueryDTO.filePath
       this.worksType = worksQueryDTO.worksType
       this.siteId = worksQueryDTO.siteId
