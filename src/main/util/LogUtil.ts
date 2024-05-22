@@ -4,19 +4,35 @@ import LogConstant from '../constant/LogConstant.ts'
 import FileSysUtil from './FileSysUtil.ts'
 
 function info(module: string, msg: string, ...args: unknown[]) {
-  log.info(module, ':', msg, args)
+  if (args !== undefined && args.length > 0) {
+    log.info(module, ':', msg, args)
+  } else {
+    log.info(module, ':', msg)
+  }
 }
 
 function debug(module: string, msg: string, ...args: unknown[]) {
-  log.debug(module, ':', msg, args)
+  if (args !== undefined && args.length > 0) {
+    log.debug(module, ':', msg, args)
+  } else {
+    log.debug(module, ':', msg)
+  }
 }
 
 function warn(module: string, msg: string, ...args: unknown[]) {
-  log.warn(module, ':', msg, args)
+  if (args !== undefined && args.length > 0) {
+    log.warn(module, ':', msg, args)
+  } else {
+    log.warn(module, ':', msg)
+  }
 }
 
 function error(module: string, msg: string, ...args: unknown[]) {
-  log.error(module, ':', msg, args)
+  if (args !== undefined && args.length > 0) {
+    log.error(module, ':', msg, args)
+  } else {
+    log.error(module, ':', msg)
+  }
 }
 
 /**
