@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WorksInfo from './WorksInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
-import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import { Ref, ref, UnwrapRef } from 'vue'
 
 // props
 const props = defineProps<{
@@ -10,23 +10,20 @@ const props = defineProps<{
   width?: number
 }>()
 
-// onBeforeMount
-onBeforeMount(() => {
-  handleElImageFit()
-})
-
 // 变量
 const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> = ref('none')
-const imageWidth: Ref<UnwrapRef<string>> = ref(
+const caseWidth: Ref<UnwrapRef<string>> = ref(
   props.width === undefined ? 'auto' : String(props.width) + 'px'
-)
-const imageHeight: Ref<UnwrapRef<string>> = ref(
+) // 展示框宽度
+const caseHeight: Ref<UnwrapRef<string>> = ref(
   props.width === undefined ? 'auto' : String(props.height) + 'px'
-)
+) // 展示框高度
 
 // 方法
 // 判断el-image使用什么模式
-function handleElImageFit() {
+function handleElImageFit(event) {
+  console.log('imageHeight', event.target.naturalHeight)
+  console.log('imageWidth', event.target.naturalWidth)
   imageFit.value = 'none'
 }
 </script>
@@ -36,6 +33,7 @@ function handleElImageFit() {
       :fit="imageFit"
       class="display-case-image-box"
       :src="`workdir-resource://workdir/${props.imageUrl}`"
+      @load="handleElImageFit"
     ></el-image>
     <works-info class="display-case-works-info"></works-info>
     <author-info class="display-case-author-info"></author-info>
@@ -46,8 +44,8 @@ function handleElImageFit() {
 .display-case {
   display: flex;
   flex-direction: column;
-  width: v-bind(imageWidth);
-  height: v-bind(imageHeight);
+  width: v-bind(caseWidth);
+  height: v-bind(caseHeight);
 }
 .display-case-image-box {
   width: 100%;
