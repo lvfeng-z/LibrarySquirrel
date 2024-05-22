@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import { reactive, Ref, ref, UnwrapRef } from 'vue'
+import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import TagManage from './components/closeablePage/TagManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import Settings from './components/closeablePage/Settings.vue'
 import WorksCase from './components/common/WorksCase.vue'
+import ApiUtil from './utils/ApiUtil'
+import Works from './model/main/Works'
+import PageCondition from './model/util/PageCondition'
 
+// onMounted
+onMounted(() => {
+  // const request = apis.worksQueryPage()
+  // console.log(request)
+})
 // 变量
 const apis = {
-  testInsertLocalTag10W: window.api.testInsertLocalTag10W
+  testInsertLocalTag10W: window.api.testInsertLocalTag10W,
+  worksQueryPage: window.api.worksQueryPage
 } // 接口
 let loading = false // 主菜单栏加载中开关
 const selectedList = ref() // 主搜索栏选中列表
@@ -20,6 +29,7 @@ const pageState = reactive({
   showSettingsPage: false
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
+const imageList: Ref<UnwrapRef<Works[]>> = ref([])
 
 // 方法
 async function getTagSelectList(keyword) {
@@ -33,7 +43,7 @@ async function getTagSelectList(keyword) {
     loading = false
   }
 }
-
+// 开启副页面
 function showFloatPage(pageName) {
   closeFloatPage()
   pageState.closeablePage = true
@@ -47,16 +57,25 @@ function showFloatPage(pageName) {
       break
   }
 }
-
+// 关闭副页面
 function closeFloatPage() {
   Object.keys(pageState).forEach((key) => (pageState[key] = false))
   pageState.mainPage = true
 }
+// 请求作品接口
+async function requestWorks() {
+  const page = new PageCondition()
+  page.query = { includeLocalTagIds: [1,2] }
+  const response = await apis.worksQueryPage(page)
+  if (ApiUtil.apiResponseCheck(response)) {
+    imageList.value = (ApiUtil.apiResponseGetData(response) as {data:[]}).data as Works[]
+  }
+}
 
 // test
-async function handleTest() {
-  await apis.testInsertLocalTag10W()
-}
+// async function handleTest() {
+//   await apis.testInsertLocalTag10W()
+// }
 </script>
 
 <template>
@@ -131,20 +150,13 @@ async function handleTest() {
               </el-select>
             </el-col>
             <el-col :span="1">
-              <el-button @click="handleTest"> 测试 </el-button>
+              <el-button @click="requestWorks"> 测试 </el-button>
             </el-col>
           </el-row>
         </div>
         <works-case
           class="mainPage-works-space"
-          :works-list="[
-            { id: 1, filePath: '1.png' },
-            { id: 2, filePath: '创业指导-图标.png' },
-            { id: 3, filePath: '发布招聘-封面.png' },
-            { id: 4, filePath: '发布招聘-图标.png' },
-            { id: 5, filePath: '法律服务-封面.png' },
-            { id: 6, filePath: '法律服务-图标.png' }
-          ]"
+          :works-list="imageList"
         ></works-case>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
