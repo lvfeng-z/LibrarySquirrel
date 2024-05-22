@@ -49,7 +49,9 @@ export default class LocalTagDao extends BaseDao.AbstractBaseDao<LocalTagQueryDT
       // 拼接排序和分页字句
       statement = await this.sorterAndPager(statement, whereClauses, page)
 
-      page.data = this.getResultTypeDataList((await db.prepare(statement)).all(page.query) as [])
+      page.data = this.getResultTypeDataList<LocalTag>(
+        (await db.prepare(statement)).all(page.query) as []
+      )
       return page
     } finally {
       db.release()
@@ -107,7 +109,7 @@ export default class LocalTagDao extends BaseDao.AbstractBaseDao<LocalTagQueryDT
          )
          SELECT * FROM treeNode`
       const result = (await db.prepare(statement)).all({ rootId: rootId, depth: depth }) as object[]
-      return this.getResultTypeDataList(result)
+      return this.getResultTypeDataList<LocalTag>(result)
     } finally {
       db.release()
     }
@@ -132,7 +134,7 @@ export default class LocalTagDao extends BaseDao.AbstractBaseDao<LocalTagQueryDT
         )
         SELECT * FROM parentNode`
       const result = (await db.prepare(statement)).all({ nodeId: nodeId }) as object[]
-      return this.getResultTypeDataList(result)
+      return this.getResultTypeDataList<LocalTag>(result)
     } finally {
       db.release()
     }

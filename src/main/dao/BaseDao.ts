@@ -122,7 +122,7 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
       const rows = (await db.prepare(statement)).all(page.query) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
-      page.data = this.getResultTypeDataList(rows)
+      page.data = this.getResultTypeDataList<Model>(rows)
 
       return page
     } finally {
