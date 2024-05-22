@@ -134,14 +134,17 @@ async function handleTest() {
             </el-col>
           </el-row>
         </div>
-        <div class="mainPage-works-space">
-          <works-case
-            :works-list="[
-              { id: 1, filePath: '1.jpg' },
-              { id: 2, filePath: '2.jpg' }
-            ]"
-          ></works-case>
-        </div>
+        <works-case
+          class="mainPage-works-space"
+          :works-list="[
+            { id: 1, filePath: '1.png' },
+            { id: 2, filePath: '创业指导-图标.png' },
+            { id: 3, filePath: '发布招聘-封面.png' },
+            { id: 4, filePath: '发布招聘-图标.png' },
+            { id: 5, filePath: '法律服务-封面.png' },
+            { id: 6, filePath: '法律服务-图标.png' }
+          ]"
+        ></works-case>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
