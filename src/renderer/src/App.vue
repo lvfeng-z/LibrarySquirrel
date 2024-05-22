@@ -35,6 +35,7 @@ async function getTagSelectList(keyword) {
 }
 
 function showFloatPage(pageName) {
+  closeFloatPage()
   pageState.closeablePage = true
   pageState.mainPage = false
   switch (pageName) {
