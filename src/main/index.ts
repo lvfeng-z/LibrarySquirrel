@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import InitializeDatabase from './database/initialize/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import logUtil from './util/LogUtil.ts'
+import LogUtil from './util/LogUtil.ts'
 import fs from 'fs/promises'
 import FileSysUtil from './util/FileSysUtil.ts'
 import SettingsUtil from './util/SettingsUtil.ts'
@@ -72,17 +73,30 @@ Electron.app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 如何响应前面的自定义协议的请求
+  // 如何响应前面的workdir-resource自定义协议的请求
   Electron.protocol.handle('workdir-resource', async (request) => {
     const workdir = global.settings.get('workdir') as string
-    const decodedUrl = decodeURIComponent(
-      Path.join(workdir, request.url.replace(new RegExp(`^workdir-resource://workdir/`, 'i'), ''))
-    )
 
-    const fullPath = process.platform === 'win32' ? FileSysUtil.convertPath(decodedUrl) : decodedUrl
+    // 使用正则表达式测试URL是否符合预期格式
+    if (!/^workdir-resource:\/\/workdir\//i.test(request.url)) {
+      LogUtil.error('main/index.ts', 'Invalid protocol request format:', request.url)
+      return new Response('Invalid request format', { status: 400 }) // 返回错误状态码
+    }
 
-    const data = await fs.readFile(fullPath) // 异步读取文件
-    return new Response(data) // 返回文件
+    try {
+      // 确保格式正确后，继续处理请求
+      const decodedUrl = decodeURIComponent(
+        Path.join(workdir, request.url.replace(/^workdir-resource:\/\/workdir\//i, ''))
+      )
+      const fullPath =
+        process.platform === 'win32' ? FileSysUtil.convertPath(decodedUrl) : decodedUrl
+
+      const data = await fs.readFile(fullPath) // 异步读取文件
+      return new Response(data) // 返回文件
+    } catch (error) {
+      LogUtil.error('Error handling protocol request:', error)
+      return new Response('main/index.ts', 'Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
+    }
   })
 
   // 配置日志设置
