@@ -3,20 +3,20 @@ import path from 'path'
 import LogConstant from '../constant/LogConstant.ts'
 import FileSysUtil from './FileSysUtil.ts'
 
-function info(module: string, msg: string) {
-  log.info(module, ':', msg)
+function info(module: string, msg: string, ...args: unknown[]) {
+  log.info(module, ':', msg, args)
 }
 
-function debug(module: string, msg: string) {
-  log.debug(module, ':', msg)
+function debug(module: string, msg: string, ...args: unknown[]) {
+  log.debug(module, ':', msg, args)
 }
 
-function warn(module: string, msg: string) {
-  log.warn(module, ':', msg)
+function warn(module: string, msg: string, ...args: unknown[]) {
+  log.warn(module, ':', msg, args)
 }
 
-function error(module: string, msg: string) {
-  log.error(module, ':', msg)
+function error(module: string, msg: string, ...args: unknown[]) {
+  log.error(module, ':', msg, args)
 }
 
 /**
