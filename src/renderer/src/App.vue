@@ -92,7 +92,7 @@ async function requestWorks() {
           ) {
             page.query.includeLocalTagIds = []
           }
-          page.query.includeLocalTagIds.push(tag.value)
+          ;(page.query.includeLocalTagIds as string[]).push(tag.value)
         } else {
           if (
             page.query.excludeLocalTagIds === undefined ||
@@ -100,7 +100,7 @@ async function requestWorks() {
           ) {
             page.query.excludeLocalTagIds = []
           }
-          page.query.excludeLocalTagIds.push(tag.value)
+          ;(page.query.excludeLocalTagIds as string[]).push(tag.value)
         }
       } else {
         // 根据标签状态判断是包含此标签还是排除此标签
@@ -108,12 +108,12 @@ async function requestWorks() {
           if (page.query.includeSiteTagIds === undefined || page.query.includeSiteTagIds === null) {
             page.query.includeSiteTagIds = []
           }
-          page.query.includeSiteTagIds.push(tag.value)
+          ;(page.query.includeSiteTagIds as string[]).push(tag.value)
         } else {
           if (page.query.excludeSiteTagIds === undefined || page.query.excludeSiteTagIds === null) {
             page.query.excludeSiteTagIds = []
           }
-          page.query.excludeSiteTagIds.push(tag.value)
+          ;(page.query.excludeSiteTagIds as string[]).push(tag.value)
         }
       }
     }
