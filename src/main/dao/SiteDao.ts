@@ -2,7 +2,6 @@ import Site from '../model/Site.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
-import DB from '../database/DB.ts'
 import BaseDao from './BaseDao.ts'
 
 export default class SiteDao extends BaseDao.AbstractBaseDao<SiteQueryDTO, Site> {
@@ -14,7 +13,7 @@ export default class SiteDao extends BaseDao.AbstractBaseDao<SiteQueryDTO, Site>
   }
 
   public async getSelectList(queryDTO: SiteQueryDTO): Promise<SelectItem[]> {
-    const db = new DB('SiteDao')
+    const db = this.acquire()
     try {
       const selectFrom = 'select id as value, site_name as label from site'
       let where = ''
