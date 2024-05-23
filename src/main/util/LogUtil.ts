@@ -3,7 +3,7 @@ import path from 'path'
 import LogConstant from '../constant/LogConstant.ts'
 import FileSysUtil from './FileSysUtil.ts'
 
-function info(module: string, msg: string, ...args: unknown[]) {
+function info(module: string, msg: unknown, ...args: unknown[]) {
   if (args !== undefined && args.length > 0) {
     log.info(module, ':', msg, args)
   } else {
@@ -11,7 +11,7 @@ function info(module: string, msg: string, ...args: unknown[]) {
   }
 }
 
-function debug(module: string, msg: string, ...args: unknown[]) {
+function debug(module: string, msg: unknown, ...args: unknown[]) {
   if (args !== undefined && args.length > 0) {
     log.debug(module, ':', msg, args)
   } else {
@@ -19,7 +19,7 @@ function debug(module: string, msg: string, ...args: unknown[]) {
   }
 }
 
-function warn(module: string, msg: string, ...args: unknown[]) {
+function warn(module: string, msg: unknown, ...args: unknown[]) {
   if (args !== undefined && args.length > 0) {
     log.warn(module, ':', msg, args)
   } else {
@@ -27,7 +27,7 @@ function warn(module: string, msg: string, ...args: unknown[]) {
   }
 }
 
-function error(module: string, msg: string, ...args: unknown[]) {
+function error(module: string, msg: unknown, ...args: unknown[]) {
   if (args !== undefined && args.length > 0) {
     log.error(module, ':', msg, args)
   } else {
