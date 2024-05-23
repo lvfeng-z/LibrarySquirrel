@@ -47,7 +47,7 @@ async function InitializeDB() {
       try {
         for (const tableNameSql of tableNameSqlStatements.tables) {
           if (!currentTables.includes(tableNameSql.name)) {
-            ;(await db.prepare(tableNameSql.sql)).run()
+            await db.exec(tableNameSql.sql)
             logUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
           }
         }
