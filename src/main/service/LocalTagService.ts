@@ -126,7 +126,14 @@ async function getTree(rootId: number) {
  */
 async function getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
   const dao = new LocalTagDao()
-  return await dao.getSelectList(queryDTO)
+  const result = dao.getSelectList(queryDTO)
+  // extraData.tagType=true表示这些标签是本地的
+  return result.then((res) => {
+    return res.map((selectItem) => {
+      selectItem.extraData = { tagType: true }
+      return selectItem
+    })
+  })
 }
 
 export default {
