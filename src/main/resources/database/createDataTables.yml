@@ -164,3 +164,5 @@ tables:
         create_time number,
         update_time number
       );
+      create unique index re_works_tag_works_id_tag_id_uindex
+      on re_works_tag (works_id, tag_id);
