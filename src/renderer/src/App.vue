@@ -8,6 +8,8 @@ import WorksCase from './components/common/WorksCase.vue'
 import ApiUtil from './utils/ApiUtil'
 import Works from './model/main/Works'
 import PageCondition from './model/util/PageCondition'
+import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
+import SelectOption from './model/util/SelectOption'
 
 // onMounted
 onMounted(() => {
@@ -16,12 +18,13 @@ onMounted(() => {
 })
 // 变量
 const apis = {
+  localTagGetSelectList: window.api.localTagGetSelectList,
   testInsertLocalTag10W: window.api.testInsertLocalTag10W,
   worksQueryPage: window.api.worksQueryPage
 } // 接口
 let loading = false // 主菜单栏加载中开关
 const selectedList = ref() // 主搜索栏选中列表
-const tagSelectList = ref() // 主搜索栏选择项列表
+const tagSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
   closeablePage: false,
@@ -36,7 +39,7 @@ async function getTagSelectList(keyword) {
   loading = true
   try {
     const params = { keyword: keyword }
-    tagSelectList.value = await window.api.localTagGetSelectList(params)
+    tagSelectList.value = await apis.localTagGetSelectList(params)
   } catch (e) {
     console.log(e)
   } finally {
@@ -65,10 +68,10 @@ function closeFloatPage() {
 // 请求作品接口
 async function requestWorks() {
   const page = new PageCondition()
-  page.query = { includeLocalTagIds: [1,2] }
+  page.query = { includeLocalTagIds: [10] }
   const response = await apis.worksQueryPage(page)
   if (ApiUtil.apiResponseCheck(response)) {
-    imageList.value = (ApiUtil.apiResponseGetData(response) as {data:[]}).data as Works[]
+    imageList.value = (ApiUtil.apiResponseGetData(response) as { data: [] }).data as Works[]
   }
 }
 
@@ -132,7 +135,7 @@ async function requestWorks() {
       <div v-show="pageState.mainPage" class="mainPage margin-box">
         <div class="mainPage-searchbar">
           <el-row>
-            <el-col :span="20">
+            <el-col :span="22">
               <el-select
                 v-model="selectedList"
                 multiple
@@ -146,18 +149,29 @@ async function requestWorks() {
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
-                ></el-option>
+                >
+                  <span style="float: left">{{ item.label }}</span>
+                  <span
+                    style="float: right; color: var(--el-text-color-secondary); font-size: 13px"
+                  >
+                    {{ item.secondaryLabel }}
+                  </span>
+                </el-option>
+                <template #tag>
+                  <double-check-tag
+                    v-for="item in selectedList"
+                    :key="item.value"
+                    :item="item"
+                  ></double-check-tag>
+                </template>
               </el-select>
             </el-col>
-            <el-col :span="1">
-              <el-button @click="requestWorks"> 测试 </el-button>
+            <el-col style="display: flex; justify-content: center" :span="2">
+              <el-button @click="requestWorks"> 搜索 </el-button>
             </el-col>
           </el-row>
         </div>
-        <works-case
-          class="mainPage-works-space"
-          :works-list="imageList"
-        ></works-case>
+        <works-case class="mainPage-works-space" :works-list="imageList"></works-case>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
