@@ -38,7 +38,7 @@ export default class DB {
   }
 
   /**
-   * prepare
+   * 预处理语句
    * @param statement
    */
   public async prepare(statement: string): Promise<BetterSqlite3.Statement> {
@@ -53,6 +53,14 @@ export default class DB {
     if (this.connection != undefined) {
       global.connectionPool.release(this.connection)
     }
+  }
+
+  /**
+   * 执行语句
+   */
+  public async exec(statement: string): Promise<BetterSqlite3.Database> {
+    const connectionPromise = this.acquire()
+    return connectionPromise.then((connection) => connection.exec(statement))
   }
 
   /**
