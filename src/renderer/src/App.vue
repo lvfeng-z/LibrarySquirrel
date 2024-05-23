@@ -9,7 +9,8 @@ import ApiUtil from './utils/ApiUtil'
 import Works from './model/main/Works'
 import PageCondition from './model/util/PageCondition'
 import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
-import SelectOption from './model/util/SelectOption'
+import SelectOption from './model/util/SelectOption.ts'
+import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -23,7 +24,7 @@ const apis = {
   worksQueryPage: window.api.worksQueryPage
 } // 接口
 let loading = false // 主菜单栏加载中开关
-const selectedList = ref() // 主搜索栏选中列表
+const selectedTagList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选中列表
 const tagSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
@@ -35,6 +36,7 @@ const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') 
 const imageList: Ref<UnwrapRef<Works[]>> = ref([])
 
 // 方法
+// 查询标签选择列表
 async function getTagSelectList(keyword) {
   loading = true
   try {
@@ -67,8 +69,56 @@ function closeFloatPage() {
 }
 // 请求作品接口
 async function requestWorks() {
-  const page = new PageCondition()
-  page.query = { includeLocalTagIds: [10] }
+  const page = new PageCondition<WorksQueryDTO>()
+  page.query = new WorksQueryDTO()
+
+  // 处理搜索框的标签
+  selectedTagList.value.forEach((tag) => {
+    if (
+      tag.extraData !== undefined &&
+      Object.prototype.hasOwnProperty.call(tag.extraData, 'tagType')
+    ) {
+      // "page.query !== undefined"是为了保证编译能通过，没有实际意义
+      if (page.query === undefined) {
+        return
+      }
+      // 如果extraData存储的tagType为true，则此标签是本地标签，否则是站点标签，
+      if (tag.extraData['tagType']) {
+        // 根据标签状态判断是包含此标签还是排除此标签
+        if (tag.state === undefined || tag.state) {
+          if (
+            page.query.includeLocalTagIds === undefined ||
+            page.query.includeLocalTagIds === null
+          ) {
+            page.query.includeLocalTagIds = []
+          }
+          page.query.includeLocalTagIds.push(tag.value)
+        } else {
+          if (
+            page.query.excludeLocalTagIds === undefined ||
+            page.query.excludeLocalTagIds === null
+          ) {
+            page.query.excludeLocalTagIds = []
+          }
+          page.query.excludeLocalTagIds.push(tag.value)
+        }
+      } else {
+        // 根据标签状态判断是包含此标签还是排除此标签
+        if (tag.state === undefined || tag.state) {
+          if (page.query.includeSiteTagIds === undefined || page.query.includeSiteTagIds === null) {
+            page.query.includeSiteTagIds = []
+          }
+          page.query.includeSiteTagIds.push(tag.value)
+        } else {
+          if (page.query.excludeSiteTagIds === undefined || page.query.excludeSiteTagIds === null) {
+            page.query.excludeSiteTagIds = []
+          }
+          page.query.excludeSiteTagIds.push(tag.value)
+        }
+      }
+    }
+  })
+
   const response = await apis.worksQueryPage(page)
   if (ApiUtil.apiResponseCheck(response)) {
     imageList.value = (ApiUtil.apiResponseGetData(response) as { data: [] }).data as Works[]
@@ -137,7 +187,7 @@ async function requestWorks() {
           <el-row>
             <el-col :span="22">
               <el-select
-                v-model="selectedList"
+                v-model="selectedTagList"
                 multiple
                 filterable
                 remote
@@ -148,7 +198,7 @@ async function requestWorks() {
                   v-for="item in tagSelectList"
                   :key="item.value"
                   :label="item.label"
-                  :value="item.value"
+                  :value="item"
                 >
                   <span style="float: left">{{ item.label }}</span>
                   <span
@@ -159,7 +209,7 @@ async function requestWorks() {
                 </el-option>
                 <template #tag>
                   <double-check-tag
-                    v-for="item in selectedList"
+                    v-for="item in selectedTagList"
                     :key="item.value"
                     :item="item"
                   ></double-check-tag>
