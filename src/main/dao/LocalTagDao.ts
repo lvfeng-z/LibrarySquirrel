@@ -61,7 +61,7 @@ export default class LocalTagDao extends BaseDao.AbstractBaseDao<LocalTagQueryDT
   public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
     const db = super.acquire()
     try {
-      const selectFrom = 'select id as value, local_tag_name as label from local_tag'
+      const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`
       let where = ''
       const columns: string[] = []
       const values: string[] = []
