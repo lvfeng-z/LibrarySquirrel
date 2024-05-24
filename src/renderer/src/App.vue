@@ -4,7 +4,7 @@ import TagManage from './components/closeablePage/TagManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import Settings from './components/closeablePage/Settings.vue'
-import WorksCase from './components/common/WorksCase.vue'
+import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Works from './model/main/Works'
 import PageCondition from './model/util/PageCondition'
@@ -221,7 +221,10 @@ async function requestWorks() {
             </el-col>
           </el-row>
         </div>
-        <works-case class="mainPage-works-space" :works-list="imageList"></works-case>
+        <works-display-area
+          class="mainPage-works-space"
+          :works-list="imageList"
+        ></works-display-area>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
