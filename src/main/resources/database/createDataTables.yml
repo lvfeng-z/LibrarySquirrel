@@ -166,3 +166,17 @@ tables:
       );
       create unique index re_works_tag_works_id_tag_id_uindex
       on re_works_tag (works_id, tag_id);
+
+  - name: installed_plugins
+    sql: |
+      create table installed_plugins
+      (
+        id        integer not null
+        constraint installed_plugins_pk
+        primary key autoincrement,
+        type      integer,
+        author    text,
+        domain    text,
+        version   text,
+        className text
+      );
