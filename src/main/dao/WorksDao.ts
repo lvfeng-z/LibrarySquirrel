@@ -92,9 +92,12 @@ export class WorksDao extends BaseDao.AbstractBaseDao<WorksQueryDTO, Works> {
       // 排序和分页子句
       statement = await this.sorterAndPager(statement, '', page, fromClause)
 
-      page.data = this.getResultTypeDataList<WorksDTO>(
+      const rows = this.getResultTypeDataList<WorksDTO>(
         (await db.prepare(statement)).all(page.query) as []
       )
+
+      // 利用构造函数处理JSON字符串
+      page.data = rows.map((worksDTO) => new WorksDTO(worksDTO))
     } catch (error) {
       LogUtil.error('WorksDao', error)
     } finally {
