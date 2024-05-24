@@ -12,8 +12,14 @@ export default class LocalAuthor {
    * 作者名称
    */
   localAuthorName: string | undefined | null
-  constructor(localAuthor: LocalAuthor) {
-    this.id = localAuthor.id
-    this.localAuthorName = localAuthor.localAuthorName
+
+  constructor(localAuthor?: LocalAuthor) {
+    if (localAuthor === undefined || localAuthor === null) {
+      this.id = undefined
+      this.localAuthorName = undefined
+    } else {
+      this.id = localAuthor.id
+      this.localAuthorName = localAuthor.localAuthorName
+    }
   }
 }
