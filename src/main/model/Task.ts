@@ -5,10 +5,6 @@ import BaseModel from './BaseModel.ts'
  */
 export default class Task extends BaseModel {
   /**
-   * 主键
-   */
-  id: number | undefined | null
-  /**
    * 任务链接的站点id
    */
   siteId: number | undefined | null
@@ -25,13 +21,19 @@ export default class Task extends BaseModel {
    */
   status: number | undefined | null
 
-  constructor(task: Task) {
-    super(task)
-    this.id = task.id
-    this.siteId = task.siteId
-    this.worksId = task.worksId
-    this.url = task.url
-    this.createTime = task.createTime
-    this.status = task.status
+  constructor(task?: Task) {
+    if (task === undefined) {
+      super()
+      this.siteId = undefined
+      this.worksId = undefined
+      this.url = undefined
+      this.status = undefined
+    } else {
+      super(task)
+      this.siteId = task.siteId
+      this.worksId = task.worksId
+      this.url = task.url
+      this.status = task.status
+    }
   }
 }
