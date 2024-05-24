@@ -12,7 +12,11 @@ const props = defineProps<{
   <el-scrollbar>
     <el-row class="works-display-case">
       <template v-for="works in props.worksList" :key="works.id">
-        <display-case :image-url="works.filePath as string"></display-case>
+        <display-case
+          class="works-display-case-display-case"
+          :width="300"
+          :image-url="works.filePath as string"
+        ></display-case>
       </template>
     </el-row>
   </el-scrollbar>
@@ -22,5 +26,8 @@ const props = defineProps<{
 .works-display-case {
   display: flex;
   flex-direction: row;
+}
+.works-display-case-display-case {
+  height: 300px;
 }
 </style>

@@ -11,7 +11,8 @@ const props = defineProps<{
 }>()
 
 // 变量
-const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> = ref('none')
+const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> =
+  ref('contain')
 const caseWidth: Ref<UnwrapRef<string>> = ref(
   props.width === undefined ? 'auto' : String(props.width) + 'px'
 ) // 展示框宽度
@@ -24,7 +25,7 @@ const caseHeight: Ref<UnwrapRef<string>> = ref(
 function handleElImageFit(event) {
   console.log('imageHeight', event.target.naturalHeight)
   console.log('imageWidth', event.target.naturalWidth)
-  imageFit.value = 'none'
+  imageFit.value = 'contain'
 }
 </script>
 <template>
