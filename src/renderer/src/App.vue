@@ -19,6 +19,7 @@ onMounted(() => {
 })
 // 变量
 const apis = {
+  test: window.api.testTaskServiceStartTask,
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
 } // 接口
@@ -127,7 +128,7 @@ async function requestWorks() {
 // test
 async function handleTest() {
   console.log('test')
-  // await apis.test()
+  return await apis.test(1)
 }
 </script>
 

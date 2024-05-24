@@ -10,11 +10,15 @@ import InsertLocalTag from '../test/InsertLocalTag.ts'
 import SettingsService from './SettingsService.ts'
 import WorksService from './WorksService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
+import TaskService from './TaskService.ts'
 
 function exposeService() {
   // test
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
     return await InsertLocalTag.insertLocalTag10W()
+  })
+  Electron.ipcMain.handle('test-taskService-startTask', async (_event, args) => {
+    return await TaskService.startTask(args)
   })
 
   // LocalTagService

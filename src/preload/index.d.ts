@@ -6,6 +6,7 @@ declare global {
     api: {
       // test
       testInsertLocalTag10W: function
+      testTaskServiceStartTask: function
 
       // LocalTagService
       localTagSave: function

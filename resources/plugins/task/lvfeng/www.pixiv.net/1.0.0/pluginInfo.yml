@@ -1,0 +1,5 @@
+type: task
+author: lvfeng
+domain: www.pixiv.net
+version: 1.0.0
+className: pixivTaskHandler.ts

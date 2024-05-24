@@ -7,6 +7,9 @@ const api = {
   testInsertLocalTag10W: (args) => {
     return Electron.ipcRenderer.invoke('test-insertLocalTag10W', args)
   },
+  testTaskServiceStartTask: (args) => {
+    return Electron.ipcRenderer.invoke('test-taskService-startTask', args)
+  },
 
   // LocalTagService
   localTagSave: (args) => {
