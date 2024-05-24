@@ -29,32 +29,33 @@ function handleElImageFit(event) {
 }
 </script>
 <template>
-  <div class="display-case">
+  <div class="works-display-case">
     <el-image
       :fit="imageFit"
-      class="display-case-image-box"
+      class="works-display-case-image"
       :src="`workdir-resource://workdir/${props.imageUrl}`"
       @load="handleElImageFit"
     ></el-image>
-    <works-info class="display-case-works-info"></works-info>
-    <author-info class="display-case-author-info"></author-info>
+    <works-info class="works-display-case-works-info"></works-info>
+    <author-info class="works-display-case-author-info"></author-info>
   </div>
 </template>
 
 <style scoped>
-.display-case {
+.works-display-case {
   display: flex;
   flex-direction: column;
   width: v-bind(caseWidth);
   height: v-bind(caseHeight);
 }
-.display-case-image-box {
+.works-display-case-image {
   width: 100%;
 }
-.display-case-works-info {
+.works-display-case-works-info {
   width: 100%;
 }
-.display-case-author-info {
+.works-display-case-author-info {
+  justify-self: flex-end;
   width: 100%;
 }
 </style>
