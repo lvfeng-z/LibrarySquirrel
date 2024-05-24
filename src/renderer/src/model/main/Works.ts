@@ -1,24 +1,17 @@
+import BaseModel from './BaseModel'
+
 /**
  * 作品
  */
-export default interface Works {
-  /**
-   * 主键
-   */
-  id?: number | undefined | null
-  /**
-   * 创建时间
-   */
-  createTime?: number | null | undefined
-
-  /**
-   * 更新时间
-   */
-  updateTime?: number | null | undefined
+export default class Works extends BaseModel {
   /**
    * 文件存储路径（文件相对于工作目录的相对路径）
    */
   filePath?: string | undefined | null
+  /**
+   * 文件所在工作目录（冗余）
+   */
+  workdir: string | undefined | null
   /**
    * 作品类型（0：图片，1：视频，2：文章）
    */
@@ -75,4 +68,44 @@ export default interface Works {
    * 下载状态
    */
   downloadStatus?: number | undefined | null
+
+  constructor(works?: Works) {
+    if (works === undefined) {
+      super()
+      this.filePath = undefined
+      this.workdir = undefined
+      this.worksType = undefined
+      this.siteId = undefined
+      this.siteWorksId = undefined
+      this.siteWorksName = undefined
+      this.siteAuthorId = undefined
+      this.siteWorkDescription = undefined
+      this.siteUploadTime = undefined
+      this.siteUpdateTime = undefined
+      this.nickName = undefined
+      this.localAuthorId = undefined
+      this.includeTime = undefined
+      this.includeMode = undefined
+      this.includeTaskId = undefined
+      this.downloadStatus = undefined
+    } else {
+      super(works)
+      this.filePath = works.filePath
+      this.workdir = works.workdir
+      this.worksType = works.worksType
+      this.siteId = works.siteId
+      this.siteWorksId = works.siteWorksId
+      this.siteWorksName = works.siteWorksName
+      this.siteWorkDescription = works.siteWorkDescription
+      this.siteAuthorId = works.siteAuthorId
+      this.siteUploadTime = works.siteUploadTime
+      this.siteUpdateTime = works.siteUpdateTime
+      this.nickName = works.nickName
+      this.localAuthorId = works.localAuthorId
+      this.includeTime = works.includeTime
+      this.includeMode = works.includeMode
+      this.includeTaskId = works.includeTaskId
+      this.downloadStatus = works.downloadStatus
+    }
+  }
 }
