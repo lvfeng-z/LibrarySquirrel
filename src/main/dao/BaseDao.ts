@@ -14,7 +14,7 @@ interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
   save(entity: Model): Promise<number | string>
   deleteById(id: PrimaryKey): Promise<number>
   updateById(id: PrimaryKey, updateData: Model): Promise<number>
-  getById(id: PrimaryKey): Promise<Query>
+  getById(id: PrimaryKey): Promise<Model>
   selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>>
 }
 
@@ -89,7 +89,7 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     }
   }
 
-  async getById(id: PrimaryKey): Promise<Query> {
+  async getById(id: PrimaryKey): Promise<Model> {
     const db = this.acquire()
     try {
       const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
@@ -98,7 +98,7 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
       Object.entries(originResult).forEach(([key, value]) => {
         result[StringUtil.snakeToCamelCase(key)] = value
       })
-      return result as Query
+      return result as Model
     } finally {
       db.release()
     }
