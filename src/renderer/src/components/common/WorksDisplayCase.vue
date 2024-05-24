@@ -2,10 +2,12 @@
 import WorksInfo from './WorksInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
+import WorksDTO from '../../model/main/dto/WorksDTO.ts'
+import LocalAuthor from '../../model/main/LocalAuthor'
 
 // props
 const props = defineProps<{
-  imageUrl: string
+  works: WorksDTO
   height?: number
   width?: number
 }>()
@@ -33,11 +35,18 @@ function handleElImageFit(event) {
     <el-image
       :fit="imageFit"
       class="works-display-case-image"
-      :src="`workdir-resource://workdir/${props.imageUrl}`"
+      :src="`workdir-resource://workdir/${props.works.filePath}`"
       @load="handleElImageFit"
     ></el-image>
-    <works-info class="works-display-case-works-info"></works-info>
-    <author-info class="works-display-case-author-info"></author-info>
+    <works-info class="works-display-case-works-info" :works="works"></works-info>
+    <author-info
+      class="works-display-case-author-info"
+      :author="
+        props.works.author === undefined || props.works.author === null
+          ? new LocalAuthor()
+          : props.works.author
+      "
+    ></author-info>
   </div>
 </template>
 
@@ -55,7 +64,6 @@ function handleElImageFit(event) {
   width: 100%;
 }
 .works-display-case-author-info {
-  justify-self: flex-end;
   width: 100%;
 }
 </style>

@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import LocalAuthor from '../../model/main/LocalAuthor.ts'
 
+// props
+const props = defineProps<{
+  author: LocalAuthor
+}>()
 </script>
 
 <template>
-  <el-text>作者名称</el-text>
+  <el-text>{{ props.author.localAuthorName }}</el-text>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -6,11 +6,11 @@ import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/ic
 import Settings from './components/closeablePage/Settings.vue'
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
-import Works from './model/main/Works'
 import PageCondition from './model/util/PageCondition'
 import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
 import SelectOption from './model/util/SelectOption.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
+import WorksDTO from './model/main/dto/WorksDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -33,7 +33,7 @@ const pageState = reactive({
   showSettingsPage: false
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
-const imageList: Ref<UnwrapRef<Works[]>> = ref([])
+const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([])
 
 // 方法
 // 查询标签选择列表
@@ -121,7 +121,7 @@ async function requestWorks() {
 
   const response = await apis.worksQueryPage(page)
   if (ApiUtil.apiResponseCheck(response)) {
-    imageList.value = (ApiUtil.apiResponseGetData(response) as { data: [] }).data as Works[]
+    imageList.value = (ApiUtil.apiResponseGetData(response) as { data: [] }).data as WorksDTO[]
   }
 }
 
