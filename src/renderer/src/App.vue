@@ -20,7 +20,6 @@ onMounted(() => {
 // 变量
 const apis = {
   localTagGetSelectList: window.api.localTagGetSelectList,
-  testInsertLocalTag10W: window.api.testInsertLocalTag10W,
   worksQueryPage: window.api.worksQueryPage
 } // 接口
 let loading = false // 主菜单栏加载中开关
@@ -126,9 +125,10 @@ async function requestWorks() {
 }
 
 // test
-// async function handleTest() {
-//   await apis.testInsertLocalTag10W()
-// }
+async function handleTest() {
+  console.log('test')
+  // await apis.test()
+}
 </script>
 
 <template>
@@ -185,7 +185,10 @@ async function requestWorks() {
       <div v-show="pageState.mainPage" class="mainPage margin-box">
         <div class="mainPage-searchbar">
           <el-row>
-            <el-col :span="22">
+            <el-col style="display: flex; justify-content: center" :span="2">
+              <el-button @click="handleTest"> 测试 </el-button>
+            </el-col>
+            <el-col :span="20">
               <el-select
                 v-model="selectedTagList"
                 multiple
