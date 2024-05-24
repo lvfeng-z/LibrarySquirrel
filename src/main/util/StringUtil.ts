@@ -2,7 +2,7 @@ function isBlank(input: string | null | undefined): boolean {
   if (input === undefined || input === null) {
     return true
   }
-  return !input || /^\s*$/.test(input)
+  return /^\s*$/.test(input)
 }
 
 function isNotBlank(input: string | null | undefined) {
