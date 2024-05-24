@@ -8,10 +8,19 @@ import FileSysUtil from '../util/FileSysUtil.ts'
 async function getClassPathById(id: number): Promise<string> {
   const dao = new InstalledPluginsDao()
   const installedPlugin = await dao.getById(id)
+
+  let resourcePath: string
+  const NODE_ENV = process.env.NODE_ENV
+  if (NODE_ENV == 'development') {
+    resourcePath = '/resources/plugins/task'
+  } else {
+    resourcePath = '/resources/app.asar.unpacked/resources/plugins/task'
+  }
+
   return Path.join(
     'file://',
     FileSysUtil.getRootDir(),
-    '/resources/plugins/task',
+    resourcePath,
     installedPlugin.author as string,
     installedPlugin.domain as string,
     installedPlugin.version as string,

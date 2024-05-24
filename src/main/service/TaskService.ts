@@ -4,6 +4,7 @@ import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskDao from '../dao/TaskDao.ts'
 import fs from 'fs/promises'
+import SettingsService from './SettingsService.ts'
 
 async function createTask(task: Task): Promise<number> {
   task = new Task(task)
@@ -24,13 +25,15 @@ async function startTask(taskId: number): Promise<boolean> {
   const pluginId = global.settings.get(`plugins.task.${task.siteId}`)
   const classPath = await InstalledPluginsService.getClassPathById(pluginId)
   return import(classPath).then(async (module) => {
-    const taskHandler = new module.default() as TaskHandler
-    const data = await taskHandler.start(task)
     try {
-      fs.writeFile('C:/Users/Administrator/Downloads/新建文件夹/test.jpg', data)
+      const taskHandler = new module.default() as TaskHandler
+      const data = await taskHandler.start(task)
+
+      const settings = SettingsService.getSettings() as { workdir: string }
+      fs.writeFile(`${settings.workdir}/test.jpg`, data)
       return true
     } catch (err) {
-      console.error(err)
+      LogUtil.error('TaskService', err)
       return false
     }
   })
