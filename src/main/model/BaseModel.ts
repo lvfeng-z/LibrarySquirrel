@@ -20,8 +20,8 @@ export default class BaseModel {
   constructor(baseModel?: BaseModel) {
     if (baseModel === undefined) {
       this.id = undefined
-      this.createTime = Date.now()
-      this.updateTime = Date.now()
+      this.createTime = undefined
+      this.updateTime = undefined
     } else {
       this.id = baseModel.id
       this.createTime = baseModel.createTime
