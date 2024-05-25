@@ -144,6 +144,33 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
+   * 查询列表
+   * @param query
+   */
+  public async selectList(query: Query): Promise<Model[]> {
+    const db = this.acquire()
+    try {
+      // 生成where字句
+      let whereClause = ''
+      if (query) {
+        whereClause = this.getWhereClause(query)
+      }
+
+      // 拼接查询语句
+      const statement = `SELECT * FROM "${this.tableName}" ${whereClause}`
+
+      // 查询
+      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(query)
+      const rows = (await db.prepare(statement)).all(nonUndefinedValue) as object[]
+
+      // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
+      return this.getResultTypeDataList<Model>(rows)
+    } finally {
+      db.release()
+    }
+  }
+
+  /**
    * 拼接where字句
    * @protected
    * @param whereClauses
@@ -163,13 +190,25 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param alias
    */
   protected getWhereClause(queryConditions: Query, alias?: string): string {
-    const keyAndWhereClauses = this.getWhereClauses(queryConditions, alias)
-    const whereClauses = Object.entries(keyAndWhereClauses).map((item) => item[1])
+    const whereClauses: string[] = []
+    if (queryConditions) {
+      Object.entries(queryConditions)
+        .filter(([, value]) => value !== undefined)
+        .forEach(([key]) => {
+          const snakeCaseKey = StringUtil.camelToSnakeCase(key)
+          const whereClause =
+            alias == undefined
+              ? `"${snakeCaseKey}" = @${key}`
+              : `${alias}."${snakeCaseKey}" = @${key}`
+          whereClauses.push(whereClause)
+        })
+    }
+
     return this.splicingWhereClauses(whereClauses)
   }
 
   /**
-   * 获取where字句
+   * 获取属性名为键，where字句为值的Record对象
    * @param queryConditions 查询条件
    * @param alias 所查询数据表的别名
    * @protected
