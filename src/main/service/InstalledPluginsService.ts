@@ -1,7 +1,16 @@
 import Path from 'path'
 import InstalledPluginsDao from '../dao/InstalledPluginsDao.ts'
 import FileSysUtil from '../util/FileSysUtil.ts'
+import InstalledPlugins from '../model/InstalledPlugins.ts'
 
+/**
+ * 主键查询
+ * @param id
+ */
+async function getById(id: number): Promise<InstalledPlugins> {
+  const dao = new InstalledPluginsDao()
+  return dao.getById(id)
+}
 /**
  * 根据id获取插件加载路径
  */
@@ -30,5 +39,6 @@ async function getClassPathById(id: number): Promise<string> {
 }
 
 export default {
+  getById,
   getClassPathById
 }
