@@ -94,15 +94,19 @@ tables:
   - name: task
     sql: |
       create table if not exists task (
-        id          integer not null
+        id             integer not null
         constraint task_pk
         primary key autoincrement,
-        site_id     integer,
-        works_id    integer,
-        url         text,
-        create_time number,
-        update_time number,
-        status      smallint
+        has_children   integer(1),
+        parent_id      integer,
+        site_id        integer,
+        local_works_id integer,
+        site_works_id  text,
+        url            text,
+        create_time    number,
+        update_time    number,
+        status         smallint,
+        plugin_data    text
       );
 
   - name: works
