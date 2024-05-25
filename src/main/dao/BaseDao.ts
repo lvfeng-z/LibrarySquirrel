@@ -93,11 +93,10 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     const db = this.acquire()
     try {
       const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
-      const originResult = (await db.prepare(statement)).get({ id: id }) as object
-      const result = {}
-      Object.entries(originResult).forEach(([key, value]) => {
-        result[StringUtil.snakeToCamelCase(key)] = value
-      })
+      let result = (await db.prepare(statement)).get({ id: id }) as object
+      if (result) {
+        result = this.getResultTypeData(result as Record<string, unknown>)
+      }
       return result as Model
     } finally {
       db.release()
@@ -294,12 +293,18 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
    * @protected
    */
   protected getResultTypeDataList<Result>(dataList: object[]): Result[] {
-    return dataList.map(
-      (row) =>
-        Object.fromEntries(
-          Object.entries(row).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
-        ) as Result
-    )
+    return dataList.map((row) => this.getResultTypeData(row as Record<string, unknown>))
+  }
+
+  /**
+   * 以元素的属性名为snakeCase格式的data为原型，返回一个Result类型的对象
+   * @protected
+   * @param data
+   */
+  protected getResultTypeData<Result>(data: Record<string, unknown>): Result {
+    return Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
+    ) as Result
   }
 
   protected abstract getPrimaryKeyColumnName(): string
