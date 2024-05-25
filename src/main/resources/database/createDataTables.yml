@@ -97,7 +97,7 @@ tables:
         id             integer not null
         constraint task_pk
         primary key autoincrement,
-        has_children   integer(1),
+        is_collection  integer(1),
         parent_id      integer,
         site_id        integer,
         local_works_id integer,

@@ -2,9 +2,9 @@ import BaseQueryDTO from './BaseQueryDTO.ts'
 
 export default class TaskQueryDTO extends BaseQueryDTO {
   /**
-   * 是否有子任务
+   * 是否是任务集合
    */
-  hasChildren: boolean | undefined | null
+  isCollection: boolean | undefined | null
   /**
    * 上级任务id
    */
@@ -14,7 +14,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
    */
   siteId: number | undefined | null
   /**
-   * 本地作品id
+   * 本地作品id/本地作品集id
    */
   localWorksId: number | undefined | null
   /**
@@ -22,7 +22,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
    */
   siteWorksId: number | undefined | null
   /**
-   * 链接
+   * 当任务是任务集合时，url存储创建此任务集合所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
    */
   url: string | undefined | null
   /**
@@ -37,7 +37,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   constructor(task?: TaskQueryDTO) {
     if (task === undefined) {
       super()
-      this.hasChildren = undefined
+      this.isCollection = undefined
       this.parentId = undefined
       this.siteId = undefined
       this.localWorksId = undefined
@@ -47,7 +47,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.pluginData = undefined
     } else {
       super(task)
-      this.hasChildren = task.hasChildren
+      this.isCollection = task.isCollection
       this.parentId = task.parentId
       this.siteId = task.siteId
       this.localWorksId = task.localWorksId
