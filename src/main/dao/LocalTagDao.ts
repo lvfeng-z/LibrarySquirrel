@@ -5,7 +5,7 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 
-export default class LocalTagDao extends BaseDao.AbstractBaseDao<LocalTagQueryDTO, LocalTag> {
+export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor() {
     super('local_tag', 'LocalTagDao')
   }

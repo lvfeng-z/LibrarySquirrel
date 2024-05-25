@@ -9,22 +9,9 @@ import LogUtil from '../util/LogUtil.ts'
 type PrimaryKey = string | number
 
 /**
- * Dao接口，定义CRUD方法
- */
-interface BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
-  save(entity: Model): Promise<number | string>
-  deleteById(id: PrimaryKey): Promise<number>
-  updateById(id: PrimaryKey, updateData: Model): Promise<number>
-  getById(id: PrimaryKey): Promise<Model>
-  selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>>
-}
-
-/**
  * 抽象Dao基类，实现基本的CRUD方法
  */
-abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseModel>
-  implements BaseDao<Query, Model>
-{
+export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
   /**
    * 数据表名
    * @protected
@@ -47,7 +34,11 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     this.db = undefined
   }
 
-  async save(entity: Model): Promise<number | string> {
+  /**
+   * 保存
+   * @param entity
+   */
+  public async save(entity: Model): Promise<number | string> {
     const db = this.acquire()
     try {
       // 设置createTime和updateTime
@@ -63,7 +54,11 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     }
   }
 
-  async deleteById(id: PrimaryKey): Promise<number> {
+  /**
+   * 删除
+   * @param id
+   */
+  public async deleteById(id: PrimaryKey): Promise<number> {
     const db = this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
@@ -73,7 +68,12 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     }
   }
 
-  async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
+  /**
+   * 更新
+   * @param id
+   * @param updateData
+   */
+  public async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
     if (id === undefined) {
       const msg = '更新时主键不能为空'
       LogUtil.error('BaseDao', msg)
@@ -95,7 +95,11 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     }
   }
 
-  async getById(id: PrimaryKey): Promise<Model> {
+  /**
+   * 主键查询
+   * @param id
+   */
+  public async getById(id: PrimaryKey): Promise<Model> {
     const db = this.acquire()
     try {
       const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
@@ -109,7 +113,11 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     }
   }
 
-  async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
+  /**
+   * 分页查询
+   * @param page
+   */
+  public async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
     const db = this.acquire()
     try {
       // 生成where字句
@@ -321,8 +329,4 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
     }
     return this.db
   }
-}
-
-export default {
-  AbstractBaseDao
 }

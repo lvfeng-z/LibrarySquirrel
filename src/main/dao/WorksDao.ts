@@ -6,7 +6,7 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import LogUtil from '../util/LogUtil.ts'
 
-export class WorksDao extends BaseDao.AbstractBaseDao<WorksQueryDTO, Works> {
+export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor() {
     super('works', 'WorksDao')
   }

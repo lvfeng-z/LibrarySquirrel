@@ -4,7 +4,7 @@ import StringUtil from '../util/StringUtil.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 
-export default class SiteDao extends BaseDao.AbstractBaseDao<SiteQueryDTO, Site> {
+export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
   constructor() {
     super('site', 'SiteDao')
   }

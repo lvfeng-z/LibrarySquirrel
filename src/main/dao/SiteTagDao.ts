@@ -6,7 +6,7 @@ import StringUtil from '../util/StringUtil.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 
-export default class SiteTagDao extends BaseDao.AbstractBaseDao<SiteTagQueryDTO, SiteTag> {
+export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
   constructor() {
