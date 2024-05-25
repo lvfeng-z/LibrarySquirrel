@@ -4,6 +4,7 @@ import DB from '../database/DB.ts'
 import BaseModel from '../model/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
+import LogUtil from '../util/LogUtil.ts'
 
 type PrimaryKey = string | number
 
@@ -73,6 +74,11 @@ abstract class AbstractBaseDao<Query extends BaseQueryDTO, Model extends BaseMod
   }
 
   async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
+    if (id === undefined) {
+      const msg = '更新时主键不能为空'
+      LogUtil.error('BaseDao', msg)
+      throw new Error(msg)
+    }
     const db = this.acquire()
     try {
       // 设置createTime和updateTime
