@@ -129,7 +129,6 @@ async function createTask(url: string): Promise<number> {
           'TaskService',
           `插件创建任务时出现异常，error: ${error}，url: ${url}，plugin: ${pluginInfo}`
         )
-        throw error
       }
     }
   }
