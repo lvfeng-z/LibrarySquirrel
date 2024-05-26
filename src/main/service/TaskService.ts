@@ -55,6 +55,7 @@ async function startTask(taskId: number): Promise<boolean> {
     tasks = await getChildrenTask(task.id as number)
   }
 
+  // 读取配置
   const pluginId = global.settings.get(`plugins.task.${task.siteId}`)
 
   // 查询插件信息，日志用
@@ -64,11 +65,33 @@ async function startTask(taskId: number): Promise<boolean> {
   return pluginLoader.loadTaskPlugin(pluginId).then(async (taskHandler: TaskHandler) => {
     try {
       const worksDTOs = await taskHandler.start(tasks)
+      // 记录任务id，用于校验插件返回的任务id是否越界
+      const taskIds = tasks.map((task) => task.id)
 
       const settings = SettingsService.getSettings() as { workdir: string }
 
       let i = 0
-      worksDTOs.forEach((worksDTO) => {
+      for (const worksDTO of worksDTOs) {
+        // 如果插件未返回任务id，发出警告并跳过此次循环
+        if (
+          Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') &&
+          worksDTO.includeTaskId !== undefined &&
+          worksDTO.includeTaskId !== null
+        ) {
+          // 如果插件返回的任务id越界，发出警告并跳过此次循环
+          if (!taskIds.includes(worksDTO.includeTaskId)) {
+            LogUtil.warn(
+              'TaskService',
+              `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+            )
+            continue
+          }
+        } else {
+          LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
+          continue
+        }
+
+        // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
         if (
           Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
           worksDTO.resourceStream !== undefined &&
@@ -85,12 +108,13 @@ async function startTask(taskId: number): Promise<boolean> {
           })
           i++
         } else {
+          taskFailed(worksDTO.includeTaskId as number)
           LogUtil.warn(
             'TaskService',
             `插件未返回任务的资源，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
           )
         }
-      })
+      }
       return true
     } catch (err) {
       LogUtil.error('TaskService', err)
