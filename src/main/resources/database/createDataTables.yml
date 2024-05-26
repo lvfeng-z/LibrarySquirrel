@@ -107,10 +107,12 @@ tables:
         create_time    integer,
         update_time    integer,
         status         smallint,
+        plugin_id       integer,
+        plugin_info     text,
         plugin_data    text
       );
 
-  - name: task
+  - name: task_plugin_listener
     sql: |
       create table task_plugin_listener (
         id          integer not null
