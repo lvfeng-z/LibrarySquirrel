@@ -8,9 +8,11 @@ import PluginLoader from '../plugin/PluginLoader.ts'
 import TaskConstant from '../constant/TaskConstant.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
+import logUtil from '../util/LogUtil.ts'
+import TaskPluginListenerService from './TaskPluginListenerService.ts'
 
 /**
- * 保存任务
+ * 保存
  * @param task
  */
 async function save(task: Task): Promise<number> {
@@ -20,14 +22,107 @@ async function save(task: Task): Promise<number> {
 }
 
 /**
+ * 批量保存
+ * @param tasks
+ */
+async function saveBatch(tasks: Task[]): Promise<number> {
+  const dao = new TaskDao()
+  return (await dao.saveBatch(tasks)) as number
+}
+
+/**
  * 根据传入的url创建任务
  * @param url 作品/作品集所在url
  */
-async function createTask(url: string) {
-  console.log(url)
-  // task = new Task(task)
-  // const dao = new TaskDao()
-  // return (await dao.save(task)) as number
+async function createTask(url: string): Promise<number> {
+  if (url.startsWith('file://')) {
+    // 查询监听此url的插件
+    // todo 需要处理监听此url的插件对应不同站点的情况
+    const taskPlugins = await TaskPluginListenerService.getMonitored(url)
+
+    // 插件加载器
+    const pluginLoader = new PluginLoader()
+
+    // 按照排序尝试每个插件
+    for (const taskPlugin of taskPlugins) {
+      // 查询插件信息，用于输出日志
+      const pluginInfo = JSON.stringify(
+        await InstalledPluginsService.getById(taskPlugin.id as number)
+      )
+
+      try {
+        // 异步加载插件
+        const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
+
+        // 创建任务
+        const tasks = await taskHandler.create(url)
+
+        // 校验是否返回了空数据或非数组
+        if (
+          tasks === undefined ||
+          tasks === null ||
+          Object.prototype.hasOwnProperty.call(tasks, 'length') ||
+          tasks.length === 0
+        ) {
+          logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+          return 0
+        }
+        tasks.forEach((task) => task.security())
+
+        // 根据插件返回的任务数组长度判断如何处理
+        if (tasks.length === 1) {
+          // 如果插件返回的的任务列表长度为1，则不需要创建子任务
+          const task = tasks[0]
+          task.status = TaskConstant.TaskStatesEnum.created
+          task.isCollection = false
+          try {
+            task.pluginData = JSON.stringify(task.pluginData)
+          } catch (error) {
+            logUtil.error(
+              'TaskService',
+              `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
+            )
+            return 0
+          }
+
+          return save(task).then(() => 1)
+        } else {
+          // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
+          const parentTask = new Task()
+          parentTask.isCollection = true
+          const parentId = await save(parentTask)
+
+          const childTasks = tasks
+            .map((task) => {
+              task.status = TaskConstant.TaskStatesEnum.created
+              task.isCollection = false
+              task.parentId = parentId
+              task.pluginId = taskPlugin.id as number
+              task.pluginInfo = pluginInfo
+              task.siteDomain = taskPlugin.domain
+              try {
+                task.pluginData = JSON.stringify(task.pluginData)
+              } catch (error) {
+                logUtil.error(
+                  'TaskService',
+                  `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
+                )
+                return undefined
+              }
+              return task
+            })
+            .filter((childTask) => childTask !== undefined) as Task[]
+
+          return saveBatch(childTasks)
+        }
+      } catch (error) {
+        logUtil.warn('TaskService', `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}`)
+      }
+    }
+  }
+
+  // 到此处依然没有返回，说明失败了
+  return 0
 }
 
 /**
@@ -43,11 +138,6 @@ async function startTask(taskId: number): Promise<boolean> {
     LogUtil.error('TaskService', msg)
     return false
   }
-  if (!Object.prototype.hasOwnProperty.call(task, 'siteId') || task.siteId === 0) {
-    const msg = '开始任务时，siteId意外为空'
-    LogUtil.error('TaskService', msg, 'task:', task)
-    return false
-  }
 
   let tasks: Task[] = []
 
@@ -55,14 +145,18 @@ async function startTask(taskId: number): Promise<boolean> {
     tasks = await getChildrenTask(task.id as number)
   }
 
-  // 读取配置
-  const pluginId = global.settings.get(`plugins.task.${task.siteId}`)
+  // 校验任务的插件id
+  if (task.pluginId === undefined || task.pluginId === null) {
+    const msg = `任务的插件id意外为空，taskId: ${task.id}`
+    LogUtil.error('TaskService', msg)
+    throw new Error(msg)
+  }
 
   // 查询插件信息，日志用
-  const pluginInfo = JSON.stringify(await InstalledPluginsService.getById(pluginId))
+  const pluginInfo = JSON.stringify(await InstalledPluginsService.getById(task.pluginId))
 
   const pluginLoader = new PluginLoader()
-  return pluginLoader.loadTaskPlugin(pluginId).then(async (taskHandler: TaskHandler) => {
+  return pluginLoader.loadTaskPlugin(task.pluginId).then(async (taskHandler: TaskHandler) => {
     try {
       const worksDTOs = await taskHandler.start(tasks)
       // 记录任务id，用于校验插件返回的任务id是否越界
@@ -154,6 +248,7 @@ function taskFailed(taskId: number) {
 
 export default {
   save,
+  saveBatch,
   createTask,
   startTask
 }
