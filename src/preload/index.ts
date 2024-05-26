@@ -10,6 +10,12 @@ const api = {
   testTaskServiceStartTask: (args) => {
     return Electron.ipcRenderer.invoke('test-taskService-startTask', args)
   },
+  testTaskPluginListenerServiceSaveBatch: (args) => {
+    return Electron.ipcRenderer.invoke('test-taskPluginListenerService-saveBatch', args)
+  },
+  testTaskPluginListenerServiceGetMonitored: (args) => {
+    return Electron.ipcRenderer.invoke('test-taskPluginListenerService-getMonitored', args)
+  },
 
   // LocalTagService
   localTagSave: (args) => {

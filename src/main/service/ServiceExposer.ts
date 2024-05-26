@@ -11,6 +11,7 @@ import SettingsService from './SettingsService.ts'
 import WorksService from './WorksService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from './TaskService.ts'
+import TaskPluginListenerService from './TaskPluginListenerService.ts'
 
 function exposeService() {
   // test
@@ -19,6 +20,12 @@ function exposeService() {
   })
   Electron.ipcMain.handle('test-taskService-startTask', async (_event, args) => {
     return await TaskService.startTask(args)
+  })
+  Electron.ipcMain.handle('test-taskPluginListenerService-saveBatch', async (_event, args) => {
+    return await TaskPluginListenerService.saveBatch(args)
+  })
+  Electron.ipcMain.handle('test-taskPluginListenerService-getMonitored', async (_event, args) => {
+    return await TaskPluginListenerService.getMonitored(args)
   })
 
   // LocalTagService

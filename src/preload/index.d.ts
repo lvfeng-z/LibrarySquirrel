@@ -7,6 +7,8 @@ declare global {
       // test
       testInsertLocalTag10W: function
       testTaskServiceStartTask: function
+      testTaskPluginListenerServiceSaveBatch: function
+      testTaskPluginListenerServiceGetMonitored: function
 
       // LocalTagService
       localTagSave: function
