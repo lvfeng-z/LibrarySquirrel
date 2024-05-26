@@ -175,12 +175,14 @@ tables:
     sql: |
       create table installed_plugins
       (
-        id        integer not null
+        id          integer not null
         constraint installed_plugins_pk
         primary key autoincrement,
-        type      integer,
-        author    text,
-        domain    text,
-        version   text,
-        className text
+        type        integer,
+        author      text,
+        domain      text,
+        version     text,
+        className   text，
+        create_time integer,
+        update_time integer
       );
