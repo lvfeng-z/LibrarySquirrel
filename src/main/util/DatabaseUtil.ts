@@ -26,7 +26,30 @@ function getDataBasePath() {
   return path.join(FileSysUtil.getRootDir(), DataBaseConstant.DB_PATH)
 }
 
+/**
+ * 基于对象生成一个sqlite3接受的纯对象
+ */
+function buildObjSqlite3Accepted(obj: object) {
+  if (obj === undefined) {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => {
+        if (typeof value === 'boolean') {
+          return [key, value ? 1 : 0]
+        }
+        if (typeof value === 'object') {
+          return [key, String(value)]
+        }
+        return [key, value]
+      })
+  )
+}
+
 export default {
   listAllDataTables,
-  getDataBasePath
+  getDataBasePath,
+  buildObjSqlite3Accepted
 }
