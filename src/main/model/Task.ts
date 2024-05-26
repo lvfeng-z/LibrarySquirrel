@@ -15,9 +15,9 @@ export default class Task extends BaseModel {
   parentId: number | undefined | null
 
   /**
-   * 任务的站点id
+   * 任务的站点domain
    */
-  siteId: number | undefined | null
+  siteDomain: string | undefined | null
 
   /**
    * 本地作品id/本地作品集id
@@ -59,7 +59,7 @@ export default class Task extends BaseModel {
       super()
       this.isCollection = undefined
       this.parentId = undefined
-      this.siteId = undefined
+      this.siteDomain = undefined
       this.localWorksId = undefined
       this.siteWorksId = undefined
       this.url = undefined
@@ -71,7 +71,7 @@ export default class Task extends BaseModel {
       super(task)
       this.isCollection = task.isCollection
       this.parentId = task.parentId
-      this.siteId = task.siteId
+      this.siteDomain = task.siteDomain
       this.localWorksId = task.localWorksId
       this.siteWorksId = task.siteWorksId
       this.url = task.url
@@ -95,7 +95,7 @@ export default class Task extends BaseModel {
     this.updateTime = undefined
     this.isCollection = undefined
     this.parentId = undefined
-    this.siteId = undefined
+    this.siteDomain = undefined
     this.localWorksId = undefined
     this.status = undefined
     this.pluginId = undefined

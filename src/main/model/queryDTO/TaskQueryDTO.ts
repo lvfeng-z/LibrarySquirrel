@@ -12,9 +12,9 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   parentId: number | undefined | null
 
   /**
-   * 任务的站点id
+   * 任务的站点domain
    */
-  siteId: number | undefined | null
+  siteDomain: string | undefined | null
 
   /**
    * 本地作品id/本地作品集id
@@ -56,7 +56,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       super()
       this.isCollection = undefined
       this.parentId = undefined
-      this.siteId = undefined
+      this.siteDomain = undefined
       this.localWorksId = undefined
       this.siteWorksId = undefined
       this.url = undefined
@@ -68,7 +68,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       super(task)
       this.isCollection = task.isCollection
       this.parentId = task.parentId
-      this.siteId = task.siteId
+      this.siteDomain = task.siteDomain
       this.localWorksId = task.localWorksId
       this.siteWorksId = task.siteWorksId
       this.url = task.url
