@@ -53,11 +53,11 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   /**
    * 站点中作品的上传时间
    */
-  siteUploadTime: string | undefined | null
+  siteUploadTime: number | undefined | null
   /**
    * 站点中作品最后修改的时间
    */
-  siteUpdateTime: string | undefined | null
+  siteUpdateTime: number | undefined | null
   /**
    * 作品别称
    */
@@ -69,7 +69,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   /**
    * 收录时间
    */
-  includeTime: string | undefined | null
+  includeTime: number | undefined | null
   /**
    * 收录方式（0：本地导入，1：站点下载）
    */
