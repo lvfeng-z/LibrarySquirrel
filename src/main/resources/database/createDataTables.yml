@@ -182,7 +182,7 @@ tables:
         author      text,
         domain      text,
         version     text,
-        className   text，
+        className   text,
         create_time integer,
         update_time integer
       );
