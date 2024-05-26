@@ -47,7 +47,7 @@ export default class Task extends BaseModel {
   /**
    * 插件信息
    */
-  pluginInfo: number | undefined | null
+  pluginInfo: string | undefined | null
 
   /**
    * 插件数据

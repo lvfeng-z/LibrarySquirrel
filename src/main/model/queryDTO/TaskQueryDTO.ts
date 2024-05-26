@@ -44,7 +44,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   /**
    * 插件信息
    */
-  pluginInfo: number | undefined | null
+  pluginInfo: string | undefined | null
 
   /**
    * 插件数据
