@@ -75,6 +75,11 @@ export default class DB {
       this.acquirePromise = (async () => {
         this.connection = (await global.connectionPool.acquire()) as BetterSqlite3.Database
         this.acquirePromise = null
+        // 为每个链接注册REGEXP函数，以支持正则表达式
+        this.connection.function('REGEXP', (pattern, string) => {
+          const regex = new RegExp(pattern as string)
+          return regex.test(string as string) ? 1 : 0
+        })
         return this.connection
       })()
     }
