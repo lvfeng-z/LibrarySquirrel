@@ -55,6 +55,68 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
+   * 批量保存
+   * @param entities
+   */
+  public async saveBatch(entities: Model[]): Promise<number> {
+    const db = this.acquire()
+    try {
+      if (entities === undefined || entities === null || entities.length === 0) {
+        throw new Error('保存的对象不能为空')
+      }
+
+      // 对齐所有属性
+      // 设置createTime和updateTime
+      entities.forEach((entity) => {
+        entity.createTime = Date.now()
+        entity.updateTime = Date.now()
+      })
+      entities = ObjectUtil.alignProperties(entities, null) as Model[]
+      // 按照第一个对象的属性设置insert子句的value部分
+      const keys = Object.keys(entities[0])
+        // .filter((key) => 'id' !== key)
+        .map((key) => StringUtil.camelToSnakeCase(key))
+      const insertClause = `INSERT INTO "${this.tableName}" (${keys})`
+      const valuesClauses: string[] = []
+
+      // 存储编号后的所有属性
+      let numberedProperties = {}
+
+      let index = 0
+      entities.forEach((entity) => {
+        // 给对象的属性编号，放进新的对象中
+        const tempNumberedProperties = Object.fromEntries(
+          Object.entries(entity).map(([key, value]) => [
+            StringUtil.camelToSnakeCase(key).concat(String(index)),
+            value
+          ])
+        )
+
+        // 获取values子句
+        valuesClauses.push(
+          Object.keys(tempNumberedProperties)
+            .map((key) => '@'.concat(key))
+            .join()
+        )
+
+        // 编号后的对象的所有属性放进一个对象中
+        numberedProperties = { ...numberedProperties, ...tempNumberedProperties }
+
+        index++
+      })
+
+      const valuesClause =
+        'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
+
+      const statement = insertClause.concat(' ', valuesClause)
+
+      return (await db.prepare(statement)).run(numberedProperties).changes as number
+    } finally {
+      db.release()
+    }
+  }
+
+  /**
    * 删除
    * @param id
    */
