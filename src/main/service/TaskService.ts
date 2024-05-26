@@ -55,19 +55,24 @@ async function createTask(url: string): Promise<number> {
         const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
 
         // 创建任务
-        const tasks = await taskHandler.create(url)
+        const pluginResponseTasks = await taskHandler.create(url)
 
         // 校验是否返回了空数据或非数组
         if (
-          tasks === undefined ||
-          tasks === null ||
-          Object.prototype.hasOwnProperty.call(tasks, 'length') ||
-          tasks.length === 0
+          pluginResponseTasks === undefined ||
+          pluginResponseTasks === null ||
+          pluginResponseTasks.length === 0
         ) {
           logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
           return 0
         }
-        tasks.forEach((task) => task.security())
+
+        // 清除所有插件不应处理的属性值
+        const tasks = pluginResponseTasks.map((task) => {
+          const temp = new Task(task)
+          temp.security()
+          return temp
+        })
 
         // 根据插件返回的任务数组长度判断如何处理
         if (tasks.length === 1) {
@@ -80,7 +85,7 @@ async function createTask(url: string): Promise<number> {
           } catch (error) {
             logUtil.error(
               'TaskService',
-              `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
+              `序列化插件保存的pluginData时出错，error: ${error}，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
             )
             return 0
           }
@@ -90,6 +95,10 @@ async function createTask(url: string): Promise<number> {
           // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
           const parentTask = new Task()
           parentTask.isCollection = true
+          parentTask.siteDomain = taskPlugin.domain
+          parentTask.url = url
+          parentTask.pluginId = taskPlugin.id as number
+          parentTask.pluginInfo = pluginInfo
           const parentId = await save(parentTask)
 
           const childTasks = tasks
@@ -105,7 +114,7 @@ async function createTask(url: string): Promise<number> {
               } catch (error) {
                 logUtil.error(
                   'TaskService',
-                  `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
+                  `序列化插件保存的pluginData时出错，error: ${error}，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
                 )
                 return undefined
               }
@@ -116,7 +125,11 @@ async function createTask(url: string): Promise<number> {
           return saveBatch(childTasks)
         }
       } catch (error) {
-        logUtil.warn('TaskService', `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}`)
+        logUtil.warn(
+          'TaskService',
+          `插件创建任务时出现异常，error: ${error}，url: ${url}，plugin: ${pluginInfo}`
+        )
+        throw error
       }
     }
   }
