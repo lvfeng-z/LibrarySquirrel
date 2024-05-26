@@ -21,6 +21,9 @@ function exposeService() {
   Electron.ipcMain.handle('test-taskService-startTask', async (_event, args) => {
     return await TaskService.startTask(args)
   })
+  Electron.ipcMain.handle('test-taskService-createTask', async (_event, args) => {
+    return await TaskService.createTask(args)
+  })
   Electron.ipcMain.handle('test-taskPluginListenerService-saveBatch', async (_event, args) => {
     return await TaskPluginListenerService.saveBatch(args)
   })

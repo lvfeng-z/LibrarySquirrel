@@ -4,7 +4,11 @@ export default class LocalTaskHandler {
   constructor() {}
 
   create(url) {
-
+    const task1 = this.createTask()
+    task1.url = 'zh.jpg'
+    const task2 = this.createTask()
+    task2.url = 'lt.mp4'
+    return [task1, task2]
   }
 
   async start(tasks) {
@@ -27,6 +31,21 @@ export default class LocalTaskHandler {
 
   cancel() {
 
+  }
+
+  createTask(){
+    return {
+      isCollection: undefined,
+      parentId: undefined,
+      siteDomain: undefined,
+      localWorksId: undefined,
+      siteWorksId: undefined,
+      url: undefined,
+      status: undefined,
+      pluginId: undefined,
+      pluginInfo: undefined,
+      pluginData: undefined
+    }
   }
 
   createWorksDTO() {

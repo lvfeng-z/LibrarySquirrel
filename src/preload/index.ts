@@ -10,6 +10,9 @@ const api = {
   testTaskServiceStartTask: (args) => {
     return Electron.ipcRenderer.invoke('test-taskService-startTask', args)
   },
+  testTaskServiceCreateTask: (args) => {
+    return Electron.ipcRenderer.invoke('test-taskService-createTask', args)
+  },
   testTaskPluginListenerServiceSaveBatch: (args) => {
     return Electron.ipcRenderer.invoke('test-taskPluginListenerService-saveBatch', args)
   },
