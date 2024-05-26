@@ -5,6 +5,7 @@ import BaseModel from '../model/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
+import DatabaseUtil from '../util/DatabaseUtil.ts'
 
 type PrimaryKey = string | number
 
@@ -45,10 +46,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       entity.createTime = Date.now()
       entity.updateTime = Date.now()
 
-      const keys = Object.keys(entity).map((key) => StringUtil.camelToSnakeCase(key))
-      const valueKeys = Object.keys(entity).map((item) => `@${item}`)
+      // 转换为sqlite3接受的数据类型
+      const plainObject = DatabaseUtil.buildObjSqlite3Accepted(entity)
+
+      const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
+      const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-      return (await db.prepare(sql)).run(entity).lastInsertRowid as number
+      return (await db.prepare(sql)).run(plainObject).lastInsertRowid as number
     } finally {
       db.release()
     }
@@ -67,13 +71,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       // 对齐所有属性
       // 设置createTime和updateTime
-      entities.forEach((entity) => {
+      let plainObject = entities.map((entity) => {
         entity.createTime = Date.now()
         entity.updateTime = Date.now()
+        // 转换为sqlite3接受的数据类型
+        return DatabaseUtil.buildObjSqlite3Accepted(entity)
       })
-      entities = ObjectUtil.alignProperties(entities, null) as Model[]
+      plainObject = ObjectUtil.alignProperties(plainObject, null)
       // 按照第一个对象的属性设置insert子句的value部分
-      const keys = Object.keys(entities[0])
+      const keys = Object.keys(plainObject[0])
         // .filter((key) => 'id' !== key)
         .map((key) => StringUtil.camelToSnakeCase(key))
       const insertClause = `INSERT INTO "${this.tableName}" (${keys})`
@@ -83,7 +89,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       let numberedProperties = {}
 
       let index = 0
-      entities.forEach((entity) => {
+      plainObject.forEach((entity) => {
         // 给对象的属性编号，放进新的对象中
         const tempNumberedProperties = Object.fromEntries(
           Object.entries(entity).map(([key, value]) => [
