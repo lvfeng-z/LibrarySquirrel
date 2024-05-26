@@ -26,6 +26,11 @@ export default class InstalledPlugins extends BaseModel {
    */
   className: string | undefined | null
 
+  /**
+   * 排序号
+   */
+  sortNum: number | undefined | null
+
   constructor(installedPlugins?: InstalledPlugins) {
     if (installedPlugins === undefined) {
       super()
@@ -34,6 +39,7 @@ export default class InstalledPlugins extends BaseModel {
       this.domain = undefined
       this.version = undefined
       this.className = undefined
+      this.sortNum = undefined
     } else {
       super(installedPlugins)
       this.type = installedPlugins.type
@@ -41,6 +47,7 @@ export default class InstalledPlugins extends BaseModel {
       this.domain = installedPlugins.domain
       this.version = installedPlugins.version
       this.className = installedPlugins.className
+      this.sortNum = installedPlugins.sortNum
     }
   }
 }

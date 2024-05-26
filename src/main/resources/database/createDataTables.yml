@@ -60,7 +60,8 @@ tables:
         site_domain   text,
         site_homepage text,
         create_time   integer,
-        update_time   integer
+        update_time   integer,
+        sort_num      integer
       );
 
   - name: local_tag
@@ -184,5 +185,6 @@ tables:
         version     text,
         className   text,
         create_time integer,
-        update_time integer
+        update_time integer,
+        sort_num    integer
       );

@@ -21,11 +21,26 @@ export default class Site extends BaseModel {
    */
   siteHomepage: string | undefined | null
 
-  constructor(site: Site) {
-    super(site)
-    this.id = site.id
-    this.siteName = site.siteName
-    this.siteDomain = site.siteDomain
-    this.siteHomepage = site.siteHomepage
+  /**
+   * 排序号
+   */
+  sortNum: number | undefined | null
+
+  constructor(site?: Site) {
+    if (site === undefined) {
+      super()
+      this.id = undefined
+      this.siteName = undefined
+      this.siteDomain = undefined
+      this.siteHomepage = undefined
+      this.sortNum = undefined
+    } else {
+      super(site)
+      this.id = site.id
+      this.siteName = site.siteName
+      this.siteDomain = site.siteDomain
+      this.siteHomepage = site.siteHomepage
+      this.sortNum = site.sortNum
+    }
   }
 }
