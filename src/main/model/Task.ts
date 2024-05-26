@@ -35,7 +35,7 @@ export default class Task extends BaseModel {
   /**
    * 插件数据
    */
-  pluginData: { [key: string]: unknown } | undefined | null
+  pluginData: { [key: string]: unknown } | string | undefined | null
 
   constructor(task?: Task) {
     if (task === undefined) {
@@ -63,5 +63,19 @@ export default class Task extends BaseModel {
         this.pluginData = task.pluginData
       }
     }
+  }
+
+  /**
+   * 清除所有插件不应处理的属性值
+   */
+  security() {
+    this.id = undefined
+    this.createTime = undefined
+    this.updateTime = undefined
+    this.isCollection = undefined
+    this.parentId = undefined
+    this.siteId = undefined
+    this.localWorksId = undefined
+    this.status = undefined
   }
 }
