@@ -115,8 +115,8 @@ tables:
         id               integer not null
         constraint works_pk
         primary key autoincrement,
-        works_type             integer,
         file_path             text,
+        filename_extension    text,
         workdir               text,
         set_id                integer,
         site_id               integer,
@@ -131,7 +131,7 @@ tables:
         include_time          integer,
         include_mode          integer,
         include_task_id       integer,
-        download_status       smallint,
+        last_viewed           integer,
         create_time           integer,
         update_time           integer
       );

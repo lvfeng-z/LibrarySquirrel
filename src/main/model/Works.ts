@@ -9,13 +9,13 @@ export default class Works extends BaseModel {
    */
   filePath: string | undefined | null
   /**
+   * 扩展名
+   */
+  filenameExtension: string | undefined | null
+  /**
    * 文件所在工作目录（冗余）
    */
   workdir: string | undefined | null
-  /**
-   * 作品类型（0：图片，1：视频，2：文章）
-   */
-  worksType: number | undefined | null
   /**
    * 作品来源站点id
    */
@@ -65,16 +65,16 @@ export default class Works extends BaseModel {
    */
   includeTaskId: number | undefined | null
   /**
-   * 下载状态
+   * 最后一次查看的时间
    */
-  downloadStatus: number | undefined | null
+  lastViewed: number | undefined | null
 
   constructor(works?: Works) {
     if (works === undefined) {
       super()
       this.filePath = undefined
+      this.filenameExtension = undefined
       this.workdir = undefined
-      this.worksType = undefined
       this.siteId = undefined
       this.siteWorksId = undefined
       this.siteWorksName = undefined
@@ -87,12 +87,12 @@ export default class Works extends BaseModel {
       this.includeTime = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
-      this.downloadStatus = undefined
+      this.lastViewed = undefined
     } else {
       super(works)
       this.filePath = works.filePath
+      this.filenameExtension = works.filenameExtension
       this.workdir = works.workdir
-      this.worksType = works.worksType
       this.siteId = works.siteId
       this.siteWorksId = works.siteWorksId
       this.siteWorksName = works.siteWorksName
@@ -105,7 +105,7 @@ export default class Works extends BaseModel {
       this.includeTime = works.includeTime
       this.includeMode = works.includeMode
       this.includeTaskId = works.includeTaskId
-      this.downloadStatus = works.downloadStatus
+      this.lastViewed = works.lastViewed
     }
   }
 }

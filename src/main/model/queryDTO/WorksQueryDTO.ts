@@ -27,9 +27,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   filePath: string | undefined | null
   /**
-   * 作品类型（0：图片，1：视频，2：文章）
+   * 扩展名
    */
-  worksType: number | undefined | null
+  filenameExtension: string | undefined | null
   /**
    * 作品来源站点id
    */
@@ -79,9 +79,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   includeTaskId: number | undefined | null
   /**
-   * 下载状态
+   * 最后一次查看的时间
    */
-  downloadStatus: number | undefined | null
+  lastViewed: number | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
     if (worksQueryDTO === undefined) {
@@ -91,7 +91,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeSiteTagIds = undefined
       this.includeSiteTagIds = undefined
       this.filePath = undefined
-      this.worksType = undefined
+      this.filenameExtension = undefined
       this.siteId = undefined
       this.siteWorksId = undefined
       this.siteWorksName = undefined
@@ -104,7 +104,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeTime = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
-      this.downloadStatus = undefined
+      this.lastViewed = undefined
     } else {
       super(worksQueryDTO)
       this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
@@ -112,7 +112,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
       this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
       this.filePath = worksQueryDTO.filePath
-      this.worksType = worksQueryDTO.worksType
+      this.filenameExtension = worksQueryDTO.filenameExtension
       this.siteId = worksQueryDTO.siteId
       this.siteWorksId = worksQueryDTO.siteWorksId
       this.siteWorksName = worksQueryDTO.siteWorksName
@@ -125,7 +125,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeTime = worksQueryDTO.includeTime
       this.includeMode = worksQueryDTO.includeMode
       this.includeTaskId = worksQueryDTO.includeTaskId
-      this.downloadStatus = worksQueryDTO.downloadStatus
+      this.lastViewed = worksQueryDTO.lastViewed
     }
   }
 }
