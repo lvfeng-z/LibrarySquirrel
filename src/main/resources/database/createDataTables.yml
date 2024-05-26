@@ -110,6 +110,21 @@ tables:
         plugin_data    text
       );
 
+  - name: task
+    sql: |
+      create table task_plugin_listener (
+        id          integer not null
+        constraint task_plugin_listener_pk
+        primary key,
+        plugin_id   integer
+        constraint task_plugin_listener_installed_plugins_id_fk
+        references installed_plugins
+        on delete cascade,
+        listener    text,
+        create_time integer,
+        update_time integer
+      );
+
   - name: works
     sql: |
       create table if not exists works (
