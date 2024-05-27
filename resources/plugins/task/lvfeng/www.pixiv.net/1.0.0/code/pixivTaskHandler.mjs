@@ -22,11 +22,7 @@ export default class PixivTaskHandler {
     return worksDTOs
   }
 
-  pause() {
-
-  }
-
-  cancel() {
+  retry() {
 
   }
 

@@ -28,18 +28,10 @@ export default class PluginLoader {
       throw new Error(msg)
     }
 
-    // pause方法
-    isTaskHandler = 'pause' in taskPlugin && typeof taskPlugin.pause === 'function'
+    // retry方法
+    isTaskHandler = 'retry' in taskPlugin && typeof taskPlugin.retry === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现pause方法`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
-
-    // cancel方法
-    isTaskHandler = 'cancel' in taskPlugin && typeof taskPlugin.cancel === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现cancel方法`
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现retry方法`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }

@@ -4,25 +4,22 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 export default interface TaskHandler {
   /**
    * 创建任务
-   * @return 下载的资源
+   * @param url 需解析的url
+   * @return 根据解析结果创建的任务数组
    */
   create(url: string): Promise<Task[]>
 
   /**
    * 开始任务
-   * @return 下载的资源
+   * @param tasks 需开始的任务数组
+   * @return 作品信息（包含资源的数据流）
    */
   start(tasks: Task[]): Promise<WorksDTO[]>
 
   /**
-   * 暂停下载任务
-   * @param taskIds
+   * 重试下载任务
+   * @param tasks 需要重试的任务
+   * @return 作品信息（包含资源的数据流）
    */
-  pause(taskIds: number[]): Promise<boolean>
-
-  /**
-   * 取消下载任务
-   * @param taskIds
-   */
-  cancel(taskIds: number[]): Promise<boolean>
+  retry(tasks: Task[]): Promise<WorksDTO[]>
 }

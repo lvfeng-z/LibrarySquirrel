@@ -25,11 +25,7 @@ export default class LocalTaskHandler {
     return worksDTOs
   }
 
-  pause() {
-
-  }
-
-  cancel() {
+  retry() {
 
   }
 
