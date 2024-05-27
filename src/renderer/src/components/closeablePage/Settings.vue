@@ -14,7 +14,7 @@ const apis = reactive({
   settingsSaveSettings: window.api.settingsSaveSettings,
   settingsResetSettings: window.api.settingsResetSettings
 }) // 接口
-const activeName = [1] // 默认展开的折叠面板
+const activeName = ref([1]) // 默认展开的折叠面板
 const settings = ref({ workdir: '' }) // 设置
 const oldSettings = ref() // 原设置
 
