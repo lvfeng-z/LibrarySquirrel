@@ -1,5 +1,6 @@
 import Task from '../model/Task.ts'
 import LogUtil from '../util/LogUtil.ts'
+import logUtil from '../util/LogUtil.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskDao from '../dao/TaskDao.ts'
 import fs from 'fs'
@@ -8,7 +9,6 @@ import PluginLoader from '../plugin/PluginLoader.ts'
 import TaskConstant from '../constant/TaskConstant.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
-import logUtil from '../util/LogUtil.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
 
 /**
@@ -176,7 +176,6 @@ async function startTask(taskId: number): Promise<boolean> {
 
       const settings = SettingsService.getSettings() as { workdir: string }
 
-      let i = 0
       for (const worksDTO of worksDTOs) {
         // 如果插件未返回任务id，发出警告并跳过此次循环
         if (
@@ -203,7 +202,28 @@ async function startTask(taskId: number): Promise<boolean> {
           worksDTO.resourceStream !== undefined &&
           worksDTO.resourceStream !== null
         ) {
-          const writeStream = fs.createWriteStream(`${settings.workdir}/download/test${i}.jpg`)
+          // 提取作品的部分信息，用于文件命名
+          // 作者信息
+          const siteAuthorName: string = 'unknown'
+          if (
+            Object.prototype.hasOwnProperty.call(worksDTO, 'siteAuthor') &&
+            worksDTO.siteAuthor !== undefined &&
+            worksDTO.siteAuthor !== null
+          ) {
+            if (
+              worksDTO.siteAuthor.siteAuthorName === undefined ||
+              worksDTO.siteAuthor.siteAuthorName === null
+            ) {
+              LogUtil.warn('TaskService', `任务taskId: ${worksDTO.includeTaskId}未返回作者名称`)
+            }
+          }
+          // 作品信息
+          const siteWorksName =
+            worksDTO.siteWorksName === undefined ? 'unknown' : worksDTO.siteWorksName
+
+          const writeStream = fs.createWriteStream(
+            `${settings.workdir}/download/[${siteAuthorName}_${siteWorksName}]`
+          )
           worksDTO.resourceStream.pipe(writeStream)
 
           worksDTO.resourceStream.on('end', () => {
@@ -212,7 +232,6 @@ async function startTask(taskId: number): Promise<boolean> {
           worksDTO.resourceStream.on('error', () => {
             taskFailed(worksDTO.includeTaskId as number)
           })
-          i++
         } else {
           taskFailed(worksDTO.includeTaskId as number)
           LogUtil.warn(
