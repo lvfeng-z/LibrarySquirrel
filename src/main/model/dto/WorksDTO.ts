@@ -8,9 +8,14 @@ import fs from 'fs'
  */
 export default class WorksDTO extends Works {
   /**
-   * 作者
+   * 本地作者
    */
-  author: LocalAuthor | undefined | null
+  localAuthor: LocalAuthor | undefined | null
+
+  /**
+   * 站点作者
+   */
+  siteAuthor: LocalAuthor | undefined | null
 
   /**
    * 站点标签数组
@@ -30,16 +35,22 @@ export default class WorksDTO extends Works {
   constructor(works?: WorksDTO) {
     if (works === undefined) {
       super()
-      this.author = undefined
+      this.localAuthor = undefined
+      this.siteAuthor = undefined
       this.siteTags = undefined
       this.resourceStream = undefined
       this.resourceSize = undefined
     } else {
       super(works)
-      if (typeof works.author === 'string') {
-        this.author = JSON.parse(works.author)
+      if (typeof works.localAuthor === 'string') {
+        this.localAuthor = JSON.parse(works.localAuthor)
       } else {
-        this.author = works.author
+        this.localAuthor = works.localAuthor
+      }
+      if (typeof works.siteAuthor === 'string') {
+        this.siteAuthor = JSON.parse(works.siteAuthor)
+      } else {
+        this.siteAuthor = works.siteAuthor
       }
       this.siteTags = works.siteTags
       this.resourceStream = works.resourceStream
