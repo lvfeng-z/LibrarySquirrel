@@ -1,0 +1,146 @@
+可以实现这样的设计，利用Node.js的Stream（流）特性来控制数据流动，可以有效地管理内存，同时保持数据的实时处理。这种方式下，插件负责生成文件内容的Readable Stream（可读流），而主程序通过监听流事件来控制数据的处理节奏和存储逻辑。下面是一个简化示例，展示如何实现这样的设计：
+插件（读取逻辑）示例：
+
+javascript
+
+import * as fs from 'fs';
+
+import * as path from 'path';
+
+
+class FileReadStreamPlugin {
+
+    async *createFileStream(dirPath: string): AsyncIterable<string> {
+
+        const queue = [];
+
+        const streamQueueLimit = 10;
+
+
+        async function* readFilesRecursively(dir: string) {
+
+            const files = await fs.promises.readdir(dir, { withFileTypes: true });
+
+            for (const file of files) {
+
+                const filePath = path.join(dir, file.name);
+
+                if (file.isDirectory()) {
+
+                    yield* readFilesRecursively(filePath);
+
+                } else {
+
+                    yield filePath;
+
+                }
+
+            }
+
+        }
+
+
+        for await (const filePath of readFilesRecursively(dirPath)) {
+
+            // 控制队列长度
+
+            if(queue.length >= streamQueueLimit) {
+
+                await new Promise(resolve => setTimeout(resolve, 10)); // 简单的延时等待，确保不会无限制增加队列
+
+            }
+
+            queue.push(fs.createReadStream(filePath, 'utf8'));
+
+            yield queue.shift(); // 开始发送队列中的第一个流
+
+        }
+
+    }
+
+}
+
+主程序（存储逻辑）示例：
+
+javascript
+
+import { FileReadStreamPlugin } from './FileReadStreamPlugin';
+
+
+class MainProgram {
+
+    async processAndStoreFiles(dirPath: string) {
+
+        const fileStreamPlugin = new FileReadStreamPlugin();
+
+        const fileStreams = fileStreamPlugin.createFileStream(dirPath);
+
+
+        let activeStreams = 0;
+
+        for await (const fileStream of fileStreams) {
+
+            // 控制并发流的数量
+
+            while (activeStreams >= 10) {
+
+                await new Promise(resolve => setTimeout(resolve, 10)); // 等待直到有空闲位置
+
+            }
+
+            activeStreams++;
+
+
+            fileStream.on('data', (chunk) => {
+
+                // 处理数据块，这里可以替换为存储逻辑
+
+                console.log(`Received chunk from stream: ${chunk.toString().slice(0, 20)}...`);
+
+                // 假设这里调用存储逻辑
+
+                this.storeData(chunk.toString());
+
+            });
+
+
+            fileStream.on('end', () => {
+
+                activeStreams--;
+
+            });
+
+        }
+
+    }
+
+
+    async storeData(data: string) {
+
+        // 假设的存储逻辑
+
+        await new Promise(resolve => setTimeout(resolve, 100)); // 模拟长时间操作
+
+        console.log(`Stored data: ${data.slice(0, 20)}...`);
+
+    }
+
+}
+
+
+// 使用示例
+
+(async () => {
+
+    const mainProgram = new MainProgram();
+
+    await mainProgram.processAndStoreFiles('./your_directory_here');
+
+})();
+
+解释：
+
+    插件 (FileReadStreamPlugin) 提供了一个生成器函数 createFileStream，它遍历指定目录下的所有文件，并为每个文件创建一个 ReadableStream。通过控制队列长度（streamQueueLimit）来间接控制并发读取的文件数量。
+    主程序 (MainProgram) 中的 processAndStoreFiles 方法消费插件提供的流。它通过监听流的 'data' 事件处理文件内容，并在每个文件的 'end' 事件中减少活跃流计数，以此来控制并发度，确保任何时候最多只有10个流处于活动状态。
+    这种设计模式确保了主程序按需从插件获取数据流，并且在存储逻辑处理完一条数据后，才会从流中加载新的数据，有效控制内存占用。
+
