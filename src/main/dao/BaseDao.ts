@@ -5,7 +5,9 @@ import BaseModel from '../model/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
+import logUtil from '../util/LogUtil.ts'
 import DatabaseUtil from '../util/DatabaseUtil.ts'
+import CrudConstant from '../constant/CrudConstant.ts'
 
 type PrimaryKey = string | number
 
@@ -52,7 +54,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-      return (await db.prepare(sql)).run(plainObject).lastInsertRowid as number
+      try {
+        return (await db.prepare(sql)).run(plainObject).lastInsertRowid as number
+      } catch (error) {
+        logUtil.error('BaseDao', 'save方法error: ', error)
+        return CrudConstant.saveFailed
+      }
     } finally {
       db.release()
     }
