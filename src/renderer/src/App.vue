@@ -19,7 +19,7 @@ onMounted(() => {
 })
 // 变量
 const apis = {
-  test: window.api.testTaskServiceStartTask,
+  test: window.api.testTaskServiceCreateTask,
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
 } // 接口
@@ -128,8 +128,8 @@ async function requestWorks() {
 // test
 async function handleTest() {
   console.log('test')
-  return await apis.test(27)
-  // return await apis.test('file://tes1fasdftes1')
+  // return await apis.test(27)
+  return await apis.test('file://F:/inner world/picture/[stockings]/白丝/白丝雪糕')
 }
 </script>
 

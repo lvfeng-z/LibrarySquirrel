@@ -4,12 +4,29 @@ import { join } from 'path'
 export default class LocalTaskHandler {
   constructor() {}
 
-  create(url) {
-    const task1 = this.createTask()
-    task1.url = 'zh.jpg'
-    const task2 = this.createTask()
-    task2.url = 'lt.mp4'
-    return [task1, task2]
+  async *create(url) {
+    url = url.replace(/^file:\/\//, '')
+
+    async function* readFilesRecursively(task) {
+      const files = await fs.promises.readdir(task.url, { withFileTypes: true });
+      for (const file of files) {
+        const newTask = new Task()
+        newTask.url = join(task.url, file.name);
+        console.log(newTask);
+        if (file.isDirectory()) {
+          yield* readFilesRecursively(newTask);
+        } else {
+          yield newTask;
+        }
+      }
+    }
+
+    const task = new Task()
+    task.url = url
+
+    for await (const ta of readFilesRecursively(task)) {
+      yield ta
+    }
   }
 
   async start(tasks) {
@@ -30,46 +47,29 @@ export default class LocalTaskHandler {
 
   }
 
-  async *createFileStream(dirPath) {
-    const queue = [];
-    const streamQueueLimit = 10;
-
-    async function* readFilesRecursively(dir) {
-      const files = await fs.promises.readdir(dir, { withFileTypes: true });
-      for (const file of files) {
-        const filePath = join(dir, file.name);
-        if (file.isDirectory()) {
-          yield* readFilesRecursively(filePath);
-        } else {
-          yield filePath;
-        }
-      }
-    }
-
-    for await (const filePath of readFilesRecursively(dirPath)) {
-      // 控制队列长度
-      if(queue.length >= streamQueueLimit) {
-        await new Promise(resolve => setTimeout(resolve, 10)); // 简单的延时等待，确保不会无限制增加队列
-      }
-      queue.push(fs.createReadStream(filePath, 'utf8'));
-      yield queue.shift(); // 开始发送队列中的第一个流
-    }
-  }
-
-  createTask(){
-    return {
-      isCollection: undefined,
-      parentId: undefined,
-      siteDomain: undefined,
-      localWorksId: undefined,
-      siteWorksId: undefined,
-      url: undefined,
-      status: undefined,
-      pluginId: undefined,
-      pluginInfo: undefined,
-      pluginData: undefined
-    }
-  }
+  // async *taskGenerator(dirPath) {
+  //
+  //   async function* readFilesRecursively(task) {
+  //     const files = await fs.promises.readdir(task.url, { withFileTypes: true });
+  //     for (const file of files) {
+  //       const newTask = new Task()
+  //       newTask.url = join(task.url, file.name);
+  //       console.log(newTask);
+  //       if (file.isDirectory()) {
+  //         yield* readFilesRecursively(newTask);
+  //       } else {
+  //         yield newTask;
+  //       }
+  //     }
+  //   }
+  //
+  //   const task = new Task()
+  //   task.url = dirPath
+  //
+  //   for await (const ta of readFilesRecursively(task)) {
+  //     yield ta
+  //   }
+  // }
 
   createWorksDTO() {
     return {
@@ -93,5 +93,31 @@ export default class LocalTaskHandler {
       siteTags: undefined,
       resourceStream: undefined
     }
+  }
+}
+
+class Task {
+  isCollection
+  parentId
+  siteDomain
+  localWorksId
+  siteWorksId
+  url
+  status
+  pluginId
+  pluginInfo
+  pluginData
+
+  constructor() {
+    this.isCollection = undefined
+    this.parentId = undefined
+    this.siteDomain = undefined
+    this.localWorksId = undefined
+    this.siteWorksId = undefined
+    this.url = undefined
+    this.status = undefined
+    this.pluginId = undefined
+    this.pluginInfo = undefined
+    this.pluginData = undefined
   }
 }
