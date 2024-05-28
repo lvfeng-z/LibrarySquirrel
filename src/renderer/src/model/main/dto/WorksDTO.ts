@@ -8,18 +8,18 @@ export default class WorksDTO extends Works {
   /**
    * 作者
    */
-  author: LocalAuthor | undefined | null
+  localAuthor: LocalAuthor | undefined | null
 
   constructor(works?: WorksDTO) {
     if (works === undefined) {
       super()
-      this.author = undefined
+      this.localAuthor = undefined
     } else {
       super(works)
-      if (typeof works.author === 'string') {
-        this.author = JSON.parse(works.author)
+      if (typeof works.localAuthor === 'string') {
+        this.localAuthor = JSON.parse(works.localAuthor)
       } else {
-        this.author = works.author
+        this.localAuthor = works.localAuthor
       }
     }
   }

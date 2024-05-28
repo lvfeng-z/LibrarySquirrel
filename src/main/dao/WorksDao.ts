@@ -25,7 +25,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     const db = this.acquire()
     try {
       let statement: string
-      const selectClause = `select t1.*, json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as author`
+      const selectClause = `select t1.*, json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor`
       const fromClause = 'from works t1 left join local_author t2 on t1.local_author_id = t2.id'
       let whereClauses: string[]
       if (page.query !== undefined) {

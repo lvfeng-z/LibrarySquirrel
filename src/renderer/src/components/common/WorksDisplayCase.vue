@@ -42,9 +42,9 @@ function handleElImageFit(event) {
     <author-info
       class="works-display-case-author-info"
       :author="
-        props.works.author === undefined || props.works.author === null
+        props.works.localAuthor === undefined || props.works.localAuthor === null
           ? new LocalAuthor()
-          : props.works.author
+          : props.works.localAuthor
       "
     ></author-info>
   </div>
