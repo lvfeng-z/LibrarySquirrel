@@ -1,15 +1,14 @@
 import Task from '../model/Task.ts'
 import LogUtil from '../util/LogUtil.ts'
 import logUtil from '../util/LogUtil.ts'
-import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskDao from '../dao/TaskDao.ts'
-import fs from 'fs'
-import SettingsService from './SettingsService.ts'
 import PluginLoader from '../plugin/PluginLoader.ts'
 import TaskConstant from '../constant/TaskConstant.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
+import WorksService from './WorksService.ts'
+import CrudConstant from '../constant/CrudConstant.ts'
 
 /**
  * 保存
@@ -78,7 +77,7 @@ async function createTask(url: string): Promise<number> {
         if (tasks.length === 1) {
           // 如果插件返回的的任务列表长度为1，则不需要创建子任务
           const task = tasks[0]
-          task.status = TaskConstant.TaskStatesEnum.created
+          task.status = TaskConstant.TaskStatesEnum.CREATED
           task.isCollection = false
           try {
             task.pluginData = JSON.stringify(task.pluginData)
@@ -103,7 +102,7 @@ async function createTask(url: string): Promise<number> {
 
           const childTasks = tasks
             .map((task) => {
-              task.status = TaskConstant.TaskStatesEnum.created
+              task.status = TaskConstant.TaskStatesEnum.CREATED
               task.isCollection = false
               task.parentId = parentId
               task.pluginId = taskPlugin.id as number
@@ -143,9 +142,9 @@ async function createTask(url: string): Promise<number> {
  */
 async function startTask(taskId: number): Promise<boolean> {
   const dao = new TaskDao()
-  const task = await dao.getById(taskId)
+  const baseTask = await dao.getById(taskId)
 
-  if (task === undefined) {
+  if (baseTask === undefined) {
     const msg = `找不到任务，taskId = ${taskId}`
     LogUtil.error('TaskService', msg)
     return false
@@ -153,99 +152,66 @@ async function startTask(taskId: number): Promise<boolean> {
 
   let tasks: Task[] = []
 
-  if (task.isCollection) {
-    tasks = await getChildrenTask(task.id as number)
+  // 如果任务是一个任务集合，则其子任务放进tasks，否则其自身放进tasks
+  if (baseTask.isCollection) {
+    tasks = await getChildrenTask(baseTask.id as number)
+  } else {
+    tasks.push(baseTask)
   }
 
   // 校验任务的插件id
-  if (task.pluginId === undefined || task.pluginId === null) {
-    const msg = `任务的插件id意外为空，taskId: ${task.id}`
+  if (baseTask.pluginId === undefined || baseTask.pluginId === null) {
+    const msg = `任务的插件id意外为空，taskId: ${baseTask.id}`
     LogUtil.error('TaskService', msg)
     throw new Error(msg)
   }
 
   // 查询插件信息，日志用
-  const pluginInfo = JSON.stringify(await InstalledPluginsService.getById(task.pluginId))
+  const pluginInfo = JSON.stringify(await InstalledPluginsService.getById(baseTask.pluginId))
 
+  // 加载插件
   const pluginLoader = new PluginLoader()
-  return pluginLoader.loadTaskPlugin(task.pluginId).then(async (taskHandler: TaskHandler) => {
-    try {
-      const worksDTOs = await taskHandler.start(tasks)
-      // 记录任务id，用于校验插件返回的任务id是否越界
-      const taskIds = tasks.map((task) => task.id)
+  const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId)
 
-      const settings = SettingsService.getSettings() as { workdir: string }
+  // 尝试开始任务
+  try {
+    const worksDTOs = await taskHandler.start(tasks)
 
-      for (const worksDTO of worksDTOs) {
-        // 如果插件未返回任务id，发出警告并跳过此次循环
-        if (
-          Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') &&
-          worksDTO.includeTaskId !== undefined &&
-          worksDTO.includeTaskId !== null
-        ) {
-          // 如果插件返回的任务id越界，发出警告并跳过此次循环
-          if (!taskIds.includes(worksDTO.includeTaskId)) {
-            LogUtil.warn(
-              'TaskService',
-              `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-            )
-            continue
-          }
-        } else {
-          LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-          continue
-        }
-
-        // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
-        if (
-          Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
-          worksDTO.resourceStream !== undefined &&
-          worksDTO.resourceStream !== null
-        ) {
-          // 提取作品的部分信息，用于文件命名
-          // 作者信息
-          const siteAuthorName: string = 'unknown'
-          if (
-            Object.prototype.hasOwnProperty.call(worksDTO, 'siteAuthor') &&
-            worksDTO.siteAuthor !== undefined &&
-            worksDTO.siteAuthor !== null
-          ) {
-            if (
-              worksDTO.siteAuthor.siteAuthorName === undefined ||
-              worksDTO.siteAuthor.siteAuthorName === null
-            ) {
-              LogUtil.warn('TaskService', `任务taskId: ${worksDTO.includeTaskId}未返回作者名称`)
-            }
-          }
-          // 作品信息
-          const siteWorksName =
-            worksDTO.siteWorksName === undefined ? 'unknown' : worksDTO.siteWorksName
-
-          const writeStream = fs.createWriteStream(
-            `${settings.workdir}/download/[${siteAuthorName}_${siteWorksName}]`
-          )
-          worksDTO.resourceStream.pipe(writeStream)
-
-          worksDTO.resourceStream.on('end', () => {
-            finishTask(worksDTO.includeTaskId as number)
-          })
-          worksDTO.resourceStream.on('error', () => {
-            taskFailed(worksDTO.includeTaskId as number)
-          })
-        } else {
-          taskFailed(worksDTO.includeTaskId as number)
-          LogUtil.warn(
-            'TaskService',
-            `插件未返回任务的资源，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-          )
-        }
+    for (const worksDTO of worksDTOs) {
+      // 如果插件未返回任务id，发出警告并跳过此次循环
+      if (
+        !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
+        worksDTO.includeTaskId === undefined ||
+        worksDTO.includeTaskId === null
+      ) {
+        LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
+        continue
       }
-      return true
-    } catch (err) {
-      LogUtil.error('TaskService', err)
-      return false
+
+      // 找到插件返回的作品对应的task
+      const taskFilter = tasks.filter((task) => task.id !== worksDTO.includeTaskId)
+      if (taskFilter.length < 1) {
+        // 如果插件返回的任务id越界，发出警告并跳过此次循环
+        LogUtil.warn(
+          'TaskService',
+          `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+        )
+        continue
+      }
+
+      WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
+        if (worksId === CrudConstant.saveFailed) {
+          taskFailed(taskFilter[0])
+        } else {
+          finishTask(taskFilter[0])
+        }
+      })
     }
-  })
+    return true
+  } catch (error) {
+    LogUtil.error('TaskService', '开始任务时出错，error: ', error)
+    return false
+  }
 }
 
 function getChildrenTask(parentId: number) {
@@ -257,24 +223,32 @@ function getChildrenTask(parentId: number) {
 
 /**
  * 任务完成
- * @param taskId
+ * @param task 任务信息
  */
-function finishTask(taskId: number) {
+function finishTask(task: Task) {
   const dao = new TaskDao()
-  const task = new Task()
-  task.status = TaskConstant.TaskStatesEnum.finished
-  return dao.updateById(taskId, task)
+  task = new Task(task)
+  task.status = TaskConstant.TaskStatesEnum.FINISHED
+  if (task.id !== undefined && task.id !== null) {
+    return dao.updateById(task.id, task)
+  } else {
+    throw new Error('任务标记为完成时，任务id意外为空')
+  }
 }
 
 /**
  * 任务失败
- * @param taskId
+ * @param task
  */
-function taskFailed(taskId: number) {
+function taskFailed(task: Task) {
   const dao = new TaskDao()
-  const task = new Task()
-  task.status = TaskConstant.TaskStatesEnum.failed
-  return dao.updateById(taskId, task)
+  task = new Task(task)
+  task.status = TaskConstant.TaskStatesEnum.FAILED
+  if (task.id !== undefined && task.id !== null) {
+    return dao.updateById(task.id, task)
+  } else {
+    throw new Error('任务标记为完成时，任务id意外为空')
+  }
 }
 
 export default {
