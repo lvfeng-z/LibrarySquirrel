@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { join } from 'path'
 
 export default class LocalTaskHandler {
   constructor() {}
@@ -27,6 +28,32 @@ export default class LocalTaskHandler {
 
   retry() {
 
+  }
+
+  async *createFileStream(dirPath) {
+    const queue = [];
+    const streamQueueLimit = 10;
+
+    async function* readFilesRecursively(dir) {
+      const files = await fs.promises.readdir(dir, { withFileTypes: true });
+      for (const file of files) {
+        const filePath = join(dir, file.name);
+        if (file.isDirectory()) {
+          yield* readFilesRecursively(filePath);
+        } else {
+          yield filePath;
+        }
+      }
+    }
+
+    for await (const filePath of readFilesRecursively(dirPath)) {
+      // 控制队列长度
+      if(queue.length >= streamQueueLimit) {
+        await new Promise(resolve => setTimeout(resolve, 10)); // 简单的延时等待，确保不会无限制增加队列
+      }
+      queue.push(fs.createReadStream(filePath, 'utf8'));
+      yield queue.shift(); // 开始发送队列中的第一个流
+    }
   }
 
   createTask(){
