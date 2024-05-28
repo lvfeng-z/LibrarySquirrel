@@ -7,6 +7,8 @@ import SettingsService from './SettingsService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
+import { promisify } from 'node:util'
+import CrudConstant from '../constant/CrudConstant.ts'
 
 /**
  * 保存作品信息及资源
@@ -43,20 +45,27 @@ async function saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
     // 作品信息
     const siteWorksName = worksDTO.siteWorksName === undefined ? 'unknown' : worksDTO.siteWorksName
 
+    const pipelinePromise = promisify((readable: fs.ReadStream, writable: fs.WriteStream) =>
+      readable.pipe(writable)
+    )
+
     const writeStream = fs.createWriteStream(
       `${settings.workdir}/download/[${siteAuthorName}_${siteWorksName}]`
     )
-    const writeProcess = worksDTO.resourceStream.pipe(writeStream)
 
-    writeProcess.on('end', () => {
-      return dao.save(works)
-    })
-    writeProcess.on('error', () => {
-      return 0
-    })
+    try {
+      await pipelinePromise(worksDTO.resourceStream, writeStream)
+      return dao.save(works).then((worksId) => worksId as number)
+    } catch (error) {
+      LogUtil.error(
+        'WorksService',
+        `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
+      )
+      return CrudConstant.saveFailed
+    }
   } else {
-    LogUtil.error('WorksService', `保存任务时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
-    return 0
+    LogUtil.error('WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
+    return CrudConstant.saveFailed
   }
 }
 
