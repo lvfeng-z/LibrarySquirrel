@@ -84,7 +84,8 @@ async function createTask(url: string): Promise<number> {
           } catch (error) {
             logUtil.error(
               'TaskService',
-              `序列化插件保存的pluginData时出错，error: ${error}，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
+              `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
+              error
             )
             return 0
           }
@@ -113,7 +114,8 @@ async function createTask(url: string): Promise<number> {
               } catch (error) {
                 logUtil.error(
                   'TaskService',
-                  `序列化插件保存的pluginData时出错，error: ${error}，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}`
+                  `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
+                  error
                 )
                 return undefined
               }
@@ -126,7 +128,8 @@ async function createTask(url: string): Promise<number> {
       } catch (error) {
         logUtil.warn(
           'TaskService',
-          `插件创建任务时出现异常，error: ${error}，url: ${url}，plugin: ${pluginInfo}`
+          `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`,
+          error
         )
       }
     }
