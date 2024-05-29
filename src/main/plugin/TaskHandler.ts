@@ -1,5 +1,6 @@
 import Task from '../model/Task.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
+import { Readable } from 'node:stream'
 
 export default interface TaskHandler {
   /**
@@ -7,7 +8,7 @@ export default interface TaskHandler {
    * @param url 需解析的url
    * @return 根据解析结果创建的任务数组
    */
-  create(url: string): Promise<Task[]>
+  create(url: string): Promise<Task[] | Readable>
 
   /**
    * 开始任务
