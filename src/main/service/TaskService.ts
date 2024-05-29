@@ -9,6 +9,8 @@ import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
 import CrudConstant from '../constant/CrudConstant.ts'
+import InstalledPlugins from '../model/InstalledPlugins.ts'
+import { Readable } from 'node:stream'
 
 /**
  * 保存
@@ -54,76 +56,12 @@ async function createTask(url: string): Promise<number> {
         const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
 
         // 创建任务
-        const pluginResponseTasks = await taskHandler.create(url)
-
-        // 校验是否返回了空数据或非数组
-        if (
-          pluginResponseTasks === undefined ||
-          pluginResponseTasks === null ||
-          pluginResponseTasks.length === 0
-        ) {
-          logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
-          return 0
+        const pluginResponse = await taskHandler.create(url)
+        if (Array.isArray(pluginResponse)) {
+          await handlePluginTaskArray(pluginResponse, url, taskPlugin)
         }
-
-        // 清除所有插件不应处理的属性值
-        const tasks = pluginResponseTasks.map((task) => {
-          const temp = new Task(task)
-          temp.security()
-          return temp
-        })
-
-        // 根据插件返回的任务数组长度判断如何处理
-        if (tasks.length === 1) {
-          // 如果插件返回的的任务列表长度为1，则不需要创建子任务
-          const task = tasks[0]
-          task.status = TaskConstant.TaskStatesEnum.CREATED
-          task.isCollection = false
-          try {
-            task.pluginData = JSON.stringify(task.pluginData)
-          } catch (error) {
-            logUtil.error(
-              'TaskService',
-              `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
-              error
-            )
-            return 0
-          }
-
-          return save(task).then(() => 1)
-        } else {
-          // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
-          const parentTask = new Task()
-          parentTask.isCollection = true
-          parentTask.siteDomain = taskPlugin.domain
-          parentTask.url = url
-          parentTask.pluginId = taskPlugin.id as number
-          parentTask.pluginInfo = pluginInfo
-          const parentId = await save(parentTask)
-
-          const childTasks = tasks
-            .map((task) => {
-              task.status = TaskConstant.TaskStatesEnum.CREATED
-              task.isCollection = false
-              task.parentId = parentId
-              task.pluginId = taskPlugin.id as number
-              task.pluginInfo = pluginInfo
-              task.siteDomain = taskPlugin.domain
-              try {
-                task.pluginData = JSON.stringify(task.pluginData)
-              } catch (error) {
-                logUtil.error(
-                  'TaskService',
-                  `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
-                  error
-                )
-                return undefined
-              }
-              return task
-            })
-            .filter((childTask) => childTask !== undefined) as Task[]
-
-          return saveBatch(childTasks)
+        if (pluginResponse instanceof Readable) {
+          await handlePluginTaskStream(pluginResponse, url, taskPlugin)
         }
       } catch (error) {
         logUtil.warn(
@@ -137,6 +75,126 @@ async function createTask(url: string): Promise<number> {
 
   // 到此处依然没有返回，说明失败了
   return 0
+}
+
+/**
+ * 处理插件返回的任务数组
+ * @param pluginResponseTasks 插件返回的任务数组
+ * @param url 传给插件的url
+ * @param taskPlugin 插件信息
+ */
+async function handlePluginTaskArray(
+  pluginResponseTasks: Task[],
+  url: string,
+  taskPlugin: InstalledPlugins
+): Promise<number> {
+  // 查询插件信息，用于输出日志
+  const pluginInfo = JSON.stringify(taskPlugin)
+
+  // 校验是否返回了空数据或非数组
+  if (
+    pluginResponseTasks === undefined ||
+    pluginResponseTasks === null ||
+    pluginResponseTasks.length === 0
+  ) {
+    logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+    return 0
+  }
+
+  // 清除所有插件不应处理的属性值
+  const tasks = pluginResponseTasks.map((task) => {
+    const temp = new Task(task)
+    temp.security()
+    return temp
+  })
+
+  // 根据插件返回的任务数组长度判断如何处理
+  if (tasks.length === 1) {
+    // 如果插件返回的的任务列表长度为1，则不需要创建子任务
+    const task = tasks[0]
+    task.status = TaskConstant.TaskStatesEnum.CREATED
+    task.isCollection = false
+    try {
+      task.pluginData = JSON.stringify(task.pluginData)
+    } catch (error) {
+      logUtil.error(
+        'TaskService',
+        `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
+        error
+      )
+      return 0
+    }
+
+    return save(task).then(() => 1)
+  } else {
+    // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
+    const parentTask = new Task()
+    parentTask.isCollection = true
+    parentTask.siteDomain = taskPlugin.domain
+    parentTask.url = url
+    parentTask.pluginId = taskPlugin.id as number
+    parentTask.pluginInfo = pluginInfo
+    const parentId = await save(parentTask)
+
+    const childTasks = tasks
+      .map((task) => {
+        task.status = TaskConstant.TaskStatesEnum.CREATED
+        task.isCollection = false
+        task.parentId = parentId
+        task.pluginId = taskPlugin.id as number
+        task.pluginInfo = pluginInfo
+        task.siteDomain = taskPlugin.domain
+        try {
+          task.pluginData = JSON.stringify(task.pluginData)
+        } catch (error) {
+          logUtil.error(
+            'TaskService',
+            `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
+            error
+          )
+          return undefined
+        }
+        return task
+      })
+      .filter((childTask) => childTask !== undefined) as Task[]
+
+    return saveBatch(childTasks)
+  }
+}
+
+async function handlePluginTaskStream(
+  pluginResponseTaskStream: Readable,
+  url: string,
+  taskPlugin: InstalledPlugins
+) {
+  let hasItems = false // 是否有数据的标记
+  let itemCount = 0 // 计数器
+
+  pluginResponseTaskStream.on('data', (chunk) => {
+    // 数据到来，标记为非空并增加计数
+    hasItems = true
+    itemCount++
+
+    // 一旦发现有2个或以上数据项，就可以提前结束判断
+    if (itemCount >= 2) {
+      pluginResponseTaskStream.pause() // 如果不再需要更多数据，可以暂停流
+      console.log('Stream has at least 2 items.')
+    }
+  })
+
+  pluginResponseTaskStream.on('end', () => {
+    // 所有数据读取完毕
+    if (!hasItems) {
+      console.log('Stream is empty.')
+    } else if (itemCount === 1) {
+      console.log('Stream has exactly 1 item.')
+    } else {
+      console.log(`Stream has more than 1 item, total: ${itemCount}`)
+    }
+  })
+
+  // 开始读取流
+  pluginResponseTaskStream.resume()
 }
 
 /**
@@ -217,6 +275,10 @@ async function startTask(taskId: number): Promise<boolean> {
   }
 }
 
+/**
+ * 获取parentId的子任务
+ * @param parentId
+ */
 function getChildrenTask(parentId: number) {
   const dao = new TaskDao()
   const query = new TaskQueryDTO()
