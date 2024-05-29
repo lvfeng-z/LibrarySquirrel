@@ -11,6 +11,7 @@ import WorksService from './WorksService.ts'
 import CrudConstant from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
+import msgpack from 'msgpack5'
 
 /**
  * 保存
@@ -167,19 +168,16 @@ async function handlePluginTaskStream(
   url: string,
   taskPlugin: InstalledPlugins
 ) {
+  console.log(url, taskPlugin)
   let hasItems = false // 是否有数据的标记
   let itemCount = 0 // 计数器
 
   pluginResponseTaskStream.on('data', (chunk) => {
+    const task = msgpack().decode(chunk)
+    console.log(task)
     // 数据到来，标记为非空并增加计数
     hasItems = true
     itemCount++
-
-    // 一旦发现有2个或以上数据项，就可以提前结束判断
-    if (itemCount >= 2) {
-      pluginResponseTaskStream.pause() // 如果不再需要更多数据，可以暂停流
-      console.log('Stream has at least 2 items.')
-    }
   })
 
   pluginResponseTaskStream.on('end', () => {

@@ -1,32 +1,27 @@
 import fs from 'fs'
 import { join } from 'path'
+import { Readable } from 'node:stream'
+import msgpack from 'msgpack5'
 
 export default class LocalTaskHandler {
   constructor() {}
 
-  async *create(url) {
+  async create(url) {
     url = url.replace(/^file:\/\//, '')
 
-    async function* readFilesRecursively(task) {
-      const files = await fs.promises.readdir(task.url, { withFileTypes: true });
-      for (const file of files) {
-        const newTask = new Task()
-        newTask.url = join(task.url, file.name);
-        console.log(newTask);
-        if (file.isDirectory()) {
-          yield* readFilesRecursively(newTask);
-        } else {
-          yield newTask;
+    const baseTask = new Task()
+    baseTask.url = url
+    const self = this
+
+    return new Readable({
+      async read() {
+        for await (const task of self.createTaskRecursively(baseTask)) {
+          const taskData = msgpack().encode(task);
+          this.push(Buffer.from(taskData));
         }
+        this.push(null)
       }
-    }
-
-    const task = new Task()
-    task.url = url
-
-    for await (const ta of readFilesRecursively(task)) {
-      yield ta
-    }
+    })
   }
 
   async start(tasks) {
@@ -47,29 +42,18 @@ export default class LocalTaskHandler {
 
   }
 
-  // async *taskGenerator(dirPath) {
-  //
-  //   async function* readFilesRecursively(task) {
-  //     const files = await fs.promises.readdir(task.url, { withFileTypes: true });
-  //     for (const file of files) {
-  //       const newTask = new Task()
-  //       newTask.url = join(task.url, file.name);
-  //       console.log(newTask);
-  //       if (file.isDirectory()) {
-  //         yield* readFilesRecursively(newTask);
-  //       } else {
-  //         yield newTask;
-  //       }
-  //     }
-  //   }
-  //
-  //   const task = new Task()
-  //   task.url = dirPath
-  //
-  //   for await (const ta of readFilesRecursively(task)) {
-  //     yield ta
-  //   }
-  // }
+  async *createTaskRecursively(task) {
+    const files = await fs.promises.readdir(task.url, { withFileTypes: true });
+    for (const file of files) {
+      const newTask = new Task()
+      newTask.url = join(task.url, file.name);
+      if (file.isDirectory()) {
+        yield* this.createTaskRecursively(newTask);
+      } else {
+        yield newTask;
+      }
+    }
+  }
 
   createWorksDTO() {
     return {

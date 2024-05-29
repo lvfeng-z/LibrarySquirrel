@@ -129,7 +129,7 @@ async function requestWorks() {
 async function handleTest() {
   console.log('test')
   // return await apis.test(27)
-  return await apis.test('file://F:/inner world/picture/[stockings]/白丝/白丝雪糕')
+  return await apis.test('file://')
 }
 </script>
 
