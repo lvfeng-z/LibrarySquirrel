@@ -11,6 +11,7 @@ import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
 import SelectOption from './model/util/SelectOption.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
+import TaskManage from './components/closeablePage/TaskManage.vue'
 
 // onMounted
 onMounted(() => {
@@ -19,7 +20,6 @@ onMounted(() => {
 })
 // 变量
 const apis = {
-  test: window.api.testTaskServiceCreateTask,
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
 } // 接口
@@ -30,6 +30,7 @@ const pageState = reactive({
   mainPage: true,
   closeablePage: false,
   showTagManagePage: false,
+  showTaskManagePage: false,
   showSettingsPage: false
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
@@ -56,6 +57,9 @@ function showFloatPage(pageName) {
   switch (pageName) {
     case 'TagManage':
       pageState.showTagManagePage = true
+      break
+    case 'TaskManage':
+      pageState.showTaskManagePage = true
       break
     case 'Settings':
       pageState.showSettingsPage = true
@@ -129,7 +133,6 @@ async function requestWorks() {
 async function handleTest() {
   console.log('test')
   // return await apis.test(27)
-  return await apis.test('file://')
 }
 </script>
 
@@ -152,7 +155,7 @@ async function handleTest() {
               <el-icon><User /></el-icon>
               <span>作者</span>
             </template>
-            <el-menu-item index="2-1" @click="showFloatPage('TagManage')">本地作者</el-menu-item>
+            <el-menu-item index="2-1">本地作者</el-menu-item>
             <el-menu-item index="2-2">站点作者</el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="3">
@@ -172,6 +175,7 @@ async function handleTest() {
               <el-icon><List /></el-icon>
               <span>任务</span>
             </template>
+            <el-menu-item index="5-1" @click="showFloatPage('TaskManage')">任务管理</el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="6">
             <template #title>
@@ -233,6 +237,7 @@ async function handleTest() {
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
+        <TaskManage v-if="pageState.showTaskManagePage" @close-self="closeFloatPage" />
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>

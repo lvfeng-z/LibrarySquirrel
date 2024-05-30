@@ -6,8 +6,6 @@ declare global {
     api: {
       // test
       testInsertLocalTag10W: function
-      testTaskServiceStartTask: function
-      testTaskServiceCreateTask: function
       testTaskPluginListenerServiceSaveBatch: function
       testTaskPluginListenerServiceGetMonitored: function
 
@@ -35,6 +33,10 @@ declare global {
       siteTagUpdateBindLocalTag: function
       siteTagGetBoundOrUnboundInLocalTag: function
       siteTagGetSelectList: function
+
+      // TaskService
+      taskServiceStartTask: function
+      taskServiceCreateTask: function
 
       // WorksService
       worksQueryPage: function

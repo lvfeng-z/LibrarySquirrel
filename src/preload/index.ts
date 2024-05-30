@@ -7,12 +7,6 @@ const api = {
   testInsertLocalTag10W: (args) => {
     return Electron.ipcRenderer.invoke('test-insertLocalTag10W', args)
   },
-  testTaskServiceStartTask: (args) => {
-    return Electron.ipcRenderer.invoke('test-taskService-startTask', args)
-  },
-  testTaskServiceCreateTask: (args) => {
-    return Electron.ipcRenderer.invoke('test-taskService-createTask', args)
-  },
   testTaskPluginListenerServiceSaveBatch: (args) => {
     return Electron.ipcRenderer.invoke('test-taskPluginListenerService-saveBatch', args)
   },
@@ -77,6 +71,14 @@ const api = {
   },
   siteTagGetSelectList: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-getSelectList', args)
+  },
+
+  // TaskService
+  taskServiceCreateTask: (args) => {
+    return Electron.ipcRenderer.invoke('taskService-createTask', args)
+  },
+  taskServiceStartTask: (args) => {
+    return Electron.ipcRenderer.invoke('taskService-startTask', args)
   },
 
   // WorksService

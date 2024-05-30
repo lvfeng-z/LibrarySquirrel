@@ -18,12 +18,6 @@ function exposeService() {
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
     return await InsertLocalTag.insertLocalTag10W()
   })
-  Electron.ipcMain.handle('test-taskService-startTask', async (_event, args) => {
-    return await TaskService.startTask(args)
-  })
-  Electron.ipcMain.handle('test-taskService-createTask', async (_event, args) => {
-    return await TaskService.createTask(args)
-  })
   Electron.ipcMain.handle('test-taskPluginListenerService-saveBatch', async (_event, args) => {
     return await TaskPluginListenerService.saveBatch(args)
   })
@@ -94,6 +88,14 @@ function exposeService() {
   )
   Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
     return await SiteTagService.getSelectList(args)
+  })
+
+  // TaskService
+  Electron.ipcMain.handle('taskService-startTask', async (_event, args) => {
+    return await TaskService.startTask(args)
+  })
+  Electron.ipcMain.handle('taskService-createTask', async (_event, args) => {
+    return await TaskService.createTask(args)
   })
 
   // WorksService
