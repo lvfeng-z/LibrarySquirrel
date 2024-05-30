@@ -165,31 +165,80 @@ async function handlePluginTaskArray(
   }
 }
 
+/**
+ * 处理插件返回的任务流
+ * @param pluginResponseTaskStream 插件返回的任务流
+ * @param url 传给插件的url
+ * @param taskPlugin 插件信息
+ */
 async function handlePluginTaskStream(
   pluginResponseTaskStream: Readable,
   url: string,
   taskPlugin: InstalledPlugins
 ) {
-  console.log(url, taskPlugin)
-  let hasItems = false // 是否有数据的标记
-  let itemCount = 0 // 计数器
+  // 查询插件信息，用于输出日志
+  const pluginInfo = JSON.stringify(taskPlugin)
+  // 任务缓存
+  const taskBuffer: Task[] = []
+  // 任务集合，只在任务多于1个的时候进行保存
+  const parentTask = new Task()
+  parentTask.pluginId = taskPlugin.id as number
+  parentTask.pluginInfo = pluginInfo
+  parentTask.url = url
+  parentTask.status = TaskConstant.TaskStatesEnum.CREATED
+  parentTask.siteDomain = taskPlugin.domain
+  parentTask.isCollection = true
+  // 任务计数
+  let itemCount = 0
+  let parentTaskProcess: Promise<number>
 
-  pluginResponseTaskStream.on('data', (chunk) => {
+  const parentTaskProcessing = async () => {
+    return await save(parentTask)
+  }
+
+  pluginResponseTaskStream.on('data', async (chunk) => {
+    await parentTaskProcess
+    // 解析json，处理属性
     const task = JSON.parse(chunk)
-    logUtil.info('TaskService', task)
-    // 数据到来，标记为非空并增加计数
-    hasItems = true
+    task.pluginId = taskPlugin.id as number
+    task.pluginInfo = pluginInfo
+    task.status = TaskConstant.TaskStatesEnum.CREATED
+    task.siteDomain = taskPlugin.domain
+    task.isCollection = false
+    task.parentId = parentTask.id
+
+    // 当任务缓存达到10时，保存一次
+    taskBuffer.push(task)
     itemCount++
+    if (taskBuffer.length >= 10) {
+      // 如果任务集合尚未保存，则先保存任务集合
+      if (parentTaskProcess === undefined) {
+        parentTaskProcess = parentTaskProcessing()
+        parentTask.id = await parentTaskProcess
+        // 更新parentId
+        taskBuffer.forEach((task) => (task.parentId = parentTask.id as number))
+      }
+      saveBatch(taskBuffer)
+      taskBuffer.length = 0
+    }
   })
 
-  pluginResponseTaskStream.on('end', () => {
+  pluginResponseTaskStream.on('end', async () => {
     // 所有数据读取完毕
-    if (!hasItems) {
-      console.log('Stream is empty.')
+    if (itemCount === 0) {
+      logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
     } else if (itemCount === 1) {
-      console.log('Stream has exactly 1 item.')
-    } else {
-      console.log(`Stream has more than 1 item, total: ${itemCount}`)
+      await save(taskBuffer[0])
+    } else if (taskBuffer.length > 0) {
+      // 如果任务集合尚未保存，则先保存任务集合
+      if (parentTaskProcess === undefined) {
+        parentTaskProcess = parentTaskProcessing()
+        parentTask.id = await parentTaskProcess
+        // 更新parentId
+        taskBuffer.forEach((task) => (task.parentId = parentTask.id as number))
+      }
+      await parentTaskProcess
+      await saveBatch(taskBuffer)
     }
   })
 
