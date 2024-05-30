@@ -7,7 +7,6 @@ import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import logUtil from '../util/LogUtil.ts'
 import DatabaseUtil from '../util/DatabaseUtil.ts'
-import CrudConstant from '../constant/CrudConstant.ts'
 
 type PrimaryKey = string | number
 
@@ -58,7 +57,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         return (await db.prepare(sql)).run(plainObject).lastInsertRowid as number
       } catch (error) {
         logUtil.error('BaseDao', 'save方法error: ', error)
-        return CrudConstant.saveFailed
+        throw error
       }
     } finally {
       db.release()
