@@ -1,7 +1,6 @@
 import fs from 'fs'
 import { join } from 'path'
 import { Readable } from 'node:stream'
-import msgpack from 'msgpack5'
 
 export default class LocalTaskHandler {
   constructor() {}
@@ -16,7 +15,7 @@ export default class LocalTaskHandler {
     return new Readable({
       async read() {
         for await (const task of self.createTaskRecursively(baseTask)) {
-          const taskData = msgpack().encode(task);
+          const taskData = JSON.stringify(task);
           this.push(Buffer.from(taskData));
         }
         this.push(null)

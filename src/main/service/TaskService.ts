@@ -11,7 +11,6 @@ import WorksService from './WorksService.ts'
 import CrudConstant from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
-import msgpack from 'msgpack5'
 
 /**
  * 保存
@@ -37,40 +36,43 @@ async function saveBatch(tasks: Task[]): Promise<number> {
  * @param url 作品/作品集所在url
  */
 async function createTask(url: string): Promise<number> {
-  if (url.startsWith('file://')) {
-    // 查询监听此url的插件
-    // todo 需要处理监听此url的插件对应不同站点的情况
-    const taskPlugins = await TaskPluginListenerService.getMonitored(url)
+  // 查询监听此url的插件
+  // todo 需要处理监听此url的插件对应不同站点的情况
+  const taskPlugins = await TaskPluginListenerService.getMonitored(url)
 
-    // 插件加载器
-    const pluginLoader = new PluginLoader()
+  if (taskPlugins.length === 0) {
+    logUtil.info('TaskService', '没有监听此链接的插件，url: ', url)
+    return 0
+  }
 
-    // 按照排序尝试每个插件
-    for (const taskPlugin of taskPlugins) {
-      // 查询插件信息，用于输出日志
-      const pluginInfo = JSON.stringify(
-        await InstalledPluginsService.getById(taskPlugin.id as number)
-      )
+  // 插件加载器
+  const pluginLoader = new PluginLoader()
 
-      try {
-        // 异步加载插件
-        const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
+  // 按照排序尝试每个插件
+  for (const taskPlugin of taskPlugins) {
+    // 查询插件信息，用于输出日志
+    const pluginInfo = JSON.stringify(
+      await InstalledPluginsService.getById(taskPlugin.id as number)
+    )
 
-        // 创建任务
-        const pluginResponse = await taskHandler.create(url)
-        if (Array.isArray(pluginResponse)) {
-          await handlePluginTaskArray(pluginResponse, url, taskPlugin)
-        }
-        if (pluginResponse instanceof Readable) {
-          await handlePluginTaskStream(pluginResponse, url, taskPlugin)
-        }
-      } catch (error) {
-        logUtil.warn(
-          'TaskService',
-          `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`,
-          error
-        )
+    try {
+      // 异步加载插件
+      const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
+
+      // 创建任务
+      const pluginResponse = await taskHandler.create(url)
+      if (Array.isArray(pluginResponse)) {
+        await handlePluginTaskArray(pluginResponse, url, taskPlugin)
       }
+      if (pluginResponse instanceof Readable) {
+        await handlePluginTaskStream(pluginResponse, url, taskPlugin)
+      }
+    } catch (error) {
+      logUtil.warn(
+        'TaskService',
+        `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`,
+        error
+      )
     }
   }
 
@@ -173,8 +175,8 @@ async function handlePluginTaskStream(
   let itemCount = 0 // 计数器
 
   pluginResponseTaskStream.on('data', (chunk) => {
-    const task = msgpack().decode(chunk)
-    console.log(task)
+    const task = JSON.parse(chunk)
+    logUtil.info('TaskService', task)
     // 数据到来，标记为非空并增加计数
     hasItems = true
     itemCount++

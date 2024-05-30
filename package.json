@@ -35,7 +35,6 @@
     "electron-store": "^9.0.0",
     "electron-updater": "^6.1.8",
     "element-plus": "^2.7.3",
-    "msgpack5": "^6.0.2",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
