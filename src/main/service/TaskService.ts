@@ -190,40 +190,39 @@ async function handlePluginTaskStream(
   parentTask.isCollection = true
   // 任务计数
   let itemCount = 0
-  // 标记任务集合是否保存
-  let isParentSaved = false
-  // 任务处理过程队列
-  const taskProcessingQueue: Promise<void>[] = []
+  // 集合任务存储过程
+  let parentTaskProcess: Promise<number>
 
-  // 任务处理过程
-  const taskProcessing = async (task: Task) => {
+  const parentTaskProcessing = async () => {
+    return await save(parentTask)
+  }
+
+  pluginResponseTaskStream.on('data', async (chunk) => {
+    await parentTaskProcess
+    // 解析json，处理属性
+    const task = JSON.parse(chunk)
     task.pluginId = taskPlugin.id as number
     task.pluginInfo = pluginInfo
     task.status = TaskConstant.TaskStatesEnum.CREATED
     task.siteDomain = taskPlugin.domain
     task.isCollection = false
-    task.parentId = parentTask.id as number
+    task.parentId = parentTask.id
 
     // 当任务缓存达到10时，保存一次
     taskBuffer.push(task)
     itemCount++
     if (taskBuffer.length >= 10) {
       // 如果任务集合尚未保存，则先保存任务集合
-      if (!isParentSaved) {
-        await save(parentTask)
-        isParentSaved = true
+      if (parentTaskProcess === undefined) {
+        parentTaskProcess = parentTaskProcessing()
+        parentTask.id = await parentTaskProcess
         // 更新parentId
         taskBuffer.forEach((task) => (task.parentId = parentTask.id as number))
       }
-      await saveBatch(taskBuffer)
+      const temp = taskBuffer.slice()
       taskBuffer.length = 0
+      await saveBatch(temp)
     }
-  }
-
-  pluginResponseTaskStream.on('data', async (chunk) => {
-    // 解析json，处理属性
-    const task = JSON.parse(chunk)
-    taskProcessingQueue.push(taskProcessing(task))
   })
 
   pluginResponseTaskStream.on('end', async () => {
@@ -234,12 +233,13 @@ async function handlePluginTaskStream(
       await save(taskBuffer[0])
     } else if (taskBuffer.length > 0) {
       // 如果任务集合尚未保存，则先保存任务集合
-      if (!isParentSaved) {
-        await save(parentTask)
-        isParentSaved = true
+      if (parentTaskProcess === undefined) {
+        parentTaskProcess = parentTaskProcessing()
+        parentTask.id = await parentTaskProcess
         // 更新parentId
         taskBuffer.forEach((task) => (task.parentId = parentTask.id as number))
       }
+      await parentTaskProcess
       await saveBatch(taskBuffer)
     }
   })
