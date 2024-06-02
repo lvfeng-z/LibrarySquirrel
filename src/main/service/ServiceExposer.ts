@@ -94,8 +94,8 @@ function exposeService() {
   Electron.ipcMain.handle('taskService-startTask', async (_event, args) => {
     return await TaskService.startTask(args)
   })
-  Electron.ipcMain.handle('taskService-createTask', async (_event, args) => {
-    return await TaskService.createTask(args)
+  Electron.ipcMain.handle('taskService-createTask', (_event, args) => {
+    return TaskService.createTask(args)
   })
 
   // WorksService

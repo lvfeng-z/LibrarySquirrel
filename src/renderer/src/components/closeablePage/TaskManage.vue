@@ -12,7 +12,9 @@ const importDir = ref('')
 // 方法
 // 保存设置
 function importFromDir() {
-  apis.taskServiceCreateTask('file://'.concat(importDir.value))
+  apis.taskServiceCreateTask('file://'.concat(importDir.value)).then(() => {
+    console.log('完成了')
+  })
 }
 </script>
 
