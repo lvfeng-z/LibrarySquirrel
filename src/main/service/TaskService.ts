@@ -62,10 +62,10 @@ async function createTask(url: string): Promise<number> {
       // 创建任务
       const pluginResponse = await taskHandler.create(url)
       if (Array.isArray(pluginResponse)) {
-        await handlePluginTaskArray(pluginResponse, url, taskPlugin)
+        return handlePluginTaskArray(pluginResponse, url, taskPlugin).then()
       }
       if (pluginResponse instanceof Readable) {
-        await handlePluginTaskStream(pluginResponse, url, taskPlugin)
+        return handlePluginTaskStream(pluginResponse, url, taskPlugin, 100, 200).then()
       }
     } catch (error) {
       logUtil.warn(
@@ -76,7 +76,7 @@ async function createTask(url: string): Promise<number> {
     }
   }
 
-  // 到此处依然没有返回，说明失败了
+  // 未能在循环中返回，则返回0
   return 0
 }
 
@@ -170,16 +170,18 @@ async function handlePluginTaskArray(
  * @param pluginResponseTaskStream 插件返回的任务流
  * @param url 传给插件的url
  * @param taskPlugin 插件信息
+ * @param batchSize 每次保存任务的数量
+ * @param maxQueueLength 任务队列最大长度
  */
 async function handlePluginTaskStream(
   pluginResponseTaskStream: Readable,
   url: string,
-  taskPlugin: InstalledPlugins
-) {
+  taskPlugin: InstalledPlugins,
+  batchSize: number,
+  maxQueueLength: number
+): Promise<number> {
   // 查询插件信息，用于输出日志
   const pluginInfo = JSON.stringify(taskPlugin)
-  // 任务缓存
-  const taskBuffer: Task[] = []
   // 任务集合，只在任务多于1个的时候进行保存
   const parentTask = new Task()
   parentTask.pluginId = taskPlugin.id as number
@@ -192,15 +194,50 @@ async function handlePluginTaskStream(
   let itemCount = 0
   // 集合任务存储过程
   let parentTaskProcess: Promise<number>
+  // 任务队列
+  const taskQueue: Task[] = []
+  // 标记流是否已暂停
+  let isPaused = false
 
   const parentTaskProcessing = async () => {
-    return await save(parentTask)
+    return save(parentTask)
+  }
+  // 处理任务队列的函数
+  async function processTasks() {
+    const taskBuffer: Task[] = []
+    // 从队列中取出最多batchSize个任务
+    while (taskQueue.length > 0 && taskBuffer.length < batchSize) {
+      taskBuffer.push(taskQueue.shift()!)
+    }
+
+    // 检查队列是否小于上限，如果是，则恢复流
+    if (taskQueue.length < maxQueueLength && isPaused) {
+      LogUtil.info('TaskService', `任务队列减至${taskQueue.length}个，恢复任务流`)
+      pluginResponseTaskStream.resume()
+      isPaused = false
+    }
+
+    // 如果缓冲区中有任务，则保存
+    if (taskBuffer.length > 0) {
+      saveBatch(taskBuffer).then()
+    }
   }
 
+  // data事件处理函数
   pluginResponseTaskStream.on('data', async (chunk) => {
+    itemCount++
+    // 如果任务集合尚未保存且任务数大于1，则先保存任务集合
+    if (parentTaskProcess === undefined && itemCount > 1) {
+      parentTaskProcess = parentTaskProcessing()
+      parentTask.id = await parentTaskProcess
+      // 更新parentId
+      taskQueue.forEach((task) => (task.parentId = parentTask.id as number))
+    }
+
+    // 等待任务集合完成
     await parentTaskProcess
-    // 解析json，处理属性
-    const task = JSON.parse(chunk)
+    // 解析JSON并创建任务对象
+    const task = JSON.parse(chunk.toString())
     task.pluginId = taskPlugin.id as number
     task.pluginInfo = pluginInfo
     task.status = TaskConstant.TaskStatesEnum.CREATED
@@ -208,44 +245,47 @@ async function handlePluginTaskStream(
     task.isCollection = false
     task.parentId = parentTask.id
 
-    // 当任务缓存达到10时，保存一次
-    taskBuffer.push(task)
-    itemCount++
-    if (taskBuffer.length >= 10) {
-      // 如果任务集合尚未保存，则先保存任务集合
-      if (parentTaskProcess === undefined) {
-        parentTaskProcess = parentTaskProcessing()
-        parentTask.id = await parentTaskProcess
-        // 更新parentId
-        taskBuffer.forEach((task) => (task.parentId = parentTask.id as number))
-      }
-      const temp = taskBuffer.slice()
-      taskBuffer.length = 0
-      await saveBatch(temp)
+    // 将任务添加到队列
+    taskQueue.push(task)
+
+    // 每batchSize个任务处理一次
+    if (taskQueue.length % batchSize === 0) {
+      processTasks()
+    }
+
+    // 如果队列中的任务数量超过上限，则暂停流
+    if (taskQueue.length >= maxQueueLength && !isPaused) {
+      LogUtil.info(
+        'TaskService',
+        `任务队列超过${maxQueueLength}个，暂停任务流，已经收到${itemCount}个任务`
+      )
+      pluginResponseTaskStream.pause()
+      isPaused = true
     }
   })
 
+  // end事件处理函数
   pluginResponseTaskStream.on('end', async () => {
-    // 所有数据读取完毕
-    if (itemCount === 0) {
-      logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
-    } else if (itemCount === 1) {
-      await save(taskBuffer[0])
-    } else if (taskBuffer.length > 0) {
-      // 如果任务集合尚未保存，则先保存任务集合
-      if (parentTaskProcess === undefined) {
-        parentTaskProcess = parentTaskProcessing()
-        parentTask.id = await parentTaskProcess
-        // 更新parentId
-        taskBuffer.forEach((task) => (task.parentId = parentTask.id as number))
+    try {
+      // 所有数据读取完毕
+      if (itemCount === 0) {
+        logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+      } else if (itemCount === 1) {
+        await save(taskQueue[0])
+      } else if (taskQueue.length > 0) {
+        await processTasks()
       }
-      await parentTaskProcess
-      await saveBatch(taskBuffer)
+    } catch (error) {
+      LogUtil.error('TaskService', '处理任务流结束事件时出错，error:', error)
+    } finally {
+      LogUtil.info('TaskService', `任务流结束，创建了${itemCount}个任务`)
     }
   })
 
   // 开始读取流
   pluginResponseTaskStream.resume()
+
+  return itemCount
 }
 
 /**
