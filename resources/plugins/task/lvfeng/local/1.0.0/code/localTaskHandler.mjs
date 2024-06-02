@@ -36,7 +36,13 @@ export default class LocalTaskHandler {
     const stream = new Readable({
       async read() {
         for await (const task of self.createTaskRecursively(url)) {
+          if (this.createTaskPaused) {
+            await this.createTaskBlocker
+          }
           const taskData = JSON.stringify(task)
+          if (this.createTaskPaused) {
+            await this.createTaskBlocker
+          }
           this.push(Buffer.from(taskData))
         }
         this.push(null)
@@ -111,6 +117,9 @@ export default class LocalTaskHandler {
     }
     // 使用生成器函数来逐个yield生成的任务，模拟异步迭代器行为
     for (const task of tasks) {
+      if (this.createTaskPaused) {
+        await this.createTaskBlocker
+      }
       yield task
     }
   }
