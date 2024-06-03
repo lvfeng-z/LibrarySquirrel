@@ -16,36 +16,36 @@ import TaskPluginListenerService from './TaskPluginListenerService.ts'
 function exposeService() {
   // test
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
-    return await InsertLocalTag.insertLocalTag10W()
+    return InsertLocalTag.insertLocalTag10W()
   })
   Electron.ipcMain.handle('test-taskPluginListenerService-saveBatch', async (_event, args) => {
-    return await TaskPluginListenerService.saveBatch(args)
+    return TaskPluginListenerService.saveBatch(args)
   })
   Electron.ipcMain.handle('test-taskPluginListenerService-getMonitored', async (_event, args) => {
-    return await TaskPluginListenerService.getMonitored(args)
+    return TaskPluginListenerService.getMonitored(args)
   })
 
   // LocalTagService
   Electron.ipcMain.handle('localTag-save', async (_event, args) => {
-    return await LocalTagService.save(args)
+    return LocalTagService.save(args)
   })
   Electron.ipcMain.handle('localTag-deleteById', async (_event, args) => {
-    return await LocalTagService.deleteById(args)
+    return LocalTagService.deleteById(args)
   })
   Electron.ipcMain.handle('localTag-updateById', async (_event, args) => {
-    return await LocalTagService.updateById(args)
+    return LocalTagService.updateById(args)
   })
   Electron.ipcMain.handle('localTag-queryPage', async (_event, args) => {
-    return await LocalTagService.queryPage(args)
+    return LocalTagService.queryPage(args)
   })
   Electron.ipcMain.handle('localTag-getById', async (_event, args) => {
-    return await LocalTagService.getById(args)
+    return LocalTagService.getById(args)
   })
   Electron.ipcMain.handle('localTag-getTree', async (_event, args) => {
-    return await LocalTagService.getTree(args)
+    return LocalTagService.getTree(args)
   })
   Electron.ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
-    return await LocalTagService.getSelectList(args)
+    return LocalTagService.getSelectList(args)
   })
 
   //SettingsService
@@ -61,23 +61,23 @@ function exposeService() {
 
   // SiteService
   Electron.ipcMain.handle('site-insert', async (_event, args) => {
-    return await SiteService.save(args)
+    return SiteService.save(args)
   })
   Electron.ipcMain.handle('site-getSelectList', async (_event, args) => {
-    return await SiteService.getSelectList(args)
+    return SiteService.getSelectList(args)
   })
 
   // SiteTagService
   Electron.ipcMain.handle('siteTag-save', async (_event, args) => {
-    return await SiteTagService.save(args)
+    return SiteTagService.save(args)
   })
   Electron.ipcMain.handle('siteTag-updateById', async (_event, args) => {
-    return await SiteTagService.updateById(args)
+    return SiteTagService.updateById(args)
   })
   Electron.ipcMain.handle(
     'siteTag-updateBindLocalTag',
     async (_event, localTagId: string | null, siteTagIds: string[]) => {
-      return await SiteTagService.updateBindLocalTag(localTagId, siteTagIds)
+      return SiteTagService.updateBindLocalTag(localTagId, siteTagIds)
     }
   )
   Electron.ipcMain.handle(
@@ -87,12 +87,12 @@ function exposeService() {
     }
   )
   Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
-    return await SiteTagService.getSelectList(args)
+    return SiteTagService.getSelectList(args)
   })
 
   // TaskService
   Electron.ipcMain.handle('taskService-startTask', async (_event, args) => {
-    return await TaskService.startTask(args)
+    return TaskService.startTask(args)
   })
   Electron.ipcMain.handle('taskService-createTask', (_event, args) => {
     return TaskService.createTask(args)
@@ -100,7 +100,7 @@ function exposeService() {
 
   // WorksService
   Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
-    return await WorksService.queryPage(args)
+    return WorksService.queryPage(args)
   })
 }
 
