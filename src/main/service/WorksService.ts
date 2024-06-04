@@ -26,7 +26,7 @@ async function saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
     // 提取作品信息
     const works = new Works(worksDTO)
     // 作者信息
-    const siteAuthorName: string = 'unknown'
+    const siteAuthorName: string = 'unknownAuthor'
     if (
       Object.prototype.hasOwnProperty.call(worksDTO, 'siteAuthor') &&
       worksDTO.siteAuthor !== undefined &&
@@ -43,19 +43,43 @@ async function saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
       }
     }
     // 作品信息
-    const siteWorksName = worksDTO.siteWorksName === undefined ? 'unknown' : worksDTO.siteWorksName
+    const siteWorksName =
+      worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
 
-    const pipelinePromise = promisify((readable: fs.ReadStream, writable: fs.WriteStream) =>
-      readable.pipe(writable)
+    const pipelinePromise = promisify(
+      (readable: fs.ReadStream, writable: fs.WriteStream, callback) => {
+        let errorOccurred = false
+
+        readable.on('error', (err) => {
+          errorOccurred = true
+          LogUtil.error('WorksService', `readable出错${err}`)
+          callback(err)
+        })
+
+        writable.on('error', (err) => {
+          errorOccurred = true
+          LogUtil.error('WorksService', `writable出错${err}`)
+          callback(err)
+        })
+
+        readable.on('end', () => {
+          if (!errorOccurred) {
+            writable.end()
+            callback(null)
+          }
+        })
+        readable.pipe(writable)
+      }
     )
 
     const writeStream = fs.createWriteStream(
-      `${settings.workdir}/download/[${siteAuthorName}_${siteWorksName}]`
+      `${settings.workdir}/download/${siteAuthorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
     )
 
     try {
       await pipelinePromise(worksDTO.resourceStream, writeStream)
-      return dao.save(works).then((worksId) => worksId as number)
+      const worksId = dao.save(works)
+      return worksId as Promise<number>
     } catch (error) {
       LogUtil.error(
         'WorksService',
