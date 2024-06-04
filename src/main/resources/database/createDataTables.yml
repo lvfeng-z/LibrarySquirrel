@@ -100,6 +100,7 @@ tables:
         primary key autoincrement,
         is_collection  integer(1),
         parent_id      integer,
+        task_name      text,
         site_domain    text,
         local_works_id integer,
         site_works_id  text,
