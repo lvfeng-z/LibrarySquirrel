@@ -12,10 +12,10 @@ export default interface TaskHandler {
 
   /**
    * 开始任务
-   * @param tasks 需开始的任务数组
+   * @param tasks 需开始的任务
    * @return 作品信息（包含资源的数据流）
    */
-  start(tasks: Task[]): Promise<WorksDTO[]>
+  start(tasks: Task): Promise<WorksDTO>
 
   /**
    * 重试下载任务
