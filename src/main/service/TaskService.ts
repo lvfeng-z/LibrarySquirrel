@@ -327,36 +327,36 @@ async function startTask(taskId: number): Promise<boolean> {
 
   // 尝试开始任务
   try {
-    const worksDTOs = await taskHandler.start(tasks)
-
-    for (const worksDTO of worksDTOs) {
-      // 如果插件未返回任务id，发出警告并跳过此次循环
-      if (
-        !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
-        worksDTO.includeTaskId === undefined ||
-        worksDTO.includeTaskId === null
-      ) {
-        LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-        continue
-      }
-
-      // 找到插件返回的作品对应的task
-      const taskFilter = tasks.filter((task) => task.id !== worksDTO.includeTaskId)
-      if (taskFilter.length < 1) {
-        // 如果插件返回的任务id越界，发出警告并跳过此次循环
-        LogUtil.warn(
-          'TaskService',
-          `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-        )
-        continue
-      }
-
-      WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
-        if (worksId === CrudConstant.saveFailed) {
-          taskFailed(taskFilter[0])
-        } else {
-          finishTask(taskFilter[0])
+    for (const task of tasks) {
+      taskHandler.start(task).then((worksDTO) => {
+        // 如果插件未返回任务id，发出警告并跳过此次循环
+        if (
+          !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
+          worksDTO.includeTaskId === undefined ||
+          worksDTO.includeTaskId === null
+        ) {
+          LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
+          return
         }
+
+        // 找到插件返回的作品对应的task
+        const taskFilter = tasks.filter((task) => task.id == worksDTO.includeTaskId)
+        if (taskFilter.length < 1) {
+          // 如果插件返回的任务id越界，发出警告并跳过此次循环
+          LogUtil.warn(
+            'TaskService',
+            `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+          )
+          return
+        }
+
+        WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
+          if (worksId === CrudConstant.saveFailed) {
+            taskFailed(taskFilter[0])
+          } else {
+            finishTask(taskFilter[0], worksId)
+          }
+        })
       })
     }
     return true
@@ -380,15 +380,19 @@ function getChildrenTask(parentId: number) {
 /**
  * 任务完成
  * @param task 任务信息
+ * @param worksId 本地作品id
  */
-function finishTask(task: Task) {
+function finishTask(task: Task, worksId: number) {
   const dao = new TaskDao()
   task = new Task(task)
   task.status = TaskConstant.TaskStatesEnum.FINISHED
+  task.localWorksId = worksId
   if (task.id !== undefined && task.id !== null) {
     return dao.updateById(task.id, task)
   } else {
-    throw new Error('任务标记为完成时，任务id意外为空')
+    const msg = '任务标记为完成时，任务id意外为空'
+    LogUtil.error('TaskService', msg)
+    throw new Error(msg)
   }
 }
 
@@ -403,7 +407,9 @@ function taskFailed(task: Task) {
   if (task.id !== undefined && task.id !== null) {
     return dao.updateById(task.id, task)
   } else {
-    throw new Error('任务标记为完成时，任务id意外为空')
+    const msg = '任务标记为失败时，任务id意外为空'
+    LogUtil.error('TaskService', msg)
+    throw new Error(msg)
   }
 }
 
