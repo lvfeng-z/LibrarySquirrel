@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { join } from 'path'
+import path from 'path'
 import { Readable } from 'node:stream'
 
 export default class LocalTaskHandler {
@@ -35,7 +35,7 @@ export default class LocalTaskHandler {
 
     const stream = new Readable({
       async read() {
-        for await (const task of self.createTaskRecursively(url)) {
+        for await (const task of self.createTaskIteratively(url)) {
           if (this.createTaskPaused) {
             await this.createTaskBlocker
           }
@@ -61,21 +61,20 @@ export default class LocalTaskHandler {
 
   /**
    * 开始任务
-   * @param tasks 需开始的任务数组
+   * @param task 需开始的任务数组
    * @return 作品信息
    */
-  async start(tasks) {
-    const worksDTOs = []
-    tasks.forEach((task) => {
-      const worksDTO = new WorksDTO()
-      worksDTO.siteWorksName = ''
-      worksDTO.siteWorkDescription = ''
-      worksDTO.includeTaskId = task.id
-      // 异步读取文件
-      worksDTO.resourceStream = fs.createReadStream(task.url)
-      worksDTOs.push(worksDTO)
-    })
-    return worksDTOs
+  async start(task) {
+    const worksDTO = new WorksDTO()
+    const stats = await fs.promises.stat(task.url)
+    worksDTO.filenameExtension = path.parse(task.url).ext
+    worksDTO.siteWorksName = ''
+    worksDTO.siteWorkDescription = ''
+    worksDTO.includeTaskId = task.id
+    // 异步读取文件
+    worksDTO.resourceStream = fs.createReadStream(task.url)
+    worksDTO.resourceSize = stats.size
+    return worksDTO
   }
 
   /**
@@ -87,7 +86,12 @@ export default class LocalTaskHandler {
 
   }
 
-  async* createTaskRecursively(dir) {
+  /**
+   * 迭代目录创建任务
+   * @param dir 目录
+   * @return {AsyncGenerator<*, void, *>}
+   */
+  async* createTaskIteratively(dir) {
     const stack = [dir] // 初始任务放入栈中
     const tasks = [] // 用于收集所有生成的任务
 
@@ -103,12 +107,13 @@ export default class LocalTaskHandler {
           const entries = await fs.promises.readdir(dir, { withFileTypes: true })
           for (let i = entries.length - 1; i >= 0; i--) {
             const entry = entries[i]
-            stack.push(join(dir, entry.name))
+            stack.push(path.join(dir, entry.name))
           }
         } else {
           // 如果是文件，则创建任务并加入列表
           const task = new Task()
           task.url = dir
+          task.taskName = path.parse(dir).base
           tasks.push(task)
         }
       } catch (err) {
@@ -127,8 +132,8 @@ export default class LocalTaskHandler {
 
 class WorksDTO {
   filePath
+  filenameExtension
   workdir
-  worksType
   siteId
   siteWorksId
   siteWorksName
@@ -141,13 +146,12 @@ class WorksDTO {
   includeTime
   includeMode
   includeTaskId
-  downloadStatus
-  author
-  siteTags
   resourceStream
+  resourceSize
 
   constructor() {
     this.filePath = undefined
+    this.filenameExtension = undefined
     this.workdir = undefined
     this.worksType = undefined
     this.siteId = undefined
@@ -166,12 +170,14 @@ class WorksDTO {
     this.author = undefined
     this.siteTags = undefined
     this.resourceStream = undefined
+    this.resourceSize = undefined
   }
 }
 
 class Task {
   isCollection
   parentId
+  taskName
   siteDomain
   localWorksId
   siteWorksId
@@ -184,6 +190,7 @@ class Task {
   constructor() {
     this.isCollection = undefined
     this.parentId = undefined
+    this.taskName = undefined
     this.siteDomain = undefined
     this.localWorksId = undefined
     this.siteWorksId = undefined
