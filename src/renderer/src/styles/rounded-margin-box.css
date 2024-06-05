@@ -1,0 +1,8 @@
+.rounded-margin-box {
+  background: #f4f4f4;
+  border-radius: 6px;
+  display: flex;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 10px;
+}
