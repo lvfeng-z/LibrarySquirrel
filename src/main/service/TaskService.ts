@@ -37,7 +37,6 @@ async function saveBatch(tasks: Task[]): Promise<number> {
  */
 async function createTask(url: string): Promise<number> {
   // 查询监听此url的插件
-  // todo 需要处理监听此url的插件对应不同站点的情况
   const taskPlugins = await TaskPluginListenerService.getMonitored(url)
 
   if (taskPlugins.length === 0) {
