@@ -412,7 +412,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 64px;
   height: 100%;
   writing-mode: vertical-lr;
-  background-color: #ffffff;
+  background-color: #fbfbfb;
   border-top-left-radius: 6px;
 }
 .exchange-box-upper-main {
@@ -502,7 +502,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   border-left-width: 1px;
   border-left-style: dotted;
   border-right-width: 1px;
-  border-right-style: solid;
+  border-right-style: dotted;
   border-color: #bfbfbf;
   box-sizing: border-box;
 }
@@ -518,7 +518,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 64px;
   height: 100%;
   writing-mode: vertical-lr;
-  background-color: #fbfbfb;
+  background-color: #ffffff;
   border-bottom-left-radius: 6px;
 }
 .exchange-box-lower-main {
