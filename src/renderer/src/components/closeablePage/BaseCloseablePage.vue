@@ -44,8 +44,8 @@ function closeSelf() {
 }
 .base-closeable-page-close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 10px;
+  right: 10px;
   margin: 0;
 }
 </style>

@@ -235,7 +235,7 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
     const height = scrollWrapper.clientHeight
 
     // 判断是否滚动到底部
-    if (scrollTop + height >= scrollHeight) {
+    if (scrollTop + height + 0.5 >= scrollHeight) {
       await requestNextPage(upperOrLower)
     }
   }
@@ -256,7 +256,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
 <template>
   <div class="exchange-box">
     <div class="exchange-box-upper">
-      <div class="exchange-box-upper-name rounded-borders">
+      <div class="exchange-box-upper-name">
         <el-text>{{ upperTitle }}</el-text>
       </div>
       <div class="exchange-box-upper-main">
@@ -271,11 +271,11 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
           >
           </SearchToolbar>
         </div>
-        <div class="exchange-box-upper-data rounded-borders margin-box">
+        <div class="exchange-box-upper-data">
           <el-scrollbar ref="upperScroll" @scroll="handleDataScroll($event, true)">
             <el-row>
               <template v-for="item in upperData" :key="item.value">
-                <div class="exchange-box-upperLower-data-item rounded-borders">
+                <div class="exchange-box-upperLower-data-item">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'upperData')"
@@ -316,11 +316,11 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
         </div>
       </div>
       <div class="exchange-box-middle-buffer">
-        <div class="exchange-box-middle-buffer-upper rounded-borders">
+        <div class="exchange-box-middle-buffer-upper">
           <el-scrollbar>
             <el-row>
               <template v-for="item in upperBufferData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item rounded-borders">
+                <div class="exchange-box-upperLower-data-item">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'upperBuffer')"
@@ -332,11 +332,11 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
             </el-row>
           </el-scrollbar>
         </div>
-        <div class="exchange-box-middle-buffer-lower rounded-borders">
+        <div class="exchange-box-middle-buffer-lower">
           <el-scrollbar>
             <el-row>
               <template v-for="item in lowerBufferData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item rounded-borders">
+                <div class="exchange-box-upperLower-data-item">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'lowerBuffer')"
@@ -351,15 +351,15 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
       </div>
     </div>
     <div class="exchange-box-lower">
-      <div class="exchange-box-lower-name rounded-borders">
+      <div class="exchange-box-lower-name">
         <el-text>{{ lowerTitle }}</el-text>
       </div>
       <div class="exchange-box-lower-main">
-        <div class="exchange-box-lower-data rounded-borders margin-box">
+        <div class="exchange-box-lower-data">
           <el-scrollbar ref="lowerScroll" @scroll="handleDataScroll($event, false)">
             <el-row class="exchange-box-lower-data-scroll-row">
               <template v-for="item in lowerData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item rounded-borders">
+                <div class="exchange-box-upperLower-data-item">
                   <double-check-tag
                     :item="item"
                     @left-clicked="handleCheckTagClick(item, 'lowerData')"
@@ -412,7 +412,8 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 64px;
   height: 100%;
   writing-mode: vertical-lr;
-  background-color: #fdfdfd;
+  background-color: #ffffff;
+  border-top-left-radius: 6px;
 }
 .exchange-box-upper-main {
   display: flex;
@@ -427,16 +428,12 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
 .exchange-box-upper-data {
   width: 100%;
   height: calc(100% - 32px);
-  background-color: #fdfdfd;
-  border-bottom-style: hidden;
-  border-left-style: hidden;
+  background-color: #ffffff;
 }
 .exchange-box-upperLower-data-item {
   margin: 2px;
   word-break: break-all;
   word-wrap: break-word;
-  border-width: 2px;
-  border-color: #c6f3ac;
 }
 .exchange-box-middle {
   display: flex;
@@ -484,23 +481,30 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   position: relative;
   width: 50%;
   height: 100%;
-  background-color: #fdfdfd;
-  border-top-color: #e8e8e8;
+  background-color: #ffffff;
+  border-top-width: 1px;
   border-top-style: dashed;
+  border-bottom-width: 1px;
   border-bottom-style: dotted;
-  border-left-style: hidden;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  border-right-width: 1px;
+  border-right-style: dotted;
+  border-color: #bfbfbf;
+  box-sizing: border-box;
 }
 .exchange-box-middle-buffer-lower {
   width: 50%;
   height: 100%;
-  background-color: #f6f6f6;
-  border-bottom-color: #e8e8e8;
+  background-color: #fbfbfb;
+  border-top-width: 1px;
   border-top-style: dotted;
+  border-bottom-width: 1px;
   border-bottom-style: dashed;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  border-left-width: 1px;
+  border-left-style: dotted;
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-color: #bfbfbf;
+  box-sizing: border-box;
 }
 .exchange-box-lower {
   display: flex;
@@ -514,7 +518,8 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 64px;
   height: 100%;
   writing-mode: vertical-lr;
-  background-color: #f6f6f6;
+  background-color: #fbfbfb;
+  border-bottom-left-radius: 6px;
 }
 .exchange-box-lower-main {
   display: flex;
@@ -531,9 +536,6 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   flex-direction: column;
   width: 100%;
   height: calc(100% - 32px);
-  background-color: #f6f6f6;
-  border-top-style: hidden;
-  border-left-style: hidden;
-  transition: height 1s ease;
+  background-color: #fbfbfb;
 }
 </style>

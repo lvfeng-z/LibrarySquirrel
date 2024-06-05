@@ -239,48 +239,44 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
 <template>
   <BaseCloseablePage>
     <template #default>
-      <div class="tag-manage-container">
+      <div class="tag-manage-container rounded-margin-box">
         <div class="tag-manage-left">
-          <div class="margin-box">
-            <SearchTable
-              ref="localTagSearchTable"
-              key-of-data="id"
-              :create-button="true"
-              :operation-button="operationButton"
-              :thead="localTagThead"
-              :sort="[
-                ['updateTime', 'desc'],
-                ['createTime', 'desc']
-              ]"
-              :main-input-boxes="mainInputBoxes"
-              :drop-down-input-boxes="dropDownInputBoxes"
-              :search-api="apis.localTagQueryPage"
-              :multi-select="false"
-              :selectable="true"
-              @create-button-clicked="handleCreateButtonClicked"
-              @row-button-clicked="handleRowButtonClicked"
-              @selection-change="handleLocalTagSelectionChange"
-            ></SearchTable>
-          </div>
+          <SearchTable
+            ref="localTagSearchTable"
+            key-of-data="id"
+            :create-button="true"
+            :operation-button="operationButton"
+            :thead="localTagThead"
+            :sort="[
+              ['updateTime', 'desc'],
+              ['createTime', 'desc']
+            ]"
+            :main-input-boxes="mainInputBoxes"
+            :drop-down-input-boxes="dropDownInputBoxes"
+            :search-api="apis.localTagQueryPage"
+            :multi-select="false"
+            :selectable="true"
+            @create-button-clicked="handleCreateButtonClicked"
+            @row-button-clicked="handleRowButtonClicked"
+            @selection-change="handleLocalTagSelectionChange"
+          ></SearchTable>
         </div>
         <div class="tag-manage-right">
-          <div class="margin-box">
-            <ExchangeBox
-              ref="siteTagExchangeBox"
-              upper-title="已绑定站点标签"
-              :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-              :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-              :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-              :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
-              lower-title="可绑定站点标签"
-              :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-              :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-              :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-              :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
-              required-static-params="localTagId"
-              @exchange-confirm="handleExchangeBoxConfirm"
-            ></ExchangeBox>
-          </div>
+          <ExchangeBox
+            ref="siteTagExchangeBox"
+            upper-title="已绑定站点标签"
+            :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
+            :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+            :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+            :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
+            lower-title="可绑定站点标签"
+            :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
+            :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+            :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+            :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
+            required-static-params="localTagId"
+            @exchange-confirm="handleExchangeBoxConfirm"
+          ></ExchangeBox>
         </div>
       </div>
     </template>
@@ -307,14 +303,14 @@ async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOp
 }
 
 .tag-manage-left {
-  width: 50%;
+  width: calc(50% - 5px);
   height: 100%;
+  margin-right: 5px;
 }
 
 .tag-manage-right {
-  display: flex;
-  flex-direction: column;
-  width: 50%;
+  width: calc(50% - 5px);
   height: 100%;
+  margin-left: 5px;
 }
 </style>

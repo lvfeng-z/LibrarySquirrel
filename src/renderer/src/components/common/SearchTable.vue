@@ -134,7 +134,7 @@ defineExpose({
       @search-button-clicked="handleSearchButtonClicked"
     >
     </SearchToolbar>
-    <div class="search-table-data rounded-borders">
+    <div class="search-table-data">
       <DataTable
         v-model:tableData="data"
         class="search-table-data-table"
@@ -205,6 +205,9 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #fdfdfd;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 .search-table-data-pagination {
   height: auto;
