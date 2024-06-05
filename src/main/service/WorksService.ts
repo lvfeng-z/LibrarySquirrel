@@ -9,6 +9,8 @@ import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
 import { promisify } from 'node:util'
 import CrudConstant from '../constant/CrudConstant.ts'
+import FileSysUtil from '../util/FileSysUtil'
+import path from 'path'
 
 /**
  * 保存作品信息及资源
@@ -46,6 +48,11 @@ async function saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
     const siteWorksName =
       worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
 
+    // 保存路径
+    const fileName = `${siteAuthorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
+    const relativeSavePath = path.join(siteAuthorName)
+    const fullSavePath = path.join(settings.workdir, relativeSavePath)
+
     const pipelinePromise = promisify(
       (readable: fs.ReadStream, writable: fs.WriteStream, callback) => {
         let errorOccurred = false
@@ -72,12 +79,13 @@ async function saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
       }
     )
 
-    const writeStream = fs.createWriteStream(
-      `${settings.workdir}/download/${siteAuthorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
-    )
-
+    // 保存资源和作品信息
     try {
+      await FileSysUtil.createDirIfNotExists(fullSavePath)
+      const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
       await pipelinePromise(worksDTO.resourceStream, writeStream)
+      works.filePath = path.join(relativeSavePath, fileName)
+      works.workdir = settings.workdir
       const worksId = dao.save(works)
       return worksId as Promise<number>
     } catch (error) {
