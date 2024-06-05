@@ -9,7 +9,7 @@ import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
 import { promisify } from 'node:util'
 import CrudConstant from '../constant/CrudConstant.ts'
-import FileSysUtil from '../util/FileSysUtil'
+import FileSysUtil from '../util/FileSysUtil.ts'
 import path from 'path'
 
 /**
