@@ -12,6 +12,7 @@ import SelectOption from './model/util/SelectOption.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
 import TaskManage from './components/closeablePage/TaskManage.vue'
+import ExplainString from './components/dialogs/ExplainString.vue'
 
 // onMounted
 onMounted(() => {
@@ -19,10 +20,11 @@ onMounted(() => {
   // console.log(request)
 })
 // 变量
+// 接口
 const apis = {
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
-} // 接口
+}
 let loading = false // 主菜单栏加载中开关
 const selectedTagList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选中列表
 const tagSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选择项列表
@@ -134,6 +136,12 @@ async function handleTest() {
   console.log('test')
   // return await apis.test(27)
 }
+
+//
+window.electron.ipcRenderer.on('explain-string', (event, str) => {
+  console.log(event)
+  console.log(str)
+})
 </script>
 
 <template>
@@ -241,6 +249,7 @@ async function handleTest() {
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
+    <explain-string string-to-explain=""></explain-string>
   </div>
 </template>
 

@@ -6,12 +6,12 @@ import PluginLoader from '../plugin/PluginLoader.ts'
 import TaskConstant from '../constant/TaskConstant.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
-import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
 import CrudConstant from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
 import limit from 'p-limit'
+import TaskPluginListenerService from './TaskPluginListenerService'
 
 /**
  * 保存
@@ -50,33 +50,10 @@ async function createTask(url: string): Promise<number> {
 
   // 按照排序尝试每个插件
   for (const taskPlugin of taskPlugins) {
-    // 查询插件信息，用于输出日志
-    const pluginInfo = JSON.stringify(
-      await InstalledPluginsService.getById(taskPlugin.id as number)
-    )
-
-    try {
-      // 异步加载插件
-      const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
-
-      // 创建任务
-      const pluginResponse = await taskHandler.create(url)
-      if (Array.isArray(pluginResponse)) {
-        return handlePluginTaskArray(pluginResponse, url, taskPlugin).then()
-      }
-      if (pluginResponse instanceof Readable) {
-        return handlePluginTaskStream(pluginResponse, url, taskPlugin, 100, 200).then()
-      }
-    } catch (error) {
-      logUtil.warn(
-        'TaskService',
-        `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`,
-        error
-      )
-    }
+    // 异步加载插件
+    const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
   }
 
-  // 未能在循环中返回，则返回0
   return 0
 }
 
@@ -423,5 +400,7 @@ export default {
   save,
   saveBatch,
   createTask,
+  handlePluginTaskArray,
+  handlePluginTaskStream,
   startTask
 }
