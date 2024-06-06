@@ -11,6 +11,7 @@ import WorksService from './WorksService.ts'
 import CrudConstant from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
+import limit from 'p-limit'
 
 /**
  * 保存
@@ -326,6 +327,9 @@ async function startTask(taskId: number): Promise<boolean> {
 
   // 尝试开始任务
   try {
+    // 限制最多同时保存100个
+    const maxSaveWorksPromise = 100
+    const promiseLimit = limit(maxSaveWorksPromise)
     for (const task of tasks) {
       taskHandler.start(task).then((worksDTO) => {
         // 如果插件未返回任务id，发出警告并跳过此次循环
@@ -349,12 +353,15 @@ async function startTask(taskId: number): Promise<boolean> {
           return
         }
 
-        WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
-          if (worksId === CrudConstant.saveFailed) {
-            taskFailed(taskFilter[0])
-          } else {
-            finishTask(taskFilter[0], worksId)
-          }
+        // 保存资源和作品信息
+        promiseLimit(() => {
+          WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
+            if (worksId === CrudConstant.saveFailed) {
+              taskFailed(taskFilter[0])
+            } else {
+              finishTask(taskFilter[0], worksId)
+            }
+          })
         })
       })
     }
