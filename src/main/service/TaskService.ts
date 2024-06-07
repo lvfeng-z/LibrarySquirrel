@@ -237,21 +237,16 @@ async function handlePluginTaskStream(
     // 等待任务集合完成
     await parentTaskProcess
     // 解析JSON并创建任务对象
-    const task = JSON.parse(chunk.toString())
+    const task = chunk as Task
     task.pluginId = taskPlugin.id as number
     task.pluginInfo = pluginInfo
     task.status = TaskConstant.TaskStatesEnum.CREATED
     task.siteDomain = taskPlugin.domain
     task.isCollection = false
-    task.parentId = parentTask.id
+    task.parentId = parentTask.id as number
 
     // 将任务添加到队列
     taskQueue.push(task)
-
-    // 每batchSize个任务处理一次
-    if (taskQueue.length % batchSize === 0) {
-      processTasks()
-    }
 
     // 如果队列中的任务数量超过上限，则暂停流
     if (taskQueue.length >= maxQueueLength && !isPaused) {
@@ -261,6 +256,11 @@ async function handlePluginTaskStream(
       )
       pluginResponseTaskStream.pause()
       isPaused = true
+    }
+
+    // 每batchSize个任务处理一次
+    if (taskQueue.length % batchSize === 0) {
+      await processTasks()
     }
   })
 
@@ -281,9 +281,6 @@ async function handlePluginTaskStream(
       LogUtil.info('TaskService', `任务流结束，创建了${itemCount}个任务`)
     }
   })
-
-  // 开始读取流
-  pluginResponseTaskStream.resume()
 
   return itemCount
 }

@@ -3,24 +3,7 @@ import path from 'path'
 import { Readable } from 'node:stream'
 
 export default class LocalTaskHandler {
-  /**
-   * 创建任务过程暂停标识
-   */
-  createTaskPaused
-
-  /**
-   * 创建任务过程的阻塞器
-   */
-  createTaskBlocker
-
-  /**
-   * 创建任务过程的阻塞器的resolve函数
-   */
-  createTaskResume
-
   constructor() {
-    this.createTaskPaused = false
-    this.createTaskBlocker = new Promise(resolve => this.createTaskResume = resolve)
   }
 
   /**
@@ -31,32 +14,7 @@ export default class LocalTaskHandler {
   async create(url) {
     url = url.replace(/^file:\/\//, '')
 
-    const self = this
-
-    const stream = new Readable({
-      async read() {
-        for await (const task of self.createTaskIteratively(url)) {
-          if (this.createTaskPaused) {
-            await this.createTaskBlocker
-          }
-          const taskData = JSON.stringify(task)
-          if (this.createTaskPaused) {
-            await this.createTaskBlocker
-          }
-          this.push(Buffer.from(taskData))
-        }
-        this.push(null)
-      }
-    })
-    stream.on('resume', () => {
-      this.createTaskResume()
-      this.createTaskBlocker = new Promise(resolve => this.createTaskResume = resolve)
-      this.createTaskPaused = false
-    })
-    stream.on('pause', () => {
-      this.createTaskPaused = true
-    })
-    return stream
+    return new TaskStream(url)
   }
 
   /**
@@ -91,43 +49,7 @@ export default class LocalTaskHandler {
    * @param dir 目录
    * @return {AsyncGenerator<*, void, *>}
    */
-  async* createTaskIteratively(dir) {
-    const stack = [dir] // 初始任务放入栈中
-    const tasks = [] // 用于收集所有生成的任务
 
-    while (stack.length > 0) {
-      if (this.createTaskPaused) {
-        await this.createTaskBlocker
-      }
-      const dir = stack.pop() // 获取并移除栈顶元素
-      try {
-        const stats = await fs.promises.stat(dir)
-        if (stats.isDirectory()) {
-          // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
-          const entries = await fs.promises.readdir(dir, { withFileTypes: true })
-          for (let i = entries.length - 1; i >= 0; i--) {
-            const entry = entries[i]
-            stack.push(path.join(dir, entry.name))
-          }
-        } else {
-          // 如果是文件，则创建任务并加入列表
-          const task = new Task()
-          task.url = dir
-          task.taskName = path.parse(dir).base
-          tasks.push(task)
-        }
-      } catch (err) {
-        console.error(`Error reading ${dir}: ${err}`)
-      }
-    }
-    // 使用生成器函数来逐个yield生成的任务，模拟异步迭代器行为
-    for (const task of tasks) {
-      if (this.createTaskPaused) {
-        await this.createTaskBlocker
-      }
-      yield task
-    }
-  }
 }
 
 class WorksDTO {
@@ -199,5 +121,61 @@ class Task {
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined
+  }
+}
+
+class TaskStream extends Readable{
+  /**
+   * 基础路径
+   */
+  directoryPath
+  /**
+   *
+   */
+  stack
+
+  constructor(directoryPath) {
+    super({ objectMode: true, highWaterMark: 1 });
+    this.directoryPath = directoryPath;
+    this.stack = [this.directoryPath]
+    this._read = this._read.bind(this);
+  }
+
+  async _read(size) {
+
+      let bufferFilled = false
+      // 迭代到路径指向文件或者栈为空为止
+      while (!bufferFilled) {
+        // 获取并移除栈顶元素
+        const dir = this.stack.pop()
+        try {
+        const stats = await fs.promises.stat(dir)
+
+        if (stats.isDirectory()) {
+          // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
+          const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+          for (let i = entries.length - 1; i >= 0; i--) {
+            const entry = entries[i]
+            this.stack.push(path.join(dir, entry.name))
+          }
+        } else {
+          // 如果是文件，则创建任务并加入列表
+          const task = new Task()
+          task.url = dir
+          task.taskName = path.parse(dir).base
+          this.push(task)
+          bufferFilled = true
+
+          if(this.stack.length === 0) {
+            this.push(null)
+            bufferFilled = true
+          }
+        }
+      } catch (err) {
+        console.error(`Error reading ${dir}: ${err}`)
+        // 停止流
+        this.emit('error', err)
+      }
+    }
   }
 }
