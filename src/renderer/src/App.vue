@@ -77,6 +77,7 @@ function closeFloatPage() {
 async function requestWorks() {
   const page = new PageCondition<WorksQueryDTO>()
   page.query = new WorksQueryDTO()
+  page.pageSize = 100
 
   // 处理搜索框的标签
   selectedTagList.value.forEach((tag) => {
