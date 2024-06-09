@@ -121,7 +121,6 @@ function clearFormData() {
 <!--2024-05-07 el-date-picker组件会触发警告：[Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive.-->
 <template>
   <BaseFormDialog
-    v-if="state"
     v-model:form-data="formData"
     v-model:state="state"
     :mode="props.mode"
