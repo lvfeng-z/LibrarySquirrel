@@ -1,12 +1,13 @@
 import InstalledPluginsService from '../service/InstalledPluginsService.ts'
 import TaskHandler from './TaskHandler.ts'
 import LogUtil from '../util/LogUtil.ts'
+import ExplainPath from './pluginTools/ExplainPath.ts'
 
 export default class PluginLoader {
-  public async loadTaskPlugin(pluginId: number) {
+  public async loadTaskPlugin(pluginId: number, explainPath?: ExplainPath) {
     const classPath = await InstalledPluginsService.getClassPathById(pluginId)
     const module = await import(classPath)
-    const taskPlugin = new module.default()
+    const taskPlugin = new module.default(explainPath)
 
     // 验证taskPlugin是否符合TaskHandler接口要求
     let isTaskHandler: boolean

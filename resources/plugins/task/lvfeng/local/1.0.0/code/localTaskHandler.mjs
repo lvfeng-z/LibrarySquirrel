@@ -3,7 +3,10 @@ import path from 'path'
 import { Readable } from 'node:stream'
 
 export default class LocalTaskHandler {
-  constructor() {
+  explainPath
+
+  constructor(explainPath) {
+    this.explainPath = explainPath
   }
 
   /**
@@ -13,7 +16,8 @@ export default class LocalTaskHandler {
    */
   async create(url) {
     url = url.replace(/^file:\/\//, '')
-
+    const result = await this.explainPath.getExplain()
+    console.log(result)
     return new TaskStream(url)
   }
 

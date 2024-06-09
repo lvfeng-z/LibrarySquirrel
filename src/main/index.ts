@@ -10,7 +10,7 @@ import fs from 'fs/promises'
 import FileSysUtil from './util/FileSysUtil.ts'
 import SettingsUtil from './util/SettingsUtil.ts'
 
-function createWindow(): void {
+function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
   const mainWindow = new Electron.BrowserWindow({
     width: 1280,
@@ -40,6 +40,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(Path.join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 // 初始化设置配置
@@ -105,12 +107,12 @@ Electron.app.whenReady().then(() => {
   // IPC test
   Electron.ipcMain.on('ping', () => console.log('pong'))
 
+  const mainWindow = createWindow()
+
   // 初始化数据库
   InitializeDatabase.InitializeDB().then(() => {
-    ServiceExposer.exposeService()
+    ServiceExposer.exposeService(mainWindow)
   })
-
-  createWindow()
 
   Electron.app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the

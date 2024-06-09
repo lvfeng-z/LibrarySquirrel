@@ -12,6 +12,7 @@ import CrudConstant from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
 import limit from 'p-limit'
+import ExplainPath from '../plugin/pluginTools/ExplainPath.ts'
 
 /**
  * 保存
@@ -35,8 +36,9 @@ async function saveBatch(tasks: Task[]): Promise<number> {
 /**
  * 根据传入的url创建任务
  * @param url 作品/作品集所在url
+ * @param explainPath
  */
-async function createTask(url: string): Promise<number> {
+async function createTask(url: string, explainPath: ExplainPath): Promise<number> {
   // 查询监听此url的插件
   const taskPlugins = await TaskPluginListenerService.getMonitored(url)
 
@@ -57,7 +59,7 @@ async function createTask(url: string): Promise<number> {
 
     try {
       // 异步加载插件
-      const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
+      const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number, explainPath)
 
       // 创建任务
       const pluginResponse = await taskHandler.create(url)

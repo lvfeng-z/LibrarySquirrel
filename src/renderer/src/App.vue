@@ -37,6 +37,7 @@ const pageState = reactive({
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
 const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([])
+const showExplainPath = ref(false)
 
 // 方法
 // 查询标签选择列表
@@ -139,7 +140,9 @@ async function handleTest() {
 }
 
 //
-window.electron.ipcRenderer.on('explain-string', (event, str) => {
+window.electron.ipcRenderer.on('explain-path', (event, str) => {
+  showExplainPath.value = true
+  console.log('渲染进程收到主进程事件explain-path')
   console.log(event)
   console.log(str)
 })
@@ -250,7 +253,7 @@ window.electron.ipcRenderer.on('explain-string', (event, str) => {
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
-    <explain-string string-to-explain=""></explain-string>
+    <explain-string v-model="showExplainPath" string-to-explain=""></explain-string>
   </div>
 </template>
 
