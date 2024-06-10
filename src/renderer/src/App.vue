@@ -36,8 +36,9 @@ const pageState = reactive({
   showSettingsPage: false
 }) // 悬浮页面开关
 const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
-const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([])
-const showExplainPath = ref(false)
+const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
+const showExplainPath = ref(false) // 解释路径dialog的开关
+const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 
 // 方法
 // 查询标签选择列表
@@ -140,9 +141,9 @@ async function handleTest() {
 }
 
 //
-window.electron.ipcRenderer.on('explain-path', (event, str) => {
+window.electron.ipcRenderer.on('explain-path-request', (event, str) => {
   showExplainPath.value = true
-  console.log('渲染进程收到主进程事件explain-path')
+  console.log('渲染进程收到主进程事件explain-path-request')
   console.log(event)
   console.log(str)
 })
@@ -253,7 +254,10 @@ window.electron.ipcRenderer.on('explain-path', (event, str) => {
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
-    <explain-string v-model="showExplainPath" string-to-explain=""></explain-string>
+    <explain-string
+      v-model="showExplainPath"
+      :string-to-explain="pathWaitingExplain"
+    ></explain-string>
   </div>
 </template>
 

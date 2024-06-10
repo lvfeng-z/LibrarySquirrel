@@ -16,9 +16,7 @@ export default class LocalTaskHandler {
    */
   async create(url) {
     url = url.replace(/^file:\/\//, '')
-    const result = await this.explainPath.getExplain()
-    console.log(result)
-    return new TaskStream(url)
+    return new TaskStream(url, this.explainPath)
   }
 
   /**
@@ -133,20 +131,26 @@ class TaskStream extends Readable{
    * 基础路径
    */
   directoryPath
+
   /**
-   *
+   * 迭代栈
    */
   stack
 
-  constructor(directoryPath) {
+  /**
+   * 插件工具
+   */
+  explainPath
+
+  constructor(directoryPath, explainPath) {
     super({ objectMode: true, highWaterMark: 1 });
-    this.directoryPath = directoryPath;
+    this.directoryPath = directoryPath
     this.stack = [this.directoryPath]
-    this._read = this._read.bind(this);
+    this.explainPath = explainPath
+    this._read = this._read.bind(this)
   }
 
   async _read(size) {
-
       let bufferFilled = false
       // 迭代到路径指向文件或者栈为空为止
       while (!bufferFilled) {
@@ -156,6 +160,9 @@ class TaskStream extends Readable{
         const stats = await fs.promises.stat(dir)
 
         if (stats.isDirectory()) {
+          const waitUserInput = this.explainPath.getExplain(dir)
+          const meaningOfPath = await waitUserInput
+          console.log(meaningOfPath)
           // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
           const entries = await fs.promises.readdir(dir, { withFileTypes: true })
           for (let i = entries.length - 1; i >= 0; i--) {
