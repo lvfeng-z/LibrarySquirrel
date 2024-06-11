@@ -10,7 +10,8 @@ declare global {
       testTaskPluginListenerServiceGetMonitored: function
 
       // LocalAuthorService
-      LocalAuthorSelectPage: function
+      localAuthorSelectPage: function
+      localAuthorGetSelectItems: function
 
       // LocalTagService
       localTagSave: function

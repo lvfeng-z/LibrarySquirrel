@@ -33,8 +33,17 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
     try {
       const page = await service.selectPage(args)
       return ApiUtil.response(page)
-    } catch (e) {
-      return ApiUtil.error(String(e))
+    } catch (error) {
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('localAuthor-getSelectItems', async (_event, args) => {
+    const service = new LocalAuthorService()
+    try {
+      const result = await service.getSelectItems(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return ApiUtil.error(String(error))
     }
   })
 

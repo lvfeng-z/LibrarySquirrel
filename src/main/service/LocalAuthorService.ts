@@ -5,6 +5,7 @@ import BaseDao from '../dao/BaseDao.ts'
 import LocalAuthorDao from '../dao/LocalAuthorDao.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
+import { COMPARATOR } from '../constant/CrudConstant.ts'
 
 /**
  * 本地作者Service
@@ -17,12 +18,15 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
   /**
    * 查询SelectItem列表
    */
-  public getSelectItems(): Promise<SelectItem> {
+  public getSelectItems(query: LocalAuthorQueryDTO): Promise<SelectItem[]> {
     const dao = new LocalAuthorDao()
     try {
-      return dao.getSelectItems()
+      query = new LocalAuthorQueryDTO(query)
+      query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
+      return dao.getSelectItems(query, 'id', 'localAuthorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
+      throw error
     }
   }
 

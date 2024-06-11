@@ -15,8 +15,11 @@ const api = {
   },
 
   // LocalAuthorService
-  LocalAuthorSelectPage: (args) => {
+  localAuthorSelectPage: (args) => {
     return Electron.ipcRenderer.invoke('localAuthor-selectPage', args)
+  },
+  localAuthorGetSelectItems: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-getSelectItems', args)
   },
 
   // LocalTagService
