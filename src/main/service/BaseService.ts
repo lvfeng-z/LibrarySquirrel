@@ -1,6 +1,3 @@
-/**
- * 基础Service类
- */
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import BaseModel from '../model/BaseModel.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
@@ -8,13 +5,16 @@ import BaseDao from '../dao/BaseDao.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 
+/**
+ * 基础Service类
+ */
 export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseModel> {
   /**
    * 子类名称
    */
-  childClassName: string
+  protected childClassName: string
 
-  constructor(childClassName: string) {
+  protected constructor(childClassName: string) {
     this.childClassName = childClassName
   }
 
