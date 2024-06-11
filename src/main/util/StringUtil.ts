@@ -1,13 +1,16 @@
 import LogUtil from './LogUtil.ts'
 
-function isBlank(input: string | null | undefined): boolean {
+function isBlank(input: string | number | null | undefined): boolean {
   if (input === undefined || input === null) {
     return true
+  }
+  if (typeof input === 'number') {
+    return /^\s*$/.test(String(input))
   }
   return /^\s*$/.test(input)
 }
 
-function isNotBlank(input: string | null | undefined) {
+function isNotBlank(input: string | number | null | undefined) {
   return !isBlank(input)
 }
 
