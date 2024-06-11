@@ -15,7 +15,6 @@ export default class LocalAuthorQueryDTO extends BaseQueryDTO {
       this.localAuthorName = undefined
     } else {
       super(localAuthorQueryDTO)
-      this.id = localAuthorQueryDTO.id
       this.localAuthorName = localAuthorQueryDTO.localAuthorName
     }
   }
