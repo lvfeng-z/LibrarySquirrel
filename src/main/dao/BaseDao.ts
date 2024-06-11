@@ -7,6 +7,8 @@ import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import logUtil from '../util/LogUtil.ts'
 import DatabaseUtil from '../util/DatabaseUtil.ts'
+import SelectItem from '../model/utilModels/SelectItem.ts'
+import { COMPARATOR } from '../constant/CrudConstant.ts'
 
 type PrimaryKey = string | number
 
@@ -196,8 +198,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     try {
       // 生成where字句
       let whereClause = ''
+      let tempQuery = page.query
       if (page.query) {
-        whereClause = this.getWhereClause(page.query)
+        const whereClauseAndQuery = this.getWhereClause(page.query)
+        whereClause = whereClauseAndQuery.whereClause
+        tempQuery = whereClauseAndQuery.query
       }
 
       // 拼接查询语句
@@ -207,8 +212,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       // 查询
       let rows
-      if (page.query) {
-        rows = (await db.prepare(statement)).all(page.query) as object[]
+      if (tempQuery) {
+        rows = (await db.prepare(statement)).all(tempQuery) as object[]
       } else {
         rows = (await db.prepare(statement)).all() as object[]
       }
@@ -231,19 +236,63 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     try {
       // 生成where字句
       let whereClause = ''
+      let tempQuery = query
       if (query) {
-        whereClause = this.getWhereClause(query)
+        const whereClauseAndQuery = this.getWhereClause(query)
+        whereClause = whereClauseAndQuery.whereClause
+        tempQuery = whereClauseAndQuery.query
       }
 
       // 拼接查询语句
       const statement = `SELECT * FROM "${this.tableName}" ${whereClause}`
 
       // 查询
-      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(query)
+      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(tempQuery)
       const rows = (await db.prepare(statement)).all(nonUndefinedValue) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
       return this.getResultTypeDataList<Model>(rows)
+    } finally {
+      db.release()
+    }
+  }
+
+  /**
+   * 查询SelectItem列表
+   */
+  public async getSelectItems(
+    query: Query,
+    valueName: string,
+    labelName: string,
+    secondaryLabelName?: string
+  ): Promise<SelectItem[]> {
+    const db = this.acquire()
+    try {
+      // 拼接select子句
+      let selectClause: string
+      const valueCol = StringUtil.camelToSnakeCase(valueName)
+      const labelCol = StringUtil.camelToSnakeCase(labelName)
+      let secondaryLabelCol: string | undefined
+      if (secondaryLabelName !== undefined) {
+        secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
+        selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel from ${this.tableName}`
+      } else {
+        selectClause = `select ${valueCol} as "value", ${labelCol} as label from ${this.tableName}`
+      }
+
+      // 拼接where子句
+      const whereClauseAndQuery = this.getWhereClause(query)
+
+      // 拼接sql语句
+      const statement = selectClause.concat(' ').concat(whereClauseAndQuery.whereClause)
+
+      // 查询
+      const rows = (await db.prepare(statement)).all(whereClauseAndQuery.query)
+
+      return rows.map((row) => new SelectItem(row as SelectItem))
+    } catch (error) {
+      LogUtil.error(this.childClassName, error)
+      throw error
     } finally {
       db.release()
     }
@@ -268,22 +317,60 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param queryConditions
    * @param alias
    */
-  protected getWhereClause(queryConditions: Query, alias?: string): string {
+  protected getWhereClause(
+    queryConditions: Query,
+    alias?: string
+  ): { whereClause: string; query: Query } {
     const whereClauses: string[] = []
+    // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
+    const modifiedQuery = {}
+
     if (queryConditions) {
+      // 去除值为undefined的属性和assignComparator属性
       Object.entries(queryConditions)
-        .filter(([, value]) => value !== undefined)
-        .forEach(([key]) => {
+        .filter(([key, value]) => value !== undefined && key !== 'assignComparator')
+        .forEach(([key, value]) => {
           const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-          const whereClause =
-            alias == undefined
-              ? `"${snakeCaseKey}" = @${key}`
-              : `${alias}."${snakeCaseKey}" = @${key}`
+          const comparator = this.getComparator(key, queryConditions.assignComparator)
+          // 根据运算符的不同给出不同的where子句和匹配值
+          let modifiedValue: unknown
+          let whereClause: string
+          switch (comparator) {
+            case COMPARATOR.LEFT_LIKE:
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+              modifiedValue = String(value).concat('%')
+              break
+            case COMPARATOR.RIGHT_LIKE:
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+              modifiedValue = '%'.concat(value)
+              break
+            case COMPARATOR.LIKE:
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${comparator} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              modifiedValue = '%'.concat(value).concat('%')
+              break
+            default:
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${comparator} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              modifiedValue = value
+          }
           whereClauses.push(whereClause)
+          modifiedQuery[key] = modifiedValue
         })
     }
 
-    return this.splicingWhereClauses(whereClauses)
+    const whereClause = this.splicingWhereClauses(whereClauses)
+    return { whereClause: whereClause, query: modifiedQuery as Query }
   }
 
   /**
@@ -293,21 +380,77 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @protected
    * @return 属性名为键，where字句为值的Record对象
    */
-  protected getWhereClauses(queryConditions: Query, alias?: string): Record<string, string> {
+  protected getWhereClauses(
+    queryConditions: Query,
+    alias?: string
+  ): {
+    whereClauses: Record<string, string>
+    query: Query
+  } {
     const whereClauses: Record<string, string> = {}
+    // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
+    const modifiedQuery = {}
     if (queryConditions) {
-      Object.entries(queryConditions).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-          whereClauses[key] =
-            alias == undefined
-              ? `"${snakeCaseKey}" = @${key}`
-              : `${alias}."${snakeCaseKey}" = @${key}`
-        }
-      })
+      // 去除值为undefined的属性和assignComparator属性
+      Object.entries(queryConditions)
+        .filter(([key, value]) => value !== undefined && key !== 'assignComparator')
+        .forEach(([key, value]) => {
+          if (value !== undefined && value !== '') {
+            const snakeCaseKey = StringUtil.camelToSnakeCase(key)
+            const comparator = this.getComparator(key, queryConditions.assignComparator)
+            // 根据运算符的不同给出不同的where子句和匹配值
+            let modifiedValue
+            switch (comparator) {
+              case COMPARATOR.LEFT_LIKE:
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                    : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                modifiedValue = String(value).concat('%')
+                break
+              case COMPARATOR.RIGHT_LIKE:
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                    : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                modifiedValue = '%'.concat(value)
+                break
+              default:
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"${snakeCaseKey}" ${comparator} @${key}`
+                    : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                modifiedValue = value
+            }
+            modifiedQuery[key] = modifiedValue
+          }
+        })
     }
 
-    return whereClauses
+    return { whereClauses: whereClauses, query: modifiedQuery as Query }
+  }
+
+  /**
+   * 获取运算符
+   * @param property
+   * @param assignComparator
+   * @private
+   */
+  private getComparator(
+    property: string,
+    assignComparator: { [key: string]: COMPARATOR } | undefined
+  ): COMPARATOR {
+    // 指定运算符的对象转换为数组
+    const assignComparatorList =
+      assignComparator === undefined ? undefined : Object.entries(assignComparator)
+    let comparator = COMPARATOR.EQUAL
+    if (assignComparatorList !== undefined && assignComparatorList.length > 0) {
+      const comparatorTarget = assignComparatorList.filter((item) => item[0] === property)
+      if (comparatorTarget.length > 0) {
+        comparator = comparatorTarget[0][1]
+      }
+    }
+    return comparator
   }
 
   /**

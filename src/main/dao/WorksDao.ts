@@ -36,8 +36,8 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         delete baseProperties.includeSiteTagIds
         delete baseProperties.excludeSiteTagIds
         // 生成实际列的where子句
-        const propertiesWhereClauses = this.getWhereClauses(baseProperties, 't1')
-        whereClauses = Object.entries(propertiesWhereClauses).map((item) => item[1])
+        const whereClausesAndQuery = this.getWhereClauses(baseProperties, 't1')
+        whereClauses = Object.entries(whereClausesAndQuery.whereClauses).map((item) => item[1])
 
         // 补充虚拟列的where子句
         if (
