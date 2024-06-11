@@ -22,6 +22,7 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
+  // test: window.api.
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
 }
@@ -137,7 +138,7 @@ async function requestWorks() {
 // test
 async function handleTest() {
   console.log('test')
-  // return await apis.test(27)
+  return await apis.test(27)
 }
 
 //

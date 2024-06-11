@@ -140,13 +140,13 @@ class TaskStream extends Readable{
   /**
    * 插件工具
    */
-  explainPath
+  pluginTool
 
-  constructor(directoryPath, explainPath) {
+  constructor(directoryPath, pluginTool) {
     super({ objectMode: true, highWaterMark: 1 });
     this.directoryPath = directoryPath
     this.stack = [this.directoryPath]
-    this.explainPath = explainPath
+    this.pluginTool = pluginTool
     this._read = this._read.bind(this)
   }
 
@@ -160,7 +160,7 @@ class TaskStream extends Readable{
         const stats = await fs.promises.stat(dir)
 
         if (stats.isDirectory()) {
-          const waitUserInput = this.explainPath.getExplain(dir)
+          const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPath = await waitUserInput
           console.log(meaningOfPath)
           // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）

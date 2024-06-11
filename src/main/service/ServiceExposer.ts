@@ -12,7 +12,6 @@ import WorksService from './WorksService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from './TaskService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
-import ExplainPath from '../plugin/pluginTools/ExplainPath.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -93,20 +92,16 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
 
   // TaskService
   Electron.ipcMain.handle('taskService-startTask', async (_event, args) => {
-    return TaskService.startTask(args)
+    return TaskService.startTask(args, mainWindow)
   })
   Electron.ipcMain.handle('taskService-createTask', (_event, args) => {
-    return TaskService.createTask(args, getPluginTool(mainWindow))
+    return TaskService.createTask(args, mainWindow)
   })
 
   // WorksService
   Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
     return WorksService.queryPage(args)
   })
-}
-
-function getPluginTool(mainWindow: Electron.BrowserWindow) {
-  return new ExplainPath(mainWindow)
 }
 
 export default {

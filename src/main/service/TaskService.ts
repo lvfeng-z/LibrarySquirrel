@@ -12,7 +12,7 @@ import CrudConstant from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
 import limit from 'p-limit'
-import ExplainPath from '../plugin/pluginTools/ExplainPath.ts'
+import Electron from 'electron'
 
 /**
  * 保存
@@ -36,9 +36,9 @@ async function saveBatch(tasks: Task[]): Promise<number> {
 /**
  * 根据传入的url创建任务
  * @param url 作品/作品集所在url
- * @param explainPath
+ * @param mainWindow
  */
-async function createTask(url: string, explainPath: ExplainPath): Promise<number> {
+async function createTask(url: string, mainWindow: Electron.BrowserWindow): Promise<number> {
   // 查询监听此url的插件
   const taskPlugins = await TaskPluginListenerService.getMonitored(url)
 
@@ -48,7 +48,7 @@ async function createTask(url: string, explainPath: ExplainPath): Promise<number
   }
 
   // 插件加载器
-  const pluginLoader = new PluginLoader()
+  const pluginLoader = new PluginLoader(mainWindow)
 
   // 按照排序尝试每个插件
   for (const taskPlugin of taskPlugins) {
@@ -59,15 +59,15 @@ async function createTask(url: string, explainPath: ExplainPath): Promise<number
 
     try {
       // 异步加载插件
-      const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number, explainPath)
+      const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
 
       // 创建任务
       const pluginResponse = await taskHandler.create(url)
       if (Array.isArray(pluginResponse)) {
-        return handlePluginTaskArray(pluginResponse, url, taskPlugin).then()
+        return handlePluginTaskArray(pluginResponse, url, taskPlugin)
       }
       if (pluginResponse instanceof Readable) {
-        return handlePluginTaskStream(pluginResponse, url, taskPlugin, 100, 200).then()
+        return handlePluginTaskStream(pluginResponse, url, taskPlugin, 100, 200)
       }
     } catch (error) {
       logUtil.warn(
@@ -290,8 +290,9 @@ async function handlePluginTaskStream(
 /**
  * 开始任务
  * @param taskId
+ * @param mainWindow
  */
-async function startTask(taskId: number): Promise<boolean> {
+async function startTask(taskId: number, mainWindow: Electron.BrowserWindow): Promise<boolean> {
   const dao = new TaskDao()
   const baseTask = await dao.getById(taskId)
 
@@ -321,7 +322,7 @@ async function startTask(taskId: number): Promise<boolean> {
   const pluginInfo = JSON.stringify(await InstalledPluginsService.getById(baseTask.pluginId))
 
   // 加载插件
-  const pluginLoader = new PluginLoader()
+  const pluginLoader = new PluginLoader(mainWindow)
   const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId)
 
   // 尝试开始任务
