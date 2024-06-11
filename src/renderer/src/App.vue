@@ -12,7 +12,7 @@ import SelectOption from './model/util/SelectOption.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
 import TaskManage from './components/closeablePage/TaskManage.vue'
-import ExplainString from './components/dialogs/ExplainString.vue'
+import ExplainPath from './components/dialogs/ExplainPath.vue'
 
 // onMounted
 onMounted(() => {
@@ -138,7 +138,7 @@ async function requestWorks() {
 // test
 async function handleTest() {
   console.log('test')
-  return await apis.test(27)
+  // return await apis.test(27)
 }
 
 //
@@ -255,10 +255,7 @@ window.electron.ipcRenderer.on('explain-path-request', (event, str) => {
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
-    <explain-string
-      v-model="showExplainPath"
-      :string-to-explain="pathWaitingExplain"
-    ></explain-string>
+    <explain-path v-model="showExplainPath" :string-to-explain="pathWaitingExplain"></explain-path>
   </div>
 </template>
 
