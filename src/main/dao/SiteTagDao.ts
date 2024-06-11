@@ -17,6 +17,11 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     return 'id'
   }
 
+  /**
+   * 站点标签绑定在本地标签上
+   * @param localTagId 本地标签id
+   * @param siteTagIds 站点标签id列表
+   */
   public async updateBindLocalTag(
     localTagId: string | null,
     siteTagIds: string[]
@@ -38,6 +43,10 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
   }
 
+  /**
+   * 查询站点标签（附带绑定的本地标签）
+   * @param page
+   */
   public async getSiteTagWithLocalTag(
     page: PageModel<SiteTagQueryDTO, SiteTag>
   ): Promise<SiteTagDTO[]> {
@@ -89,6 +98,10 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
   }
 
+  /**
+   * 查询SelectItem列表
+   * @param queryDTO
+   */
   public async getSelectList(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
     const db = super.acquire()
     try {
