@@ -22,7 +22,7 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
-  test: window.api.LocalAuthorSelectPage,
+  test: window.api.localAuthorGetSelectItems,
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
 }
@@ -138,7 +138,7 @@ async function requestWorks() {
 // test
 async function handleTest() {
   console.log('test')
-  const page = new PageCondition()
+  const page = { localAuthorName: '🐤' }
   const a = await apis.test(page)
   console.log(a)
 }
