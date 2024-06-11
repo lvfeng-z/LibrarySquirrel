@@ -8,7 +8,7 @@ import ApiUtil from '../util/ApiUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
 import { promisify } from 'node:util'
-import CrudConstant from '../constant/CrudConstant.ts'
+import { SAVE_FAILED } from '../constant/CrudConstant.ts'
 import FileSysUtil from '../util/FileSysUtil.ts'
 import path from 'path'
 
@@ -93,11 +93,11 @@ async function saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
         'WorksService',
         `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
       )
-      return CrudConstant.saveFailed
+      return SAVE_FAILED
     }
   } else {
     LogUtil.error('WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
-    return CrudConstant.saveFailed
+    return SAVE_FAILED
   }
 }
 

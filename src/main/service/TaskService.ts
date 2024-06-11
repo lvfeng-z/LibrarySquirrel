@@ -8,7 +8,7 @@ import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
-import CrudConstant from '../constant/CrudConstant.ts'
+import { SAVE_FAILED } from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
 import limit from 'p-limit'
@@ -356,7 +356,7 @@ async function startTask(taskId: number, mainWindow: Electron.BrowserWindow): Pr
         // 保存资源和作品信息
         promiseLimit(() => {
           WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
-            if (worksId === CrudConstant.saveFailed) {
+            if (worksId === SAVE_FAILED) {
               taskFailed(taskFilter[0])
             } else {
               finishTask(taskFilter[0], worksId)
