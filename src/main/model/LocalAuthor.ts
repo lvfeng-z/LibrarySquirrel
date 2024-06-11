@@ -1,13 +1,9 @@
 /**
  * 本地作者
  */
+import BaseModel from './BaseModel.ts'
 
-export default class LocalAuthor {
-  /**
-   * 主键
-   */
-  id: string | undefined | null
-
+export default class LocalAuthor extends BaseModel {
   /**
    * 作者名称
    */
@@ -15,10 +11,10 @@ export default class LocalAuthor {
 
   constructor(localAuthor?: LocalAuthor) {
     if (localAuthor === undefined || localAuthor === null) {
-      this.id = undefined
+      super()
       this.localAuthorName = undefined
     } else {
-      this.id = localAuthor.id
+      super(localAuthor)
       this.localAuthorName = localAuthor.localAuthorName
     }
   }

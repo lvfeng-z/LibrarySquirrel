@@ -9,6 +9,9 @@ declare global {
       testTaskPluginListenerServiceSaveBatch: function
       testTaskPluginListenerServiceGetMonitored: function
 
+      // LocalAuthorService
+      LocalAuthorSelectPage: function
+
       // LocalTagService
       localTagSave: function
       localTagDeleteById: function

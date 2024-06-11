@@ -14,6 +14,11 @@ const api = {
     return Electron.ipcRenderer.invoke('test-taskPluginListenerService-getMonitored', args)
   },
 
+  // LocalAuthorService
+  LocalAuthorSelectPage: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-selectPage', args)
+  },
+
   // LocalTagService
   localTagSave: (args) => {
     return Electron.ipcRenderer.invoke('localTag-save', args)

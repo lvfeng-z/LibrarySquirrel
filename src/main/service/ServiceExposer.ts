@@ -12,6 +12,7 @@ import WorksService from './WorksService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from './TaskService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
+import LocalAuthorService from './LocalAuthorService.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -23,6 +24,18 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
   Electron.ipcMain.handle('test-taskPluginListenerService-getMonitored', async (_event, args) => {
     return TaskPluginListenerService.getMonitored(args)
+  })
+
+  // LocalAuthorService
+  Electron.ipcMain.handle('localAuthor-selectPage', async (_event, args) => {
+    const service = new LocalAuthorService()
+    args = new PageModel(args)
+    try {
+      const page = await service.selectPage(args)
+      return ApiUtil.response(page)
+    } catch (e) {
+      return ApiUtil.error(String(e))
+    }
   })
 
   // LocalTagService
