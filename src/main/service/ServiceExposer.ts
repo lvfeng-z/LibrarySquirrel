@@ -46,6 +46,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('localAuthor-getSelectItemPage', async (_event, args) => {
+    const service = new LocalAuthorService()
+    try {
+      const result = await service.getSelectItemPage(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return ApiUtil.error(String(error))
+    }
+  })
 
   // LocalTagService
   Electron.ipcMain.handle('localTag-save', async (_event, args) => {

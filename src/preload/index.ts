@@ -21,6 +21,9 @@ const api = {
   localAuthorGetSelectItems: (args) => {
     return Electron.ipcRenderer.invoke('localAuthor-getSelectItems', args)
   },
+  localAuthorGetSelectItemPage: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-getSelectItemPage', args)
+  },
 
   // LocalTagService
   localTagSave: (args) => {

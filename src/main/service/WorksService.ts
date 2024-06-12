@@ -117,7 +117,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     page = new PageModel(page)
     const dao = new WorksDao()
     try {
-      await new Promise((resolve) => setTimeout(resolve, 10000))
       return dao.queryPage(page)
     } catch (error) {
       LogUtil.error('WorksService', error)

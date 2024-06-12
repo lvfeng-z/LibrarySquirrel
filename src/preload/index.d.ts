@@ -12,6 +12,7 @@ declare global {
       // LocalAuthorService
       localAuthorSelectPage: function
       localAuthorGetSelectItems: function
+      localAuthorGetSelectItemPage: function
 
       // LocalTagService
       localTagSave: function
