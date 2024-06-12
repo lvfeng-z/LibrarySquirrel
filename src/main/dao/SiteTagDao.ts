@@ -77,20 +77,21 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       const fromClause = `from site_tag t1
           left join local_tag t2 on t1.local_tag_id = t2.id
           left join site t3 on t1.site_id = t3.id`
-      const whereClausesAndQuery = super.getWhereClauses(page.query, 't1')
+      const whereClausesAndQuery = this.getWhereClauses(page.query, 't1')
+
+      const whereClauses = whereClausesAndQuery.whereClauses
+      const modifiedQuery = whereClausesAndQuery.query
 
       // 删除用于标识localTagId运算符的属性生成的子句
-      delete whereClausesAndQuery.whereClauses.bound
+      delete whereClauses.bound
 
       // 处理keyword
-      if (Object.prototype.hasOwnProperty.call(whereClausesAndQuery.whereClauses, 'keyword')) {
-        whereClausesAndQuery.whereClauses.keyword = 't1.site_tag_name like @keyword'
+      if (Object.prototype.hasOwnProperty.call(whereClauses, 'keyword')) {
+        whereClauses.keyword = 't1.site_tag_name like @keyword'
         page.query.keyword = page.query.getKeywordLikeString()
       }
 
-      const whereClauseArray = Object.entries(whereClausesAndQuery.whereClauses).map(
-        (whereClause) => whereClause[1]
-      )
+      const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
       // 拼接sql语句
       let statement = selectClause + ' ' + fromClause
@@ -99,9 +100,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
       // 查询
-      const results: SiteTagDTO[] = (await db.prepare(statement)).all({
-        ...page.query
-      }) as SiteTagDTO[]
+      const results: SiteTagDTO[] = (await db.prepare(statement)).all(modifiedQuery) as SiteTagDTO[]
 
       // 利用构造方法处理localTag的JSON字符串
       return results.map((result) => new SiteTagDTO(result))

@@ -199,10 +199,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       // 生成where字句
       let whereClause
       let tempQuery = page.query
+      const modifiedPage = new PageModel(page)
       if (page.query) {
         const whereClauseAndQuery = this.getWhereClause(page.query)
         whereClause = whereClauseAndQuery.whereClause
         tempQuery = whereClauseAndQuery.query
+
+        // modifiedPage存储修改过的查询条件
+        modifiedPage.query = whereClauseAndQuery.query
       }
 
       // 拼接查询语句
@@ -211,7 +215,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         statement = statement.concat(' ', whereClause)
       }
       // 拼接排序和分页字句
-      statement = await this.sorterAndPager(statement, whereClause, page)
+      statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
       let rows
@@ -239,11 +243,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     try {
       // 生成where字句
       let whereClause
-      let tempQuery = query
+      let modifiedQuery = query
       if (query) {
         const whereClauseAndQuery = this.getWhereClause(query)
         whereClause = whereClauseAndQuery.whereClause
-        tempQuery = whereClauseAndQuery.query
+        modifiedQuery = whereClauseAndQuery.query
       }
 
       // 拼接查询语句
@@ -253,7 +257,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 查询
-      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(tempQuery)
+      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery)
       const rows = (await db.prepare(statement)).all(nonUndefinedValue) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
@@ -335,6 +339,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       // 拼接where子句
       const whereClauseAndQuery = this.getWhereClause(page.query)
 
+      // 创建一个新的PageModel实例存储修改过的查询条件
       const modifiedPage = new PageModel(page)
       modifiedPage.query = whereClauseAndQuery.query
 
@@ -343,10 +348,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       if (whereClause !== undefined) {
         statement = selectClause.concat(' ', whereClause)
       }
+
+      // 分页和排序
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
+      // 查询
       const rows = (await db.prepare(statement)).all(modifiedPage)
 
+      // 处理查询结果
       const selectItems = rows.map((row) => new SelectItem(row as SelectItem))
       const result = modifiedPage.transform<SelectItem>()
       result.data = selectItems
