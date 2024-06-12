@@ -289,8 +289,8 @@ async function handlePluginTaskStream(
 
 /**
  * 开始任务
- * @param taskId
- * @param mainWindow
+ * @param taskId 任务id
+ * @param mainWindow 主窗口实例
  */
 async function startTask(taskId: number, mainWindow: Electron.BrowserWindow): Promise<boolean> {
   const dao = new TaskDao()
@@ -355,7 +355,8 @@ async function startTask(taskId: number, mainWindow: Electron.BrowserWindow): Pr
 
         // 保存资源和作品信息
         promiseLimit(() => {
-          WorksService.saveWorksAndResource(worksDTO).then((worksId) => {
+          const worksService = new WorksService()
+          worksService.saveWorksAndResource(worksDTO).then((worksId) => {
             if (worksId === SAVE_FAILED) {
               taskFailed(taskFilter[0])
             } else {

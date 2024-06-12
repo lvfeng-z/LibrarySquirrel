@@ -122,7 +122,13 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
 
   // WorksService
   Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
-    return WorksService.queryPage(args)
+    const worksService = new WorksService()
+    try {
+      const result = await worksService.queryPage(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return ApiUtil.error(String(error))
+    }
   })
 }
 
