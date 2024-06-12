@@ -398,7 +398,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     if (queryConditions !== undefined) {
       // 去除值为undefined的属性和assignComparator属性
       Object.entries(queryConditions)
-        .filter(([key, value]) => value !== undefined && key !== 'assignComparator')
+        .filter(
+          ([key, value]) => value !== undefined && key !== 'assignComparator' && key !== 'keyword'
+        )
         .forEach(([key, value]) => {
           const snakeCaseKey = StringUtil.camelToSnakeCase(key)
           const comparator = this.getComparator(key, queryConditions.assignComparator)
@@ -461,9 +463,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery = {}
     if (queryConditions) {
-      // 去除值为undefined的属性和assignComparator属性
+      // 去除值为undefined的属性和assignComparator、keyword属性
       Object.entries(queryConditions)
-        .filter(([key, value]) => value !== undefined && key !== 'assignComparator')
+        .filter(
+          ([key, value]) => value !== undefined && key !== 'assignComparator' && key !== 'keyword'
+        )
         .forEach(([key, value]) => {
           if (value !== undefined && value !== '') {
             const snakeCaseKey = StringUtil.camelToSnakeCase(key)
