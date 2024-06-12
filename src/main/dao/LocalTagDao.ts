@@ -13,53 +13,48 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     return 'id'
   }
 
-  public async queryPage(
+  public async selectPage(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
-    const db = super.acquire()
+    const db = this.acquire()
     try {
       const selectClause = 'select * from local_tag'
-      let whereClauses: string = ''
-      const columns: string[] = []
-      if (page.query) {
-        if (page.query.id != undefined && page.query.id !== '') {
-          columns.push('id = @id')
-        }
-        if (page.query.baseLocalTagId != undefined) {
-          columns.push('base_local_tag_id = @baseLocalTagId')
-        }
-        if (page.query.localTagName != undefined && page.query.localTagName != '') {
-          columns.push('local_tag_name like @localTagName')
-        }
-        if (page.query.keyword != undefined && page.query.keyword != '') {
-          columns.push('local_tag_name like @keyword')
-          const temp = new LocalTagQueryDTO(page.query as LocalTagQueryDTO)
-          page.query.keyword = temp.getKeywordLikeString()
-        }
-      }
+      let whereClause: string | undefined
+      const modifiedPage = new PageModel(page)
 
-      if (columns.length == 1) {
-        whereClauses = ' where ' + columns.toString()
-      } else if (columns.length > 1) {
-        whereClauses = ' where ' + columns.join(' and ')
+      if (page.query !== undefined) {
+        const whereClausesAndQuery = this.getWhereClauses(page.query)
+        const whereClauses = Object.entries(whereClausesAndQuery.whereClauses).map(
+          (whereClause) => whereClause[1]
+        )
+        if (StringUtil.isNotBlank(page.query.keyword)) {
+          whereClauses.push('local_tag_name like @keyword')
+          page.query = new LocalTagQueryDTO(page.query)
+          whereClausesAndQuery.query.keyword = page.query.getKeywordLikeString()
+        }
+        modifiedPage.query = whereClausesAndQuery.query
+        whereClause = this.splicingWhereClauses(whereClauses)
       }
 
       // 拼接查询语句
-      let statement = selectClause + whereClauses
+      let statement = selectClause
+      if (whereClause !== undefined) {
+        statement = statement.concat(' ', whereClause)
+      }
       // 拼接排序和分页字句
-      statement = await this.sorterAndPager(statement, whereClauses, page)
+      statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
-      page.data = this.getResultTypeDataList<LocalTag>(
-        (await db.prepare(statement)).all(page.query) as []
+      modifiedPage.data = this.getResultTypeDataList<LocalTag>(
+        (await db.prepare(statement)).all(modifiedPage.query) as []
       )
-      return page
+      return modifiedPage
     } finally {
       db.release()
     }
   }
 
   public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
-    const db = super.acquire()
+    const db = this.acquire()
     try {
       const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`
       let where = ''
@@ -91,7 +86,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param depth 查询深度
    */
   async selectTreeNode(rootId: number, depth?: number) {
-    const db = super.acquire()
+    const db = this.acquire()
     try {
       if (depth === undefined || depth < 0) {
         depth = 10
@@ -120,7 +115,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param nodeId 节点id
    */
   async selectParentNode(nodeId: number) {
-    const db = super.acquire()
+    const db = this.acquire()
     try {
       const statement = `WITH RECURSIVE parentNode AS
         (
