@@ -353,7 +353,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      const rows = (await db.prepare(statement)).all(modifiedPage)
+      const rows = (await db.prepare(statement)).all(modifiedPage.query)
 
       // 处理查询结果
       const selectItems = rows.map((row) => new SelectItem(row as SelectItem))
