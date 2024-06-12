@@ -36,8 +36,8 @@ function confirmExplain() {
   if (selected.value !== undefined) {
     const meaningOfPath = new MeaningOfPath()
     meaningOfPath.type = typeOfMeaning.value
-    meaningOfPath.name = selected.value.label
-    window.electron.ipcRenderer.send('explain-path-response', meaningOfPath)
+    meaningOfPath.id = selected.value.value
+    window.electron.ipcRenderer.send('explain-path-response', [meaningOfPath])
   }
 }
 // 刷新输入栏
@@ -96,12 +96,7 @@ function requestInputData(api) {
       <el-col :span="19">
         <el-input v-if="typeOfInput === 'input'"></el-input>
         <el-select v-if="typeOfInput === 'select'" v-model="selected">
-          <el-option
-            v-for="item in selectList"
-            :key="item.value"
-            :value="item"
-            :label="item.label"
-          >
+          <el-option v-for="item in selectList" :key="item.value" :value="item" :label="item.label">
           </el-option>
         </el-select>
         <el-date-picker v-if="typeOfInput === 'dateTimePicker'"></el-date-picker>
