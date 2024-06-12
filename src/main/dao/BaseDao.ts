@@ -308,6 +308,58 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
+   * 分页查询SelectItem
+   */
+  public async getSelectItemPage(
+    page: PageModel<Query, Model>,
+    valueName: string,
+    labelName: string,
+    secondaryLabelName?: string
+  ): Promise<PageModel<Query, SelectItem>> {
+    const db = this.acquire()
+    try {
+      // 拼接select子句
+      let selectClause: string
+      const valueCol = StringUtil.camelToSnakeCase(valueName)
+      const labelCol = StringUtil.camelToSnakeCase(labelName)
+      let secondaryLabelCol: string | undefined
+      if (secondaryLabelName !== undefined) {
+        secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
+        selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel
+                        from ${this.tableName}`
+      } else {
+        selectClause = `select ${valueCol} as "value", ${labelCol} as label
+                        from ${this.tableName}`
+      }
+
+      // 拼接where子句
+      const whereClauseAndQuery = this.getWhereClause(page.query)
+
+      const modifiedPage = new PageModel(page)
+      modifiedPage.query = whereClauseAndQuery.query
+
+      const whereClause = whereClauseAndQuery.whereClause
+      let statement = selectClause
+      if (whereClause !== undefined) {
+        statement = selectClause.concat(' ', whereClause)
+      }
+      statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
+
+      const rows = (await db.prepare(statement)).all(modifiedPage)
+
+      const selectItems = rows.map((row) => new SelectItem(row as SelectItem))
+      const result = modifiedPage.transform<SelectItem>()
+      result.data = selectItems
+      return result
+    } catch (error) {
+      LogUtil.error(this.childClassName, error)
+      throw error
+    } finally {
+      db.release()
+    }
+  }
+
+  /**
    * 拼接where字句
    * @protected
    * @param whereClauses
@@ -327,14 +379,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param alias
    */
   protected getWhereClause(
-    queryConditions: Query,
+    queryConditions: Query | undefined,
     alias?: string
   ): { whereClause: string | undefined; query: Query } {
     const whereClauses: string[] = []
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery = {}
 
-    if (queryConditions) {
+    if (queryConditions !== undefined) {
       // 去除值为undefined的属性和assignComparator属性
       Object.entries(queryConditions)
         .filter(([key, value]) => value !== undefined && key !== 'assignComparator')
