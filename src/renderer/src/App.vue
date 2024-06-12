@@ -13,6 +13,7 @@ import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
 import TaskManage from './components/closeablePage/TaskManage.vue'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
+import ApiResponse from './model/util/ApiResponse.ts'
 
 // onMounted
 onMounted(() => {
@@ -129,10 +130,12 @@ async function requestWorks() {
     }
   })
 
-  const response = await apis.worksQueryPage(page)
-  if (ApiUtil.apiResponseCheck(response)) {
-    imageList.value = (ApiUtil.apiResponseGetData(response) as { data: [] }).data as WorksDTO[]
-  }
+  apis.worksQueryPage(page).then((response: ApiResponse) => {
+    if (ApiUtil.apiResponseCheck(response)) {
+      const works = (ApiUtil.apiResponseGetData(response) as PageCondition<WorksDTO>).data
+      imageList.value = works === undefined ? [] : works
+    }
+  })
 }
 
 // test
