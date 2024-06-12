@@ -4,7 +4,6 @@ import LogUtil from '../util/LogUtil.ts'
 import PluginTool from './PluginTool.ts'
 import Electron from 'electron'
 import { EventEmitter } from 'node:events'
-import MeaningOfPath from '../model/utilModels/MeaningOfPath.ts'
 
 export default class PluginLoader {
   /**
@@ -23,11 +22,9 @@ export default class PluginLoader {
 
     // 处理插件工具的explain-path-request事件
     events.on('explain-path-request', (dir) => {
-      const meaningOfPath = new MeaningOfPath()
       // 监听渲染进程的explain-path-response事件
       Electron.ipcMain.once('explain-path-response', (_event, args) => {
-        meaningOfPath.name = args
-        events.emit('explain-path-response', meaningOfPath)
+        events.emit('explain-path-response', args)
       })
       // 向渲染进程发送explain-path-request事件
       this.mainWindow.webContents.send('explain-path-request', dir)
