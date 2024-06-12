@@ -1,7 +1,5 @@
-interface ApiResponse {
+export default interface ApiResponse {
   success: boolean
   msg: string
-  data: unknown | unknown[]
+  data: unknown | unknown[] | undefined
 }
-
-export default ApiResponse
