@@ -83,7 +83,10 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         const whereClause = this.splicingWhereClauses(whereClauses)
 
         // 拼接语句
-        statement = selectClause.concat(' ', fromClause, ' ', whereClause)
+        statement = selectClause.concat(' ', fromClause)
+        if (whereClause !== undefined) {
+          statement.concat(' ', whereClause)
+        }
       } else {
         // 拼接语句
         statement = selectClause.concat(' ', fromClause)

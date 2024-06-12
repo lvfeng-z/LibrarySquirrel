@@ -197,7 +197,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       // 生成where字句
-      let whereClause = ''
+      let whereClause
       let tempQuery = page.query
       if (page.query) {
         const whereClauseAndQuery = this.getWhereClause(page.query)
@@ -206,7 +206,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 拼接查询语句
-      let statement = `SELECT * FROM "${this.tableName}" ${whereClause}`
+      let statement = `SELECT * FROM "${this.tableName}"`
+      if (whereClause !== undefined) {
+        statement = statement.concat(' ', whereClause)
+      }
       // 拼接排序和分页字句
       statement = await this.sorterAndPager(statement, whereClause, page)
 
@@ -235,7 +238,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       // 生成where字句
-      let whereClause = ''
+      let whereClause
       let tempQuery = query
       if (query) {
         const whereClauseAndQuery = this.getWhereClause(query)
@@ -244,7 +247,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 拼接查询语句
-      const statement = `SELECT * FROM "${this.tableName}" ${whereClause}`
+      let statement = `SELECT * FROM "${this.tableName}"`
+      if (whereClause !== undefined) {
+        statement = statement.concat(' ', whereClause)
+      }
 
       // 查询
       const nonUndefinedValue = ObjectUtil.nonUndefinedValue(tempQuery)
@@ -284,7 +290,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const whereClauseAndQuery = this.getWhereClause(query)
 
       // 拼接sql语句
-      const statement = selectClause.concat(' ').concat(whereClauseAndQuery.whereClause)
+      let statement = selectClause
+      if (whereClauseAndQuery.whereClause !== undefined) {
+        statement = statement.concat(' ', whereClauseAndQuery.whereClause)
+      }
 
       // 查询
       const rows = (await db.prepare(statement)).all(whereClauseAndQuery.query)
@@ -303,11 +312,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @protected
    * @param whereClauses
    */
-  protected splicingWhereClauses(whereClauses: string[]): string {
+  protected splicingWhereClauses(whereClauses: string[]): string | undefined {
     if (whereClauses.length > 0) {
       return `where ${whereClauses.length > 1 ? whereClauses.join(' and ') : whereClauses[0]}`
     } else {
-      return ''
+      return undefined
     }
   }
 
@@ -320,7 +329,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   protected getWhereClause(
     queryConditions: Query,
     alias?: string
-  ): { whereClause: string; query: Query } {
+  ): { whereClause: string | undefined; query: Query } {
     const whereClauses: string[] = []
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery = {}
@@ -355,7 +364,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
                 alias == undefined
                   ? `"${snakeCaseKey}" ${comparator} @${key}`
                   : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-              modifiedValue = '%'.concat(value).concat('%')
+              modifiedValue = '%'.concat(value, '%')
               break
             default:
               whereClause =
@@ -463,7 +472,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected async pager(
     statement: string,
-    whereClause: string,
+    whereClause: string | undefined,
     page: PageModel<Query, Model>,
     fromClause?: string
   ): Promise<string> {
@@ -481,7 +490,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @protected
    */
   protected async getPagingClause(
-    whereClause: string,
+    whereClause: string | undefined,
     page: PageModel<Query, Model>,
     fromClause?: string
   ): Promise<string> {
@@ -494,7 +503,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
       // 查询数据总量，计算页码数量
       const nonUndefinedValue = ObjectUtil.nonUndefinedValue(page.query)
-      const countSql = `SELECT COUNT(*) AS total FROM ${fromClause} ${whereClause}`
+      let countSql = `SELECT COUNT(*) AS total FROM ${fromClause}`
+      if (whereClause !== undefined) {
+        countSql = countSql.concat(' ', whereClause)
+      }
       const countResult = (await db.prepare(countSql)).get(nonUndefinedValue) as { total: number }
       page.dataCount = countResult.total
       page.pageCount = Math.ceil(countResult.total / page.pageSize)
@@ -553,7 +565,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected async sorterAndPager(
     statement: string,
-    whereClause: string,
+    whereClause: string | undefined,
     page: PageModel<Query, Model>,
     fromClause?: string
   ): Promise<string> {
