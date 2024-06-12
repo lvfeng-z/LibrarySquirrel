@@ -1,6 +1,7 @@
 import QuerySortOption from './QuerySortOption.ts'
+import BaseQueryDTO from '../queryDTO/BaseQueryDTO.ts'
 
-export default class PageModel<Query, Result> {
+export default class PageModel<Query extends BaseQueryDTO, Result> {
   /**
    * 是否分页
    */
