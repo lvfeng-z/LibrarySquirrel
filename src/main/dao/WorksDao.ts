@@ -29,7 +29,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       let statement: string
       const selectClause = `select t1.*, json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor`
       const fromClause = 'from works t1 left join local_author t2 on t1.local_author_id = t2.id'
-      if (modifiedPage.query !== undefined) {
+      if (modifiedPage.query !== undefined && page.query !== undefined) {
         const baseProperties = lodash.cloneDeep(modifiedPage.query)
         // 去掉虚拟列
         delete baseProperties.includeLocalTagIds
@@ -47,41 +47,41 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
 
         // 补充虚拟列的where子句
         if (
-          modifiedPage.query.includeLocalTagIds !== undefined &&
-          modifiedPage.query.includeLocalTagIds !== null &&
-          modifiedPage.query.includeLocalTagIds.length > 0
+          page.query.includeLocalTagIds !== undefined &&
+          page.query.includeLocalTagIds !== null &&
+          page.query.includeLocalTagIds.length > 0
         ) {
-          const tagNum = modifiedPage.query.includeLocalTagIds.length
+          const tagNum = page.query.includeLocalTagIds.length
           whereClauses.push(
-            `${tagNum} = (select count(1) from re_works_tag ct1 where ct1.works_id = t1.id and ct1.tag_id in (${modifiedPage.query.includeLocalTagIds.join()}) and ct1.tag_type = 1)`
+            `${tagNum} = (select count(1) from re_works_tag ct1 where ct1.works_id = t1.id and ct1.tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = 1)`
           )
         }
         if (
-          modifiedPage.query.excludeLocalTagIds !== undefined &&
-          modifiedPage.query.excludeLocalTagIds !== null &&
-          modifiedPage.query.excludeLocalTagIds.length > 0
+          page.query.excludeLocalTagIds !== undefined &&
+          page.query.excludeLocalTagIds !== null &&
+          page.query.excludeLocalTagIds.length > 0
         ) {
           whereClauses.push(
-            `0 = (select count(1) from re_works_tag ct2 where ct2.works_id = t1.id and ct1.tag_id in (${modifiedPage.query.excludeLocalTagIds.join()}) and ct2.tag_type = 1)`
+            `0 = (select count(1) from re_works_tag ct2 where ct2.works_id = t1.id and ct1.tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = 1)`
           )
         }
         if (
-          modifiedPage.query.includeSiteTagIds !== undefined &&
-          modifiedPage.query.includeSiteTagIds !== null &&
-          modifiedPage.query.includeSiteTagIds.length > 0
+          page.query.includeSiteTagIds !== undefined &&
+          page.query.includeSiteTagIds !== null &&
+          page.query.includeSiteTagIds.length > 0
         ) {
-          const tagNum = modifiedPage.query.includeSiteTagIds.length
+          const tagNum = page.query.includeSiteTagIds.length
           whereClauses.push(
-            `${tagNum} = (select count(1) from re_works_tag ct3 where ct3.works_id = t1.id and ct1.tag_id in (${modifiedPage.query.includeSiteTagIds.join()}) and ct3.tag_type = 0)`
+            `${tagNum} = (select count(1) from re_works_tag ct3 where ct3.works_id = t1.id and ct1.tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = 0)`
           )
         }
         if (
-          modifiedPage.query.excludeSiteTagIds !== undefined &&
-          modifiedPage.query.excludeSiteTagIds !== null &&
-          modifiedPage.query.excludeSiteTagIds.length > 0
+          page.query.excludeSiteTagIds !== undefined &&
+          page.query.excludeSiteTagIds !== null &&
+          page.query.excludeSiteTagIds.length > 0
         ) {
           whereClauses.push(
-            `0 = (select count(1) from re_works_tag ct4 where ct4.works_id = t1.id and ct1.tag_id in (${modifiedPage.query.excludeSiteTagIds.join()}) and ct4.tag_type = 0)`
+            `0 = (select count(1) from re_works_tag ct4 where ct4.works_id = t1.id and ct1.tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = 0)`
           )
         }
 
@@ -91,7 +91,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         // 拼接语句
         statement = selectClause.concat(' ', fromClause)
         if (whereClause !== undefined) {
-          statement.concat(' ', whereClause)
+          statement = statement.concat(' ', whereClause)
         }
       } else {
         // 拼接语句
