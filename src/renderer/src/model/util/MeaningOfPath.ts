@@ -26,7 +26,7 @@ export class MeaningOfPath {
   /**
    * 详细信息
    */
-  description: LocalAuthor | LocalTag | Works | WorksSet | Site | null | undefined
+  details: LocalAuthor | LocalTag | Works | WorksSet | Site | null | undefined
 
   constructor(meaningOfPath?: MeaningOfPath) {
     if (meaningOfPath === undefined) {
