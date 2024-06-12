@@ -48,7 +48,10 @@ async function getTagSelectList(keyword) {
   loading = true
   try {
     const params = { keyword: keyword }
-    tagSelectList.value = await apis.localTagGetSelectList(params)
+    const response = await apis.localTagGetSelectList(params)
+    if (ApiUtil.apiResponseCheck(response)) {
+      tagSelectList.value = ApiUtil.apiResponseGetData(response) as SelectOption[]
+    }
   } catch (e) {
     console.log(e)
   } finally {
