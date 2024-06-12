@@ -13,6 +13,7 @@ import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from './TaskService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
+import LogUtil from '../util/LogUtil.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -34,6 +35,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       const page = await service.selectPage(args)
       return ApiUtil.response(page)
     } catch (error) {
+      LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
@@ -43,6 +45,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       const result = await service.getSelectItems(args)
       return ApiUtil.response(result)
     } catch (error) {
+      LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
@@ -52,31 +55,74 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       const result = await service.getSelectItemPage(args)
       return ApiUtil.response(result)
     } catch (error) {
+      LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
 
   // LocalTagService
   Electron.ipcMain.handle('localTag-save', async (_event, args) => {
-    return LocalTagService.save(args)
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.save(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('localTag-deleteById', async (_event, args) => {
-    return LocalTagService.deleteById(args)
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.deleteById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('localTag-updateById', async (_event, args) => {
-    return LocalTagService.updateById(args)
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.updateById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('localTag-queryPage', async (_event, args) => {
-    return LocalTagService.queryPage(args)
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.selectPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('localTag-getById', async (_event, args) => {
-    return LocalTagService.getById(args)
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.getById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('localTag-getTree', async (_event, args) => {
-    return LocalTagService.getTree(args)
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.getTree(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
-  Electron.ipcMain.handle('localTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
-    return LocalTagService.getSelectList(args)
+  Electron.ipcMain.handle('localTag-getSelectList', async (_event, args) => {
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.getSelectList(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
 
   //SettingsService
@@ -136,6 +182,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       const result = await worksService.queryPage(args)
       return ApiUtil.response(result)
     } catch (error) {
+      LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
