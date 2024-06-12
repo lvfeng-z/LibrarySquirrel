@@ -14,6 +14,11 @@ export class MeaningOfPath {
   type: PathType
 
   /**
+   * 主键
+   */
+  id: number | string | null | undefined
+
+  /**
    * 名称
    */
   name: string | null | undefined
@@ -26,14 +31,23 @@ export class MeaningOfPath {
   constructor(meaningOfPath?: MeaningOfPath) {
     if (meaningOfPath === undefined) {
       this.type = 'unknown'
+      this.id = undefined
       this.name = undefined
-      this.description = undefined
+      this.details = undefined
     } else {
       this.type = meaningOfPath.type
+      this.id = meaningOfPath.id
       this.name = meaningOfPath.name
-      this.description = meaningOfPath.description
+      this.details = meaningOfPath.details
     }
   }
 }
 
-export type PathType = 'author' | 'tag' | 'worksName' | 'worksSetName' | 'siteName' | 'createTime' | 'unknown'
+export type PathType =
+  | 'author'
+  | 'tag'
+  | 'worksName'
+  | 'worksSetName'
+  | 'siteName'
+  | 'createTime'
+  | 'unknown'

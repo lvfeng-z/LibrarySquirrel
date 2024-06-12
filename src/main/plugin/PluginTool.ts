@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import MeaningOfPath from '../model/utilModels/MeaningOfPath.ts'
+import { MeaningOfPath } from '../model/utilModels/MeaningOfPath.ts'
 
 export default class PluginTool {
   /**
