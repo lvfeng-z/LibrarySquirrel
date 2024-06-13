@@ -143,10 +143,7 @@ async function requestWorks() {
 
 // test
 async function handleTest() {
-  console.log('test')
-  const page = { localAuthorName: '🐤' }
-  const a = await apis.test(page)
-  console.log(a)
+  showExplainPath.value = true
 }
 
 //
