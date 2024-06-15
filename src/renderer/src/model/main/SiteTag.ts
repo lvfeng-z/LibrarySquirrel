@@ -1,21 +1,13 @@
-/**
- * 本地标签
- */
+import BaseModel from './BaseModel.ts'
 
-export default interface LocalTag {
+/**
+ * 站点标签
+ */
+export default class SiteTag extends BaseModel {
   /**
    * 主键
    */
   id: number | undefined | null
-  /**
-   * 创建时间
-   */
-  createTime: number | null | undefined
-
-  /**
-   * 更新时间
-   */
-  updateTime: number | null | undefined
   /**
    * 标签来源站点id
    */
@@ -40,4 +32,15 @@ export default interface LocalTag {
    * 站点标签对应的本地标签id
    */
   localTagId: number | undefined | null
+
+  constructor(siteTag: SiteTag) {
+    super(siteTag)
+    this.id = siteTag.id
+    this.siteId = siteTag.siteId
+    this.siteTagId = siteTag.siteTagId
+    this.siteTagName = siteTag.siteTagName
+    this.baseSiteTagId = siteTag.baseSiteTagId
+    this.description = siteTag.description
+    this.localTagId = siteTag.localTagId
+  }
 }
