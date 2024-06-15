@@ -42,7 +42,7 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
       this.pageSize = 10
       this.pageCount = 0
       this.dataCount = 0
-      this.query = undefined
+      this.query = {} as Query
       this.sort = undefined
       this.data = []
     } else {
