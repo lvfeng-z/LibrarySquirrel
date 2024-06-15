@@ -86,9 +86,12 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       delete whereClauses.bound
 
       // 处理keyword
-      if (Object.prototype.hasOwnProperty.call(whereClauses, 'keyword')) {
+      if (
+        Object.prototype.hasOwnProperty.call(page.query, 'keyword') &&
+        StringUtil.isNotBlank(page.query.keyword)
+      ) {
         whereClauses.keyword = 't1.site_tag_name like @keyword'
-        page.query.keyword = page.query.getKeywordLikeString()
+        modifiedQuery.keyword = page.query.getKeywordLikeString()
       }
 
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
