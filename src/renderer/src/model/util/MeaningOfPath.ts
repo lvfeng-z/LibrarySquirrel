@@ -48,6 +48,6 @@ export type PathType =
   | 'tag'
   | 'worksName'
   | 'worksSetName'
-  | 'siteName'
+  | 'site'
   | 'createTime'
   | 'unknown'
