@@ -337,6 +337,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 拼接where子句
+      if (page === undefined) {
+        page = new PageModel<Query, Model>()
+      }
       const whereClauseAndQuery = this.getWhereClause(page.query)
 
       // 创建一个新的PageModel实例存储修改过的查询条件
