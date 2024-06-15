@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
+import { nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import BaseCloseablePage from './BaseCloseablePage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
@@ -21,7 +21,7 @@ onMounted(() => {
 
 // 变量
 // 接口
-const apis = reactive({
+const apis = {
   localTagDeleteById: window.api.localTagDeleteById,
   localTagUpdateById: window.api.localTagUpdateById,
   localTagQueryPage: window.api.localTagQueryPage,
@@ -31,9 +31,9 @@ const apis = reactive({
   siteTagSave: window.api.siteTagSave,
   siteTagUpdateById: window.api.siteTagUpdateById,
   siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
-  siteGetSelectList: window.api.siteGetSelectList,
+  siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
-})
+}
 // localTagSearchTable子组件
 const localTagSearchTable = ref()
 // siteTagExchangeBox子组件
@@ -134,9 +134,12 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 12
   },
   {
-    name: 'id',
-    type: 'selectTree',
+    name: 'siteId',
+    type: 'select',
     placeholder: '选择站点',
+    useApi: true,
+    api: apis.siteGetSelectItemPage,
+    pagingApi: true,
     inputSpan: 9
   }
 ])
