@@ -8,6 +8,8 @@ import TreeNode from '../model/utilModels/TreeNode.ts'
 import BaseService from './BaseService.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import LogUtil from '../util/LogUtil.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import { COMPARATOR } from '../constant/CrudConstant.ts'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag> {
   constructor() {
@@ -103,6 +105,21 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         return selectItem
       })
     })
+  }
+
+  /**
+   * 分页查询SelectItem
+   * @param page
+   */
+  async getSelectItemPage(
+    page: PageModel<LocalTagQueryDTO, LocalTag>
+  ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
+    const dao = new LocalTagDao()
+    if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
+      page.query = new LocalTagQueryDTO(page.query)
+      page.query.assignComparator = { localTagName: COMPARATOR.LIKE }
+    }
+    return await dao.getSelectItemPage(page, 'id', 'localTagName')
   }
 
   protected getDao(): BaseDao<LocalTagQueryDTO, LocalTag> {

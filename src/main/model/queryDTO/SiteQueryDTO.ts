@@ -30,7 +30,7 @@ export default class SiteQueryDTO extends BaseQueryDTO {
    */
   sortNum: number | undefined | null
 
-  constructor(siteQueryDTO: SiteQueryDTO) {
+  constructor(siteQueryDTO?: SiteQueryDTO) {
     if (siteQueryDTO === undefined) {
       super()
       this.id = undefined

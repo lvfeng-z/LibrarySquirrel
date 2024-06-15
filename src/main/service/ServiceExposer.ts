@@ -124,6 +124,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('localTag-getSelectItemPage', async (_event, args) => {
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.getSelectItemPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', () => {
@@ -137,11 +146,14 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
 
   // SiteService
-  Electron.ipcMain.handle('site-insert', async (_event, args) => {
-    return SiteService.save(args)
-  })
-  Electron.ipcMain.handle('site-getSelectList', async (_event, args) => {
-    return SiteService.getSelectList(args)
+  Electron.ipcMain.handle('site-getSelectItemPage', async (_event, args) => {
+    const siteService = new SiteService()
+    try {
+      return ApiUtil.response(await siteService.getSelectItemPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
 
   // SiteTagService

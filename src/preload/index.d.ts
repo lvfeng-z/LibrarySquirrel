@@ -22,6 +22,7 @@ declare global {
       localTagGetById: function
       localTagGetTree: function
       localTagGetSelectList: function
+      localTagGetSelectItemPage: function
 
       // SettingsService
       settingsGetSettings: function
@@ -29,8 +30,7 @@ declare global {
       settingsResetSettings: function
 
       // SiteService
-      siteInsert: function
-      siteGetSelectList: function
+      siteGetSelectItemPage: function
 
       // SiteTagService
       siteTagSave: function

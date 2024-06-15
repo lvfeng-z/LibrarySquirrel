@@ -1,19 +1,26 @@
 import Site from '../model/Site.ts'
 import SiteDao from '../dao/SiteDao.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
-import ApiUtil from '../util/ApiUtil.ts'
+import BaseService from './BaseService.ts'
+import BaseDao from '../dao/BaseDao.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import { COMPARATOR } from '../constant/CrudConstant.ts'
 
-async function save(site: Site) {
-  const dao = new SiteDao()
-  return ApiUtil.response(await dao.save(site))
-}
+export default class SiteService extends BaseService<SiteQueryDTO, Site> {
+  constructor() {
+    super('SiteService')
+  }
 
-async function getSelectList(queryDTO: SiteQueryDTO) {
-  const dao = new SiteDao()
-  return ApiUtil.response(await dao.getSelectList(queryDTO))
-}
+  public async getSelectItemPage(page: PageModel<SiteQueryDTO, Site>) {
+    const dao = new SiteDao()
+    if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
+      page.query = new SiteQueryDTO(page.query)
+      page.query.assignComparator = { siteName: COMPARATOR.LIKE }
+    }
+    return dao.getSelectItemPage(page, 'id', 'SiteName')
+  }
 
-export default {
-  save,
-  getSelectList
+  protected getDao(): BaseDao<SiteQueryDTO, Site> {
+    return new SiteDao()
+  }
 }

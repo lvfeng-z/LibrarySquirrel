@@ -47,6 +47,9 @@ const api = {
   localTagGetSelectList: (args) => {
     return Electron.ipcRenderer.invoke('localTag-getSelectList', args)
   },
+  localTagGetSelectItemPage: (args) => {
+    return Electron.ipcRenderer.invoke('localTag-getSelectItemPage', args)
+  },
 
   // SettingsService
   settingsGetSettings: () => {
@@ -60,11 +63,8 @@ const api = {
   },
 
   // SiteService
-  siteInsert: (args) => {
-    return Electron.ipcRenderer.invoke('site-insert', args)
-  },
-  siteGetSelectList: (args) => {
-    return Electron.ipcRenderer.invoke('site-getSelectList', args)
+  siteGetSelectItemPage: (args) => {
+    return Electron.ipcRenderer.invoke('site-getSelectItemPage', args)
   },
 
   // SiteTagService
