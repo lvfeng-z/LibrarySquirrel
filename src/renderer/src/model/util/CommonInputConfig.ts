@@ -19,6 +19,7 @@ interface CommonInputConfig {
   selectData?: SelectOption[] // 选择框数据
   useApi?: boolean // 是否请求接口获得选择框数据
   api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
+  pagingApi?: boolean // 接口是否分页
   placeholder?: string // 占位符
 }
 

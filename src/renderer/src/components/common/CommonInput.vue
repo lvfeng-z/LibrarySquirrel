@@ -4,6 +4,7 @@ import { onMounted, ref, Ref, UnwrapRef } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SelectOption from '../../model/util/SelectOption'
 import lodash from 'lodash'
+import PageCondition from '../../model/util/PageCondition.ts'
 
 // props
 const props = defineProps<{
@@ -21,10 +22,7 @@ onMounted(async () => {
 
   // 请求接口给selectData赋值
   if (props.config.useApi && props.config.api !== undefined) {
-    const response = await props.config.api()
-    if (ApiUtil.apiResponseCheck(response)) {
-      innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectOption[]
-    }
+    requestSelectDataApi()
   } else if (props.config.selectData !== undefined) {
     innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectOption[]
   }
@@ -57,10 +55,33 @@ function handleBlur() {
 function handleDataChange() {
   emits('dataChanged')
 }
-// 处理清空事件
-function handleClear() {
-  // 清空是将值设置为null，不是undefined，因为主进程中crud函数将undefined视为不对此属性进行更改，null更符合清空的定义
-  data.value = null
+// 请求select数据接口
+async function requestSelectDataApi(queryStr?: string) {
+  if (props.config.useApi && props.config.api !== undefined) {
+    if (props.config.pagingApi) {
+      let page
+      if (queryStr !== undefined && queryStr !== '') {
+        page = new PageCondition()
+        page.query = { keyword: queryStr }
+      }
+      const response = await props.config.api(page)
+      if (ApiUtil.apiResponseCheck(response)) {
+        const datalist = (ApiUtil.apiResponseGetData(response) as PageCondition<object>).data
+        innerSelectData.value = datalist === undefined ? [] : (datalist as SelectOption[])
+      }
+    } else {
+      let query
+      if (queryStr !== undefined && queryStr !== '') {
+        query = { keyword: queryStr }
+      }
+      const response = await props.config.api(query)
+      if (ApiUtil.apiResponseCheck(response)) {
+        innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectOption[]
+      }
+    }
+  } else {
+    console.debug('CommonInput在未启用接口或者未配置接口的情况下请求了接口')
+  }
 }
 </script>
 
@@ -105,10 +126,21 @@ function handleClear() {
     <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
     <el-select
       v-if="props.config.type === 'select'"
+      v-model="data"
       :disabled="disabled"
       :placeholder="props.config.placeholder"
+      :remote="props.config.useApi"
+      :remote-method="(query: string) => requestSelectDataApi(query)"
+      :filterable="props.config.useApi"
       clearable
-    ></el-select>
+    >
+      <el-option
+        v-for="item in innerSelectData"
+        :key="item.value"
+        :value="item.value"
+        :label="item.label"
+      />
+    </el-select>
     <el-tree-select
       v-if="props.config.type === 'selectTree'"
       v-model="data"
@@ -116,9 +148,11 @@ function handleClear() {
       :disabled="disabled"
       :data="innerSelectData"
       :placeholder="props.config.placeholder"
+      :remote="props.config.useApi"
+      :remote-method="(query: string) => requestSelectDataApi(query)"
+      :filterable="props.config.useApi"
       clearable
       @change="handleDataChange"
-      @clear="handleClear"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
   </div>
