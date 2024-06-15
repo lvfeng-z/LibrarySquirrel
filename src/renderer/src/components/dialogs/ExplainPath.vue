@@ -5,6 +5,9 @@ import ApiUtil from '../../utils/ApiUtil.ts'
 import PageCondition from '../../model/util/PageCondition.ts'
 import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
+import LocalAuthor from '../../model/main/LocalAuthor.ts'
+import LocalTag from '../../model/main/LocalTag.ts'
+import Site from '../../model/main/Site.ts'
 
 // props
 const props = defineProps<{
@@ -14,7 +17,9 @@ const props = defineProps<{
 // 变量
 // 接口
 const apis = {
-  localAuthorGetSelectItemPage: window.api.localAuthorGetSelectItemPage
+  localAuthorGetSelectItemPage: window.api.localAuthorGetSelectItemPage,
+  localTagGetSelectItemPage: window.api.localTagGetSelectItemPage,
+  siteGetSelectItemPage: window.api.siteGetSelectItemPage
 }
 // 目录含义选择列表
 const meaningTypes = [
@@ -22,7 +27,7 @@ const meaningTypes = [
   { value: 'tag', label: '标签' },
   { value: 'worksName', label: '作品名称' },
   { value: 'worksSetName', label: '作品集名称' },
-  { value: 'siteName', label: '站点名称' },
+  { value: 'site', label: '站点名称' },
   { value: 'createTime', label: '创建时间' },
   { value: 'unknown', label: '未知/无含义' }
 ]
@@ -50,7 +55,7 @@ function getInputRowType(pathType: PathType) {
   switch (pathType) {
     case 'author':
     case 'tag':
-    case 'siteName':
+    case 'site':
       inputType = 'select'
       break
     case 'worksName':
@@ -67,18 +72,32 @@ function getInputRowType(pathType: PathType) {
   return inputType
 }
 // 获取输入栏数据接口
-function getInputRowDataApi(pathType: PathType) {
+function getInputRowDataApi(query: string, pathType: PathType) {
+  let page
   switch (pathType) {
     case 'author':
-      requestInputData(apis.localAuthorGetSelectItemPage).then((response) => {
+      page = new PageCondition<LocalAuthor>()
+      page.query = new LocalAuthor()
+      page.query.localAuthorName = query
+      requestInputData(apis.localAuthorGetSelectItemPage, page).then((response) => {
         authorSelectList.value = response
       })
       break
     case 'tag':
-      // tagSelectList.value = await requestInputData(apis.localAuthorGetSelectItemPage)
+      page = new PageCondition<LocalTag>()
+      page.query = new LocalTag()
+      page.query.localTagName = query
+      requestInputData(apis.localTagGetSelectItemPage, page).then((response) => {
+        tagSelectList.value = response
+      })
       break
-    case 'siteName':
-      // siteSelectList.value = await requestInputData(apis.localAuthorGetSelectItemPage)
+    case 'site':
+      page = new PageCondition<Site>()
+      page.query = new Site()
+      page.query.siteName = query
+      requestInputData(apis.siteGetSelectItemPage, page).then((response) => {
+        siteSelectList.value = response
+      })
       break
     default:
       break
@@ -91,15 +110,19 @@ function getInputRowData(pathType: PathType): SelectOption[] {
       return authorSelectList.value
     case 'tag':
       return tagSelectList.value
-    case 'siteName':
+    case 'site':
       return siteSelectList.value
     default:
       return []
   }
 }
+// 重置输入栏
+function resetInputData(meaningOfPath: MeaningOfPath) {
+  meaningOfPath.id = undefined
+  meaningOfPath.name = undefined
+}
 // 请求接口
-async function requestInputData(api): Promise<SelectOption[]> {
-  const page = new PageCondition()
+async function requestInputData(api, page: PageCondition<unknown>): Promise<SelectOption[]> {
   const response = await api(page)
   if (ApiUtil.apiResponseCheck(response)) {
     return (ApiUtil.apiResponseGetData(response) as PageCondition<object>).data as []
@@ -123,7 +146,7 @@ async function requestInputData(api): Promise<SelectOption[]> {
         <template v-for="(meaningOfPath, index) in meaningOfPaths" :key="index">
           <el-row>
             <el-col :span="5">
-              <el-select v-model="meaningOfPath.type">
+              <el-select v-model="meaningOfPath.type" @change="resetInputData(meaningOfPath)">
                 <el-option
                   v-for="item in meaningTypes"
                   :key="item.value"
@@ -142,7 +165,8 @@ async function requestInputData(api): Promise<SelectOption[]> {
                 v-if="getInputRowType(meaningOfPath.type) === 'select'"
                 v-model="meaningOfPath.id"
                 remote
-                :remote-method="getInputRowDataApi(meaningOfPath.type)"
+                :remote-method="(query: string) => getInputRowDataApi(query, meaningOfPath.type)"
+                filterable
               >
                 <el-option
                   v-for="item in getInputRowData(meaningOfPath.type)"
