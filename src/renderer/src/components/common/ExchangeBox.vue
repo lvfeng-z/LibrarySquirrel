@@ -2,7 +2,7 @@
 import SearchToolbar from './SearchToolbar.vue'
 import InputBox from '../../model/util/InputBox'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import SelectOption from '../../model/util/SelectOption'
+import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
 import DoubleCheckTag from './DoubleCheckTag.vue'
@@ -37,8 +37,8 @@ const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
 const upperPageConfig: Ref<UnwrapRef<PageCondition<object>>> = ref(new PageCondition<object>()) // upper搜索栏分页参数
 const lowerPageConfig: Ref<UnwrapRef<PageCondition<object>>> = ref(new PageCondition<object>()) // lower搜索栏分页参数
-const upperData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upper的数据
-const lowerData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lower的数据
+const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
+const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperScroll = ref() // upperDataScrollBar子组件
 const lowerScroll = ref() // lowerDataScrollBar子组件
 const upperLoadMore: Ref<boolean> = computed(() => {
@@ -47,9 +47,9 @@ const upperLoadMore: Ref<boolean> = computed(() => {
 const lowerLoadMore: Ref<boolean> = computed(() => {
   return lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount
 }) // lower加载更多开关
-const upperBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // upperBuffer的数据
+const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // upperBuffer的数据Id
-const lowerBufferData: Ref<UnwrapRef<SelectOption[]>> = ref([]) // lowerBuffer的数据
+const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
 const lowerBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
 const searchButtonDisabled = computed(() => {
   return !(
@@ -60,7 +60,7 @@ const searchButtonDisabled = computed(() => {
 
 // 方法
 // 请求查询接口
-async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption[] | undefined> {
+async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[] | undefined> {
   // 请求api
   let response: ApiResponse
   if (upperOrLower) {
@@ -81,7 +81,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectOption
 
   // 解析并返回数据，同时把分页参数赋值给响应式变量
   if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageCondition<SelectOption>
+    const page = ApiUtil.apiResponseGetData(response) as PageCondition<SelectItem>
     if (upperOrLower) {
       upperPageConfig.value = new PageCondition(page)
     } else {
@@ -108,12 +108,12 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   if (newData) {
     if (upperOrLower) {
       // 过滤掉upperBufferId已包含的数据
-      upperData.value = newData.filter((item: SelectOption) => {
+      upperData.value = newData.filter((item: SelectItem) => {
         return !upperBufferId.value.has(item.value)
       })
     } else {
       // 过滤掉lowerBufferId已包含的数据
-      lowerData.value = newData.filter((item: SelectOption) => {
+      lowerData.value = newData.filter((item: SelectItem) => {
         return !lowerBufferId.value.has(item.value)
       })
     }
@@ -121,7 +121,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 }
 // 处理check-tag点击事件
 function handleCheckTagClick(
-  tag: SelectOption,
+  tag: SelectItem,
   type: 'upperData' | 'upperBuffer' | 'lowerData' | 'lowerBuffer'
 ) {
   switch (type) {
@@ -150,7 +150,7 @@ function handleCheckTagClick(
   }
 }
 // 元素由source移动至target
-function exchange(source: SelectOption[], target: SelectOption[], item: SelectOption) {
+function exchange(source: SelectItem[], target: SelectItem[], item: SelectItem) {
   const index = source.indexOf(item)
   if (index !== -1) {
     source.splice(index, 1)

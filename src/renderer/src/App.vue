@@ -8,7 +8,7 @@ import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import PageCondition from './model/util/PageCondition'
 import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
-import SelectOption from './model/util/SelectOption.ts'
+import SelectItem from './model/util/SelectItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
 import TaskManage from './components/closeablePage/TaskManage.vue'
@@ -28,8 +28,8 @@ const apis = {
   worksQueryPage: window.api.worksQueryPage
 }
 let loading = false // 主菜单栏加载中开关
-const selectedTagList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选中列表
-const tagSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 主搜索栏选择项列表
+const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
+const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
   closeablePage: false,
@@ -50,7 +50,7 @@ async function getTagSelectList(keyword) {
     const params = { keyword: keyword }
     const response = await apis.localTagGetSelectList(params)
     if (ApiUtil.apiResponseCheck(response)) {
-      tagSelectList.value = ApiUtil.apiResponseGetData(response) as SelectOption[]
+      tagSelectList.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
     }
   } catch (e) {
     console.log(e)
@@ -90,6 +90,7 @@ async function requestWorks() {
   selectedTagList.value.forEach((tag) => {
     if (
       tag.extraData !== undefined &&
+      tag.extraData !== null &&
       Object.prototype.hasOwnProperty.call(tag.extraData, 'tagType')
     ) {
       // "page.query !== undefined"是为了保证编译能通过，没有实际意义

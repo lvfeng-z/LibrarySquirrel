@@ -10,7 +10,7 @@ import ApiResponse from '../../model/util/ApiResponse'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
-import SelectOption from '../../model/util/SelectOption'
+import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import LocalTag from '../../model/main/LocalTag'
@@ -216,7 +216,7 @@ async function deleteLocalTag(id: string) {
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件
-async function handleExchangeBoxConfirm(unBound: SelectOption[], bound: SelectOption[]) {
+async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
     const boundIds = bound.map((item) => item.value)

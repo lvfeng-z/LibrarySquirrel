@@ -2,7 +2,7 @@
 import CommonInputConfig from '../../model/util/CommonInputConfig'
 import { onMounted, ref, Ref, UnwrapRef } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
-import SelectOption from '../../model/util/SelectOption'
+import SelectItem from '../../model/util/SelectItem'
 import lodash from 'lodash'
 import PageCondition from '../../model/util/PageCondition.ts'
 
@@ -24,7 +24,7 @@ onMounted(async () => {
   if (props.config.useApi && props.config.api !== undefined) {
     requestSelectDataApi()
   } else if (props.config.selectData !== undefined) {
-    innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectOption[]
+    innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectItem[]
   }
 })
 
@@ -36,7 +36,7 @@ const emits = defineEmits(['dataChanged'])
 
 // 变量
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
-const innerSelectData: Ref<UnwrapRef<SelectOption[]>> = ref([])
+const innerSelectData: Ref<UnwrapRef<SelectItem[]>> = ref([])
 
 // 方法
 // 处理组件被双击事件
@@ -67,7 +67,7 @@ async function requestSelectDataApi(queryStr?: string) {
       const response = await props.config.api(page)
       if (ApiUtil.apiResponseCheck(response)) {
         const datalist = (ApiUtil.apiResponseGetData(response) as PageCondition<object>).data
-        innerSelectData.value = datalist === undefined ? [] : (datalist as SelectOption[])
+        innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
       }
     } else {
       let query
@@ -76,7 +76,7 @@ async function requestSelectDataApi(queryStr?: string) {
       }
       const response = await props.config.api(query)
       if (ApiUtil.apiResponseCheck(response)) {
-        innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectOption[]
+        innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
       }
     }
   } else {

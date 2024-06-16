@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import SelectOption from '../../model/util/SelectOption'
+import SelectItem from '../../model/util/SelectItem'
 
 // props
 const props = withDefaults(
   defineProps<{
-    item: SelectOption
+    item: SelectItem
     leftTagType?: 'success' | 'warning' | 'danger' | 'info'
     rightTagType?: 'success' | 'warning' | 'danger' | 'info'
   }>(),

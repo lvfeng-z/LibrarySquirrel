@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, ref, UnwrapRef } from 'vue'
-import SelectOption from '../../model/util/SelectOption.ts'
+import SelectItem from '../../model/util/SelectItem.ts'
 import ApiUtil from '../../utils/ApiUtil.ts'
 import PageCondition from '../../model/util/PageCondition.ts'
 import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
@@ -32,9 +32,9 @@ const meaningTypes = [
   { value: 'unknown', label: '未知/无含义' }
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
-const authorSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 作者选择列表
-const tagSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 标签选择列表
-const siteSelectList: Ref<UnwrapRef<SelectOption[]>> = ref([]) // 站点选择列表
+const authorSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 作者选择列表
+const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 标签选择列表
+const siteSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 站点选择列表
 
 // 方法
 function confirmExplain() {
@@ -104,7 +104,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
   }
 }
 // 获取输入行的数据
-function getInputRowData(pathType: PathType): SelectOption[] {
+function getInputRowData(pathType: PathType): SelectItem[] {
   switch (pathType) {
     case 'author':
       return authorSelectList.value
@@ -122,7 +122,7 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
   meaningOfPath.name = undefined
 }
 // 请求接口
-async function requestInputData(api, page: PageCondition<unknown>): Promise<SelectOption[]> {
+async function requestInputData(api, page: PageCondition<unknown>): Promise<SelectItem[]> {
   const response = await api(page)
   if (ApiUtil.apiResponseCheck(response)) {
     return (ApiUtil.apiResponseGetData(response) as PageCondition<object>).data as []
