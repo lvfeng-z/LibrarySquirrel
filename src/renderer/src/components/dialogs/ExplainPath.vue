@@ -2,7 +2,7 @@
 import { Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem.ts'
 import ApiUtil from '../../utils/ApiUtil.ts'
-import PageCondition from '../../model/util/PageCondition.ts'
+import PageModel from '../../model/util/PageModel.ts'
 import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
 import LocalAuthor from '../../model/main/LocalAuthor.ts'
@@ -76,7 +76,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
   let page
   switch (pathType) {
     case 'author':
-      page = new PageCondition<LocalAuthor>()
+      page = new PageModel<LocalAuthor>()
       page.query = new LocalAuthor()
       page.query.localAuthorName = query
       requestInputData(apis.localAuthorGetSelectItemPage, page).then((response) => {
@@ -84,7 +84,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
       })
       break
     case 'tag':
-      page = new PageCondition<LocalTag>()
+      page = new PageModel<LocalTag>()
       page.query = new LocalTag()
       page.query.localTagName = query
       requestInputData(apis.localTagGetSelectItemPage, page).then((response) => {
@@ -92,7 +92,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
       })
       break
     case 'site':
-      page = new PageCondition<Site>()
+      page = new PageModel<Site>()
       page.query = new Site()
       page.query.siteName = query
       requestInputData(apis.siteGetSelectItemPage, page).then((response) => {
@@ -122,10 +122,10 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
   meaningOfPath.name = undefined
 }
 // 请求接口
-async function requestInputData(api, page: PageCondition<unknown>): Promise<SelectItem[]> {
+async function requestInputData(api, page: PageModel<unknown>): Promise<SelectItem[]> {
   const response = await api(page)
   if (ApiUtil.apiResponseCheck(response)) {
-    return (ApiUtil.apiResponseGetData(response) as PageCondition<object>).data as []
+    return (ApiUtil.apiResponseGetData(response) as PageModel<object>).data as []
   } else {
     return []
   }

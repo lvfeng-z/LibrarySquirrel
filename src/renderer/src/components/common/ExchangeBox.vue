@@ -6,7 +6,7 @@ import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
 import DoubleCheckTag from './DoubleCheckTag.vue'
-import PageCondition from '../../model/util/PageCondition'
+import PageModel from '../../model/util/PageModel'
 import lodash from 'lodash'
 
 // props
@@ -35,8 +35,8 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPageConfig: Ref<UnwrapRef<PageCondition<object>>> = ref(new PageCondition<object>()) // upper搜索栏分页参数
-const lowerPageConfig: Ref<UnwrapRef<PageCondition<object>>> = ref(new PageCondition<object>()) // lower搜索栏分页参数
+const upperPageConfig: Ref<UnwrapRef<PageModel<object>>> = ref(new PageModel<object>()) // upper搜索栏分页参数
+const lowerPageConfig: Ref<UnwrapRef<PageModel<object>>> = ref(new PageModel<object>()) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperScroll = ref() // upperDataScrollBar子组件
@@ -81,11 +81,11 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
 
   // 解析并返回数据，同时把分页参数赋值给响应式变量
   if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageCondition<SelectItem>
+    const page = ApiUtil.apiResponseGetData(response) as PageModel<SelectItem>
     if (upperOrLower) {
-      upperPageConfig.value = new PageCondition(page)
+      upperPageConfig.value = new PageModel(page)
     } else {
-      lowerPageConfig.value = new PageCondition(page)
+      lowerPageConfig.value = new PageModel(page)
     }
     return page.data === undefined ? [] : page.data
   } else {
@@ -97,9 +97,9 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
 async function handleSearchButtonClicked(upperOrLower: boolean) {
   // 点击搜索按钮后，分页和滚动条位置重置
   if (upperOrLower) {
-    upperPageConfig.value = new PageCondition<object>()
+    upperPageConfig.value = new PageModel<object>()
   } else {
-    lowerPageConfig.value = new PageCondition<object>()
+    lowerPageConfig.value = new PageModel<object>()
   }
   resetScrollBarPosition(upperOrLower)
 
@@ -174,10 +174,10 @@ function handleClearButtonClicked() {
 function refreshData() {
   upperBufferData.value = []
   upperBufferId.value.clear()
-  upperPageConfig.value = new PageCondition()
+  upperPageConfig.value = new PageModel()
   lowerBufferData.value = []
   lowerBufferId.value.clear()
-  lowerPageConfig.value = new PageCondition()
+  lowerPageConfig.value = new PageModel()
   resetScrollBarPosition()
 
   requestApiAndGetData(true).then((response) => {

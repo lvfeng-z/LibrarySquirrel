@@ -1,6 +1,6 @@
 import QuerySortOption from './QuerySortOption.ts'
 
-export default class PageCondition<T> {
+export default class PageModel<T> {
   /**
    * 当前页码
    */
@@ -30,7 +30,7 @@ export default class PageCondition<T> {
    */
   data?: T[]
 
-  constructor(page?: PageCondition<T>) {
+  constructor(page?: PageModel<T>) {
     if (page === undefined) {
       this.pageNumber = 1
       this.pageSize = 10

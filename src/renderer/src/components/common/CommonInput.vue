@@ -4,7 +4,7 @@ import { onMounted, ref, Ref, UnwrapRef } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SelectItem from '../../model/util/SelectItem'
 import lodash from 'lodash'
-import PageCondition from '../../model/util/PageCondition.ts'
+import PageModel from '../../model/util/PageModel.ts'
 
 // props
 const props = defineProps<{
@@ -61,12 +61,12 @@ async function requestSelectDataApi(queryStr?: string) {
     if (props.config.pagingApi) {
       let page
       if (queryStr !== undefined && queryStr !== '') {
-        page = new PageCondition()
+        page = new PageModel()
         page.query = { keyword: queryStr }
       }
       const response = await props.config.api(page)
       if (ApiUtil.apiResponseCheck(response)) {
-        const datalist = (ApiUtil.apiResponseGetData(response) as PageCondition<object>).data
+        const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<object>).data
         innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
       }
     } else {

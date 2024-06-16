@@ -6,7 +6,7 @@ import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/ic
 import Settings from './components/closeablePage/Settings.vue'
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
-import PageCondition from './model/util/PageCondition'
+import PageModel from './model/util/PageModel'
 import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
 import SelectItem from './model/util/SelectItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
@@ -82,7 +82,7 @@ function closeFloatPage() {
 }
 // 请求作品接口
 async function requestWorks() {
-  const page = new PageCondition<WorksQueryDTO>()
+  const page = new PageModel<WorksQueryDTO>()
   page.query = new WorksQueryDTO()
   page.pageSize = 100
 
@@ -136,7 +136,7 @@ async function requestWorks() {
 
   apis.worksQueryPage(page).then((response: ApiResponse) => {
     if (ApiUtil.apiResponseCheck(response)) {
-      const works = (ApiUtil.apiResponseGetData(response) as PageCondition<WorksDTO>).data
+      const works = (ApiUtil.apiResponseGetData(response) as PageModel<WorksDTO>).data
       imageList.value = works === undefined ? [] : works
     }
   })
