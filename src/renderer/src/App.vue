@@ -82,7 +82,7 @@ function closeFloatPage() {
 }
 // 请求作品接口
 async function requestWorks() {
-  const page = new PageModel<WorksQueryDTO>()
+  const page = new PageModel<WorksQueryDTO, WorksDTO>()
   page.query = new WorksQueryDTO()
   page.pageSize = 100
 
@@ -136,7 +136,7 @@ async function requestWorks() {
 
   apis.worksQueryPage(page).then((response: ApiResponse) => {
     if (ApiUtil.apiResponseCheck(response)) {
-      const works = (ApiUtil.apiResponseGetData(response) as PageModel<WorksDTO>).data
+      const works = (ApiUtil.apiResponseGetData(response) as PageModel<WorksQueryDTO, WorksDTO>).data
       imageList.value = works === undefined ? [] : works
     }
   })

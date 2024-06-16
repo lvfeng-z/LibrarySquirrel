@@ -8,6 +8,7 @@ import lodash from 'lodash'
 import LocalAuthor from '../../model/main/LocalAuthor.ts'
 import LocalTag from '../../model/main/LocalTag.ts'
 import Site from '../../model/main/Site.ts'
+import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -32,6 +33,7 @@ const meaningTypes = [
   { value: 'unknown', label: '未知/无含义' }
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
+const authorPage:Ref<UnwrapRef<PageModel<BaseQueryDTO, SelectItem>>> = ref(new PageModel<BaseQueryDTO, SelectItem>())
 const authorSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 作者选择列表
 const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 标签选择列表
 const siteSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 站点选择列表
@@ -76,7 +78,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
   let page
   switch (pathType) {
     case 'author':
-      page = new PageModel<LocalAuthor>()
+      page = authorPage.value
       page.query = new LocalAuthor()
       page.query.localAuthorName = query
       requestInputData(apis.localAuthorGetSelectItemPage, page).then((response) => {
@@ -84,7 +86,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
       })
       break
     case 'tag':
-      page = new PageModel<LocalTag>()
+      page = new PageModel<BaseQueryDTO, LocalTag>()
       page.query = new LocalTag()
       page.query.localTagName = query
       requestInputData(apis.localTagGetSelectItemPage, page).then((response) => {
@@ -92,7 +94,7 @@ function getInputRowDataApi(query: string, pathType: PathType) {
       })
       break
     case 'site':
-      page = new PageModel<Site>()
+      page = new PageModel<BaseQueryDTO, Site>()
       page.query = new Site()
       page.query.siteName = query
       requestInputData(apis.siteGetSelectItemPage, page).then((response) => {
@@ -122,10 +124,10 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
   meaningOfPath.name = undefined
 }
 // 请求接口
-async function requestInputData(api, page: PageModel<unknown>): Promise<SelectItem[]> {
+async function requestInputData(api, page: PageModel<BaseQueryDTO, unknown>): Promise<SelectItem[]> {
   const response = await api(page)
   if (ApiUtil.apiResponseCheck(response)) {
-    return (ApiUtil.apiResponseGetData(response) as PageModel<object>).data as []
+    return (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>).data as []
   } else {
     return []
   }

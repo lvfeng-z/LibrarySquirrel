@@ -8,6 +8,7 @@ import ApiResponse from '../../model/util/ApiResponse'
 import DoubleCheckTag from './DoubleCheckTag.vue'
 import PageModel from '../../model/util/PageModel'
 import lodash from 'lodash'
+import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -35,8 +36,8 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPageConfig: Ref<UnwrapRef<PageModel<object>>> = ref(new PageModel<object>()) // upper搜索栏分页参数
-const lowerPageConfig: Ref<UnwrapRef<PageModel<object>>> = ref(new PageModel<object>()) // lower搜索栏分页参数
+const upperPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // upper搜索栏分页参数
+const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperScroll = ref() // upperDataScrollBar子组件
@@ -65,6 +66,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
   let response: ApiResponse
   if (upperOrLower) {
     upperPageConfig.value.query = {
+      ...new BaseQueryDTO(),
       ...upperSearchToolbarParams.value,
       ...props.upperApiStaticParams
     }
@@ -72,6 +74,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
     response = await props.upperSearchApi(tempPage)
   } else {
     lowerPageConfig.value.query = {
+      ...new BaseQueryDTO(),
       ...lowerSearchToolbarParams.value,
       ...props.lowerApiStaticParams
     }
@@ -81,7 +84,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
 
   // 解析并返回数据，同时把分页参数赋值给响应式变量
   if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<SelectItem>
+    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, SelectItem>
     if (upperOrLower) {
       upperPageConfig.value = new PageModel(page)
     } else {
@@ -97,9 +100,9 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
 async function handleSearchButtonClicked(upperOrLower: boolean) {
   // 点击搜索按钮后，分页和滚动条位置重置
   if (upperOrLower) {
-    upperPageConfig.value = new PageModel<object>()
+    upperPageConfig.value = new PageModel<BaseQueryDTO, object>()
   } else {
-    lowerPageConfig.value = new PageModel<object>()
+    lowerPageConfig.value = new PageModel<BaseQueryDTO, object>()
   }
   resetScrollBarPosition(upperOrLower)
 

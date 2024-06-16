@@ -10,6 +10,7 @@ import ApiUtil from '../../utils/ApiUtil'
 import PageModel from '../../model/util/PageModel'
 import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
+import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = withDefaults(
@@ -23,13 +24,13 @@ const props = withDefaults(
     thead: Thead[] // 表头
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
-    pageCondition?: PageModel<object> // 查询配置
+    pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
     createButton?: boolean // 是否展示新增按钮
     pageSizes?: number[]
   }>(),
   {
     createButton: false,
-    pageCondition: () => new PageModel<object>(),
+    pageCondition: () => new PageModel<BaseQueryDTO, object>(),
     pageSizes: () => [10, 20, 30, 50, 100]
   }
 )
@@ -75,17 +76,17 @@ function handleCreateButtonClicked() {
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked() {
   // 配置分页参数
-  const pageCondition: PageModel<object> = lodash.cloneDeep(props.pageCondition)
+  const pageCondition: PageModel<BaseQueryDTO, object> = lodash.cloneDeep(props.pageCondition)
   pageCondition.pageSize = pageSize.value
   pageCondition.pageNumber = pageNumber.value
   // 配置排序参数
   pageCondition.sort = lodash.cloneDeep(innerSort.value)
   // 配置查询参数
-  pageCondition.query = { ...searchToolbarParams.value }
+  pageCondition.query = { ...new BaseQueryDTO(), ...searchToolbarParams.value }
 
   const response = await props.searchApi(pageCondition)
   if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<object>
+    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
     data.value = page.data === undefined ? [] : page.data
     dataCount.value = page.dataCount
   } else {

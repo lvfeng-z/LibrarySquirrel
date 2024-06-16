@@ -5,6 +5,7 @@ import ApiUtil from '../../utils/ApiUtil'
 import SelectItem from '../../model/util/SelectItem'
 import lodash from 'lodash'
 import PageModel from '../../model/util/PageModel.ts'
+import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -66,7 +67,7 @@ async function requestSelectDataApi(queryStr?: string) {
       }
       const response = await props.config.api(page)
       if (ApiUtil.apiResponseCheck(response)) {
-        const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<object>).data
+        const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>).data
         innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
       }
     } else {
