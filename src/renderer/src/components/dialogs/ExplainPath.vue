@@ -5,10 +5,11 @@ import ApiUtil from '../../utils/ApiUtil.ts'
 import PageModel from '../../model/util/PageModel.ts'
 import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
-import LocalAuthor from '../../model/main/LocalAuthor.ts'
-import LocalTag from '../../model/main/LocalTag.ts'
-import Site from '../../model/main/Site.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
+import LocalAuthorQueryDTO from '../../model/main/queryDTO/LocalAuthorQueryDTO'
+import LocalTagQueryDTO from '../../model/main/queryDTO/LocalTagQueryDTO'
+import SiteQueryDTO from '../../model/main/queryDTO/SiteQueryDTO'
+import AutoLoadSelect from '../common/AutoLoadSelect.vue'
 
 // props
 const props = defineProps<{
@@ -33,10 +34,15 @@ const meaningTypes = [
   { value: 'unknown', label: '未知/无含义' }
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
-const authorPage:Ref<UnwrapRef<PageModel<BaseQueryDTO, SelectItem>>> = ref(new PageModel<BaseQueryDTO, SelectItem>())
-const authorSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 作者选择列表
-const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 标签选择列表
-const siteSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 站点选择列表
+const authorPage: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, SelectItem>>> = ref(
+  new PageModel<LocalAuthorQueryDTO, SelectItem>()
+)
+const tagPage: Ref<UnwrapRef<PageModel<LocalTagQueryDTO, SelectItem>>> = ref(
+  new PageModel<LocalTagQueryDTO, SelectItem>()
+)
+const sitePage: Ref<UnwrapRef<PageModel<SiteQueryDTO, SelectItem>>> = ref(
+  new PageModel<SiteQueryDTO, SelectItem>()
+)
 
 // 方法
 function confirmExplain() {
@@ -74,32 +80,42 @@ function getInputRowType(pathType: PathType) {
   return inputType
 }
 // 获取输入栏数据接口
-function getInputRowDataApi(query: string, pathType: PathType) {
+async function getInputRowDataApi(query: string, pathType: PathType) {
   let page
+  let response
   switch (pathType) {
     case 'author':
-      page = authorPage.value
-      page.query = new LocalAuthor()
+      page = lodash.cloneDeep(authorPage.value) as PageModel<LocalAuthorQueryDTO, object>
       page.query.localAuthorName = query
-      requestInputData(apis.localAuthorGetSelectItemPage, page).then((response) => {
-        authorSelectList.value = response
-      })
+      response = await apis.localAuthorGetSelectItemPage(page)
+      if (ApiUtil.apiResponseCheck(response)) {
+        const data = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
+          .data as SelectItem[]
+        authorPage.value.data = [...(authorPage.value.data as SelectItem[]), ...data]
+        authorPage.value.pageNumber++
+      }
       break
     case 'tag':
-      page = new PageModel<BaseQueryDTO, LocalTag>()
-      page.query = new LocalTag()
+      page = tagPage.value as PageModel<LocalTagQueryDTO, object>
       page.query.localTagName = query
-      requestInputData(apis.localTagGetSelectItemPage, page).then((response) => {
-        tagSelectList.value = response
-      })
+      response = await apis.localTagGetSelectItemPage(page)
+      if (ApiUtil.apiResponseCheck(response)) {
+        const data = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
+          .data as SelectItem[]
+        tagPage.value.data = [...(tagPage.value.data as SelectItem[]), ...data]
+        tagPage.value.pageNumber++
+      }
       break
     case 'site':
-      page = new PageModel<BaseQueryDTO, Site>()
-      page.query = new Site()
+      page = sitePage.value as PageModel<SiteQueryDTO, object>
       page.query.siteName = query
-      requestInputData(apis.siteGetSelectItemPage, page).then((response) => {
-        siteSelectList.value = response
-      })
+      response = await apis.localTagGetSelectItemPage(page)
+      if (ApiUtil.apiResponseCheck(response)) {
+        const data = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
+          .data as SelectItem[]
+        sitePage.value.data = [...(sitePage.value.data as SelectItem[]), ...data]
+        sitePage.value.pageNumber++
+      }
       break
     default:
       break
@@ -109,11 +125,11 @@ function getInputRowDataApi(query: string, pathType: PathType) {
 function getInputRowData(pathType: PathType): SelectItem[] {
   switch (pathType) {
     case 'author':
-      return authorSelectList.value
+      return authorPage.value.data === undefined ? [] : authorPage.value.data
     case 'tag':
-      return tagSelectList.value
+      return tagPage.value.data === undefined ? [] : tagPage.value.data
     case 'site':
-      return siteSelectList.value
+      return sitePage.value.data === undefined ? [] : sitePage.value.data
     default:
       return []
   }
@@ -122,15 +138,6 @@ function getInputRowData(pathType: PathType): SelectItem[] {
 function resetInputData(meaningOfPath: MeaningOfPath) {
   meaningOfPath.id = undefined
   meaningOfPath.name = undefined
-}
-// 请求接口
-async function requestInputData(api, page: PageModel<BaseQueryDTO, unknown>): Promise<SelectItem[]> {
-  const response = await api(page)
-  if (ApiUtil.apiResponseCheck(response)) {
-    return (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>).data as []
-  } else {
-    return []
-  }
 }
 </script>
 
