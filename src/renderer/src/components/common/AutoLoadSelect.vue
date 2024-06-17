@@ -1,32 +1,38 @@
 <script setup lang="ts">
 import PageModel from '../../model/util/PageModel'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
+import { Ref, ref, UnwrapRef } from 'vue'
+import ApiUtil from '../../utils/ApiUtil'
+import ApiResponse from '../../model/util/ApiResponse'
 
 // props
 const props = defineProps<{
-  api?: (params?: object) => Promise<PageModel<BaseQueryDTO, object>>
+  api: (params?: object) => ApiResponse
 }>()
+
+// 变量
+const page: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
+  new PageModel<BaseQueryDTO, object>()
+)
 
 // 处理DataScroll滚动事件
 async function handleScroll() {
-  // 获得滚动条包裹的 ref 对象
-  let scrollWrapper
-
-  if (scrollWrapper) {
-    const scrollHeight = scrollWrapper.scrollHeight
-    const scrollTop = scrollWrapper.scrollTop
-    const height = scrollWrapper.clientHeight
-
-    // 判断是否滚动到底部
-    if (scrollTop + height + 0.5 >= scrollHeight) {
-    }
+  const response = (await props.api(page)) as ApiResponse
+  if (ApiUtil.apiResponseCheck(response)) {
+    const newPage = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+    page.value.pageNumber++
+    page.value.pageCount = newPage.pageCount
+    page.value.dataCount = newPage.dataCount
+    const oldData = page.value.data === undefined ? [] : page.value.data
+    const newData = newPage.data === undefined ? [] : newPage.data
+    page.value.data = [...oldData, ...newData]
   }
 }
 </script>
 
 <template>
-  <el-select @visible-change="handleScroll">
-    <slot name="default" />
+  <el-select v-scroll-to-bottom="handleScroll" popper-class="select-scroll">
+    <slot name="default"></slot>
   </el-select>
 </template>
 

@@ -170,12 +170,13 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
                 v-if="getInputRowType(meaningOfPath.type) === 'input'"
                 v-model="meaningOfPath.name"
               ></el-input>
-              <el-select
+              <auto-load-select
                 v-if="getInputRowType(meaningOfPath.type) === 'select'"
                 v-model="meaningOfPath.id"
                 remote
                 :remote-method="(query: string) => getInputRowDataApi(query, meaningOfPath.type)"
                 filterable
+                :api="(query: string) => getInputRowDataApi(query, meaningOfPath.type)"
               >
                 <el-option
                   v-for="item in getInputRowData(meaningOfPath.type)"
@@ -184,7 +185,7 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
                   :label="item.label"
                 >
                 </el-option>
-              </el-select>
+              </auto-load-select>
               <el-date-picker
                 v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
               ></el-date-picker>
