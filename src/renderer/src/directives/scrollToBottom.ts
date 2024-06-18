@@ -7,14 +7,20 @@ export default {
       const clientHeight = domTarget.clientHeight
       const scrollHeight = domTarget.scrollHeight
       if (scrollHeight - scrollTop <= clientHeight) {
-        binding()
+        binding.value()
       }
     }
-    const dom = document.querySelector('.select-scroll .el-scrollbar__wrap')
-    if (dom !== null) {
-      dom.addEventListener('scroll', handleScroll)
-      el.__handleScroll = handleScroll
-      el.__scrollDom = dom
+    const child = el.querySelector('.el-select__input')
+    const id = child.getAttribute('aria-controls')
+    const popper = document.getElementById(id)
+    if (popper != null) {
+      const selectWrapper = popper.parentElement
+
+      if (selectWrapper !== null) {
+        selectWrapper.addEventListener('scroll', handleScroll)
+        el.__handleScroll = handleScroll
+        el.__scrollDom = selectWrapper
+      }
     }
   },
   unmounted(el) {
