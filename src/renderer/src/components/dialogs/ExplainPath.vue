@@ -1,15 +1,9 @@
 <script setup lang="ts">
 import { Ref, ref, UnwrapRef } from 'vue'
-import SelectItem from '../../model/util/SelectItem.ts'
-import ApiUtil from '../../utils/ApiUtil.ts'
-import PageModel from '../../model/util/PageModel.ts'
 import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
-import LocalAuthorQueryDTO from '../../model/main/queryDTO/LocalAuthorQueryDTO'
-import LocalTagQueryDTO from '../../model/main/queryDTO/LocalTagQueryDTO'
-import SiteQueryDTO from '../../model/main/queryDTO/SiteQueryDTO'
 import AutoLoadSelect from '../common/AutoLoadSelect.vue'
+import ApiResponse from '../../model/util/ApiResponse'
 
 // props
 const props = defineProps<{
@@ -34,15 +28,6 @@ const meaningTypes = [
   { value: 'unknown', label: '未知/无含义' }
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
-const authorPage: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, SelectItem>>> = ref(
-  new PageModel<LocalAuthorQueryDTO, SelectItem>()
-)
-const tagPage: Ref<UnwrapRef<PageModel<LocalTagQueryDTO, SelectItem>>> = ref(
-  new PageModel<LocalTagQueryDTO, SelectItem>()
-)
-const sitePage: Ref<UnwrapRef<PageModel<SiteQueryDTO, SelectItem>>> = ref(
-  new PageModel<SiteQueryDTO, SelectItem>()
-)
 
 // 方法
 function confirmExplain() {
@@ -80,58 +65,16 @@ function getInputRowType(pathType: PathType) {
   return inputType
 }
 // 获取输入栏数据接口
-async function getInputRowDataApi(query: string, pathType: PathType) {
-  let page
-  let response
+function getInputRowDataApi(pathType: PathType): () => ApiResponse {
   switch (pathType) {
     case 'author':
-      page = lodash.cloneDeep(authorPage.value) as PageModel<LocalAuthorQueryDTO, object>
-      page.query.localAuthorName = query
-      response = await apis.localAuthorGetSelectItemPage(page)
-      if (ApiUtil.apiResponseCheck(response)) {
-        const data = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
-          .data as SelectItem[]
-        authorPage.value.data = [...(authorPage.value.data as SelectItem[]), ...data]
-        authorPage.value.pageNumber++
-      }
-      break
+      return apis.localAuthorGetSelectItemPage
     case 'tag':
-      page = tagPage.value as PageModel<LocalTagQueryDTO, object>
-      page.query.localTagName = query
-      response = await apis.localTagGetSelectItemPage(page)
-      if (ApiUtil.apiResponseCheck(response)) {
-        const data = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
-          .data as SelectItem[]
-        tagPage.value.data = [...(tagPage.value.data as SelectItem[]), ...data]
-        tagPage.value.pageNumber++
-      }
-      break
+      return apis.localTagGetSelectItemPage
     case 'site':
-      page = sitePage.value as PageModel<SiteQueryDTO, object>
-      page.query.siteName = query
-      response = await apis.localTagGetSelectItemPage(page)
-      if (ApiUtil.apiResponseCheck(response)) {
-        const data = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
-          .data as SelectItem[]
-        sitePage.value.data = [...(sitePage.value.data as SelectItem[]), ...data]
-        sitePage.value.pageNumber++
-      }
-      break
+      return apis.localTagGetSelectItemPage
     default:
-      break
-  }
-}
-// 获取输入行的数据
-function getInputRowData(pathType: PathType): SelectItem[] {
-  switch (pathType) {
-    case 'author':
-      return authorPage.value.data === undefined ? [] : authorPage.value.data
-    case 'tag':
-      return tagPage.value.data === undefined ? [] : tagPage.value.data
-    case 'site':
-      return sitePage.value.data === undefined ? [] : sitePage.value.data
-    default:
-      return []
+      return apis.localAuthorGetSelectItemPage
   }
 }
 // 重置输入栏
@@ -174,17 +117,9 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
                 v-if="getInputRowType(meaningOfPath.type) === 'select'"
                 v-model="meaningOfPath.id"
                 remote
-                :remote-method="(query: string) => getInputRowDataApi(query, meaningOfPath.type)"
                 filterable
-                :api="(query: string) => getInputRowDataApi(query, meaningOfPath.type)"
+                :api="getInputRowDataApi(meaningOfPath.type)"
               >
-                <el-option
-                  v-for="item in getInputRowData(meaningOfPath.type)"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
-                >
-                </el-option>
               </auto-load-select>
               <el-date-picker
                 v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
