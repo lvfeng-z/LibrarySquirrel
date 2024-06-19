@@ -10,6 +10,12 @@ const props = defineProps<{
   stringToExplain: string
 }>()
 
+// model
+// dialog开关
+const state = defineModel<boolean>('state', {
+  default: false
+})
+
 // 变量
 // 接口
 const apis = {
@@ -33,6 +39,7 @@ const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()
 function confirmExplain() {
   const temp = lodash.cloneDeep(meaningOfPaths.value)
   window.electron.ipcRenderer.send('explain-path-response', temp)
+  state.value = false
 }
 // 增加一行输入栏
 function addInputRow() {
@@ -72,9 +79,9 @@ function getInputRowDataApi(pathType: PathType): () => ApiResponse {
     case 'tag':
       return apis.localTagGetSelectItemPage
     case 'site':
-      return apis.localTagGetSelectItemPage
+      return apis.siteGetSelectItemPage
     default:
-      return apis.localAuthorGetSelectItemPage
+      throw new Error('不支持的类型使用了getInputRowDataApi函数')
   }
 }
 // 重置输入栏
@@ -85,9 +92,9 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
 </script>
 
 <template>
-  <el-dialog class="explain-path-dialog">
+  <el-dialog v-model="state" destroy-on-close class="explain-path-dialog">
     <el-row>
-      <label>{{ props.stringToExplain }}</label>
+      <el-text>{{ props.stringToExplain }}</el-text>
     </el-row>
     <el-row>
       <el-button type="primary" @click="confirmExplain">确定</el-button>
@@ -123,6 +130,7 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
               </auto-load-select>
               <el-date-picker
                 v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
+                v-model="meaningOfPath.name"
               ></el-date-picker>
             </el-col>
             <el-col :span="2">

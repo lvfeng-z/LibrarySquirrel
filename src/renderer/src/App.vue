@@ -136,7 +136,8 @@ async function requestWorks() {
 
   apis.worksQueryPage(page).then((response: ApiResponse) => {
     if (ApiUtil.apiResponseCheck(response)) {
-      const works = (ApiUtil.apiResponseGetData(response) as PageModel<WorksQueryDTO, WorksDTO>).data
+      const works = (ApiUtil.apiResponseGetData(response) as PageModel<WorksQueryDTO, WorksDTO>)
+        .data
       imageList.value = works === undefined ? [] : works
     }
   })
@@ -148,11 +149,9 @@ async function handleTest() {
 }
 
 //
-window.electron.ipcRenderer.on('explain-path-request', (event, str) => {
+window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
   showExplainPath.value = true
-  console.log('渲染进程收到主进程事件explain-path-request')
-  console.log(event)
-  console.log(str)
+  pathWaitingExplain.value = dir
 })
 </script>
 
@@ -261,7 +260,10 @@ window.electron.ipcRenderer.on('explain-path-request', (event, str) => {
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
-    <explain-path v-model="showExplainPath" :string-to-explain="pathWaitingExplain"></explain-path>
+    <explain-path
+      v-model:state="showExplainPath"
+      :string-to-explain="pathWaitingExplain"
+    ></explain-path>
   </div>
 </template>
 
