@@ -7,6 +7,7 @@ import { EventEmitter } from 'node:events'
 import { MeaningOfPath } from '../model/utilModels/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
+import SiteService from '../service/SiteService.ts'
 
 export default class PluginLoader {
   /**
@@ -79,23 +80,29 @@ export default class PluginLoader {
         'explain-path-response',
         async (_event, meaningOfPaths: MeaningOfPath[]) => {
           for (const meaningOfPath of meaningOfPaths) {
-            if (meaningOfPath.id === undefined || meaningOfPath.id === null) {
-              const msg = '获取目录含义的详情时，id意外为空，'
-              LogUtil.error('PluginLoader', msg)
-              throw new Error(msg)
-            }
-
             if (meaningOfPath.type === 'author') {
               const localAuthorService = new LocalAuthorService()
-              const localAuthor = await localAuthorService.getById(meaningOfPath.id)
-              meaningOfPath.name = localAuthor.localAuthorName
-              meaningOfPath.details = localAuthor
+              if (meaningOfPath.id !== undefined && meaningOfPath.id !== null) {
+                const localAuthor = await localAuthorService.getById(meaningOfPath.id)
+                meaningOfPath.name = localAuthor.localAuthorName
+                meaningOfPath.details = localAuthor
+              }
             }
             if (meaningOfPath.type === 'tag') {
               const localTagService = new LocalTagService()
-              const localTag = await localTagService.getById(meaningOfPath.id)
-              meaningOfPath.name = localTag.localTagName
-              meaningOfPath.details = localTag
+              if (meaningOfPath.id !== undefined && meaningOfPath.id !== null) {
+                const localTag = await localTagService.getById(meaningOfPath.id)
+                meaningOfPath.name = localTag.localTagName
+                meaningOfPath.details = localTag
+              }
+            }
+            if (meaningOfPath.type === 'site') {
+              const siteService = new SiteService()
+              if (meaningOfPath.id !== undefined && meaningOfPath.id !== null) {
+                const site = await siteService.getById(meaningOfPath.id)
+                meaningOfPath.name = site.siteName
+                meaningOfPath.details = site
+              }
             }
           }
           event.emit('explain-path-response', meaningOfPaths)
