@@ -1,7 +1,7 @@
 // 处理el-select滚动到底部的自定义指令
 export default {
   mounted(el, binding) {
-    const handleScroll = async function (event) {
+    const handleScroll = function (event) {
       const domTarget = event.target
       const scrollTop = domTarget.scrollTop
       const clientHeight = domTarget.clientHeight
