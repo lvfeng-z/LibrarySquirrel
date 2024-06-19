@@ -24,7 +24,7 @@
     "watch": "chcp 65001 & electron-vite dev --watch"
   },
   "engines": {
-    "node": "20.13.1"
+    "node": "20.14.0"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
