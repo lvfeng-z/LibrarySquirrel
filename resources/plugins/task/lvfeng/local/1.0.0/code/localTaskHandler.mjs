@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'node:stream'
+import lodash from 'lodash'
 
 export default class LocalTaskHandler {
   explainPath
@@ -145,7 +146,7 @@ class TaskStream extends Readable{
   constructor(directoryPath, pluginTool) {
     super({ objectMode: true, highWaterMark: 1 });
     this.directoryPath = directoryPath
-    this.stack = [this.directoryPath]
+    this.stack = [{ dir: this.directoryPath, meaningOfPaths: [] }]
     this.pluginTool = pluginTool
     this._read = this._read.bind(this)
   }
@@ -155,25 +156,28 @@ class TaskStream extends Readable{
       // 迭代到路径指向文件或者栈为空为止
       while (!bufferFilled) {
         // 获取并移除栈顶元素
-        const dir = this.stack.pop()
+        const dirInfo = this.stack.pop()
+        const dir = dirInfo.dir
         try {
         const stats = await fs.promises.stat(dir)
 
         if (stats.isDirectory()) {
           const waitUserInput = this.pluginTool.explainPath(dir)
-          const meaningOfPath = await waitUserInput
-          console.log(meaningOfPath)
+          const meaningOfPaths = await waitUserInput
+          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, ...lodash.cloneDeep(meaningOfPaths)]
           // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
           const entries = await fs.promises.readdir(dir, { withFileTypes: true })
           for (let i = entries.length - 1; i >= 0; i--) {
             const entry = entries[i]
-            this.stack.push(path.join(dir, entry.name))
+            const childDir = { dir: path.join(dir, entry.name), meaningOfPaths: dirInfo.meaningOfPaths }
+            this.stack.push(childDir)
           }
         } else {
           // 如果是文件，则创建任务并加入列表
           const task = new Task()
           task.url = dir
           task.taskName = path.parse(dir).base
+          task.pluginData = dirInfo.meaningOfPaths
           this.push(task)
           bufferFilled = true
 

@@ -238,7 +238,7 @@ async function handlePluginTaskStream(
 
     // 等待任务集合完成
     await parentTaskProcess
-    // 解析JSON并创建任务对象
+    // 创建任务对象
     const task = chunk as Task
     task.pluginId = taskPlugin.id as number
     task.pluginInfo = pluginInfo
