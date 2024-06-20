@@ -41,7 +41,7 @@ function buildObjSqlite3Accepted(obj: object) {
           return [key, value ? 1 : 0]
         }
         if (typeof value === 'object') {
-          return [key, String(value)]
+          return [key, JSON.stringify(value)]
         }
         return [key, value]
       })
