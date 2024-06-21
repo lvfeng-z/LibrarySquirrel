@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'node:stream'
-import lodash from 'lodash'
 
 export default class LocalTaskHandler {
   explainPath
@@ -26,15 +25,37 @@ export default class LocalTaskHandler {
    * @return 作品信息
    */
   async start(task) {
-    const worksDTO = new WorksDTO()
+    // 保存在pluginData的数据
+    const pluginData = task.pluginData
+    // 含义列表
+    const meaningOfPaths = pluginData.meaningOfPaths
+    // 文件名
+    const filename = path.parse(task.url).name
+    // 扩展名
+    const filenameExtension = path.parse(task.url).ext
+    // 其他文件信息
     const stats = await fs.promises.stat(task.url)
-    worksDTO.filenameExtension = path.parse(task.url).ext
-    worksDTO.siteWorksName = ''
-    worksDTO.siteWorkDescription = ''
+
+    const worksDTO = new WorksDTO()
+    // 处理扩展名
+    worksDTO.filenameExtension = filenameExtension
+    // 处理作品名称
+    const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
+    // 如果pluginData里保存的用户解释含义中包含worksName，则使用worksName，否则使用文件名
+    if (worksNames.length > 0) {
+      worksDTO.siteWorksName = worksNames[0].name
+    } else {
+      worksDTO.siteWorksName = filename
+    }
+    // 处理标签
+    const tagInfos = this.getDataFromMeaningOfPath(meaningOfPaths, 'tag')
+    worksDTO.siteTags = tagInfos.map(tagInfo => tagInfo.details)
+    // 处理任务id
     worksDTO.includeTaskId = task.id
-    // 异步读取文件
+    // 处理资源
     worksDTO.resourceStream = fs.createReadStream(task.url)
     worksDTO.resourceSize = stats.size
+
     return worksDTO
   }
 
@@ -48,37 +69,83 @@ export default class LocalTaskHandler {
   }
 
   /**
-   * 迭代目录创建任务
-   * @param dir 目录
-   * @return {AsyncGenerator<*, void, *>}
+   * 在含义列表中查找对应类型的含义
+   * @param meaningOfPaths 含义列表
+   * @param type 类型
+   * @return {*}
    */
-
+  getDataFromMeaningOfPath(meaningOfPaths, type) {
+    return meaningOfPaths.filter(meaningOfPath => meaningOfPath.type === type)
+  }
 }
 
 class WorksDTO {
-  filePath
-  filenameExtension
-  workdir
+  /**
+   * 作品来源站点id
+   */
   siteId
+  /**
+   * 站点中作品的id
+   */
   siteWorksId
+  /**
+   * 站点中作品的名称
+   */
   siteWorksName
+  /**
+   * 站点中作品的作者id
+   */
   siteAuthorId
+  /**
+   * 站点中作品的描述
+   */
   siteWorkDescription
+  /**
+   * 站点中作品的上传时间
+   */
   siteUploadTime
+  /**
+   * 站点中作品最后修改的时间
+   */
   siteUpdateTime
+  /**
+   * 作品别称
+   */
   nickName
-  localAuthorId
-  includeTime
+  /**
+   * 收录方式（0：本地导入，1：站点下载）
+   */
   includeMode
+  /**
+   * 收录任务id
+   */
   includeTaskId
+  /**
+   * 本地作者
+   */
+  localAuthor
+  /**
+   * 本地标签数组
+   */
+  localTags
+  /**
+   * 站点作者
+   */
+  siteAuthor
+  /**
+   * 站点标签数组
+   */
+  siteTags
+  /**
+   * 作品资源的数据流
+   */
   resourceStream
+  /**
+   * 作品资源的文件大小，单位：字节（Bytes）
+   */
   resourceSize
 
   constructor() {
-    this.filePath = undefined
-    this.filenameExtension = undefined
-    this.workdir = undefined
-    this.worksType = undefined
     this.siteId = undefined
     this.siteWorksId = undefined
     this.siteWorksName = undefined
@@ -87,12 +154,11 @@ class WorksDTO {
     this.siteUploadTime = undefined
     this.siteUpdateTime = undefined
     this.nickName = undefined
-    this.localAuthorId = undefined
-    this.includeTime = undefined
     this.includeMode = undefined
     this.includeTaskId = undefined
-    this.downloadStatus = undefined
-    this.author = undefined
+    this.localAuthor = undefined
+    this.localTags = undefined
+    this.siteAuthor = undefined
     this.siteTags = undefined
     this.resourceStream = undefined
     this.resourceSize = undefined
@@ -162,13 +228,17 @@ class TaskStream extends Readable{
         const stats = await fs.promises.stat(dir)
 
         if (stats.isDirectory()) {
+          // 请求用户解释目录含义
           const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPaths = await waitUserInput
-          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, ...lodash.cloneDeep(meaningOfPaths)]
+          // 将获得的目录含义并入从上级目录继承的含义数组中
+          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, meaningOfPaths]
+
           // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
           const entries = await fs.promises.readdir(dir, { withFileTypes: true })
           for (let i = entries.length - 1; i >= 0; i--) {
             const entry = entries[i]
+            // 把下级目录放进栈的同时，将自身的含义传给下级目录
             const childDir = { dir: path.join(dir, entry.name), meaningOfPaths: dirInfo.meaningOfPaths }
             this.stack.push(childDir)
           }
@@ -177,7 +247,7 @@ class TaskStream extends Readable{
           const task = new Task()
           task.url = dir
           task.taskName = path.parse(dir).base
-          task.pluginData = dirInfo.meaningOfPaths
+          task.pluginData = { meaningOfPaths: dirInfo.meaningOfPaths }
           this.push(task)
           bufferFilled = true
 

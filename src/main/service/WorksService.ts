@@ -20,6 +20,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
 
   /**
    * 保存作品信息及资源
+   * @param worksDTO
    */
   async saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
     const dao = new WorksDao()
@@ -105,6 +106,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
       LogUtil.error('WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
       return SAVE_FAILED
     }
+  }
+
+  /**
+   * 保存作品信息
+   * @param worksDTO
+   */
+  async saveWorks(worksDTO: WorksDTO): Promise<number> {
+
   }
 
   /**

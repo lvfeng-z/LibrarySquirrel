@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// TODO 新增一个输入用于解析路径的正则表达式和一个解析此路径下文件名的正则表达式
 import { Ref, ref, UnwrapRef } from 'vue'
 import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
