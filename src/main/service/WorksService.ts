@@ -12,6 +12,7 @@ import FileSysUtil from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
 import BaseDao from '../dao/BaseDao.ts'
+import SiteAuthorService from './SiteAuthorService.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   constructor() {
@@ -112,8 +113,18 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
    * 保存作品信息
    * @param worksDTO
    */
-  async saveWorks(worksDTO: WorksDTO): Promise<number> {
+  async saveWorks(worksDTO: WorksDTO): Promise<void> {
+    // 处理站点作者
+    // 根据站点作者的id查询此作者是否已经保存在本地
+    const siteAuthor = worksDTO.siteAuthor
+    if (siteAuthor !== undefined && siteAuthor !== null) {
+      const siteAuthorService = new SiteAuthorService()
+      await siteAuthorService.save(siteAuthor)
+    }
 
+    // 保存作品获得作品Id
+    // const dao = new WorksDao()
+    // // const worksId = await dao.save(worksDTO)
   }
 
   /**
