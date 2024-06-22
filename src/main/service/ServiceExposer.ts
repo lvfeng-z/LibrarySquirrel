@@ -88,7 +88,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localTag-queryPage', async (_event, args) => {
+  Electron.ipcMain.handle('localTag-selectPage', async (_event, args) => {
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.selectPage(args))

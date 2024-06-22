@@ -35,8 +35,8 @@ const api = {
   localTagUpdateById: (args) => {
     return Electron.ipcRenderer.invoke('localTag-updateById', args)
   },
-  localTagQueryPage: (args) => {
-    return Electron.ipcRenderer.invoke('localTag-queryPage', args)
+  localTagSelectPage: (args) => {
+    return Electron.ipcRenderer.invoke('localTag-selectPage', args)
   },
   localTagGetById: (args) => {
     return Electron.ipcRenderer.invoke('localTag-getById', args)

@@ -24,15 +24,19 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
       if (page.query !== undefined) {
         const whereClausesAndQuery = this.getWhereClauses(page.query)
+
+        modifiedPage.query = whereClausesAndQuery.query
+
         const whereClauses = Object.entries(whereClausesAndQuery.whereClauses).map(
           (whereClause) => whereClause[1]
         )
-        if (StringUtil.isNotBlank(page.query.keyword)) {
+
+        // 处理keyword
+        if (StringUtil.isNotBlank(modifiedPage.query.keyword)) {
           whereClauses.push('local_tag_name like @keyword')
-          page.query = new LocalTagQueryDTO(page.query)
-          whereClausesAndQuery.query.keyword = page.query.getKeywordLikeString()
+          modifiedPage.query = new LocalTagQueryDTO(page.query)
+          whereClausesAndQuery.query.keyword = modifiedPage.query.getKeywordLikeString()
         }
-        modifiedPage.query = whereClausesAndQuery.query
         whereClause = this.splicingWhereClauses(whereClauses)
       }
 

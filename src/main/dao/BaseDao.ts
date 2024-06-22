@@ -9,6 +9,8 @@ import logUtil from '../util/LogUtil.ts'
 import DatabaseUtil from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
+import QuerySortOption from '../model/utilModels/QuerySortOption.ts'
+import lodash from 'lodash'
 
 type PrimaryKey = string | number
 
@@ -238,22 +240,24 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 查询列表
    * @param query
    */
-  public async selectList(query: Query): Promise<Model[]> {
+  public async selectList(query?: Query): Promise<Model[]> {
     const db = this.acquire()
     try {
+      let statement = `SELECT * FROM "${this.tableName}"`
       // 生成where字句
-      let whereClause
       let modifiedQuery = query
       if (query) {
         const whereClauseAndQuery = this.getWhereClause(query)
-        whereClause = whereClauseAndQuery.whereClause
+        const whereClause = whereClauseAndQuery.whereClause
         modifiedQuery = whereClauseAndQuery.query
-      }
 
-      // 拼接查询语句
-      let statement = `SELECT * FROM "${this.tableName}"`
-      if (whereClause !== undefined) {
-        statement = statement.concat(' ', whereClause)
+        // 拼接查询语句
+        if (whereClause !== undefined) {
+          statement = statement.concat(' ', whereClause)
+        }
+
+        // 拼接排序字句
+        statement = this.sorter(statement, query.sort)
       }
 
       // 查询
@@ -393,56 +397,58 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   protected getWhereClause(
     queryConditions: Query | undefined,
     alias?: string
-  ): { whereClause: string | undefined; query: Query } {
+  ): { whereClause: string | undefined; query: Query | undefined } {
+    if (queryConditions === undefined) {
+      return { whereClause: undefined, query: undefined }
+    }
+
     const whereClauses: string[] = []
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
-    const modifiedQuery = {}
-
-    if (queryConditions !== undefined) {
-      // 去除值为undefined的属性和assignComparator属性
-      Object.entries(queryConditions)
-        .filter(
-          ([key, value]) => value !== undefined && key !== 'assignComparator' && key !== 'keyword'
-        )
-        .forEach(([key, value]) => {
-          const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-          const comparator = this.getComparator(key, queryConditions.assignComparator)
-          // 根据运算符的不同给出不同的where子句和匹配值
-          let modifiedValue: unknown
-          let whereClause: string
-          switch (comparator) {
-            case COMPARATOR.LEFT_LIKE:
-              whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-              modifiedValue = String(value).concat('%')
-              break
-            case COMPARATOR.RIGHT_LIKE:
-              whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-              modifiedValue = '%'.concat(value)
-              break
-            case COMPARATOR.LIKE:
-              whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${comparator} @${key}`
-                  : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-              modifiedValue = '%'.concat(value, '%')
-              break
-            default:
-              whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${comparator} @${key}`
-                  : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-              modifiedValue = value
-          }
-          whereClauses.push(whereClause)
-          modifiedQuery[key] = modifiedValue
-        })
-    }
+    const modifiedQuery: Query = lodash.clone(queryConditions)
+    // 去除值为undefined的属性和assignComparator属性
+    Object.entries(queryConditions)
+      .filter(
+        ([key, value]) =>
+          value !== undefined && key !== 'assignComparator' && key !== 'keyword' && key !== 'sort'
+      )
+      .forEach(([key, value]) => {
+        const snakeCaseKey = StringUtil.camelToSnakeCase(key)
+        const comparator = this.getComparator(key, queryConditions.assignComparator)
+        // 根据运算符的不同给出不同的where子句和匹配值
+        let modifiedValue: unknown
+        let whereClause: string
+        switch (comparator) {
+          case COMPARATOR.LEFT_LIKE:
+            whereClause =
+              alias == undefined
+                ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+            modifiedValue = String(value).concat('%')
+            break
+          case COMPARATOR.RIGHT_LIKE:
+            whereClause =
+              alias == undefined
+                ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+            modifiedValue = '%'.concat(value)
+            break
+          case COMPARATOR.LIKE:
+            whereClause =
+              alias == undefined
+                ? `"${snakeCaseKey}" ${comparator} @${key}`
+                : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+            modifiedValue = '%'.concat(value, '%')
+            break
+          default:
+            whereClause =
+              alias == undefined
+                ? `"${snakeCaseKey}" ${comparator} @${key}`
+                : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+            modifiedValue = value
+        }
+        whereClauses.push(whereClause)
+        modifiedQuery[key] = modifiedValue
+      })
 
     const whereClause = this.splicingWhereClauses(whereClauses)
     return { whereClause: whereClause, query: modifiedQuery as Query }
@@ -464,12 +470,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   } {
     const whereClauses: Record<string, string> = {}
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
-    const modifiedQuery = {}
+    const modifiedQuery = lodash.clone(queryConditions)
     if (queryConditions) {
       // 去除值为undefined的属性和assignComparator、keyword属性
       Object.entries(queryConditions)
         .filter(
-          ([key, value]) => value !== undefined && key !== 'assignComparator' && key !== 'keyword'
+          ([key, value]) =>
+            value !== undefined && key !== 'assignComparator' && key !== 'keyword' && key !== 'sort'
         )
         .forEach(([key, value]) => {
           if (value !== undefined && value !== '') {
@@ -591,32 +598,32 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 为查询语句附加排序字句（为第一个参数statement末端拼接排序字句并返回）
    * @param statement 需要分页的语句
-   * @param page 排序配置
+   * @param sortOption
    * @protected
    */
-  protected sorter(statement: string, page: PageModel<Query, Model>): string {
-    if (page.paging === undefined || page.paging) {
-      statement += ' ' + this.getSortClause(page)
+  protected sorter(statement: string, sortOption?: QuerySortOption[]): string {
+    if (sortOption === undefined) {
+      return statement
     }
+    const sortClause = this.getSortClause(sortOption)
+    statement = statement.concat(' ', sortClause)
     return statement
   }
 
   /**
    * 获取排序字句
-   * @param page
    * @protected
+   * @param sortOption
    */
-  protected getSortClause(page: PageModel<Query, Model>): string {
-    let sortClauses: string = ''
-    if (page.query?.sort !== undefined) {
-      sortClauses = page.query.sort
-        .filter((item) => item[1] === 'asc' || item[1] === 'desc')
-        .map((item) => {
-          item[0] = StringUtil.camelToSnakeCase(item[0])
-          return item.join(' ')
-        })
-        .join(',')
-    }
+  protected getSortClause(sortOption: QuerySortOption[]): string {
+    let sortClauses: string
+    sortClauses = sortOption
+      .filter((item) => item.order === 'asc' || item.order === 'desc')
+      .map((item) => {
+        item.column = StringUtil.camelToSnakeCase(item.column)
+        return item.column.concat(' ', item.order)
+      })
+      .join(',')
     if (sortClauses !== '') {
       sortClauses = 'ORDER BY ' + sortClauses
     }
@@ -637,7 +644,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     page: PageModel<Query, Model>,
     fromClause?: string
   ): Promise<string> {
-    statement = this.sorter(statement, page)
+    statement = this.sorter(statement, page.query?.sort)
     statement = await this.pager(statement, whereClause, page, fromClause)
     return statement
   }
