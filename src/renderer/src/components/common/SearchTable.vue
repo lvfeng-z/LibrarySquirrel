@@ -79,10 +79,10 @@ async function handleSearchButtonClicked() {
   const pageCondition: PageModel<BaseQueryDTO, object> = lodash.cloneDeep(props.pageCondition)
   pageCondition.pageSize = pageSize.value
   pageCondition.pageNumber = pageNumber.value
-  // 配置排序参数
-  pageCondition.sort = lodash.cloneDeep(innerSort.value)
   // 配置查询参数
   pageCondition.query = { ...new BaseQueryDTO(), ...searchToolbarParams.value }
+  // 配置排序参数
+  pageCondition.query.sort = lodash.cloneDeep(innerSort.value)
 
   const response = await props.searchApi(pageCondition)
   if (ApiUtil.apiResponseCheck(response)) {

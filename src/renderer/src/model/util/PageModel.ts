@@ -1,5 +1,4 @@
-import QuerySortOption from './QuerySortOption.ts'
-import BaseQueryDTO from '../main/queryDTO/BaseQueryDTO'
+import BaseQueryDTO from '../main/queryDTO/BaseQueryDTO.ts'
 
 export default class PageModel<Query extends BaseQueryDTO, Result> {
   /**
@@ -27,10 +26,6 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
    */
   query?: Query
   /**
-   * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
-   */
-  sort?: QuerySortOption[]
-  /**
    * 数据
    */
   data?: Result[]
@@ -43,7 +38,6 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
       this.pageCount = 0
       this.dataCount = 0
       this.query = {} as Query
-      this.sort = undefined
       this.data = []
     } else {
       this.paging = page.paging === undefined ? true : page.paging
@@ -52,7 +46,6 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
       this.pageCount = page.pageCount === undefined ? 0 : page.pageCount
       this.dataCount = page.dataCount === undefined ? 0 : page.dataCount
       this.query = page.query === undefined ? undefined : page.query
-      this.sort = page.sort === undefined ? undefined : page.sort
       this.data = page.data === undefined ? [] : page.data
     }
   }
@@ -68,7 +61,6 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
     result.pageCount = this.pageCount
     result.dataCount = this.dataCount
     result.query = this.query
-    result.sort = this.sort
     result.data = []
 
     return result

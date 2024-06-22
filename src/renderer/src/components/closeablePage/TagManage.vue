@@ -24,7 +24,7 @@ onMounted(() => {
 const apis = {
   localTagDeleteById: window.api.localTagDeleteById,
   localTagUpdateById: window.api.localTagUpdateById,
-  localTagQueryPage: window.api.localTagQueryPage,
+  localTagSelectPage: window.api.localTagSelectPage,
   localTagGetSelectList: window.api.localTagGetSelectList,
   localTagGetTree: window.api.localTagGetTree,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
@@ -251,12 +251,12 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             :operation-button="operationButton"
             :thead="localTagThead"
             :sort="[
-              ['updateTime', 'desc'],
-              ['createTime', 'desc']
+              { column: 'updateTime', order: 'desc' },
+              { column: 'createTime', order: 'desc' }
             ]"
             :main-input-boxes="mainInputBoxes"
             :drop-down-input-boxes="dropDownInputBoxes"
-            :search-api="apis.localTagQueryPage"
+            :search-api="apis.localTagSelectPage"
             :multi-select="false"
             :selectable="true"
             @create-button-clicked="handleCreateButtonClicked"
