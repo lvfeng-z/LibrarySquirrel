@@ -608,8 +608,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected getSortClause(page: PageModel<Query, Model>): string {
     let sortClauses: string = ''
-    if (page.sort !== undefined) {
-      sortClauses = page.sort
+    if (page.query?.sort !== undefined) {
+      sortClauses = page.query.sort
         .filter((item) => item[1] === 'asc' || item[1] === 'desc')
         .map((item) => {
           item[0] = StringUtil.camelToSnakeCase(item[0])
