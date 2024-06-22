@@ -114,12 +114,23 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
    * @param worksDTO
    */
   async saveWorks(worksDTO: WorksDTO): Promise<void> {
+    const siteId = worksDTO.siteId
+    const siteAuthor = worksDTO.siteAuthor
     // 处理站点作者
     // 根据站点作者的id查询此作者是否已经保存在本地
-    const siteAuthor = worksDTO.siteAuthor
     if (siteAuthor !== undefined && siteAuthor !== null) {
-      const siteAuthorService = new SiteAuthorService()
-      await siteAuthorService.save(siteAuthor)
+      if (siteAuthor.siteAuthorId === undefined || siteAuthor.siteAuthorId === null) {
+        LogUtil.warn('WorksService', '保存作品时，作品的站点作者id意外为空')
+      } else if (siteId === undefined || siteId === null) {
+        LogUtil.warn('WorksService', '保存作品时，作品的站点id意外为空')
+      } else {
+        const siteAuthorService = new SiteAuthorService()
+        const oldSiteAuthor = await siteAuthorService.getBySiteAuthorId(
+          siteAuthor.siteAuthorId,
+          siteId
+        )
+        await siteAuthorService.save(siteAuthor)
+      }
     }
 
     // 保存作品获得作品Id
