@@ -1,6 +1,7 @@
 import Works from '../Works.ts'
 import LocalAuthor from '../LocalAuthor.ts'
-import SiteAuthor from '../SiteAuthor.ts'
+import Site from '../Site.ts'
+import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTag from '../SiteTag.ts'
 import LocalTag from '../LocalTag.ts'
 import fs from 'fs'
@@ -9,6 +10,11 @@ import fs from 'fs'
  * 作品
  */
 export default class WorksDTO extends Works {
+  /**
+   * 站点
+   */
+  site: Site | undefined | null
+
   /**
    * 本地作者
    */
@@ -22,7 +28,7 @@ export default class WorksDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthor: SiteAuthor | undefined | null
+  siteAuthor: SiteAuthorDTO | undefined | null
 
   /**
    * 站点标签数组
@@ -42,6 +48,7 @@ export default class WorksDTO extends Works {
   constructor(works?: WorksDTO) {
     if (works === undefined) {
       super()
+      this.site = undefined
       this.localAuthor = undefined
       this.siteAuthor = undefined
       this.localTags = undefined
@@ -50,6 +57,7 @@ export default class WorksDTO extends Works {
       this.resourceSize = undefined
     } else {
       super(works)
+      this.site = works.site
       this.localAuthor = works.localAuthor
       this.localTags = works.localTags
       this.siteAuthor = works.siteAuthor
