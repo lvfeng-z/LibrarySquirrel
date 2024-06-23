@@ -37,7 +37,7 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
       this.pageSize = 10
       this.pageCount = 0
       this.dataCount = 0
-      this.query = {} as Query
+      this.query = new BaseQueryDTO() as Query
       this.data = []
     } else {
       this.paging = page.paging === undefined ? true : page.paging
@@ -45,7 +45,7 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
       this.pageSize = page.pageSize === undefined ? 10 : page.pageSize
       this.pageCount = page.pageCount === undefined ? 0 : page.pageCount
       this.dataCount = page.dataCount === undefined ? 0 : page.dataCount
-      this.query = page.query === undefined ? undefined : page.query
+      this.query = page.query === undefined ? (new BaseQueryDTO() as Query) : page.query
       this.data = page.data === undefined ? [] : page.data
     }
   }

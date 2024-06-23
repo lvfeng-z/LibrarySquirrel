@@ -200,12 +200,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     try {
       // 生成where字句
       let whereClause
-      let tempQuery = page.query
       const modifiedPage = new PageModel(page)
       if (page.query) {
         const whereClauseAndQuery = this.getWhereClause(page.query)
         whereClause = whereClauseAndQuery.whereClause
-        tempQuery = whereClauseAndQuery.query
 
         // modifiedPage存储修改过的查询条件
         modifiedPage.query = whereClauseAndQuery.query
@@ -220,12 +218,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      let rows
-      if (tempQuery) {
-        rows = (await db.prepare(statement)).all(tempQuery) as object[]
-      } else {
-        rows = (await db.prepare(statement)).all() as object[]
-      }
+      const rows = (await db.prepare(statement)).all(
+        modifiedPage.query?.getQueryObject()
+      ) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
       page.data = this.getResultTypeDataList<Model>(rows)
@@ -245,9 +240,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     try {
       let statement = `SELECT * FROM "${this.tableName}"`
       // 生成where字句
-      let modifiedQuery = query
-      if (query) {
-        const whereClauseAndQuery = this.getWhereClause(query)
+      let modifiedQuery = lodash.cloneDeep(query)
+      if (modifiedQuery !== undefined) {
+        const whereClauseAndQuery = this.getWhereClause(modifiedQuery)
         const whereClause = whereClauseAndQuery.whereClause
         modifiedQuery = whereClauseAndQuery.query
 
@@ -257,11 +252,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         }
 
         // 拼接排序字句
-        statement = this.sorter(statement, query.sort)
+        if (modifiedQuery !== undefined) {
+          statement = this.sorter(statement, modifiedQuery.sort)
+        }
       }
 
       // 查询
-      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery)
+      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.getQueryObject())
       const rows = (await db.prepare(statement)).all(nonUndefinedValue) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
@@ -296,6 +293,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       // 拼接where子句
       const whereClauseAndQuery = this.getWhereClause(query)
+      const modifiedQuery = whereClauseAndQuery.query
 
       // 拼接sql语句
       let statement = selectClause
@@ -304,7 +302,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 查询
-      const rows = (await db.prepare(statement)).all(whereClauseAndQuery.query)
+      const rows = (await db.prepare(statement)).all(modifiedQuery?.getQueryObject())
 
       return rows.map((row) => new SelectItem(row as SelectItem))
     } catch (error) {
@@ -341,9 +339,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 拼接where子句
-      if (page === undefined) {
-        page = new PageModel<Query, Model>()
-      }
+      page = new PageModel<Query, Model>(page)
       const whereClauseAndQuery = this.getWhereClause(page.query)
 
       // 创建一个新的PageModel实例存储修改过的查询条件
@@ -360,7 +356,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      const rows = (await db.prepare(statement)).all(modifiedPage.query)
+      const rows = (await db.prepare(statement)).all(modifiedPage.query?.getQueryObject())
 
       // 处理查询结果
       const selectItems = rows.map((row) => new SelectItem(row as SelectItem))

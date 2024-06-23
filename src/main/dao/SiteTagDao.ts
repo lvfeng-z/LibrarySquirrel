@@ -103,7 +103,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
       // 查询
-      const results: SiteTagDTO[] = (await db.prepare(statement)).all(modifiedQuery) as SiteTagDTO[]
+      const results: SiteTagDTO[] = (await db.prepare(statement)).all(
+        modifiedQuery.getQueryObject()
+      ) as SiteTagDTO[]
 
       // 利用构造方法处理localTag的JSON字符串
       return results.map((result) => new SiteTagDTO(result))

@@ -40,9 +40,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
     const dao = new LocalAuthorDao()
     try {
       page = new PageModel(page)
-      if (page.query === undefined) {
-        page.query = new LocalAuthorQueryDTO()
-      }
+      page.query = new LocalAuthorQueryDTO(page.query)
       page.query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
       return dao.getSelectItemPage(page, 'id', 'localAuthorName')
     } catch (error) {
