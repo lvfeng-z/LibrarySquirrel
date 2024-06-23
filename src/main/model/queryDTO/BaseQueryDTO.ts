@@ -1,6 +1,6 @@
 import BaseModel from '../BaseModel.ts'
 import { COMPARATOR } from '../../constant/CrudConstant.ts'
-import QuerySortOption from '../utilModels/QuerySortOption.ts'
+import QuerySortOption from '../../constant/QuerySortOption.ts'
 
 export default class BaseQueryDTO extends BaseModel {
   /**

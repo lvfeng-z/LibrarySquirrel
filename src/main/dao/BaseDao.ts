@@ -9,7 +9,7 @@ import logUtil from '../util/LogUtil.ts'
 import DatabaseUtil from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
-import QuerySortOption from '../model/utilModels/QuerySortOption.ts'
+import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
 
 type PrimaryKey = string | number
