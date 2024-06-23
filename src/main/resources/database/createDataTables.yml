@@ -50,6 +50,46 @@ tables:
         update_time integer
       );
 
+  - name: re_works_author
+    sql: |
+      create table re_works_author (
+        id              integer not null
+        constraint re_works_author_pk
+        primary key autoincrement,
+        type            integer,
+        works_id        integer
+        constraint re_works_author_works_id_fk
+        references works
+        on update cascade on delete cascade,
+        local_author_id integer
+        constraint re_works_author_local_author_id_fk
+        references local_author
+        on update cascade on delete cascade,
+        site_author_id  text
+        constraint re_works_author_site_tag_id_fk
+        references site_tag
+        on update cascade on delete cascade,
+        author_role     integer,
+        create_time     integer,
+        update_time     integer
+      );
+
+  - name: re_works_tag
+    sql: |
+      create table if not exists re_works_tag (
+        id          integer not null
+        constraint works_tag_pk
+        primary key autoincrement,
+        works_id    integer,
+        tag_id      text,
+        tag_type    boolean,
+        tag_site_id integer,
+        create_time integer,
+        update_time integer
+      );
+      create unique index re_works_tag_works_id_tag_id_uindex
+      on re_works_tag (works_id, tag_id);
+
   - name: site
     sql: |
       create table if not exists site (
@@ -173,22 +213,6 @@ tables:
         create_time      integer,
         update_time      integer
       );
-
-  - name: re_works_tag
-    sql: |
-      create table if not exists re_works_tag (
-        id          integer not null
-        constraint works_tag_pk
-        primary key autoincrement,
-        works_id    integer,
-        tag_id      text,
-        tag_type    boolean,
-        tag_site_id integer,
-        create_time integer,
-        update_time integer
-      );
-      create unique index re_works_tag_works_id_tag_id_uindex
-      on re_works_tag (works_id, tag_id);
 
   - name: installed_plugins
     sql: |
