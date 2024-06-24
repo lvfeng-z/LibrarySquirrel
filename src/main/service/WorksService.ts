@@ -13,6 +13,7 @@ import path from 'path'
 import BaseService from './BaseService.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
+import SiteService from './SiteService.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   constructor() {
@@ -114,18 +115,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
    * @param worksDTO
    */
   async saveWorks(worksDTO: WorksDTO): Promise<void> {
-    // const site = worksDTO.site
+    const site = worksDTO.site
     const siteAuthorDTO = worksDTO.siteAuthor
     // 处理站点
+    if (site !== undefined && site !== null) {
+      const siteService = new SiteService()
+      await siteService.saveOnNotExistByDomain(site)
+    }
     // 处理站点作者
-    // 根据站点作者的id查询此作者是否已经保存在本地
     if (siteAuthorDTO !== undefined && siteAuthorDTO !== null) {
-      if (siteAuthorDTO.siteAuthorId === undefined || siteAuthorDTO.siteAuthorId === null) {
-        LogUtil.warn('WorksService', '保存作品时，作品的站点作者id意外为空')
-      } else {
-        const siteAuthorService = new SiteAuthorService()
-        await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
-      }
+      const siteAuthorService = new SiteAuthorService()
+      await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
     }
 
     // 保存作品获得作品Id
