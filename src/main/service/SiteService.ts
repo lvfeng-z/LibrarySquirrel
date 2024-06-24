@@ -14,6 +14,21 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
   }
 
   /**
+   * 基于域名确认站点是否存在，如果不存在则新增站点
+   * @param site
+   */
+  public async saveOnNotExistByDomain(site: Site) {
+    if (StringUtil.isBlank(site.siteDomain)) {
+      LogUtil.warn('SiteService', '保存站点时，站点域名意外为空')
+    } else {
+      const oldSite = await this.getByDomain(site.siteDomain as string)
+      if (oldSite === undefined || oldSite === null) {
+        await this.save(site)
+      }
+    }
+  }
+
+  /**
    * 分页查询SelectItem
    * @param page
    */
@@ -40,7 +55,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
         return sites[0]
       }
       if (sites.length > 1) {
-        LogUtil.warn('SiteAuthorService', `域名：${domain}在数据库中存在多个作者`)
+        LogUtil.warn('SiteAuthorService', `域名：${domain}在数据库中存在多个站点`)
         return sites[0]
       }
       return undefined
