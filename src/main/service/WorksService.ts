@@ -14,6 +14,7 @@ import BaseService from './BaseService.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import SiteService from './SiteService.ts'
+import LocalTagService from './LocalTagService.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   constructor() {
@@ -117,6 +118,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   async saveWorks(worksDTO: WorksDTO): Promise<void> {
     const site = worksDTO.site
     const siteAuthorDTO = worksDTO.siteAuthor
+    const localTags = worksDTO.localTags
     // 处理站点
     if (site !== undefined && site !== null) {
       const siteService = new SiteService()
@@ -126,6 +128,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     if (siteAuthorDTO !== undefined && siteAuthorDTO !== null) {
       const siteAuthorService = new SiteAuthorService()
       await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
+    }
+    // 处理本地标签
+    if (localTags !== undefined && localTags != null && localTags.length > 0) {
+      const localTagService = new LocalTagService()
+      await localTagService.link(localTags, worksDTO)
     }
 
     // 保存作品获得作品Id

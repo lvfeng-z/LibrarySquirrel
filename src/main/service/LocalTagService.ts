@@ -10,6 +10,7 @@ import BaseDao from '../dao/BaseDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
+import WorksDTO from '../model/dto/WorksDTO'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag> {
   constructor() {
@@ -59,6 +60,16 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       LogUtil.error('LocalTagService', msg)
       throw new Error(msg)
     }
+  }
+
+  /**
+   * 关联作品和标签
+   * @param localTags
+   * @param worksDTO
+   */
+  async link(localTags: LocalTag[], worksDTO: WorksDTO) {
+    localTags.map(localTag => {
+    })
   }
 
   /**
