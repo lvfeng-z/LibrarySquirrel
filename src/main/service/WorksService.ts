@@ -150,7 +150,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     page = new PageModel(page)
     const dao = new WorksDao()
     try {
-      return dao.queryPage(page)
+      return dao.synthesisQueryPage(page)
     } catch (error) {
       LogUtil.error('WorksService', error)
       throw error
