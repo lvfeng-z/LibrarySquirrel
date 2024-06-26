@@ -9,25 +9,31 @@ export default class ReWorksTag extends BaseModel {
    */
   worksId: number | undefined | null
   /**
-   * 标签id
+   * 标签类型（0：本地，1：站点）
    */
-  tagId: string | undefined | null
+  tagType: number | undefined | null
   /**
-   * 标签类型（true：本地，false：站点）
+   * 本地标签id
    */
-  tagType: boolean | undefined | null
+  localTagId: number | undefined | null
   /**
-   * 标签来源站点id
+   * 站点标签id
    */
-  tagSiteId: number | undefined | null
+  siteTagId: number | undefined | null
 
-  constructor(reWorksTag: ReWorksTag) {
-    super(reWorksTag)
-    this.id = reWorksTag.id
-    this.worksId = reWorksTag.worksId
-    this.tagId = reWorksTag.tagId
-    this.tagType = reWorksTag.tagType
-    this.tagSiteId = reWorksTag.tagSiteId
-    this.createTime = reWorksTag.createTime
+  constructor(reWorksTag?: ReWorksTag) {
+    if (reWorksTag === undefined) {
+      super()
+      this.worksId = undefined
+      this.tagType = undefined
+      this.localTagId = undefined
+      this.siteTagId = undefined
+    } else {
+      super(reWorksTag)
+      this.worksId = reWorksTag.worksId
+      this.tagType = reWorksTag.tagType
+      this.localTagId = reWorksTag.localTagId
+      this.siteTagId = reWorksTag.siteTagId
+    }
   }
 }
