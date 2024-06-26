@@ -1,4 +1,14 @@
 export enum AuthorRole {
+  /**
+   * 主作者
+   */
   'main' = 0,
-  'deputy' = 1
+  /**
+   * 副作者
+   */
+  'deputy' = 1,
+  /**
+   * 平级作者
+   */
+  'equal' = 2
 }
