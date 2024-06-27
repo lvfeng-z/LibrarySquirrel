@@ -5,10 +5,11 @@ import PageModel from '../model/utilModels/PageModel.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import LogUtil from '../util/LogUtil.ts'
+import DB from '../database/DB.ts'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
-  constructor() {
-    super('works', 'WorksDao')
+  constructor(db?: DB) {
+    super('works', 'WorksDao', db)
   }
 
   protected getPrimaryKeyColumnName(): string {

@@ -2,13 +2,14 @@ import BaseDao from './BaseDao.ts'
 import TaskPluginListener from '../model/TaskPluginListener.ts'
 import TaskPluginListenerQueryDTO from '../model/queryDTO/TaskPluginListenerQueryDTO.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
+import DB from '../database/DB.ts'
 
 export default class TaskPluginListenerDao extends BaseDao<
   TaskPluginListenerQueryDTO,
   TaskPluginListener
 > {
-  constructor() {
-    super('task_plugin_listener', 'TaskPluginListenerDao')
+  constructor(db?: DB) {
+    super('task_plugin_listener', 'TaskPluginListenerDao', db)
   }
 
   protected getPrimaryKeyColumnName(): string {

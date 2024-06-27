@@ -4,10 +4,11 @@ import StringUtil from '../util/StringUtil.ts'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
+import DB from '../database/DB.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
-  constructor() {
-    super('local_tag', 'LocalTagDao')
+  constructor(db?: DB) {
+    super('local_tag', 'LocalTagDao', db)
   }
   protected getPrimaryKeyColumnName(): string {
     return 'id'

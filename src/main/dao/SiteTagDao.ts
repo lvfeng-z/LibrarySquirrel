@@ -6,12 +6,13 @@ import StringUtil from '../util/StringUtil.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
+import DB from '../database/DB.ts'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
-  constructor() {
-    super('site_tag', 'SiteTagDao')
+  constructor(db?: DB) {
+    super('site_tag', 'SiteTagDao', db)
   }
 
   protected getPrimaryKeyColumnName(): string {

@@ -33,11 +33,21 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @private
    */
   private db: DB | undefined
+  /**
+   * 是否为注入的链接实例
+   * @private
+   */
+  private readonly injectedDB: boolean
 
-  protected constructor(tableName: string, childClassName: string) {
+  protected constructor(tableName: string, childClassName: string, db?: DB) {
     this.tableName = tableName
     this.childClassName = childClassName
-    this.db = undefined
+    if (db !== undefined && db !== null) {
+      this.db = db
+      this.injectedDB = true
+    } else {
+      this.injectedDB = false
+    }
   }
 
   /**
@@ -64,7 +74,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         throw error
       }
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -128,7 +140,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       return (await db.prepare(statement)).run(numberedProperties).changes as number
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -142,7 +156,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
       return (await db.prepare(sql)).run().changes
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -169,7 +185,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const sql = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
       return (await db.prepare(sql)).run(existingValue).changes
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -187,7 +205,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
       return result as Model
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -227,7 +247,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       return page
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -264,7 +286,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
       return this.getResultTypeDataList<Model>(rows)
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -309,7 +333,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       LogUtil.error(this.childClassName, error)
       throw error
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -367,7 +393,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       LogUtil.error(this.childClassName, error)
       throw error
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -587,7 +615,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       return `LIMIT ${page.pageSize} OFFSET ${offset}`
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
