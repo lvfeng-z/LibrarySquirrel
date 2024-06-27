@@ -18,6 +18,17 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   }
 
   /**
+   * 保存
+   * @param localTag 本地标签
+   */
+  async save(localTag: LocalTag) {
+    if (localTag.baseLocalTagId === null) {
+      localTag.baseLocalTagId = 0
+    }
+    return this.dao.save(localTag)
+  }
+
+  /**
    * 修改
    * @param localTag
    */

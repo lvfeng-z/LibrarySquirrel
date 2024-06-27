@@ -17,7 +17,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   /**
    * 子类名称
    */
-  private dao: BaseDao<Query, Model>
+  protected dao: BaseDao<Query, Model>
 
   protected constructor(childClassName: string, dao: BaseDao<Query, Model>) {
     this.childClassName = childClassName
