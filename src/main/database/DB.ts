@@ -1,4 +1,4 @@
-import BetterSqlite3 from 'better-sqlite3'
+import BetterSqlite3, { Transaction } from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 
@@ -64,16 +64,23 @@ export default class DB {
   /**
    * 事务
    */
-  public async transaction(fun: () => void) {
-    const connectionPromise = this.acquire()
-    connectionPromise.then((connection) => connection.transaction(fun))
+  public async transaction<F extends (...args: unknown[]) => Promise<unknown>>(
+    fun: F
+  ): Promise<Transaction<F>> {
+    const connection = await this.acquire()
+    try {
+      return connection.transaction(() => fun())
+    } catch (error) {
+      LogUtil.error('DB', error)
+      throw error
+    }
   }
 
   /**
    * 请求链接
    * @private
    */
-  private async acquire(): Promise<BetterSqlite3.Database> {
+  public async acquire(): Promise<BetterSqlite3.Database> {
     if (this.connection != undefined) {
       return this.connection
     }
