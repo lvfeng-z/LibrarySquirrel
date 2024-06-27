@@ -7,6 +7,9 @@ const api = {
   testInsertLocalTag10W: (args) => {
     return Electron.ipcRenderer.invoke('test-insertLocalTag10W', args)
   },
+  testTransactionTest: (args) => {
+    return Electron.ipcRenderer.invoke('test-transactionTest', args)
+  },
   testTaskPluginListenerServiceSaveBatch: (args) => {
     return Electron.ipcRenderer.invoke('test-taskPluginListenerService-saveBatch', args)
   },

@@ -9,7 +9,8 @@ import lodash from 'lodash'
 // 变量
 // 接口
 const apis = {
-  worksServiceSaveWorks: window.api.worksServiceSaveWorks
+  worksServiceSaveWorks: window.api.worksServiceSaveWorks,
+  testTransactionTest: window.api.testTransactionTest
 }
 const site = ref(new Site())
 const siteAuthor = ref(new SiteAuthor())
@@ -22,6 +23,7 @@ function saveWorks() {
   worksDTO.siteAuthor = lodash.cloneDeep(siteAuthor.value)
   worksDTO.localTags = lodash.cloneDeep([localTag.value])
   apis.worksServiceSaveWorks(worksDTO)
+  // apis.testTransactionTest()
 }
 </script>
 
@@ -49,6 +51,11 @@ function saveWorks() {
         <el-col>
           <el-form-item label="站点作者名称">
             <el-input v-model="siteAuthor.siteAuthorName"></el-input>
+          </el-form-item>
+        </el-col>
+        <el-col>
+          <el-form-item label="站点作者所在站点Id">
+            <el-input v-model="siteAuthor.siteId"></el-input>
           </el-form-item>
         </el-col>
       </el-row>

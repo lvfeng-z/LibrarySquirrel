@@ -1,4 +1,7 @@
 import DB from '../database/DB.ts'
+import Database from 'better-sqlite3'
+import DatabaseUtil from '../util/DatabaseUtil.ts'
+import DataBaseConstant from '../constant/DataBaseConstant.ts'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')
@@ -26,6 +29,26 @@ async function insertLocalTag10W() {
   }
 }
 
+async function transactionTest() {
+  const db = new Database(DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME)
+  const p1 = db.prepare(
+    "insert into site_author (site_author_id, site_author_name) values (1, 'test1')"
+  )
+  const p2 = db.prepare(
+    "insert into site_author (site_author_id, site_author_name) values (2, 'test2')"
+  )
+  const p3 = db.prepare(
+    "insert into site_author (site_author_id, site_author_name) values (3, 'test3')"
+  )
+  const t = db.transaction(() => {
+    p1.run()
+    p2.run()
+    p3.run()
+  })
+  t()
+}
+
 export default {
-  insertLocalTag10W
+  insertLocalTag10W,
+  transactionTest
 }

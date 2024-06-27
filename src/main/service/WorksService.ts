@@ -120,36 +120,35 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     const siteAuthorDTO = worksDTO.siteAuthor
     const localTags = worksDTO.localTags
     const db = new DB('WorksService')
-    await db.acquire()
     try {
-      const saveWorksTransaction = await db.transaction(async () => {
+      await db.simpleTransaction(async (transactionDB) => {
         try {
-          const dao = new WorksDao(db)
+          const dao = new WorksDao(transactionDB)
           // 处理站点
           if (site !== undefined && site !== null) {
-            const siteService = new SiteService(db)
+            const siteService = new SiteService(transactionDB)
             await siteService.saveOnNotExistByDomain(site)
           }
           // 处理站点作者
           if (siteAuthorDTO !== undefined && siteAuthorDTO !== null) {
-            const siteAuthorService = new SiteAuthorService(db)
+            const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
           }
           // 处理本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
-            const localTagService = new LocalTagService(db)
+            const localTagService = new LocalTagService(transactionDB)
             await localTagService.link(localTags, worksDTO)
           }
 
           // 保存作品
-          const worksId = await dao.save(worksDTO)
+          const works = new Works(worksDTO)
+          const worksId = await dao.save(works)
           console.log(worksId)
         } catch (error) {
           LogUtil.warn('WorksService', '保存作品时出错')
           throw error
         }
       })
-      await saveWorksTransaction()
     } finally {
       db.release()
     }

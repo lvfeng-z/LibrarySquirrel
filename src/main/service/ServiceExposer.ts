@@ -20,6 +20,9 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
     return InsertLocalTag.insertLocalTag10W()
   })
+  Electron.ipcMain.handle('test-transactionTest', async () => {
+    return InsertLocalTag.transactionTest()
+  })
   Electron.ipcMain.handle('test-taskPluginListenerService-saveBatch', async (_event, args) => {
     return TaskPluginListenerService.saveBatch(args)
   })
