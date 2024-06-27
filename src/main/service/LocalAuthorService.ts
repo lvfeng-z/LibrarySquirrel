@@ -1,19 +1,19 @@
 import BaseService from './BaseService.ts'
 import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.ts'
 import LocalAuthor from '../model/LocalAuthor.ts'
-import BaseDao from '../dao/BaseDao.ts'
 import LocalAuthorDao from '../dao/LocalAuthorDao.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
+import DB from '../database/DB.ts'
 
 /**
  * 本地作者Service
  */
 export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor> {
-  constructor() {
-    super('LocalAuthorService')
+  constructor(db?: DB) {
+    super('LocalAuthorService', new LocalAuthorDao(db))
   }
 
   /**
@@ -47,9 +47,5 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
       LogUtil.error('LocalAuthorService', error)
       throw error
     }
-  }
-
-  protected getDao(): BaseDao<LocalAuthorQueryDTO, LocalAuthor> {
-    return new LocalAuthorDao()
   }
 }

@@ -6,15 +6,15 @@ import LocalTagConstant from '../constant/LocalTagConstant.ts'
 import TreeSelectNode from '../model/utilModels/TreeSelectNode.ts'
 import TreeNode from '../model/utilModels/TreeNode.ts'
 import BaseService from './BaseService.ts'
-import BaseDao from '../dao/BaseDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
-import WorksDTO from '../model/dto/WorksDTO'
+import WorksDTO from '../model/dto/WorksDTO.ts'
+import DB from '../database/DB.ts'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag> {
-  constructor() {
-    super('LocalTagService')
+  constructor(db?: DB) {
+    super('LocalTagService', new LocalTagDao(db))
   }
 
   /**
@@ -38,7 +38,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId !== 0) {
         const parentTags = await dao.selectParentNode(localTag.baseLocalTagId)
         const parentTagIds = parentTags.map((tag) => tag.id)
-        // 如果新的上级节点是原本的下级节点，则先把原本的下级节点移动至与本节点相同上级节点之下，再把本节点变成原下级节点的下级节点
+        // 如果新的上级节点是原本的下级节点，则先把原本的下级节点移动至本节点的上级节点之下，再把本节点变成原下级节点的下级节点
         if (parentTagIds.includes(localTag.id)) {
           // 查询要修改的标签原本的数据
           const old = await dao.getById(localTag.id)
@@ -68,8 +68,9 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param worksDTO
    */
   async link(localTags: LocalTag[], worksDTO: WorksDTO) {
-    localTags.map(localTag => {
-    })
+    // localTags.map(localTag => {
+    // })
+    console.log(localTags, worksDTO)
   }
 
   /**
@@ -131,9 +132,5 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       page.query.assignComparator = { localTagName: COMPARATOR.LIKE }
     }
     return await dao.getSelectItemPage(page, 'id', 'localTagName')
-  }
-
-  protected getDao(): BaseDao<LocalTagQueryDTO, LocalTag> {
-    return new LocalTagDao()
   }
 }

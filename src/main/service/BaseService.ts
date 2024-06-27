@@ -14,8 +14,14 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   protected childClassName: string
 
-  protected constructor(childClassName: string) {
+  /**
+   * 子类名称
+   */
+  private dao: BaseDao<Query, Model>
+
+  protected constructor(childClassName: string, dao: BaseDao<Query, Model>) {
     this.childClassName = childClassName
+    this.dao = dao
   }
 
   /**
@@ -23,7 +29,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param entity
    */
   public async save(entity: Model): Promise<number | string> {
-    return this.getDao().save(entity)
+    return this.dao.save(entity)
   }
 
   /**
@@ -31,7 +37,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param entities
    */
   public async saveBatch(entities: Model[]): Promise<number> {
-    return this.getDao().saveBatch(entities)
+    return this.dao.saveBatch(entities)
   }
 
   /**
@@ -39,7 +45,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param id
    */
   public async deleteById(id: number | string): Promise<number> {
-    return this.getDao().deleteById(id)
+    return this.dao.deleteById(id)
   }
 
   /**
@@ -52,7 +58,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
       LogUtil.error(this.childClassName, msg)
       throw new Error(msg)
     }
-    return this.getDao().updateById(updateData.id as number | string, updateData)
+    return this.dao.updateById(updateData.id as number | string, updateData)
   }
 
   /**
@@ -60,7 +66,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param id
    */
   public async getById(id: number | string): Promise<Model> {
-    return this.getDao().getById(id)
+    return this.dao.getById(id)
   }
 
   /**
@@ -68,7 +74,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param page
    */
   public async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
-    return this.getDao().selectPage(page)
+    return this.dao.selectPage(page)
   }
 
   /**
@@ -76,11 +82,6 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param query
    */
   public async selectList(query: Query): Promise<Model[]> {
-    return this.getDao().selectList(query)
+    return this.dao.selectList(query)
   }
-
-  /**
-   * 获取Dao
-   */
-  protected abstract getDao(): BaseDao<Query, Model>
 }

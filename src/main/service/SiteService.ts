@@ -2,15 +2,15 @@ import Site from '../model/Site.ts'
 import SiteDao from '../dao/SiteDao.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseService from './BaseService.ts'
-import BaseDao from '../dao/BaseDao.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
+import DB from '../database/DB.ts'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site> {
-  constructor() {
-    super('SiteService')
+  constructor(db?: DB) {
+    super('SiteService', new SiteDao(db))
   }
 
   /**
@@ -62,9 +62,5 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
     } else {
       throw new Error('')
     }
-  }
-
-  protected getDao(): BaseDao<SiteQueryDTO, Site> {
-    return new SiteDao()
   }
 }

@@ -1,18 +1,18 @@
 import BaseService from './BaseService.ts'
 import SiteAuthor from '../model/SiteAuthor.ts'
-import BaseDao from '../dao/BaseDao.ts'
 import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorDao from '../dao/SiteAuthorDao.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
+import DB from '../database/DB.ts'
 
 /**
  * 站点作者Service
  */
 export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor> {
-  constructor() {
-    super('SiteAuthorService')
+  constructor(db?: DB) {
+    super('SiteAuthorService', new SiteAuthorDao(db))
   }
 
   /**
@@ -85,9 +85,5 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return 1
       }
     }
-  }
-
-  protected getDao(): BaseDao<SiteAuthorQueryDTO, SiteAuthor> {
-    return new SiteAuthorDao()
   }
 }
