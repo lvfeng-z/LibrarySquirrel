@@ -1,7 +1,7 @@
 import Works from '../Works.ts'
 import LocalAuthor from '../LocalAuthor.ts'
 import Site from '../Site.ts'
-import SiteAuthorDTO from './SiteAuthorDTO.ts'
+import SiteAuthor from '../SiteAuthor.ts'
 import SiteTag from '../SiteTag.ts'
 import LocalTag from '../LocalTag.ts'
 import fs from 'fs'
@@ -28,7 +28,7 @@ export default class WorksDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthor: SiteAuthorDTO | undefined | null
+  siteAuthor: SiteAuthor | undefined | null
 
   /**
    * 站点标签数组
