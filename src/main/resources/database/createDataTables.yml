@@ -90,9 +90,8 @@ tables:
         references local_tag
         on delete cascade,
         site_tag_id  integer
-        constraint re_works_tag_site_tag_site_id_fk
-        references site_tag (site_id)
-        on delete cascade,
+        constraint re_works_tag_site_tag_id_fk
+        references site_tag,
         create_time  integer,
         update_time  integer,
         constraint re_works_tag_unique_local_tag_id
