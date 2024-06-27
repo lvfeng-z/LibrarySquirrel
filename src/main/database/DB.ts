@@ -64,12 +64,12 @@ export default class DB {
   /**
    * 事务
    */
-  public async transaction<F extends (...args: unknown[]) => Promise<unknown>>(
-    fun: F
+  public async transaction<F extends (...params: any[]) => Promise<unknown>>(
+    fn: F
   ): Promise<Transaction<F>> {
     const connection = await this.acquire()
     try {
-      return connection.transaction(() => fun())
+      return connection.transaction(fn)
     } catch (error) {
       LogUtil.error('DB', error)
       throw error
