@@ -22,7 +22,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param localTag 本地标签
    */
   async save(localTag: LocalTag) {
-    if (localTag.baseLocalTagId === null) {
+    if (localTag.baseLocalTagId === undefined || localTag.baseLocalTagId === null) {
       localTag.baseLocalTagId = 0
     }
     return this.dao.save(localTag)
@@ -41,12 +41,12 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         throw new Error(msg)
       }
 
-      if (localTag.baseLocalTagId === null) {
+      if (localTag.baseLocalTagId === undefined || localTag.baseLocalTagId === null) {
         localTag.baseLocalTagId = 0
       }
 
       // 查询新上级节点的所有上级节点
-      if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId !== 0) {
+      if (localTag.baseLocalTagId !== 0) {
         const parentTags = await dao.selectParentNode(localTag.baseLocalTagId)
         const parentTagIds = parentTags.map((tag) => tag.id)
         // 如果新的上级节点是原本的下级节点，则先把原本的下级节点移动至本节点的上级节点之下，再把本节点变成原下级节点的下级节点
