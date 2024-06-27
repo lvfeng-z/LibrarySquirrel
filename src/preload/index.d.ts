@@ -45,6 +45,7 @@ declare global {
 
       // WorksService
       worksQueryPage: function
+      worksServiceSaveWorks: function
     }
   }
 }

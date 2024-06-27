@@ -14,6 +14,7 @@ import WorksDTO from './model/main/dto/WorksDTO.ts'
 import TaskManage from './components/closeablePage/TaskManage.vue'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
+import TransactionTest from './test/transaction-test.vue'
 
 // onMounted
 onMounted(() => {
@@ -143,16 +144,19 @@ async function requestWorks() {
   })
 }
 
-// test
-async function handleTest() {
-  showExplainPath.value = true
-}
-
-//
+// 监听
 window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
   showExplainPath.value = true
   pathWaitingExplain.value = dir
 })
+
+// test
+
+const showTestDialog = ref(false)
+async function handleTest() {
+  // showExplainPath.value = true
+  showTestDialog.value = true
+}
 </script>
 
 <template>
@@ -264,6 +268,7 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
       v-model:state="showExplainPath"
       :string-to-explain="pathWaitingExplain"
     ></explain-path>
+    <transaction-test v-model="showTestDialog"></transaction-test>
   </div>
 </template>
 

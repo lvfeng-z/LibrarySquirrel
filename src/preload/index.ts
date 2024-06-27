@@ -95,6 +95,9 @@ const api = {
   // WorksService
   worksQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('works-queryPage', args)
+  },
+  worksServiceSaveWorks: (args) => {
+    return Electron.ipcRenderer.invoke('worksService-saveWorks', args)
   }
 }
 

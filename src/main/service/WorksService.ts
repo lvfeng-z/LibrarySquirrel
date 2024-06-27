@@ -11,14 +11,14 @@ import { SAVE_FAILED } from '../constant/CrudConstant.ts'
 import FileSysUtil from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
-import BaseDao from '../dao/BaseDao.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import SiteService from './SiteService.ts'
 import LocalTagService from './LocalTagService.ts'
+import DB from '../database/DB.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   constructor() {
-    super('WorksService')
+    super('WorksService', new WorksDao())
   }
 
   /**
@@ -119,25 +119,40 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     const site = worksDTO.site
     const siteAuthorDTO = worksDTO.siteAuthor
     const localTags = worksDTO.localTags
-    // 处理站点
-    if (site !== undefined && site !== null) {
-      const siteService = new SiteService()
-      await siteService.saveOnNotExistByDomain(site)
-    }
-    // 处理站点作者
-    if (siteAuthorDTO !== undefined && siteAuthorDTO !== null) {
-      const siteAuthorService = new SiteAuthorService()
-      await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
-    }
-    // 处理本地标签
-    if (localTags !== undefined && localTags != null && localTags.length > 0) {
-      const localTagService = new LocalTagService()
-      await localTagService.link(localTags, worksDTO)
-    }
+    const db = new DB('WorksService')
+    await db.acquire()
+    try {
+      const saveWorksTransaction = await db.transaction(async () => {
+        try {
+          const dao = new WorksDao(db)
+          // 处理站点
+          if (site !== undefined && site !== null) {
+            const siteService = new SiteService(db)
+            await siteService.saveOnNotExistByDomain(site)
+          }
+          // 处理站点作者
+          if (siteAuthorDTO !== undefined && siteAuthorDTO !== null) {
+            const siteAuthorService = new SiteAuthorService(db)
+            await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
+          }
+          // 处理本地标签
+          if (localTags !== undefined && localTags != null && localTags.length > 0) {
+            const localTagService = new LocalTagService(db)
+            await localTagService.link(localTags, worksDTO)
+          }
 
-    // 保存作品获得作品Id
-    // const dao = new WorksDao()
-    // // const worksId = await dao.save(worksDTO)
+          // 保存作品
+          const worksId = await dao.save(worksDTO)
+          console.log(worksId)
+        } catch (error) {
+          LogUtil.warn('WorksService', '保存作品时出错')
+          throw error
+        }
+      })
+      await saveWorksTransaction()
+    } finally {
+      db.release()
+    }
   }
 
   /**
@@ -155,9 +170,5 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
       LogUtil.error('WorksService', error)
       throw error
     }
-  }
-
-  protected getDao(): BaseDao<WorksQueryDTO, Works> {
-    return new WorksDao()
   }
 }

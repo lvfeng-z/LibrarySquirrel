@@ -198,6 +198,16 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('worksService-saveWorks', async (_event, args): Promise<ApiUtil> => {
+    const worksService = new WorksService()
+    try {
+      const result = await worksService.saveWorks(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 }
 
 export default {
