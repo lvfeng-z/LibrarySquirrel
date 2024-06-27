@@ -29,12 +29,10 @@ export default class DB {
       this.caller = 'unknown'
     }
 
-    // 封装类被回收时，释放链接，并提醒应该手动释放链接
-    const finalizationRegistry = new FinalizationRegistry(() => {
-      this.release()
-      LogUtil.warn(this.caller, '数据库链接被垃圾回收机制释放，请手动释放链接！')
-    })
-    finalizationRegistry.register(this, undefined)
+    // 封装类被回收时，释放链接
+    const weakThis = new WeakRef(this)
+    const fin = new FinalizationRegistry((callback: () => void) => callback())
+    fin.register(this, this.beforeDestroy, weakThis)
   }
 
   /**
@@ -64,6 +62,14 @@ export default class DB {
   }
 
   /**
+   * 事务
+   */
+  public async transaction(fun: () => void) {
+    const connectionPromise = this.acquire()
+    connectionPromise.then((connection) => connection.transaction(fun))
+  }
+
+  /**
    * 请求链接
    * @private
    */
@@ -84,5 +90,16 @@ export default class DB {
       })()
     }
     return this.acquirePromise
+  }
+
+  /**
+   * 实例销毁之前的回调
+   * @private
+   */
+  private beforeDestroy(): void {
+    if (this.connection !== undefined && this.connection !== null) {
+      this.release()
+      LogUtil.info(this.caller, '数据库链接在封装实例销毁时被释放')
+    }
   }
 }
