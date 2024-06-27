@@ -1,4 +1,4 @@
-import BetterSqlite3, { Transaction } from 'better-sqlite3'
+import BetterSqlite3 from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 
@@ -62,15 +62,17 @@ export default class DB {
   }
 
   /**
-   * 事务
+   * 简单的事务
+   * @param fn 事务代码
    */
-  public async transaction<F extends (...params: any[]) => Promise<unknown>>(
-    fn: F
-  ): Promise<Transaction<F>> {
+  public async simpleTransaction<F extends (db: DB) => Promise<unknown>>(fn: F): Promise<void> {
     const connection = await this.acquire()
     try {
-      return connection.transaction(fn)
+      connection.exec('BEGIN')
+      await fn(this)
+      connection.exec('COMMIT')
     } catch (error) {
+      connection.exec('ROLLBACK')
       LogUtil.error('DB', error)
       throw error
     }
