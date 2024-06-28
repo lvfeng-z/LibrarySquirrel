@@ -515,6 +515,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
             // 根据运算符的不同给出不同的where子句和匹配值
             let modifiedValue
             switch (comparator) {
+              case COMPARATOR.NOT_EQUAL:
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                    : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                modifiedValue = String(value).concat('%')
+                break
               case COMPARATOR.LEFT_LIKE:
                 whereClauses[key] =
                   alias == undefined

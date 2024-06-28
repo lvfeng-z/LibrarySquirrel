@@ -9,7 +9,8 @@ enum COMPARATOR {
   LESS_THAN_OR_EQUAL = '<=',
   LIKE = 'like',
   LEFT_LIKE = 'leftLike',
-  RIGHT_LIKE = 'rightLike'
+  RIGHT_LIKE = 'rightLike',
+  IS_NULL = 'is null'
 }
 
 export { SAVE_FAILED, COMPARATOR }
