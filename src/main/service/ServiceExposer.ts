@@ -1,6 +1,5 @@
 import LocalTagService from './LocalTagService.ts'
 import Electron from 'electron'
-import SelectItem from '../model/utilModels/SelectItem.ts'
 import SiteTagService from './SiteTagService.ts'
 import SiteService from './SiteService.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
@@ -11,7 +10,6 @@ import SettingsService from './SettingsService.ts'
 import WorksService from './WorksService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from './TaskService.ts'
-import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
 
@@ -22,12 +20,6 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
   Electron.ipcMain.handle('test-transactionTest', async () => {
     return InsertLocalTag.transactionTest()
-  })
-  Electron.ipcMain.handle('test-taskPluginListenerService-saveBatch', async (_event, args) => {
-    return TaskPluginListenerService.saveBatch(args)
-  })
-  Electron.ipcMain.handle('test-taskPluginListenerService-getMonitored', async (_event, args) => {
-    return TaskPluginListenerService.getMonitored(args)
   })
 
   // LocalAuthorService
@@ -161,33 +153,75 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
 
   // SiteTagService
   Electron.ipcMain.handle('siteTag-save', async (_event, args) => {
-    return SiteTagService.save(args)
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.save(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('siteTag-updateById', async (_event, args) => {
-    return SiteTagService.updateById(args)
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.updateById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle(
     'siteTag-updateBindLocalTag',
     async (_event, localTagId: string | null, siteTagIds: string[]) => {
-      return SiteTagService.updateBindLocalTag(localTagId, siteTagIds)
+      try {
+        const siteTagService = new SiteTagService()
+        return ApiUtil.response(await siteTagService.updateBindLocalTag(localTagId, siteTagIds))
+      } catch (error) {
+        LogUtil.error('ServiceExposer', error)
+        return ApiUtil.error(String(error))
+      }
     }
   )
   Electron.ipcMain.handle(
     'siteTag-getBoundOrUnboundInLocalTag',
     async (_event, page: PageModel<SiteTagQueryDTO, SiteTag>) => {
-      return await SiteTagService.getBoundOrUnboundInLocalTag(page)
+      try {
+        const siteTagService = new SiteTagService()
+        return ApiUtil.response(await siteTagService.getBoundOrUnboundInLocalTag(page))
+      } catch (error) {
+        LogUtil.error('ServiceExposer', error)
+        return ApiUtil.error(String(error))
+      }
     }
   )
-  Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args): Promise<SelectItem[]> => {
-    return SiteTagService.getSelectList(args)
+  Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args) => {
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.getSelectList(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
 
   // TaskService
   Electron.ipcMain.handle('taskService-startTask', async (_event, args) => {
-    return TaskService.startTask(args, mainWindow)
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.startTask(args, mainWindow))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
-  Electron.ipcMain.handle('taskService-createTask', (_event, args) => {
-    return TaskService.createTask(args, mainWindow)
+  Electron.ipcMain.handle('taskService-createTask', async (_event, args) => {
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.createTask(args, mainWindow))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
 
   // WorksService

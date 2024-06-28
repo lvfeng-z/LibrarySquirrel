@@ -32,14 +32,15 @@ export default class PluginLoader {
    * @param pluginId
    */
   public async loadTaskPlugin(pluginId: number) {
-    const classPath = await InstalledPluginsService.getClassPathById(pluginId)
+    const installedPluginsService = new InstalledPluginsService()
+    const classPath = await installedPluginsService.getClassPathById(pluginId)
     const module = await import(classPath)
     const taskPlugin = new module.default(this.pluginTool)
 
     // 验证taskPlugin是否符合TaskHandler接口要求
     let isTaskHandler: boolean
     // 查询插件信息，日志用
-    const pluginInfo = JSON.stringify(await InstalledPluginsService.getById(pluginId))
+    const pluginInfo = JSON.stringify(await installedPluginsService.getById(pluginId))
     // create方法
     isTaskHandler = 'create' in taskPlugin && typeof taskPlugin.create === 'function'
     if (!isTaskHandler) {
