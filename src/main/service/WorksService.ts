@@ -119,6 +119,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     const site = worksDTO.site
     const siteAuthorDTO = worksDTO.siteAuthor
     const localTags = worksDTO.localTags
+
+    // 开启事务
     const db = new DB('WorksService')
     try {
       await db.simpleTransaction(async (transactionDB) => {
@@ -134,16 +136,16 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
             const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
           }
+
+          // 保存作品
+          const works = new Works(worksDTO)
+          worksDTO.id = await dao.save(works)
+
           // 处理本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
             const localTagService = new LocalTagService(transactionDB)
             await localTagService.link(localTags, worksDTO)
           }
-
-          // 保存作品
-          const works = new Works(worksDTO)
-          const worksId = await dao.save(works)
-          console.log(worksId)
         } catch (error) {
           LogUtil.warn('WorksService', '保存作品时出错')
           throw error

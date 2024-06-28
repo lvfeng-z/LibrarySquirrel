@@ -11,10 +11,13 @@ import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import DB from '../database/DB.ts'
+import ReWorksTag from '../model/ReWorksTag.ts'
+import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
+import { ReWorksTagService } from './ReWorksTagService.ts'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
-    super('LocalTagService', new LocalTagDao(db))
+    super('LocalTagService', new LocalTagDao(db), db)
   }
 
   /**
@@ -79,9 +82,24 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param worksDTO
    */
   async link(localTags: LocalTag[], worksDTO: WorksDTO) {
-    // localTags.map(localTag => {
-    // })
-    console.log(localTags, worksDTO)
+    // 创建关联对象
+    const links = localTags.map((localTag) => {
+      const reWorksTag = new ReWorksTag()
+      reWorksTag.worksId = worksDTO.id as number
+      reWorksTag.localTagId = localTag.id
+      reWorksTag.tagType = ReWorksTagTypeEnum.LOCAL
+      return reWorksTag
+    })
+
+    // 调用reWorksTagService前区分是否为注入式的DB
+    let reWorksTagService: ReWorksTagService
+    if (this.injectedDB) {
+      reWorksTagService = new ReWorksTagService(this.db)
+    } else {
+      reWorksTagService = new ReWorksTagService()
+    }
+
+    await reWorksTagService.saveBatch(links, true)
   }
 
   /**
