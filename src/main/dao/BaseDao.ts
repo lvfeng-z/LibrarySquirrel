@@ -82,9 +82,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
   /**
    * 批量保存
-   * @param entities
+   * @param entities 待插入的数据
+   * @param ignore 是否使用ignore关键字
    */
-  public async saveBatch(entities: Model[]): Promise<number> {
+  public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
     const db = this.acquire()
     try {
       if (entities === undefined || entities === null || entities.length === 0) {
@@ -104,7 +105,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const keys = Object.keys(plainObject[0])
         // .filter((key) => 'id' !== key)
         .map((key) => StringUtil.camelToSnakeCase(key))
-      const insertClause = `INSERT INTO "${this.tableName}" (${keys})`
+      let insertClause: string
+      if (ignore === undefined || ignore === null || !ignore) {
+        insertClause = `INSERT INTO "${this.tableName}" (${keys})`
+      } else {
+        insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${keys})`
+      }
       const valuesClauses: string[] = []
 
       // 存储编号后的所有属性
