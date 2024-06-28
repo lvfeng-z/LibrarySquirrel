@@ -12,7 +12,7 @@ import DB from '../database/DB.ts'
  */
 export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor> {
   constructor(db?: DB) {
-    super('SiteAuthorService', new SiteAuthorDao(db))
+    super('SiteAuthorService', new SiteAuthorDao(db), db)
   }
 
   /**

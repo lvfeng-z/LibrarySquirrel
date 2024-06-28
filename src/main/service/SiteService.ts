@@ -10,7 +10,7 @@ import DB from '../database/DB.ts'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site> {
   constructor(db?: DB) {
-    super('SiteService', new SiteDao(db))
+    super('SiteService', new SiteDao(db), db)
   }
 
   /**

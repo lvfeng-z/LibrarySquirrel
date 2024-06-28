@@ -17,8 +17,8 @@ import LocalTagService from './LocalTagService.ts'
 import DB from '../database/DB.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
-  constructor() {
-    super('WorksService', new WorksDao())
+  constructor(db?: DB) {
+    super('WorksService', new WorksDao(), db)
   }
 
   /**

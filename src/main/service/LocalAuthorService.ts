@@ -13,7 +13,7 @@ import DB from '../database/DB.ts'
  */
 export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor> {
   constructor(db?: DB) {
-    super('LocalAuthorService', new LocalAuthorDao(db))
+    super('LocalAuthorService', new LocalAuthorDao(db), db)
   }
 
   /**

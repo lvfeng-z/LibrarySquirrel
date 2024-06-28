@@ -27,7 +27,9 @@ export default class TaskPluginListenerDao extends BaseDao<
       const result = (await db.prepare(statement)).all() as object[]
       return this.getResultTypeDataList<InstalledPlugins>(result)
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 }
