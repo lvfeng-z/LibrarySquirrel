@@ -54,7 +54,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       )
       return modifiedPage
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -81,7 +83,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
       return (await db.prepare(sql)).all(values) as SelectItem[]
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -111,7 +115,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       const result = (await db.prepare(statement)).all({ rootId: rootId, depth: depth }) as object[]
       return this.getResultTypeDataList<LocalTag>(result)
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
@@ -136,7 +142,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       const result = (await db.prepare(statement)).all({ nodeId: nodeId }) as object[]
       return this.getResultTypeDataList<LocalTag>(result)
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 }

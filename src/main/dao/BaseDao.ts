@@ -37,7 +37,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 是否为注入的链接实例
    * @private
    */
-  private readonly injectedDB: boolean
+  protected readonly injectedDB: boolean
 
   protected constructor(tableName: string, childClassName: string, db?: DB) {
     this.tableName = tableName

@@ -114,7 +114,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       LogUtil.error('WorksDao', error)
       throw error
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 }
