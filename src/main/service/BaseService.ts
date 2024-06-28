@@ -55,9 +55,10 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   /**
    * 批量保存
    * @param entities
+   * @param ignore 是否使用ignore关键字
    */
-  public async saveBatch(entities: Model[]): Promise<number> {
-    return this.dao.saveBatch(entities)
+  public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
+    return this.dao.saveBatch(entities, ignore)
   }
 
   /**
