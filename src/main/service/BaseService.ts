@@ -4,6 +4,7 @@ import PageModel from '../model/utilModels/PageModel.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
+import DB from '../database/DB.ts'
 
 /**
  * 基础Service类
@@ -19,9 +20,28 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   protected dao: BaseDao<Query, Model>
 
-  protected constructor(childClassName: string, dao: BaseDao<Query, Model>) {
+  /**
+   * 封装数据库链接实例
+   * @private
+   */
+  protected db: DB | undefined
+
+  /**
+   * 是否为注入的链接实例
+   * @private
+   */
+  protected readonly injectedDB: boolean
+
+  protected constructor(childClassName: string, dao: BaseDao<Query, Model>, db?: DB) {
     this.childClassName = childClassName
     this.dao = dao
+    if (db === undefined || db === null) {
+      this.db = undefined
+      this.injectedDB = false
+    } else {
+      this.db = db
+      this.injectedDB = true
+    }
   }
 
   /**
