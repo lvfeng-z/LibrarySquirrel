@@ -12,19 +12,21 @@ tables:
 
   - name: site_author
     sql: |
-     create table if not exists site_author (
-       id                      integer not null
-       constraint site_author_pk
-       primary key autoincrement,
-       site_id                 integer,
-       site_author_id          text,
-       site_author_name        text,
-       site_author_name_before text,
-       introduce               text,
-       local_author_id         integer,
-       create_time             integer,
-       update_time             integer
-     );
+      create table if not exists site_author (
+        id                      integer not null
+        constraint site_author_pk
+        primary key autoincrement,
+        site_id                 integer,
+        site_author_id          text,
+        site_author_name        text,
+        site_author_name_before text,
+        introduce               text,
+        local_author_id         integer,
+        create_time             integer,
+        update_time             integer,
+        constraint site_author_unique_site_id_site_author_id
+        unique (site_id, site_author_id)
+      );
 
   - name: poi
     sql: |
