@@ -99,7 +99,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       reWorksTagService = new ReWorksTagService()
     }
 
-    await reWorksTagService.saveBatch(links, true)
+    return reWorksTagService.saveBatch(links, true)
   }
 
   /**
