@@ -1,5 +1,6 @@
 import SiteAuthor from '../SiteAuthor.ts'
 import LocalAuthor from '../LocalAuthor.ts'
+import { AuthorRole } from '../../constant/AuthorRole.ts'
 
 /**
  * 站点作者DTO
@@ -10,13 +11,20 @@ export default class SiteAuthorDTO extends SiteAuthor {
    */
   localAuthor: LocalAuthor | undefined | null
 
+  /**
+   * 作者角色
+   */
+  authorRole: AuthorRole | undefined | null
+
   constructor(siteAuthorDTO?: SiteAuthorDTO) {
     if (siteAuthorDTO === undefined) {
       super()
       this.localAuthor = undefined
+      this.authorRole = undefined
     } else {
       super(siteAuthorDTO)
       this.localAuthor = siteAuthorDTO.localAuthor
+      this.authorRole = siteAuthorDTO.authorRole
     }
   }
 }
