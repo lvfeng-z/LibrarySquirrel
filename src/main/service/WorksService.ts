@@ -7,7 +7,6 @@ import SettingsService from './SettingsService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
 import { promisify } from 'node:util'
-import { SAVE_FAILED } from '../constant/CrudConstant.ts'
 import FileSysUtil from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
@@ -15,6 +14,9 @@ import SiteAuthorService from './SiteAuthorService.ts'
 import SiteService from './SiteService.ts'
 import LocalTagService from './LocalTagService.ts'
 import DB from '../database/DB.ts'
+import SiteTagService from './SiteTagService.ts'
+import LocalAuthorService from './LocalAuthorService.ts'
+import { ReadStream } from 'node:fs'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -26,7 +28,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
    * @param worksDTO
    */
   async saveWorksAndResource(worksDTO: WorksDTO): Promise<number> {
-    const dao = new WorksDao()
     // 读取设置中的工作目录信息
     const settings = SettingsService.getSettings() as { workdir: string }
     // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
@@ -41,12 +42,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
       const siteAuthorName: string = 'unknownAuthor'
       if (
         Object.prototype.hasOwnProperty.call(worksDTO, 'siteAuthor') &&
-        worksDTO.siteAuthor !== undefined &&
-        worksDTO.siteAuthor !== null
+        worksDTO.siteAuthors !== undefined &&
+        worksDTO.siteAuthors !== null &&
+        worksDTO.siteAuthors
       ) {
+        // TODO 选择主要作者
         if (
-          worksDTO.siteAuthor.siteAuthorName === undefined ||
-          worksDTO.siteAuthor.siteAuthorName === null
+          worksDTO.siteAuthors[0].siteAuthorName === undefined ||
+          worksDTO.siteAuthors[0].siteAuthorName === null
         ) {
           LogUtil.warn(
             'WorksService',
@@ -90,24 +93,36 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
       )
 
       // 保存资源和作品信息
-      try {
-        await FileSysUtil.createDirIfNotExists(fullSavePath)
-        const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
-        await pipelinePromise(worksDTO.resourceStream, writeStream)
-        works.filePath = path.join(relativeSavePath, fileName)
-        works.workdir = settings.workdir
-        const worksId = dao.save(works)
-        return worksId as Promise<number>
-      } catch (error) {
-        LogUtil.error(
-          'WorksService',
-          `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
-        )
-        return SAVE_FAILED
+      // 开启事务
+      let db: DB
+      if (this.injectedDB) {
+        db = this.db as DB
+      } else {
+        db = new DB('WorksService')
       }
+      const result = await db.nestedTransaction(async (transactionDB) => {
+        try {
+          await FileSysUtil.createDirIfNotExists(fullSavePath)
+          const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
+          await pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
+          works.filePath = path.join(relativeSavePath, fileName)
+          works.workdir = settings.workdir
+
+          // 创建一个新的服务对象用于组合嵌套事务
+          const worksService = new WorksService(transactionDB)
+          const worksId = worksService.saveWorks(worksDTO)
+          return worksId as Promise<number>
+        } catch (error) {
+          const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
+          LogUtil.error('WorksService', msg)
+          throw new Error(msg)
+        }
+      })
+      return result as Promise<number>
     } else {
-      LogUtil.error('WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
-      return SAVE_FAILED
+      const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
+      LogUtil.error('WorksService', msg)
+      throw new Error(msg)
     }
   }
 
@@ -115,42 +130,65 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
    * 保存作品信息
    * @param worksDTO
    */
-  async saveWorks(worksDTO: WorksDTO): Promise<void> {
+  async saveWorks(worksDTO: WorksDTO): Promise<number> {
     const site = worksDTO.site
-    const siteAuthorDTO = worksDTO.siteAuthor
+    const siteAuthor = worksDTO.siteAuthors
+    const siteTags = worksDTO.siteTags
+    const localAuthors = worksDTO.localAuthors
     const localTags = worksDTO.localTags
 
     // 开启事务
-    const db = new DB('WorksService')
+    let db: DB
+    if (this.injectedDB) {
+      db = this.db as DB
+    } else {
+      db = new DB('WorksService')
+    }
     try {
-      await db.simpleTransaction(async (transactionDB) => {
+      const worksId = await db.nestedTransaction(async (transactionDB) => {
         try {
-          const dao = new WorksDao(transactionDB)
-          // 处理站点
+          // 保存站点
           if (site !== undefined && site !== null) {
             const siteService = new SiteService(transactionDB)
             await siteService.saveOnNotExistByDomain(site)
           }
-          // 处理站点作者
-          if (siteAuthorDTO !== undefined && siteAuthorDTO !== null) {
+          // 保存站点作者
+          if (siteAuthor !== undefined && siteAuthor !== null) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.saveOrUpdateBySiteAuthorId(siteAuthorDTO)
+            await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthor)
+          }
+          // 保存站点标签
+          if (siteTags !== undefined && siteTags !== null && siteTags.length > 0) {
+            const siteTagService = new SiteTagService(transactionDB)
+            await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
           }
 
           // 保存作品
+          const dao = new WorksDao(transactionDB)
           const works = new Works(worksDTO)
           worksDTO.id = await dao.save(works)
 
-          // 处理本地标签
+          // 关联作品和本地作者
+          if (localAuthors !== undefined && localAuthors !== null && localAuthors.length > 0) {
+            const localAuthorService = new LocalAuthorService(transactionDB)
+            await localAuthorService.link(localAuthors, worksDTO)
+          }
+          // 关联作品和本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
             const localTagService = new LocalTagService(transactionDB)
             await localTagService.link(localTags, worksDTO)
           }
+
+          // 关联作品和站点标签
+
+          return worksDTO.id
         } catch (error) {
           LogUtil.warn('WorksService', '保存作品时出错')
           throw error
         }
       })
+
+      return worksId as Promise<number>
     } finally {
       db.release()
     }
