@@ -1,7 +1,7 @@
-import BaseModel from './BaseModel.ts'
-import { AuthorRole } from '../constant/AuthorRole.ts'
+import BaseQueryDTO from './BaseQueryDTO.ts'
+import { AuthorRole } from '../../constant/AuthorRole.ts'
 
-export default class ReWorksAuthor extends BaseModel {
+export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 类型(true: 本地作者，false: 站点作者)
    */
@@ -27,8 +27,8 @@ export default class ReWorksAuthor extends BaseModel {
    */
   authorRole: AuthorRole | undefined | null
 
-  constructor(reWorksAuthor?: ReWorksAuthor) {
-    if (reWorksAuthor === undefined) {
+  constructor(reWorksAuthorQueryDTO?: ReWorksAuthorQueryDTO) {
+    if (reWorksAuthorQueryDTO === undefined) {
       super()
       this.type = undefined
       this.worksId = undefined
@@ -36,12 +36,12 @@ export default class ReWorksAuthor extends BaseModel {
       this.siteAuthorId = undefined
       this.authorRole = undefined
     } else {
-      super(reWorksAuthor)
-      this.type = reWorksAuthor.type
-      this.worksId = reWorksAuthor.worksId
-      this.localAuthorId = reWorksAuthor.localAuthorId
-      this.siteAuthorId = reWorksAuthor.siteAuthorId
-      this.authorRole = reWorksAuthor.authorRole
+      super(reWorksAuthorQueryDTO)
+      this.type = reWorksAuthorQueryDTO.type
+      this.worksId = reWorksAuthorQueryDTO.worksId
+      this.localAuthorId = reWorksAuthorQueryDTO.localAuthorId
+      this.siteAuthorId = reWorksAuthorQueryDTO.siteAuthorId
+      this.authorRole = reWorksAuthorQueryDTO.authorRole
     }
   }
 }
