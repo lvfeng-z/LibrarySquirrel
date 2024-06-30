@@ -83,6 +83,28 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   }
 
   /**
+   * 批量更新
+   * @param entities
+   */
+  public async updateBatchById(entities: Model[]) {
+    const check = entities.filter((entity) => entity.id === undefined || entity.id === null)
+    if (check !== undefined && check !== null && check.length > 0) {
+      const msg = '批量更新数据时，id不能为空'
+      LogUtil.error(this.childClassName, msg)
+      throw new Error(msg)
+    }
+    return this.dao.updateBatchById(entities)
+  }
+
+  /**
+   * 批量新增或更新
+   * @param entities
+   */
+  public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
+    return this.dao.saveOrUpdateBatchById(entities)
+  }
+
+  /**
    * 主键查询
    * @param id
    */
