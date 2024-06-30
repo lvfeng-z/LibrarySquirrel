@@ -17,11 +17,19 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     super('SiteTagService', new SiteTagDao(db), db)
   }
 
-  async save(siteTag: SiteTag) {
-    const dao = new SiteTagDao()
-    return await dao.save(siteTag)
+  /**
+   * 批量新增或更新
+   * @param siteTags
+   */
+  async saveOrUpdateBatchBySiteTagId(siteTags: SiteTag[]) {
+    return super.saveOrUpdateBatchById(siteTags)
   }
 
+  /**
+   * 站点标签绑定在本地标签上
+   * @param localTagId
+   * @param siteTagIds
+   */
   async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
     const dao = new SiteTagDao()
     if (localTagId !== undefined) {
