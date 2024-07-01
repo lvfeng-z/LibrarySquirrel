@@ -5,10 +5,6 @@ import BaseModel from './BaseModel.ts'
  */
 export default class SiteAuthor extends BaseModel {
   /**
-   * 主键
-   */
-  id: string | undefined | null
-  /**
    * 作者来源站点id
    */
   siteId: number | undefined | null
@@ -36,7 +32,6 @@ export default class SiteAuthor extends BaseModel {
   constructor(siteAuthor?: SiteAuthor) {
     if (siteAuthor === undefined) {
       super()
-      this.id = undefined
       this.siteId = undefined
       this.siteAuthorId = undefined
       this.siteAuthorName = undefined
@@ -45,7 +40,6 @@ export default class SiteAuthor extends BaseModel {
       this.localAuthorId = undefined
     } else {
       super(siteAuthor)
-      this.id = siteAuthor.id
       this.siteId = siteAuthor.siteId
       this.siteAuthorId = siteAuthor.siteAuthorId
       this.siteAuthorName = siteAuthor.siteAuthorName

@@ -20,7 +20,7 @@ export default class ReWorksAuthor extends BaseModel {
   /**
    * 站点作者Id
    */
-  siteAuthorId: string | undefined | null
+  siteAuthorId: number | undefined | null
 
   /**
    * 作者类型
