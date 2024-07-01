@@ -17,6 +17,7 @@ import DB from '../database/DB.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { ReadStream } from 'node:fs'
+import { AuthorRole } from '../constant/AuthorRole.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -38,25 +39,53 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     ) {
       // 提取作品信息
       const works = new Works(worksDTO)
-      // 作者信息
-      const siteAuthorName: string = 'unknownAuthor'
+
+      // 处理作者信息
+      let siteAuthorName: string = 'unknownAuthor'
       if (
-        Object.prototype.hasOwnProperty.call(worksDTO, 'siteAuthor') &&
         worksDTO.siteAuthors !== undefined &&
         worksDTO.siteAuthors !== null &&
-        worksDTO.siteAuthors
+        worksDTO.siteAuthors.length > 0
       ) {
-        // TODO 选择主要作者
-        if (
-          worksDTO.siteAuthors[0].siteAuthorName === undefined ||
-          worksDTO.siteAuthors[0].siteAuthorName === null
-        ) {
+        const target = worksDTO.siteAuthors.filter(
+          (siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN
+        )
+        if (target.length === 0) {
           LogUtil.warn(
             'WorksService',
-            `保存任务时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回作者名称`
+            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
           )
+        } else if (target.length > 1) {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
+          )
+        } else {
+          siteAuthorName = target[0].siteAuthorName as string
+        }
+      } else if (
+        worksDTO.localAuthors !== undefined &&
+        worksDTO.localAuthors !== null &&
+        worksDTO.localAuthors.length > 0
+      ) {
+        const target = worksDTO.localAuthors.filter(
+          (localAuthor) => localAuthor.authorRole === AuthorRole.MAIN
+        )
+        if (target.length === 0) {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
+          )
+        } else if (target.length > 1) {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
+          )
+        } else {
+          siteAuthorName = target[0].localAuthorName as string
         }
       }
+
       // 作品信息
       const siteWorksName =
         worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
@@ -132,7 +161,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
    */
   async saveWorks(worksDTO: WorksDTO): Promise<number> {
     const site = worksDTO.site
-    const siteAuthor = worksDTO.siteAuthors
+    const siteAuthors = worksDTO.siteAuthors
     const siteTags = worksDTO.siteTags
     const localAuthors = worksDTO.localAuthors
     const localTags = worksDTO.localTags
@@ -153,9 +182,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
             await siteService.saveOnNotExistByDomain(site)
           }
           // 保存站点作者
-          if (siteAuthor !== undefined && siteAuthor !== null) {
+          if (siteAuthors !== undefined && siteAuthors !== null) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthor)
+            await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
           }
           // 保存站点标签
           if (siteTags !== undefined && siteTags !== null && siteTags.length > 0) {
@@ -178,8 +207,16 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
             const localTagService = new LocalTagService(transactionDB)
             await localTagService.link(localTags, worksDTO)
           }
-
+          // 关联作品和站点作者
+          if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
+            const siteAuthorService = new SiteAuthorService(transactionDB)
+            await siteAuthorService.link(siteAuthors, worksDTO)
+          }
           // 关联作品和站点标签
+          if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
+            const siteTagService = new SiteTagService(transactionDB)
+            await siteTagService.link(siteTags, worksDTO)
+          }
 
           return worksDTO.id
         } catch (error) {
