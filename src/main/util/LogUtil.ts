@@ -39,9 +39,14 @@ function error(module: string, msg: unknown, ...args: unknown[]) {
  * 初始化日志工具配置
  */
 function initializeLogSetting() {
-  log.transports.file.level = 'info' // 设置文件日志的级别为 info 或更高
-  log.transports.console.level = 'info' // 设置控制台日志的级别为 info 或更高
-
+  const NODE_ENV = process.env.NODE_ENV
+  if (NODE_ENV == 'development') {
+    log.transports.file.level = 'debug' // 设置文件日志的级别为 debug 或更高
+    log.transports.console.level = 'debug' // 设置控制台日志的级别为 debug 或更高
+  } else {
+    log.transports.file.level = 'info' // 设置文件日志的级别为 info 或更高
+    log.transports.console.level = 'info' // 设置控制台日志的级别为 info 或更高
+  }
   const logPath = path.join(FileSysUtil.getRootDir(), LogConstant.LOG_PATH)
   log.transports.file.resolvePathFn = () => logPath + LogConstant.LOG_FILL_NAME
 }
