@@ -37,9 +37,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
       worksDTO.resourceStream !== undefined &&
       worksDTO.resourceStream !== null
     ) {
-      // 提取作品信息
-      const works = new Works(worksDTO)
-
       // 处理作者信息
       let siteAuthorName: string = 'unknownAuthor'
       if (
@@ -134,8 +131,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
           await FileSysUtil.createDirIfNotExists(fullSavePath)
           const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
           await pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
-          works.filePath = path.join(relativeSavePath, fileName)
-          works.workdir = settings.workdir
+          worksDTO.filePath = path.join(relativeSavePath, fileName)
+          worksDTO.workdir = settings.workdir
 
           // 创建一个新的服务对象用于组合嵌套事务
           const worksService = new WorksService(transactionDB)
