@@ -15,6 +15,7 @@ import limit from 'p-limit'
 import Electron from 'electron'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
+import lodash from 'lodash'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task> {
   constructor(db?: DB) {
@@ -364,15 +365,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
     }
   }
 
+
   /**
-   * 获取parentId的子任务
-   * @param parentId
+   * 根据id更新
+   * @param updateData
    */
-  getChildrenTask(parentId: number) {
-    const dao = new TaskDao()
-    const query = new TaskQueryDTO()
-    query.parentId = parentId
-    return dao.selectList(query)
+  async updateById(updateData: Task) {
+    const temp = lodash.cloneDeep(updateData)
+    if (typeof temp.pluginData === 'object') {
+      temp.pluginData = JSON.stringify(temp.pluginData)
+    }
+    return await super.updateById(temp)
   }
 
   /**
@@ -381,12 +384,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
    * @param worksId 本地作品id
    */
   finishTask(task: Task, worksId: number) {
-    const dao = new TaskDao()
     task = new Task(task)
     task.status = TaskConstant.TaskStatesEnum.FINISHED
     task.localWorksId = worksId
     if (task.id !== undefined && task.id !== null) {
-      return dao.updateById(task.id, task)
+      return this.updateById(task)
     } else {
       const msg = '任务标记为完成时，任务id意外为空'
       LogUtil.error('TaskService', msg)
@@ -409,5 +411,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
       LogUtil.error('TaskService', msg)
       throw new Error(msg)
     }
+  }
+
+  /**
+   * 获取parentId的子任务
+   * @param parentId
+   */
+  getChildrenTask(parentId: number) {
+    const dao = new TaskDao()
+    const query = new TaskQueryDTO()
+    query.parentId = parentId
+    return dao.selectList(query)
   }
 }
