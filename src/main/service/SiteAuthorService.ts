@@ -69,7 +69,9 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         LogUtil.error('SiteAuthorService', '保存作品时，站点作者的id意外为空')
         throw new Error(msg)
       } else if (siteAuthor.siteId === undefined || siteAuthor.siteId === null) {
-        newSiteAuthors.push(siteAuthor)
+        const msg = '保存作品时，作品的站点id意外为空'
+        LogUtil.error('SiteAuthorService', msg)
+        throw new Error(msg)
       } else {
         const oldSiteAuthor = oldSiteAuthors.find(
           (oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId
