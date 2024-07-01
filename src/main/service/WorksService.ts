@@ -126,25 +126,31 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
       } else {
         db = new DB('WorksService')
       }
-      const result = await db.nestedTransaction(async (transactionDB) => {
-        try {
-          await FileSysUtil.createDirIfNotExists(fullSavePath)
-          const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
-          await pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
-          worksDTO.filePath = path.join(relativeSavePath, fileName)
-          worksDTO.workdir = settings.workdir
+      try {
+        const result = await db.nestedTransaction(async (transactionDB) => {
+          try {
+            await FileSysUtil.createDirIfNotExists(fullSavePath)
+            const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
+            await pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
+            worksDTO.filePath = path.join(relativeSavePath, fileName)
+            worksDTO.workdir = settings.workdir
 
-          // 创建一个新的服务对象用于组合嵌套事务
-          const worksService = new WorksService(transactionDB)
-          const worksId = worksService.saveWorks(worksDTO)
-          return worksId as Promise<number>
-        } catch (error) {
-          const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
-          LogUtil.error('WorksService', msg)
-          throw new Error(msg)
+            // 创建一个新的服务对象用于组合嵌套事务
+            const worksService = new WorksService(transactionDB)
+            const worksId = worksService.saveWorks(worksDTO)
+            return worksId as Promise<number>
+          } catch (error) {
+            const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
+            LogUtil.error('WorksService', msg)
+            throw new Error(msg)
+          }
+        })
+        return result as Promise<number>
+      } finally {
+        if (!this.injectedDB) {
+          db.release()
         }
-      })
-      return result as Promise<number>
+      }
     } else {
       const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
       LogUtil.error('WorksService', msg)
