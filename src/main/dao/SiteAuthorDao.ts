@@ -22,7 +22,9 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       const rows = (await db.prepare(statement)).all() as object[]
       return this.getResultTypeDataList<SiteAuthor>(rows)
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 
