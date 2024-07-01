@@ -8,6 +8,10 @@ import StringUtil from '../util/StringUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
+import ReWorksTag from '../model/ReWorksTag.ts'
+import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
+import { ReWorksTagService } from './ReWorksTagService.ts'
+import WorksDTO from '../model/dto/WorksDTO.ts'
 
 /**
  * 站点标签Service
@@ -22,6 +26,25 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param siteTags
    */
   async saveOrUpdateBatchBySiteTagId(siteTags: SiteTag[]) {
+    // 校验
+    const target = siteTags.find(
+      (siteTag) =>
+        siteTag.siteId === undefined ||
+        siteTag.siteId === null ||
+        siteTag.siteTagId === undefined ||
+        siteTag.siteTagId === null
+    )
+    if (target !== undefined) {
+      let msg: string
+      if (target.siteId === undefined || target.siteId === null) {
+        msg = `批量新增或更新站点标签时，站点id为空，tagName: ${target.siteTagName}`
+      } else {
+        msg = `批量新增或更新站点标签时，站点中标签的id为空，tagName: ${target.siteTagName}`
+      }
+      LogUtil.error('SiteTagService', msg)
+      throw new Error()
+    }
+
     return super.saveOrUpdateBatchById(siteTags)
   }
 
@@ -74,5 +97,31 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   async getSelectList(queryDTO: SiteTagQueryDTO) {
     const dao = new SiteTagDao()
     return await dao.getSelectList(queryDTO)
+  }
+
+  /**
+   * 关联作品和标签
+   * @param siteTags
+   * @param worksDTO
+   */
+  async link(siteTags: SiteTag[], worksDTO: WorksDTO) {
+    // 创建关联对象
+    const links = siteTags.map((siteTag) => {
+      const reWorksTag = new ReWorksTag()
+      reWorksTag.worksId = worksDTO.id as number
+      reWorksTag.siteTagId = siteTag.id
+      reWorksTag.tagType = ReWorksTagTypeEnum.SITE
+      return reWorksTag
+    })
+
+    // 调用reWorksTagService前区分是否为注入式的DB
+    let reWorksTagService: ReWorksTagService
+    if (this.injectedDB) {
+      reWorksTagService = new ReWorksTagService(this.db)
+    } else {
+      reWorksTagService = new ReWorksTagService()
+    }
+
+    return reWorksTagService.saveBatch(links, true)
   }
 }
