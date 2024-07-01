@@ -141,7 +141,9 @@ tables:
         description      text,
         local_tag_id     integer,
         create_time      integer,
-        update_time      integer
+        update_time      integer,
+        constraint site_tag_unique_site_id_site_tag_id
+        unique (site_id, site_tag_id)
       );
 
   - name: task
