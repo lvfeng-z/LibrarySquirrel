@@ -1,12 +1,13 @@
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'node:stream'
+import lodash from 'lodash'
 
 export default class LocalTaskHandler {
-  explainPath
+  pluginTool
 
-  constructor(explainPath) {
-    this.explainPath = explainPath
+  constructor(pluginTool) {
+    this.pluginTool = pluginTool
   }
 
   /**
@@ -16,7 +17,7 @@ export default class LocalTaskHandler {
    */
   async create(url) {
     url = url.replace(/^file:\/\//, '')
-    return new TaskStream(url, this.explainPath)
+    return new TaskStream(url, this.pluginTool)
   }
 
   /**
@@ -26,7 +27,7 @@ export default class LocalTaskHandler {
    */
   async start(task) {
     // 保存在pluginData的数据
-    const pluginData = task.pluginData
+    const pluginData = JSON.parse(task.pluginData)
     // 含义列表
     const meaningOfPaths = pluginData.meaningOfPaths
     // 文件名
@@ -49,7 +50,7 @@ export default class LocalTaskHandler {
     }
     // 处理标签
     const tagInfos = this.getDataFromMeaningOfPath(meaningOfPaths, 'tag')
-    worksDTO.siteTags = tagInfos.map(tagInfo => tagInfo.details)
+    worksDTO.localTags = tagInfos.map(tagInfo => tagInfo.details)
     // 处理任务id
     worksDTO.includeTaskId = task.id
     // 处理资源
@@ -232,15 +233,17 @@ class TaskStream extends Readable{
           const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPaths = await waitUserInput
           // 将获得的目录含义并入从上级目录继承的含义数组中
-          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, meaningOfPaths]
+          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, ...meaningOfPaths]
 
           // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
           const entries = await fs.promises.readdir(dir, { withFileTypes: true })
           for (let i = entries.length - 1; i >= 0; i--) {
             const entry = entries[i]
             // 把下级目录放进栈的同时，将自身的含义传给下级目录
-            const childDir = { dir: path.join(dir, entry.name), meaningOfPaths: dirInfo.meaningOfPaths }
-            this.stack.push(childDir)
+            const childDir = path.join(dir, entry.name)
+            const childMeaningOfPaths = lodash.cloneDeep(dirInfo.meaningOfPaths)
+            const childInfo = lodash.cloneDeep({ dir: childDir, meaningOfPaths: childMeaningOfPaths })
+            this.stack.push(childInfo)
           }
         } else {
           // 如果是文件，则创建任务并加入列表

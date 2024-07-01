@@ -12,6 +12,7 @@ import ReWorksTag from '../model/ReWorksTag.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { ReWorksTagService } from './ReWorksTagService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
+import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 
 /**
  * 站点标签Service
@@ -25,7 +26,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 批量新增或更新
    * @param siteTags
    */
-  async saveOrUpdateBatchBySiteTagId(siteTags: SiteTag[]) {
+  async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagDTO[]) {
+    // TODO 根据dto里存的域名查询站点id
     // 校验
     const target = siteTags.find(
       (siteTag) =>

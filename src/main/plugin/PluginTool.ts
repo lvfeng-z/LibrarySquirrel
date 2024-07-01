@@ -1,5 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { MeaningOfPath } from '../model/utilModels/MeaningOfPath.ts'
+import WorksSet from '../model/WorksSet.ts'
+import WorksSetService from '../service/WorksSetService.ts'
 
 export default class PluginTool {
   /**
@@ -22,6 +24,18 @@ export default class PluginTool {
         resolve(response)
       })
       this.events.emit('explain-path-request', dir)
+    })
+  }
+
+  /**
+   * 创建一个作品集并返回
+   * @param worksSet
+   */
+  public async createWorksSet(worksSet: WorksSet): Promise<WorksSet> {
+    const worksSetService = new WorksSetService()
+    return worksSetService.save(worksSet).then((result) => {
+      worksSet.id = result as number
+      return worksSet
     })
   }
 }
