@@ -1,9 +1,6 @@
-import BaseModel from './BaseModel.ts'
+import BaseQueryDTO from './BaseQueryDTO.ts'
 
-/**
- * 作品集合
- */
-export default class WorksSet extends BaseModel {
+export default class WorksSetQueryDTO extends BaseQueryDTO {
   /**
    * 主键
    */
@@ -45,8 +42,8 @@ export default class WorksSet extends BaseModel {
    */
   localAuthorId: number | undefined | null
 
-  constructor(worksSet?: WorksSet) {
-    if (worksSet === undefined || worksSet === null) {
+  constructor(worksSetQueryDTO?: WorksSetQueryDTO) {
+    if (worksSetQueryDTO === undefined || worksSetQueryDTO === null) {
       super()
       this.id = undefined
       this.setName = undefined
@@ -60,18 +57,18 @@ export default class WorksSet extends BaseModel {
       this.localAuthorId = undefined
       this.createTime = undefined
     } else {
-      super(worksSet)
-      this.id = worksSet.id
-      this.setName = worksSet.setName
-      this.siteId = worksSet.siteId
-      this.siteWorksId = worksSet.siteWorksId
-      this.siteWorksName = worksSet.siteWorksName
-      this.siteAuthorId = worksSet.siteAuthorId
-      this.siteUploadTime = worksSet.siteUploadTime
-      this.siteUpdateTime = worksSet.siteUpdateTime
-      this.nickName = worksSet.nickName
-      this.localAuthorId = worksSet.localAuthorId
-      this.createTime = worksSet.createTime
+      super(worksSetQueryDTO)
+      this.id = worksSetQueryDTO.id
+      this.setName = worksSetQueryDTO.setName
+      this.siteId = worksSetQueryDTO.siteId
+      this.siteWorksId = worksSetQueryDTO.siteWorksId
+      this.siteWorksName = worksSetQueryDTO.siteWorksName
+      this.siteAuthorId = worksSetQueryDTO.siteAuthorId
+      this.siteUploadTime = worksSetQueryDTO.siteUploadTime
+      this.siteUpdateTime = worksSetQueryDTO.siteUpdateTime
+      this.nickName = worksSetQueryDTO.nickName
+      this.localAuthorId = worksSetQueryDTO.localAuthorId
+      this.createTime = worksSetQueryDTO.createTime
     }
   }
 }
