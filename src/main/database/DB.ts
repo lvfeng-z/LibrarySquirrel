@@ -26,11 +26,6 @@ export default class DB {
    * @private
    */
   private savepointCounter = 0
-  /**
-   * 事务保存点数组
-   * @private
-   */
-  private savepointNames: string[] = []
 
   constructor(caller: string) {
     if (StringUtil.isNotBlank(caller)) {
@@ -94,24 +89,22 @@ export default class DB {
    */
   public async nestedTransaction<F extends (db: DB) => Promise<unknown>>(fn: F): Promise<unknown> {
     const connection = await this.acquire()
+    // 创建一个当前层级的保存点
+    const savepointName = `sp${this.savepointCounter++}`
     try {
-      // 创建一个当前层级的保存点
-      const savepointName = `sp${this.savepointCounter++}`
-      this.savepointNames.push(savepointName)
       connection.exec(`SAVEPOINT ${savepointName}`)
+      LogUtil.info('DB', `创建一个保存点${savepointName}`)
 
       const result = await fn(this)
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
-      this.savepointNames.pop()
+      LogUtil.info('DB', `释放保存点${savepointName}`)
       return result
     } catch (error) {
       // 事务代码出现异常的话回滚至此保存点
-      if (this.savepointNames.length > 0) {
-        const lastSavepoint = this.savepointNames[this.savepointNames.length - 1]
-        connection.exec(`ROLLBACK TO SAVEPOINT ${lastSavepoint}`)
-      }
+      connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
+      LogUtil.info('DB', `恢复至保存点${savepointName}`)
 
       LogUtil.error('DB', error)
       throw error
