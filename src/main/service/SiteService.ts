@@ -63,4 +63,13 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
       throw new Error('')
     }
   }
+
+  /**
+   * 获取域名为键，站点id为值的Record对象
+   * @param domains
+   */
+  public async getIdDomainRecord(domains: string[]): Promise<Record<string, number>> {
+    const dao = new SiteDao()
+    return dao.getIdDomainRecord(domains)
+  }
 }
