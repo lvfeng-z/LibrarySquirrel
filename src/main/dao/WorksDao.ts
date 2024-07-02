@@ -6,6 +6,7 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
+import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -54,7 +55,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         ) {
           const tagNum = page.query.includeLocalTagIds.length
           whereClauses.push(
-            `${tagNum} = (select count(1) from re_works_tag ct1 where ct1.works_id = t1.id and ct1.local_tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = 1)`
+            `${tagNum} = (select count(1) from re_works_tag ct1 where ct1.works_id = t1.id and ct1.local_tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
           )
         }
         if (
@@ -63,7 +64,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           page.query.excludeLocalTagIds.length > 0
         ) {
           whereClauses.push(
-            `0 = (select count(1) from re_works_tag ct2 where ct2.works_id = t1.id and ct1.local_tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = 1)`
+            `0 = (select count(1) from re_works_tag ct2 where ct2.works_id = t1.id and ct1.local_tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
           )
         }
         if (
@@ -73,7 +74,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         ) {
           const tagNum = page.query.includeSiteTagIds.length
           whereClauses.push(
-            `${tagNum} = (select count(1) from re_works_tag ct3 where ct3.works_id = t1.id and ct1.site_tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = 0)`
+            `${tagNum} = (select count(1) from re_works_tag ct3 where ct3.works_id = t1.id and ct1.site_tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
           )
         }
         if (
@@ -82,7 +83,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           page.query.excludeSiteTagIds.length > 0
         ) {
           whereClauses.push(
-            `0 = (select count(1) from re_works_tag ct4 where ct4.works_id = t1.id and ct1.site_tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = 0)`
+            `0 = (select count(1) from re_works_tag ct4 where ct4.works_id = t1.id and ct1.site_tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
           )
         }
 
