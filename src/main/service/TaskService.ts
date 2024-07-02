@@ -345,8 +345,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           }
 
           // 保存资源和作品信息
+          const worksService = new WorksService()
           promiseLimit(() => {
-            const worksService = new WorksService()
             worksService.saveWorksAndResource(worksDTO).then((worksId) => {
               if (worksId === SAVE_FAILED) {
                 this.taskFailed(taskFilter[0])
