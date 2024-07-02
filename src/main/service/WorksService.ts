@@ -21,7 +21,7 @@ import { AuthorRole } from '../constant/AuthorRole.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
-    super('WorksService', new WorksDao(), db)
+    super('WorksService', new WorksDao(db), db)
   }
 
   /**
