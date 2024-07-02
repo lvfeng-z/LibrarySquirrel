@@ -9,6 +9,6 @@ import DB from '../database/DB.ts'
  */
 export class ReWorksTagService extends BaseService<ReWorksTagQueryDTO, ReWorksTag> {
   constructor(db?: DB) {
-    super('ReWorksTagService', new ReWorksTagDao(), db)
+    super('ReWorksTagService', new ReWorksTagDao(db), db)
   }
 }
