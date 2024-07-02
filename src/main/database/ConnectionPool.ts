@@ -43,7 +43,7 @@ export class ConnectionPool {
         let firstIdleIndex = -1
         // 遍历链接数组，寻找是否有可复用链接，并记录数组的第一个空闲索引
         for (let index = 0; index < this.config.maxConnections; index++) {
-          if (this.connections[index] == undefined && firstIdleIndex == -1) {
+          if (this.connections[index] === undefined && firstIdleIndex === -1) {
             firstIdleIndex = index
           } else if (this.connectionExtra[index].state) {
             // 分配之前清除超时定时器
@@ -51,6 +51,7 @@ export class ConnectionPool {
             this.connectionExtra[index].timeoutId = undefined
             LogUtil.debug('ConnectionPool', `${index}号链接复用，清除定时器`)
             this.connectionExtra[index].state = false
+            // this.log('链接复用')
             resolve(this.connections[index] as Database.Database)
             return
           }
@@ -60,6 +61,7 @@ export class ConnectionPool {
           this.connections[firstIdleIndex] = this.createConnection()
           resolve(this.connections[firstIdleIndex] as Database.Database)
           LogUtil.debug('ConnectionPool', '在' + firstIdleIndex + '号新建链接')
+          // this.log('新增链接')
           return
         } else {
           this.connectionQueue.push({ resolve })
@@ -80,6 +82,13 @@ export class ConnectionPool {
    * @param connection
    */
   public release(connection: Database.Database) {
+    const connectionIndex = this.connections.indexOf(connection)
+    const available = this.connectionExtra[connectionIndex].state
+    if (available) {
+      const msg = `释放${connectionIndex}号链接时出错，链接已经处于空闲状态`
+      LogUtil.error('ConnectionPool', msg)
+      throw new Error()
+    }
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开启超时定时器
     if (this.connectionQueue.length > 0) {
       const request = this.connectionQueue.shift()
@@ -89,6 +98,7 @@ export class ConnectionPool {
           this.connections.indexOf(connection) +
             `号链接在释放时被复用，当前等待队列长度为：${this.connectionQueue.length}`
         )
+        // this.log('链接复用')
         request.resolve(connection)
       }
     } else {
@@ -96,6 +106,7 @@ export class ConnectionPool {
       this.connectionExtra[index].state = true
       LogUtil.debug('ConnectionPool', `${this.connections.indexOf(connection)}号链接已释放`)
       this.setupIdleTimeout(index)
+      // this.log('链接释放')
     }
   }
 
@@ -145,7 +156,23 @@ export class ConnectionPool {
     this.connectionExtra[index].state = false
     this.connections[index] = undefined
     LogUtil.debug('ConnectionPool', `${index}号链接已超时关闭`)
+    // this.log('链接关闭')
   }
+
+  // private log(msg: string) {
+  //   console.log(msg)
+  //   this.connections.forEach((connection, index) => {
+  //     console.log(
+  //       index,
+  //       'haveConnection:',
+  //       connection === undefined ? '×' : '√',
+  //       'available:',
+  //       this.connectionExtra[index].state ? '√' : '×',
+  //       'timeoutId:',
+  //       String(this.connectionExtra[index].timeoutId)
+  //     )
+  //   })
+  // }
 }
 
 export default {

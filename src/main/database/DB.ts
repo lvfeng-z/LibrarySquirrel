@@ -55,6 +55,7 @@ export default class DB {
   public release() {
     if (this.connection != undefined) {
       global.connectionPool.release(this.connection)
+      this.connection = undefined
     }
   }
 
