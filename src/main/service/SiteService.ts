@@ -8,7 +8,7 @@ import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
 
-export default class SiteService extends BaseService<SiteQueryDTO, Site> {
+export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DB) {
     super('SiteService', new SiteDao(db), db)
   }
@@ -33,12 +33,11 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
    * @param page
    */
   public async getSelectItemPage(page: PageModel<SiteQueryDTO, Site>) {
-    const dao = new SiteDao()
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new SiteQueryDTO(page.query)
       page.query.assignComparator = { siteName: COMPARATOR.LIKE }
     }
-    return dao.getSelectItemPage(page, 'id', 'SiteName')
+    return this.dao.getSelectItemPage(page, 'id', 'SiteName')
   }
 
   /**
@@ -47,10 +46,9 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
    */
   public async getByDomain(domain: string): Promise<Site | undefined> {
     if (StringUtil.isNotBlank(domain)) {
-      const dao = new SiteDao()
       const query = new SiteQueryDTO()
       query.siteDomain = domain
-      const sites = await dao.selectList(query)
+      const sites = await this.dao.selectList(query)
       if (sites.length === 1) {
         return sites[0]
       }
@@ -69,7 +67,6 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site> {
    * @param domains
    */
   public async getIdDomainRecord(domains: string[]): Promise<Record<string, number>> {
-    const dao = new SiteDao()
-    return dao.getIdDomainRecord(domains)
+    return this.dao.getIdDomainRecord(domains)
   }
 }

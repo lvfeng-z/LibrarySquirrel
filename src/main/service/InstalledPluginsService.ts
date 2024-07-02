@@ -12,7 +12,8 @@ import DB from '../database/DB.ts'
  */
 export default class InstalledPluginsService extends BaseService<
   InstalledPluginsQueryDTO,
-  InstalledPlugins
+  InstalledPlugins,
+  InstalledPluginsDao
 > {
   constructor(db?: DB) {
     super('InstalledPluginsService', new InstalledPluginsDao(db), db)
@@ -22,8 +23,7 @@ export default class InstalledPluginsService extends BaseService<
    * 根据id获取插件加载路径
    */
   async getClassPathById(id: number): Promise<string> {
-    const dao = new InstalledPluginsDao()
-    const installedPlugin = await dao.getById(id)
+    const installedPlugin = await this.dao.getById(id)
 
     let resourcePath: string
     const NODE_ENV = process.env.NODE_ENV

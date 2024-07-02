@@ -15,7 +15,7 @@ import ReWorksTag from '../model/ReWorksTag.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { ReWorksTagService } from './ReWorksTagService.ts'
 
-export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag> {
+export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
     super('LocalTagService', new LocalTagDao(db), db)
   }
@@ -36,7 +36,6 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param localTag
    */
   async updateById(localTag: LocalTag) {
-    const dao = new LocalTagDao()
     if (localTag.id) {
       if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId === localTag.id) {
         const msg = '基础标签不能为自身'
@@ -50,17 +49,17 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
 
       // 查询新上级节点的所有上级节点
       if (localTag.baseLocalTagId !== 0) {
-        const parentTags = await dao.selectParentNode(localTag.baseLocalTagId)
+        const parentTags = await this.dao.selectParentNode(localTag.baseLocalTagId)
         const parentTagIds = parentTags.map((tag) => tag.id)
         // 如果新的上级节点是原本的下级节点，则先把原本的下级节点移动至本节点的上级节点之下，再把本节点变成原下级节点的下级节点
         if (parentTagIds.includes(localTag.id)) {
           // 查询要修改的标签原本的数据
-          const old = await dao.getById(localTag.id)
+          const old = await this.dao.getById(localTag.id)
 
           const newBaseLocalTag = new LocalTag()
           newBaseLocalTag.id = localTag.baseLocalTagId
           newBaseLocalTag.baseLocalTagId = old.baseLocalTagId
-          const result = (await dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) <= 0
+          const result = (await this.dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) <= 0
           if (result) {
             const msg = '更新原下级节点时出错'
             LogUtil.error('LocalTagService', msg)
@@ -68,7 +67,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           }
         }
       }
-      return await dao.updateById(localTag.id, localTag)
+      return await this.dao.updateById(localTag.id, localTag)
     } else {
       const msg = '更新本地标签时，id意外为空'
       LogUtil.error('LocalTagService', msg)
@@ -110,10 +109,9 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     if (rootId === undefined) {
       rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
     }
-    const dao = new LocalTagDao()
 
     // 递归查询rootId的子节点
-    const localTags = await dao.selectTreeNode(rootId)
+    const localTags = await this.dao.selectTreeNode(rootId)
     // 子节点转换为TreeSelectNode类型
     const treeNodes = localTags.map((localTag) => {
       const treeSelectNode = new TreeSelectNode()
@@ -137,8 +135,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param queryDTO
    */
   async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
-    const dao = new LocalTagDao()
-    const result = dao.getSelectList(queryDTO)
+    const result = this.dao.getSelectList(queryDTO)
     // extraData.tagType=true表示这些标签是本地的
     return result.then((res) => {
       return res.map((selectItem) => {
@@ -155,11 +152,10 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   async getSelectItemPage(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
-    const dao = new LocalTagDao()
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new LocalTagQueryDTO(page.query)
       page.query.assignComparator = { localTagName: COMPARATOR.LIKE }
     }
-    return await dao.getSelectItemPage(page, 'id', 'localTagName')
+    return await this.dao.getSelectItemPage(page, 'id', 'localTagName')
   }
 }

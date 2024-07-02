@@ -19,7 +19,7 @@ import LocalAuthorService from './LocalAuthorService.ts'
 import { ReadStream } from 'node:fs'
 import { AuthorRole } from '../constant/AuthorRole.ts'
 
-export default class WorksService extends BaseService<WorksQueryDTO, Works> {
+export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
     super('WorksService', new WorksDao(), db)
   }
@@ -196,9 +196,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
           }
 
           // 保存作品
-          const dao = new WorksDao(transactionDB)
           const works = new Works(worksDTO)
-          worksDTO.id = await dao.save(works)
+          worksDTO.id = await this.dao.save(works)
 
           // 关联作品和本地作者
           if (localAuthors !== undefined && localAuthors !== null && localAuthors.length > 0) {
@@ -242,9 +241,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works> {
     page: PageModel<WorksQueryDTO, WorksDTO>
   ): Promise<PageModel<WorksQueryDTO, Works>> {
     page = new PageModel(page)
-    const dao = new WorksDao()
     try {
-      return dao.synthesisQueryPage(page)
+      return this.dao.synthesisQueryPage(page)
     } catch (error) {
       LogUtil.error('WorksService', error)
       throw error

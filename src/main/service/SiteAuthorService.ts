@@ -15,7 +15,11 @@ import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 /**
  * 站点作者Service
  */
-export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor> {
+export default class SiteAuthorService extends BaseService<
+  SiteAuthorQueryDTO,
+  SiteAuthor,
+  SiteAuthorDao
+> {
   constructor(db?: DB) {
     super('SiteAuthorService', new SiteAuthorDao(db), db)
   }
@@ -64,9 +68,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthors
    */
   public async saveOrUpdateBatchBySiteAuthorId(siteAuthors: SiteAuthor[]): Promise<number> {
-    const dao = new SiteAuthorDao()
     const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId) as string[]
-    const oldSiteAuthors = await dao.selectListBySiteAuthorIds(siteAuthorIds)
+    const oldSiteAuthors = await this.dao.selectListBySiteAuthorIds(siteAuthorIds)
     const newSiteAuthors: SiteAuthor[] = []
     siteAuthors.forEach((siteAuthor) => {
       if (siteAuthor.siteAuthorId === undefined || siteAuthor.siteAuthorId === null) {
@@ -114,14 +117,12 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     siteId: number
   ): Promise<SiteAuthor | undefined> {
     if (StringUtil.isNotBlank(siteAuthorId)) {
-      const dao = new SiteAuthorDao()
-
       const queryDTO = new SiteAuthorQueryDTO()
       queryDTO.siteAuthorId = siteAuthorId
       queryDTO.siteId = siteId
       queryDTO.sort = [{ column: 'createTime', order: 'desc' }]
 
-      const siteAuthors = await dao.selectList(queryDTO)
+      const siteAuthors = await this.dao.selectList(queryDTO)
       if (siteAuthors.length === 1) {
         return siteAuthors[0]
       }

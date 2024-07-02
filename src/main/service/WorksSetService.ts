@@ -7,7 +7,7 @@ import WorksSetDao from '../dao/WorksSetDao.ts'
 /**
  * 作品集Service
  */
-export default class WorksSetService extends BaseService<WorksSetQueryDTO, WorksSet> {
+export default class WorksSetService extends BaseService<WorksSetQueryDTO, WorksSet, WorksSetDao> {
   constructor(db?: DB) {
     super('WorksSetService', new WorksSetDao(db), db)
   }

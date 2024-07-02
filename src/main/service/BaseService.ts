@@ -9,7 +9,11 @@ import DB from '../database/DB.ts'
 /**
  * 基础Service类
  */
-export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseModel> {
+export default abstract class BaseService<
+  Query extends BaseQueryDTO,
+  Model extends BaseModel,
+  Dao extends BaseDao<Query, Model>
+> {
   /**
    * 子类名称
    */
@@ -18,7 +22,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   /**
    * 子类名称
    */
-  protected dao: BaseDao<Query, Model>
+  protected dao: Dao
 
   /**
    * 封装数据库链接实例
@@ -32,7 +36,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(childClassName: string, dao: BaseDao<Query, Model>, db?: DB) {
+  protected constructor(childClassName: string, dao: Dao, db?: DB) {
     this.childClassName = childClassName
     this.dao = dao
     if (db === undefined || db === null) {

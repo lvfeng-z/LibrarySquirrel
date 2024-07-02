@@ -17,7 +17,7 @@ import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 /**
  * 站点标签Service
  */
-export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag> {
+export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag, SiteTagDao> {
   constructor(db?: DB) {
     super('SiteTagService', new SiteTagDao(db), db)
   }
@@ -56,10 +56,9 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param siteTagIds
    */
   async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
-    const dao = new SiteTagDao()
     if (localTagId !== undefined) {
       if (siteTagIds != undefined && siteTagIds.length > 0) {
-        return ApiUtil.check((await dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
+        return ApiUtil.check((await this.dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
       } else {
         return ApiUtil.check(true)
       }
@@ -78,8 +77,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     page = new PageModel(page)
     page.query = new SiteTagQueryDTO(page.query)
 
-    const dao = new SiteTagDao()
-    const results = await dao.getSiteTagWithLocalTag(page)
+    const results = await this.dao.getSiteTagWithLocalTag(page)
     const selectItems = results.map(
       (result) =>
         new SelectItem({
@@ -97,8 +95,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   async getSelectList(queryDTO: SiteTagQueryDTO) {
-    const dao = new SiteTagDao()
-    return await dao.getSelectList(queryDTO)
+    return await this.dao.getSelectList(queryDTO)
   }
 
   /**

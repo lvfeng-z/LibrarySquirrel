@@ -9,22 +9,21 @@ import DB from '../database/DB.ts'
  */
 export default class TaskPluginListenerService extends BaseService<
   TaskPluginListenerQueryDTO,
-  TaskPluginListener
+  TaskPluginListener,
+  TaskPluginListenerDao
 > {
   constructor(db?: DB) {
     super('TaskPluginListenerService', new TaskPluginListenerDao(db), db)
   }
 
   saveBatch(entities: TaskPluginListener[]) {
-    const dao = new TaskPluginListenerDao()
-    return dao.saveBatch(entities)
+    return this.dao.saveBatch(entities)
   }
 
   /**
    * 获取监听此链接的插件
    */
   getMonitored(url: string) {
-    const dao = new TaskPluginListenerDao()
-    return dao.getMonitored(url)
+    return this.dao.getMonitored(url)
   }
 }

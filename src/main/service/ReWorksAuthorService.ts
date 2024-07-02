@@ -6,7 +6,8 @@ import ReWorksAuthorDao from '../dao/ReWorksAuthorDao.ts'
 
 export default class ReWorksAuthorService extends BaseService<
   ReWorksAuthorQueryDTO,
-  ReWorksAuthor
+  ReWorksAuthor,
+  ReWorksAuthorDao
 > {
   constructor(db?: DB) {
     super('ReWorksAuthorService', new ReWorksAuthorDao(db), db)

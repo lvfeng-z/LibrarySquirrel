@@ -17,7 +17,7 @@ import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
 
-export default class TaskService extends BaseService<TaskQueryDTO, Task> {
+export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
     super('TaskService', new TaskDao(db), db)
   }
@@ -284,8 +284,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
    * @param mainWindow 主窗口实例
    */
   async startTask(taskId: number, mainWindow: Electron.BrowserWindow): Promise<boolean> {
-    const dao = new TaskDao()
-    const baseTask = await dao.getById(taskId)
+    const baseTask = await this.dao.getById(taskId)
 
     if (baseTask === undefined) {
       const msg = `找不到任务，taskId = ${taskId}`
@@ -365,7 +364,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
     }
   }
 
-
   /**
    * 根据id更新
    * @param updateData
@@ -401,11 +399,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
    * @param task
    */
   taskFailed(task: Task) {
-    const dao = new TaskDao()
     task = new Task(task)
     task.status = TaskConstant.TaskStatesEnum.FAILED
     if (task.id !== undefined && task.id !== null) {
-      return dao.updateById(task.id, task)
+      return this.dao.updateById(task.id, task)
     } else {
       const msg = '任务标记为失败时，任务id意外为空'
       LogUtil.error('TaskService', msg)
@@ -418,9 +415,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task> {
    * @param parentId
    */
   getChildrenTask(parentId: number) {
-    const dao = new TaskDao()
     const query = new TaskQueryDTO()
     query.parentId = parentId
-    return dao.selectList(query)
+    return this.dao.selectList(query)
   }
 }
