@@ -90,22 +90,29 @@ export default class DB {
    */
   public async nestedTransaction<F extends (db: DB) => Promise<unknown>>(fn: F): Promise<unknown> {
     const connection = await this.acquire()
+    // 记录是否为事务最外层保存点
+    const isStartPoint = this.savepointCounter === 0
     // 创建一个当前层级的保存点
     const savepointName = `sp${this.savepointCounter++}`
     try {
       connection.exec(`SAVEPOINT ${savepointName}`)
-      LogUtil.info('DB', `创建一个保存点${savepointName}`)
+      LogUtil.debug('DB', `创建一个保存点${savepointName}`)
 
       const result = await fn(this)
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
-      LogUtil.info('DB', `释放保存点${savepointName}`)
+      LogUtil.debug('DB', `释放保存点${savepointName}`)
       return result
     } catch (error) {
-      // 事务代码出现异常的话回滚至此保存点
-      connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-      LogUtil.info('DB', `恢复至保存点${savepointName}`)
+      // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
+      if (isStartPoint) {
+        connection.exec(`ROLLBACK`)
+      } else {
+        // 事务代码出现异常的话回滚至此保存点
+        connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
+      }
+      LogUtil.debug('DB', `恢复至保存点${savepointName}`)
 
       LogUtil.error('DB', error)
       throw error
