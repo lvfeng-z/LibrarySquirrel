@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'node:stream'
-import lodash from 'lodash'
+import lodash from 'lodash-es'
 
 export default class LocalTaskHandler {
   pluginTool
