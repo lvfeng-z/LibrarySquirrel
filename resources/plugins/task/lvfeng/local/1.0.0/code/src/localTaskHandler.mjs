@@ -40,6 +40,9 @@ export default class LocalTaskHandler {
     const worksDTO = new WorksDTO()
     // 处理扩展名
     worksDTO.filenameExtension = filenameExtension
+    // 处理作品集
+    let worksSet = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksSetName')
+    worksSet = await this.pluginTool.createWorksSet()
     // 处理作品名称
     const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
     // 如果pluginData里保存的用户解释含义中包含worksName，则使用worksName，否则使用文件名
@@ -77,6 +80,106 @@ export default class LocalTaskHandler {
    */
   getDataFromMeaningOfPath(meaningOfPaths, type) {
     return meaningOfPaths.filter(meaningOfPath => meaningOfPath.type === type)
+  }
+}
+
+class TaskStream extends Readable{
+  /**
+   * 基础路径
+   */
+  directoryPath
+
+  /**
+   * 迭代栈
+   */
+  stack
+
+  /**
+   * 插件工具
+   */
+  pluginTool
+
+  /**
+   * 计数器（用于给作品集设置唯一标识）
+   */
+  counter
+
+  constructor(directoryPath, pluginTool) {
+    super({ objectMode: true, highWaterMark: 1 });
+    this.directoryPath = directoryPath
+    this.stack = [{ dir: this.directoryPath, meaningOfPaths: [] }]
+    this.pluginTool = pluginTool
+    this.counter = 0
+    this._read = this._read.bind(this)
+  }
+
+  async _read(size) {
+    this.counter++
+    let bufferFilled = false
+    // 迭代到路径指向文件或者栈为空为止
+    while (!bufferFilled) {
+      // 获取并移除栈顶元素
+      const dirInfo = this.stack.pop()
+      const dir = dirInfo.dir
+      try {
+        const stats = await fs.promises.stat(dir)
+
+        if (stats.isDirectory()) {
+          // 请求用户解释目录含义
+          const waitUserInput = this.pluginTool.explainPath(dir)
+          const meaningOfPaths = await waitUserInput
+          // 如果含义是作品集，给这个作品集添加一个唯一标识，用于识别同一作品集的任务
+          meaningOfPaths.id = this.counter
+          // 将获得的目录含义并入从上级目录继承的含义数组中
+          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, ...meaningOfPaths]
+
+          // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
+          const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+          for (let i = entries.length - 1; i >= 0; i--) {
+            const entry = entries[i]
+            // 把下级目录放进栈的同时，将自身的含义传给下级目录
+            const childDir = path.join(dir, entry.name)
+            const childMeaningOfPaths = lodash.cloneDeep(dirInfo.meaningOfPaths)
+            const childInfo = lodash.cloneDeep({ dir: childDir, meaningOfPaths: childMeaningOfPaths })
+            this.stack.push(childInfo)
+          }
+        } else {
+          // 如果是文件，则创建任务并加入列表
+          const task = new Task()
+          task.url = dir
+          task.taskName = path.parse(dir).base
+          task.pluginData = { meaningOfPaths: dirInfo.meaningOfPaths }
+          this.push(task)
+          bufferFilled = true
+
+          if(this.stack.length === 0) {
+            this.push(null)
+            bufferFilled = true
+          }
+        }
+      } catch (err) {
+        console.error(`Error reading ${dir}: ${err}`)
+        // 停止流
+        this.emit('error', err)
+      }
+    }
+  }
+}
+
+class PluginWorksResponse {
+  /**
+   * 数据类型
+   */
+  dataType
+
+  /**
+   * 数据
+   */
+  data
+
+  constructor() {
+    this.dataType = undefined
+    this.data = undefined
   }
 }
 
@@ -166,6 +269,63 @@ class WorksDTO {
   }
 }
 
+class WorksSet {
+  /**
+   * 主键
+   */
+  id
+  /**
+   * 集合名称
+   */
+  setName
+  /**
+   * 集合来源站点id
+   */
+  siteId
+  /**
+   * 集合在站点的id
+   */
+  siteWorksId
+  /**
+   * 集合在站点的名称
+   */
+  siteWorksName
+  /**
+   * 集合在站点的作者id
+   */
+  siteAuthorId
+  /**
+   * 集合在站点的上传时间
+   */
+  siteUploadTime
+  /**
+   * 集合在站点最后更新的时间
+   */
+  siteUpdateTime
+  /**
+   * 别名
+   */
+  nickName
+  /**
+   * 集合在本地的作者
+   */
+  localAuthorId
+
+  constructor(worksSet) {
+    this.id = undefined
+    this.setName = undefined
+    this.siteId = undefined
+    this.siteWorksId = undefined
+    this.siteWorksName = undefined
+    this.siteAuthorId = undefined
+    this.siteUploadTime = undefined
+    this.siteUpdateTime = undefined
+    this.nickName = undefined
+    this.localAuthorId = undefined
+    this.createTime = undefined
+  }
+}
+
 class Task {
   isCollection
   parentId
@@ -191,79 +351,5 @@ class Task {
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined
-  }
-}
-
-class TaskStream extends Readable{
-  /**
-   * 基础路径
-   */
-  directoryPath
-
-  /**
-   * 迭代栈
-   */
-  stack
-
-  /**
-   * 插件工具
-   */
-  pluginTool
-
-  constructor(directoryPath, pluginTool) {
-    super({ objectMode: true, highWaterMark: 1 });
-    this.directoryPath = directoryPath
-    this.stack = [{ dir: this.directoryPath, meaningOfPaths: [] }]
-    this.pluginTool = pluginTool
-    this._read = this._read.bind(this)
-  }
-
-  async _read(size) {
-      let bufferFilled = false
-      // 迭代到路径指向文件或者栈为空为止
-      while (!bufferFilled) {
-        // 获取并移除栈顶元素
-        const dirInfo = this.stack.pop()
-        const dir = dirInfo.dir
-        try {
-        const stats = await fs.promises.stat(dir)
-
-        if (stats.isDirectory()) {
-          // 请求用户解释目录含义
-          const waitUserInput = this.pluginTool.explainPath(dir)
-          const meaningOfPaths = await waitUserInput
-          // 将获得的目录含义并入从上级目录继承的含义数组中
-          dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, ...meaningOfPaths]
-
-          // 如果是目录，则获取子项并按相反顺序压入栈中（保证左子树先遍历）
-          const entries = await fs.promises.readdir(dir, { withFileTypes: true })
-          for (let i = entries.length - 1; i >= 0; i--) {
-            const entry = entries[i]
-            // 把下级目录放进栈的同时，将自身的含义传给下级目录
-            const childDir = path.join(dir, entry.name)
-            const childMeaningOfPaths = lodash.cloneDeep(dirInfo.meaningOfPaths)
-            const childInfo = lodash.cloneDeep({ dir: childDir, meaningOfPaths: childMeaningOfPaths })
-            this.stack.push(childInfo)
-          }
-        } else {
-          // 如果是文件，则创建任务并加入列表
-          const task = new Task()
-          task.url = dir
-          task.taskName = path.parse(dir).base
-          task.pluginData = { meaningOfPaths: dirInfo.meaningOfPaths }
-          this.push(task)
-          bufferFilled = true
-
-          if(this.stack.length === 0) {
-            this.push(null)
-            bufferFilled = true
-          }
-        }
-      } catch (err) {
-        console.error(`Error reading ${dir}: ${err}`)
-        // 停止流
-        this.emit('error', err)
-      }
-    }
   }
 }

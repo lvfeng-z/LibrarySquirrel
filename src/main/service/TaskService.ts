@@ -284,17 +284,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param mainWindow 主窗口实例
    */
   async startTask(taskId: number, mainWindow: Electron.BrowserWindow): Promise<boolean> {
+    // 校验任务可用性
     const baseTask = await this.dao.getById(taskId)
-
     if (baseTask === undefined) {
       const msg = `找不到任务，taskId = ${taskId}`
       LogUtil.error('TaskService', msg)
       return false
     }
 
-    let tasks: Task[] = []
-
     // 如果任务是一个任务集合，则其子任务放进tasks，否则其自身放进tasks
+    let tasks: Task[] = []
     if (baseTask.isCollection) {
       tasks = await this.getChildrenTask(baseTask.id as number)
     } else {
@@ -308,59 +307,78 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       throw new Error(msg)
     }
 
-    // 查询插件信息，日志用
-    const installedPluginsService = new InstalledPluginsService()
-    const pluginInfo = JSON.stringify(await installedPluginsService.getById(baseTask.pluginId))
-
-    // 加载插件
-    const pluginLoader = new PluginLoader(mainWindow)
-    const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId)
-
-    // 尝试开始任务
+    // 开启事务
+    let db: DB
+    if (this.injectedDB) {
+      db = this.db as DB
+    } else {
+      db = new DB('WorksService')
+    }
     try {
-      // 限制最多同时保存100个
-      const maxSaveWorksPromise = 100
-      const promiseLimit = limit(maxSaveWorksPromise)
-      for (const task of tasks) {
-        taskHandler.start(task).then((worksDTO) => {
-          // 如果插件未返回任务id，发出警告并跳过此次循环
-          if (
-            !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
-            worksDTO.includeTaskId === undefined ||
-            worksDTO.includeTaskId === null
-          ) {
-            LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-            return
-          }
+      // 这个事务用来回滚PluginTool的createWorksSet方法创建的作品集
+      const result = db.nestedTransaction(async (transactionDB) => {
+        // 加载插件
+        const pluginLoader = new PluginLoader(mainWindow, transactionDB)
+        const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId as number)
+        // 查询插件信息，日志用
+        const installedPluginsService = new InstalledPluginsService()
+        const pluginInfo = JSON.stringify(
+          await installedPluginsService.getById(baseTask.pluginId as number)
+        )
 
-          // 找到插件返回的作品对应的task
-          const taskFilter = tasks.filter((task) => task.id == worksDTO.includeTaskId)
-          if (taskFilter.length < 1) {
-            // 如果插件返回的任务id越界，发出警告并跳过此次循环
-            LogUtil.warn(
-              'TaskService',
-              `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-            )
-            return
-          }
-
-          // 保存资源和作品信息
-          const worksService = new WorksService()
-          promiseLimit(() => {
-            worksService.saveWorksAndResource(worksDTO).then((worksId) => {
-              if (worksId === SAVE_FAILED) {
-                this.taskFailed(taskFilter[0])
-              } else {
-                this.finishTask(taskFilter[0], worksId)
+        // 尝试开始任务
+        try {
+          // 限制最多同时保存100个
+          const maxSaveWorksPromise = 100
+          const promiseLimit = limit(maxSaveWorksPromise)
+          for (const task of tasks) {
+            taskHandler.start(task).then((worksDTO) => {
+              // 如果插件未返回任务id，发出警告并跳过此次循环
+              if (
+                !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
+                worksDTO.includeTaskId === undefined ||
+                worksDTO.includeTaskId === null
+              ) {
+                LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
+                return
               }
+
+              // 找到插件返回的作品对应的task
+              const taskFilter = tasks.filter((task) => task.id == worksDTO.includeTaskId)
+              if (taskFilter.length < 1) {
+                // 如果插件返回的任务id越界，发出警告并跳过此次循环
+                LogUtil.warn(
+                  'TaskService',
+                  `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+                )
+                return
+              }
+
+              // 保存资源和作品信息
+              promiseLimit(() => {
+                const worksService = new WorksService()
+                worksService.saveWorksAndResource(worksDTO).then((worksId) => {
+                  if (worksId === SAVE_FAILED) {
+                    this.taskFailed(taskFilter[0])
+                  } else {
+                    this.finishTask(taskFilter[0], worksId)
+                  }
+                })
+              })
             })
-          })
-        })
+          }
+          return true
+        } catch (error) {
+          LogUtil.error('TaskService', '开始任务时出错，error: ', error)
+          throw error
+        }
+      })
+
+      return (await result) as boolean
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
       }
-      return true
-    } catch (error) {
-      LogUtil.error('TaskService', '开始任务时出错，error: ', error)
-      return false
     }
   }
 

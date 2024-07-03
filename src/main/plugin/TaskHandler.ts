@@ -12,15 +12,15 @@ export default interface TaskHandler {
 
   /**
    * 开始任务
-   * @param tasks 需开始的任务
+   * @param task 需开始的任务
    * @return 作品信息（包含资源的数据流）
    */
-  start(tasks: Task): Promise<WorksDTO>
+  start(task: Task): Promise<WorksDTO>
 
   /**
    * 重试下载任务
-   * @param tasks 需要重试的任务
+   * @param task 需要重试的任务
    * @return 作品信息（包含资源的数据流）
    */
-  retry(tasks: Task[]): Promise<WorksDTO[]>
+  retry(task: Task): Promise<WorksDTO>
 }
