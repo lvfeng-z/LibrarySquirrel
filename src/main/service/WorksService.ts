@@ -202,22 +202,22 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           // 关联作品和本地作者
           if (localAuthors !== undefined && localAuthors !== null && localAuthors.length > 0) {
             const localAuthorService = new LocalAuthorService(transactionDB)
-            await localAuthorService.link(localAuthors, worksDTO)
+            localAuthorService.link(localAuthors, worksDTO)
           }
           // 关联作品和本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
             const localTagService = new LocalTagService(transactionDB)
-            await localTagService.link(localTags, worksDTO)
+            localTagService.link(localTags, worksDTO)
           }
           // 关联作品和站点作者
           if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.link(siteAuthors, worksDTO)
+            siteAuthorService.link(siteAuthors, worksDTO)
           }
           // 关联作品和站点标签
           if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
             const siteTagService = new SiteTagService(transactionDB)
-            await siteTagService.link(siteTags, worksDTO)
+            siteTagService.link(siteTags, worksDTO)
           }
 
           return worksDTO.id
@@ -229,7 +229,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       return worksId as Promise<number>
     } finally {
-      db.release()
+      if (!this.injectedDB) {
+        db.release()
+      }
     }
   }
 

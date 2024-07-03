@@ -16,6 +16,7 @@ export default class LocalTag extends BaseModel {
    * 上级标签id
    */
   baseLocalTagId: number | null | undefined
+
   constructor(localTag?: LocalTag) {
     if (localTag === undefined) {
       super()

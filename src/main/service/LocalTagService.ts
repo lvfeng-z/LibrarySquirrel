@@ -81,8 +81,31 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param worksDTO
    */
   async link(localTags: LocalTag[], worksDTO: WorksDTO) {
+    // 校验
+    const legalLocalTags = localTags.filter((localTag) => {
+      if (localTag === undefined || localTag === null) {
+        LogUtil.warn('LocalTagService', `关联作品和本地标签时，标签意外为空`)
+        return false
+      }
+      if (!Object.hasOwn(localTag, 'id') || localTag.id === undefined || localTag.id === null) {
+        const localTagName = Object.hasOwn(localTag, 'localTagName')
+          ? localTag.localTagName
+          : 'unknown'
+        LogUtil.warn(
+          'LocalTagService',
+          `关联作品和本地标签时，标签id意外为空，localTagName: ${localTagName}`
+        )
+        return false
+      }
+      return true
+    })
+
+    if (legalLocalTags.length === 0) {
+      return 0
+    }
+
     // 创建关联对象
-    const links = localTags.map((localTag) => {
+    const links = legalLocalTags.map((localTag) => {
       const reWorksTag = new ReWorksTag()
       reWorksTag.worksId = worksDTO.id as number
       reWorksTag.localTagId = localTag.id
