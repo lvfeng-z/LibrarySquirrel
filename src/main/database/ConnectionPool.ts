@@ -24,7 +24,7 @@ export class ConnectionPool {
   private connectionExtra: { state: boolean; timeoutId?: NodeJS.Timeout }[] // 链接额外数据列表
   private connectionQueue: WaitingRequest[] // 等待队列
   private visualLocked: boolean
-  private visualLockQueue: (() => Promise<void>)[]
+  private visualLockQueue: (() => void)[]
 
   constructor(config: ConnectionPoolConfig) {
     this.config = config
@@ -119,11 +119,13 @@ export class ConnectionPool {
    */
   public async acquireVisualLock(): Promise<void> {
     return new Promise((resolve) => {
-      if (this.visualLocked) {
+      if (!this.visualLocked) {
+        LogUtil.debug('ConnectionPool', '虚拟锁已锁定')
         this.visualLocked = true
         resolve()
       } else {
-        this.visualLockQueue.push(() => this.acquireVisualLock().then(resolve))
+        LogUtil.debug('ConnectionPool', '虚拟锁处于锁定状态，进入等待队列')
+        this.visualLockQueue.push(() => resolve())
       }
     })
   }
@@ -133,11 +135,13 @@ export class ConnectionPool {
    */
   public releaseVisualLock(): void {
     if (this.visualLockQueue.length > 0) {
+      LogUtil.debug('ConnectionPool', '虚拟锁转交下一个请求者')
       const next = this.visualLockQueue.shift()
       if (next) {
         next()
       }
     } else {
+      LogUtil.debug('ConnectionPool', '释放虚拟锁')
       this.visualLocked = false
     }
   }

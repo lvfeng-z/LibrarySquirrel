@@ -27,6 +27,11 @@ export default class DB {
    * @private
    */
   private savepointCounter = 0
+  /**
+   * 是否持有虚拟锁
+   * @private
+   */
+  private holdingVisualLock: boolean
 
   constructor(caller: string) {
     if (StringUtil.isNotBlank(caller)) {
@@ -34,6 +39,7 @@ export default class DB {
     } else {
       this.caller = 'unknown'
     }
+    this.holdingVisualLock = false
 
     // 封装类被回收时，释放链接
     const weakThis = new WeakRef(this)
@@ -103,6 +109,12 @@ export default class DB {
     // 创建一个当前层级的保存点
     const savepointName = `sp${this.savepointCounter++}`
     try {
+      // 开启事务之前获取虚拟的排它锁
+      if (!this.holdingVisualLock) {
+        await global.connectionPool.acquireVisualLock()
+        this.holdingVisualLock = true
+      }
+
       connection.exec(`SAVEPOINT ${savepointName}`)
       LogUtil.debug('DB', `${name}，SAVEPOINT ${savepointName}`)
 
@@ -111,12 +123,19 @@ export default class DB {
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
       LogUtil.debug('DB', `${name}，RELEASE ${savepointName}，result: ${result}`)
+
+      // 释放虚拟的排它锁
+      global.connectionPool.releaseVisualLock()
+      this.holdingVisualLock = false
       return result
     } catch (error) {
       // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
       if (isStartPoint) {
         connection.exec(`ROLLBACK`)
         LogUtil.info('DB', `${name}，ROLLBACK`)
+
+        // 释放虚拟的排它锁
+        global.connectionPool.releaseVisualLock()
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
