@@ -46,7 +46,11 @@ export default class DB {
    */
   public async prepare(statement: string): Promise<BetterSqlite3.Statement> {
     const connectionPromise = this.acquire()
-    return connectionPromise.then((connection) => connection.prepare(statement))
+    return connectionPromise.then((connection) => {
+      const stmt = connection.prepare(statement)
+      LogUtil.info('DB', stmt.source)
+      return stmt
+    })
   }
 
   /**
@@ -87,8 +91,12 @@ export default class DB {
   /**
    * 可嵌套的事务
    * @param fn 事务代码
+   * @param name
    */
-  public async nestedTransaction<F extends (db: DB) => Promise<unknown>>(fn: F): Promise<unknown> {
+  public async nestedTransaction<F extends (db: DB) => Promise<unknown>>(
+    fn: F,
+    name: string
+  ): Promise<unknown> {
     const connection = await this.acquire()
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0
@@ -96,23 +104,30 @@ export default class DB {
     const savepointName = `sp${this.savepointCounter++}`
     try {
       connection.exec(`SAVEPOINT ${savepointName}`)
-      LogUtil.debug('DB', `创建一个保存点${savepointName}`)
+      LogUtil.debug('DB', `${name}，SAVEPOINT ${savepointName}`)
 
       const result = await fn(this)
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
-      LogUtil.debug('DB', `释放保存点${savepointName}`)
+      LogUtil.debug(
+        'DB',
+        `${name}，RELEASE ${savepointName}，result: ${result}`
+      )
       return result
     } catch (error) {
       // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
       if (isStartPoint) {
         connection.exec(`ROLLBACK`)
+        LogUtil.info('DB', `${name}，ROLLBACK`)
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
+        LogUtil.info(
+          'DB',
+          `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`
+        )
       }
-      LogUtil.debug('DB', `恢复至保存点${savepointName}`)
 
       LogUtil.error('DB', error)
       throw error

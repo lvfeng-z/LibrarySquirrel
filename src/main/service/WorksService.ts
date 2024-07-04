@@ -209,7 +209,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           LogUtil.warn('WorksService', '保存作品时出错')
           throw error
         }
-      })
+      }, 'saveWorks')
 
       return worksId as Promise<number>
     } finally {
