@@ -8,9 +8,6 @@ import { MeaningOfPath } from '../model/utilModels/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
-import DB from '../database/DB.ts'
-import WorksSet from '../model/WorksSet.ts'
-import WorksSetService from '../service/WorksSetService.ts'
 
 export default class PluginLoader {
   /**
@@ -18,32 +15,15 @@ export default class PluginLoader {
    */
   private mainWindow: Electron.BrowserWindow
   /**
-   * 封装链接
-   */
-  private db: DB | undefined
-  /**
-   * 是否为注入的链接实例
-   * @private
-   */
-  private readonly injectedDB: boolean
-  /**
    * 插件工具
    */
   private pluginTool: PluginTool
 
-  constructor(mainWindow: Electron.BrowserWindow, db?: DB) {
+  constructor(mainWindow: Electron.BrowserWindow) {
     this.mainWindow = mainWindow
-    if (db === undefined || db === null) {
-      this.injectedDB = false
-      this.db = undefined
-    } else {
-      this.injectedDB = true
-      this.db = db
-    }
     const event = new EventEmitter()
 
     this.attachExplainPathEvents(event)
-    this.attachCreateWorksSetEvents(event)
     this.pluginTool = new PluginTool(event)
   }
 
@@ -131,25 +111,6 @@ export default class PluginLoader {
       )
       // 向渲染进程发送explain-path-request事件
       this.mainWindow.webContents.send('explain-path-request', dir)
-    })
-  }
-
-  /**
-   * 为事件发射器附加创建作品集的事件和处理函数
-   * @param event
-   * @private
-   */
-  private attachCreateWorksSetEvents(event: EventEmitter) {
-    event.on('create-works-set-request', async (worksSet: WorksSet) => {
-      let worksSetService: WorksSetService
-      if (this.injectedDB) {
-        worksSetService = new WorksSetService(this.db)
-      } else {
-        worksSetService = new WorksSetService()
-      }
-      const id = await worksSetService.save(worksSet)
-      worksSet.id = id as number
-      event.emit('create-works-set-response', worksSet)
     })
   }
 }

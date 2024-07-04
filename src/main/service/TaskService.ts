@@ -8,7 +8,6 @@ import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
-import { SAVE_FAILED } from '../constant/CrudConstant.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
 import limit from 'p-limit'
@@ -307,78 +306,59 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       throw new Error(msg)
     }
 
-    // 开启事务
-    let db: DB
-    if (this.injectedDB) {
-      db = this.db as DB
-    } else {
-      db = new DB('WorksService')
-    }
+    // 加载插件
+    const pluginLoader = new PluginLoader(mainWindow)
+    const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId as number)
+    // 查询插件信息，日志用
+    const installedPluginsService = new InstalledPluginsService()
+    const pluginInfo = JSON.stringify(
+      await installedPluginsService.getById(baseTask.pluginId as number)
+    )
+
+    // 尝试开始任务
     try {
-      // 这个事务用来回滚PluginTool的createWorksSet方法创建的作品集
-      const result = db.nestedTransaction(async (transactionDB) => {
-        // 加载插件
-        const pluginLoader = new PluginLoader(mainWindow, transactionDB)
-        const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId as number)
-        // 查询插件信息，日志用
-        const installedPluginsService = new InstalledPluginsService()
-        const pluginInfo = JSON.stringify(
-          await installedPluginsService.getById(baseTask.pluginId as number)
-        )
-
-        // 尝试开始任务
-        try {
-          // 限制最多同时保存100个
-          const maxSaveWorksPromise = 100
-          const promiseLimit = limit(maxSaveWorksPromise)
-          for (const task of tasks) {
-            taskHandler.start(task).then((worksDTO) => {
-              // 如果插件未返回任务id，发出警告并跳过此次循环
-              if (
-                !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
-                worksDTO.includeTaskId === undefined ||
-                worksDTO.includeTaskId === null
-              ) {
-                LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-                return
-              }
-
-              // 找到插件返回的作品对应的task
-              const taskFilter = tasks.filter((task) => task.id == worksDTO.includeTaskId)
-              if (taskFilter.length < 1) {
-                // 如果插件返回的任务id越界，发出警告并跳过此次循环
-                LogUtil.warn(
-                  'TaskService',
-                  `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-                )
-                return
-              }
-
-              // 保存资源和作品信息
-              promiseLimit(() => {
-                const worksService = new WorksService()
-                worksService.saveWorksAndResource(worksDTO).then((worksId) => {
-                  if (worksId === SAVE_FAILED) {
-                    this.taskFailed(taskFilter[0])
-                  } else {
-                    this.finishTask(taskFilter[0], worksId)
-                  }
-                })
-              })
-            })
-          }
-          return true
-        } catch (error) {
-          LogUtil.error('TaskService', '开始任务时出错，error: ', error)
-          throw error
+      // 限制最多同时保存100个
+      const maxSaveWorksPromise = 100
+      const promiseLimit = limit(maxSaveWorksPromise)
+      for (const task of tasks) {
+        const worksDTO = await taskHandler.start(task)
+        // 如果插件未返回任务id，发出警告并跳过此次循环
+        if (
+          !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
+          worksDTO.includeTaskId === undefined ||
+          worksDTO.includeTaskId === null
+        ) {
+          LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
+          continue
         }
-      })
 
-      return (await result) as boolean
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
+        // 找到插件返回的作品对应的task
+        const taskFilter = tasks.filter((task) => task.id == worksDTO.includeTaskId)
+        if (taskFilter.length < 1) {
+          // 如果插件返回的任务id越界，发出警告并跳过此次循环
+          LogUtil.warn(
+            'TaskService',
+            `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+          )
+          continue
+        }
+
+        // 保存资源和作品信息
+        await promiseLimit(async () => {
+          try {
+            const worksService = new WorksService()
+            const worksId = await worksService.saveWorksAndResource(worksDTO)
+            this.finishTask(taskFilter[0], worksId)
+          } catch (error) {
+            LogUtil.warn('TaskService', '保存作品失败，error: ', error)
+            this.taskFailed(taskFilter[0])
+          }
+        })
       }
+      return true
+    } catch (error) {
+      LogUtil.error('TaskService', '开始任务时出错，error: ', error)
+      throw error
     }
   }
 
