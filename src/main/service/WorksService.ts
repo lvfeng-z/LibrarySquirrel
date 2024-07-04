@@ -181,27 +181,28 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
           // 保存作品
           const works = new Works(worksDTO)
-          worksDTO.id = await this.dao.save(works)
+          const worksService = new WorksService(db)
+          worksDTO.id = await worksService.save(works)
 
           // 关联作品和本地作者
           if (localAuthors !== undefined && localAuthors !== null && localAuthors.length > 0) {
             const localAuthorService = new LocalAuthorService(transactionDB)
-            localAuthorService.link(localAuthors, worksDTO)
+            await localAuthorService.link(localAuthors, worksDTO)
           }
           // 关联作品和本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
             const localTagService = new LocalTagService(transactionDB)
-            localTagService.link(localTags, worksDTO)
+            await localTagService.link(localTags, worksDTO)
           }
           // 关联作品和站点作者
           if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
-            siteAuthorService.link(siteAuthors, worksDTO)
+            await siteAuthorService.link(siteAuthors, worksDTO)
           }
           // 关联作品和站点标签
           if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
             const siteTagService = new SiteTagService(transactionDB)
-            siteTagService.link(siteTags, worksDTO)
+            await siteTagService.link(siteTags, worksDTO)
           }
 
           return worksDTO.id
