@@ -68,7 +68,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
       try {
-        return (await db.prepare(sql)).run(plainObject).lastInsertRowid as number
+        return (await (await db.prepare(sql)).run(plainObject)).lastInsertRowid as number
       } catch (error) {
         logUtil.error('BaseDao', 'save方法error: ', error)
         throw error
@@ -144,7 +144,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       const statement = insertClause.concat(' ', valuesClause)
 
-      return (await db.prepare(statement)).run(numberedProperties).changes as number
+      return (await (await db.prepare(statement)).run(numberedProperties)).changes as number
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -160,7 +160,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await db.prepare(sql)).run().changes
+      return (await (await db.prepare(sql)).run()).changes
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -189,7 +189,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const keys = Object.keys(existingValue)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await db.prepare(statement)).run(existingValue).changes
+      return (await (await db.prepare(statement)).run(existingValue)).changes
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -292,7 +292,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       const statement = insertClause.concat(' ', valuesClause)
 
-      return (await db.prepare(statement)).run(numberedProperties).changes as number
+      return (await (await db.prepare(statement)).run(numberedProperties)).changes as number
     } finally {
       if (!this.injectedDB) {
         db.release()

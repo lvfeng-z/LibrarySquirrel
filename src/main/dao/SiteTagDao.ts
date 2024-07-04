@@ -36,7 +36,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
           setClause.push(`when ${siteTagId} then ${localTagId} `)
         })
         const statement = `update ${this.tableName} set local_tag_id = (case ${setClause.join('')} end) where id in (${siteTagIds.join()})`
-        return (await db.prepare(statement)).run().changes
+        return (await (await db.prepare(statement)).run()).changes
       } finally {
         if (!this.injectedDB) {
           db.release()

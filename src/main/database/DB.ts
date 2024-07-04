@@ -1,6 +1,7 @@
 import BetterSqlite3 from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
+import AsyncStatement from './AsyncStatement.ts'
 
 /**
  * 数据库链接池封装
@@ -44,12 +45,11 @@ export default class DB {
    * 预处理语句
    * @param statement
    */
-  public async prepare(statement: string): Promise<BetterSqlite3.Statement> {
+  public async prepare(statement: string): Promise<AsyncStatement> {
     const connectionPromise = this.acquire()
     return connectionPromise.then((connection) => {
       const stmt = connection.prepare(statement)
-      LogUtil.info('DB', stmt.source)
-      return stmt
+      return new AsyncStatement(stmt)
     })
   }
 
@@ -110,10 +110,7 @@ export default class DB {
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
-      LogUtil.debug(
-        'DB',
-        `${name}，RELEASE ${savepointName}，result: ${result}`
-      )
+      LogUtil.debug('DB', `${name}，RELEASE ${savepointName}，result: ${result}`)
       return result
     } catch (error) {
       // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
@@ -123,10 +120,7 @@ export default class DB {
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-        LogUtil.info(
-          'DB',
-          `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`
-        )
+        LogUtil.info('DB', `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`)
       }
 
       LogUtil.error('DB', error)
