@@ -29,13 +29,13 @@ function getDataBasePath() {
 /**
  * 基于对象生成一个sqlite3接受的纯对象
  */
-function buildObjSqlite3Accepted(obj: object) {
+function toObjAcceptedBySqlite3(obj: object) {
   if (obj === undefined) {
     return {}
   }
   return Object.fromEntries(
     Object.entries(obj)
-      .filter(([, value]) => value !== undefined)
+      .filter(([, value]) => value !== undefined || typeof value !== 'function')
       .map(([key, value]) => {
         if (typeof value === 'boolean') {
           return [key, value ? 1 : 0]
@@ -51,5 +51,5 @@ function buildObjSqlite3Accepted(obj: object) {
 export default {
   listAllDataTables,
   getDataBasePath,
-  buildObjSqlite3Accepted
+  toObjAcceptedBySqlite3
 }

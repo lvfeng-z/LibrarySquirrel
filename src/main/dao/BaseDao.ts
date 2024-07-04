@@ -62,7 +62,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       entity.updateTime = Date.now()
 
       // 转换为sqlite3接受的数据类型
-      const plainObject = DatabaseUtil.buildObjSqlite3Accepted(entity)
+      const plainObject = DatabaseUtil.toObjAcceptedBySqlite3(entity)
 
       const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
@@ -98,7 +98,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         entity.createTime = Date.now()
         entity.updateTime = Date.now()
         // 转换为sqlite3接受的数据类型
-        return DatabaseUtil.buildObjSqlite3Accepted(entity)
+        return DatabaseUtil.toObjAcceptedBySqlite3(entity)
       })
       plainObject = ObjectUtil.alignProperties(plainObject, null)
       // 按照第一个对象的属性设置insert子句的value部分
@@ -213,7 +213,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       let plainObjects = entities.map((entity) => {
         entity.updateTime = Date.now()
         // 转换为sqlite3接受的数据类型
-        return DatabaseUtil.buildObjSqlite3Accepted(entity)
+        return DatabaseUtil.toObjAcceptedBySqlite3(entity)
       })
       plainObjects = ObjectUtil.alignProperties(plainObjects, null)
       // 按照第一个对象的属性设置update子句的value部分
@@ -251,7 +251,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         entity.createTime = Date.now()
         entity.updateTime = Date.now()
         // 转换为sqlite3接受的数据类型
-        return DatabaseUtil.buildObjSqlite3Accepted(entity)
+        return DatabaseUtil.toObjAcceptedBySqlite3(entity)
       })
       plainObject = ObjectUtil.alignProperties(plainObject, null)
       // 按照第一个对象的属性设置insert子句的value部分
