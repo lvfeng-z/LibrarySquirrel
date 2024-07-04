@@ -41,14 +41,6 @@ export default class LocalTaskHandler {
     // 处理扩展名
     worksDTO.filenameExtension = filenameExtension
     // 处理作品集
-    let worksSetNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksSetName')
-    let worksSetName
-    if (worksSetNames.length > 0) {
-      worksSetName = worksSetNames[0].name
-    }
-    let worksSet = new WorksSet()
-    worksSet.siteWorksName = worksSetName
-    worksSet = await this.pluginTool.createWorksSet(worksSet)
     // 处理作品名称
     const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
     // 如果pluginData里保存的用户解释含义中包含worksName，则使用worksName，否则使用文件名
