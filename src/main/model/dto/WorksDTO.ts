@@ -5,6 +5,7 @@ import fs from 'fs'
 import LocalAuthorDTO from './LocalAuthorDTO.ts'
 import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from './SiteTagDTO.ts'
+import WorksSet from '../WorksSet.ts'
 
 /**
  * 作品
@@ -36,6 +37,11 @@ export default class WorksDTO extends Works {
   siteTags: SiteTagDTO[] | undefined | null
 
   /**
+   * 作品所属作品集
+   */
+  worksSet: WorksSet | undefined | null
+
+  /**
    * 作品资源的数据流
    */
   resourceStream: fs.ReadStream | undefined | null
@@ -53,6 +59,7 @@ export default class WorksDTO extends Works {
       this.siteAuthors = undefined
       this.localTags = undefined
       this.siteTags = undefined
+      this.worksSet = undefined
       this.resourceStream = undefined
       this.resourceSize = undefined
     } else {
@@ -62,6 +69,7 @@ export default class WorksDTO extends Works {
       this.localTags = works.localTags
       this.siteAuthors = works.siteAuthors
       this.siteTags = works.siteTags
+      this.worksSet = works.worksSet
       this.resourceStream = works.resourceStream
       this.resourceSize = works.resourceSize
     }

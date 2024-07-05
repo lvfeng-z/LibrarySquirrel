@@ -200,6 +200,7 @@ tables:
         site_upload_time      integer,
         site_update_time      integer,
         nick_name             text,
+        works_site_id         integer,
         local_author_id       integer,
         include_mode          integer,
         include_task_id       integer,

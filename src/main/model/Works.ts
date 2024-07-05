@@ -50,6 +50,10 @@ export default class Works extends BaseModel {
    */
   nickName: string | undefined | null
   /**
+   * 作品集id
+   */
+  worksSetId: number | undefined | null
+  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode: number | undefined | null
@@ -76,6 +80,7 @@ export default class Works extends BaseModel {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
+      this.worksSetId = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
@@ -92,6 +97,7 @@ export default class Works extends BaseModel {
       this.siteUploadTime = works.siteUploadTime
       this.siteUpdateTime = works.siteUpdateTime
       this.nickName = works.nickName
+      this.worksSetId = works.worksSetId
       this.includeMode = works.includeMode
       this.includeTaskId = works.includeTaskId
       this.lastViewed = works.lastViewed

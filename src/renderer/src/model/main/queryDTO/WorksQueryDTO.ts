@@ -1,9 +1,10 @@
+import BaseQueryDTO from './BaseQueryDTO.ts'
+import { isNullish } from '../../../utils/CommonUtil'
+
 /**
  * QueryDTO
  * 作品
  */
-import BaseQueryDTO from './BaseQueryDTO.ts'
-
 export default class WorksQueryDTO extends BaseQueryDTO {
   /**
    * 包含本地标签
@@ -63,6 +64,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   nickName: string | undefined | null
   /**
+   * 作品集id
+   */
+  worksSetId: number | undefined | null
+  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode: number | undefined | null
@@ -76,7 +81,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   lastViewed: number | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
-    if (worksQueryDTO === undefined) {
+    if (isNullish(worksQueryDTO)) {
       super()
       this.includeLocalTagIds = undefined
       this.excludeLocalTagIds = undefined
@@ -92,6 +97,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
+      this.worksSetId = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
@@ -111,6 +117,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = worksQueryDTO.siteUploadTime
       this.siteUpdateTime = worksQueryDTO.siteUpdateTime
       this.nickName = worksQueryDTO.nickName
+      this.worksSetId = worksQueryDTO.worksSetId
       this.includeMode = worksQueryDTO.includeMode
       this.includeTaskId = worksQueryDTO.includeTaskId
       this.lastViewed = worksQueryDTO.lastViewed
