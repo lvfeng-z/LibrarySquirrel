@@ -55,7 +55,7 @@ export default class DB {
     const connectionPromise = this.acquire()
     return connectionPromise.then((connection) => {
       const stmt = connection.prepare(statement)
-      return new AsyncStatement(stmt)
+      return new AsyncStatement(stmt, this.holdingVisualLock)
     })
   }
 
@@ -75,23 +75,6 @@ export default class DB {
   public async exec(statement: string): Promise<BetterSqlite3.Database> {
     const connectionPromise = this.acquire()
     return connectionPromise.then((connection) => connection.exec(statement))
-  }
-
-  /**
-   * 简单的事务
-   * @param fn 事务代码
-   */
-  public async simpleTransaction<F extends (db: DB) => Promise<unknown>>(fn: F): Promise<void> {
-    const connection = await this.acquire()
-    try {
-      connection.exec('BEGIN')
-      await fn(this)
-      connection.exec('COMMIT')
-    } catch (error) {
-      connection.exec('ROLLBACK')
-      LogUtil.error('DB', error)
-      throw error
-    }
   }
 
   /**
@@ -143,8 +126,10 @@ export default class DB {
       throw error
     } finally {
       // 释放虚拟的排它锁
-      global.connectionPool.releaseVisualLock()
-      this.holdingVisualLock = false
+      if (this.holdingVisualLock && isStartPoint) {
+        global.connectionPool.releaseVisualLock()
+        this.holdingVisualLock = false
+      }
     }
   }
 
