@@ -37,7 +37,7 @@ export default class LocalAuthorService extends BaseService<
       reWorksAuthor.authorRole = localAuthorDTO.authorRole
       reWorksAuthor.localAuthorId = localAuthorDTO.id as number
       reWorksAuthor.type = ReWorksAuthorTypeEnum.LOCAL
-      return reWorksAuthors
+      return reWorksAuthor
     })
 
     // 调用ReWorksAuthorService前区分是否为注入式DB
