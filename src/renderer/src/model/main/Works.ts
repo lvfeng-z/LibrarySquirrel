@@ -1,4 +1,4 @@
-import BaseModel from './BaseModel'
+import BaseModel from './BaseModel.ts'
 
 /**
  * 作品
@@ -49,14 +49,6 @@ export default class Works extends BaseModel {
    */
   nickName: string | undefined | null
   /**
-   * 在本地作品的作者id
-   */
-  localAuthorId: number | undefined | null
-  /**
-   * 收录时间
-   */
-  includeTime: number | undefined | null
-  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode: number | undefined | null
@@ -83,8 +75,6 @@ export default class Works extends BaseModel {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
-      this.localAuthorId = undefined
-      this.includeTime = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
@@ -101,8 +91,6 @@ export default class Works extends BaseModel {
       this.siteUploadTime = works.siteUploadTime
       this.siteUpdateTime = works.siteUpdateTime
       this.nickName = works.nickName
-      this.localAuthorId = works.localAuthorId
-      this.includeTime = works.includeTime
       this.includeMode = works.includeMode
       this.includeTaskId = works.includeTaskId
       this.lastViewed = works.lastViewed

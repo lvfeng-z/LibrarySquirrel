@@ -63,14 +63,6 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   nickName: string | undefined | null
   /**
-   * 在本地作品的作者id
-   */
-  localAuthorId: number | undefined | null
-  /**
-   * 收录时间
-   */
-  includeTime: number | undefined | null
-  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode: number | undefined | null
@@ -100,8 +92,6 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
-      this.localAuthorId = undefined
-      this.includeTime = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
@@ -121,8 +111,6 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = worksQueryDTO.siteUploadTime
       this.siteUpdateTime = worksQueryDTO.siteUpdateTime
       this.nickName = worksQueryDTO.nickName
-      this.localAuthorId = worksQueryDTO.localAuthorId
-      this.includeTime = worksQueryDTO.includeTime
       this.includeMode = worksQueryDTO.includeMode
       this.includeTaskId = worksQueryDTO.includeTaskId
       this.lastViewed = worksQueryDTO.lastViewed

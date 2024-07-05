@@ -27,9 +27,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   filePath: string | undefined | null
   /**
-   * 作品类型（0：图片，1：视频，2：文章）
+   * 扩展名
    */
-  worksType: number | undefined | null
+  filenameExtension: string | undefined | null
   /**
    * 作品来源站点id
    */
@@ -53,23 +53,15 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   /**
    * 站点中作品的上传时间
    */
-  siteUploadTime: string | undefined | null
+  siteUploadTime: number | undefined | null
   /**
    * 站点中作品最后修改的时间
    */
-  siteUpdateTime: string | undefined | null
+  siteUpdateTime: number | undefined | null
   /**
    * 作品别称
    */
   nickName: string | undefined | null
-  /**
-   * 在本地作品的作者id
-   */
-  localAuthorId: number | undefined | null
-  /**
-   * 收录时间
-   */
-  includeTime: string | undefined | null
   /**
    * 收录方式（0：本地导入，1：站点下载）
    */
@@ -79,9 +71,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   includeTaskId: number | undefined | null
   /**
-   * 下载状态
+   * 最后一次查看的时间
    */
-  downloadStatus: number | undefined | null
+  lastViewed: number | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
     if (worksQueryDTO === undefined) {
@@ -91,7 +83,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeSiteTagIds = undefined
       this.includeSiteTagIds = undefined
       this.filePath = undefined
-      this.worksType = undefined
+      this.filenameExtension = undefined
       this.siteId = undefined
       this.siteWorksId = undefined
       this.siteWorksName = undefined
@@ -100,11 +92,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
-      this.localAuthorId = undefined
-      this.includeTime = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
-      this.downloadStatus = undefined
+      this.lastViewed = undefined
     } else {
       super(worksQueryDTO)
       this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
@@ -112,7 +102,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
       this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
       this.filePath = worksQueryDTO.filePath
-      this.worksType = worksQueryDTO.worksType
+      this.filenameExtension = worksQueryDTO.filenameExtension
       this.siteId = worksQueryDTO.siteId
       this.siteWorksId = worksQueryDTO.siteWorksId
       this.siteWorksName = worksQueryDTO.siteWorksName
@@ -121,11 +111,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = worksQueryDTO.siteUploadTime
       this.siteUpdateTime = worksQueryDTO.siteUpdateTime
       this.nickName = worksQueryDTO.nickName
-      this.localAuthorId = worksQueryDTO.localAuthorId
-      this.includeTime = worksQueryDTO.includeTime
       this.includeMode = worksQueryDTO.includeMode
       this.includeTaskId = worksQueryDTO.includeTaskId
-      this.downloadStatus = worksQueryDTO.downloadStatus
+      this.lastViewed = worksQueryDTO.lastViewed
     }
   }
 }
