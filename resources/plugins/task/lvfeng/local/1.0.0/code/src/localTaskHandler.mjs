@@ -43,6 +43,13 @@ export default class LocalTaskHandler {
 
     // 处理pluginData里的信息
     // 处理作品集
+    const worksSets = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksSetName')
+    if (worksSets.length > 0) {
+      const worksSet = new WorksSet()
+      worksSet.siteWorksSetName = worksSets[0].name
+      worksSet.siteWorksSetId = worksSets[0].details.siteWorksSetId
+      worksDTO.worksSet = worksSet
+    }
     // 处理作品名称
     const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
     // 如果pluginData里保存的用户解释含义中包含worksName，则使用worksName，否则使用文件名
@@ -132,8 +139,12 @@ class TaskStream extends Readable{
           // 请求用户解释目录含义
           const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPaths = await waitUserInput
-          // 如果含义是作品集，给这个作品集添加一个唯一标识，用于识别同一作品集的任务
-          meaningOfPaths.id = this.counter
+          // 如果含义是作品集
+          meaningOfPaths.forEach(meaningOfPath => {
+            if (meaningOfPath.type === 'worksSetName') {
+              meaningOfPath.details = { siteWorksSetId: dir }
+            }
+          })
           // 将获得的目录含义并入从上级目录继承的含义数组中
           dirInfo.meaningOfPaths = [...dirInfo.meaningOfPaths, ...meaningOfPaths]
 
@@ -204,6 +215,10 @@ class WorksDTO {
    */
   nickName
   /**
+   * 作品所属作品集
+   */
+  worksSet
+  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode
@@ -262,21 +277,17 @@ class WorksSet {
    */
   id
   /**
-   * 集合名称
-   */
-  setName
-  /**
    * 集合来源站点id
    */
   siteId
   /**
    * 集合在站点的id
    */
-  siteWorksId
+  siteWorksSetId
   /**
    * 集合在站点的名称
    */
-  siteWorksName
+  siteWorksSetName
   /**
    * 集合在站点的作者id
    */
@@ -293,23 +304,16 @@ class WorksSet {
    * 别名
    */
   nickName
-  /**
-   * 集合在本地的作者
-   */
-  localAuthorId
 
   constructor() {
     this.id = undefined
-    this.setName = undefined
     this.siteId = undefined
-    this.siteWorksId = undefined
-    this.siteWorksName = undefined
+    this.siteWorksSetId = undefined
+    this.siteWorksSetName = undefined
     this.siteAuthorId = undefined
     this.siteUploadTime = undefined
     this.siteUpdateTime = undefined
     this.nickName = undefined
-    this.localAuthorId = undefined
-    this.createTime = undefined
   }
 }
 

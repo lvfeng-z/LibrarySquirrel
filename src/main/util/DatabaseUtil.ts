@@ -29,7 +29,7 @@ function getDataBasePath() {
 /**
  * 基于对象生成一个sqlite3接受的纯对象
  */
-function toObjAcceptedBySqlite3(obj: object) {
+function toObjAcceptedBySqlite3(obj: object): Record<string, unknown> {
   if (obj === undefined) {
     return {}
   }

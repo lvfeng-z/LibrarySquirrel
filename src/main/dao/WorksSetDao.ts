@@ -3,6 +3,8 @@ import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import WorksSet from '../model/WorksSet.ts'
 import DB from '../database/DB.ts'
 import LogUtil from '../util/LogUtil.ts'
+import DatabaseUtil from '../util/DatabaseUtil.ts'
+import { notNullish } from '../util/CommonUtil.ts'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
   constructor(db?: DB) {
@@ -14,13 +16,19 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
    * @param siteWorksSetId 作品集在站点的id
    * @param taskId 入库任务的id
    */
-  public async getBySiteWorksSetIdAndTaskId(siteWorksSetId: string, taskId: number):Promise<WorksSet | undefined> {
+  public async getBySiteWorksSetIdAndTaskId(
+    siteWorksSetId: string,
+    taskId: number
+  ): Promise<WorksSet | undefined> {
     const queryDTO = new WorksSetQueryDTO()
     queryDTO.siteWorksSetId = siteWorksSetId
     queryDTO.includeTaskId = taskId
     const whereClauseAndQuery = super.getWhereClause(queryDTO)
     const whereClause = whereClauseAndQuery.whereClause
-    const modifiedQuery = whereClauseAndQuery.query
+    let modifiedQuery
+    if (notNullish(whereClauseAndQuery.query)) {
+      modifiedQuery = DatabaseUtil.toObjAcceptedBySqlite3(whereClauseAndQuery.query)
+    }
     const statement = `select *
                        from works_set ${whereClause}`
     const db = super.acquire()
@@ -28,7 +36,10 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
       const rows = (await db.prepare(statement)).all(modifiedQuery) as Record<string, unknown>[]
       const result = super.getResultTypeDataList(rows) as WorksSet[]
       if (result.length > 1) {
-        LogUtil.warn('WorksSetDao', `同一站点作品集id和导入任务id下，存在多个作品集，siteWorksSetId: ${siteWorksSetId}，taskId: ${taskId}`)
+        LogUtil.warn(
+          'WorksSetDao',
+          `同一站点作品集id和导入任务id下，存在多个作品集，siteWorksSetId: ${siteWorksSetId}，taskId: ${taskId}`
+        )
       }
       if (result.length > 0) {
         return result[0]

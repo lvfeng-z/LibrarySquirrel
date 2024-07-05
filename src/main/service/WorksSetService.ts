@@ -17,7 +17,10 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
    * @param siteWorksSetId 作品集在站点的id
    * @param taskId 入库任务的id
    */
-  public async getBySiteWorksSetIdAndTaskId(siteWorksSetId: string, taskId: number):Promise<WorksSet | undefined> {
+  public async getBySiteWorksSetIdAndTaskId(
+    siteWorksSetId: string,
+    taskId: number
+  ): Promise<WorksSet | undefined> {
     return this.dao.getBySiteWorksSetIdAndTaskId(siteWorksSetId, taskId)
   }
 }

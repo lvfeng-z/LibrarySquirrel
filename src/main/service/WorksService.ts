@@ -176,15 +176,22 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
             if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
               const worksSetService = new WorksSetService(transactionDB)
-              let worksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(siteWorksSetId, rootTaskId)
+              let worksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
+                siteWorksSetId,
+                rootTaskId
+              )
               if (isNullish(worksSet)) {
                 worksSet = new WorksSet(worksDTO.worksSet)
-                worksDTO.worksSetId = await worksSetService.save(worksSet) as number
+                worksSet.includeTaskId = rootTaskId
+                worksDTO.worksSetId = (await worksSetService.save(worksSet)) as number
               } else {
                 worksDTO.worksSetId = worksSet.id
               }
             } else {
-              LogUtil.warn('WorksService', `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
+              LogUtil.warn(
+                'WorksService',
+                `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
+              )
             }
           }
 
