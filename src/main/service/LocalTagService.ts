@@ -14,6 +14,7 @@ import DB from '../database/DB.ts'
 import ReWorksTag from '../model/ReWorksTag.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { ReWorksTagService } from './ReWorksTagService.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
@@ -25,7 +26,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param localTag 本地标签
    */
   async save(localTag: LocalTag) {
-    if (localTag.baseLocalTagId === undefined || localTag.baseLocalTagId === null) {
+    if (isNullish(localTag.baseLocalTagId)) {
       localTag.baseLocalTagId = 0
     }
     return this.dao.save(localTag)
@@ -43,7 +44,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         throw new Error(msg)
       }
 
-      if (localTag.baseLocalTagId === undefined || localTag.baseLocalTagId === null) {
+      if (isNullish(localTag.baseLocalTagId)) {
         localTag.baseLocalTagId = 0
       }
 
@@ -83,11 +84,11 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   async link(localTags: LocalTag[], worksDTO: WorksDTO) {
     // 校验
     const legalLocalTags = localTags.filter((localTag) => {
-      if (localTag === undefined || localTag === null) {
+      if (isNullish(localTag)) {
         LogUtil.warn('LocalTagService', `关联作品和本地标签时，标签意外为空`)
         return false
       }
-      if (!Object.hasOwn(localTag, 'id') || localTag.id === undefined || localTag.id === null) {
+      if (isNullish(!Object.hasOwn(localTag, 'id') || localTag.id)) {
         const localTagName = Object.hasOwn(localTag, 'localTagName')
           ? localTag.localTagName
           : 'unknown'

@@ -1,8 +1,9 @@
+import BaseModel from './BaseModel.ts'
+import { isNullish } from '../util/CommonUtil.ts'
+
 /**
  * 本地作者
  */
-import BaseModel from './BaseModel.ts'
-
 export default class LocalAuthor extends BaseModel {
   /**
    * 作者名称
@@ -10,7 +11,7 @@ export default class LocalAuthor extends BaseModel {
   localAuthorName: string | undefined | null
 
   constructor(localAuthor?: LocalAuthor) {
-    if (localAuthor === undefined || localAuthor === null) {
+    if (isNullish(localAuthor)) {
       super()
       this.localAuthorName = undefined
     } else {

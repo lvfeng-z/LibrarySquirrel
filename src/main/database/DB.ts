@@ -2,6 +2,7 @@ import BetterSqlite3 from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
+import { notNullish } from '../util/CommonUtil.ts'
 
 /**
  * 数据库链接池封装
@@ -161,7 +162,7 @@ export default class DB {
    * @private
    */
   private beforeDestroy(): void {
-    if (this.connection !== undefined && this.connection !== null) {
+    if (notNullish(this.connection)) {
       this.release()
       LogUtil.info(this.caller, '数据库链接在封装实例销毁时被释放')
     }

@@ -1,7 +1,8 @@
+import { isNullish } from '../../utils/CommonUtil'
+
 /**
  * 本地作者
  */
-
 export default class LocalAuthor {
   /**
    * 主键
@@ -14,7 +15,7 @@ export default class LocalAuthor {
   localAuthorName: string | undefined | null
 
   constructor(localAuthor?: LocalAuthor) {
-    if (localAuthor === undefined || localAuthor === null) {
+    if (isNullish(localAuthor)) {
       this.id = undefined
       this.localAuthorName = undefined
     } else {

@@ -7,6 +7,7 @@ import { COMPARATOR } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DB) {
@@ -22,7 +23,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
       LogUtil.warn('SiteService', '保存站点时，站点域名意外为空')
     } else {
       const oldSite = await this.getByDomain(site.siteDomain as string)
-      if (oldSite === undefined || oldSite === null) {
+      if (isNullish(oldSite)) {
         await this.save(site)
       }
     }

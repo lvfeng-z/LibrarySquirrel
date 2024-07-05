@@ -1,5 +1,6 @@
 import LocalAuthor from '../LocalAuthor.ts'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class LocalAuthorDTO extends LocalAuthor {
   /**
@@ -8,7 +9,7 @@ export default class LocalAuthorDTO extends LocalAuthor {
   authorRole: AuthorRole | undefined | null
 
   constructor(localAuthorDTO?: LocalAuthorDTO) {
-    if (localAuthorDTO === undefined || localAuthorDTO === null) {
+    if (isNullish(localAuthorDTO)) {
       super()
       this.authorRole = undefined
     } else {

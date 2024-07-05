@@ -5,6 +5,7 @@ import BaseDao from '../dao/BaseDao.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 
 /**
  * 基础Service类
@@ -39,7 +40,7 @@ export default abstract class BaseService<
   protected constructor(childClassName: string, dao: Dao, db?: DB) {
     this.childClassName = childClassName
     this.dao = dao
-    if (db === undefined || db === null) {
+    if (isNullish(db)) {
       this.db = undefined
       this.injectedDB = false
     } else {
@@ -92,7 +93,7 @@ export default abstract class BaseService<
    */
   public async updateBatchById(entities: Model[]) {
     const check = entities.filter((entity) => entity.id === undefined || entity.id === null)
-    if (check !== undefined && check !== null && check.length > 0) {
+    if (notNullish(check) && check.length > 0) {
       const msg = '批量更新数据时，id不能为空'
       LogUtil.error(this.childClassName, msg)
       throw new Error(msg)

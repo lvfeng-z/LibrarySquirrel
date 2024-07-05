@@ -11,6 +11,7 @@ import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.ts'
 import ReWorksAuthorService from './ReWorksAuthorService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 /**
  * 站点作者Service
@@ -29,11 +30,11 @@ export default class SiteAuthorService extends BaseService<
    * @param siteAuthor
    */
   public async saveOrUpdateBySiteAuthorId(siteAuthor: SiteAuthor): Promise<number> {
-    if (siteAuthor.siteId === undefined || siteAuthor.siteId === null) {
+    if (isNullish(siteAuthor.siteId)) {
       const msg = '保存作品时，作品的站点id意外为空'
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
-    } else if (siteAuthor.siteAuthorId === undefined || siteAuthor.siteAuthorId === null) {
+    } else if (isNullish(siteAuthor.siteAuthorId)) {
       const msg = '保存作品时，站点作者的id意外为空'
       LogUtil.error('SiteAuthorService', '保存作品时，站点作者的id意外为空')
       throw new Error(msg)
@@ -72,11 +73,11 @@ export default class SiteAuthorService extends BaseService<
     const oldSiteAuthors = await this.dao.selectListBySiteAuthorIds(siteAuthorIds)
     const newSiteAuthors: SiteAuthor[] = []
     siteAuthors.forEach((siteAuthor) => {
-      if (siteAuthor.siteAuthorId === undefined || siteAuthor.siteAuthorId === null) {
+      if (isNullish(siteAuthor.siteAuthorId)) {
         const msg = '保存作品时，站点作者的id意外为空'
         LogUtil.error('SiteAuthorService', '保存作品时，站点作者的id意外为空')
         throw new Error(msg)
-      } else if (siteAuthor.siteId === undefined || siteAuthor.siteId === null) {
+      } else if (isNullish(siteAuthor.siteId)) {
         const msg = '保存作品时，作品的站点id意外为空'
         LogUtil.error('SiteAuthorService', msg)
         throw new Error(msg)

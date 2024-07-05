@@ -11,6 +11,7 @@ import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 
 type PrimaryKey = string | number
 
@@ -42,7 +43,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   protected constructor(tableName: string, childClassName: string, db?: DB) {
     this.tableName = tableName
     this.childClassName = childClassName
-    if (db !== undefined && db !== null) {
+    if (notNullish(db)) {
       this.db = db
       this.injectedDB = true
     } else {
@@ -88,7 +89,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
     const db = this.acquire()
     try {
-      if (entities === undefined || entities === null || entities.length === 0) {
+      if (isNullish(entities) || entities.length === 0) {
         throw new Error('保存的对象不能为空')
       }
 
@@ -106,7 +107,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         // .filter((key) => 'id' !== key)
         .map((key) => StringUtil.camelToSnakeCase(key))
       let insertClause: string
-      if (ignore === undefined || ignore === null || !ignore) {
+      if (isNullish(ignore) || !ignore) {
         insertClause = `INSERT INTO "${this.tableName}" (${keys})`
       } else {
         insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${keys})`
@@ -204,7 +205,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   public async updateBatchById(entities: Model[]): Promise<number> {
     const db = this.acquire()
     try {
-      if (entities === undefined || entities === null || entities.length === 0) {
+      if (isNullish(entities) || entities.length === 0) {
         throw new Error('保存的对象不能为空')
       }
 
@@ -241,7 +242,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
     const db = this.acquire()
     try {
-      if (entities === undefined || entities === null || entities.length === 0) {
+      if (isNullish(entities) || entities.length === 0) {
         throw new Error('保存的对象不能为空')
       }
 

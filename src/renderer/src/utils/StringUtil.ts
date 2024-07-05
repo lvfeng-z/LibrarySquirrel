@@ -1,5 +1,7 @@
+import { isNullish } from './CommonUtil'
+
 function isBlank(input: string | null | undefined): boolean {
-  if (input === undefined || input === null) {
+  if (isNullish(input)) {
     return true
   }
   return /^\s*$/.test(input)

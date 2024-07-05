@@ -1,3 +1,5 @@
+import { notNullish } from '../../utils/CommonUtil'
+
 /**
  * 树节点
  */
@@ -25,7 +27,7 @@ export default class TreeNode<T extends TreeNode<T>> {
     if (this.value === value) {
       return this
     }
-    if (this.children !== undefined && this.children !== null && this.children.length > 0) {
+    if (notNullish(this.children) && this.children.length > 0) {
       for (let index = this.children.length - 1; index >= 0; index--) {
         let target
         for (let childIndex = this.children.length - 1; childIndex >= 0; childIndex--) {

@@ -15,6 +15,7 @@ import Electron from 'electron'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -300,7 +301,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 校验任务的插件id
-    if (baseTask.pluginId === undefined || baseTask.pluginId === null) {
+    if (isNullish(baseTask.pluginId)) {
       const msg = `任务的插件id意外为空，taskId: ${baseTask.id}`
       LogUtil.error('TaskService', msg)
       throw new Error(msg)
@@ -403,7 +404,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task = new Task(task)
     task.status = TaskConstant.TaskStatesEnum.FINISHED
     task.localWorksId = worksId
-    if (task.id !== undefined && task.id !== null) {
+    if (notNullish(task.id)) {
       return this.updateById(task)
     } else {
       const msg = '任务标记为完成时，任务id意外为空'
@@ -419,7 +420,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   taskFailed(task: Task) {
     task = new Task(task)
     task.status = TaskConstant.TaskStatesEnum.FAILED
-    if (task.id !== undefined && task.id !== null) {
+    if (notNullish(task.id)) {
       return this.dao.updateById(task.id, task)
     } else {
       const msg = '任务标记为失败时，任务id意外为空'

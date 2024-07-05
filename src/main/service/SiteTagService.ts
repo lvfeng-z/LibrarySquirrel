@@ -13,6 +13,7 @@ import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { ReWorksTagService } from './ReWorksTagService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 /**
  * 站点标签Service
@@ -38,7 +39,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     )
     if (target !== undefined) {
       let msg: string
-      if (target.siteId === undefined || target.siteId === null) {
+      if (isNullish(target.siteId)) {
         msg = `批量新增或更新站点标签时，站点id为空，tagName: ${target.siteTagName}`
       } else {
         msg = `批量新增或更新站点标签时，站点中标签的id为空，tagName: ${target.siteTagName}`

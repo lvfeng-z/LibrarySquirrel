@@ -8,6 +8,7 @@ import { MeaningOfPath } from '../model/utilModels/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
+import { notNullish } from '../util/CommonUtil.ts'
 
 export default class PluginLoader {
   /**
@@ -83,7 +84,7 @@ export default class PluginLoader {
           for (const meaningOfPath of meaningOfPaths) {
             if (meaningOfPath.type === 'author') {
               const localAuthorService = new LocalAuthorService()
-              if (meaningOfPath.id !== undefined && meaningOfPath.id !== null) {
+              if (notNullish(meaningOfPath.id)) {
                 const localAuthor = await localAuthorService.getById(meaningOfPath.id)
                 meaningOfPath.name = localAuthor.localAuthorName
                 meaningOfPath.details = localAuthor
@@ -91,7 +92,7 @@ export default class PluginLoader {
             }
             if (meaningOfPath.type === 'tag') {
               const localTagService = new LocalTagService()
-              if (meaningOfPath.id !== undefined && meaningOfPath.id !== null) {
+              if (notNullish(meaningOfPath.id)) {
                 const localTag = await localTagService.getById(meaningOfPath.id)
                 meaningOfPath.name = localTag.localTagName
                 meaningOfPath.details = localTag
@@ -99,7 +100,7 @@ export default class PluginLoader {
             }
             if (meaningOfPath.type === 'site') {
               const siteService = new SiteService()
-              if (meaningOfPath.id !== undefined && meaningOfPath.id !== null) {
+              if (notNullish(meaningOfPath.id)) {
                 const site = await siteService.getById(meaningOfPath.id)
                 meaningOfPath.name = site.siteName
                 meaningOfPath.details = site

@@ -1,8 +1,9 @@
 import WorksSet from '../WorksSet.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class WorksSetDTO extends WorksSet {
   constructor(worksSetDTO?: WorksSetDTO) {
-    if (worksSetDTO === undefined || worksSetDTO === null) {
+    if (isNullish(worksSetDTO)) {
       super()
     } else {
       super(worksSetDTO)

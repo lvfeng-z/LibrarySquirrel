@@ -1,4 +1,5 @@
 import BaseModel from './BaseModel.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 /**
  * 作品集合
@@ -54,7 +55,7 @@ export default class WorksSet extends BaseModel {
   lastViewed: number | undefined | null
 
   constructor(worksSet?: WorksSet) {
-    if (worksSet === undefined || worksSet === null) {
+    if (isNullish(worksSet)) {
       super()
       this.id = undefined
       this.setName = undefined

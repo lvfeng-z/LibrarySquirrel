@@ -1,4 +1,5 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class WorksSetQueryDTO extends BaseQueryDTO {
   /**
@@ -51,7 +52,7 @@ export default class WorksSetQueryDTO extends BaseQueryDTO {
   lastViewed: number | undefined | null
 
   constructor(worksSetQueryDTO?: WorksSetQueryDTO) {
-    if (worksSetQueryDTO === undefined || worksSetQueryDTO === null) {
+    if (isNullish(worksSetQueryDTO)) {
       super()
       this.id = undefined
       this.setName = undefined

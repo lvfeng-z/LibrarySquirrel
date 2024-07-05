@@ -1,4 +1,5 @@
 import BaseModel from './BaseModel.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 /**
  * 作品
@@ -62,7 +63,7 @@ export default class Works extends BaseModel {
   lastViewed: number | undefined | null
 
   constructor(works?: Works) {
-    if (works === undefined) {
+    if (isNullish(works)) {
       super()
       this.filePath = undefined
       this.filenameExtension = undefined
