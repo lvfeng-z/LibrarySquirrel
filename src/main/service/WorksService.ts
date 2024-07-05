@@ -181,7 +181,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
           // 保存作品
           const works = new Works(worksDTO)
-          const worksService = new WorksService(db)
+          const worksService = new WorksService(transactionDB)
           worksDTO.id = await worksService.save(works)
 
           // 关联作品和本地作者

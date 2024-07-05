@@ -343,17 +343,37 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           continue
         }
 
-        // 保存资源和作品信息
-        await promiseLimit(async () => {
-          try {
-            const worksService = new WorksService()
-            const worksId = await worksService.saveWorksAndResource(worksDTO)
-            this.finishTask(taskFilter[0], worksId)
-          } catch (error) {
-            LogUtil.warn('TaskService', '保存作品失败，error: ', error)
-            this.taskFailed(taskFilter[0])
+        // 用于异步执行作品和任务处理过程
+        const worksAndTaskProcess = async () => {
+          // 开启事务
+          let db: DB
+          if (this.injectedDB) {
+            db = this.db as DB
+          } else {
+            db = new DB('TaskService')
           }
-        })
+          try {
+            await db.nestedTransaction(async (transactionDB) => {
+              // 保存资源和作品信息
+              await promiseLimit(async () => {
+                const taskService = new TaskService(transactionDB)
+                try {
+                  const worksService = new WorksService(transactionDB)
+                  const worksId = await worksService.saveWorksAndResource(worksDTO)
+                  await taskService.finishTask(taskFilter[0], worksId)
+                } catch (error) {
+                  LogUtil.warn('TaskService', '保存作品失败，error: ', error)
+                  await taskService.taskFailed(taskFilter[0])
+                }
+              })
+            }, 'startTask')
+          } finally {
+            if (!this.injectedDB) {
+              db.release()
+            }
+          }
+        }
+        worksAndTaskProcess()
       }
       return true
     } catch (error) {
