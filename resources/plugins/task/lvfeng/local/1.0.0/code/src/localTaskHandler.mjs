@@ -40,6 +40,8 @@ export default class LocalTaskHandler {
     const worksDTO = new WorksDTO()
     // 处理扩展名
     worksDTO.filenameExtension = filenameExtension
+
+    // 处理pluginData里的信息
     // 处理作品集
     // 处理作品名称
     const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
@@ -52,6 +54,10 @@ export default class LocalTaskHandler {
     // 处理标签
     const tagInfos = this.getDataFromMeaningOfPath(meaningOfPaths, 'tag')
     worksDTO.localTags = tagInfos.map(tagInfo => tagInfo.details)
+    // 处理作者信息
+    const authors = this.getDataFromMeaningOfPath(meaningOfPaths, 'author')
+    worksDTO.localAuthors = authors.map(authorInfo => authorInfo.details)
+
     // 处理任务id
     worksDTO.includeTaskId = task.id
     // 处理资源
@@ -164,23 +170,6 @@ class TaskStream extends Readable{
   }
 }
 
-class PluginWorksResponse {
-  /**
-   * 数据类型
-   */
-  dataType
-
-  /**
-   * 数据
-   */
-  data
-
-  constructor() {
-    this.dataType = undefined
-    this.data = undefined
-  }
-}
-
 class WorksDTO {
   /**
    * 作品来源站点id
@@ -225,7 +214,7 @@ class WorksDTO {
   /**
    * 本地作者
    */
-  localAuthor
+  localAuthors
   /**
    * 本地标签数组
    */
@@ -233,7 +222,7 @@ class WorksDTO {
   /**
    * 站点作者
    */
-  siteAuthor
+  siteAuthors
   /**
    * 站点标签数组
    */
@@ -258,9 +247,9 @@ class WorksDTO {
     this.nickName = undefined
     this.includeMode = undefined
     this.includeTaskId = undefined
-    this.localAuthor = undefined
+    this.localAuthors = undefined
     this.localTags = undefined
-    this.siteAuthor = undefined
+    this.siteAuthors = undefined
     this.siteTags = undefined
     this.resourceStream = undefined
     this.resourceSize = undefined
@@ -309,7 +298,7 @@ class WorksSet {
    */
   localAuthorId
 
-  constructor(worksSet) {
+  constructor() {
     this.id = undefined
     this.setName = undefined
     this.siteId = undefined
