@@ -18,6 +18,10 @@ import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { ReadStream } from 'node:fs'
 import { AuthorRole } from '../constant/AuthorRole.ts'
+import TaskService from './TaskService.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import WorksSetService from './WorksSetService.ts'
+import WorksSet from '../model/WorksSet.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -163,18 +167,39 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     try {
       const worksId = await db.nestedTransaction(async (transactionDB) => {
         try {
+          // 如果worksSet不为空，则此作品是作品集中的作品
+          if (notNullish(worksDTO.worksSet) && notNullish(worksDTO.includeTaskId)) {
+            const taskService = new TaskService()
+            const includeTask = await taskService.getById(worksDTO.includeTaskId)
+            const rootTaskId = includeTask.parentId
+            const siteWorksSetId = worksDTO.worksSet.siteWorksSetId
+
+            if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
+              const worksSetService = new WorksSetService(transactionDB)
+              let worksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(siteWorksSetId, rootTaskId)
+              if (isNullish(worksSet)) {
+                worksSet = new WorksSet(worksDTO.worksSet)
+                worksDTO.worksSetId = await worksSetService.save(worksSet) as number
+              } else {
+                worksDTO.worksSetId = worksSet.id
+              }
+            } else {
+              LogUtil.warn('WorksService', `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
+            }
+          }
+
           // 保存站点
-          if (site !== undefined && site !== null) {
+          if (notNullish(site)) {
             const siteService = new SiteService(transactionDB)
             await siteService.saveOnNotExistByDomain(site)
           }
           // 保存站点作者
-          if (siteAuthors !== undefined && siteAuthors !== null) {
+          if (notNullish(siteAuthors)) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
           }
           // 保存站点标签
-          if (siteTags !== undefined && siteTags !== null && siteTags.length > 0) {
+          if (notNullish(siteTags) && siteTags.length > 0) {
             const siteTagService = new SiteTagService(transactionDB)
             await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
           }
@@ -185,7 +210,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           worksDTO.id = await worksService.save(works)
 
           // 关联作品和本地作者
-          if (localAuthors !== undefined && localAuthors !== null && localAuthors.length > 0) {
+          if (notNullish(localAuthors) && localAuthors.length > 0) {
             const localAuthorService = new LocalAuthorService(transactionDB)
             await localAuthorService.link(localAuthors, worksDTO)
           }
