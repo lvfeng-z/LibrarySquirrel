@@ -7,10 +7,6 @@ export default class WorksSetQueryDTO extends BaseQueryDTO {
    */
   id: number | undefined | null
   /**
-   * 集合名称
-   */
-  setName: string | undefined | null
-  /**
    * 集合来源站点id
    */
   siteId: number | undefined | null
@@ -55,7 +51,6 @@ export default class WorksSetQueryDTO extends BaseQueryDTO {
     if (isNullish(worksSetQueryDTO)) {
       super()
       this.id = undefined
-      this.setName = undefined
       this.siteId = undefined
       this.siteWorksSetId = undefined
       this.siteWorksSetName = undefined
@@ -69,7 +64,6 @@ export default class WorksSetQueryDTO extends BaseQueryDTO {
     } else {
       super(worksSetQueryDTO)
       this.id = worksSetQueryDTO.id
-      this.setName = worksSetQueryDTO.setName
       this.siteId = worksSetQueryDTO.siteId
       this.siteWorksSetId = worksSetQueryDTO.siteWorksSetId
       this.siteWorksSetName = worksSetQueryDTO.siteWorksSetName

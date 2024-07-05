@@ -10,10 +10,6 @@ export default class WorksSet extends BaseModel {
    */
   id: number | undefined | null
   /**
-   * 集合名称
-   */
-  setName: string | undefined | null
-  /**
    * 集合来源站点id
    */
   siteId: number | undefined | null
@@ -58,7 +54,6 @@ export default class WorksSet extends BaseModel {
     if (isNullish(worksSet)) {
       super()
       this.id = undefined
-      this.setName = undefined
       this.siteId = undefined
       this.siteWorksSetId = undefined
       this.siteWorksSetName = undefined
@@ -72,7 +67,6 @@ export default class WorksSet extends BaseModel {
     } else {
       super(worksSet)
       this.id = worksSet.id
-      this.setName = worksSet.setName
       this.siteId = worksSet.siteId
       this.siteWorksSetId = worksSet.siteWorksSetId
       this.siteWorksSetName = worksSet.siteWorksSetName

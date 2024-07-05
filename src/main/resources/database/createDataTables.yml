@@ -215,7 +215,6 @@ tables:
         id                   integer not null
         constraint works_pk
         primary key autoincrement,
-        set_name             text,
         site_id              integer,
         site_works_set_id    text,
         site_works_set_name  text,
