@@ -9,18 +9,19 @@ export default class AsyncStatement {
   }
 
   async run(...params: unknown[]): Promise<Database.RunResult> {
-    return new Promise((resolve, reject) => {
-      try {
-        const runResult = this.statement.run(...params)
-        LogUtil.debug(
-          'AsyncStatement',
-          `SQL: ${this.statement.source}\nPARAMS: ${JSON.stringify(params)}`
-        )
-        resolve(runResult)
-      } catch (error) {
-        reject(error)
-      }
-    })
+    // 开启事务之前获取虚拟的排它锁
+    try {
+      await global.connectionPool.acquireVisualLock()
+      const runResult = this.statement.run(...params)
+      LogUtil.debug(
+        'AsyncStatement',
+        `SQL: ${this.statement.source}\nPARAMS: ${JSON.stringify(params)}`
+      )
+      return runResult
+    } finally {
+      // 释放虚拟的排它锁
+      global.connectionPool.releaseVisualLock()
+    }
   }
   get(...params: unknown[]): unknown | undefined {
     return this.statement.get(...params)

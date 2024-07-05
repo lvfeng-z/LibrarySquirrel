@@ -124,9 +124,6 @@ export default class DB {
       connection.exec(`RELEASE ${savepointName}`)
       LogUtil.debug('DB', `${name}，RELEASE ${savepointName}，result: ${result}`)
 
-      // 释放虚拟的排它锁
-      global.connectionPool.releaseVisualLock()
-      this.holdingVisualLock = false
       return result
     } catch (error) {
       // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
@@ -144,6 +141,10 @@ export default class DB {
 
       LogUtil.error('DB', error)
       throw error
+    } finally {
+      // 释放虚拟的排它锁
+      global.connectionPool.releaseVisualLock()
+      this.holdingVisualLock = false
     }
   }
 
