@@ -67,7 +67,8 @@ async function requestSelectDataApi(queryStr?: string) {
       }
       const response = await props.config.api(page)
       if (ApiUtil.apiResponseCheck(response)) {
-        const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>).data
+        const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
+          .data
         innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
       }
     } else {
@@ -115,6 +116,7 @@ async function requestSelectDataApi(queryStr?: string) {
     >
       <el-date-picker
         v-model="data"
+        style="width: 100%"
         :type="props.config.type"
         :disabled="disabled"
         :placeholder="props.config.placeholder"
