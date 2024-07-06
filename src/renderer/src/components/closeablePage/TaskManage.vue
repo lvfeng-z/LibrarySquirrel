@@ -4,8 +4,8 @@ import { reactive, ref } from 'vue'
 
 // 变量
 const apis = reactive({
-  taskServiceCreateTask: window.api.taskServiceCreateTask,
-  taskServiceStartTask: window.api.taskServiceStartTask
+  taskCreateTask: window.api.taskCreateTask,
+  taskStartTask: window.api.taskStartTask
 }) // 接口
 const activeName = ref([1, 2]) // 默认展开的折叠面板
 const importDir = ref('') // 导入目录
@@ -14,13 +14,13 @@ const taskId = ref() // 任务id
 // 方法
 // 保存设置
 function importFromDir() {
-  apis.taskServiceCreateTask('file://'.concat(importDir.value)).then(() => {
+  apis.taskCreateTask('file://'.concat(importDir.value)).then(() => {
     console.log('完成了')
   })
 }
 // 开始任务
 function startTask() {
-  apis.taskServiceStartTask(taskId.value)
+  apis.taskStartTask(taskId.value)
 }
 </script>
 
