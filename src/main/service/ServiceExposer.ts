@@ -23,6 +23,46 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
 
   // LocalAuthorService
+  Electron.ipcMain.handle('localAuthor-save', async (_event, args) => {
+    const service = new LocalAuthorService()
+    try {
+      const page = await service.save(args)
+      return ApiUtil.response(page)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('localAuthor-deleteById', async (_event, args) => {
+    const service = new LocalAuthorService()
+    try {
+      const page = await service.deleteById(args)
+      return ApiUtil.response(page)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('localAuthor-updateById', async (_event, args) => {
+    const service = new LocalAuthorService()
+    try {
+      const page = await service.updateById(args)
+      return ApiUtil.response(page)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('localAuthor-getById', async (_event, args) => {
+    const service = new LocalAuthorService()
+    try {
+      const page = await service.getById(args)
+      return ApiUtil.response(page)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('localAuthor-selectPage', async (_event, args) => {
     const service = new LocalAuthorService()
     args = new PageModel(args)
@@ -205,7 +245,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
 
   // TaskService
-  Electron.ipcMain.handle('taskService-startTask', async (_event, args) => {
+  Electron.ipcMain.handle('task-startTask', async (_event, args) => {
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.startTask(args, mainWindow))
@@ -214,7 +254,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('taskService-createTask', async (_event, args) => {
+  Electron.ipcMain.handle('task-createTask', async (_event, args) => {
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.createTask(args, mainWindow))
@@ -235,7 +275,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('worksService-saveWorks', async (_event, args): Promise<ApiUtil> => {
+  Electron.ipcMain.handle('works-saveWorks', async (_event, args): Promise<ApiUtil> => {
     const worksService = new WorksService()
     try {
       const result = await worksService.saveWorks(args)

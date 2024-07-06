@@ -12,6 +12,7 @@ import ReWorksAuthor from '../model/ReWorksAuthor.ts'
 import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.ts'
 import ReWorksAuthorService from './ReWorksAuthorService.ts'
 import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.ts'
+import { notNullish } from '../util/CommonUtil.ts'
 
 /**
  * 本地作者Service
@@ -49,6 +50,24 @@ export default class LocalAuthorService extends BaseService<
     }
 
     return reWorksAuthorService.saveBatch(reWorksAuthors, true)
+  }
+
+  /**
+   * 分页查询
+   * @param page
+   */
+  public selectPage(
+    page: PageModel<LocalAuthorQueryDTO, LocalAuthor>
+  ): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
+    try {
+      if (notNullish(page.query)) {
+        page.query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
+      }
+      return this.dao.selectPage(page)
+    } catch (error) {
+      LogUtil.error('LocalAuthorService', error)
+      throw error
+    }
   }
 
   /**

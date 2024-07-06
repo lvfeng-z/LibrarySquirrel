@@ -11,11 +11,15 @@ declare global {
       testTaskPluginListenerServiceGetMonitored: function
 
       // LocalAuthorService
+      localAuthorSave: function
+      localAuthorDeleteById: function
+      localAuthorUpdateById: function
+      localAuthorGetById : function
       localAuthorSelectPage: function
       localAuthorGetSelectItems: function
       localAuthorGetSelectItemPage: function
 
-      // LocalTagService
+      // LocalTag
       localTagSave: function
       localTagDeleteById: function
       localTagUpdateById: function
@@ -25,28 +29,28 @@ declare global {
       localTagGetSelectList: function
       localTagGetSelectItemPage: function
 
-      // SettingsService
+      // Settings
       settingsGetSettings: function
       settingsSaveSettings: function
       settingsResetSettings: function
 
-      // SiteService
+      // Site
       siteGetSelectItemPage: function
 
-      // SiteTagService
+      // SiteTag
       siteTagSave: function
       siteTagUpdateById: function
       siteTagUpdateBindLocalTag: function
       siteTagGetBoundOrUnboundInLocalTag: function
       siteTagGetSelectList: function
 
-      // TaskService
-      taskServiceStartTask: function
-      taskServiceCreateTask: function
+      // Task
+      taskStartTask: function
+      taskCreateTask: function
 
-      // WorksService
+      // Works
       worksQueryPage: function
-      worksServiceSaveWorks: function
+      worksSaveWorks: function
     }
   }
 }

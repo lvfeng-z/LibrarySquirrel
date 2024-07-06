@@ -15,6 +15,7 @@ import TaskManage from './components/closeablePage/TaskManage.vue'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
+import LocalAuthorManage from './components/closeablePage/LocalAuthorManage.vue'
 
 // onMounted
 onMounted(() => {
@@ -35,6 +36,7 @@ const pageState = reactive({
   mainPage: true,
   closeablePage: false,
   showTagManagePage: false,
+  showLocalAuthorManagePage: false,
   showTaskManagePage: false,
   showSettingsPage: false
 }) // 悬浮页面开关
@@ -67,6 +69,9 @@ function showFloatPage(pageName) {
   switch (pageName) {
     case 'TagManage':
       pageState.showTagManagePage = true
+      break
+    case 'LocalAuthorManage':
+      pageState.showLocalAuthorManagePage = true
       break
     case 'TaskManage':
       pageState.showTaskManagePage = true
@@ -178,7 +183,9 @@ async function handleTest() {
               <el-icon><User /></el-icon>
               <span>作者</span>
             </template>
-            <el-menu-item index="2-1">本地作者</el-menu-item>
+            <el-menu-item index="2-1" @click="showFloatPage('LocalAuthorManage')"
+              >本地作者</el-menu-item
+            >
             <el-menu-item index="2-2">站点作者</el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="3">
@@ -260,6 +267,10 @@ async function handleTest() {
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
         <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
+        <LocalAuthorManage
+          v-if="pageState.showLocalAuthorManagePage"
+          @close-self="closeFloatPage"
+        />
         <TaskManage v-if="pageState.showTaskManagePage" @close-self="closeFloatPage" />
         <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>

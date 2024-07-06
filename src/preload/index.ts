@@ -10,14 +10,26 @@ const api = {
   testTransactionTest: (args) => {
     return Electron.ipcRenderer.invoke('test-transactionTest', args)
   },
-  testTaskPluginListenerServiceSaveBatch: (args) => {
-    return Electron.ipcRenderer.invoke('test-taskPluginListenerService-saveBatch', args)
+  testTaskPluginListenerSaveBatch: (args) => {
+    return Electron.ipcRenderer.invoke('test-taskPluginListener-saveBatch', args)
   },
-  testTaskPluginListenerServiceGetMonitored: (args) => {
-    return Electron.ipcRenderer.invoke('test-taskPluginListenerService-getMonitored', args)
+  testTaskPluginListenerGetMonitored: (args) => {
+    return Electron.ipcRenderer.invoke('test-taskPluginListener-getMonitored', args)
   },
 
-  // LocalAuthorService
+  // LocalAuthor
+  localAuthorSave: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-save', args)
+  },
+  localAuthorDeleteById: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-deleteById', args)
+  },
+  localAuthorUpdateById: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-updateById', args)
+  },
+  localAuthorGetById: (args) => {
+    return Electron.ipcRenderer.invoke('localAuthor-getById', args)
+  },
   localAuthorSelectPage: (args) => {
     return Electron.ipcRenderer.invoke('localAuthor-selectPage', args)
   },
@@ -28,7 +40,7 @@ const api = {
     return Electron.ipcRenderer.invoke('localAuthor-getSelectItemPage', args)
   },
 
-  // LocalTagService
+  // LocalTag
   localTagSave: (args) => {
     return Electron.ipcRenderer.invoke('localTag-save', args)
   },
@@ -54,7 +66,7 @@ const api = {
     return Electron.ipcRenderer.invoke('localTag-getSelectItemPage', args)
   },
 
-  // SettingsService
+  // Settings
   settingsGetSettings: () => {
     return Electron.ipcRenderer.invoke('settings-getSettings')
   },
@@ -65,12 +77,12 @@ const api = {
     return Electron.ipcRenderer.invoke('settings-resetSettings')
   },
 
-  // SiteService
+  // Site
   siteGetSelectItemPage: (args) => {
     return Electron.ipcRenderer.invoke('site-getSelectItemPage', args)
   },
 
-  // SiteTagService
+  // SiteTag
   siteTagSave: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-save', args)
   },
@@ -87,20 +99,20 @@ const api = {
     return Electron.ipcRenderer.invoke('siteTag-getSelectList', args)
   },
 
-  // TaskService
-  taskServiceCreateTask: (args) => {
-    return Electron.ipcRenderer.invoke('taskService-createTask', args)
+  // Task
+  taskCreateTask: (args) => {
+    return Electron.ipcRenderer.invoke('task-createTask', args)
   },
-  taskServiceStartTask: (args) => {
-    return Electron.ipcRenderer.invoke('taskService-startTask', args)
+  taskStartTask: (args) => {
+    return Electron.ipcRenderer.invoke('task-startTask', args)
   },
 
-  // WorksService
+  // Works
   worksQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('works-queryPage', args)
   },
-  worksServiceSaveWorks: (args) => {
-    return Electron.ipcRenderer.invoke('worksService-saveWorks', args)
+  worksSaveWorks: (args) => {
+    return Electron.ipcRenderer.invoke('works-saveWorks', args)
   }
 }
 
