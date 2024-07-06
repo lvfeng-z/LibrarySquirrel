@@ -353,9 +353,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       ) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
-      page.data = this.getResultTypeDataList<Model>(rows)
+      modifiedPage.data = this.getResultTypeDataList<Model>(rows)
 
-      return page
+      return modifiedPage
     } finally {
       if (!this.injectedDB) {
         db.release()
