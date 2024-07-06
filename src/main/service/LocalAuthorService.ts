@@ -56,14 +56,17 @@ export default class LocalAuthorService extends BaseService<
    * 分页查询
    * @param page
    */
-  public selectPage(
+  public async selectPage(
     page: PageModel<LocalAuthorQueryDTO, LocalAuthor>
   ): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
       if (notNullish(page.query)) {
-        page.query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
+        page.query.assignComparator = {
+          ...{ localAuthorName: COMPARATOR.LIKE },
+          ...page.query.assignComparator
+        }
       }
-      return this.dao.selectPage(page)
+      return super.selectPage(page)
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error

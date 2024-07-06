@@ -14,7 +14,7 @@ import DB from '../database/DB.ts'
 import ReWorksTag from '../model/ReWorksTag.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { ReWorksTagService } from './ReWorksTagService.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
@@ -123,6 +123,27 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     }
 
     return reWorksTagService.saveBatch(links, true)
+  }
+
+  /**
+   * 分页查询
+   * @param page
+   */
+  public async selectPage(
+    page: PageModel<LocalTagQueryDTO, LocalTag>
+  ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
+    try {
+      if (notNullish(page.query)) {
+        page.query.assignComparator = {
+          ...{ localTagName: COMPARATOR.LIKE },
+          ...page.query.assignComparator
+        }
+      }
+      return super.selectPage(page)
+    } catch (error) {
+      LogUtil.error('LocalTagService', error)
+      throw error
+    }
   }
 
   /**

@@ -100,7 +100,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
 // 本地标签SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
-    name: 'keyword',
+    name: 'localTagName',
     type: 'text',
     placeholder: '输入本地标签的名称',
     inputSpan: 10

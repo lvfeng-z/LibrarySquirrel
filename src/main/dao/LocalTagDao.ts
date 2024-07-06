@@ -3,7 +3,6 @@ import SelectItem from '../model/utilModels/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
-import PageModel from '../model/utilModels/PageModel.ts'
 import DB from '../database/DB.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
@@ -12,52 +11,6 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   }
   protected getPrimaryKeyColumnName(): string {
     return 'id'
-  }
-
-  public async selectPage(
-    page: PageModel<LocalTagQueryDTO, LocalTag>
-  ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
-    const db = this.acquire()
-    try {
-      const selectClause = 'select * from local_tag'
-      let whereClause: string | undefined
-      const modifiedPage = new PageModel(page)
-
-      if (page.query !== undefined) {
-        const whereClausesAndQuery = this.getWhereClauses(page.query)
-
-        modifiedPage.query = whereClausesAndQuery.query
-
-        const whereClauses = Object.entries(whereClausesAndQuery.whereClauses).map(
-          (whereClause) => whereClause[1]
-        )
-
-        // 处理keyword
-        if (StringUtil.isNotBlank(modifiedPage.query.keyword)) {
-          whereClauses.push('local_tag_name like @keyword')
-          modifiedPage.query = new LocalTagQueryDTO(page.query)
-          whereClausesAndQuery.query.keyword = modifiedPage.query.getKeywordLikeString()
-        }
-        whereClause = this.splicingWhereClauses(whereClauses)
-      }
-
-      // 拼接查询语句
-      let statement = selectClause
-      if (whereClause !== undefined) {
-        statement = statement.concat(' ', whereClause)
-      }
-      // 拼接排序和分页字句
-      statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
-
-      modifiedPage.data = this.getResultTypeDataList<LocalTag>(
-        (await db.prepare(statement)).all(modifiedPage.query) as []
-      )
-      return modifiedPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
   }
 
   public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
