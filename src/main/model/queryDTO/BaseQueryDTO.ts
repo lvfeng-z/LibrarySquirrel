@@ -1,7 +1,7 @@
 import BaseModel from '../BaseModel.ts'
 import { COMPARATOR } from '../../constant/CrudConstant.ts'
 import QuerySortOption from '../../constant/QuerySortOption.ts'
-import lodash from 'lodash'
+import DatabaseUtil from '../../util/DatabaseUtil.ts'
 
 export default class BaseQueryDTO extends BaseModel {
   /**
@@ -36,7 +36,7 @@ export default class BaseQueryDTO extends BaseModel {
    * 获取可用于查询的实例
    */
   public getQueryObject() {
-    const query = lodash.pickBy(this, (value) => typeof value !== 'function')
+    const query = DatabaseUtil.toObjAcceptedBySqlite3(this)
     delete query.assignComparator
     delete query.sort
     return query
@@ -45,7 +45,7 @@ export default class BaseQueryDTO extends BaseModel {
   /**
    * 获取keyword的全匹配字符串
    */
-  public getKeywordLikeString() {
+  public keywordForFullMatch() {
     return '%' + this.keyword + '%'
   }
 }

@@ -94,7 +94,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
         StringUtil.isNotBlank(page.query.keyword)
       ) {
         whereClauses.keyword = 't1.site_tag_name like @keyword'
-        modifiedQuery.keyword = page.query.getKeywordLikeString()
+        modifiedQuery.keyword = page.query.keywordForFullMatch()
       }
 
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])

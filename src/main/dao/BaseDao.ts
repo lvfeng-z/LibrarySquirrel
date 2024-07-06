@@ -538,12 +538,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const whereClauses: string[] = []
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
-    const modifiedQuery: Query = lodash.clone(queryConditions)
+    const modifiedQuery: Query = Object.assign(new BaseQueryDTO(), queryConditions)
     // 去除值为undefined的属性和assignComparator属性
     Object.entries(queryConditions)
       .filter(
         ([key, value]) =>
-          value !== undefined && key !== 'assignComparator' && key !== 'keyword' && key !== 'sort'
+          value !== undefined &&
+          (typeof value === 'string' ? StringUtil.isNotBlank(value) : true) &&
+          key !== 'assignComparator' &&
+          key !== 'keyword' &&
+          key !== 'sort'
       )
       .forEach(([key, value]) => {
         const snakeCaseKey = StringUtil.camelToSnakeCase(key)
@@ -604,13 +608,17 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   } {
     const whereClauses: Record<string, string> = {}
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
-    const modifiedQuery = lodash.clone(queryConditions)
+    const modifiedQuery = Object.assign(queryConditions, queryConditions)
     if (queryConditions) {
       // 去除值为undefined的属性和assignComparator、keyword属性
       Object.entries(queryConditions)
         .filter(
           ([key, value]) =>
-            value !== undefined && key !== 'assignComparator' && key !== 'keyword' && key !== 'sort'
+            value !== undefined &&
+            (typeof value === 'string' ? StringUtil.isNotBlank(value) : true) &&
+            key !== 'assignComparator' &&
+            key !== 'keyword' &&
+            key !== 'sort'
         )
         .forEach(([key, value]) => {
           if (value !== undefined && value !== '') {
@@ -718,12 +726,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'from ')
       }
       // 查询数据总量，计算页码数量
-      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(page.query)
+      const notNullishValue = DatabaseUtil.toObjAcceptedBySqlite3(page.query)
       let countSql = `SELECT COUNT(*) AS total FROM ${fromClause}`
       if (whereClause !== undefined) {
         countSql = countSql.concat(' ', whereClause)
       }
-      const countResult = (await db.prepare(countSql)).get(nonUndefinedValue) as { total: number }
+      const countResult = (await db.prepare(countSql)).get(notNullishValue) as { total: number }
       page.dataCount = countResult.total
       page.pageCount = Math.ceil(countResult.total / page.pageSize)
 
