@@ -154,8 +154,8 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
 
 const showTestDialog = ref(false)
 async function handleTest() {
-  // showExplainPath.value = true
-  showTestDialog.value = true
+  showExplainPath.value = true
+  // showTestDialog.value = true
 }
 </script>
 
@@ -267,6 +267,7 @@ async function handleTest() {
     <explain-path
       v-model:state="showExplainPath"
       :string-to-explain="pathWaitingExplain"
+      :close-on-click-modal="false"
     ></explain-path>
     <transaction-test v-model="showTestDialog"></transaction-test>
   </div>

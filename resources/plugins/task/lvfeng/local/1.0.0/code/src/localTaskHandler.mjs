@@ -139,7 +139,7 @@ class TaskStream extends Readable{
           // 请求用户解释目录含义
           const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPaths = await waitUserInput
-          // 如果含义是作品集
+          // 如果含义是作品集，路径作为站点作品集id
           meaningOfPaths.forEach(meaningOfPath => {
             if (meaningOfPath.type === 'worksSetName') {
               meaningOfPath.details = { siteWorksSetId: dir }
