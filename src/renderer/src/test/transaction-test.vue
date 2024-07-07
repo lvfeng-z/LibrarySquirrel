@@ -9,7 +9,7 @@ import lodash from 'lodash'
 // 变量
 // 接口
 const apis = {
-  worksServiceSaveWorks: window.api.worksServiceSaveWorks,
+  worksSaveWorks: window.api.worksSaveWorks,
   testTransactionTest: window.api.testTransactionTest
 }
 const site = ref(new Site())
@@ -22,7 +22,7 @@ function saveWorks() {
   worksDTO.site = lodash.cloneDeep(site.value)
   worksDTO.siteAuthor = lodash.cloneDeep(siteAuthor.value)
   worksDTO.localTags = lodash.cloneDeep([localTag.value])
-  apis.worksServiceSaveWorks(worksDTO)
+  apis.worksSaveWorks(worksDTO)
   // apis.testTransactionTest()
 }
 </script>

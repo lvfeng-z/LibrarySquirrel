@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
-import TagManage from './components/closeablePage/TagManage.vue'
+import LocalTagManage from './components/closeablePage/LocalTagManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import Settings from './components/closeablePage/Settings.vue'
@@ -266,13 +266,13 @@ async function handleTest() {
         ></works-display-area>
       </div>
       <div v-if="pageState.closeablePage" class="floatPage">
-        <TagManage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
-        <LocalAuthorManage
+        <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
+        <local-author-manage
           v-if="pageState.showLocalAuthorManagePage"
           @close-self="closeFloatPage"
         />
-        <TaskManage v-if="pageState.showTaskManagePage" @close-self="closeFloatPage" />
-        <Settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
+        <task-manage v-if="pageState.showTaskManagePage" @close-self="closeFloatPage" />
+        <settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
       </div>
     </div>
     <explain-path
