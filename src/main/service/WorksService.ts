@@ -42,58 +42,16 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       worksDTO.resourceStream !== null
     ) {
       // 处理作者信息
-      let siteAuthorName: string = 'unknownAuthor'
-      if (
-        worksDTO.siteAuthors !== undefined &&
-        worksDTO.siteAuthors !== null &&
-        worksDTO.siteAuthors.length > 0
-      ) {
-        const target = worksDTO.siteAuthors.filter(
-          (siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN
-        )
-        if (target.length === 0) {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
-          )
-        } else if (target.length > 1) {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
-          )
-        } else {
-          siteAuthorName = target[0].siteAuthorName as string
-        }
-      } else if (
-        worksDTO.localAuthors !== undefined &&
-        worksDTO.localAuthors !== null &&
-        worksDTO.localAuthors.length > 0
-      ) {
-        const target = worksDTO.localAuthors.filter(
-          (localAuthor) => localAuthor.authorRole === AuthorRole.MAIN
-        )
-        if (target.length === 0) {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
-          )
-        } else if (target.length > 1) {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
-          )
-        } else {
-          siteAuthorName = target[0].localAuthorName as string
-        }
-      }
+      const tempName = this.getAuthorNameFromAuthorDTO(worksDTO)
+      const authorName = tempName === undefined ? 'unknownAuthor' : tempName
 
       // 作品信息
       const siteWorksName =
         worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
 
       // 保存路径
-      const fileName = `${siteAuthorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
-      const relativeSavePath = path.join(siteAuthorName)
+      const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
+      const relativeSavePath = path.join(authorName)
       const fullSavePath = path.join(settings.workdir, relativeSavePath)
 
       const pipelinePromise = promisify(
@@ -266,5 +224,79 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       LogUtil.error('WorksService', error)
       throw error
     }
+  }
+
+  /**
+   * 从作品信息中提取用于文件名的作者名称
+   * @param worksDTO
+   * @private
+   */
+  private getAuthorNameFromAuthorDTO(worksDTO: WorksDTO): string | undefined {
+    let authorName: string | undefined
+    // 优先使用站点作者名称
+    if (
+      worksDTO.siteAuthors !== undefined &&
+      worksDTO.siteAuthors !== null &&
+      worksDTO.siteAuthors.length > 0
+    ) {
+      const mainAuthor = worksDTO.siteAuthors.filter(
+        (siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN
+      )
+      // 先查找主作者，没有主作者就查找平级作者
+      if (mainAuthor.length > 0) {
+        if (mainAuthor.length > 1) {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`
+          )
+        } else {
+          authorName = mainAuthor[0].siteAuthorName as string
+        }
+      } else {
+        const equalAuthor = worksDTO.siteAuthors.filter(
+          (siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL
+        )
+        if (equalAuthor.length > 0) {
+          authorName = equalAuthor[0].siteAuthorName as string
+        } else {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
+          )
+        }
+      }
+    } else if (
+      worksDTO.localAuthors !== undefined &&
+      worksDTO.localAuthors !== null &&
+      worksDTO.localAuthors.length > 0
+    ) {
+      const mainAuthor = worksDTO.localAuthors.filter(
+        (localAuthor) => localAuthor.authorRole === AuthorRole.MAIN
+      )
+      // 先查找主作者，没有主作者就查找平级作者
+      if (mainAuthor.length > 0) {
+        if (mainAuthor.length > 1) {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`
+          )
+        } else {
+          authorName = mainAuthor[0].localAuthorName as string
+        }
+      } else {
+        const equalAuthor = worksDTO.localAuthors.filter(
+          (siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL
+        )
+        if (equalAuthor.length > 0) {
+          authorName = equalAuthor[0].localAuthorName as string
+        } else {
+          LogUtil.warn(
+            'WorksService',
+            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
+          )
+        }
+      }
+    }
+    return authorName
   }
 }

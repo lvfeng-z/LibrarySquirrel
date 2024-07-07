@@ -139,10 +139,14 @@ class TaskStream extends Readable{
           // 请求用户解释目录含义
           const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPaths = await waitUserInput
-          // 如果含义是作品集，路径作为站点作品集id
           meaningOfPaths.forEach(meaningOfPath => {
+            // 如果含义是作品集，路径作为站点作品集id
             if (meaningOfPath.type === 'worksSetName') {
               meaningOfPath.details = { siteWorksSetId: dir }
+            }
+            // 如果含义是作者，作者角色设置为平级作者
+            if (meaningOfPath.type === 'author') {
+              meaningOfPath.details.authorRole = 2
             }
           })
           // 将获得的目录含义并入从上级目录继承的含义数组中
