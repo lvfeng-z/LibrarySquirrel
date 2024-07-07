@@ -29,8 +29,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       // 创建一个新的PageModel实例存储修改过的查询条件
       const modifiedPage = new PageModel(page)
       let statement: string
-      const selectClause = `select t1.*, json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor`
-      const fromClause = 'from works t1 left join local_author t2 on t1.local_author_id = t2.id'
+      const selectClause = `select t1.*`
+      const fromClause = `from works t1`
+      let whereClause: string | undefined
       if (modifiedPage.query !== undefined && page.query !== undefined) {
         const baseProperties = lodash.cloneDeep(modifiedPage.query)
         // 去掉虚拟列
@@ -88,7 +89,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         }
 
         // 拼接where子句
-        const whereClause = this.splicingWhereClauses(whereClauses)
+        whereClause = this.splicingWhereClauses(whereClauses)
 
         // 拼接语句
         statement = selectClause.concat(' ', fromClause)
@@ -101,7 +102,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       }
 
       // 排序和分页子句
-      statement = await this.sorterAndPager(statement, '', modifiedPage, fromClause)
+      statement = await this.sorterAndPager(statement, whereClause, modifiedPage, fromClause)
 
       const rows = this.getResultTypeDataList<WorksDTO>(
         (await db.prepare(statement)).all(modifiedPage.query) as []
