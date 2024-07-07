@@ -172,7 +172,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           // 保存作品
           const works = new Works(worksDTO)
           const worksService = new WorksService(transactionDB)
-          worksDTO.id = await worksService.save(works)
+          worksDTO.id = (await worksService.save(works)) as number
 
           // 关联作品和本地作者
           if (notNullish(localAuthors) && localAuthors.length > 0) {
@@ -219,7 +219,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   ): Promise<PageModel<WorksQueryDTO, Works>> {
     page = new PageModel(page)
     try {
-      return this.dao.synthesisQueryPage(page)
+      const resultPage = await this.dao.synthesisQueryPage(page)
+      if (notNullish(resultPage.data)) {
+        const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
+        console.log(worksIds)
+      }
+      return resultPage
     } catch (error) {
       LogUtil.error('WorksService', error)
       throw error

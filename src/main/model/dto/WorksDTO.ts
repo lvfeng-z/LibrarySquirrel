@@ -12,6 +12,10 @@ import WorksSet from '../WorksSet.ts'
  */
 export default class WorksDTO extends Works {
   /**
+   * 主键
+   */
+  id: number | undefined | null
+  /**
    * 站点
    */
   site: Site | undefined | null
@@ -54,6 +58,7 @@ export default class WorksDTO extends Works {
   constructor(works?: WorksDTO) {
     if (works === undefined) {
       super()
+      this.id = undefined
       this.site = undefined
       this.localAuthors = undefined
       this.siteAuthors = undefined
@@ -64,6 +69,7 @@ export default class WorksDTO extends Works {
       this.resourceSize = undefined
     } else {
       super(works)
+      this.id = works.id
       this.site = works.site
       this.localAuthors = works.localAuthors
       this.localTags = works.localTags
