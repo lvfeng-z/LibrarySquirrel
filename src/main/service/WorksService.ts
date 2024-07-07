@@ -169,7 +169,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         try {
           // 如果worksSet不为空，则此作品是作品集中的作品
           if (notNullish(worksDTO.worksSet) && notNullish(worksDTO.includeTaskId)) {
-            const taskService = new TaskService()
+            const taskService = new TaskService(transactionDB)
             const includeTask = await taskService.getById(worksDTO.includeTaskId)
             const rootTaskId = includeTask.parentId
             const siteWorksSetId = worksDTO.worksSet.siteWorksSetId
