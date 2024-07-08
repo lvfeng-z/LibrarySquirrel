@@ -103,4 +103,14 @@ export default class LocalAuthorService extends BaseService<
       throw error
     }
   }
+
+  /**
+   * 批量获取作品与作者的关联
+   * @param worksIds
+   */
+  public async getWorksAuthorRelationShip(
+    worksIds: number[]
+  ): Promise<Map<number, LocalAuthorDTO[]>> {
+    return this.dao.getWorksAuthorRelationShip(worksIds)
+  }
 }

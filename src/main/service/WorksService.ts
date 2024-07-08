@@ -219,10 +219,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   ): Promise<PageModel<WorksQueryDTO, Works>> {
     page = new PageModel(page)
     try {
+      // 查询作品信息
       const resultPage = await this.dao.synthesisQueryPage(page)
+
+      // 给每个作品附加作者信息
       if (notNullish(resultPage.data)) {
         const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
-        console.log(worksIds)
+        const localAuthorService = new LocalAuthorService()
+        const relationShipMap = await localAuthorService.getWorksAuthorRelationShip(worksIds)
+        resultPage.data.forEach((worksDTO) => {
+          worksDTO.localAuthors = relationShipMap.get(worksDTO.id as number)
+        })
       }
       return resultPage
     } catch (error) {
