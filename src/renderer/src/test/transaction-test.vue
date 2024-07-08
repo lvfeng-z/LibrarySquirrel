@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Site from '../model/main/Site'
-import SiteAuthor from '../model/main/SiteAuthor'
 import LocalTag from '../model/main/LocalTag'
 import WorksDTO from '../model/main/dto/WorksDTO'
 import lodash from 'lodash'
+import SiteAuthorDTO from '../model/main/dto/SiteAuthorDTO'
 
 // 变量
 // 接口
@@ -13,14 +13,16 @@ const apis = {
   testTransactionTest: window.api.testTransactionTest
 }
 const site = ref(new Site())
-const siteAuthor = ref(new SiteAuthor())
+const siteAuthor = ref(new SiteAuthorDTO())
 const localTag = ref(new LocalTag())
 
 // 方法
 function saveWorks() {
   const worksDTO = new WorksDTO()
   worksDTO.site = lodash.cloneDeep(site.value)
-  worksDTO.siteAuthor = lodash.cloneDeep(siteAuthor.value)
+  const siteAuthors: SiteAuthorDTO[] = []
+  siteAuthors.push(lodash.cloneDeep(siteAuthor.value))
+  worksDTO.siteAuthors = siteAuthors
   worksDTO.localTags = lodash.cloneDeep([localTag.value])
   apis.worksSaveWorks(worksDTO)
   // apis.testTransactionTest()

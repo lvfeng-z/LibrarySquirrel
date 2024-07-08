@@ -3,7 +3,6 @@ import WorksInfo from './WorksInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
 import WorksDTO from '../../model/main/dto/WorksDTO.ts'
-import LocalAuthor from '../../model/main/LocalAuthor'
 
 // props
 const props = defineProps<{
@@ -41,11 +40,7 @@ function handleElImageFit(event) {
     <works-info class="works-display-case-works-info" :works="works"></works-info>
     <author-info
       class="works-display-case-author-info"
-      :author="
-        props.works.localAuthor === undefined || props.works.localAuthor === null
-          ? new LocalAuthor()
-          : props.works.localAuthor
-      "
+      :authors="props.works.localAuthors"
     ></author-info>
   </div>
 </template>

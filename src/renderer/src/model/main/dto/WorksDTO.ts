@@ -1,10 +1,10 @@
 import Works from '../Works.ts'
-import LocalAuthor from '../LocalAuthor.ts'
 import fs from 'fs'
 import LocalTag from '../LocalTag'
 import Site from '../Site'
 import SiteTag from '../SiteTag'
-import SiteAuthor from '../SiteAuthor'
+import LocalAuthorDTO from './LocalAuthorDTO'
+import SiteAuthorDTO from './SiteAuthorDTO'
 
 /**
  * 作品
@@ -18,7 +18,7 @@ export default class WorksDTO extends Works {
   /**
    * 本地作者
    */
-  localAuthor: LocalAuthor | undefined | null
+  localAuthors: LocalAuthorDTO[] | undefined | null
 
   /**
    * 本地标签数组
@@ -28,7 +28,7 @@ export default class WorksDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthor: SiteAuthor | undefined | null
+  siteAuthors: SiteAuthorDTO[] | undefined | null
 
   /**
    * 站点标签数组
@@ -49,8 +49,8 @@ export default class WorksDTO extends Works {
     if (works === undefined) {
       super()
       this.site = undefined
-      this.localAuthor = undefined
-      this.siteAuthor = undefined
+      this.localAuthors = undefined
+      this.siteAuthors = undefined
       this.localTags = undefined
       this.siteTags = undefined
       this.resourceStream = undefined
@@ -58,9 +58,9 @@ export default class WorksDTO extends Works {
     } else {
       super(works)
       this.site = works.site
-      this.localAuthor = works.localAuthor
+      this.localAuthors = works.localAuthors
       this.localTags = works.localTags
-      this.siteAuthor = works.siteAuthor
+      this.siteAuthors = works.siteAuthors
       this.siteTags = works.siteTags
       this.resourceStream = works.resourceStream
       this.resourceSize = works.resourceSize
