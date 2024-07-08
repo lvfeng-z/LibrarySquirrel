@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+
+// props
+const props = withDefaults(
+  defineProps<{
+    textAlign?: 'left' | 'center' | 'right' | 'justify'
+  }>(),
+  { textAlign: 'center' }
+)
 // onMounted
 onMounted(() => {
   resizeObserver = new ResizeObserver(triggerVScrollableUpdate)
   if (scrollTextBoxRef.value) {
     resizeObserver.observe(scrollTextBoxRef.value)
+  }
+  if (scrollTextBoxLabelRef.value) {
+    scrollTextBoxLabelRef.value.style.setProperty('--animationName', 'scroll-text-left')
   }
 })
 
@@ -17,6 +28,7 @@ onBeforeUnmount(() => {
 
 // 变量
 const scrollTextBoxRef = ref()
+const scrollTextBoxLabelRef = ref()
 let resizeObserver: ResizeObserver
 
 // 方法
@@ -37,8 +49,17 @@ async function triggerVScrollableUpdate() {
 }
 </script>
 <template>
-  <div ref="scrollTextBoxRef" v-scrollable class="scroll-text-box">
-    <label class="scroll-text-box-text scrollable-check">
+  <div
+    ref="scrollTextBoxRef"
+    v-scrollable
+    :class="{
+      'scroll-text-box': true,
+      left: props.textAlign === 'left',
+      center: props.textAlign === 'center',
+      right: props.textAlign === 'right'
+    }"
+  >
+    <label ref="scrollTextBoxLabelRef" class="scrollable-check">
       <slot></slot>
     </label>
   </div>
@@ -49,13 +70,18 @@ async function triggerVScrollableUpdate() {
   display: flex;
   align-items: center;
   align-content: center;
-  justify-content: center;
-}
-.scroll-text-box .scroll-text-box-text {
-  white-space: nowrap;
-  text-align: center;
 }
 .scroll-text {
-  animation: scroll-text 10s linear infinite;
+  --animationName: scroll-text;
+  animation: var(--animationName) 10s linear infinite;
+}
+.left {
+  justify-content: left;
+}
+.center {
+  justify-content: center;
+}
+.right {
+  justify-content: right;
 }
 </style>
