@@ -45,8 +45,6 @@ async function triggerVScrollableUpdate() {
 </template>
 <style scoped>
 .scroll-text-box {
-  width: 100%;
-  height: 100%;
   overflow: hidden;
   display: flex;
   align-items: center;

@@ -122,7 +122,9 @@ function handleClickOutSide() {
                     class="dropdown-table-label-scroll-text-wrapper el-tag-mimic"
                     style="width: 100%"
                   >
-                    <ScrollTextBox>{{ item.label }}</ScrollTextBox>
+                    <scroll-text-box class="dropdown-table-label-scroll-text">{{
+                      item.label
+                    }}</scroll-text-box>
                   </div>
                 </el-col>
                 <el-col class="dropdown-table-input" :span="item.inputSpan">
@@ -214,5 +216,9 @@ function handleClickOutSide() {
 .dropdown-table-rows {
   flex-direction: column;
   width: 100%;
+}
+.dropdown-table-label-scroll-text {
+  width: 100%;
+  height: 100%;
 }
 </style>
