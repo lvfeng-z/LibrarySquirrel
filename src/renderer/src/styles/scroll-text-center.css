@@ -1,4 +1,4 @@
-@keyframes scroll-text {
+@keyframes scroll-text-center {
   0% {
     transform: translateX(0);
   }

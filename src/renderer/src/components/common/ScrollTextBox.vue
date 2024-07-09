@@ -4,9 +4,10 @@ import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 // props
 const props = withDefaults(
   defineProps<{
-    textAlign?: 'left' | 'center' | 'right' | 'justify'
+    textAlign?: 'left' | 'center' | 'right'
+    duration?: number
   }>(),
-  { textAlign: 'center' }
+  { textAlign: 'center', duration: 10 }
 )
 // onMounted
 onMounted(() => {
@@ -15,7 +16,21 @@ onMounted(() => {
     resizeObserver.observe(scrollTextBoxRef.value)
   }
   if (scrollTextBoxLabelRef.value) {
-    scrollTextBoxLabelRef.value.style.setProperty('--animationName', 'scroll-text-left')
+    scrollTextBoxLabelRef.value.style.setProperty(
+      '--animationDuration',
+      String(props.duration).concat('s')
+    )
+    switch (props.textAlign) {
+      case 'left':
+        scrollTextBoxLabelRef.value.style.setProperty('--animationName', 'scroll-text-left')
+        break
+      case 'center':
+        scrollTextBoxLabelRef.value.style.setProperty('--animationName', 'scroll-text-center')
+        break
+      case 'right':
+        scrollTextBoxLabelRef.value.style.setProperty('--animationName', 'scroll-text-right')
+        break
+    }
   }
 })
 
@@ -45,13 +60,13 @@ async function triggerVScrollableUpdate() {
     } else {
       label.classList.remove('scroll-text')
     }
+    return
   }
 }
 </script>
 <template>
   <div
     ref="scrollTextBoxRef"
-    v-scrollable
     :class="{
       'scroll-text-box': true,
       left: props.textAlign === 'left',
@@ -72,8 +87,9 @@ async function triggerVScrollableUpdate() {
   align-content: center;
 }
 .scroll-text {
-  --animationName: scroll-text;
-  animation: var(--animationName) 10s linear infinite;
+  --animationName: scroll-text-center;
+  --animationDuration: 10s;
+  animation: var(--animationName) var(--animationDuration) linear infinite;
 }
 .left {
   justify-content: left;

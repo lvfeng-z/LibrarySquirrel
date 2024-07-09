@@ -118,7 +118,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'id',
-    label: 'id321321321321321321',
+    label: 'id',
     type: 'text',
     placeholder: '内部id'
   }
