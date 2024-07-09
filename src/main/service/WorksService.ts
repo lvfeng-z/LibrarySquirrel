@@ -225,11 +225,13 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       // 给每个作品附加作者信息
       if (notNullish(resultPage.data)) {
         const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
-        const localAuthorService = new LocalAuthorService()
-        const relationShipMap = await localAuthorService.getWorksAuthorRelationShip(worksIds)
-        resultPage.data.forEach((worksDTO) => {
-          worksDTO.localAuthors = relationShipMap.get(worksDTO.id as number)
-        })
+        if (worksIds.length > 0) {
+          const localAuthorService = new LocalAuthorService()
+          const relationShipMap = await localAuthorService.getWorksAuthorRelationShip(worksIds)
+          resultPage.data.forEach((worksDTO) => {
+            worksDTO.localAuthors = relationShipMap.get(worksDTO.id as number)
+          })
+        }
       }
       return resultPage
     } catch (error) {
