@@ -30,6 +30,17 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
    */
   localAuthorId: number | undefined | null
 
+  // 查询用字段
+  /**
+   * 标签来源站点id列表
+   */
+  sites?: string[] | undefined | null
+
+  /**
+   * 查询绑定在localTagId上的，还是未绑定的（true：绑定的，false：未绑定的）
+   */
+  bound?: boolean | undefined | null
+
   constructor(siteAuthorQueryDTO?: SiteAuthorQueryDTO) {
     if (siteAuthorQueryDTO === undefined) {
       super()
@@ -39,6 +50,8 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
       this.siteAuthorNameBefore = undefined
       this.introduce = undefined
       this.localAuthorId = undefined
+      this.sites = undefined
+      this.bound = undefined
     } else {
       super(siteAuthorQueryDTO)
       this.siteId = siteAuthorQueryDTO.siteId
@@ -47,6 +60,8 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
       this.siteAuthorNameBefore = siteAuthorQueryDTO.siteAuthorNameBefore
       this.introduce = siteAuthorQueryDTO.introduce
       this.localAuthorId = siteAuthorQueryDTO.localAuthorId
+      this.sites = siteAuthorQueryDTO.sites
+      this.bound = siteAuthorQueryDTO.bound
     }
   }
 }

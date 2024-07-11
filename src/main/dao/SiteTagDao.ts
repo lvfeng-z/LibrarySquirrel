@@ -15,10 +15,6 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     super('site_tag', 'SiteTagDao', db)
   }
 
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
-
   /**
    * 站点标签绑定在本地标签上
    * @param localTagId 本地标签id
@@ -157,5 +153,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
         db.release()
       }
     }
+  }
+
+  protected getPrimaryKeyColumnName(): string {
+    return 'id'
   }
 }
