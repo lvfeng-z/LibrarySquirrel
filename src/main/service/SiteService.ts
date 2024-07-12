@@ -19,13 +19,13 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param site
    */
   public async saveOnNotExistByDomain(site: Site) {
-    if (StringUtil.isBlank(site.siteDomain)) {
-      LogUtil.warn('SiteService', '保存站点时，站点域名意外为空')
-    } else {
-      const oldSite = await this.getByDomain(site.siteDomain as string)
+    if (StringUtil.isNotBlank(site.siteDomain)) {
+      const oldSite = await this.getByDomain(site.siteDomain)
       if (isNullish(oldSite)) {
         await this.save(site)
       }
+    } else {
+      LogUtil.warn('SiteService', '保存站点时，站点域名意外为空')
     }
   }
 

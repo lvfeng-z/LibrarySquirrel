@@ -37,6 +37,10 @@ declare global {
       // Site
       siteGetSelectItemPage: function
 
+      // SiteAuthor
+      siteAuthorUpdateBindLocalAuthor: function
+      siteAuthorGetBoundOrUnboundInLocalAuthor: function
+
       // SiteTag
       siteTagSave: function
       siteTagUpdateById: function

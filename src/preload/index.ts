@@ -82,6 +82,14 @@ const api = {
     return Electron.ipcRenderer.invoke('site-getSelectItemPage', args)
   },
 
+  // SiteAuthor
+  siteAuthorUpdateBindLocalAuthor: (arg1, arg2) => {
+    return Electron.ipcRenderer.invoke('siteAuthor-updateBindLocalAuthor', arg1, arg2)
+  },
+  siteAuthorGetBoundOrUnboundInLocalAuthor: (args) => {
+    return Electron.ipcRenderer.invoke('siteAuthor-getBoundOrUnboundInLocalAuthor', args)
+  },
+
   // SiteTag
   siteTagSave: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-save', args)

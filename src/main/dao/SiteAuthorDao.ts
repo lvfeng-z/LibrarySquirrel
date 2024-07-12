@@ -88,7 +88,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       }
 
       const selectClause = `select t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
-                json_object('id', t2.id, 'localAuthorName', t2.local_author_name, 'baseLocalAuthorId') as localAuthor,
+                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
       const fromClause = `from site_author t1
           left join local_author t2 on t1.local_author_id = t2.id
@@ -113,9 +113,11 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
       // 拼接sql语句
-      let statement = selectClause + ' ' + fromClause
+      let statement = selectClause.concat(' ', fromClause)
       const whereClause = super.splicingWhereClauses(whereClauseArray)
-      statement += ' ' + whereClause
+      if (StringUtil.isNotBlank(whereClause)) {
+        statement = statement.concat(' ', whereClause)
+      }
       statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
       // 查询

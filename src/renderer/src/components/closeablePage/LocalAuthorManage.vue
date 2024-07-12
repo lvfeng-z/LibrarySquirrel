@@ -25,12 +25,11 @@ const apis = {
   localAuthorDeleteById: window.api.localAuthorDeleteById,
   localAuthorUpdateById: window.api.localAuthorUpdateById,
   localAuthorSelectPage: window.api.localAuthorSelectPage,
-  siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteTagSave: window.api.siteTagSave,
   siteTagUpdateById: window.api.siteTagUpdateById,
-  siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
+  siteAuthorUpdateBindLocalAuthor: window.api.siteAuthorUpdateBindLocalAuthor,
   siteGetSelectItemPage: window.api.siteGetSelectItemPage,
-  siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
+  siteAuthorGetBoundOrUnboundInLocalAuthor: window.api.siteAuthorGetBoundOrUnboundInLocalAuthor
 }
 // localTagSearchTable子组件
 const localTagSearchTable = ref()
@@ -39,7 +38,7 @@ const siteTagExchangeBox = ref()
 // localTagDialog子组件
 const localTagDialog = ref()
 // 被选中的本地标签
-const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
+const localAuthorSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem[] = [
   {
@@ -171,12 +170,12 @@ function handleRowButtonClicked(op: DataTableOperationResponse) {
 // 处理被选中的本地标签改变的事件
 async function handleLocalTagSelectionChange(selections: object[]) {
   if (selections.length > 0) {
-    localTagSelected.value = selections[0]
+    localAuthorSelected.value = selections[0]
     // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
     await nextTick()
     siteTagExchangeBox.value.refreshData()
   } else {
-    localTagSelected.value = {}
+    localAuthorSelected.value = {}
   }
 }
 // 处理本地标签弹窗请求成功事件
@@ -207,14 +206,17 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
     const boundIds = bound.map((item) => item.value)
-    upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
+    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(
+      localAuthorSelected.value['id'],
+      boundIds
+    )
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }
   let lowerResponse: ApiResponse
   if (unBound && unBound.length > 0) {
     const unBoundIds = unBound.map((item) => item.value)
-    lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
+    lowerResponse = await apis.siteAuthorUpdateBindLocalAuthor(null, unBoundIds)
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
   }
@@ -257,14 +259,14 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             upper-title="已绑定站点作者"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-            :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
+            :upper-search-api="apis.siteAuthorGetBoundOrUnboundInLocalAuthor"
+            :upper-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: true }"
             lower-title="可绑定站点作者"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
-            :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
-            required-static-params="localTagId"
+            :lower-search-api="apis.siteAuthorGetBoundOrUnboundInLocalAuthor"
+            :lower-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: false }"
+            required-static-params="localAuthorId"
             @exchange-confirm="handleExchangeBoxConfirm"
           ></ExchangeBox>
         </div>

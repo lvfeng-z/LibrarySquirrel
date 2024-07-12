@@ -12,6 +12,7 @@ import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from './TaskService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
+import SiteAuthorService from './SiteAuthorService.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -185,6 +186,26 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
     const siteService = new SiteService()
     try {
       return ApiUtil.response(await siteService.getSelectItemPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+
+  // SiteAuthorService
+  Electron.ipcMain.handle('siteAuthor-updateBindLocalAuthor', async (_event, arg1, arg2) => {
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.updateBindLocalAuthor(arg1, arg2))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('siteAuthor-getBoundOrUnboundInLocalAuthor', async (_event, args) => {
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.getBoundOrUnboundInLocalAuthor(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

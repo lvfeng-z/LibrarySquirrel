@@ -12,6 +12,9 @@ import ReWorksAuthorService from './ReWorksAuthorService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 import { isNullish } from '../util/CommonUtil.ts'
+import ApiUtil from '../util/ApiUtil.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import SelectItem from '../model/utilModels/SelectItem.ts'
 
 /**
  * 站点作者Service
@@ -106,6 +109,52 @@ export default class SiteAuthorService extends BaseService<
       }
     })
     return super.saveOrUpdateBatchById(newSiteAuthors)
+  }
+
+  /**
+   * 站点标签绑定在本地标签上
+   * @param localAuthorId
+   * @param siteAuthorIds
+   */
+  async updateBindLocalAuthor(localAuthorId: string | null, siteAuthorIds: string[]) {
+    if (localAuthorId !== undefined) {
+      if (siteAuthorIds != undefined && siteAuthorIds.length > 0) {
+        return ApiUtil.check(
+          (await this.dao.updateBindLocalAuthor(localAuthorId, siteAuthorIds)) > 0
+        )
+      } else {
+        return ApiUtil.check(true)
+      }
+    } else {
+      LogUtil.error('SiteAuthorService', 'localAuthorId意外为undefined')
+      return ApiUtil.error('localAuthorId意外为undefined')
+    }
+  }
+
+  /**
+   * 查询本地标签绑定或未绑定的站点标签
+   * @param page
+   */
+  async getBoundOrUnboundInLocalAuthor(page: PageModel<SiteAuthorQueryDTO, SiteAuthor>) {
+    // 使用构造函数创建对象，补充缺失的方法和属性
+    page = new PageModel(page)
+    page.query = new SiteAuthorQueryDTO(page.query)
+
+    const results = await this.dao.getSiteAuthorWithLocalAuthor(page)
+    const selectItems = results.map(
+      (result) =>
+        new SelectItem({
+          extraData: undefined,
+          label: result.siteAuthorName,
+          rootId: undefined,
+          secondaryLabel: StringUtil.isBlank(result.site?.siteName) ? '?' : result.site?.siteName,
+          value: String(result.id)
+        })
+    )
+
+    const newPage = page.transform<SelectItem>()
+    newPage.data = selectItems
+    return newPage
   }
 
   /**
