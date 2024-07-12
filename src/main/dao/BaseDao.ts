@@ -561,7 +561,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
               alias == undefined
                 ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
                 : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-            modifiedValue = String(value).concat('%')
+            modifiedValue = value
             break
           case COMPARATOR.RIGHT_LIKE:
             whereClause =
@@ -632,7 +632,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
                   alias == undefined
                     ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
                     : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
-                modifiedValue = String(value).concat('%')
+                modifiedValue = value
                 break
               case COMPARATOR.LEFT_LIKE:
                 whereClauses[key] =
@@ -720,10 +720,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   ): Promise<string> {
     const db = this.acquire()
     try {
-      if (StringUtil.isBlank(fromClause)) {
-        fromClause = this.tableName
-      } else {
+      if (StringUtil.isNotBlank(fromClause)) {
         fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'from ')
+      } else {
+        fromClause = this.tableName
       }
       // 查询数据总量，计算页码数量
       const notNullishValue = DatabaseUtil.toObjAcceptedBySqlite3(page.query)
