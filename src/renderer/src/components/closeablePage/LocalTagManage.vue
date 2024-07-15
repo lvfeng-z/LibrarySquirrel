@@ -28,8 +28,6 @@ const apis = {
   localTagGetSelectList: window.api.localTagGetSelectList,
   localTagGetTree: window.api.localTagGetTree,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
-  siteTagSave: window.api.siteTagSave,
-  siteTagUpdateById: window.api.siteTagUpdateById,
   siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
   siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
