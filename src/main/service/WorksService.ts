@@ -141,9 +141,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
               if (isNullish(worksSet)) {
                 worksSet = new WorksSet(worksDTO.worksSet)
                 worksSet.includeTaskId = rootTaskId
-                worksDTO.worksSetId = (await worksSetService.save(worksSet)) as number
+                await worksSetService.save(worksSet)
+                worksSetService.link([worksDTO], worksSet)
               } else {
-                worksDTO.worksSetId = worksSet.id
+                worksSetService.link([worksDTO], worksSet)
               }
             } else {
               LogUtil.warn(
