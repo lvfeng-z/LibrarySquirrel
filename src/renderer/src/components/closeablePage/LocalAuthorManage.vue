@@ -13,10 +13,10 @@ import InputBox from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
-import LocalTag from '../../model/main/LocalTag'
+import LocalAuthor from '../../model/main/LocalAuthor'
 
 onMounted(() => {
-  localTagSearchTable.value.handleSearchButtonClicked()
+  localAuthorSearchTable.value.handleSearchButtonClicked()
 })
 
 // 变量
@@ -25,35 +25,33 @@ const apis = {
   localAuthorDeleteById: window.api.localAuthorDeleteById,
   localAuthorUpdateById: window.api.localAuthorUpdateById,
   localAuthorSelectPage: window.api.localAuthorSelectPage,
-  siteTagSave: window.api.siteTagSave,
-  siteTagUpdateById: window.api.siteTagUpdateById,
   siteAuthorUpdateBindLocalAuthor: window.api.siteAuthorUpdateBindLocalAuthor,
   siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   siteAuthorGetBoundOrUnboundInLocalAuthor: window.api.siteAuthorGetBoundOrUnboundInLocalAuthor
 }
-// localTagSearchTable子组件
-const localTagSearchTable = ref()
-// siteTagExchangeBox子组件
-const siteTagExchangeBox = ref()
-// localTagDialog子组件
-const localTagDialog = ref()
-// 被选中的本地标签
+// localAuthorSearchTable子组件
+const localAuthorSearchTable = ref()
+// siteAuthorExchangeBox子组件
+const siteAuthorExchangeBox = ref()
+// localAuthorDialog子组件
+const localAuthorDialog = ref()
+// 被选中的本地作者
 const localAuthorSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
-// 本地标签SearchTable的operationButton
+// 本地作者SearchTable的operationButton
 const operationButton: OperationItem[] = [
   {
     label: '保存',
     icon: 'Checked',
     buttonType: 'primary',
     code: 'save',
-    rule: (row) => localTagSearchTable.value.changedRows.includes(row)
+    rule: (row) => localAuthorSearchTable.value.changedRows.includes(row)
   },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
-// 本地标签SearchTable的表头
-const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
+// 本地作者SearchTable的表头
+const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
   {
     type: 'text',
     defaultDisabled: true,
@@ -91,7 +89,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   }
 ])
-// 本地标签SearchTable的mainInputBoxes
+// 本地作者SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'localAuthorName',
@@ -100,7 +98,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 18
   }
 ])
-// 本地标签SearchTable的dropDownInputBoxes
+// 本地作者SearchTable的dropDownInputBoxes
 const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'id',
@@ -109,9 +107,9 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     placeholder: '内部id'
   }
 ])
-// 本地标签弹窗的mode
-const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
-// 站点标签ExchangeBox的mainInputBoxes
+// 本地作者弹窗的mode
+const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+// 站点作者ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
@@ -129,7 +127,7 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 9
   }
 ])
-// 站点标签ExchangeBox的DropDownInputBoxes
+// 站点作者ExchangeBox的DropDownInputBoxes
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
     name: 'keyword',
@@ -141,67 +139,67 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 ])
 
 // 方法
-// 处理本地标签新增按钮点击事件
+// 处理本地作者新增按钮点击事件
 async function handleCreateButtonClicked() {
-  localTagDialogMode.value = DialogMode.NEW
-  await localTagDialog.value.handleDialog(true)
+  localAuthorDialogMode.value = DialogMode.NEW
+  await localAuthorDialog.value.handleDialog(true)
 }
-// 处理本地标签数据行按钮点击事件
+// 处理本地作者数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse) {
   switch (op.code) {
     case 'save':
-      saveRowEdit(op.data as LocalTag)
+      saveRowEdit(op.data as LocalAuthor)
       break
     case DialogMode.VIEW:
-      localTagDialogMode.value = DialogMode.VIEW
-      localTagDialog.value.handleDialog(true, op.data)
+      localAuthorDialogMode.value = DialogMode.VIEW
+      localAuthorDialog.value.handleDialog(true, op.data)
       break
     case DialogMode.EDIT:
-      localTagDialogMode.value = DialogMode.EDIT
-      localTagDialog.value.handleDialog(true, op.data)
+      localAuthorDialogMode.value = DialogMode.EDIT
+      localAuthorDialog.value.handleDialog(true, op.data)
       break
     case 'delete':
-      deleteLocalTag(op.id)
+      deleteLocalAuthor(op.id)
       break
     default:
       break
   }
 }
-// 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: object[]) {
+// 处理被选中的本地作者改变的事件
+async function handleLocalAuthorSelectionChange(selections: object[]) {
   if (selections.length > 0) {
     localAuthorSelected.value = selections[0]
     // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
     await nextTick()
-    siteTagExchangeBox.value.refreshData()
+    siteAuthorExchangeBox.value.refreshData()
   } else {
     localAuthorSelected.value = {}
   }
 }
-// 处理本地标签弹窗请求成功事件
+// 处理本地作者弹窗请求成功事件
 function handleDialogRequestSuccess() {
-  localTagSearchTable.value.handleSearchButtonClicked()
+  localAuthorSearchTable.value.handleSearchButtonClicked()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData?: LocalTag) {
+async function saveRowEdit(newData?: LocalAuthor) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localAuthorUpdateById(tempData)
   ApiUtil.apiResponseMsg(response)
   if (ApiUtil.apiResponseCheck(response)) {
-    const index = localTagSearchTable.value.changedRows.indexOf(newData)
-    localTagSearchTable.value.changedRows.splice(index, 1)
+    const index = localAuthorSearchTable.value.changedRows.indexOf(newData)
+    localAuthorSearchTable.value.changedRows.splice(index, 1)
   }
 }
-// 删除本地标签
-async function deleteLocalTag(id: string) {
+// 删除本地作者
+async function deleteLocalAuthor(id: string) {
   const response = await apis.localAuthorDeleteById(id)
   ApiUtil.apiResponseMsg(response)
   if (ApiUtil.apiResponseCheck(response)) {
-    await localTagSearchTable.value.handleSearchButtonClicked()
+    await localAuthorSearchTable.value.handleSearchButtonClicked()
   }
 }
-// 处理站点标签ExchangeBox确认交换的事件
+// 处理站点作者ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
@@ -223,7 +221,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   ApiUtil.apiResponseMsgNoSuccess(upperResponse)
   ApiUtil.apiResponseMsgNoSuccess(lowerResponse)
   if (ApiUtil.apiResponseCheck(lowerResponse) && ApiUtil.apiResponseCheck(upperResponse)) {
-    siteTagExchangeBox.value.refreshData()
+    siteAuthorExchangeBox.value.refreshData()
   }
 }
 </script>
@@ -231,14 +229,14 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
 <template>
   <BaseCloseablePage>
     <template #default>
-      <div class="tag-manage-container rounded-margin-box">
-        <div class="tag-manage-left">
+      <div class="local-author-manage-container rounded-margin-box">
+        <div class="local-author-manage-left">
           <SearchTable
-            ref="localTagSearchTable"
+            ref="localAuthorSearchTable"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"
-            :thead="localTagThead"
+            :thead="localAuthorThead"
             :sort="[
               { column: 'updateTime', order: 'desc' },
               { column: 'createTime', order: 'desc' }
@@ -250,12 +248,12 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             :selectable="true"
             @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
-            @selection-change="handleLocalTagSelectionChange"
+            @selection-change="handleLocalAuthorSelectionChange"
           ></SearchTable>
         </div>
-        <div class="tag-manage-right">
+        <div class="local-author-manage-right">
           <ExchangeBox
-            ref="siteTagExchangeBox"
+            ref="siteAuthorExchangeBox"
             upper-title="已绑定站点作者"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
@@ -274,10 +272,10 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     </template>
     <template #dialog>
       <LocalAuthorDialog
-        ref="localTagDialog"
+        ref="localAuthorDialog"
         align-center
         destroy-on-close
-        :mode="localTagDialogMode"
+        :mode="localAuthorDialogMode"
         @request-success="handleDialogRequestSuccess"
       ></LocalAuthorDialog>
     </template>
@@ -285,7 +283,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
 </template>
 
 <style>
-.tag-manage-container {
+.local-author-manage-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -294,13 +292,13 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   height: 100%;
 }
 
-.tag-manage-left {
+.local-author-manage-left {
   width: calc(50% - 5px);
   height: 100%;
   margin-right: 5px;
 }
 
-.tag-manage-right {
+.local-author-manage-right {
   width: calc(50% - 5px);
   height: 100%;
   margin-left: 5px;

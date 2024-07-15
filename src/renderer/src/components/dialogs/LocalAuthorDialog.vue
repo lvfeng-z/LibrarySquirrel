@@ -72,11 +72,6 @@ async function handleDialog(newState: boolean, newFormData?: LocalAuthor) {
   if (newState) {
     if (newFormData) {
       formData.value = newFormData
-      // // 请求标签详情接口
-      // const localTagInfoResponse = await apis.localTagGetById(newFormData.id)
-      // if (apiResponseCheck(localTagInfoResponse)) {
-      //   formData.value = apiResponseGetData(localTagInfoResponse) as LocalTag
-      // }
     } else {
       clearFormData()
     }
