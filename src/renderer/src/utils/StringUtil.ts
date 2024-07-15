@@ -1,13 +1,16 @@
-import { isNullish } from './CommonUtil'
+import { isNullish } from './CommonUtil.ts'
 
-function isBlank(input: string | null | undefined): boolean {
+function isBlank(input: string | number | null | undefined): boolean {
   if (isNullish(input)) {
     return true
+  }
+  if (typeof input === 'number') {
+    return /^\s*$/.test(String(input))
   }
   return /^\s*$/.test(input)
 }
 
-function isNotBlank(input: string | null | undefined) {
+function isNotBlank(input: string | number | null | undefined): input is string {
   return !isBlank(input)
 }
 

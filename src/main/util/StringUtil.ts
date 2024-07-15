@@ -1,7 +1,7 @@
 import LogUtil from './LogUtil.ts'
 import { isNullish } from './CommonUtil.ts'
 
-function isBlank(input: string | number | null | undefined): input is string {
+function isBlank(input: string | number | null | undefined): boolean {
   if (isNullish(input)) {
     return true
   }
