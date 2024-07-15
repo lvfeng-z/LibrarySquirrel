@@ -43,12 +43,15 @@ export default class LocalTaskHandler {
 
     // 处理pluginData里的信息
     // 处理作品集
-    const worksSets = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksSetName')
-    if (worksSets.length > 0) {
-      const worksSet = new WorksSet()
-      worksSet.siteWorksSetName = worksSets[0].name
-      worksSet.siteWorksSetId = worksSets[0].details.siteWorksSetId
-      worksDTO.worksSet = worksSet
+    const worksSetInfos = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksSetName')
+    if (worksSetInfos.length > 0) {
+      worksDTO.worksSets = []
+      worksSetInfos.forEach((worksSetInfo) => {
+        const worksSet = new WorksSet()
+        worksSet.siteWorksSetName = worksSetInfo.name
+        worksSet.siteWorksSetId = worksSetInfo.details.siteWorksSetId
+        worksDTO.worksSets.push(worksSet)
+      })
     }
     // 处理作品名称
     const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
@@ -221,7 +224,7 @@ class WorksDTO {
   /**
    * 作品所属作品集
    */
-  worksSet
+  worksSets
   /**
    * 收录方式（0：本地导入，1：站点下载）
    */

@@ -51,7 +51,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       // 保存路径
       const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
-      const relativeSavePath = path.join(authorName)
+      const relativeSavePath = path.join('/includeDir', authorName)
       const fullSavePath = path.join(settings.workdir, relativeSavePath)
 
       const pipelinePromise = promisify(
@@ -125,32 +125,37 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     try {
       const worksId = await db.nestedTransaction(async (transactionDB) => {
         try {
-          // 如果worksSet不为空，则此作品是作品集中的作品
-          if (notNullish(worksDTO.worksSet) && notNullish(worksDTO.includeTaskId)) {
-            const taskService = new TaskService(transactionDB)
-            const includeTask = await taskService.getById(worksDTO.includeTaskId)
-            const rootTaskId = includeTask.parentId
-            const siteWorksSetId = worksDTO.worksSet.siteWorksSetId
+          // 如果worksSets不为空，则此作品是作品集中的作品
+          if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
+            // 遍历处理作品集数组
+            for (const worksSet of worksDTO.worksSets) {
+              if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
+                const taskService = new TaskService(transactionDB)
+                const includeTask = await taskService.getById(worksDTO.includeTaskId)
+                const rootTaskId = includeTask.parentId
+                const siteWorksSetId = worksSet.siteWorksSetId
 
-            if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
-              const worksSetService = new WorksSetService(transactionDB)
-              let worksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
-                siteWorksSetId,
-                rootTaskId
-              )
-              if (isNullish(worksSet)) {
-                worksSet = new WorksSet(worksDTO.worksSet)
-                worksSet.includeTaskId = rootTaskId
-                await worksSetService.save(worksSet)
-                worksSetService.link([worksDTO], worksSet)
-              } else {
-                worksSetService.link([worksDTO], worksSet)
+                if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
+                  const worksSetService = new WorksSetService(transactionDB)
+                  const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
+                    siteWorksSetId,
+                    rootTaskId
+                  )
+                  if (isNullish(oldWorksSet)) {
+                    const tempWorksSet = new WorksSet(worksSet)
+                    tempWorksSet.includeTaskId = rootTaskId
+                    await worksSetService.save(tempWorksSet)
+                    worksSetService.link([worksDTO], tempWorksSet)
+                  } else {
+                    worksSetService.link([worksDTO], oldWorksSet)
+                  }
+                } else {
+                  LogUtil.warn(
+                    'WorksService',
+                    `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
+                  )
+                }
               }
-            } else {
-              LogUtil.warn(
-                'WorksService',
-                `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
-              )
             }
           }
 

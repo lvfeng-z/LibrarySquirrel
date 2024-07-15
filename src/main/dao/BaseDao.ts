@@ -186,7 +186,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       updateData.updateTime = Date.now()
 
       // 生成一个不包含值为undefined的属性的对象
-      const existingValue = ObjectUtil.nonUndefinedValue(updateData)
+      const existingValue = DatabaseUtil.toObjAcceptedBySqlite3(updateData)
       const keys = Object.keys(existingValue)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`

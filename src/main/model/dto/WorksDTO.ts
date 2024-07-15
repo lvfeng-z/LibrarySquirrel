@@ -43,7 +43,7 @@ export default class WorksDTO extends Works {
   /**
    * 作品所属作品集
    */
-  worksSet: WorksSet | undefined | null
+  worksSets: WorksSet[] | undefined | null
 
   /**
    * 作品资源的数据流
@@ -64,7 +64,7 @@ export default class WorksDTO extends Works {
       this.siteAuthors = undefined
       this.localTags = undefined
       this.siteTags = undefined
-      this.worksSet = undefined
+      this.worksSets = undefined
       this.resourceStream = undefined
       this.resourceSize = undefined
     } else {
@@ -75,7 +75,7 @@ export default class WorksDTO extends Works {
       this.localTags = works.localTags
       this.siteAuthors = works.siteAuthors
       this.siteTags = works.siteTags
-      this.worksSet = works.worksSet
+      this.worksSets = works.worksSets
       this.resourceStream = works.resourceStream
       this.resourceSize = works.resourceSize
     }

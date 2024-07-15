@@ -102,7 +102,7 @@ tables:
         unique (works_id, site_tag_id)
       );
 
-  - name: re_works_tag
+  - name: re_works_works_set
     sql: |
       create table re_works_works_set (
         id           integer not null
