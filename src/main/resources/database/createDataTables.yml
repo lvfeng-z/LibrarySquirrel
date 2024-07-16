@@ -1,14 +1,27 @@
 tables:
+  - name: auto_explain_path
+    sql: |
+      create table auto_explain_path (
+        id                 integer not null
+        constraint auto_explain_path_pk
+        primary key,
+        name               text,
+        type               integer,
+        regular_expression text,
+        create_time        integer,
+        update_time        integer
+      );
+
   - name: local_author
     sql: |
-     create table if not exists local_author (
-       id                integer not null
-       constraint local_author_pk
-       primary key autoincrement,
-       local_author_name text,
-       create_time       integer,
-       update_time       integer
-     );
+      create table if not exists local_author (
+        id                integer not null
+        constraint local_author_pk
+        primary key autoincrement,
+        local_author_name text,
+        create_time       integer,
+        update_time       integer
+      );
 
   - name: site_author
     sql: |
