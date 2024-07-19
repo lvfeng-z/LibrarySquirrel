@@ -14,4 +14,21 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
   protected getPrimaryKeyColumnName(): string {
     return 'id'
   }
+
+  /**
+   * 查询监听此path的自动解释
+   * @param path
+   */
+  async getListener(path: string): Promise<AutoExplainPath[]> {
+    const db = this.acquire()
+    try {
+      const statement = `select * from auto_explain_path where '${path}' REGEXP regular_expression`
+      const rows = (await db.prepare(statement)).all() as object[]
+      return super.getResultTypeDataList<AutoExplainPath>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
 }

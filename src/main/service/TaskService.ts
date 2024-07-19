@@ -30,7 +30,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   async createTask(url: string, mainWindow: Electron.BrowserWindow): Promise<number> {
     // 查询监听此url的插件
     const taskPluginListenerService = new TaskPluginListenerService()
-    const taskPlugins = await taskPluginListenerService.getMonitored(url)
+    const taskPlugins = await taskPluginListenerService.getListener(url)
 
     if (taskPlugins.length === 0) {
       logUtil.info('TaskService', '没有监听此链接的插件，url: ', url)

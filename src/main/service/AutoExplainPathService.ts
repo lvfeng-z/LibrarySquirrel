@@ -15,4 +15,12 @@ export default class AutoExplainPathService extends BaseService<
   constructor(db?: DB) {
     super('AutoExplainPathService', new AutoExplainPathDao(db), db)
   }
+
+  /**
+   * 获取监听path的自动解释
+   * @param path
+   */
+  public async getListener(path: string): Promise<AutoExplainPath[]> {
+    return await this.dao.getListener(path)
+  }
 }

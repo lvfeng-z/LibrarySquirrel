@@ -23,7 +23,7 @@ export default class TaskPluginListenerService extends BaseService<
   /**
    * 获取监听此链接的插件
    */
-  getMonitored(url: string) {
-    return this.dao.getMonitored(url)
+  getListener(url: string) {
+    return this.dao.getListener(url)
   }
 }
