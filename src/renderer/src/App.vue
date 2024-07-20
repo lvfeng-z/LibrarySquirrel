@@ -277,6 +277,7 @@ async function handleTest() {
     </div>
     <explain-path
       v-model:state="showExplainPath"
+      width="80%"
       :string-to-explain="pathWaitingExplain"
       :close-on-click-modal="false"
     ></explain-path>

@@ -10,7 +10,11 @@ declare global {
       testTaskPluginListenerServiceSaveBatch: function
       testTaskPluginListenerServiceGetMonitored: function
 
-      // LocalAuthorService
+      // AutoExplainPath
+      autoExplainPathGetListenerPage: function
+      autoExplainPathGetListenerList: function
+
+      // LocalAuthor
       localAuthorSave: function
       localAuthorDeleteById: function
       localAuthorUpdateById: function

@@ -6,7 +6,7 @@ tables:
         constraint auto_explain_path_pk
         primary key,
         name               text,
-        type               integer,
+        type               text,
         regular_expression text,
         create_time        integer,
         update_time        integer

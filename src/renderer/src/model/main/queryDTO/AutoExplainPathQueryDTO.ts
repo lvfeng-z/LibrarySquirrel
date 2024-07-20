@@ -1,6 +1,6 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
-import { PathType } from '../../constant/PathType.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { PathType } from '../../../constants/PathType.ts'
+import { isNullish } from '../../../utils/CommonUtil.ts'
 
 /**
  * 自动解释路径含义QueryDTO

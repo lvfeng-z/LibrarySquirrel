@@ -17,6 +17,14 @@ const api = {
     return Electron.ipcRenderer.invoke('test-taskPluginListener-getMonitored', args)
   },
 
+  // AutoExplainPath
+  autoExplainPathGetListenerPage: (args) => {
+    return Electron.ipcRenderer.invoke('autoExplainPath-getListenerPage', args)
+  },
+  autoExplainPathGetListenerList: (args) => {
+    return Electron.ipcRenderer.invoke('autoExplainPath-getListenerList', args)
+  },
+
   // LocalAuthor
   localAuthorSave: (args) => {
     return Electron.ipcRenderer.invoke('localAuthor-save', args)

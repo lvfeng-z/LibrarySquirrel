@@ -1,10 +1,17 @@
 <script setup lang="ts">
 // TODO 新增一个输入用于解析路径的正则表达式和一个解析此路径下文件名的正则表达式
 import { Ref, ref, UnwrapRef } from 'vue'
-import { MeaningOfPath, PathType } from '../../model/util/MeaningOfPath.ts'
+import { MeaningOfPath } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
 import AutoLoadSelect from '../common/AutoLoadSelect.vue'
 import ApiResponse from '../../model/util/ApiResponse'
+import ApiUtil from '../../utils/ApiUtil'
+import AutoExplainPath from '../../model/main/AutoExplainPath'
+import { PathType } from '../../constants/PathType'
+import StringUtil from '../../utils/StringUtil'
+import PageModel from '../../model/util/PageModel'
+import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQueryDTO'
+import { isNullish } from '../../utils/CommonUtil'
 
 // props
 const props = defineProps<{
@@ -20,6 +27,8 @@ const state = defineModel<boolean>('state', {
 // 变量
 // 接口
 const apis = {
+  autoExplainPathGetListenerPage: window.api.autoExplainPathGetListenerPage,
+  autoExplainPathGetListenerList: window.api.autoExplainPathGetListenerList,
   localAuthorGetSelectItemPage: window.api.localAuthorGetSelectItemPage,
   localTagGetSelectItemPage: window.api.localTagGetSelectItemPage,
   siteGetSelectItemPage: window.api.siteGetSelectItemPage
@@ -35,12 +44,34 @@ const meaningTypes = [
   { value: 'unknown', label: '未知/无含义' }
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
+const autoExplains: Ref<UnwrapRef<AutoExplainPath[]>> = ref([]) // 自动解释列表
+const autoExplainPage: Ref<UnwrapRef<PageModel<AutoExplainPathQueryDTO, AutoExplainPath>>> = ref(
+  new PageModel<AutoExplainPathQueryDTO, AutoExplainPath>()
+)
 
 // 方法
+// 确认解释
 function confirmExplain() {
   const temp = lodash.cloneDeep(meaningOfPaths.value)
   window.electron.ipcRenderer.send('explain-path-response', temp)
   state.value = false
+}
+// 确认解释
+async function loadAutoExplain() {
+  const stringToExplain = StringUtil.isBlank(props.stringToExplain)
+    ? 'Artist[test]'
+    : props.stringToExplain
+  autoExplainPage.value.query = new AutoExplainPathQueryDTO()
+  autoExplainPage.value.query.path = stringToExplain
+  const tempPage = lodash.cloneDeep(autoExplainPage.value)
+  const response = await apis.autoExplainPathGetListenerPage(tempPage)
+  if (ApiUtil.apiResponseCheck(response)) {
+    const newPage = ApiUtil.apiResponseGetData(response) as PageModel<
+      AutoExplainPathQueryDTO,
+      AutoExplainPath
+    >
+    autoExplains.value = isNullish(newPage.data) ? [] : newPage.data
+  }
 }
 // 增加一行输入栏
 function addInputRow() {
@@ -94,60 +125,117 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
 
 <template>
   <el-dialog v-model="state" destroy-on-close class="explain-path-dialog">
-    <el-row>
-      <el-text>{{ props.stringToExplain }}</el-text>
-    </el-row>
-    <el-row>
-      <el-button type="primary" @click="confirmExplain">确定</el-button>
-      <el-button type="success" icon="circlePlus" @click="addInputRow"></el-button>
-    </el-row>
-    <div class="explain-path-dialog-context">
-      <el-scrollbar class="explain-path-dialog-context-scrollbar">
-        <template v-for="(meaningOfPath, index) in meaningOfPaths" :key="index">
-          <el-row>
-            <el-col :span="5">
-              <el-select v-model="meaningOfPath.type" @change="resetInputData(meaningOfPath)">
-                <el-option
-                  v-for="item in meaningTypes"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
+    <div class="explain-path-dialog-manual-automatic">
+      <div class="explain-path-dialog-manual">
+        <el-row>
+          <el-text>{{ props.stringToExplain }}</el-text>
+        </el-row>
+        <el-row>
+          <el-button type="primary" @click="confirmExplain">确定</el-button>
+          <el-button type="success" icon="circlePlus" @click="addInputRow"></el-button>
+        </el-row>
+        <el-scrollbar class="explain-path-dialog-context-scrollbar">
+          <template v-for="(meaningOfPath, index) in meaningOfPaths" :key="index">
+            <el-row>
+              <el-col :span="5">
+                <el-select v-model="meaningOfPath.type" @change="resetInputData(meaningOfPath)">
+                  <el-option
+                    v-for="item in meaningTypes"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  >
+                  </el-option>
+                </el-select>
+              </el-col>
+              <el-col :span="17">
+                <el-input
+                  v-if="getInputRowType(meaningOfPath.type) === 'input'"
+                  v-model="meaningOfPath.name"
+                ></el-input>
+                <auto-load-select
+                  v-if="getInputRowType(meaningOfPath.type) === 'select'"
+                  v-model="meaningOfPath.id"
+                  remote
+                  filterable
+                  :api="getInputRowDataApi(meaningOfPath.type)"
                 >
-                </el-option>
-              </el-select>
-            </el-col>
-            <el-col :span="17">
-              <el-input
-                v-if="getInputRowType(meaningOfPath.type) === 'input'"
-                v-model="meaningOfPath.name"
-              ></el-input>
-              <auto-load-select
-                v-if="getInputRowType(meaningOfPath.type) === 'select'"
-                v-model="meaningOfPath.id"
-                remote
-                filterable
-                :api="getInputRowDataApi(meaningOfPath.type)"
-              >
-              </auto-load-select>
-              <el-date-picker
-                v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
-                v-model="meaningOfPath.name"
-              ></el-date-picker>
-            </el-col>
-            <el-col :span="2">
-              <el-button type="warning" icon="Remove" @click="removeInputRow(index)"></el-button>
-            </el-col>
-          </el-row>
-        </template>
-      </el-scrollbar>
+                </auto-load-select>
+                <el-date-picker
+                  v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
+                  v-model="meaningOfPath.name"
+                ></el-date-picker>
+              </el-col>
+              <el-col :span="2">
+                <el-button type="warning" icon="Remove" @click="removeInputRow(index)"></el-button>
+              </el-col>
+            </el-row>
+          </template>
+        </el-scrollbar>
+      </div>
+      <div class="explain-path-dialog-automatic">
+        <el-row>
+          <el-text>{{ props.stringToExplain }}</el-text>
+        </el-row>
+        <el-row>
+          <el-button type="primary" @click="loadAutoExplain">加载</el-button>
+          <el-switch></el-switch>
+        </el-row>
+        <el-scrollbar class="explain-path-dialog-context-scrollbar">
+          <template v-for="autoExplain in autoExplains" :key="autoExplain.id">
+            <el-row>
+              <el-col :span="5">
+                <el-select v-model="autoExplain.type">
+                  <el-option
+                    v-for="item in meaningTypes"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  >
+                  </el-option>
+                </el-select>
+              </el-col>
+              <el-col :span="5">
+                <el-input v-model="autoExplain.name"></el-input>
+              </el-col>
+              <el-col :span="9">
+                <el-input v-model="autoExplain.regularExpression"></el-input>
+              </el-col>
+              <el-col :span="5">
+                <el-text>{{
+                  (props.stringToExplain === undefined ||
+                  props.stringToExplain === null ||
+                  props.stringToExplain === ''
+                    ? 'Artist[test]'
+                    : props.stringToExplain
+                  ).match(new RegExp(autoExplain.regularExpression as string))
+                }}</el-text>
+              </el-col>
+            </el-row>
+          </template>
+        </el-scrollbar>
+      </div>
     </div>
   </el-dialog>
 </template>
 
 <style scoped>
-.explain-path-dialog-context {
+.explain-path-dialog-manual-automatic {
   display: flex;
   max-height: 50vh;
+  width: 100%;
+  flex-direction: row;
+}
+.explain-path-dialog-manual {
+  display: flex;
+  max-height: 50vh;
+  width: 50%;
+  flex-direction: column;
+}
+.explain-path-dialog-automatic {
+  display: flex;
+  max-height: 50vh;
+  width: 50%;
   flex-direction: column;
 }
 .explain-path-dialog-context-scrollbar {

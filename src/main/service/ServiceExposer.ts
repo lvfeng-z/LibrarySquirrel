@@ -13,6 +13,7 @@ import TaskService from './TaskService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
+import AutoExplainPathService from './AutoExplainPathService.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -21,6 +22,28 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
   Electron.ipcMain.handle('test-transactionTest', async () => {
     return InsertLocalTag.transactionTest()
+  })
+
+  //AutoExplainPathService
+  Electron.ipcMain.handle('autoExplainPath-getListenerPage', async (_event, args) => {
+    const service = new AutoExplainPathService()
+    try {
+      const page = await service.getListenerPage(args)
+      return ApiUtil.response(page)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('autoExplainPath-getListenerList', async (_event, args) => {
+    const service = new AutoExplainPathService()
+    try {
+      const page = await service.getListenerList(args)
+      return ApiUtil.response(page)
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
 
   // LocalAuthorService

@@ -3,6 +3,7 @@ import LocalTag from '../main/LocalTag.ts'
 import Works from '../main/Works.ts'
 import WorksSet from '../main/WorksSet.ts'
 import Site from '../main/Site.ts'
+import { PathType } from '../../constants/PathType.ts'
 
 /**
  * 目录含义
@@ -42,12 +43,3 @@ export class MeaningOfPath {
     }
   }
 }
-
-export type PathType =
-  | 'author'
-  | 'tag'
-  | 'worksName'
-  | 'worksSetName'
-  | 'site'
-  | 'createTime'
-  | 'unknown'
