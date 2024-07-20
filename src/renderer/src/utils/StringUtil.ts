@@ -26,13 +26,27 @@ function removePrefixIfPresent(str: string, target: string): string {
   // 使用 trim() 方法去除字符串开头的空白字符
   const trimmedStr = str.trim()
 
-  // 检查处理后的字符串是否以前五个字符为"from "
+  // 检查处理后的字符串是否以target为开头
   if (trimmedStr.startsWith(target)) {
     // 如果是，计算target的长度，并使用slice从target之后的字符开始截取
     return trimmedStr.slice(target.length)
   } else {
     // 否则，返回原字符串
     return str
+  }
+}
+
+function concatPrefixIfNotPresent(str: string, target: string): string {
+  // 使用 trim() 方法去除字符串开头的空白字符
+  const trimmedStr = str.trim()
+
+  // 检查处理后的字符串是否以target为开头
+  if (trimmedStr.startsWith(target)) {
+    // 如果是，返回原字符串
+    return str
+  } else {
+    // 否则，添加前缀
+    return target.concat(trimmedStr)
   }
 }
 
@@ -76,5 +90,6 @@ export default {
   camelToSnakeCase,
   snakeToCamelCase,
   removePrefixIfPresent,
+  concatPrefixIfNotPresent,
   createObjectsFromRegexMatches
 }

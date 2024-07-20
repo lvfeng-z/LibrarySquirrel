@@ -729,7 +729,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const notNullishValue = DatabaseUtil.toObjAcceptedBySqlite3(page.query)
       let countSql = `SELECT COUNT(*) AS total FROM ${fromClause}`
       if (whereClause !== undefined) {
-        countSql = countSql.concat(' ', whereClause)
+        const tempWhereClause = StringUtil.concatPrefixIfNotPresent(whereClause, 'where ')
+        countSql = countSql.concat(' ', tempWhereClause)
       }
       const countResult = (await db.prepare(countSql)).get(notNullishValue) as { total: number }
       page.dataCount = countResult.total
