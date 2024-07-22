@@ -9,6 +9,7 @@ import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
 import { notNullish } from '../util/CommonUtil.ts'
+import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 
 export default class PluginLoader {
   /**
@@ -82,7 +83,7 @@ export default class PluginLoader {
         'explain-path-response',
         async (_event, meaningOfPaths: MeaningOfPath[]) => {
           for (const meaningOfPath of meaningOfPaths) {
-            if (meaningOfPath.type === 'author') {
+            if (meaningOfPath.type === PathTypeEnum.AUTHOR) {
               const localAuthorService = new LocalAuthorService()
               if (notNullish(meaningOfPath.id)) {
                 const localAuthor = await localAuthorService.getById(meaningOfPath.id)
@@ -90,7 +91,7 @@ export default class PluginLoader {
                 meaningOfPath.details = localAuthor
               }
             }
-            if (meaningOfPath.type === 'tag') {
+            if (meaningOfPath.type === PathTypeEnum.TAG) {
               const localTagService = new LocalTagService()
               if (notNullish(meaningOfPath.id)) {
                 const localTag = await localTagService.getById(meaningOfPath.id)
@@ -98,7 +99,7 @@ export default class PluginLoader {
                 meaningOfPath.details = localTag
               }
             }
-            if (meaningOfPath.type === 'site') {
+            if (meaningOfPath.type === PathTypeEnum.SITE) {
               const siteService = new SiteService()
               if (notNullish(meaningOfPath.id)) {
                 const site = await siteService.getById(meaningOfPath.id)

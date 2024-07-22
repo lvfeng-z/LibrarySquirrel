@@ -1,5 +1,5 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
-import { PathType } from '../../../constants/PathType.ts'
+import { PathTypeEnum } from '../../../constants/PathTypeEnum.ts'
 import { isNullish } from '../../../utils/CommonUtil.ts'
 
 /**
@@ -19,7 +19,7 @@ export default class AutoExplainPathQueryDTO extends BaseQueryDTO {
   /**
    * 类型
    */
-  type: PathType | undefined | null
+  type: PathTypeEnum | undefined | null
 
   /**
    * 正则表达式

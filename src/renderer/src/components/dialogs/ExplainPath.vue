@@ -7,7 +7,7 @@ import AutoLoadSelect from '../common/AutoLoadSelect.vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import AutoExplainPath from '../../model/main/AutoExplainPath'
-import { PathType } from '../../constants/PathType'
+import { PathTypeEnum } from '../../constants/PathTypeEnum'
 import StringUtil from '../../utils/StringUtil'
 import PageModel from '../../model/util/PageModel'
 import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQueryDTO'
@@ -35,13 +35,13 @@ const apis = {
 }
 // 目录含义选择列表
 const meaningTypes = [
-  { value: 'author', label: '作者' },
-  { value: 'tag', label: '标签' },
-  { value: 'worksName', label: '作品名称' },
-  { value: 'worksSetName', label: '作品集名称' },
-  { value: 'site', label: '站点名称' },
-  { value: 'createTime', label: '创建时间' },
-  { value: 'unknown', label: '未知/无含义' }
+  { value: PathTypeEnum.AUTHOR, label: '作者' },
+  { value: PathTypeEnum.TAG, label: '标签' },
+  { value: PathTypeEnum.WORKS_NAME, label: '作品名称' },
+  { value: PathTypeEnum.WORKS_SET_NAME, label: '作品集名称' },
+  { value: PathTypeEnum.SITE, label: '站点名称' },
+  { value: PathTypeEnum.CREATE_TIME, label: '创建时间' },
+  { value: PathTypeEnum.UNKNOWN, label: '未知/无含义' }
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
 const autoExplains: Ref<UnwrapRef<AutoExplainPath[]>> = ref([]) // 自动解释列表
@@ -82,19 +82,19 @@ function removeInputRow(index: number) {
   meaningOfPaths.value.splice(index, 1)
 }
 // 获取输入栏类型
-function getInputRowType(pathType: PathType) {
+function getInputRowType(pathType: PathTypeEnum) {
   let inputType: string
   switch (pathType) {
-    case 'author':
-    case 'tag':
-    case 'site':
+    case PathTypeEnum.AUTHOR:
+    case PathTypeEnum.TAG:
+    case PathTypeEnum.SITE:
       inputType = 'select'
       break
-    case 'worksName':
-    case 'worksSetName':
+    case PathTypeEnum.WORKS_NAME:
+    case PathTypeEnum.WORKS_SET_NAME:
       inputType = 'input'
       break
-    case 'createTime':
+    case PathTypeEnum.CREATE_TIME:
       inputType = 'dateTimePicker'
       break
     default:
@@ -104,13 +104,13 @@ function getInputRowType(pathType: PathType) {
   return inputType
 }
 // 获取输入栏数据接口
-function getInputRowDataApi(pathType: PathType): () => ApiResponse {
+function getInputRowDataApi(pathType: PathTypeEnum): () => ApiResponse {
   switch (pathType) {
-    case 'author':
+    case PathTypeEnum.AUTHOR:
       return apis.localAuthorGetSelectItemPage
-    case 'tag':
+    case PathTypeEnum.TAG:
       return apis.localTagGetSelectItemPage
-    case 'site':
+    case PathTypeEnum.SITE:
       return apis.siteGetSelectItemPage
     default:
       throw new Error('不支持的类型使用了getInputRowDataApi函数')
@@ -185,7 +185,7 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
           <template v-for="autoExplain in autoExplains" :key="autoExplain.id">
             <el-row>
               <el-col :span="5">
-                <el-select v-model="autoExplain.type">
+                <el-select v-model="autoExplain.type" disabled>
                   <el-option
                     v-for="item in meaningTypes"
                     :key="item.value"

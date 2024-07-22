@@ -3,7 +3,7 @@ import LocalTag from '../main/LocalTag.ts'
 import Works from '../main/Works.ts'
 import WorksSet from '../main/WorksSet.ts'
 import Site from '../main/Site.ts'
-import { PathType } from '../../constants/PathType.ts'
+import { PathTypeEnum } from '../../constants/PathTypeEnum.ts'
 
 /**
  * 目录含义
@@ -12,7 +12,7 @@ export class MeaningOfPath {
   /**
    * 类型
    */
-  type: PathType
+  type: PathTypeEnum
 
   /**
    * 主键
@@ -31,7 +31,7 @@ export class MeaningOfPath {
 
   constructor(meaningOfPath?: MeaningOfPath) {
     if (meaningOfPath === undefined) {
-      this.type = 'unknown'
+      this.type = PathTypeEnum.UNKNOWN
       this.id = undefined
       this.name = undefined
       this.details = undefined
