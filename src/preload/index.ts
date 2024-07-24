@@ -16,6 +16,9 @@ const api = {
   testTaskPluginListenerGetMonitored: (args) => {
     return Electron.ipcRenderer.invoke('test-taskPluginListener-getMonitored', args)
   },
+  testDirSelect: (args) => {
+    return Electron.ipcRenderer.invoke('test-dirSelect', args)
+  },
 
   // AutoExplainPath
   autoExplainPathGetListenerPage: (args) => {
