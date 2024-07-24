@@ -43,7 +43,7 @@ export default class LocalTaskHandler {
 
     // 处理pluginData里的信息
     // 处理作品集
-    const worksSetInfos = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksSetName')
+    const worksSetInfos = this.getDataFromMeaningOfPath(meaningOfPaths, PathTypeEnum.WORKS_SET_NAME)
     if (worksSetInfos.length > 0) {
       worksDTO.worksSets = []
       worksSetInfos.forEach((worksSetInfo) => {
@@ -54,7 +54,7 @@ export default class LocalTaskHandler {
       })
     }
     // 处理作品名称
-    const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, 'worksName')
+    const worksNames = this.getDataFromMeaningOfPath(meaningOfPaths, PathTypeEnum.WORKS_NAME)
     // 如果pluginData里保存的用户解释含义中包含worksName，则使用worksName，否则使用文件名
     if (worksNames.length > 0) {
       worksDTO.siteWorksName = worksNames[0].name
@@ -62,10 +62,10 @@ export default class LocalTaskHandler {
       worksDTO.siteWorksName = filename
     }
     // 处理标签
-    const tagInfos = this.getDataFromMeaningOfPath(meaningOfPaths, 'tag')
+    const tagInfos = this.getDataFromMeaningOfPath(meaningOfPaths, PathTypeEnum.TAG)
     worksDTO.localTags = tagInfos.map(tagInfo => tagInfo.details)
     // 处理作者信息
-    const authors = this.getDataFromMeaningOfPath(meaningOfPaths, 'author')
+    const authors = this.getDataFromMeaningOfPath(meaningOfPaths, PathTypeEnum.AUTHOR)
     worksDTO.localAuthors = authors.map(authorInfo => authorInfo.details)
 
     // 处理任务id
@@ -350,4 +350,14 @@ class Task {
     this.pluginInfo = undefined
     this.pluginData = undefined
   }
+}
+
+class PathTypeEnum {
+  static AUTHOR = 0
+  static TAG = 1
+  static WORKS_NAME = 2
+  static WORKS_SET_NAME = 3
+  static SITE = 4
+  static CREATE_TIME = 5
+  static UNKNOWN = 6
 }
