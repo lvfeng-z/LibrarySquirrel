@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
 import { reactive, ref } from 'vue'
+import ApiResponse from '../../model/util/ApiResponse'
+import ApiUtil from '../../utils/ApiUtil'
 
 // 变量
 const apis = reactive({
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
-  testDirSelect: window.api.testDirSelect
+  dirSelect: window.api.dirSelect
 }) // 接口
 const activeName = ref([1, 2]) // 默认展开的折叠面板
 const taskId = ref() // 任务id
@@ -22,10 +24,13 @@ function startTask() {
 }
 // 选择目录
 async function selectDir(openFile: boolean) {
-  const result = (await apis.testDirSelect(openFile)) as Electron.OpenDialogReturnValue
-  if (!result.canceled) {
-    for (const dir of result.filePaths) {
-      await importFromDir(dir)
+  const response = (await apis.dirSelect(openFile)) as ApiResponse
+  if (ApiUtil.apiResponseCheck(response)) {
+    const dirSelectResult = ApiUtil.apiResponseGetData(response) as Electron.OpenDialogReturnValue
+    if (!dirSelectResult.canceled) {
+      for (const dir of dirSelectResult.filePaths) {
+        await importFromDir(dir)
+      }
     }
   }
 }

@@ -14,7 +14,7 @@ import LocalAuthorService from './LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import AutoExplainPathService from './AutoExplainPathService.ts'
-import { dirSelect } from '../test/DirSelect.ts'
+import FileSysUtil from '../util/FileSysUtil.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -23,9 +23,6 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
   Electron.ipcMain.handle('test-transactionTest', async () => {
     return InsertLocalTag.transactionTest()
-  })
-  Electron.ipcMain.handle('test-dirSelect', async (_event, args) => {
-    return dirSelect(args)
   })
 
   //AutoExplainPathService
@@ -332,6 +329,12 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
+  })
+
+  // FileSysUtil
+  Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, args): Promise<ApiUtil> => {
+    const result = await FileSysUtil.dirSelect(args)
+    return ApiUtil.response(result)
   })
 }
 

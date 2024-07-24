@@ -16,9 +16,6 @@ const api = {
   testTaskPluginListenerGetMonitored: (args) => {
     return Electron.ipcRenderer.invoke('test-taskPluginListener-getMonitored', args)
   },
-  testDirSelect: (args) => {
-    return Electron.ipcRenderer.invoke('test-dirSelect', args)
-  },
 
   // AutoExplainPath
   autoExplainPathGetListenerPage: (args) => {
@@ -132,6 +129,11 @@ const api = {
   },
   worksSaveWorks: (args) => {
     return Electron.ipcRenderer.invoke('works-saveWorks', args)
+  },
+
+  // FileSysUtil
+  dirSelect: (args) => {
+    return Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', args)
   }
 }
 

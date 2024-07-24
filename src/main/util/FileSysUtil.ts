@@ -1,7 +1,8 @@
-import Electron from 'electron'
+import Electron, { dialog } from 'electron'
 import fs from 'fs/promises'
 import logUtil from '../util/LogUtil.ts'
 import path from 'path'
+import SettingsService from '../service/SettingsService.ts'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -50,8 +51,26 @@ function getRootDir(): string {
   return root
 }
 
+/**
+ * 打开一个
+ */
+async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
+  const defaultPath = SettingsService.getSettings()['workdir']
+  const properties: Array<'openFile' | 'openDirectory' | 'multiSelections'> = ['multiSelections']
+  if (openFile) {
+    properties.push('openFile')
+  } else {
+    properties.push('openDirectory')
+  }
+  return dialog.showOpenDialog({
+    defaultPath: defaultPath,
+    properties: properties
+  })
+}
+
 export default {
   createDirIfNotExists,
   convertPath,
-  getRootDir
+  getRootDir,
+  dirSelect
 }
