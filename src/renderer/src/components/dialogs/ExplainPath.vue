@@ -48,6 +48,7 @@ const autoExplains: Ref<UnwrapRef<AutoExplainPath[]>> = ref([]) // 自动解释�
 const autoExplainPage: Ref<UnwrapRef<PageModel<AutoExplainPathQueryDTO, AutoExplainPath>>> = ref(
   new PageModel<AutoExplainPathQueryDTO, AutoExplainPath>()
 )
+const autoExplainSelected: Ref<UnwrapRef<object>> = ref({})
 
 // 方法
 // 确认解释
@@ -121,6 +122,14 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
   meaningOfPath.id = undefined
   meaningOfPath.name = undefined
 }
+//
+function getOptions(str: string, reg: string) {
+  if (StringUtil.isBlank(str)) {
+    str = 'Artist[test]'
+  }
+  const temp = str.match(new RegExp(reg as string))
+  return temp
+}
 </script>
 
 <template>
@@ -182,7 +191,7 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
           <el-switch></el-switch>
         </el-row>
         <el-scrollbar class="explain-path-dialog-context-scrollbar">
-          <template v-for="autoExplain in autoExplains" :key="autoExplain.id">
+          <template v-for="(autoExplain, index1) in autoExplains" :key="autoExplain.id">
             <el-row>
               <el-col :span="5">
                 <el-select v-model="autoExplain.type" disabled>
@@ -202,14 +211,18 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
                 <el-input v-model="autoExplain.regularExpression"></el-input>
               </el-col>
               <el-col :span="5">
-                <el-text>{{
-                  (props.stringToExplain === undefined ||
-                  props.stringToExplain === null ||
-                  props.stringToExplain === ''
-                    ? 'Artist[test]'
-                    : props.stringToExplain
-                  ).match(new RegExp(autoExplain.regularExpression as string))
-                }}</el-text>
+                <el-select v-model="autoExplainSelected[index1]">
+                  <el-option
+                    v-for="(item, index) in getOptions(
+                      props.stringToExplain,
+                      autoExplain.regularExpression as string
+                    )"
+                    :key="index"
+                    :value="index"
+                    :label="item"
+                  >
+                  </el-option>
+                </el-select>
               </el-col>
             </el-row>
           </template>
