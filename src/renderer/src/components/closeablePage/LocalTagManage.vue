@@ -38,6 +38,8 @@ const localTagSearchTable = ref()
 const siteTagExchangeBox = ref()
 // localTagDialog子组件
 const localTagDialog = ref()
+// 被改变的数据行
+const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地标签
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
@@ -47,7 +49,7 @@ const operationButton: OperationItem[] = [
     icon: 'Checked',
     buttonType: 'primary',
     code: 'save',
-    rule: (row) => localTagSearchTable.value.changedRows.includes(row)
+    rule: (row) => changedRows.value.includes(row)
   },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
@@ -195,14 +197,14 @@ function handleDialogRequestSuccess() {
   localTagSearchTable.value.handleSearchButtonClicked()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData?: LocalTag) {
+async function saveRowEdit(newData: LocalTag) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localTagUpdateById(tempData)
   ApiUtil.apiResponseMsg(response)
   if (ApiUtil.apiResponseCheck(response)) {
-    const index = localTagSearchTable.value.changedRows.indexOf(newData)
-    localTagSearchTable.value.changedRows.splice(index, 1)
+    const index = changedRows.value.indexOf(newData)
+    changedRows.value.splice(index, 1)
   }
 }
 // 删除本地标签
@@ -244,6 +246,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
         <div class="tag-manage-left">
           <SearchTable
             ref="localTagSearchTable"
+            v-model:changed-rows="changedRows"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"

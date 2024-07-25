@@ -35,6 +35,8 @@ const localAuthorSearchTable = ref()
 const siteAuthorExchangeBox = ref()
 // localAuthorDialog子组件
 const localAuthorDialog = ref()
+// 被改变的数据行
+const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地作者
 const localAuthorSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地作者SearchTable的operationButton
@@ -44,7 +46,7 @@ const operationButton: OperationItem[] = [
     icon: 'Checked',
     buttonType: 'primary',
     code: 'save',
-    rule: (row) => localAuthorSearchTable.value.changedRows.includes(row)
+    rule: (row) => changedRows.value.includes(row)
   },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
@@ -181,14 +183,14 @@ function handleDialogRequestSuccess() {
   localAuthorSearchTable.value.handleSearchButtonClicked()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData?: LocalAuthor) {
+async function saveRowEdit(newData: LocalAuthor) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localAuthorUpdateById(tempData)
   ApiUtil.apiResponseMsg(response)
   if (ApiUtil.apiResponseCheck(response)) {
-    const index = localAuthorSearchTable.value.changedRows.indexOf(newData)
-    localAuthorSearchTable.value.changedRows.splice(index, 1)
+    const index = changedRows.value.indexOf(newData)
+    changedRows.value.splice(index, 1)
   }
 }
 // 删除本地作者
@@ -233,6 +235,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
         <div class="local-author-manage-left">
           <SearchTable
             ref="localAuthorSearchTable"
+            v-model:changed-rows="changedRows"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"

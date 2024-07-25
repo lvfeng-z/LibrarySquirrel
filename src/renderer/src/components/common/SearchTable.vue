@@ -35,13 +35,18 @@ const props = withDefaults(
   }
 )
 
+// model
+// 已编辑的行
+const changedRows = defineModel<object[]>('changedRows', { default: [], required: true })
+
 // 事件
 const emits = defineEmits([
   'createButtonClicked',
   'rowButtonClicked',
   'selectionChange',
   'pageNumberChanged',
-  'pageSizeChanged'
+  'pageSizeChanged',
+  'query'
 ])
 
 // onMounted
@@ -57,7 +62,6 @@ onMounted(() => {
 const searchToolbarParams = ref({}) // 搜索栏参数
 const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
 const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
-const changedRows: Ref<UnwrapRef<object[]>> = ref([]) // 已编辑的行
 // 分页栏
 const pageNumber = ref(1) // 当前页码
 const innerPageSizes = ref(props.pageSizes) // 可选页面大小
@@ -117,8 +121,7 @@ function handleRowChange(changedRow: object) {
 
 // 暴露
 defineExpose({
-  handleSearchButtonClicked,
-  changedRows
+  handleSearchButtonClicked
 })
 </script>
 
