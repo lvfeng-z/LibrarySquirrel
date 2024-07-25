@@ -9,13 +9,17 @@ import lodash from 'lodash'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
-const props = defineProps<{
-  selectable: boolean // 列表是否可选择
-  multiSelect: boolean // 列表是否多选
-  thead: Thead[] // 表头信息
-  keyOfData: string // 数据的唯一标识
-  operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
-}>()
+const props = withDefaults(
+  defineProps<{
+    selectable: boolean // 列表是否可选择
+    multiSelect: boolean // 列表是否多选
+    thead: Thead[] // 表头信息
+    keyOfData: string // 数据的唯一标识
+    operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
+    customOperationButton?: boolean
+  }>(),
+  { customOperationButton: false }
+)
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -150,7 +154,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
         <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
       </template>
       <template #default="{ row }">
-        <el-dropdown>
+        <el-dropdown v-if="!customOperationButton">
           <el-button
             :type="getOperateButton(row).buttonType"
             :icon="getOperateButton(row).icon"
@@ -183,6 +187,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+        <slot v-if="customOperationButton" name="custom" />
       </template>
     </el-table-column>
   </el-table>

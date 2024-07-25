@@ -1,17 +1,94 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import { reactive, ref } from 'vue'
+import { Ref, ref, UnwrapRef } from 'vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
+import SearchTable from '../common/SearchTable.vue'
+import Thead from '../../model/util/Thead'
+import InputBox from '../../model/util/InputBox'
+import OperationItem from '../../model/util/OperationItem'
+import DialogMode from '../../model/util/DialogMode'
 
 // 变量
-const apis = reactive({
+const apis = {
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
+  taskSelectPage: window.api.taskSelectPage,
   dirSelect: window.api.dirSelect
-}) // 接口
-const activeName = ref([1, 2]) // 默认展开的折叠面板
+} // 接口
 const taskId = ref() // 任务id
+// 表头
+const thead: Ref<UnwrapRef<Thead[]>> = ref([
+  {
+    type: 'text',
+    defaultDisabled: true,
+    dblclickEnable: true,
+    name: 'taskName',
+    label: '名称',
+    hide: false,
+    width: 150,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
+    type: 'text',
+    defaultDisabled: true,
+    dblclickEnable: true,
+    name: 'siteDomain',
+    label: '站点',
+    hide: false,
+    width: 150,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
+    type: 'text',
+    defaultDisabled: true,
+    dblclickEnable: true,
+    name: 'status',
+    label: '状态',
+    hide: false,
+    width: 150,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  }
+])
+// 主搜索栏的inputBox
+const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
+  {
+    name: 'taskName',
+    type: 'text',
+    placeholder: '输入本地标签的名称',
+    inputSpan: 10
+  }
+])
+// 下拉搜索栏的inputBox
+const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
+  {
+    name: 'taskName',
+    type: 'text',
+    placeholder: '输入本地标签的名称',
+    inputSpan: 10
+  }
+])
+// 改变的行数据
+const changedRows: Ref<UnwrapRef<object[]>> = ref([])
+// SearchTable的operationButton
+const operationButton: OperationItem[] = [
+  {
+    label: '保存',
+    icon: 'Checked',
+    buttonType: 'primary',
+    code: 'save',
+    rule: (row) => changedRows.value.includes(row)
+  },
+  { label: '查看', icon: 'view', code: DialogMode.VIEW },
+  { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
+  { label: '删除', icon: 'delete', code: 'delete' }
+]
 
 // 方法
 // 保存设置
@@ -19,9 +96,9 @@ async function importFromDir(dir: string) {
   await apis.taskCreateTask('file://'.concat(dir))
 }
 // 开始任务
-function startTask() {
-  apis.taskStartTask(taskId.value)
-}
+// function startTask() {
+//   apis.taskStartTask(taskId.value)
+// }
 // 选择目录
 async function selectDir(openFile: boolean) {
   const response = (await apis.dirSelect(openFile)) as ApiResponse
@@ -55,22 +132,19 @@ async function selectDir(openFile: boolean) {
         <el-button size="large" type="primary" icon="Link">从站点下载</el-button>
       </el-col>
     </el-row>
-    <el-scrollbar>
-      <el-collapse v-model="activeName">
-        <el-collapse-item title="开始任务" :name="2">
-          <el-row>
-            <el-col :span="24">
-              <el-input v-model="taskId"></el-input>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="3">
-              <el-button type="primary" @click="startTask">开始任务</el-button>
-            </el-col>
-          </el-row>
-        </el-collapse-item>
-      </el-collapse>
-    </el-scrollbar>
+    <search-table
+      v-model:changed-rows="changedRows"
+      :selectable="true"
+      :thead="thead"
+      :search-api="apis.taskSelectPage"
+      :main-input-boxes="mainInputBoxes"
+      :drop-down-input-boxes="dropDownInputBoxes"
+      key-of-data="id"
+      :multi-select="true"
+      :custom-operation-button="true"
+    >
+      <el-button icon="VideoPlay"></el-button>
+    </search-table>
   </base-closeable-page>
 </template>
 

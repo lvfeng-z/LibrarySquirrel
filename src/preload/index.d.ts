@@ -55,6 +55,7 @@ declare global {
       // Task
       taskStartTask: function
       taskCreateTask: function
+      taskSelectPage: function
 
       // Works
       worksQueryPage: function

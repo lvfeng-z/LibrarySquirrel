@@ -122,6 +122,9 @@ const api = {
   taskStartTask: (args) => {
     return Electron.ipcRenderer.invoke('task-startTask', args)
   },
+  taskSelectPage: (args) => {
+    return Electron.ipcRenderer.invoke('task-selectPage', args)
+  },
 
   // Works
   worksQueryPage: (args) => {

@@ -20,8 +20,9 @@ const props = withDefaults(
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
     keyOfData: string // 数据的唯一标识
-    operationButton: OperationItem[] // 数据行的操作按钮
     thead: Thead[] // 表头
+    operationButton?: OperationItem[] // 数据行的操作按钮
+    customOperationButton?: boolean // 是否使用自定义操作按钮
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
@@ -147,10 +148,15 @@ defineExpose({
         :multi-select="multiSelect"
         :key-of-data="keyOfData"
         :operation-button="operationButton"
+        :custom-operation-button="customOperationButton"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
-      ></DataTable>
+      >
+        <template #custom>
+          <slot name="custom" />
+        </template>
+      </DataTable>
       <div class="search-table-data-pagination-scroll-wrapper">
         <el-scrollbar class="search-table-data-pagination-scroll">
           <div class="search-table-data-pagination-wrapper">
