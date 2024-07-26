@@ -247,6 +247,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
           <SearchTable
             ref="localTagSearchTable"
             v-model:changed-rows="changedRows"
+            class="tag-manage-left-search-table"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"
@@ -311,7 +312,10 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   height: 100%;
   margin-right: 5px;
 }
-
+.tag-manage-left-search-table {
+  height: 100%;
+  width: 100%;
+}
 .tag-manage-right {
   width: calc(50% - 5px);
   height: 100%;
