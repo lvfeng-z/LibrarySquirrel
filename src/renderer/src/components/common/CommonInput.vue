@@ -40,6 +40,31 @@ const disabled: Ref<UnwrapRef<boolean>> = ref(false)
 const innerSelectData: Ref<UnwrapRef<SelectItem[]>> = ref([])
 
 // 方法
+// 获取要显示的内容
+function getSpanValue() {
+  if (props.config.type !== 'date' && props.config.type !== 'datetime') {
+    return data.value
+  } else {
+    const datetime = new Date(data.value as number)
+    const year = datetime.getFullYear() + '-'
+    const month =
+      (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) +
+      '-'
+    const day = datetime.getDate() + ' '
+    const date = year + month + day
+    if (props.config.type === 'date') {
+      return date
+    } else {
+      const hour =
+        (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
+      const minute =
+        (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
+      const second =
+        datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
+      return date + hour + minute + second
+    }
+  }
+}
 // 处理组件被双击事件
 function handleDblclick() {
   if (props.config.dblclickEnable) {
@@ -92,9 +117,13 @@ async function requestSelectDataApi(queryStr?: string) {
     <span
       v-if="
         props.config.type === 'default' ||
-        (disabled && (props.config.type === 'text' || props.config.type === 'textarea'))
+        (disabled &&
+          (props.config.type === 'text' ||
+            props.config.type === 'textarea' ||
+            props.config.type === 'date' ||
+            props.config.type === 'datetime'))
       "
-      >{{ data }}</span
+      >{{ getSpanValue() }}</span
     >
     <el-input
       v-if="!disabled && (props.config.type === 'text' || props.config.type === 'textarea')"
@@ -111,7 +140,7 @@ async function requestSelectDataApi(queryStr?: string) {
     ></el-input-number>
     <!-- 这一层div用来防止date-picker宽度超出父组件 -->
     <div
-      v-if="props.config.type === 'date' || props.config.type === 'datetime'"
+      v-if="!disabled && (props.config.type === 'date' || props.config.type === 'datetime')"
       class="common-input-el-date-picker"
     >
       <el-date-picker
