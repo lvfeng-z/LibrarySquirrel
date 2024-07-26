@@ -187,7 +187,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <slot v-if="customOperationButton" name="custom" />
+        <slot v-if="customOperationButton" name="customOperations" :row="row" />
       </template>
     </el-table-column>
   </el-table>

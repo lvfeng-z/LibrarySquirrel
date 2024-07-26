@@ -154,8 +154,8 @@ defineExpose({
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
       >
-        <template #custom>
-          <slot name="custom" />
+        <template #customOperations="row">
+          <slot name="customOperations" :row="row.row" />
         </template>
       </DataTable>
       <div class="search-table-data-pagination-scroll-wrapper">
