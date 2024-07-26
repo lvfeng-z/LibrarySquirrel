@@ -28,11 +28,13 @@ const props = withDefaults(
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
     createButton?: boolean // 是否展示新增按钮
     pageSizes?: number[]
+    defaultPageSize?: number
   }>(),
   {
     createButton: false,
     pageCondition: () => new PageModel<BaseQueryDTO, object>(),
-    pageSizes: () => [10, 20, 30, 50, 100]
+    pageSizes: () => [10, 20, 30, 50, 100],
+    defaultPageSize: 10
   }
 )
 
@@ -65,8 +67,7 @@ const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
 const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
 // 分页栏
 const pageNumber = ref(1) // 当前页码
-const innerPageSizes = ref(props.pageSizes) // 可选页面大小
-const pageSize = ref(innerPageSizes.value[0]) // 页面大小
+const pageSize = ref(props.defaultPageSize) // 页面大小
 // 2024-05-07 jumper会导致警告：ElementPlusError: [el-input] [API] label is about to be deprecated in version 2.8.0, please use aria-label instead.
 const layout = ref('sizes, prev, pager, next') // 分页栏组件
 const dataCount = ref(3) // 数据总量
@@ -165,7 +166,8 @@ defineExpose({
               v-model:page-size="pageSize"
               class="search-table-data-pagination"
               :layout="layout"
-              :page-sizes="innerPageSizes"
+              :page-sizes="pageSizes"
+              :default-page-size="defaultPageSize"
               :pager-count="pagerCount"
               :total="dataCount"
               @current-change="handlePageNumberChange"
