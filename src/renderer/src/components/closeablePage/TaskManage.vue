@@ -16,7 +16,6 @@ const apis = {
   taskSelectPage: window.api.taskSelectPage,
   dirSelect: window.api.dirSelect
 } // 接口
-const taskId = ref() // 任务id
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   {
@@ -51,6 +50,28 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     label: '状态',
     hide: false,
     width: 150,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
+    type: 'text',
+    defaultDisabled: true,
+    dblclickEnable: true,
+    name: 'url',
+    label: 'url',
+    hide: false,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
+    type: 'datetime',
+    defaultDisabled: true,
+    dblclickEnable: true,
+    name: 'createTime',
+    label: '创建时间',
+    hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
@@ -115,7 +136,7 @@ async function selectDir(openFile: boolean) {
 
 <template>
   <base-closeable-page>
-    <el-row>
+    <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>
           <el-button size="large" type="danger" icon="Monitor" @click="selectDir(false)">
@@ -134,6 +155,7 @@ async function selectDir(openFile: boolean) {
     </el-row>
     <search-table
       v-model:changed-rows="changedRows"
+      class="task-manage-search-table"
       :selectable="true"
       :thead="thead"
       :search-api="apis.taskSelectPage"
@@ -141,14 +163,21 @@ async function selectDir(openFile: boolean) {
       :drop-down-input-boxes="dropDownInputBoxes"
       key-of-data="id"
       :multi-select="true"
+      :default-page-size="50"
+      :operation-button="operationButton"
       :custom-operation-button="true"
     >
-      <el-button icon="VideoPlay"></el-button>
+      <template #customOperations="row">
+        <el-button icon="VideoPlay" @click="console.log(JSON.stringify(row.row))"></el-button>
+      </template>
     </search-table>
   </base-closeable-page>
 </template>
 
 <style scoped>
+.task-manage-local-import-button-row {
+  height: 50px;
+}
 .task-manage-local-import-button-col {
   display: flex;
   justify-content: center;
@@ -158,5 +187,9 @@ async function selectDir(openFile: boolean) {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+.task-manage-search-table {
+  height: calc(100% - 50px);
+  width: 100%;
 }
 </style>
