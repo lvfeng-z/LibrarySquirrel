@@ -39,9 +39,9 @@ function closeSelf() {
   position: absolute;
 }
 .base-closeable-page-content {
-  height: calc(100% - 70px);
-  width: calc(100% - 90px);
-  margin-top: 15px;
+  height: calc(100% - 65px);
+  width: calc(100% - 65px);
+  margin-right: 25px;
 }
 .base-closeable-page-close-button {
   position: absolute;
