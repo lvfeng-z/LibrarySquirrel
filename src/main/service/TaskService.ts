@@ -16,6 +16,9 @@ import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import PageModel from '../model/utilModels/PageModel.ts'
+import { COMPARATOR } from '../constant/CrudConstant.ts'
+import TaskDTO from '../model/dto/TaskDTO.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -54,11 +57,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         // 创建任务
         const pluginResponse = await taskHandler.create(url)
+
+        // 分别处理数组类型和流类型的响应值
         if (Array.isArray(pluginResponse)) {
           return this.handlePluginTaskArray(pluginResponse, url, taskPlugin)
-        }
-        if (pluginResponse instanceof Readable) {
+        } else if (pluginResponse instanceof Readable) {
           return this.handlePluginTaskStream(pluginResponse, url, taskPlugin, 100, 200)
+        } else {
+          logUtil.warn('TaskService', '插件返回了不支持的类型')
         }
       } catch (error) {
         logUtil.warn(
@@ -429,6 +435,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       LogUtil.error('TaskService', msg)
       throw new Error(msg)
     }
+  }
+
+  /**
+   * 分页查询parent-children结构的任务
+   * @param page
+   */
+  async selectTreeDataPage(page: PageModel<TaskQueryDTO, Task>) {
+    if (notNullish(page.query)) {
+      page.query.assignComparator = {
+        ...{ taskName: COMPARATOR.LIKE },
+        ...page.query.assignComparator
+      }
+    }
+    const resultPage = await super.selectPage(page)
+
+    if (notNullish(resultPage.data) && resultPage.data.length > 0) {
+      const tasks = resultPage.data.map((task) => new TaskDTO(task as TaskDTO))
+      const parentList = tasks.filter((task) => task.isCollection)
+      parentList.forEach((task) => {
+        task.children = tasks.filter((taskInFull) => taskInFull.parentId === task.id)
+      })
+      resultPage.data = parentList
+    }
+
+    return resultPage
   }
 
   /**
