@@ -448,15 +448,43 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         ...page.query.assignComparator
       }
     }
-    const resultPage = await super.selectPage(page)
+    const sourcePage = await super.selectPage(page)
+    const resultPage = sourcePage.transform<TaskDTO>()
 
-    if (notNullish(resultPage.data) && resultPage.data.length > 0) {
-      const tasks = resultPage.data.map((task) => new TaskDTO(task as TaskDTO))
-      const parentList = tasks.filter((task) => task.isCollection)
-      parentList.forEach((task) => {
-        task.children = tasks.filter((taskInFull) => taskInFull.parentId === task.id)
-      })
-      resultPage.data = parentList
+    // 组装为树形数据
+    if (notNullish(sourcePage.data) && sourcePage.data.length > 0) {
+      const tasks = sourcePage.data.map((task) => new TaskDTO(task as TaskDTO))
+      for (let index = 0; index < tasks.length; index++) {
+        if (tasks[index].isCollection) {
+          // 初始化children数组
+          if (isNullish(tasks[index].children)) {
+            tasks[index].children = []
+          }
+
+          // 查找数组前面这个任务集合的所有任务
+          let lessIndex = 0
+          while (lessIndex < index) {
+            if (tasks[lessIndex].parentId === tasks[index].id) {
+              const childTask = tasks.splice(lessIndex, 1)[0]
+              index--
+              tasks[index].children?.push(childTask)
+              continue
+            }
+            lessIndex++
+          }
+          // 查找数组后面这个任务集合的所有任务
+          let greaterIndex = index + 1
+          while (greaterIndex < tasks.length) {
+            if (tasks[greaterIndex].parentId === tasks[index].id) {
+              const childTask = tasks.splice(greaterIndex, 1)[0]
+              tasks[index].children?.push(childTask)
+              continue
+            }
+            greaterIndex++
+          }
+        }
+      }
+      resultPage.data = tasks
     }
 
     return resultPage
