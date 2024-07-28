@@ -16,6 +16,7 @@ onMounted(() => {
 
 // 变量
 const apis = {
+  siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
@@ -95,7 +96,10 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'site_domain',
     type: 'select',
-    inputSpan: 4
+    inputSpan: 4,
+    useApi: true,
+    api: apis.siteGetSelectItemPage,
+    pagingApi: true
   },
   {
     name: 'status',
@@ -103,23 +107,23 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     inputSpan: 4,
     selectData: [
       {
-        value: 0,
+        value: '0',
         label: '未开始'
       },
       {
-        value: 1,
+        value: '1',
         label: '进行中'
       },
       {
-        value: 2,
+        value: '2',
         label: '暂停'
       },
       {
-        value: 3,
+        value: '3',
         label: '已完成'
       },
       {
-        value: 4,
+        value: '4',
         label: '失败'
       }
     ]
