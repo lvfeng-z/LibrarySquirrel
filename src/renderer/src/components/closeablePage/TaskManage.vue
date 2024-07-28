@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import { Ref, ref, UnwrapRef } from 'vue'
+import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
@@ -9,6 +9,11 @@ import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 
+// onMounted
+onMounted(() => {
+  taskManageSearchTable.value.handleSearchButtonClicked()
+})
+
 // 变量
 const apis = {
   taskCreateTask: window.api.taskCreateTask,
@@ -16,6 +21,8 @@ const apis = {
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   dirSelect: window.api.dirSelect
 } // 接口
+// 搜索组件ref
+const taskManageSearchTable = ref()
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   {
@@ -82,17 +89,40 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'taskName',
     type: 'text',
-    placeholder: '输入本地标签的名称',
-    inputSpan: 10
-  }
-])
-// 下拉搜索栏的inputBox
-const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
+    placeholder: '输入任务的名称',
+    inputSpan: 13
+  },
   {
-    name: 'taskName',
-    type: 'text',
-    placeholder: '输入本地标签的名称',
-    inputSpan: 10
+    name: 'site_domain',
+    type: 'select',
+    inputSpan: 4
+  },
+  {
+    name: 'status',
+    type: 'select',
+    inputSpan: 4,
+    selectData: [
+      {
+        value: 0,
+        label: '未开始'
+      },
+      {
+        value: 1,
+        label: '进行中'
+      },
+      {
+        value: 2,
+        label: '暂停'
+      },
+      {
+        value: 3,
+        label: '已完成'
+      },
+      {
+        value: 4,
+        label: '失败'
+      }
+    ]
   }
 ])
 // 改变的行数据
@@ -153,25 +183,28 @@ async function selectDir(openFile: boolean) {
         <el-button size="large" type="primary" icon="Link">从站点下载</el-button>
       </el-col>
     </el-row>
-    <search-table
-      v-model:changed-rows="changedRows"
-      class="task-manage-search-table"
-      :selectable="true"
-      :thead="thead"
-      :search-api="apis.taskSelectTreeDataPage"
-      :main-input-boxes="mainInputBoxes"
-      :drop-down-input-boxes="dropDownInputBoxes"
-      key-of-data="id"
-      :multi-select="true"
-      :default-page-size="50"
-      :operation-button="operationButton"
-      :custom-operation-button="true"
-      :tree-data="true"
-    >
-      <template #customOperations="row">
-        <el-button icon="VideoPlay" @click="console.log(JSON.stringify(row.row))"></el-button>
-      </template>
-    </search-table>
+    <div class="task-manage-search-table-wrapper rounded-margin-box">
+      <search-table
+        ref="taskManageSearchTable"
+        v-model:changed-rows="changedRows"
+        class="task-manage-search-table"
+        :selectable="true"
+        :thead="thead"
+        :search-api="apis.taskSelectTreeDataPage"
+        :main-input-boxes="mainInputBoxes"
+        :drop-down-input-boxes="[]"
+        key-of-data="id"
+        :multi-select="true"
+        :default-page-size="50"
+        :operation-button="operationButton"
+        :custom-operation-button="true"
+        :tree-data="true"
+      >
+        <template #customOperations="row">
+          <el-button icon="VideoPlay" @click="console.log(JSON.stringify(row.row))"></el-button>
+        </template>
+      </search-table>
+    </div>
   </base-closeable-page>
 </template>
 
@@ -189,8 +222,11 @@ async function selectDir(openFile: boolean) {
   justify-content: center;
   align-items: center;
 }
-.task-manage-search-table {
+.task-manage-search-table-wrapper {
   height: calc(100% - 50px);
+}
+.task-manage-search-table {
+  height: 100%;
   width: 100%;
 }
 </style>
