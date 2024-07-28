@@ -6,6 +6,7 @@ import DataTableOperationResponse from '../../model/util/DataTableOperationRespo
 import CommonInput from './CommonInput.vue'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
+import { isNullish } from '../../utils/CommonUtil'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -16,9 +17,10 @@ const props = withDefaults(
     thead: Thead[] // 表头信息
     keyOfData: string // 数据的唯一标识
     operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
-    customOperationButton?: boolean
+    customOperationButton?: boolean // 是否使用自定义操作栏
+    treeData?: boolean //是否为树形数据
   }>(),
-  { customOperationButton: false }
+  { customOperationButton: false, treeData: false }
 )
 
 // onBeforeMount
@@ -50,7 +52,7 @@ async function initializeThead() {
     }
 
     // 未设置表头tag样式，默认为info
-    if (tempThead.headerTagType == undefined) {
+    if (isNullish(tempThead.headerTagType)) {
       tempThead.headerTagType = 'info'
     }
 
@@ -119,6 +121,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
         </el-radio>
       </template>
     </el-table-column>
+    <el-table-column v-if="props.treeData" width="25" />
     <template v-for="(item, index) in innerThead">
       <template v-if="!item.hide">
         <el-table-column
@@ -131,11 +134,14 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
         >
           <template #header>
             <div :style="{ textAlign: item.headerAlign }">
-              <el-tag size="default" :type="item.headerTagType">{{ item.label }}</el-tag>
+              <el-tag v-if="props.treeData" size="default" :type="item.headerTagType">
+                {{ item.label }}
+              </el-tag>
             </div>
           </template>
           <template #default="scope">
             <common-input
+              v-if="props.treeData"
               v-model:data="scope.row[item.name]"
               :config="item"
               @data-changed="handleRowChange(scope.row)"

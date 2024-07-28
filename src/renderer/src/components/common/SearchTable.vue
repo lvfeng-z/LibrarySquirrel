@@ -23,6 +23,7 @@ const props = withDefaults(
     thead: Thead[] // 表头
     operationButton?: OperationItem[] // 数据行的操作按钮
     customOperationButton?: boolean // 是否使用自定义操作按钮
+    treeData?: boolean //是否为树形数据
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
@@ -150,6 +151,7 @@ defineExpose({
         :key-of-data="keyOfData"
         :operation-button="operationButton"
         :custom-operation-button="customOperationButton"
+        :tree-data="treeData"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
