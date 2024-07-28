@@ -134,14 +134,13 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
         >
           <template #header>
             <div :style="{ textAlign: item.headerAlign }">
-              <el-tag v-if="props.treeData" size="default" :type="item.headerTagType">
+              <el-tag size="default" :type="item.headerTagType">
                 {{ item.label }}
               </el-tag>
             </div>
           </template>
           <template #default="scope">
             <common-input
-              v-if="props.treeData"
               v-model:data="scope.row[item.name]"
               :config="item"
               @data-changed="handleRowChange(scope.row)"
