@@ -13,7 +13,7 @@ import DialogMode from '../../model/util/DialogMode'
 const apis = {
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
-  taskSelectPage: window.api.taskSelectPage,
+  taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   dirSelect: window.api.dirSelect
 } // 接口
 // 表头
@@ -158,7 +158,7 @@ async function selectDir(openFile: boolean) {
       class="task-manage-search-table"
       :selectable="true"
       :thead="thead"
-      :search-api="apis.taskSelectPage"
+      :search-api="apis.taskSelectTreeDataPage"
       :main-input-boxes="mainInputBoxes"
       :drop-down-input-boxes="dropDownInputBoxes"
       key-of-data="id"
@@ -166,6 +166,7 @@ async function selectDir(openFile: boolean) {
       :default-page-size="50"
       :operation-button="operationButton"
       :custom-operation-button="true"
+      :tree-data="true"
     >
       <template #customOperations="row">
         <el-button icon="VideoPlay" @click="console.log(JSON.stringify(row.row))"></el-button>
