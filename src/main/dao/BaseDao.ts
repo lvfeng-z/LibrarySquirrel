@@ -697,6 +697,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
                     : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
                 modifiedValue = '%'.concat(value)
                 break
+              case COMPARATOR.LIKE:
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"${snakeCaseKey}" ${comparator} @${key}`
+                    : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                modifiedValue = '%'.concat(value, '%')
+                break
               default:
                 whereClauses[key] =
                   alias == undefined
