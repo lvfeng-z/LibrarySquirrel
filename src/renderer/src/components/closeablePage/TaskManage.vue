@@ -9,7 +9,6 @@ import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import Task from '../../model/main/Task'
 
 // onMounted
 onMounted(() => {
@@ -153,6 +152,16 @@ const operationButton: OperationItem[] = [
 async function importFromDir(dir: string) {
   await apis.taskCreateTask('file://'.concat(dir))
 }
+// 懒加载处理函数
+function load(_row: object, _treeNode: unknown, resolve: (tasks: TaskDTO[]) => void) {
+  const a = new TaskDTO()
+  a.id = 19651651
+  a.taskName = '懒加载测试'
+  const b: TaskDTO[] = []
+  b.push(a)
+  console.log(b)
+  resolve(b)
+}
 // 开始任务
 // function startTask() {
 //   apis.taskStartTask(taskId.value)
@@ -202,7 +211,7 @@ async function selectDir(openFile: boolean) {
         :drop-down-input-boxes="[]"
         key-of-data="id"
         :lazy="true"
-        :load="() => { return [new Task()] }"
+        :load="load"
         :multi-select="true"
         :default-page-size="50"
         :operation-button="operationButton"
