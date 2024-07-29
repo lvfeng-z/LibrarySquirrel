@@ -20,7 +20,7 @@ const props = withDefaults(
     customOperationButton?: boolean // 是否使用自定义操作栏
     treeData?: boolean // 是否为树形数据
     lazy?: boolean // 树形数据是否懒加载
-    load?: Function // 懒加载处理函数
+    load?: (row: object, treeNode: unknown, resolve: (...args: unknown[]) => void) => void // 懒加载处理函数
   }>(),
   { customOperationButton: false, treeData: false, lazy: false }
 )
