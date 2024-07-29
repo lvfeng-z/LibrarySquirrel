@@ -438,6 +438,30 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 分页查询任务集合
+   * @param page
+   */
+  async selectParentPage(page: PageModel<TaskQueryDTO, Task>) {
+    if (notNullish(page.query)) {
+      page.query.assignComparator = {
+        ...{ taskName: COMPARATOR.LIKE },
+        ...page.query.assignComparator
+      }
+    }
+    const sourcePage = await this.dao.selectParentPage(page)
+    const resultPage = sourcePage.transform<TaskDTO>()
+    const tasks = sourcePage.data
+    if (notNullish(tasks) && tasks.length > 0) {
+      resultPage.data = tasks.map((task) => {
+        const dto = new TaskDTO(task)
+        dto.hasChildren = dto.isCollection
+        return dto
+      })
+    }
+    return resultPage
+  }
+
+  /**
    * 分页查询parent-children结构的任务
    * @param page
    */
@@ -453,7 +477,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 组装为树形数据
     if (notNullish(sourcePage.data) && sourcePage.data.length > 0) {
-      const tasks = sourcePage.data.map((task) => new TaskDTO(task as TaskDTO))
+      const tasks = sourcePage.data.map((task) => new TaskDTO(task))
       for (let index = 0; index < tasks.length; index++) {
         if (tasks[index].isCollection) {
           // 初始化children数组

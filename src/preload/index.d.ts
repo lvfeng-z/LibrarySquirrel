@@ -56,6 +56,7 @@ declare global {
       taskStartTask: function
       taskCreateTask: function
       taskSelectPage: function
+      taskSelectParentPage: function
       taskSelectTreeDataPage: function
 
       // Works

@@ -125,6 +125,9 @@ const api = {
   taskSelectPage: (args) => {
     return Electron.ipcRenderer.invoke('task-selectPage', args)
   },
+  taskSelectParentPage: (args) => {
+    return Electron.ipcRenderer.invoke('task-selectParentPage', args)
+  },
   taskSelectTreeDataPage: (args) => {
     return Electron.ipcRenderer.invoke('task-selectTreeDataPage', args)
   },
