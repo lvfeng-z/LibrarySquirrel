@@ -18,9 +18,11 @@ const props = withDefaults(
     keyOfData: string // 数据的唯一标识
     operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
     customOperationButton?: boolean // 是否使用自定义操作栏
-    treeData?: boolean //是否为树形数据
+    treeData?: boolean // 是否为树形数据
+    lazy?: boolean // 树形数据是否懒加载
+    load?: Function // 懒加载处理函数
   }>(),
-  { customOperationButton: false, treeData: false }
+  { customOperationButton: false, treeData: false, lazy: false }
 )
 
 // onBeforeMount
@@ -100,6 +102,8 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
 <template>
   <el-table
     class="data-table"
+    :lazy="props.lazy"
+    :load="props.load"
     :data="data"
     :row-key="keyOfData"
     :selectable="props.selectable"

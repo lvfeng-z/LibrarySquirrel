@@ -8,6 +8,8 @@ import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
+import TaskDTO from '../../model/main/dto/TaskDTO'
+import Task from '../../model/main/Task'
 
 // onMounted
 onMounted(() => {
@@ -20,6 +22,7 @@ const apis = {
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
+  taskSelectParentPage: window.api.taskSelectParentPage,
   dirSelect: window.api.dirSelect
 } // 接口
 // 搜索组件ref
@@ -194,10 +197,12 @@ async function selectDir(openFile: boolean) {
         class="task-manage-search-table"
         :selectable="true"
         :thead="thead"
-        :search-api="apis.taskSelectTreeDataPage"
+        :search-api="apis.taskSelectParentPage"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
         key-of-data="id"
+        :lazy="true"
+        :load="() => { return [new Task()] }"
         :multi-select="true"
         :default-page-size="50"
         :operation-button="operationButton"

@@ -24,6 +24,8 @@ const props = withDefaults(
     operationButton?: OperationItem[] // 数据行的操作按钮
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
+    lazy?: boolean // 树形数据是否懒加载
+    load?: Function // 懒加载处理函数
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
@@ -152,6 +154,8 @@ defineExpose({
         :operation-button="operationButton"
         :custom-operation-button="customOperationButton"
         :tree-data="treeData"
+        :lazy="props.lazy"
+        :load="props.load"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
