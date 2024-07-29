@@ -10,7 +10,8 @@ enum COMPARATOR {
   LIKE = 'like',
   LEFT_LIKE = 'leftLike',
   RIGHT_LIKE = 'rightLike',
-  IS_NULL = 'is null'
+  IS_NULL = 'is null',
+  IS_NOT_NULL = 'is not null'
 }
 
 export { SAVE_FAILED, COMPARATOR }

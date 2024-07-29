@@ -556,6 +556,34 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         let modifiedValue: unknown
         let whereClause: string
         switch (comparator) {
+          case COMPARATOR.EQUAL:
+            if (value !== null) {
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${comparator} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              modifiedValue = value
+            } else {
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+            }
+            break
+          case COMPARATOR.NOT_EQUAL:
+            if (value !== null) {
+              whereClause =
+                alias == undefined
+                  ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                  : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+              modifiedValue = value
+            } else {
+              whereClause =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+            }
+            break
           case COMPARATOR.LEFT_LIKE:
             whereClause =
               alias == undefined
@@ -627,12 +655,33 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
             // 根据运算符的不同给出不同的where子句和匹配值
             let modifiedValue
             switch (comparator) {
+              case COMPARATOR.EQUAL:
+                if (value !== null) {
+                  whereClauses[key] =
+                    alias == undefined
+                      ? `"${snakeCaseKey}" ${comparator} @${key}`
+                      : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                  modifiedValue = value
+                } else {
+                  whereClauses[key] =
+                    alias == undefined
+                      ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+                      : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+                }
+                break
               case COMPARATOR.NOT_EQUAL:
-                whereClauses[key] =
-                  alias == undefined
-                    ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
-                    : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
-                modifiedValue = value
+                if (value !== null) {
+                  whereClauses[key] =
+                    alias == undefined
+                      ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                      : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                  modifiedValue = value
+                } else {
+                  whereClauses[key] =
+                    alias == undefined
+                      ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                      : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                }
                 break
               case COMPARATOR.LEFT_LIKE:
                 whereClauses[key] =
