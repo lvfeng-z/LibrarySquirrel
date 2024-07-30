@@ -19,6 +19,7 @@ import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
+import TaskHandler from '../plugin/TaskHandler.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -288,41 +289,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 开始任务
-   * @param taskId 任务id
+   * @param taskIds 任务id列表
    * @param mainWindow 主窗口实例
    */
-  async startTask(taskId: number, mainWindow: Electron.BrowserWindow): Promise<boolean> {
-    // 校验任务可用性
-    const baseTask = await this.dao.getById(taskId)
-    if (baseTask === undefined) {
-      const msg = `找不到任务，taskId = ${taskId}`
-      LogUtil.error('TaskService', msg)
-      return false
-    }
+  async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<boolean> {
+    // 查找id列表对应的所有子任务
+    const tasks: Task[] = await this.dao.selectUnRepeatChildTask(taskIds)
 
-    // 如果任务是一个任务集合，则其子任务放进tasks，否则其自身放进tasks
-    let tasks: Task[] = []
-    if (baseTask.isCollection) {
-      tasks = await this.getChildrenTask(baseTask.id as number)
-    } else {
-      tasks.push(baseTask)
-    }
-
-    // 校验任务的插件id
-    if (isNullish(baseTask.pluginId)) {
-      const msg = `任务的插件id意外为空，taskId: ${baseTask.id}`
-      LogUtil.error('TaskService', msg)
-      throw new Error(msg)
-    }
-
-    // 加载插件
+    // 插件缓存
+    const pluginCache: { [id: string]: { plugin: TaskHandler; info: string } } = {}
     const pluginLoader = new PluginLoader(mainWindow)
-    const taskHandler = await pluginLoader.loadTaskPlugin(baseTask.pluginId as number)
-    // 查询插件信息，日志用
-    const installedPluginsService = new InstalledPluginsService()
-    const pluginInfo = JSON.stringify(
-      await installedPluginsService.getById(baseTask.pluginId as number)
-    )
 
     // 尝试开始任务
     try {
@@ -330,6 +306,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const maxSaveWorksPromise = 100
       const promiseLimit = limit(maxSaveWorksPromise)
       for (const task of tasks) {
+        // 校验任务的插件id
+        if (isNullish(task.pluginId)) {
+          const msg = `任务的插件id意外为空，taskId: ${task.id}`
+          LogUtil.warn('TaskService', msg)
+          continue
+        }
+
+        // 加载并缓存插件和插件信息
+        let taskHandler: TaskHandler
+        let pluginInfo: string
+        if (isNullish(pluginCache[task.pluginId])) {
+          // 查询插件信息，用于输出日志
+          const installedPluginsService = new InstalledPluginsService()
+          pluginInfo = JSON.stringify(
+            await installedPluginsService.getById(task.pluginId as number)
+          )
+
+          taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
+
+          pluginCache[task.pluginId] = { plugin: taskHandler, info: pluginInfo }
+        } else {
+          taskHandler = pluginCache[task.pluginId].plugin
+          pluginInfo = pluginCache[task.pluginId].info
+        }
+
         const worksDTO = await taskHandler.start(task)
         // 如果插件未返回任务id，发出警告并跳过此次循环
         if (

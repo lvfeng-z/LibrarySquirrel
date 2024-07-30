@@ -48,6 +48,17 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
+    name: 'url',
+    label: 'url',
+    hide: false,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
+    type: 'text',
+    defaultDisabled: true,
+    dblclickEnable: true,
     name: 'siteDomain',
     label: '站点',
     hide: false,
@@ -64,17 +75,6 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     label: '状态',
     hide: false,
     width: 80,
-    headerAlign: 'center',
-    dataAlign: 'center',
-    overHide: true
-  },
-  {
-    type: 'text',
-    defaultDisabled: true,
-    dblclickEnable: true,
-    name: 'url',
-    label: 'url',
-    hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
@@ -150,6 +150,14 @@ const operationButton: OperationItem[] = [
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
+// 操作栏代码
+const enum OperationCode {
+  START,
+  PAUSE,
+  RETRY,
+  CANCEL,
+  DELETE
+}
 
 // 方法
 // 保存设置
@@ -179,9 +187,23 @@ function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   }
 }
 // 开始任务
-// function startTask() {
-//   apis.taskStartTask(taskId.value)
-// }
+function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
+  switch (code) {
+    case OperationCode.START:
+      apis.taskStartTask([row.id])
+      break
+    case OperationCode.PAUSE:
+      break
+    case OperationCode.RETRY:
+      break
+    case OperationCode.CANCEL:
+      break
+    case OperationCode.DELETE:
+      break
+    default:
+      break
+  }
+}
 // 选择目录
 async function selectDir(openFile: boolean) {
   const response = (await apis.dirSelect(openFile)) as ApiResponse
@@ -236,7 +258,38 @@ async function selectDir(openFile: boolean) {
         :tree-data="true"
       >
         <template #customOperations="row">
-          <el-button icon="VideoPlay" @click="console.log(JSON.stringify(row.row))"></el-button>
+          <el-button-group>
+            <el-button
+              size="small"
+              icon="View"
+              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+            ></el-button>
+            <el-button
+              size="small"
+              icon="VideoPlay"
+              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+            ></el-button>
+            <el-button
+              size="small"
+              icon="VideoPause"
+              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+            ></el-button>
+            <el-button
+              size="small"
+              icon="RefreshRight"
+              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+            ></el-button>
+            <el-button
+              size="small"
+              icon="CircleClose"
+              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+            ></el-button>
+            <el-button
+              size="small"
+              icon="Delete"
+              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+            ></el-button>
+          </el-button-group>
         </template>
       </search-table>
     </div>
