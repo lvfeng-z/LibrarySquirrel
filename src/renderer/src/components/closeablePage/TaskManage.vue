@@ -9,6 +9,9 @@ import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
+import apiUtil from '../../utils/ApiUtil'
+import { TreeNode } from 'element-plus'
+import { isNullish } from '../../utils/CommonUtil'
 
 // onMounted
 onMounted(() => {
@@ -22,6 +25,7 @@ const apis = {
   taskStartTask: window.api.taskStartTask,
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   taskSelectParentPage: window.api.taskSelectParentPage,
+  taskGetChildrenTask: window.api.taskGetChildrenTask,
   dirSelect: window.api.dirSelect
 } // 接口
 // 搜索组件ref
@@ -35,9 +39,9 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'taskName',
     label: '名称',
     hide: false,
-    width: 150,
+    width: 200,
     headerAlign: 'center',
-    dataAlign: 'center',
+    dataAlign: 'left',
     overHide: true
   },
   {
@@ -59,7 +63,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'status',
     label: '状态',
     hide: false,
-    width: 150,
+    width: 80,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
@@ -153,14 +157,25 @@ async function importFromDir(dir: string) {
   await apis.taskCreateTask('file://'.concat(dir))
 }
 // 懒加载处理函数
-function load(_row: object, _treeNode: unknown, resolve: (tasks: TaskDTO[]) => void) {
-  const a = new TaskDTO()
-  a.id = 19651651
-  a.taskName = '懒加载测试'
-  const b: TaskDTO[] = []
-  b.push(a)
-  console.log(b)
-  resolve(b)
+async function load(
+  row: unknown,
+  _treeNode: TreeNode,
+  resolve: (data: unknown[]) => void
+): Promise<void> {
+  const response = await apis.taskGetChildrenTask((row as TaskDTO).id)
+  if (apiUtil.apiResponseCheck(response)) {
+    const data = apiUtil.apiResponseGetData(response) as TaskDTO[]
+    resolve(data)
+  }
+}
+// 给行添加class
+function tableRowClassName(data: { row: unknown; rowIndex: number }) {
+  const row = data.row as TaskDTO
+  if (row.hasChildren || isNullish(row.parentId)) {
+    return 'task-manage-search-table-parent-row'
+  } else {
+    return 'task-manage-search-table-child-row'
+  }
 }
 // 开始任务
 // function startTask() {
@@ -210,6 +225,7 @@ async function selectDir(openFile: boolean) {
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
         key-of-data="id"
+        :table-row-class-name="tableRowClassName"
         :lazy="true"
         :load="load"
         :multi-select="true"
@@ -246,5 +262,11 @@ async function selectDir(openFile: boolean) {
 .task-manage-search-table {
   height: 100%;
   width: 100%;
+}
+:deep(.el-table .task-manage-search-table-parent-row) {
+  font-weight: bold;
+}
+:deep(.el-table .task-manage-search-table-child-row > :nth-child(3) > .cell :nth-child(1)) {
+  transform: translateX(7px);
 }
 </style>

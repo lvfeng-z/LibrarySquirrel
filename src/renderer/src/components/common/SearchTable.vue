@@ -11,6 +11,7 @@ import PageModel from '../../model/util/PageModel'
 import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
+import { TreeNode } from 'element-plus'
 
 // props
 const props = withDefaults(
@@ -20,12 +21,13 @@ const props = withDefaults(
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
     keyOfData: string // 数据的唯一标识
+    tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     thead: Thead[] // 表头
     operationButton?: OperationItem[] // 数据行的操作按钮
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
     lazy?: boolean // 树形数据是否懒加载
-    load?: (row: object, treeNode: unknown, resolve: (...args: unknown[]) => void) => void // 懒加载处理函数
+    load?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
@@ -151,6 +153,7 @@ defineExpose({
         :selectable="selectable"
         :multi-select="multiSelect"
         :key-of-data="keyOfData"
+        :table-row-class-name="tableRowClassName"
         :operation-button="operationButton"
         :custom-operation-button="customOperationButton"
         :tree-data="treeData"

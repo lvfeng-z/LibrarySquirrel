@@ -92,20 +92,4 @@ export default class Task extends BaseModel {
       }
     }
   }
-
-  /**
-   * 清除所有插件不应处理的属性值
-   */
-  security() {
-    this.id = undefined
-    this.createTime = undefined
-    this.updateTime = undefined
-    this.isCollection = undefined
-    this.parentId = undefined
-    this.siteDomain = undefined
-    this.localWorksId = undefined
-    this.status = undefined
-    this.pluginId = undefined
-    this.pluginInfo = undefined
-  }
 }

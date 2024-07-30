@@ -7,6 +7,7 @@ import CommonInput from './CommonInput.vue'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import { isNullish } from '../../utils/CommonUtil'
+import { TreeNode } from 'element-plus'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -16,11 +17,12 @@ const props = withDefaults(
     multiSelect: boolean // 列表是否多选
     thead: Thead[] // 表头信息
     keyOfData: string // 数据的唯一标识
+    tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
     customOperationButton?: boolean // 是否使用自定义操作栏
     treeData?: boolean // 是否为树形数据
     lazy?: boolean // 树形数据是否懒加载
-    load?: (row: object, treeNode: unknown, resolve: (...args: unknown[]) => void) => void // 懒加载处理函数
+    load?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
   }>(),
   { customOperationButton: false, treeData: false, lazy: false }
 )
@@ -106,6 +108,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
     :load="props.load"
     :data="data"
     :row-key="keyOfData"
+    :row-class-name="tableRowClassName"
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
   >
