@@ -165,6 +165,7 @@ async function load(
   const response = await apis.taskGetChildrenTask((row as TaskDTO).id)
   if (apiUtil.apiResponseCheck(response)) {
     const data = apiUtil.apiResponseGetData(response) as TaskDTO[]
+    ;(row as TaskDTO).children = data
     resolve(data)
   }
 }
