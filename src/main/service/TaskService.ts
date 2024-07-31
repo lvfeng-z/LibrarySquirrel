@@ -20,6 +20,7 @@ import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
+import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -56,14 +57,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         // 异步加载插件
         const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
 
+        // 任务集
+        const parentTask = new TaskCreateDTO()
+        parentTask.pluginId = taskPlugin.id as number
+        parentTask.pluginInfo = pluginInfo
+        parentTask.url = url
+        parentTask.status = TaskConstant.TaskStatesEnum.CREATED
+        parentTask.siteDomain = taskPlugin.domain
+        parentTask.isCollection = true
+        parentTask.saved = false
+        taskHandler.pluginTool.events.on('change-collection-name-request', (taskName: string) => {
+          parentTask.taskName = taskName
+          if (parentTask.saved) {
+            const tempTask = new Task(parentTask)
+            this.updateById(tempTask)
+          }
+        })
+
         // 创建任务
         const pluginResponse = await taskHandler.create(url)
 
         // 分别处理数组类型和流类型的响应值
         if (Array.isArray(pluginResponse)) {
-          return this.handlePluginTaskArray(pluginResponse, url, taskPlugin)
+          return this.handlePluginTaskArray(pluginResponse, url, taskPlugin, parentTask)
         } else if (pluginResponse instanceof Readable) {
-          return this.handlePluginTaskStream(pluginResponse, url, taskPlugin, 100, 200)
+          return this.handlePluginTaskStream(pluginResponse, url, taskPlugin, parentTask, 100, 200)
         } else {
           logUtil.warn('TaskService', '插件返回了不支持的类型')
         }
@@ -85,11 +103,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param pluginResponseTasks 插件返回的任务数组
    * @param url 传给插件的url
    * @param taskPlugin 插件信息
+   * @param parentTask 任务集
    */
   async handlePluginTaskArray(
     pluginResponseTasks: Task[],
     url: string,
-    taskPlugin: InstalledPlugins
+    taskPlugin: InstalledPlugins,
+    parentTask: TaskCreateDTO
   ): Promise<number> {
     // 查询插件信息，用于输出日志
     const pluginInfo = JSON.stringify(taskPlugin)
@@ -131,13 +151,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       return super.save(task).then(() => 1)
     } else {
       // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
-      const parentTask = new Task()
-      parentTask.isCollection = true
-      parentTask.siteDomain = taskPlugin.domain
-      parentTask.url = url
-      parentTask.pluginId = taskPlugin.id as number
-      parentTask.pluginInfo = pluginInfo
-      const parentId = (await super.save(parentTask)) as number
+      const tempTask = new Task(parentTask)
+      const parentId = (await super.save(tempTask)) as number
+      parentTask.id = parentId
+      parentTask.saved = true
 
       const childTasks = tasks
         .map((task) => {
@@ -170,6 +187,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param pluginResponseTaskStream 插件返回的任务流
    * @param url 传给插件的url
    * @param taskPlugin 插件信息
+   * @param parentTask 任务集
    * @param batchSize 每次保存任务的数量
    * @param maxQueueLength 任务队列最大长度
    */
@@ -177,6 +195,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     pluginResponseTaskStream: Readable,
     url: string,
     taskPlugin: InstalledPlugins,
+    parentTask: TaskCreateDTO,
     batchSize: number,
     maxQueueLength: number
   ): Promise<number> {
@@ -184,14 +203,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return new Promise<number>((resolve) => {
       // 查询插件信息，用于输出日志
       const pluginInfo = JSON.stringify(taskPlugin)
-      // 任务集合，只在任务多于1个的时候进行保存
-      const parentTask = new Task()
-      parentTask.pluginId = taskPlugin.id as number
-      parentTask.pluginInfo = pluginInfo
-      parentTask.url = url
-      parentTask.status = TaskConstant.TaskStatesEnum.CREATED
-      parentTask.siteDomain = taskPlugin.domain
-      parentTask.isCollection = true
       // 任务计数
       let itemCount = 0
       // 集合任务存储过程
@@ -201,9 +212,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 标记流是否已暂停
       let isPaused = false
 
+      // 保存任务集的过程
       const parentTaskProcessing = () => {
-        return super.save(parentTask) as Promise<number>
+        const tempTask = new Task(parentTask)
+        const parentId = super.save(tempTask) as Promise<number>
+        parentTask.saved = true
+        return parentId
       }
+
       // 处理任务队列的函数
       const processTasks = async () => {
         const taskBuffer: Task[] = []

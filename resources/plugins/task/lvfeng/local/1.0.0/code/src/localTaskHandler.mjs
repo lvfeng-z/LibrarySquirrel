@@ -17,6 +17,10 @@ export default class LocalTaskHandler {
    */
   async create(url) {
     url = url.replace(/^file:\/\//, '')
+    // 修改任务集的名称
+    this.pluginTool.changeCollectionName(`从本地路径【${url}】创建的导入`)
+
+    // 创建任务流
     return new TaskStream(url, this.pluginTool)
   }
 

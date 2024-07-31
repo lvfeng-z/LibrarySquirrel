@@ -1,8 +1,11 @@
 import Task from '../model/Task.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import { Readable } from 'node:stream'
+import PluginTool from './PluginTool.ts'
 
 export default interface TaskHandler {
+  pluginTool: PluginTool
+
   /**
    * 创建任务
    * @param url 需解析的url

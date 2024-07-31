@@ -6,7 +6,7 @@ export default class PluginTool {
    * 事件收发器
    * @private
    */
-  private events: EventEmitter
+  events: EventEmitter
 
   constructor(events: EventEmitter) {
     this.events = events
@@ -23,5 +23,13 @@ export default class PluginTool {
       })
       this.events.emit('explain-path-request', dir)
     })
+  }
+
+  /**
+   * 修改当前任务集的名称
+   * @param collectionName 任务集名称
+   */
+  public changeCollectionName(collectionName: string): void {
+    this.events.emit('change-collection-name-request', collectionName)
   }
 }
