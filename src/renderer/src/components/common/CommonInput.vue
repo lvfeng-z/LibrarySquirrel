@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import CommonInputConfig from '../../model/util/CommonInputConfig'
-import { onMounted, ref, Ref, UnwrapRef } from 'vue'
+import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SelectItem from '../../model/util/SelectItem'
 import lodash from 'lodash'
 import PageModel from '../../model/util/PageModel.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
+import { isNullish } from '../../utils/CommonUtil'
+import TreeSelectNode from '../../model/util/TreeSelectNode'
 
 // props
 const props = defineProps<{
   config: CommonInputConfig
 }>()
 
-// onMounted
-onMounted(async () => {
+// onBeforeMount
+onBeforeMount(async () => {
   // 处理默认开关状态
   if (props.config.defaultDisabled === undefined) {
     disabled.value = false
@@ -26,6 +28,7 @@ onMounted(async () => {
     requestSelectDataApi()
   } else if (props.config.selectData !== undefined) {
     innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectItem[]
+    innerTreeSelectData.value = lodash.cloneDeep(props.config.selectData) as TreeSelectNode[]
   }
 })
 
@@ -38,13 +41,12 @@ const emits = defineEmits(['dataChanged'])
 // 变量
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
 const innerSelectData: Ref<UnwrapRef<SelectItem[]>> = ref([])
+const innerTreeSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 
 // 方法
 // 获取要显示的内容
 function getSpanValue() {
-  if (props.config.type !== 'date' && props.config.type !== 'datetime') {
-    return data.value
-  } else {
+  if (props.config.type === 'date' || props.config.type === 'datetime') {
     const datetime = new Date(data.value as number)
     const year = datetime.getFullYear() + '-'
     const month =
@@ -64,6 +66,17 @@ function getSpanValue() {
         datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
       return date + hour + minute + second
     }
+  } else if (props.config.type === 'select') {
+    const target = innerSelectData.value.find((selectData) => selectData.value === data.value)
+    return isNullish(target) ? '-' : target.value
+  } else if (props.config.type === 'selectTree') {
+    let tempRoot = new TreeSelectNode()
+    tempRoot.children = innerTreeSelectData.value
+    tempRoot = new TreeSelectNode(tempRoot)
+    const node = tempRoot.getNode(data.value as number)
+    return isNullish(node) ? '-' : node.label
+  } else {
+    return data.value
   }
 }
 // 处理组件被双击事件
@@ -95,7 +108,11 @@ async function requestSelectDataApi(queryStr?: string) {
       if (ApiUtil.apiResponseCheck(response)) {
         const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
           .data
-        innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
+        if (props.config.type === 'select') {
+          innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
+        } else {
+          innerTreeSelectData.value = datalist === undefined ? [] : (datalist as TreeSelectNode[])
+        }
       }
     } else {
       let query
@@ -104,7 +121,11 @@ async function requestSelectDataApi(queryStr?: string) {
       }
       const response = await props.config.api(query)
       if (ApiUtil.apiResponseCheck(response)) {
-        innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
+        if (props.config.type === 'select') {
+          innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
+        } else {
+          innerTreeSelectData.value = ApiUtil.apiResponseGetData(response) as TreeSelectNode[]
+        }
       }
     }
   } else {
@@ -122,7 +143,9 @@ async function requestSelectDataApi(queryStr?: string) {
           (props.config.type === 'text' ||
             props.config.type === 'textarea' ||
             props.config.type === 'date' ||
-            props.config.type === 'datetime'))
+            props.config.type === 'datetime' ||
+            props.config.type === 'select' ||
+            props.config.type === 'selectTree'))
       "
       >{{ getSpanValue() }}</span
     >
@@ -158,7 +181,7 @@ async function requestSelectDataApi(queryStr?: string) {
     ></el-checkbox-group>
     <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
     <el-select
-      v-if="props.config.type === 'select'"
+      v-if="!disabled && props.config.type === 'select'"
       v-model="data"
       :disabled="disabled"
       :placeholder="props.config.placeholder"
@@ -175,11 +198,11 @@ async function requestSelectDataApi(queryStr?: string) {
       />
     </el-select>
     <el-tree-select
-      v-if="props.config.type === 'selectTree'"
+      v-if="!disabled && props.config.type === 'selectTree'"
       v-model="data"
       :check-strictly="true"
       :disabled="disabled"
-      :data="innerSelectData"
+      :data="innerTreeSelectData"
       :placeholder="props.config.placeholder"
       :remote="props.config.useApi"
       :remote-method="(query: string) => requestSelectDataApi(query)"
