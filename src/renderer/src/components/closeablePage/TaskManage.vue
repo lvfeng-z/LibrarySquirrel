@@ -249,7 +249,7 @@ async function selectDir(openFile: boolean) {
         :thead="thead"
         :search-api="apis.taskSelectParentPage"
         :update-api="apis.taskSelectListByIds"
-        :update-param-name="['progressPercentage']"
+        :update-param-name="['schedule']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
         key-of-data="id"
@@ -298,7 +298,7 @@ async function selectDir(openFile: boolean) {
             </el-button-group>
             <el-progress
               style="width: 100%"
-              :percentage="row.row.progressPercentage"
+              :percentage="row.row.schedule"
               text-inside
               :stroke-width="17"
             ></el-progress>
