@@ -553,4 +553,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       return dto
     })
   }
+
+  public addTaskTracker(emitName: string, bytesWrittenTracker: { bytesWritten: number }) {
+    // 检查全局变量是否存在
+    if (Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
+      console.log('taskTracker 已存在')
+    } else {
+      console.log('taskTracker 不存在')
+    }
+    console.log(emitName, bytesWrittenTracker)
+  }
 }
