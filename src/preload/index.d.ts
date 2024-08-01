@@ -59,6 +59,7 @@ declare global {
       taskSelectParentPage: function
       taskSelectTreeDataPage: function
       taskGetChildrenTask: function
+      taskSelectScheduleList: function
 
       // Works
       worksQueryPage: function

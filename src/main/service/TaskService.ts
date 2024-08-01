@@ -540,4 +540,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     query.parentId = parentId
     return this.dao.selectList(query)
   }
+
+  /**
+   * 根据id列表查询
+   * @param ids id列表
+   */
+  public async selectScheduleList(ids: number[] | string[]): Promise<TaskDTO[]> {
+    const source = await this.dao.selectListByIds(ids)
+    return source.map((task) => {
+      const dto = new TaskDTO(task)
+      dto.schedule = 56.55
+      return dto
+    })
+  }
 }

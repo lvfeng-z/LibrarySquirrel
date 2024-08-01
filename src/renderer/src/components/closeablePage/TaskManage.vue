@@ -26,6 +26,7 @@ const apis = {
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   taskSelectParentPage: window.api.taskSelectParentPage,
   taskGetChildrenTask: window.api.taskGetChildrenTask,
+  taskSelectListByIds: window.api.taskSelectScheduleList,
   dirSelect: window.api.dirSelect
 } // 接口
 // 搜索组件ref
@@ -152,6 +153,7 @@ const operationButton: OperationItem[] = [
 ]
 // 操作栏代码
 const enum OperationCode {
+  VIEW,
   START,
   PAUSE,
   RETRY,
@@ -187,12 +189,13 @@ function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   }
 }
 // 开始任务
-function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
+function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCode) {
   switch (code) {
     case OperationCode.START:
       apis.taskStartTask([row.id])
       break
     case OperationCode.PAUSE:
+      taskManageSearchTable.value.refreshData([row])
       break
     case OperationCode.RETRY:
       break
@@ -245,6 +248,8 @@ async function selectDir(openFile: boolean) {
         :selectable="true"
         :thead="thead"
         :search-api="apis.taskSelectParentPage"
+        :update-api="apis.taskSelectListByIds"
+        :update-param-name="['progressPercentage']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
         key-of-data="id"
@@ -258,38 +263,46 @@ async function selectDir(openFile: boolean) {
         :tree-data="true"
       >
         <template #customOperations="row">
-          <el-button-group>
-            <el-button
-              size="small"
-              icon="View"
-              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
-            ></el-button>
-            <el-button
-              size="small"
-              icon="VideoPlay"
-              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
-            ></el-button>
-            <el-button
-              size="small"
-              icon="VideoPause"
-              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
-            ></el-button>
-            <el-button
-              size="small"
-              icon="RefreshRight"
-              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
-            ></el-button>
-            <el-button
-              size="small"
-              icon="CircleClose"
-              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
-            ></el-button>
-            <el-button
-              size="small"
-              icon="Delete"
-              @click="handleOperationButtonClicked(row.row, OperationCode.START)"
-            ></el-button>
-          </el-button-group>
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <el-button-group>
+              <el-button
+                size="small"
+                icon="View"
+                @click="handleOperationButtonClicked(row.row, OperationCode.VIEW)"
+              ></el-button>
+              <el-button
+                size="small"
+                icon="VideoPlay"
+                @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+              ></el-button>
+              <el-button
+                size="small"
+                icon="VideoPause"
+                @click="handleOperationButtonClicked(row.row, OperationCode.PAUSE)"
+              ></el-button>
+              <el-button
+                size="small"
+                icon="RefreshRight"
+                @click="handleOperationButtonClicked(row.row, OperationCode.RETRY)"
+              ></el-button>
+              <el-button
+                size="small"
+                icon="CircleClose"
+                @click="handleOperationButtonClicked(row.row, OperationCode.CANCEL)"
+              ></el-button>
+              <el-button
+                size="small"
+                icon="Delete"
+                @click="handleOperationButtonClicked(row.row, OperationCode.DELETE)"
+              ></el-button>
+            </el-button-group>
+            <el-progress
+              style="width: 100%"
+              :percentage="row.row.progressPercentage"
+              text-inside
+              :stroke-width="17"
+            ></el-progress>
+          </div>
         </template>
       </search-table>
     </div>
