@@ -403,6 +403,29 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   }
 
   /**
+   * 根据id列表查询
+   * @param ids id列表
+   */
+  public async selectListByIds(ids: number[] | string[]): Promise<Model[]> {
+    const db = this.acquire()
+    try {
+      const idStr = ids.join(',')
+      const statement = `SELECT * FROM "${this.tableName}" WHERE ${this.getPrimaryKeyColumnName()} IN (${idStr})`
+      // 生成where字句
+
+      // 查询
+      const rows = (await db.prepare(statement)).all() as object[]
+
+      // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
+      return this.getResultTypeDataList<Model>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
    * 查询SelectItem列表
    */
   public async getSelectItems(

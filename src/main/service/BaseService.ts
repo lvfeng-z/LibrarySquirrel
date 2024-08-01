@@ -132,4 +132,12 @@ export default abstract class BaseService<
   public async selectList(query: Query): Promise<Model[]> {
     return this.dao.selectList(query)
   }
+
+  /**
+   * 根据id列表查询
+   * @param ids id列表
+   */
+  public async selectListByIds(ids: number[] | string[]): Promise<Model[]> {
+    return this.dao.selectListByIds(ids)
+  }
 }
