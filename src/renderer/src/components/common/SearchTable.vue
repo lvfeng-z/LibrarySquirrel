@@ -12,6 +12,7 @@ import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import { TreeNode } from 'element-plus'
+import { notNullish } from '../../utils/CommonUtil'
 
 // props
 const props = withDefaults(
@@ -30,6 +31,8 @@ const props = withDefaults(
     load?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
+    updateApi?: (ids: string[]) => Promise<never> // 更新数据接口
+    updateParamName?: string[] // 要更新的属性名
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
     createButton?: boolean // 是否展示新增按钮
     pageSizes?: number[]
@@ -68,7 +71,7 @@ onMounted(() => {
 // 变量
 // 数据栏
 const searchToolbarParams = ref({}) // 搜索栏参数
-const data: Ref<UnwrapRef<unknown[]>> = ref([]) // DataTable的数据
+const dataList: Ref<UnwrapRef<object[]>> = ref([]) // DataTable的数据
 const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
 // 分页栏
 const pageNumber = ref(1) // 当前页码
@@ -98,7 +101,7 @@ async function handleSearchButtonClicked() {
   const response = await props.searchApi(pageCondition)
   if (ApiUtil.apiResponseCheck(response)) {
     const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
-    data.value = page.data === undefined ? [] : page.data
+    dataList.value = page.data === undefined ? [] : page.data
     dataCount.value = page.dataCount
   } else {
     ApiUtil.apiResponseMsg(response)
@@ -111,6 +114,51 @@ function handleDataTableButtonClicked(operationResponse: DataTableOperationRespo
 // 处理DataTable选中项改变
 function handleDataTableSelectionChange(selections: []) {
   emits('selectionChange', selections)
+}
+// 更新现有数据
+async function refreshData(waitingUpdate: object[]) {
+  let innerWaitingUpdate: object[]
+  let ids: string[]
+
+  // 根据treeData确认是否更新数据的下级数据
+  if (props.treeData) {
+    let tiledWaitingUpdate: { children: [] }[] = [] // 平铺的树形数据
+    // 把所有数据列入tiledWaitingUpdate
+    tiledWaitingUpdate = tiledWaitingUpdate.concat(waitingUpdate as { children: [] }[])
+    for (let index = 0; index < tiledWaitingUpdate.length; index++) {
+      if (
+        Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') &&
+        notNullish(tiledWaitingUpdate[index].children) &&
+        tiledWaitingUpdate[index].children.length > 0
+      ) {
+        tiledWaitingUpdate = tiledWaitingUpdate.concat(tiledWaitingUpdate[index].children)
+      }
+    }
+    ids = tiledWaitingUpdate.map((data) => data[props.keyOfData])
+    innerWaitingUpdate = tiledWaitingUpdate
+  } else {
+    ids = waitingUpdate.map((data) => data[props.keyOfData])
+    innerWaitingUpdate = waitingUpdate
+  }
+
+  // 请求更新接口
+  if (notNullish(props.updateApi)) {
+    const response = await props.updateApi(ids)
+    if (ApiUtil.apiResponseCheck(response)) {
+      const newDataList = ApiUtil.apiResponseGetData(response) as object[]
+      if (notNullish(props.updateParamName) && props.updateParamName.length > 0) {
+        // 更新updateParamName指定的属性
+        for (const data of innerWaitingUpdate) {
+          const newData = newDataList.find(
+            (newData) => data[props.keyOfData] === newData[props.keyOfData]
+          ) as object
+          props.updateParamName.forEach((paramName) => {
+            data[paramName] = newData[paramName]
+          })
+        }
+      }
+    }
+  }
 }
 // 分页栏
 // 当前页变化
@@ -128,7 +176,8 @@ function handleRowChange(changedRow: object) {
 
 // 暴露
 defineExpose({
-  handleSearchButtonClicked
+  handleSearchButtonClicked,
+  refreshData
 })
 </script>
 
@@ -147,7 +196,7 @@ defineExpose({
     </SearchToolbar>
     <div class="search-table-data">
       <DataTable
-        v-model:tableData="data"
+        v-model:tableData="dataList"
         class="search-table-data-table"
         :thead="thead"
         :selectable="selectable"
