@@ -40,7 +40,7 @@ function toObjAcceptedBySqlite3(obj: object | undefined): Record<string, unknown
         if (typeof value === 'boolean') {
           return [key, value ? 1 : 0]
         }
-        if (typeof value === 'object') {
+        if (value !== null && typeof value === 'object') {
           return [key, JSON.stringify(value)]
         }
         return [key, value]
