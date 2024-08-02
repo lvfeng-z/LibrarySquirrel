@@ -146,7 +146,11 @@ async function refreshData(waitingUpdate: object[]) {
     const response = await props.updateApi(ids)
     if (ApiUtil.apiResponseCheck(response)) {
       const newDataList = ApiUtil.apiResponseGetData(response) as object[]
-      if (notNullish(props.updateParamName) && props.updateParamName.length > 0) {
+      if (
+        notNullish(props.updateParamName) &&
+        props.updateParamName.length > 0 &&
+        newDataList.length > 0
+      ) {
         // 更新updateParamName指定的属性
         for (const data of innerWaitingUpdate) {
           const newData = newDataList.find(

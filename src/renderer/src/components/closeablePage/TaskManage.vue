@@ -26,7 +26,7 @@ const apis = {
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   taskSelectParentPage: window.api.taskSelectParentPage,
   taskGetChildrenTask: window.api.taskGetChildrenTask,
-  taskSelectListByIds: window.api.taskSelectScheduleList,
+  taskSelectScheduleList: window.api.taskSelectScheduleList,
   dirSelect: window.api.dirSelect
 } // 接口
 // 搜索组件ref
@@ -248,7 +248,7 @@ async function selectDir(openFile: boolean) {
         :selectable="true"
         :thead="thead"
         :search-api="apis.taskSelectParentPage"
-        :update-api="apis.taskSelectListByIds"
+        :update-api="apis.taskSelectScheduleList"
         :update-param-name="['schedule']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
