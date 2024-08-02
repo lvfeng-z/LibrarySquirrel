@@ -36,6 +36,7 @@ onBeforeMount(() => {
 const data = defineModel<unknown[]>('tableData', { default: [] })
 
 // 变量
+const table = ref()
 const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
 const currentFactor: Ref<UnwrapRef<object>> = ref({})
 const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
@@ -70,6 +71,7 @@ function handleSelectionChange(event: object[]) {
 }
 // 处理操作按钮点击事件
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
+  getVisibleRows()
   emits('buttonClicked', operationResponse)
 }
 // 处理行数据变化
@@ -96,6 +98,23 @@ function getOperateDropDownButton(row): OperationItem[] {
     return [{ code: '', label: '', icon: '' }]
   }
 }
+// 获取可视范围内的行数据
+function getVisibleRows() {
+  // 获取表格 body 包装器
+  const tableBodyWrapper = table.value.$el.querySelector('.el-table__body-wrapper') as Element
+
+  // 获取所有行元素
+  const rowElements = tableBodyWrapper.querySelectorAll('.el-table__row')
+
+  // 获取可视区域内的行
+  const visibleRowsId = Array.from(rowElements).filter(row => {
+    const rowTop = row.getBoundingClientRect().top
+    const rowBottom = row.getBoundingClientRect().bottom
+    return rowTop < tableBodyWrapper.getBoundingClientRect().bottom && rowBottom > tableBodyWrapper.getBoundingClientRect().top
+  })
+  console.log(visibleRowsId)
+  return visibleRowsId
+}
 
 // 事件
 const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
@@ -103,6 +122,7 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
 
 <template>
   <el-table
+    ref="table"
     class="data-table"
     :lazy="props.lazy"
     :load="props.load"
