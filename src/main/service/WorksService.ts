@@ -55,25 +55,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const fullSavePath = path.join(settings.workdir, relativeSavePath)
 
       const pipelinePromise = promisify(
-        (
-          readable: fs.ReadStream,
-          writable: fs.WriteStream,
-          bytesWrittenTracker: { bytesWritten: number },
-          callback
-        ) => {
+        (readable: fs.ReadStream, writable: fs.WriteStream, callback) => {
           let errorOccurred = false
-
-          // 监听 write 事件以计算写入的数据量
-          writable.on('write', (chunk) => {
-            bytesWrittenTracker.bytesWritten += chunk.length
-          })
-
-          // 监听 finish 事件以确保所有数据都被写入
-          writable.on('finish', () => {
-            if (!errorOccurred) {
-              callback(null)
-            }
-          })
 
           readable.on('error', (err) => {
             errorOccurred = true
@@ -99,21 +82,34 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       // 保存资源和作品信息
       try {
+        // 创建保存目录
         await FileSysUtil.createDirIfNotExists(fullSavePath)
-        const bytesWrittenTracker = { bytesWritten: 0 }
+        // 创建写入流
+        const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
+        // 数据写入量追踪器
+        const bytesWrittenTracker = {
+          bytesWritten: writeStream.bytesWritten,
+          bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
+        }
+        // 创建写入Promise
+        const saveResourcePromise = pipelinePromise(
+          worksDTO.resourceStream as ReadStream,
+          writeStream
+        )
+        // 创建任务监听器
         const taskService = new TaskService()
         if (isNullish(worksDTO.includeTaskId)) {
-          const msg = '创建任务追踪器时，任务id意外为空'
+          const msg = '创建任务监听器时，任务id意外为空'
           LogUtil.warn('WorksService', msg)
         } else {
-          taskService.addTaskTracker(String(worksDTO.includeTaskId), bytesWrittenTracker)
+          taskService.addTaskTracker(
+            String(worksDTO.includeTaskId),
+            bytesWrittenTracker,
+            saveResourcePromise
+          )
         }
-        const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
-        await pipelinePromise(
-          worksDTO.resourceStream as ReadStream,
-          writeStream,
-          bytesWrittenTracker
-        )
+        // 等待任务写入流完成
+        await saveResourcePromise
         worksDTO.filePath = path.join(relativeSavePath, fileName)
         worksDTO.workdir = settings.workdir
 

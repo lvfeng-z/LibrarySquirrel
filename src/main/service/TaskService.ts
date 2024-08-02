@@ -21,6 +21,7 @@ import { COMPARATOR } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
+import { EventEmitter } from 'node:events'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -545,22 +546,41 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 根据id列表查询
    * @param ids id列表
    */
-  public async selectScheduleList(ids: number[] | string[]): Promise<TaskDTO[]> {
-    const source = await this.dao.selectListByIds(ids)
-    return source.map((task) => {
-      const dto = new TaskDTO(task)
-      dto.schedule = 56.55
-      return dto
+  public async selectScheduleList(ids: number[]): Promise<{ id: number; schedule: number }[]> {
+    // 检查全局变量是否存在
+    if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
+      return []
+    }
+    const result: { id: number; schedule: number }[] = []
+    ids.forEach((id: number) => {
+      const listenerName = String(id)
+      if (global.taskTracker.listenerCount(listenerName) > 0) {
+        const temp: { id: number; schedule: number } = { id: id, schedule: 0 }
+        result.push(temp)
+        global.taskTracker.emit(listenerName, (schedule: number) => (temp.schedule = schedule))
+      }
     })
+    return result
   }
 
-  public addTaskTracker(emitName: string, bytesWrittenTracker: { bytesWritten: number }) {
+  /**
+   * 新增任务跟踪
+   * @param emitName
+   * @param bytesWrittenTracker
+   * @param taskEndHandler
+   */
+  public addTaskTracker(
+    emitName: string,
+    bytesWrittenTracker: { bytesWritten: number; bytesSum: number },
+    taskEndHandler: Promise<unknown>
+  ) {
     // 检查全局变量是否存在
-    if (Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
-      console.log('taskTracker 已存在')
-    } else {
-      console.log('taskTracker 不存在')
+    if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
+      global.taskTracker = new EventEmitter()
     }
-    console.log(emitName, bytesWrittenTracker)
+    global.taskTracker.on(emitName, (callback: (schedule: number) => unknown) =>
+      callback(bytesWrittenTracker.bytesWritten / bytesWrittenTracker.bytesSum)
+    )
+    taskEndHandler.then(() => global.taskTracker.removeAllListeners(emitName))
   }
 }
