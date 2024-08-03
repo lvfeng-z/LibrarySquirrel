@@ -5,6 +5,7 @@ import DB from '../database/DB.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
+import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   constructor(db?: DB) {
@@ -69,6 +70,26 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     try {
       const rows = (await db.prepare(statement)).all() as object[]
       return super.getResultTypeDataList<Task>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 查询状态列表
+   * @param ids
+   */
+  async selectStatusList(ids: number[]): Promise<TaskScheduleDTO[]> {
+    const idsStr = ids.join(',')
+    const statement = `SELECT id, status, CASE WHEN status = 3 THEN 100 END
+                       FROM "${this.tableName}"
+                       WHERE id in (${idsStr})`
+    const db = this.acquire()
+    try {
+      const rows = (await db.prepare(statement)).all() as object[]
+      return super.getResultTypeDataList<TaskScheduleDTO>(rows)
     } finally {
       if (!this.injectedDB) {
         db.release()

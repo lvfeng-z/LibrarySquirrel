@@ -16,6 +16,15 @@ import { isNullish } from '../../utils/CommonUtil'
 // onMounted
 onMounted(() => {
   taskManageSearchTable.value.handleSearchButtonClicked()
+
+  function loopWithDelay(timeoutMs: number, count: number) {
+    if (count <= 0) {
+      return // 当计数为0时停止循环
+    }
+    refreshTask()
+    setTimeout(() => loopWithDelay(timeoutMs, count - 1), timeoutMs) // 递归调用自身，延迟timeoutMs毫秒
+  }
+  loopWithDelay(500, 1000)
 })
 
 // 变量
@@ -29,7 +38,9 @@ const apis = {
   taskSelectScheduleList: window.api.taskSelectScheduleList,
   dirSelect: window.api.dirSelect
 } // 接口
-// 搜索组件ref
+// DataTable的数据
+const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
+// taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
@@ -92,6 +103,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   }
 ])
+// 数据主键
+const keyOfData: string = 'id'
 // 主搜索栏的inputBox
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
@@ -193,9 +206,9 @@ function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCo
   switch (code) {
     case OperationCode.START:
       apis.taskStartTask([row.id])
+      taskManageSearchTable.value.refreshData([row])
       break
     case OperationCode.PAUSE:
-      taskManageSearchTable.value.refreshData([row])
       break
     case OperationCode.RETRY:
       break
@@ -217,6 +230,17 @@ async function selectDir(openFile: boolean) {
         await importFromDir(dir)
       }
     }
+  }
+}
+// 刷新任务进度和状态
+function refreshTask() {
+  const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
+  const visibleProcessingRows = dataList.value.filter(
+    (data: TaskDTO) =>
+      visibleRowsId.includes(String(data[keyOfData])) && (data.status === 1 || data.status === 0)
+  )
+  if (visibleProcessingRows.length > 0) {
+    taskManageSearchTable.value.refreshData(visibleProcessingRows)
   }
 }
 </script>
@@ -243,16 +267,17 @@ async function selectDir(openFile: boolean) {
     <div class="task-manage-search-table-wrapper rounded-margin-box">
       <search-table
         ref="taskManageSearchTable"
+        v-model:data-list="dataList"
         v-model:changed-rows="changedRows"
         class="task-manage-search-table"
         :selectable="true"
         :thead="thead"
         :search-api="apis.taskSelectParentPage"
         :update-api="apis.taskSelectScheduleList"
-        :update-param-name="['schedule']"
+        :update-param-name="['schedule', 'status']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
-        key-of-data="id"
+        :key-of-data="keyOfData"
         :table-row-class-name="tableRowClassName"
         :lazy="true"
         :load="load"

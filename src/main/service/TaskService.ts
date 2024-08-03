@@ -3,7 +3,7 @@ import LogUtil from '../util/LogUtil.ts'
 import logUtil from '../util/LogUtil.ts'
 import TaskDao from '../dao/TaskDao.ts'
 import PluginLoader from '../plugin/PluginLoader.ts'
-import TaskConstant from '../constant/TaskConstant.ts'
+import { TaskStatesEnum } from '../constant/TaskStatesEnum.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
@@ -21,7 +21,9 @@ import { COMPARATOR } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
+import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { EventEmitter } from 'node:events'
+import fs from 'fs'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -63,7 +65,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         parentTask.pluginId = taskPlugin.id as number
         parentTask.pluginInfo = pluginInfo
         parentTask.url = url
-        parentTask.status = TaskConstant.TaskStatesEnum.CREATED
+        parentTask.status = TaskStatesEnum.CREATED
         parentTask.siteDomain = taskPlugin.domain
         parentTask.isCollection = true
         parentTask.saved = false
@@ -136,7 +138,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (tasks.length === 1) {
       // 如果插件返回的的任务列表长度为1，则不需要创建子任务
       const task = tasks[0]
-      task.status = TaskConstant.TaskStatesEnum.CREATED
+      task.status = TaskStatesEnum.CREATED
       task.isCollection = false
       try {
         task.pluginData = JSON.stringify(task.pluginData)
@@ -159,7 +161,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       const childTasks = tasks
         .map((task) => {
-          task.status = TaskConstant.TaskStatesEnum.CREATED
+          task.status = TaskStatesEnum.CREATED
           task.isCollection = false
           task.parentId = parentId
           task.pluginId = taskPlugin.id as number
@@ -259,7 +261,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const task = chunk as Task
         task.pluginId = taskPlugin.id as number
         task.pluginInfo = pluginInfo
-        task.status = TaskConstant.TaskStatesEnum.CREATED
+        task.status = TaskStatesEnum.CREATED
         task.siteDomain = taskPlugin.domain
         task.isCollection = false
         task.parentId = parentTask.id as number
@@ -428,7 +430,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   finishTask(task: Task, worksId: number) {
     task = new Task(task)
-    task.status = TaskConstant.TaskStatesEnum.FINISHED
+    task.status = TaskStatesEnum.FINISHED
     task.localWorksId = worksId
     if (notNullish(task.id)) {
       return this.updateById(task)
@@ -445,7 +447,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   taskFailed(task: Task) {
     task = new Task(task)
-    task.status = TaskConstant.TaskStatesEnum.FAILED
+    task.status = TaskStatesEnum.FAILED
     if (notNullish(task.id)) {
       return this.dao.updateById(task.id, task)
     } else {
@@ -543,23 +545,50 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 根据id列表查询
+   * 查询状态列表
+   * @param ids
+   */
+  public async selectStatusList(ids: number[]) {
+    return this.dao.selectStatusList(ids)
+  }
+
+  /**
+   * 查询任务进度
    * @param ids id列表
    */
-  public async selectScheduleList(ids: number[]): Promise<{ id: number; schedule: number }[]> {
+  public async selectScheduleList(ids: number[]): Promise<TaskScheduleDTO[]> {
     // 检查全局变量是否存在
     if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
       return []
     }
-    const result: { id: number; schedule: number }[] = []
+    let result: TaskScheduleDTO[] = []
+    // 没有监听器的任务
+    const noListenerIds: number[] = []
     ids.forEach((id: number) => {
       const listenerName = String(id)
+      // 如果有监听器，则从监听器获取任务进度，否则从数据库查询任务状态
       if (global.taskTracker.listenerCount(listenerName) > 0) {
-        const temp: { id: number; schedule: number } = { id: id, schedule: 0 }
-        result.push(temp)
-        global.taskTracker.emit(listenerName, (schedule: number) => (temp.schedule = schedule))
+        const temp: TaskScheduleDTO = new TaskScheduleDTO()
+        temp.id = id
+        global.taskTracker.emit(listenerName, (schedule: number) => {
+          temp.schedule = schedule
+          // 如果进度已经达到了100%，将状态设为完成，并且清除这个监听器
+          if (schedule >= 100) {
+            global.taskTracker.removeAllListeners(listenerName)
+            temp.status = TaskStatesEnum.FINISHED
+          } else {
+            temp.status = TaskStatesEnum.PROCESSING
+          }
+          result.push(temp)
+        })
+      } else {
+        noListenerIds.push(id)
       }
     })
+    // 没有监听器的任务去数据库查询状态
+    const noListener = await this.selectStatusList(noListenerIds)
+
+    result = result.concat(noListener)
     return result
   }
 
@@ -571,7 +600,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public addTaskTracker(
     emitName: string,
-    bytesWrittenTracker: { bytesWritten: number; bytesSum: number },
+    bytesWrittenTracker: { writeStream: fs.WriteStream; bytesSum: number },
     taskEndHandler: Promise<unknown>
   ) {
     // 检查全局变量是否存在
@@ -579,8 +608,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       global.taskTracker = new EventEmitter()
     }
     global.taskTracker.on(emitName, (callback: (schedule: number) => unknown) =>
-      callback(bytesWrittenTracker.bytesWritten / bytesWrittenTracker.bytesSum)
+      callback((bytesWrittenTracker.writeStream.bytesWritten / bytesWrittenTracker.bytesSum) * 100)
     )
-    taskEndHandler.then(() => global.taskTracker.removeAllListeners(emitName))
+    // 确认任务结束后，延迟2秒清除其监听器
+    taskEndHandler.then(() =>
+      setTimeout(() => global.taskTracker.removeAllListeners(emitName), 2000)
+    )
   }
 }

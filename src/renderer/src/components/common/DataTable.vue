@@ -36,7 +36,7 @@ onBeforeMount(() => {
 const data = defineModel<unknown[]>('tableData', { default: [] })
 
 // 变量
-const table = ref()
+const dataTable = ref() // el-table的组件实例
 const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
 const currentFactor: Ref<UnwrapRef<object>> = ref({})
 const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
@@ -99,30 +99,40 @@ function getOperateDropDownButton(row): OperationItem[] {
   }
 }
 // 获取可视范围内的行数据
-function getVisibleRows() {
+function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
   // 获取表格 body 包装器
-  const tableBodyWrapper = table.value.$el.querySelector('.el-table__body-wrapper') as Element
+  const tableBodyWrapper = dataTable.value.$el.querySelector('.el-table__body-wrapper') as Element
 
   // 获取所有行元素
   const rowElements = tableBodyWrapper.querySelectorAll('.el-table__row')
 
   // 获取可视区域内的行
-  const visibleRowsId = Array.from(rowElements).filter(row => {
-    const rowTop = row.getBoundingClientRect().top
-    const rowBottom = row.getBoundingClientRect().bottom
-    return rowTop < tableBodyWrapper.getBoundingClientRect().bottom && rowBottom > tableBodyWrapper.getBoundingClientRect().top
-  })
-  console.log(visibleRowsId)
-  return visibleRowsId
+  return Array.from(rowElements)
+    .filter((row) => {
+      const rowTop = row.getBoundingClientRect().top
+      const rowBottom = row.getBoundingClientRect().bottom
+      offsetTop = offsetTop || 0
+      offsetBottom = offsetBottom || 0
+      return (
+        rowTop < tableBodyWrapper.getBoundingClientRect().bottom + offsetBottom &&
+        rowBottom > tableBodyWrapper.getBoundingClientRect().top - offsetTop
+      )
+    })
+    .map((rowElement) => rowElement['__vnode'].key)
 }
 
 // 事件
 const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
+
+// 暴露
+defineExpose({
+  getVisibleRows
+})
 </script>
 
 <template>
   <el-table
-    ref="table"
+    ref="dataTable"
     class="data-table"
     :lazy="props.lazy"
     :load="props.load"

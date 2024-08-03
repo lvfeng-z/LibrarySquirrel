@@ -36,12 +36,16 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // upper搜索栏分页参数
-const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // lower搜索栏分页参数
+const upperPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
+  new PageModel<BaseQueryDTO, object>()
+) // upper搜索栏分页参数
+const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
+  new PageModel<BaseQueryDTO, object>()
+) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
-const upperScroll = ref() // upperDataScrollBar子组件
-const lowerScroll = ref() // lowerDataScrollBar子组件
+const upperScroll = ref() // upperDataScrollBar的组件实例
+const lowerScroll = ref() // lowerDataScrollBar的组件实例
 const upperLoadMore: Ref<boolean> = computed(() => {
   return upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount
 }) // upper加载更多开关

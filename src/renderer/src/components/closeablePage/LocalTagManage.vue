@@ -32,11 +32,11 @@ const apis = {
   siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
 }
-// localTagSearchTable子组件
+// localTagSearchTable的组件实例
 const localTagSearchTable = ref()
-// siteTagExchangeBox子组件
+// siteTagExchangeBox的组件实例
 const siteTagExchangeBox = ref()
-// localTagDialog子组件
+// localTagDialog的组件实例
 const localTagDialog = ref()
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])

@@ -1,0 +1,8 @@
+export enum TaskStatesEnum {
+  CREATED,
+  PROCESSING,
+  PAUSE,
+  FINISHED,
+  PARTLY_FINISHED,
+  FAILED
+}

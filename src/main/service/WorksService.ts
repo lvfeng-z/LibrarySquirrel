@@ -88,7 +88,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
         // 数据写入量追踪器
         const bytesWrittenTracker = {
-          bytesWritten: writeStream.bytesWritten,
+          writeStream: writeStream,
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
         // 创建写入Promise

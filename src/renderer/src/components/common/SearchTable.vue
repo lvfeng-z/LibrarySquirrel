@@ -47,6 +47,8 @@ const props = withDefaults(
 )
 
 // model
+// DataTable的数据
+const dataList = defineModel<object[]>('dataList', { default: [], required: false })
 // 已编辑的行
 const changedRows = defineModel<object[]>('changedRows', { default: [], required: true })
 
@@ -70,8 +72,8 @@ onMounted(() => {
 
 // 变量
 // 数据栏
+const dataTable = ref() // DataTable的的组件实例
 const searchToolbarParams = ref({}) // 搜索栏参数
-const dataList: Ref<UnwrapRef<object[]>> = ref([]) // DataTable的数据
 const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
 // 分页栏
 const pageNumber = ref(1) // 当前页码
@@ -152,13 +154,15 @@ async function refreshData(waitingUpdate: object[]) {
         newDataList.length > 0
       ) {
         // 更新updateParamName指定的属性
-        for (const data of innerWaitingUpdate) {
-          const newData = newDataList.find(
-            (newData) => data[props.keyOfData] === newData[props.keyOfData]
+        for (const newData of newDataList) {
+          const waitingUpdate = innerWaitingUpdate.find(
+            (waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData]
           ) as object
-          props.updateParamName.forEach((paramName) => {
-            data[paramName] = newData[paramName]
-          })
+          if (notNullish(waitingUpdate)) {
+            props.updateParamName.forEach((paramName) => {
+              waitingUpdate[paramName] = newData[paramName]
+            })
+          }
         }
       }
     }
@@ -177,11 +181,16 @@ function handlePageSizeChange() {
 function handleRowChange(changedRow: object) {
   changedRows.value.push(changedRow)
 }
+// 获取可视范围内的行
+function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
+  return dataTable.value.getVisibleRows(offsetTop, offsetBottom)
+}
 
 // 暴露
 defineExpose({
   handleSearchButtonClicked,
-  refreshData
+  refreshData,
+  getVisibleRows
 })
 </script>
 
@@ -200,6 +209,7 @@ defineExpose({
     </SearchToolbar>
     <div class="search-table-data">
       <DataTable
+        ref="dataTable"
         v-model:tableData="dataList"
         class="search-table-data-table"
         :thead="thead"

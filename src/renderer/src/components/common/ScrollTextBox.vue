@@ -42,7 +42,7 @@ onBeforeUnmount(() => {
 })
 
 // 变量
-const scrollTextBoxRef = ref()
+const scrollTextBoxRef = ref() // 最外层div的组件实例
 const scrollTextBoxLabelRef = ref()
 let resizeObserver: ResizeObserver
 

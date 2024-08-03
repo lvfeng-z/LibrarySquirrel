@@ -29,11 +29,11 @@ const apis = {
   siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   siteAuthorGetBoundOrUnboundInLocalAuthor: window.api.siteAuthorGetBoundOrUnboundInLocalAuthor
 }
-// localAuthorSearchTable子组件
+// localAuthorSearchTable的组件实例
 const localAuthorSearchTable = ref()
-// siteAuthorExchangeBox子组件
+// siteAuthorExchangeBox的组件实例
 const siteAuthorExchangeBox = ref()
-// localAuthorDialog子组件
+// localAuthorDialog的组件实例
 const localAuthorDialog = ref()
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
