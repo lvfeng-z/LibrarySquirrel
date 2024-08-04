@@ -71,7 +71,6 @@ function handleSelectionChange(event: object[]) {
 }
 // 处理操作按钮点击事件
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
-  getVisibleRows()
   emits('buttonClicked', operationResponse)
 }
 // 处理行数据变化
