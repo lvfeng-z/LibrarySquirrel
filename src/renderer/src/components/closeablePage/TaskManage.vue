@@ -3,7 +3,6 @@ import BaseCloseablePage from './BaseCloseablePage.vue'
 import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
-import apiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
 import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
@@ -178,8 +177,8 @@ async function load(
   resolve: (data: unknown[]) => void
 ): Promise<void> {
   const response = await apis.taskGetChildrenTask((row as TaskDTO).id)
-  if (apiUtil.apiResponseCheck(response)) {
-    const data = apiUtil.apiResponseGetData(response) as TaskDTO[]
+  if (ApiUtil.apiResponseCheck(response)) {
+    const data = ApiUtil.apiResponseGetData(response) as TaskDTO[]
     ;(row as TaskDTO).children = data
     resolve(data)
   }
@@ -198,7 +197,8 @@ function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCo
   switch (code) {
     case OperationCode.START:
       apis.taskStartTask([row.id])
-      refreshTask(true)
+      row.status = 1
+      refreshTask()
       break
     case OperationCode.PAUSE:
       break
@@ -225,17 +225,13 @@ async function selectDir(openFile: boolean) {
   }
 }
 // 刷新任务进度和状态
-async function refreshTask(start: boolean) {
+async function refreshTask() {
   // 获取需要刷新的任务
   const getRefreshTasks = () => {
     const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
-    const refreshTasks = dataList.value.filter((data: TaskDTO) =>
-      visibleRowsId.includes(String(data[keyOfData])) && start
-        ? data.status === 1 || data.status === 0
-        : data.status === 1
+    return dataList.value.filter(
+      (data: TaskDTO) => visibleRowsId.includes(String(data[keyOfData])) && data.status === 1
     )
-    start = false
-    return refreshTasks
   }
 
   let refreshTasks = getRefreshTasks()
@@ -289,7 +285,7 @@ async function refreshTask(start: boolean) {
         :operation-button="operationButton"
         :custom-operation-button="true"
         :tree-data="true"
-        @scroll="refreshTask(false)"
+        @scroll="refreshTask"
       >
         <template #customOperations="row">
           <div style="display: flex; flex-direction: column; align-items: center">
