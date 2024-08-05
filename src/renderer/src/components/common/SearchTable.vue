@@ -59,7 +59,8 @@ const emits = defineEmits([
   'selectionChange',
   'pageNumberChanged',
   'pageSizeChanged',
-  'query'
+  'query',
+  'scroll'
 ])
 
 // onMounted
@@ -113,9 +114,13 @@ async function handleSearchButtonClicked() {
 function handleDataTableButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('rowButtonClicked', operationResponse)
 }
-// 处理DataTable选中项改变
+// 处理DataTable选中项改变事件
 function handleDataTableSelectionChange(selections: []) {
   emits('selectionChange', selections)
+}
+// 处理滚动事件
+function handleScroll() {
+  emits('scroll')
 }
 // 更新现有数据
 async function refreshData(waitingUpdate: object[]) {
@@ -225,6 +230,7 @@ defineExpose({
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
+        @scroll="handleScroll"
       >
         <template #customOperations="row">
           <slot name="customOperations" :row="row.row" />

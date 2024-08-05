@@ -73,6 +73,10 @@ function handleSelectionChange(event: object[]) {
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
 }
+// 处理滚动事件
+function handleScroll() {
+  emits('scroll')
+}
 // 处理行数据变化
 function handleRowChange(row: object) {
   emits('rowChanged', row)
@@ -102,10 +106,10 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
   // 获取表格 body 包装器
   const tableBodyWrapper = dataTable.value.$el.querySelector('.el-table__body-wrapper') as Element
 
-  // 获取所有行元素
-  const rowElements = tableBodyWrapper.querySelectorAll('.el-table__row')
+  // 获取所有行中class为row-key-col的元素（添加在每一行末尾的隐藏列）
+  const rowElements = tableBodyWrapper.querySelectorAll('.row-key-col')
 
-  // 获取可视区域内的行
+  // 返回可视区域内的行的键
   return Array.from(rowElements)
     .filter((row) => {
       const rowTop = row.getBoundingClientRect().top
@@ -117,11 +121,18 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
         rowBottom > tableBodyWrapper.getBoundingClientRect().top - offsetTop
       )
     })
-    .map((rowElement) => rowElement['__vnode'].key)
+    .map((rowElement) => {
+      try {
+        return rowElement.attributes['row-key']['value']
+      } catch (error) {
+        console.warn(error)
+        return undefined
+      }
+    })
 }
 
 // 事件
-const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged'])
+const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll'])
 
 // 暴露
 defineExpose({
@@ -140,6 +151,7 @@ defineExpose({
     :row-class-name="tableRowClassName"
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
+    @scroll="handleScroll"
   >
     <el-table-column
       v-if="props.selectable && props.multiSelect"
@@ -229,6 +241,15 @@ defineExpose({
           </template>
         </el-dropdown>
         <slot v-if="customOperationButton" name="customOperations" :row="row" />
+      </template>
+    </el-table-column>
+    <el-table-column :hidden="true" :width="1">
+      <template #default="scope">
+        <div
+          :row-key="scope.row[keyOfData]"
+          class="row-key-col"
+          style="width: 0; height: 0; position: absolute"
+        ></div>
       </template>
     </el-table-column>
   </el-table>

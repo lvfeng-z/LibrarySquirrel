@@ -3,31 +3,23 @@ import BaseCloseablePage from './BaseCloseablePage.vue'
 import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
+import apiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
 import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import apiUtil from '../../utils/ApiUtil'
 import { TreeNode } from 'element-plus'
 import { isNullish } from '../../utils/CommonUtil'
 
 // onMounted
 onMounted(() => {
   taskManageSearchTable.value.handleSearchButtonClicked()
-
-  function loopWithDelay(timeoutMs: number, count: number) {
-    if (count <= 0) {
-      return // 当计数为0时停止循环
-    }
-    refreshTask()
-    setTimeout(() => loopWithDelay(timeoutMs, count - 1), timeoutMs) // 递归调用自身，延迟timeoutMs毫秒
-  }
-  loopWithDelay(500, 1000)
 })
 
 // 变量
+// 接口
 const apis = {
   siteGetSelectItemPage: window.api.siteGetSelectItemPage,
   taskCreateTask: window.api.taskCreateTask,
@@ -37,7 +29,7 @@ const apis = {
   taskGetChildrenTask: window.api.taskGetChildrenTask,
   taskSelectScheduleList: window.api.taskSelectScheduleList,
   dirSelect: window.api.dirSelect
-} // 接口
+}
 // DataTable的数据
 const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // taskManageSearchTable的组件实例
@@ -201,12 +193,12 @@ function tableRowClassName(data: { row: unknown; rowIndex: number }) {
     return 'task-manage-search-table-child-row'
   }
 }
-// 开始任务
+// 处理操作栏按钮点击事件
 function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCode) {
   switch (code) {
     case OperationCode.START:
       apis.taskStartTask([row.id])
-      taskManageSearchTable.value.refreshData([row])
+      refreshTask(true)
       break
     case OperationCode.PAUSE:
       break
@@ -233,14 +225,25 @@ async function selectDir(openFile: boolean) {
   }
 }
 // 刷新任务进度和状态
-function refreshTask() {
-  const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
-  const visibleProcessingRows = dataList.value.filter(
-    (data: TaskDTO) =>
-      visibleRowsId.includes(String(data[keyOfData])) && (data.status === 1 || data.status === 0)
-  )
-  if (visibleProcessingRows.length > 0) {
-    taskManageSearchTable.value.refreshData(visibleProcessingRows)
+async function refreshTask(start: boolean) {
+  // 获取需要刷新的任务
+  const getRefreshTasks = () => {
+    const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
+    const refreshTasks = dataList.value.filter((data: TaskDTO) =>
+      visibleRowsId.includes(String(data[keyOfData])) && start
+        ? data.status === 1 || data.status === 0
+        : data.status === 1
+    )
+    start = false
+    return refreshTasks
+  }
+
+  let refreshTasks = getRefreshTasks()
+
+  while (refreshTasks.length > 0) {
+    await taskManageSearchTable.value.refreshData(refreshTasks)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    refreshTasks = getRefreshTasks()
   }
 }
 </script>
@@ -286,6 +289,7 @@ function refreshTask() {
         :operation-button="operationButton"
         :custom-operation-button="true"
         :tree-data="true"
+        @scroll="refreshTask(false)"
       >
         <template #customOperations="row">
           <div style="display: flex; flex-direction: column; align-items: center">
