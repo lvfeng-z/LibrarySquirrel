@@ -44,7 +44,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
 
       // 查询和转换
       statement = await super.sorterAndPager(statement, whereClause, resultPage)
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       resultPage.data = super.getResultTypeDataList<AutoExplainPath>(rows)
       return resultPage
     } finally {
@@ -62,7 +62,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     const db = this.acquire()
     try {
       const statement = `select * from auto_explain_path where '${path}' REGEXP regular_expression`
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       return super.getResultTypeDataList<AutoExplainPath>(rows)
     } finally {
       if (!this.injectedDB) {

@@ -18,7 +18,7 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
       const statement = `SELECT site_domain as siteDomain, id
          FROM site
          WHERE site_domain in (${domains.join(',')})`
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       const result: Record<string, number> = {}
       rows.forEach((row) => (result[row['siteDomain']] = row['id']))
       return result

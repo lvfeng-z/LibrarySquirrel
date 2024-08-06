@@ -19,14 +19,44 @@ interface ConnectionPoolConfig {
 type WaitingRequest = { resolve: (connection: Database.Database) => void }
 
 export class ConnectionPool {
-  private config: ConnectionPoolConfig
-  private connections: (Database.Database | undefined)[] // 链接列表
-  private connectionExtra: { state: boolean; timeoutId?: NodeJS.Timeout }[] // 链接额外数据列表
-  private connectionQueue: WaitingRequest[] // 等待队列
+  /**
+   * 读取连接池还是写入连接池（true：读取，false：写入）
+   * @private
+   */
+  private readonly readOrWrite: boolean
+  /**
+   * 配置
+   * @private
+   */
+  private readonly config: ConnectionPoolConfig
+  /**
+   * 链接列表
+   * @private
+   */
+  private connections: (Database.Database | undefined)[]
+  /**
+   * 链接额外数据列表
+   * @private
+   */
+  private connectionExtra: { state: boolean; timeoutId?: NodeJS.Timeout }[]
+  /**
+   * 等待队列
+   * @private
+   */
+  private connectionQueue: WaitingRequest[]
+  /**
+   * 是否写入锁定
+   * @private
+   */
   private visualLocked: boolean
+  /**
+   * 虚拟排它锁的请求队列
+   * @private
+   */
   private visualLockQueue: (() => void)[]
 
-  constructor(config: ConnectionPoolConfig) {
+  constructor(readOrWrite: boolean, config: ConnectionPoolConfig) {
+    this.readOrWrite = readOrWrite
     this.config = config
     this.connections = Array(this.config.maxConnections).fill(undefined)
     this.connectionExtra = []
@@ -53,7 +83,7 @@ export class ConnectionPool {
             // 分配之前清除超时定时器
             clearTimeout(this.connectionExtra[index].timeoutId)
             this.connectionExtra[index].timeoutId = undefined
-            LogUtil.debug('ConnectionPool', `${index}号链接复用，清除定时器`)
+            LogUtil.debug(this.type(), `${index}号链接复用，清除定时器`)
             this.connectionExtra[index].state = false
             // this.log('链接复用')
             resolve(this.connections[index] as Database.Database)
@@ -64,18 +94,18 @@ export class ConnectionPool {
         if (firstIdleIndex != -1) {
           this.connections[firstIdleIndex] = this.createConnection()
           resolve(this.connections[firstIdleIndex] as Database.Database)
-          LogUtil.debug('ConnectionPool', '在' + firstIdleIndex + '号新建链接')
+          LogUtil.debug(this.type(), '在' + firstIdleIndex + '号新建链接')
           // this.log('新增链接')
           return
         } else {
           this.connectionQueue.push({ resolve })
           LogUtil.debug(
-            'ConnectionPool',
+            this.type(),
             `连接池已满，当前等待队列+1，当前长度为：${this.connectionQueue.length}`
           )
         }
       } catch (e) {
-        LogUtil.error('ConnectionPool', '分配数据库连接时出现未知错误！' + String(e))
+        LogUtil.error(this.type(), '分配数据库连接时出现未知错误！' + String(e))
         reject(e)
       }
     })
@@ -90,7 +120,7 @@ export class ConnectionPool {
     const available = this.connectionExtra[connectionIndex].state
     if (available) {
       const msg = `释放${connectionIndex}号链接时出错，链接已经处于空闲状态`
-      LogUtil.error('ConnectionPool', msg)
+      LogUtil.error(this.type(), msg)
       throw new Error()
     }
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开启超时定时器
@@ -98,7 +128,7 @@ export class ConnectionPool {
       const request = this.connectionQueue.shift()
       if (request) {
         LogUtil.debug(
-          'ConnectionPool',
+          this.type(),
           this.connections.indexOf(connection) +
             `号链接在释放时被复用，当前等待队列长度为：${this.connectionQueue.length}`
         )
@@ -108,7 +138,7 @@ export class ConnectionPool {
     } else {
       const index = this.connections.indexOf(connection)
       this.connectionExtra[index].state = true
-      LogUtil.debug('ConnectionPool', `${this.connections.indexOf(connection)}号链接已释放`)
+      LogUtil.debug(this.type(), `${this.connections.indexOf(connection)}号链接已释放`)
       this.setupIdleTimeout(index)
       // this.log('链接释放')
     }
@@ -120,11 +150,11 @@ export class ConnectionPool {
   public async acquireVisualLock(): Promise<void> {
     return new Promise((resolve) => {
       if (!this.visualLocked) {
-        LogUtil.debug('ConnectionPool', '虚拟锁已锁定')
+        LogUtil.debug(this.type(), '虚拟锁已锁定')
         this.visualLocked = true
         resolve()
       } else {
-        LogUtil.debug('ConnectionPool', '虚拟锁处于锁定状态，进入等待队列')
+        LogUtil.debug(this.type(), '虚拟锁处于锁定状态，进入等待队列')
         this.visualLockQueue.push(() => resolve())
       }
     })
@@ -135,13 +165,13 @@ export class ConnectionPool {
    */
   public releaseVisualLock(): void {
     if (this.visualLockQueue.length > 0) {
-      LogUtil.debug('ConnectionPool', '虚拟锁转交下一个请求者')
+      LogUtil.debug(this.type(), '虚拟锁转交下一个请求者')
       const next = this.visualLockQueue.shift()
       if (next) {
         next()
       }
     } else {
-      LogUtil.debug('ConnectionPool', '释放虚拟锁')
+      LogUtil.debug(this.type(), '释放虚拟锁')
       this.visualLocked = false
     }
   }
@@ -167,7 +197,7 @@ export class ConnectionPool {
     // 将定时器ID与连接关联，便于后续清理
     this.connectionExtra[index].timeoutId = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
     LogUtil.debug(
-      'ConnectionPool',
+      this.type(),
       `${index}号链接已设置定时器，timeoutId=${this.connectionExtra[index].timeoutId}`
     )
   }
@@ -182,7 +212,7 @@ export class ConnectionPool {
     // 关闭链接后清理定时器
     clearTimeout(this.connectionExtra[index].timeoutId)
     this.connectionExtra[index].timeoutId = undefined
-    LogUtil.debug('ConnectionPool', `${index}号链接的定时器被清除`)
+    LogUtil.debug(this.type(), `${index}号链接的定时器被清除`)
     // 关闭数据库连接
     const tempConnection = this.connections[index]
     if (tempConnection) {
@@ -191,8 +221,12 @@ export class ConnectionPool {
     // 更新连接状态和连接列表
     this.connectionExtra[index].state = false
     this.connections[index] = undefined
-    LogUtil.debug('ConnectionPool', `${index}号链接已超时关闭`)
+    LogUtil.debug(this.type(), `${index}号链接已超时关闭`)
     // this.log('链接关闭')
+  }
+
+  private type(): string {
+    return this.readOrWrite ? 'readingConnectionPool' : 'writingConnectionPool'
   }
 
   // private log(msg: string) {

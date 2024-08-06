@@ -19,9 +19,7 @@ async function insertLocalTag10W() {
       const now = Date.now()
       const sql = `insert into local_tag (local_tag_name, base_local_tag_id, create_time, update_time)
              values ('${tagName}', ${i}, ${now}, ${now});`
-      db.prepare(sql).then((statement) => {
-        statement.run()
-      })
+      db.run(sql)
     }
     console.log('循环结束')
   } finally {

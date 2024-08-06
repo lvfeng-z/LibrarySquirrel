@@ -28,7 +28,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                        where t2.works_id in (${worksIds.join(',')})`
     const db = this.acquire()
     try {
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       type relationShipType = LocalAuthorDTO & { worksId: number }
       const relationShips = this.getResultTypeDataList(rows) as relationShipType[]
 

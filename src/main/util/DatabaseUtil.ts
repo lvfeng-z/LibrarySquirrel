@@ -9,10 +9,9 @@ import FileSysUtil from './FileSysUtil.ts'
 async function listAllDataTables(): Promise<string[]> {
   const db = new DB('DatabaseUtil')
   try {
-    const statement = await db.prepare(
-      "select name from sqlite_master where name != 'sqlite_sequence'"
-    )
-    const rows = statement.all() as { name: string }[]
+    const statement = "select name from sqlite_master where name != 'sqlite_sequence'"
+
+    const rows = (await db.all(statement)) as { name: string }[]
     return rows.map((row) => row.name)
   } finally {
     db.release()

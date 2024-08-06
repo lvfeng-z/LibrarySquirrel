@@ -32,7 +32,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
           setClause.push(`when ${siteTagId} then ${localTagId} `)
         })
         const statement = `update ${this.tableName} set local_tag_id = (case ${setClause.join('')} end) where id in (${siteTagIds.join()})`
-        return (await (await db.prepare(statement)).run()).changes
+        return (await db.run(statement)).changes
       } finally {
         if (!this.injectedDB) {
           db.release()
@@ -102,9 +102,10 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
       // 查询
-      const results: SiteTagDTO[] = (await db.prepare(statement)).all(
+      const results: SiteTagDTO[] = (await db.all(
+        statement,
         modifiedQuery.getQueryObject()
-      ) as SiteTagDTO[]
+      )) as SiteTagDTO[]
 
       // 利用构造方法处理localTag的JSON字符串
       return results.map((result) => new SiteTagDTO(result))
@@ -147,7 +148,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       }
 
       const sql: string = selectFrom + where
-      return (await db.prepare(sql)).all(values) as SelectItem[]
+      return (await db.all(sql, values)) as SelectItem[]
     } finally {
       if (!this.injectedDB) {
         db.release()

@@ -105,7 +105,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage, fromClause)
 
       const rows = this.getResultTypeDataList<WorksDTO>(
-        (await db.prepare(statement)).all(modifiedPage.query) as []
+        (await db.all(statement, modifiedPage.query)) as []
       )
 
       // 利用构造函数处理JSON字符串

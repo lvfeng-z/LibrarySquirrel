@@ -34,7 +34,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
       const sql: string = selectFrom + where
 
-      return (await db.prepare(sql)).all(values) as SelectItem[]
+      return (await db.all(sql, values)) as SelectItem[]
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -65,7 +65,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
            WHERE treeNode.level < @depth
          )
          SELECT * FROM treeNode`
-      const result = (await db.prepare(statement)).all({ rootId: rootId, depth: depth }) as object[]
+      const result = (await db.all(statement, { rootId: rootId, depth: depth })) as object[]
       return this.getResultTypeDataList<LocalTag>(result)
     } finally {
       if (!this.injectedDB) {
@@ -92,7 +92,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
             JOIN parentNode ON local_tag.id = parentNode.base_local_tag_id
         )
         SELECT * FROM parentNode`
-      const result = (await db.prepare(statement)).all({ nodeId: nodeId }) as object[]
+      const result = (await db.all(statement, { nodeId: nodeId })) as object[]
       return this.getResultTypeDataList<LocalTag>(result)
     } finally {
       if (!this.injectedDB) {

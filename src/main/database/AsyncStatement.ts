@@ -37,7 +37,7 @@ export default class AsyncStatement {
     try {
       // 获取虚拟的排它锁
       if (!this.holdingVisualLock) {
-        await global.connectionPool.acquireVisualLock()
+        await global.writingConnectionPool.acquireVisualLock()
         this.holdingVisualLock = true
       }
       const runResult = this.statement.run(...params)
@@ -49,7 +49,7 @@ export default class AsyncStatement {
     } finally {
       // 释放虚拟的排它锁
       if (this.holdingVisualLock && !this.injectedLock) {
-        global.connectionPool.releaseVisualLock()
+        global.writingConnectionPool.releaseVisualLock()
       }
     }
   }

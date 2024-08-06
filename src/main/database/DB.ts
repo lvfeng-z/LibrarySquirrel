@@ -2,7 +2,7 @@ import BetterSqlite3 from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
-import { notNullish } from '../util/CommonUtil.ts'
+import Database from 'better-sqlite3'
 
 /**
  * 数据库链接池封装
@@ -12,7 +12,12 @@ export default class DB {
    * 数据库链接
    * @private
    */
-  private connection: BetterSqlite3.Database | undefined = undefined
+  private readingConnection: BetterSqlite3.Database | undefined = undefined
+  /**
+   * 数据库链接
+   * @private
+   */
+  private writingConnection: BetterSqlite3.Database | undefined = undefined
   /**
    * 调用者
    * @private
@@ -22,7 +27,12 @@ export default class DB {
    * acquire请求的缓存，防止异步调用prepare方法时重复请求链接
    * @private
    */
-  private acquirePromise: Promise<BetterSqlite3.Database> | null = null
+  private readingAcquirePromise: Promise<BetterSqlite3.Database> | null = null
+  /**
+   * acquire请求的缓存，防止异步调用prepare方法时重复请求链接
+   * @private
+   */
+  private writingAcquirePromise: Promise<BetterSqlite3.Database> | null = null
   /**
    * 事务保存点计数器
    * @private
@@ -49,11 +59,51 @@ export default class DB {
   }
 
   /**
-   * 预处理语句
+   * run方法的封装
    * @param statement
+   * @param params
    */
-  public async prepare(statement: string): Promise<AsyncStatement> {
-    const connectionPromise = this.acquire()
+  public async run(statement: string, ...params: unknown[]): Promise<Database.RunResult> {
+    return await (await this.prepare(statement, false)).run(...params)
+  }
+  public async get(statement: string, ...params: unknown[]): Promise<unknown | undefined> {
+    return await (await this.prepare(statement, true)).get(...params)
+  }
+  public async all(statement: string, ...params: unknown[]): Promise<unknown[]> {
+    return (await this.prepare(statement, true)).all(...params)
+  }
+  public async iterate(
+    statement: string,
+    ...params: unknown[]
+  ): Promise<IterableIterator<unknown>> {
+    return (await this.prepare(statement, true)).iterate(...params)
+  }
+  public async pluck(statement: string, toggleState?: boolean): Promise<Database.Statement> {
+    return (await this.prepare(statement, true)).pluck(toggleState)
+  }
+  public async expand(statement: string, toggleState?: boolean): Promise<Database.Statement> {
+    return (await this.prepare(statement, true)).expand(toggleState)
+  }
+  public async raw(statement: string, toggleState?: boolean): Promise<Database.Statement> {
+    return (await this.prepare(statement, true)).raw(toggleState)
+  }
+  public async bind(statement: string, ...params: unknown[]): Promise<Database.Statement> {
+    return (await this.prepare(statement, true)).bind(...params)
+  }
+  public async columns(statement: string): Promise<Database.ColumnDefinition[]> {
+    return (await this.prepare(statement, true)).columns()
+  }
+  async safeIntegers(statement: string, toggleState?: boolean): Promise<Database.Statement> {
+    return (await this.prepare(statement, true)).safeIntegers(toggleState)
+  }
+
+  /**
+   * 预处理语句
+   * @param statement 语句
+   * @param readOrWrite 读还是写（true：读，false：写）
+   */
+  public async prepare(statement: string, readOrWrite: boolean): Promise<AsyncStatement> {
+    const connectionPromise = this.acquire(readOrWrite)
     return connectionPromise.then((connection) => {
       const stmt = connection.prepare(statement)
       return new AsyncStatement(stmt, this.holdingVisualLock)
@@ -64,9 +114,13 @@ export default class DB {
    * 释放连接
    */
   public release() {
-    if (this.connection != undefined) {
-      global.connectionPool.release(this.connection)
-      this.connection = undefined
+    if (this.readingConnection != undefined) {
+      global.readingConnectionPool.release(this.readingConnection)
+      this.readingConnection = undefined
+    }
+    if (this.writingConnection != undefined) {
+      global.writingConnectionPool.release(this.writingConnection)
+      this.writingConnection = undefined
     }
   }
 
@@ -74,7 +128,7 @@ export default class DB {
    * 执行语句
    */
   public async exec(statement: string): Promise<BetterSqlite3.Database> {
-    const connectionPromise = this.acquire()
+    const connectionPromise = this.acquire(false)
     return connectionPromise.then((connection) => connection.exec(statement))
   }
 
@@ -87,7 +141,7 @@ export default class DB {
     fn: F,
     name: string
   ): Promise<unknown> {
-    const connection = await this.acquire()
+    const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0
     // 创建一个当前层级的保存点
@@ -95,7 +149,7 @@ export default class DB {
     try {
       // 开启事务之前获取虚拟的排它锁
       if (!this.holdingVisualLock) {
-        await global.connectionPool.acquireVisualLock()
+        await global.writingConnectionPool.acquireVisualLock()
         this.holdingVisualLock = true
       }
 
@@ -117,7 +171,7 @@ export default class DB {
         LogUtil.info('DB', `${name}，ROLLBACK`)
 
         // 释放虚拟的排它锁
-        global.connectionPool.releaseVisualLock()
+        global.writingConnectionPool.releaseVisualLock()
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
@@ -130,7 +184,7 @@ export default class DB {
     } finally {
       // 释放虚拟的排它锁
       if (this.holdingVisualLock && isStartPoint) {
-        global.connectionPool.releaseVisualLock()
+        global.writingConnectionPool.releaseVisualLock()
         this.holdingVisualLock = false
       }
     }
@@ -138,25 +192,47 @@ export default class DB {
 
   /**
    * 请求链接
+   * @param readOrWrite 读还是写（true：读，false：写）
    * @private
    */
-  public async acquire(): Promise<BetterSqlite3.Database> {
-    if (this.connection != undefined) {
-      return this.connection
+  private async acquire(readOrWrite: boolean): Promise<BetterSqlite3.Database> {
+    if (readOrWrite) {
+      if (this.readingConnection != undefined) {
+        return this.readingConnection
+      }
+      if (this.readingAcquirePromise === null) {
+        this.readingAcquirePromise = (async () => {
+          this.readingConnection =
+            (await global.readingConnectionPool.acquire()) as BetterSqlite3.Database
+          this.readingAcquirePromise = null
+          // 为每个链接注册REGEXP函数，以支持正则表达式
+          this.readingConnection.function('REGEXP', (pattern, string) => {
+            const regex = new RegExp(pattern as string)
+            return regex.test(string as string) ? 1 : 0
+          })
+          return this.readingConnection
+        })()
+      }
+      return this.readingAcquirePromise
+    } else {
+      if (this.writingConnection != undefined) {
+        return this.writingConnection
+      }
+      if (this.writingAcquirePromise === null) {
+        this.writingAcquirePromise = (async () => {
+          this.writingConnection =
+            (await global.writingConnectionPool.acquire()) as BetterSqlite3.Database
+          this.writingAcquirePromise = null
+          // 为每个链接注册REGEXP函数，以支持正则表达式
+          this.writingConnection.function('REGEXP', (pattern, string) => {
+            const regex = new RegExp(pattern as string)
+            return regex.test(string as string) ? 1 : 0
+          })
+          return this.writingConnection
+        })()
+      }
+      return this.writingAcquirePromise
     }
-    if (this.acquirePromise === null) {
-      this.acquirePromise = (async () => {
-        this.connection = (await global.connectionPool.acquire()) as BetterSqlite3.Database
-        this.acquirePromise = null
-        // 为每个链接注册REGEXP函数，以支持正则表达式
-        this.connection.function('REGEXP', (pattern, string) => {
-          const regex = new RegExp(pattern as string)
-          return regex.test(string as string) ? 1 : 0
-        })
-        return this.connection
-      })()
-    }
-    return this.acquirePromise
   }
 
   /**
@@ -164,9 +240,7 @@ export default class DB {
    * @private
    */
   private beforeDestroy(): void {
-    if (notNullish(this.connection)) {
-      this.release()
-      LogUtil.info(this.caller, '数据库链接在封装实例销毁时被释放')
-    }
+    this.release()
+    LogUtil.info(this.caller, '数据库链接在封装实例销毁时被释放')
   }
 }

@@ -23,7 +23,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const db = this.acquire()
     try {
       const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id in ${siteAuthorIs.join(',')}`
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       return this.getResultTypeDataList<SiteAuthor>(rows)
     } finally {
       if (!this.injectedDB) {
@@ -49,7 +49,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           setClause.push(`when ${siteAuthorId} then ${localAuthorId} `)
         })
         const statement = `update ${this.tableName} set local_author_id = (case ${setClause.join('')} end) where id in (${siteAuthorIds.join()})`
-        return (await (await db.prepare(statement)).run()).changes
+        return (await db.run(statement)).changes
       } finally {
         if (!this.injectedDB) {
           db.release()
@@ -121,9 +121,10 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
       // 查询
-      const results: SiteAuthorDTO[] = (await db.prepare(statement)).all(
+      const results: SiteAuthorDTO[] = (await db.all(
+        statement,
         modifiedQuery.getQueryObject()
-      ) as SiteAuthorDTO[]
+      )) as SiteAuthorDTO[]
 
       // 利用构造方法处理localAuthor的JSON字符串
       return results.map((result) => new SiteAuthorDTO(result))

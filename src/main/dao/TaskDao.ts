@@ -49,7 +49,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     // 查询
     const db = this.acquire()
     try {
-      const rows = (await db.prepare(statement)).all(modifiedPage.query) as object[]
+      const rows = (await db.all(statement, modifiedPage.query)) as object[]
       modifiedPage.data = super.getResultTypeDataList<Task>(rows)
       return modifiedPage
     } finally {
@@ -68,7 +68,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     const statement = `select distinct * from task where (id in (${idsStr}) and is_collection = 0) or parent_id in (${idsStr})`
     const db = this.acquire()
     try {
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       return super.getResultTypeDataList<Task>(rows)
     } finally {
       if (!this.injectedDB) {
@@ -88,7 +88,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        WHERE id in (${idsStr})`
     const db = this.acquire()
     try {
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
       return super.getResultTypeDataList<TaskScheduleDTO>(rows)
     } finally {
       if (!this.injectedDB) {

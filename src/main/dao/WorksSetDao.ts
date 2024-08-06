@@ -33,7 +33,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
                        from works_set ${whereClause}`
     const db = super.acquire()
     try {
-      const rows = (await db.prepare(statement)).all(modifiedQuery) as Record<string, unknown>[]
+      const rows = (await db.all(statement, modifiedQuery)) as Record<string, unknown>[]
       const result = super.getResultTypeDataList(rows) as WorksSet[]
       if (result.length > 1) {
         LogUtil.warn(

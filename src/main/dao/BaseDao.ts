@@ -69,7 +69,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
       const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
       try {
-        return (await (await db.prepare(sql)).run(plainObject)).lastInsertRowid as number
+        return (await db.run(sql, plainObject)).lastInsertRowid as number
       } catch (error) {
         logUtil.error('BaseDao', 'save方法error: ', error)
         throw error
@@ -145,7 +145,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       const statement = insertClause.concat(' ', valuesClause)
 
-      return (await (await db.prepare(statement)).run(numberedProperties)).changes as number
+      return (await db.run(statement, numberedProperties)).changes as number
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -161,7 +161,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await (await db.prepare(sql)).run()).changes
+      return (await db.run(sql)).changes
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -190,7 +190,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const keys = Object.keys(existingValue)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await (await db.prepare(statement)).run(existingValue)).changes
+      return (await db.run(statement, existingValue)).changes
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -225,7 +225,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const statement = `UPDATE "${this.tableName}" SET ${setClauses}`
 
       for (const plainObject of plainObjects) {
-        ;(await db.prepare(statement)).run(plainObject)
+        await db.run(statement, plainObject)
       }
       return entities.length
     } finally {
@@ -293,7 +293,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       const statement = insertClause.concat(' ', valuesClause)
 
-      return (await (await db.prepare(statement)).run(numberedProperties)).changes as number
+      return (await db.run(statement, numberedProperties)).changes as number
     } finally {
       if (!this.injectedDB) {
         db.release()
@@ -309,7 +309,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
-      let result = (await db.prepare(statement)).get({ id: id }) as object
+      let result = (await db.get(statement, { id: id })) as object
       if (result) {
         result = this.getResultTypeData(result as Record<string, unknown>)
       }
@@ -348,9 +348,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      const rows = (await db.prepare(statement)).all(
-        modifiedPage.query?.getQueryObject()
-      ) as object[]
+      const rows = (await db.all(statement, modifiedPage.query?.getQueryObject())) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
       modifiedPage.data = this.getResultTypeDataList<Model>(rows)
@@ -391,7 +389,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
       // 查询
       const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.getQueryObject())
-      const rows = (await db.prepare(statement)).all(nonUndefinedValue) as object[]
+      const rows = (await db.all(statement, nonUndefinedValue)) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
       return this.getResultTypeDataList<Model>(rows)
@@ -414,7 +412,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       // 生成where字句
 
       // 查询
-      const rows = (await db.prepare(statement)).all() as object[]
+      const rows = (await db.all(statement)) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
       return this.getResultTypeDataList<Model>(rows)
@@ -459,7 +457,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 查询
-      const rows = (await db.prepare(statement)).all(modifiedQuery?.getQueryObject())
+      const rows = await db.all(statement, modifiedQuery?.getQueryObject())
 
       return rows.map((row) => new SelectItem(row as SelectItem))
     } catch (error) {
@@ -515,7 +513,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      const rows = (await db.prepare(statement)).all(modifiedPage.query?.getQueryObject())
+      const rows = await db.all(statement, modifiedPage.query?.getQueryObject())
 
       // 处理查询结果
       const selectItems = rows.map((row) => new SelectItem(row as SelectItem))
@@ -811,7 +809,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         const tempWhereClause = StringUtil.concatPrefixIfNotPresent(whereClause, 'where ')
         countSql = countSql.concat(' ', tempWhereClause)
       }
-      const countResult = (await db.prepare(countSql)).get(notNullishValue) as { total: number }
+      const countResult = (await db.get(countSql, notNullishValue)) as { total: number }
       page.dataCount = countResult.total
       page.pageCount = Math.ceil(countResult.total / page.pageSize)
 
