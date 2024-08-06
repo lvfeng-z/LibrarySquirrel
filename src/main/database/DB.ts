@@ -106,6 +106,7 @@ export default class DB {
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
+      this.savepointCounter--
       LogUtil.debug('DB', `${name}，RELEASE ${savepointName}，result: ${result}`)
 
       return result
@@ -123,6 +124,7 @@ export default class DB {
         LogUtil.info('DB', `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`)
       }
 
+      this.savepointCounter = 0
       LogUtil.error('DB', error)
       throw error
     } finally {
