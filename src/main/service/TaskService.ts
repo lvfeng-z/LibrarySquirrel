@@ -322,19 +322,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 尝试开始任务
     try {
       // 限制最多同时保存100个
-      const maxSaveWorksPromise = 100
+      const maxSaveWorksPromise = 3
       const promiseLimit = limit(maxSaveWorksPromise)
-      for (const task of tasks) {
+
+      // 并行保存过程
+      const parallelProcess = async (task: Task) => {
         // 校验任务的插件id
         if (isNullish(task.pluginId)) {
           const msg = `任务的插件id意外为空，taskId: ${task.id}`
           LogUtil.warn('TaskService', msg)
-          continue
+          return
         }
 
         // 加载并缓存插件和插件信息
         let taskHandler: TaskHandler
         let pluginInfo: string
+
         if (isNullish(pluginCache[task.pluginId])) {
           // 查询插件信息，用于输出日志
           const installedPluginsService = new InstalledPluginsService()
@@ -358,52 +361,54 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           worksDTO.includeTaskId === null
         ) {
           LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-          continue
+          return
         }
 
         // 找到插件返回的作品对应的task
-        const taskFilter = tasks.filter((task) => task.id == worksDTO.includeTaskId)
-        if (taskFilter.length < 1) {
+        const taskFilter = tasks.find((task) => task.id == worksDTO.includeTaskId)
+        if (isNullish(taskFilter)) {
           // 如果插件返回的任务id越界，发出警告并跳过此次循环
           LogUtil.warn(
             'TaskService',
-            `插件返回的任务id越界，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+            `插件返回的任务id不可用，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
           )
-          continue
+          return
         }
 
         // 用于异步执行作品和任务处理过程
-        const worksAndTaskProcess = async () => {
-          // 开启事务
-          let db: DB
-          if (this.injectedDB) {
-            db = this.db as DB
-          } else {
-            db = new DB('TaskService')
-          }
-          try {
-            await db.nestedTransaction(async (transactionDB) => {
-              // 保存资源和作品信息
-              await promiseLimit(async () => {
-                const taskService = new TaskService(transactionDB)
-                try {
-                  const worksService = new WorksService(transactionDB)
-                  const worksId = await worksService.saveWorksAndResource(worksDTO)
-                  await taskService.finishTask(taskFilter[0], worksId)
-                } catch (error) {
-                  LogUtil.warn('TaskService', '保存作品失败，error: ', error)
-                  await taskService.taskFailed(taskFilter[0])
-                }
+        // 开启事务
+        const db = new DB('TaskService')
+        try {
+          await db.nestedTransaction(async (transactionDB) => {
+            // 保存资源和作品信息
+            const taskService = new TaskService(transactionDB)
+            try {
+              const worksService = new WorksService(transactionDB)
+              worksService.saveWorksAndResource(worksDTO).then(async (worksId) => {
+                await taskService.finishTask(taskFilter, worksId)
+                db.release()
               })
-            }, 'startTask')
-          } finally {
-            if (!this.injectedDB) {
+            } catch (error) {
+              LogUtil.warn('TaskService', '保存作品失败，error: ', error)
+              await taskService.taskFailed(taskFilter)
               db.release()
             }
-          }
+          }, 'startTask')
+        } finally {
+          db.release()
         }
-        worksAndTaskProcess()
       }
+
+      // 执行并行保存
+      const activeProcesses: Promise<void>[] = []
+      for (const task of tasks) {
+        const activeProcess = promiseLimit(() => {
+          parallelProcess(task)
+        })
+        activeProcesses.push(activeProcess)
+      }
+      await Promise.all(activeProcesses)
+
       return true
     } catch (error) {
       LogUtil.error('TaskService', '开始任务时出错，error: ', error)
