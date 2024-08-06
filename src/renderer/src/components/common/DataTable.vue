@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import Thead from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
@@ -30,6 +30,13 @@ const props = withDefaults(
 // onBeforeMount
 onBeforeMount(() => {
   initializeThead()
+})
+
+// onMounted
+onMounted(() => {
+  // 获取表格 body 包装器
+  const scrollBarWrapper = dataTable.value.$refs.scrollBarRef.wrapRef
+  scrollBarWrapper.addEventListener('scroll', () => emits('scroll'))
 })
 
 // model
@@ -72,10 +79,6 @@ function handleSelectionChange(event: object[]) {
 // 处理操作按钮点击事件
 function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
   emits('buttonClicked', operationResponse)
-}
-// 处理滚动事件
-function handleScroll() {
-  emits('scroll')
 }
 // 处理行数据变化
 function handleRowChange(row: object) {
@@ -151,7 +154,6 @@ defineExpose({
     :row-class-name="tableRowClassName"
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
-    @scroll="handleScroll"
   >
     <el-table-column
       v-if="props.selectable && props.multiSelect"
