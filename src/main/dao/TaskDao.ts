@@ -83,7 +83,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    */
   async selectStatusList(ids: number[]): Promise<TaskScheduleDTO[]> {
     const idsStr = ids.join(',')
-    const statement = `SELECT id, status, CASE WHEN status = 3 THEN 100 END
+    const statement = `SELECT id, status, CASE WHEN status = 3 THEN 100 END as schedule
                        FROM "${this.tableName}"
                        WHERE id in (${idsStr})`
     const db = this.acquire()
