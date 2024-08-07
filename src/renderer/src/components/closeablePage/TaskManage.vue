@@ -329,7 +329,7 @@ function handleScroll() {
             </el-button-group>
             <el-progress
               style="width: 100%"
-              :percentage="row.row.schedule"
+              :percentage="row.row.schedule?.toFixed(2)"
               text-inside
               :stroke-width="17"
             ></el-progress>
