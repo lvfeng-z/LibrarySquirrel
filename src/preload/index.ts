@@ -16,6 +16,9 @@ const api = {
   testTaskPluginListenerGetMonitored: (args) => {
     return Electron.ipcRenderer.invoke('test-taskPluginListener-getMonitored', args)
   },
+  testPLimitTest: (args) => {
+    return Electron.ipcRenderer.invoke('test-pLimitTest', args)
+  },
 
   // AutoExplainPath
   autoExplainPathGetListenerPage: (args) => {

@@ -2,6 +2,7 @@ import DB from '../database/DB.ts'
 import Database from 'better-sqlite3'
 import DatabaseUtil from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
+import pLimit from 'p-limit'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')
@@ -46,7 +47,23 @@ async function transactionTest() {
   t()
 }
 
+async function pLimitTest() {
+  const limit = pLimit(3)
+  const fetchSomething = async (t: string) => {
+    console.log('执行', t)
+    setTimeout(() => {
+      return
+    }, 1000)
+  }
+  const list: Promise<void>[] = []
+  for (let i = 0; i < 11; i++) {
+    list.push(limit(() => fetchSomething(i.toString())))
+  }
+  await Promise.all(list)
+}
+
 export default {
   insertLocalTag10W,
-  transactionTest
+  transactionTest,
+  pLimitTest
 }

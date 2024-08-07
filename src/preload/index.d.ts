@@ -9,6 +9,7 @@ declare global {
       testTransactionTest: function
       testTaskPluginListenerServiceSaveBatch: function
       testTaskPluginListenerServiceGetMonitored: function
+      testPLimitTest: function
 
       // AutoExplainPath
       autoExplainPathGetListenerPage: function

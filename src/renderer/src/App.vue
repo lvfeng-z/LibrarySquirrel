@@ -26,6 +26,7 @@ onMounted(() => {
 // 接口
 const apis = {
   test: window.api.localAuthorGetSelectItems,
+  testPLimitTest: window.api.testPLimitTest,
   localTagGetSelectList: window.api.localTagGetSelectList,
   worksQueryPage: window.api.worksQueryPage
 }
@@ -159,7 +160,9 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
 
 const showTestDialog = ref(false)
 async function handleTest() {
-  showExplainPath.value = true
+  const a = await apis.testPLimitTest()
+  console.log(a)
+  // showExplainPath.value = true
   // showTestDialog.value = true
 }
 </script>

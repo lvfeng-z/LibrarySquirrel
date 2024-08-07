@@ -5,7 +5,7 @@ import SiteService from './SiteService.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import SiteTag from '../model/SiteTag.ts'
-import InsertLocalTag from '../test/InsertLocalTag.ts'
+import test from '../test/test.ts'
 import SettingsService from './SettingsService.ts'
 import WorksService from './WorksService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
@@ -19,10 +19,13 @@ import FileSysUtil from '../util/FileSysUtil.ts'
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
-    return InsertLocalTag.insertLocalTag10W()
+    return test.insertLocalTag10W()
   })
   Electron.ipcMain.handle('test-transactionTest', async () => {
-    return InsertLocalTag.transactionTest()
+    return test.transactionTest()
+  })
+  Electron.ipcMain.handle('test-pLimitTest', async () => {
+    return test.pLimitTest()
   })
 
   //AutoExplainPathService
