@@ -10,7 +10,7 @@ import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
-import limit from 'p-limit'
+import pLimit from 'p-limit'
 import Electron from 'electron'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
@@ -321,12 +321,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 尝试开始任务
     try {
-      // 限制最多同时保存100个
-      const maxSaveWorksPromise = 3
-      const promiseLimit = limit(maxSaveWorksPromise)
-
-      // 并行保存过程
-      const parallelProcess = async (task: Task) => {
+      // 用于并行保存的过程
+      const savingProcess = async (task: Task) => {
         // 校验任务的插件id
         if (isNullish(task.pluginId)) {
           const msg = `任务的插件id意外为空，taskId: ${task.id}`
@@ -386,12 +382,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
               const worksService = new WorksService(transactionDB)
               worksService.saveWorksAndResource(worksDTO).then(async (worksId) => {
                 await taskService.finishTask(taskFilter, worksId)
-                db.release()
               })
             } catch (error) {
               LogUtil.warn('TaskService', '保存作品失败，error: ', error)
               await taskService.taskFailed(taskFilter)
-              db.release()
             }
           }, 'startTask')
         } finally {
@@ -399,11 +393,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
       }
 
-      // 执行并行保存
+      // 限制最多同时保存100个
+      const maxSaveWorksPromise = 1
+      const limit = pLimit(maxSaveWorksPromise)
+
       const activeProcesses: Promise<void>[] = []
       for (const task of tasks) {
-        const activeProcess = promiseLimit(() => {
-          parallelProcess(task)
+        const activeProcess = limit(async () => {
+          return await savingProcess(task)
         })
         activeProcesses.push(activeProcess)
       }
