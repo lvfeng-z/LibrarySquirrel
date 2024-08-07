@@ -11,6 +11,7 @@ import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { TreeNode } from 'element-plus'
 import { isNullish } from '../../utils/CommonUtil'
+import { debounce } from 'lodash'
 
 // onMounted
 onMounted(() => {
@@ -227,6 +228,7 @@ async function selectDir(openFile: boolean) {
 // 刷新任务进度和状态
 async function refreshTask() {
   // 获取需要刷新的任务
+  // todo 应该直接刷新子任务，不使用任务集关联子任务
   const getRefreshTasks = () => {
     const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
     return dataList.value.filter(
@@ -241,6 +243,10 @@ async function refreshTask() {
     await new Promise((resolve) => setTimeout(resolve, 500))
     refreshTasks = getRefreshTasks()
   }
+}
+// 滚动事件处理函数
+function handleScroll() {
+  debounce(() => refreshTask(), 500)()
 }
 </script>
 
@@ -285,7 +291,7 @@ async function refreshTask() {
         :operation-button="operationButton"
         :custom-operation-button="true"
         :tree-data="true"
-        @scroll="refreshTask"
+        @scroll="handleScroll"
       >
         <template #customOperations="row">
           <div style="display: flex; flex-direction: column; align-items: center">
