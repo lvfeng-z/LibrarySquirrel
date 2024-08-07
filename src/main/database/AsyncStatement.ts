@@ -54,9 +54,17 @@ export default class AsyncStatement {
     }
   }
   get(...params: unknown[]): unknown | undefined {
+    LogUtil.debug(
+      'AsyncStatement',
+      `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
+    )
     return this.statement.get(...params)
   }
   all(...params: unknown[]): unknown[] {
+    LogUtil.debug(
+      'AsyncStatement',
+      `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
+    )
     return this.statement.all(...params) as unknown[]
   }
   iterate(...params: unknown[]): IterableIterator<unknown> {
