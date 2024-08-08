@@ -322,8 +322,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 尝试开始任务
     try {
       // 用于并行保存的过程
-      // todo 加入日志观察每个实例执行的时机
-      const savingProcess = async (task: Task): Promise<boolean> => {
+      const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
+        LogUtil.debug('TaskService', '开始任务，taskId: ', task.id)
         // 校验任务的插件id
         if (isNullish(task.pluginId)) {
           const msg = `任务的插件id意外为空，taskId: ${task.id}`
@@ -382,9 +382,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
               const taskService = new TaskService(transactionDB)
               try {
                 const worksService = new WorksService(transactionDB)
-                return worksService.saveWorksAndResource(worksDTO).then(async (worksId) => {
-                  return taskService.finishTask(taskFilter, worksId).then(() => true)
+                worksService.saveWorksAndResource(worksDTO, limit).then(async (worksId) => {
+                  taskService.finishTask(taskFilter, worksId)
                 })
+                return true
               } catch (error) {
                 LogUtil.warn('TaskService', '保存作品失败，error: ', error)
                 await taskService.taskFailed(taskFilter)
@@ -399,13 +400,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       // 限制最多同时保存100个
-      const maxSaveWorksPromise = 4
+      const maxSaveWorksPromise = 5
       const limit = pLimit(maxSaveWorksPromise)
 
       const activeProcesses: Promise<boolean>[] = []
       for (const task of tasks) {
-        console.log('startTask正在执行task：', task.id)
-        const activeProcess = limit(() => savingProcess(task))
+        LogUtil.debug('TaskService', 'startTask正在执行task：', task.id)
+        const activeProcess = savingProcess(task, limit)
         activeProcesses.push(activeProcess)
       }
       await Promise.all(activeProcesses)
