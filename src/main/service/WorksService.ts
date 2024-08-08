@@ -29,13 +29,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     super('WorksService', new WorksDao(db), db)
   }
 
-  // todo 把保存资源和信息的操作分离
   /**
-   * 保存作品信息及资源
+   * 保存作品资源
    * @param worksDTO
-   * @param limit
+   * @param limit 保存线程并发限制
    */
-  async saveWorksAndResource(worksDTO: WorksDTO, limit: Limit): Promise<number> {
+  async saveWorksResource(worksDTO: WorksDTO, limit?: Limit): Promise<unknown> {
     // 读取设置中的工作目录信息
     const settings = SettingsService.getSettings() as { workdir: string }
     // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
@@ -95,10 +94,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
         // 创建写入Promise
-        LogUtil.debug('WorksService', '开始保存任务资源，taskId: ', worksDTO.includeTaskId)
-        const saveResourcePromise = limit(() =>
-          pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
-        )
+        let saveResourcePromise: Promise<unknown>
+        if (isNullish(limit)) {
+          saveResourcePromise = pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
+        } else {
+          saveResourcePromise = limit(() =>
+            pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
+          )
+        }
         // 创建任务监听器
         const taskService = new TaskService()
         if (isNullish(worksDTO.includeTaskId)) {
@@ -111,22 +114,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             saveResourcePromise
           )
         }
-        // 等待任务写入流完成
-        return saveResourcePromise.then(() => {
-          LogUtil.debug(
-            'WorksService',
-            '已保存任务资源，开始保存作品信息，taskId: ',
-            worksDTO.includeTaskId
-          )
-          worksDTO.filePath = path.join(relativeSavePath, fileName)
-          worksDTO.workdir = settings.workdir
 
-          // 创建一个新的服务对象用于组合嵌套事务
-          const worksService = new WorksService(this.db)
-          const worksId = worksService.saveWorks(worksDTO)
-          LogUtil.debug('WorksService', '已保存作品信息，taskId: ', worksDTO.includeTaskId)
-          return worksId
-        })
+        return saveResourcePromise
       } catch (error) {
         const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
         LogUtil.error('WorksService', msg)
@@ -143,7 +132,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 保存作品信息
    * @param worksDTO
    */
-  async saveWorks(worksDTO: WorksDTO): Promise<number> {
+  async saveWorksInfo(worksDTO: WorksDTO): Promise<number> {
     const site = worksDTO.site
     const siteAuthors = worksDTO.siteAuthors
     const siteTags = worksDTO.siteTags
