@@ -1,4 +1,4 @@
-# CollectionsManager
+# Library Squirrel
 
 An Electron application with Vue and TypeScript
 
@@ -14,7 +14,6 @@ An Electron application with Vue and TypeScript
 
 安装 vs2022 的 Desktop development with C++ 工作负载和 Windows SDK: 10.0.20348.0 的单个组件
 
-（可选）对git的配置进行修改，提交时 CRLF 转换为 LF ，检出时不做任何的转换，可以防止出现ESLint: Delete `␍`(prettier/prettier)提醒
 ```bash
 $ git config core.autocrlf input
 ```

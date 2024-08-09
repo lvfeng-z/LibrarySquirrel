@@ -1,5 +1,5 @@
 {
-  "name": "collections-manager",
+  "name": "library-squirrel",
   "version": "1.0.0",
   "type": "module",
   "description": "An Electron application with Vue and TypeScript",

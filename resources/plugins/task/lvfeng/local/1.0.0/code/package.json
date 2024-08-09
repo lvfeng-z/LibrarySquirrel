@@ -1,5 +1,5 @@
 {
-  "name": "collection-manager-plugin-lvfeng-local",
+  "name": "library-squirrel-plugin-lvfeng-local",
   "version": "1.0.0",
   "type": "module",
   "main": "src/localTaskHandler.mjs",
