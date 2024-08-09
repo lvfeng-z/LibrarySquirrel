@@ -154,32 +154,32 @@ export default class DB {
       }
 
       connection.exec(`SAVEPOINT ${savepointName}`)
-      LogUtil.debug('DB', `${name}，SAVEPOINT ${savepointName}`)
+      LogUtil.debug(this.caller, `${name}，SAVEPOINT ${savepointName}`)
 
       const result = await fn(this)
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
       this.savepointCounter--
-      LogUtil.debug('DB', `${name}，RELEASE ${savepointName}，result: ${result}`)
+      LogUtil.debug(this.caller, `${name}，RELEASE ${savepointName}，result: ${result}`)
 
       return result
     } catch (error) {
       // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
       if (isStartPoint) {
         connection.exec(`ROLLBACK`)
-        LogUtil.info('DB', `${name}，ROLLBACK`)
+        LogUtil.info(this.caller, `${name}，ROLLBACK`)
 
         // 释放虚拟的排它锁
         global.writingConnectionPool.releaseVisualLock()
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-        LogUtil.info('DB', `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`)
+        LogUtil.info(this.caller, `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`)
       }
 
       this.savepointCounter = 0
-      LogUtil.error('DB', error)
+      LogUtil.error(this.caller, error)
       throw error
     } finally {
       // 释放虚拟的排它锁
