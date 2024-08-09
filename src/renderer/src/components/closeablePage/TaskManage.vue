@@ -165,6 +165,8 @@ const enum OperationCode {
   CANCEL,
   DELETE
 }
+// 是否正在刷新数据
+let refreshing: boolean = false
 
 // 方法
 // 保存设置
@@ -202,6 +204,7 @@ function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCo
       refreshTask()
       break
     case OperationCode.PAUSE:
+      refreshTask()
       break
     case OperationCode.RETRY:
       break
@@ -227,6 +230,7 @@ async function selectDir(openFile: boolean) {
 }
 // 刷新任务进度和状态
 async function refreshTask() {
+  refreshing = true
   // 获取需要刷新的任务
   // todo 应该直接刷新子任务，不使用任务集关联子任务
   const getRefreshTasks = () => {
@@ -241,12 +245,20 @@ async function refreshTask() {
   while (refreshTasks.length > 0) {
     await taskManageSearchTable.value.refreshData(refreshTasks)
     await new Promise((resolve) => setTimeout(resolve, 500))
+    if (isNullish(taskManageSearchTable.value)) {
+      break
+    }
     refreshTasks = getRefreshTasks()
   }
+  refreshing = false
 }
 // 滚动事件处理函数
 function handleScroll() {
-  debounce(() => refreshTask(), 500)()
+  debounce(() => {
+    if (!refreshing) {
+      refreshTask()
+    }
+  }, 500)()
 }
 </script>
 
