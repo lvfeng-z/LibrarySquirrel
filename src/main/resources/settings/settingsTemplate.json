@@ -1,5 +1,8 @@
 {
   "initialized": false,
   "programVersion": "",
-  "workdir": ""
+  "workdir": "",
+  "importSettings": {
+    "maxParallelImport": 3
+  }
 }

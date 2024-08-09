@@ -1,13 +1,10 @@
-/**
- * 设置服务
- */
-
 import SettingsUtil from '../util/SettingsUtil.ts'
+import { Settings } from '../model/utilModels/Settings.ts'
 
 /**
  * 全量获取配置
  */
-function getSettings(): object {
+function getSettings(): Settings {
   return global.settings.get()
 }
 
