@@ -23,6 +23,7 @@ import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/WorksSet.ts'
 import { Limit } from 'p-limit'
+import StringUtil from '../util/StringUtil.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -34,56 +35,66 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @param limit 保存线程并发限制
    */
-  async saveWorksResource(worksDTO: WorksDTO, limit?: Limit): Promise<unknown> {
+  async saveWorksResource(worksDTO: WorksDTO, limit?: Limit): Promise<WorksDTO> {
     // 读取设置中的工作目录信息
     const settings = SettingsService.getSettings() as { workdir: string }
+    const workdir = settings.workdir
+    if (StringUtil.isBlank(workdir)) {
+      const msg = `保存资源时，工作目录意外为空，taskId: ${worksDTO.includeTaskId}`
+      LogUtil.error('WorksService', msg)
+      throw new Error(msg)
+    }
     // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
     if (
       Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
       worksDTO.resourceStream !== undefined &&
       worksDTO.resourceStream !== null
     ) {
-      // 处理作者信息
-      const tempName = this.getAuthorNameFromAuthorDTO(worksDTO)
-      const authorName = tempName === undefined ? 'unknownAuthor' : tempName
-
-      // 作品信息
-      const siteWorksName =
-        worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
-
-      // 保存路径
-      const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
-      const relativeSavePath = path.join('/includeDir', authorName)
-      const fullSavePath = path.join(settings.workdir, relativeSavePath)
-
-      const pipelinePromise = promisify(
-        (readable: fs.ReadStream, writable: fs.WriteStream, callback) => {
-          let errorOccurred = false
-
-          readable.on('error', (err) => {
-            errorOccurred = true
-            LogUtil.error('WorksService', `readable出错${err}`)
-            callback(err)
-          })
-
-          writable.on('error', (err) => {
-            errorOccurred = true
-            LogUtil.error('WorksService', `writable出错${err}`)
-            callback(err)
-          })
-
-          readable.on('end', () => {
-            if (!errorOccurred) {
-              writable.end()
-              callback(null)
-            }
-          })
-          readable.pipe(writable)
-        }
-      )
-
-      // 保存资源和作品信息
       try {
+        // 处理作者信息
+        const tempName = this.getAuthorNameFromAuthorDTO(worksDTO)
+        const authorName = tempName === undefined ? 'unknownAuthor' : tempName
+
+        // 作品信息
+        const siteWorksName =
+          worksDTO.siteWorksName === undefined
+            ? 'unknownWorksName'
+            : worksDTO.siteWorksName
+
+        // 保存路径
+        const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
+        const relativeSavePath = path.join('/includeDir', authorName)
+        const fullSavePath = path.join(workdir, relativeSavePath)
+        worksDTO.filePath = path.join(relativeSavePath, fileName)
+        worksDTO.workdir = workdir
+
+        const pipelinePromise = promisify(
+          (readable: fs.ReadStream, writable: fs.WriteStream, callback) => {
+            let errorOccurred = false
+
+            readable.on('error', (err) => {
+              errorOccurred = true
+              LogUtil.error('WorksService', `readable出错${err}`)
+              callback(err)
+            })
+
+            writable.on('error', (err) => {
+              errorOccurred = true
+              LogUtil.error('WorksService', `writable出错${err}`)
+              callback(err)
+            })
+
+            readable.on('end', () => {
+              if (!errorOccurred) {
+                writable.end()
+                callback(null)
+              }
+            })
+            readable.pipe(writable)
+          }
+        )
+
+        // 保存资源
         // 创建保存目录
         await FileSysUtil.createDirIfNotExists(fullSavePath)
         // 创建写入流
@@ -115,11 +126,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           )
         }
 
-        return saveResourcePromise
+        return saveResourcePromise.then(() => worksDTO)
       } catch (error) {
         const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
         LogUtil.error('WorksService', msg)
-        throw new Error(msg)
+        throw error
       }
     } else {
       const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`

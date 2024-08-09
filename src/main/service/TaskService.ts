@@ -24,6 +24,7 @@ import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { EventEmitter } from 'node:events'
 import fs from 'fs'
+import SettingsService from './SettingsService.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -319,19 +320,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const pluginCache: { [id: string]: { plugin: TaskHandler; info: string } } = {}
     const pluginLoader = new PluginLoader(mainWindow)
 
+    // 计数器
+    let counter = 0
+
     // 尝试开始任务
     try {
       // 用于并行保存的过程
-      const savingProcess = async (
-        task: Task,
-        limit: pLimit.Limit,
-        counter: number
-      ): Promise<void> => {
+      const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
         // 校验任务的插件id
         if (isNullish(task.pluginId)) {
           const msg = `任务的插件id意外为空，taskId: ${task.id}`
           LogUtil.warn('TaskService', msg)
-          return
+          return false
         }
 
         // 加载并缓存插件和插件信息
@@ -361,7 +361,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           worksDTO.includeTaskId === null
         ) {
           LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-          return
+          return false
         }
 
         // 找到插件返回的作品对应的task
@@ -372,43 +372,54 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             'TaskService',
             `插件返回的任务id不可用，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
           )
-          return
+          return false
         }
 
-        // 用于异步执行作品和任务处理过程
-        // 开启事务
+        // 保存资源
+        const saveWorksResourceService = new WorksService()
+        const saveResourceProcess = saveWorksResourceService.saveWorksResource(worksDTO, limit)
+
+        // 保存作品信息和修改任务状态的事务
         const db = new DB('TaskService')
         try {
-          db.nestedTransaction<(db: DB) => Promise<void>, void>(async (transactionDB) => {
-            // 保存资源和作品信息
-            const taskService = new TaskService(transactionDB)
-            try {
+          return await db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
+            async (transactionDB) => {
+              const taskService = new TaskService(transactionDB)
               const worksService = new WorksService(transactionDB)
-              worksService
-                .saveWorksResource(worksDTO, limit)
-                .then(() => worksService.saveWorksInfo(worksDTO).then(() => counter++))
-            } catch (error) {
-              LogUtil.warn('TaskService', '保存作品失败，error: ', error)
-              taskService.taskFailed(taskFilter)
-            }
-          }, 'startTask')
+
+              return saveResourceProcess
+                .then(async (savedWorks) => worksService.saveWorksInfo(savedWorks))
+                .then(async (worksId) => taskService.finishTask(taskFilter, worksId))
+                .then(() => {
+                  counter++
+                  return true
+                })
+                .catch(async (error) => {
+                  LogUtil.warn('TaskService', '保存作品失败，error: ', error)
+                  return taskService.taskFailed(taskFilter).then(() => false)
+                })
+            },
+            'startTask'
+          )
         } finally {
           db.release()
         }
       }
 
-      // 计数器
-      const counter = 0
-      // 限制并发保存数量
-      const maxSaveWorksPromise = 3
+      // 读取设置中的最大并行数
+      const settings = SettingsService.getSettings()
+      const maxSaveWorksPromise =
+        settings.importSettings.maxParallelImport >= 1
+          ? settings.importSettings.maxParallelImport
+          : 1
       const limit = pLimit(maxSaveWorksPromise)
 
-      const activeProcesses: Promise<void>[] = []
+      const activeProcesses: Promise<boolean>[] = []
       for (const task of tasks) {
-        const activeProcess = savingProcess(task, limit, counter)
+        const activeProcess = savingProcess(task, limit)
         activeProcesses.push(activeProcess)
       }
-      await Promise.all(activeProcesses)
+      await Promise.allSettled(activeProcesses)
 
       return counter
     } catch (error) {
