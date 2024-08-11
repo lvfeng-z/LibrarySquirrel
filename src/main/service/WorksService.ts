@@ -167,7 +167,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
               if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
                 const taskService = new TaskService(transactionDB)
                 const includeTask = await taskService.getById(worksDTO.includeTaskId)
-                const rootTaskId = includeTask.parentId
+                const rootTaskId = includeTask.pid
                 const siteWorksSetId = worksSet.siteWorksSetId
 
                 if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {

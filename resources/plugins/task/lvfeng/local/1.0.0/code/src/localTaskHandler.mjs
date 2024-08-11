@@ -330,7 +330,7 @@ class WorksSet {
 
 class Task {
   isCollection
-  parentId
+  pid
   taskName
   siteDomain
   localWorksId
@@ -343,7 +343,7 @@ class Task {
 
   constructor() {
     this.isCollection = undefined
-    this.parentId = undefined
+    this.pid = undefined
     this.taskName = undefined
     this.siteDomain = undefined
     this.localWorksId = undefined

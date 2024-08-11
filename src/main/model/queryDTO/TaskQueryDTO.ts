@@ -9,7 +9,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   /**
    * 上级任务id
    */
-  parentId: number | undefined | null
+  pid: number | undefined | null
 
   /**
    * 任务名称
@@ -60,7 +60,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
     if (task === undefined) {
       super()
       this.isCollection = undefined
-      this.parentId = undefined
+      this.pid = undefined
       this.taskName = undefined
       this.siteDomain = undefined
       this.localWorksId = undefined
@@ -73,7 +73,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
     } else {
       super(task)
       this.isCollection = task.isCollection
-      this.parentId = task.parentId
+      this.pid = task.pid
       this.taskName = task.taskName
       this.siteDomain = task.siteDomain
       this.localWorksId = task.localWorksId

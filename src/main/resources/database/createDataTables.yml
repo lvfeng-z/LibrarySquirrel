@@ -182,7 +182,7 @@ tables:
         constraint task_pk
         primary key autoincrement,
         is_collection  integer(1),
-        parent_id      integer,
+        pid            integer,
         task_name      text,
         site_domain    text,
         local_works_id integer,

@@ -189,7 +189,7 @@ async function load(
 // 给行添加class
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   const row = data.row as TaskDTO
-  if (row.hasChildren || isNullish(row.parentId)) {
+  if (row.hasChildren || isNullish(row.pid)) {
     return 'task-manage-search-table-parent-row'
   } else {
     return 'task-manage-search-table-child-row'
