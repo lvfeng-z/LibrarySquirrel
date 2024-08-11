@@ -4,7 +4,7 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import LocalTagConstant from '../constant/LocalTagConstant.ts'
 import TreeSelectNode from '../model/utilModels/TreeSelectNode.ts'
-import TreeNode from '../model/utilModels/TreeNode.ts'
+import { buildTree } from '../util/TreeUtil.ts'
 import BaseService from './BaseService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
@@ -171,8 +171,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     })
 
     // 递归生成树结构
-    const treeUtil = new TreeNode<TreeSelectNode>()
-    return treeUtil.buildTree(treeNodes, rootId)
+    return buildTree(treeNodes, rootId)
   }
 
   /**
