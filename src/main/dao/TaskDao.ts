@@ -6,6 +6,8 @@ import PageModel from '../model/utilModels/PageModel.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
+import TaskDTO from '../model/dto/TaskDTO.ts'
+import { buildTree } from '../util/TreeUtil.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   constructor(db?: DB) {
@@ -23,7 +25,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     }
     // 清除isCollection的值
     modifiedPage.query.isCollection = undefined
-    modifiedPage.query.parentId = undefined
+    modifiedPage.query.pid = undefined
 
     const selectClause = 'select * from task'
 
@@ -37,7 +39,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
       const whereClauseArray = Object.entries(whereClauses).map(([, value]) => value)
 
       // 查询是集合的或者只有单个任务的
-      whereClauseArray.push('(is_collection = 1 or parent_id is null)')
+      whereClauseArray.push('(is_collection = 1 or pid is null)')
 
       const temp = super.splicingWhereClauses(whereClauseArray)
       whereClause = StringUtil.isNotBlank(temp) ? temp : ''
@@ -60,21 +62,35 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   }
 
   /**
-   * 查询任务id列表中包含的所有子任务
+   * 获取树形任务列表
    * @param taskIds
    */
-  async selectUnRepeatChildTask(taskIds: number[]): Promise<Task[]> {
+  async selectTaskTreeList(taskIds: number[]): Promise<TaskDTO[]> {
     const idsStr = taskIds.join(',')
-    const statement = `select distinct * from task where (id in (${idsStr}) and is_collection = 0) or parent_id in (${idsStr})`
+    const statement = `with children as (select id, is_collection, ifnull(pid, 'root') as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                                                update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
+                            parent as (select id, is_collection, 'root' as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                                              update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
+
+                       select * from children
+                       union
+                       select * from parent
+                       union
+                       select * from task where id in (select pid from children)
+                       union
+                       select * from task where pid in (select id from parent)`
     const db = this.acquire()
+    let sourceTasks: TaskDTO[]
     try {
       const rows = (await db.all(statement)) as object[]
-      return super.getResultTypeDataList<Task>(rows)
+      sourceTasks = super.getResultTypeDataList<TaskDTO>(rows)
     } finally {
       if (!this.injectedDB) {
         db.release()
       }
     }
+
+    return buildTree(sourceTasks, 'root')
   }
 
   /**

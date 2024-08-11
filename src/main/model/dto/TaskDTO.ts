@@ -1,9 +1,10 @@
 import Task from '../Task.ts'
+import TreeNode from '../utilModels/TreeNode.ts'
 
 /**
  * 任务
  */
-export default class TaskDTO extends Task {
+export default class TaskDTO extends Task implements TreeNode<TaskDTO> {
   /**
    * 子任务（用于el-table的树形数据回显）
    */

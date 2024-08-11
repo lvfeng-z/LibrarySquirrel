@@ -156,15 +156,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     } else {
       // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
       const tempTask = new Task(parentTask)
-      const parentId = (await super.save(tempTask)) as number
-      parentTask.id = parentId
+      const pid = (await super.save(tempTask)) as number
+      parentTask.id = pid
       parentTask.saved = true
 
       const childTasks = tasks
         .map((task) => {
           task.status = TaskStatesEnum.CREATED
           task.isCollection = false
-          task.parentId = parentId
+          task.pid = pid
           task.pluginId = taskPlugin.id as number
           task.pluginInfo = pluginInfo
           task.siteDomain = taskPlugin.domain
@@ -219,9 +219,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 保存任务集的过程
       const parentTaskProcessing = () => {
         const tempTask = new Task(parentTask)
-        const parentId = super.save(tempTask) as Promise<number>
+        const pid = super.save(tempTask) as Promise<number>
         parentTask.saved = true
-        return parentId
+        return pid
       }
 
       // 处理任务队列的函数
@@ -252,8 +252,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         if (parentTaskProcess === undefined && itemCount > 1) {
           parentTaskProcess = parentTaskProcessing()
           parentTask.id = await parentTaskProcess
-          // 更新parentId
-          taskQueue.forEach((task) => (task.parentId = parentTask.id as number))
+          // 更新pid
+          taskQueue.forEach((task) => (task.pid = parentTask.id as number))
         }
 
         // 等待任务集合完成
@@ -265,7 +265,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         task.status = TaskStatesEnum.CREATED
         task.siteDomain = taskPlugin.domain
         task.isCollection = false
-        task.parentId = parentTask.id as number
+        task.pid = parentTask.id as number
 
         // 将任务添加到队列
         taskQueue.push(task)
@@ -314,7 +314,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
     // 查找id列表对应的所有子任务
-    const tasks: Task[] = await this.dao.selectUnRepeatChildTask(taskIds)
+    const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds)
 
     // 插件缓存
     const pluginCache: { [id: string]: { plugin: TaskHandler; info: string } } = {}
@@ -323,109 +323,114 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 计数器
     let counter = 0
 
-    // 尝试开始任务
-    try {
-      // 用于并行保存的过程
-      const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
-        // 校验任务的插件id
-        if (isNullish(task.pluginId)) {
-          const msg = `任务的插件id意外为空，taskId: ${task.id}`
-          LogUtil.warn('TaskService', msg)
-          return false
+    for (const parent of taskTree) {
+      const isCollection = notNullish(parent.children) && parent.children.length > 0
+      const tasks = isCollection ? (parent.children as TaskDTO[]) : [parent]
+
+      // 尝试开始任务
+      try {
+        // 用于并行保存的过程
+        const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
+          // 校验任务的插件id
+          if (isNullish(task.pluginId)) {
+            const msg = `任务的插件id意外为空，taskId: ${task.id}`
+            LogUtil.warn('TaskService', msg)
+            return false
+          }
+
+          // 加载并缓存插件和插件信息
+          let taskHandler: TaskHandler
+          let pluginInfo: string
+
+          if (isNullish(pluginCache[task.pluginId])) {
+            // 查询插件信息，用于输出日志
+            const installedPluginsService = new InstalledPluginsService()
+            pluginInfo = JSON.stringify(
+              await installedPluginsService.getById(task.pluginId as number)
+            )
+
+            taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
+
+            pluginCache[task.pluginId] = { plugin: taskHandler, info: pluginInfo }
+          } else {
+            taskHandler = pluginCache[task.pluginId].plugin
+            pluginInfo = pluginCache[task.pluginId].info
+          }
+
+          const worksDTO = await taskHandler.start(task)
+          // 如果插件未返回任务id，发出警告并跳过此次循环
+          if (
+            !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
+            worksDTO.includeTaskId === undefined ||
+            worksDTO.includeTaskId === null
+          ) {
+            LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
+            return false
+          }
+
+          // 找到插件返回的作品对应的task
+          const taskFilter = tasks.find((task) => task.id == worksDTO.includeTaskId)
+          if (isNullish(taskFilter)) {
+            // 如果插件返回的任务id越界，发出警告并跳过此次循环
+            LogUtil.warn(
+              'TaskService',
+              `插件返回的任务id不可用，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
+            )
+            return false
+          }
+
+          // 保存资源
+          const saveWorksResourceService = new WorksService()
+          const saveResourceProcess = saveWorksResourceService.saveWorksResource(worksDTO, limit)
+
+          // 保存作品信息和修改任务状态的事务
+          const db = new DB('TaskService')
+          try {
+            return await db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
+              async (transactionDB) => {
+                const taskService = new TaskService(transactionDB)
+                const worksService = new WorksService(transactionDB)
+
+                return saveResourceProcess
+                  .then(async (savedWorks) => worksService.saveWorksInfo(savedWorks))
+                  .then(async (worksId) => taskService.finishTask(taskFilter, worksId))
+                  .then(() => {
+                    counter++
+                    return true
+                  })
+                  .catch(async (error) => {
+                    LogUtil.warn('TaskService', '保存作品失败，error: ', error)
+                    return taskService.taskFailed(taskFilter).then(() => false)
+                  })
+              },
+              'startTask'
+            )
+          } finally {
+            db.release()
+          }
         }
 
-        // 加载并缓存插件和插件信息
-        let taskHandler: TaskHandler
-        let pluginInfo: string
+        // 读取设置中的最大并行数
+        const settings = SettingsService.getSettings()
+        const maxSaveWorksPromise =
+          settings.importSettings.maxParallelImport >= 1
+            ? settings.importSettings.maxParallelImport
+            : 1
+        const limit = pLimit(maxSaveWorksPromise)
 
-        if (isNullish(pluginCache[task.pluginId])) {
-          // 查询插件信息，用于输出日志
-          const installedPluginsService = new InstalledPluginsService()
-          pluginInfo = JSON.stringify(
-            await installedPluginsService.getById(task.pluginId as number)
-          )
-
-          taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
-
-          pluginCache[task.pluginId] = { plugin: taskHandler, info: pluginInfo }
-        } else {
-          taskHandler = pluginCache[task.pluginId].plugin
-          pluginInfo = pluginCache[task.pluginId].info
+        const activeProcesses: Promise<boolean>[] = []
+        for (const task of tasks) {
+          const activeProcess = savingProcess(task, limit)
+          activeProcesses.push(activeProcess)
         }
-
-        const worksDTO = await taskHandler.start(task)
-        // 如果插件未返回任务id，发出警告并跳过此次循环
-        if (
-          !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
-          worksDTO.includeTaskId === undefined ||
-          worksDTO.includeTaskId === null
-        ) {
-          LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-          return false
-        }
-
-        // 找到插件返回的作品对应的task
-        const taskFilter = tasks.find((task) => task.id == worksDTO.includeTaskId)
-        if (isNullish(taskFilter)) {
-          // 如果插件返回的任务id越界，发出警告并跳过此次循环
-          LogUtil.warn(
-            'TaskService',
-            `插件返回的任务id不可用，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-          )
-          return false
-        }
-
-        // 保存资源
-        const saveWorksResourceService = new WorksService()
-        const saveResourceProcess = saveWorksResourceService.saveWorksResource(worksDTO, limit)
-
-        // 保存作品信息和修改任务状态的事务
-        const db = new DB('TaskService')
-        try {
-          return await db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
-            async (transactionDB) => {
-              const taskService = new TaskService(transactionDB)
-              const worksService = new WorksService(transactionDB)
-
-              return saveResourceProcess
-                .then(async (savedWorks) => worksService.saveWorksInfo(savedWorks))
-                .then(async (worksId) => taskService.finishTask(taskFilter, worksId))
-                .then(() => {
-                  counter++
-                  return true
-                })
-                .catch(async (error) => {
-                  LogUtil.warn('TaskService', '保存作品失败，error: ', error)
-                  return taskService.taskFailed(taskFilter).then(() => false)
-                })
-            },
-            'startTask'
-          )
-        } finally {
-          db.release()
-        }
+        await Promise.allSettled(activeProcesses)
+      } catch (error) {
+        LogUtil.error('TaskService', '开始任务时出错，error: ', error)
+        throw error
       }
-
-      // 读取设置中的最大并行数
-      const settings = SettingsService.getSettings()
-      const maxSaveWorksPromise =
-        settings.importSettings.maxParallelImport >= 1
-          ? settings.importSettings.maxParallelImport
-          : 1
-      const limit = pLimit(maxSaveWorksPromise)
-
-      const activeProcesses: Promise<boolean>[] = []
-      for (const task of tasks) {
-        const activeProcess = savingProcess(task, limit)
-        activeProcesses.push(activeProcess)
-      }
-      await Promise.allSettled(activeProcesses)
-
-      return counter
-    } catch (error) {
-      LogUtil.error('TaskService', '开始任务时出错，error: ', error)
-      throw error
     }
+
+    return counter
   }
 
   /**
@@ -525,7 +530,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           // 查找数组前面这个任务集合的所有任务
           let lessIndex = 0
           while (lessIndex < index) {
-            if (tasks[lessIndex].parentId === tasks[index].id) {
+            if (tasks[lessIndex].pid === tasks[index].id) {
               const childTask = tasks.splice(lessIndex, 1)[0]
               index--
               tasks[index].children?.push(childTask)
@@ -536,7 +541,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           // 查找数组后面这个任务集合的所有任务
           let greaterIndex = index + 1
           while (greaterIndex < tasks.length) {
-            if (tasks[greaterIndex].parentId === tasks[index].id) {
+            if (tasks[greaterIndex].pid === tasks[index].id) {
               const childTask = tasks.splice(greaterIndex, 1)[0]
               tasks[index].children?.push(childTask)
               continue
@@ -552,12 +557,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 获取parentId的子任务
-   * @param parentId
+   * 获取任务集合的子任务
+   * @param pid
    */
-  getChildrenTask(parentId: number) {
+  getChildrenTask(pid: number) {
     const query = new TaskQueryDTO()
-    query.parentId = parentId
+    query.pid = pid
     return this.dao.selectList(query)
   }
 
