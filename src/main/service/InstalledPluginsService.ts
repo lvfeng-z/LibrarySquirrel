@@ -41,7 +41,7 @@ export default class InstalledPluginsService extends BaseService<
       installedPlugin.domain as string,
       installedPlugin.version as string,
       'code',
-      installedPlugin.className as string
+      installedPlugin.fileName as string
     )
   }
 }

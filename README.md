@@ -14,10 +14,6 @@ An Electron application with Vue and TypeScript
 
 安装 vs2022 的 Desktop development with C++ 工作负载和 Windows SDK: 10.0.20348.0 的单个组件
 
-```bash
-$ git config core.autocrlf input
-```
-
 ### 安装
 
 ```bash

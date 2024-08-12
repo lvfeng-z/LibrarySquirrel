@@ -2,4 +2,4 @@ type: task
 author: lvfeng
 domain: local
 version: 1.0.0
-className: localTaskHandler.ts
+fileName: localTaskHandler.ts

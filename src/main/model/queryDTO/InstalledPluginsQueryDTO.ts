@@ -24,7 +24,7 @@ export default class InstalledPluginsQueryDTO extends BaseQueryDTO {
   /**
    * 类名+扩展名
    */
-  className: string | undefined | null
+  fileName: string | undefined | null
 
   /**
    * 排序号
@@ -38,7 +38,7 @@ export default class InstalledPluginsQueryDTO extends BaseQueryDTO {
       this.author = undefined
       this.domain = undefined
       this.version = undefined
-      this.className = undefined
+      this.fileName = undefined
       this.sortNum = undefined
     } else {
       super(installedPlugins)
@@ -46,7 +46,7 @@ export default class InstalledPluginsQueryDTO extends BaseQueryDTO {
       this.author = installedPlugins.author
       this.domain = installedPlugins.domain
       this.version = installedPlugins.version
-      this.className = installedPlugins.className
+      this.fileName = installedPlugins.fileName
       this.sortNum = installedPlugins.sortNum
     }
   }
