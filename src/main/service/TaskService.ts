@@ -323,12 +323,53 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 计数器
     let counter = 0
 
+    // 任务等待列表
+    const activeProcesses: Promise<boolean>[] = []
+
     for (const parent of taskTree) {
       const isCollection = notNullish(parent.children) && parent.children.length > 0
       const tasks = isCollection ? (parent.children as TaskDTO[]) : [parent]
+      parent.status = TaskStatesEnum.PROCESSING
 
       // 尝试开始任务
       try {
+        // 处理任务集合的状态
+        const handleRootStatus = (rootId: number) => {
+          const root = taskTree.find((task) => task.id === rootId)
+          if (isNullish(root)) {
+            return
+          }
+
+          if (notNullish(root.children) && root.children.length > 0) {
+            const processing = root.children.some(
+              (child) => TaskStatesEnum.PROCESSING === child.status
+            )
+            if (processing) {
+              return
+            } else {
+              const finished = root.children.filter(
+                (child) => TaskStatesEnum.FINISHED === child.status
+              ).length
+              const failed = root.children.filter(
+                (child) => TaskStatesEnum.FAILED === child.status
+              ).length
+              if (finished > 0 && failed > 0) {
+                root.status = TaskStatesEnum.PARTLY_FINISHED
+              } else if (finished > 0) {
+                root.status = TaskStatesEnum.FINISHED
+              } else {
+                root.status = TaskStatesEnum.FAILED
+              }
+            }
+          } else {
+            root.status = TaskStatesEnum.FINISHED
+          }
+          if (TaskStatesEnum.PROCESSING !== root.status) {
+            const temp = new Task(root)
+            this.updateById(temp)
+          }
+        }
+
         // 用于并行保存的过程
         const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
           // 校验任务的插件id
@@ -393,14 +434,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
                 return saveResourceProcess
                   .then(async (savedWorks) => worksService.saveWorksInfo(savedWorks))
-                  .then(async (worksId) => taskService.finishTask(taskFilter, worksId))
+                  .then(async (worksId) => {
+                    task.status = TaskStatesEnum.FINISHED
+                    return taskService.finishTask(taskFilter, worksId)
+                  })
                   .then(() => {
                     counter++
+                    handleRootStatus(task.pid as number)
                     return true
                   })
                   .catch(async (error) => {
                     LogUtil.warn('TaskService', '保存作品失败，error: ', error)
-                    return taskService.taskFailed(taskFilter).then(() => false)
+                    task.status = TaskStatesEnum.FAILED
+                    return taskService.taskFailed(taskFilter).then(() => {
+                      handleRootStatus(task.pid as number)
+                      return false
+                    })
                   })
               },
               'startTask'
@@ -418,17 +467,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             : 1
         const limit = pLimit(maxSaveWorksPromise)
 
-        const activeProcesses: Promise<boolean>[] = []
         for (const task of tasks) {
+          task.status = TaskStatesEnum.PROCESSING
           const activeProcess = savingProcess(task, limit)
           activeProcesses.push(activeProcess)
         }
-        await Promise.allSettled(activeProcesses)
       } catch (error) {
         LogUtil.error('TaskService', '开始任务时出错，error: ', error)
         throw error
       }
     }
+
+    await Promise.allSettled(activeProcesses)
 
     return counter
   }
