@@ -313,6 +313,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param mainWindow 主窗口实例
    */
   async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
+    // 所有任务设置为等待中
+    await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING)
     // 查找id列表对应的所有子任务
     const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds)
 
@@ -330,6 +332,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const isCollection = notNullish(parent.children) && parent.children.length > 0
       const tasks = isCollection ? (parent.children as TaskDTO[]) : [parent]
       parent.status = TaskStatesEnum.PROCESSING
+      const tempParent = new Task(parent)
+      await this.dao.updateById(parent.id as number, tempParent)
 
       // 尝试开始任务
       try {
@@ -365,8 +369,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             root.status = TaskStatesEnum.FINISHED
           }
           if (TaskStatesEnum.PROCESSING !== root.status) {
-            const temp = new Task(root)
-            this.updateById(temp)
+            const tempRoot = new Task(root)
+            this.updateById(tempRoot)
           }
         }
 

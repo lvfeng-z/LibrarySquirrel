@@ -12,6 +12,7 @@ import TaskDTO from '../../model/main/dto/TaskDTO'
 import { TreeNode } from 'element-plus'
 import { isNullish } from '../../utils/CommonUtil'
 import { debounce } from 'lodash'
+import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 
 // onMounted
 onMounted(() => {
@@ -200,7 +201,7 @@ function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCo
   switch (code) {
     case OperationCode.START:
       apis.taskStartTask([row.id])
-      row.status = 1
+      row.status = TaskStatesEnum.WAITING
       refreshTask()
       break
     case OperationCode.PAUSE:
@@ -236,7 +237,9 @@ async function refreshTask() {
   const getRefreshTasks = () => {
     const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
     return dataList.value.filter(
-      (data: TaskDTO) => visibleRowsId.includes(String(data[keyOfData])) && data.status === 1
+      (data: TaskDTO) =>
+        visibleRowsId.includes(String(data[keyOfData])) &&
+        (data.status === TaskStatesEnum.WAITING || data.status === TaskStatesEnum.PROCESSING)
     )
   }
 

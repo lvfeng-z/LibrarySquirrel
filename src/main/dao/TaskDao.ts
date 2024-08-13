@@ -8,6 +8,7 @@ import StringUtil from '../util/StringUtil.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import { buildTree } from '../util/TreeUtil.ts'
+import { TaskStatesEnum } from '../constant/TaskStatesEnum.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   constructor(db?: DB) {
@@ -54,6 +55,35 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
       const rows = (await db.all(statement, modifiedPage.query)) as object[]
       modifiedPage.data = super.getResultTypeDataList<Task>(rows)
       return modifiedPage
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 设置任务树的状态
+   * @param taskIds
+   * @param status 状态
+   */
+  async setTaskTreeStatus(taskIds: number[], status: TaskStatesEnum): Promise<number> {
+    const idsStr = taskIds.join(',')
+    const statement = `with children as (select id, is_collection, ifnull(pid, 'root') as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                                                update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
+                            parent as (select id, is_collection, 'root' as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                                              update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
+                       update task set status = ${status} where id in(
+      select id from children
+      union
+      select id from parent
+      union
+      select id from task where id in (select pid from children)
+      union
+      select id from task where pid in (select id from parent))`
+    const db = this.acquire()
+    try {
+      return db.run(statement).then((runResult) => runResult.changes)
     } finally {
       if (!this.injectedDB) {
         db.release()
