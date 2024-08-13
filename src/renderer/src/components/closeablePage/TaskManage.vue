@@ -10,7 +10,7 @@ import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { TreeNode } from 'element-plus'
-import { isNullish } from '../../utils/CommonUtil'
+import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { debounce } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 
@@ -202,6 +202,9 @@ function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCo
     case OperationCode.START:
       apis.taskStartTask([row.id])
       row.status = TaskStatesEnum.WAITING
+      if (row.isCollection && notNullish(row.children)) {
+        row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
+      }
       refreshTask()
       break
     case OperationCode.PAUSE:
@@ -233,20 +236,32 @@ async function selectDir(openFile: boolean) {
 async function refreshTask() {
   refreshing = true
   // 获取需要刷新的任务
-  // todo 应该直接刷新子任务，不使用任务集关联子任务
-  const getRefreshTasks = () => {
+  const getRefreshTasks = (): TaskDTO[] => {
     const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
-    return dataList.value.filter(
+    const refreshTasks: TaskDTO[] = []
+    const refreshRoot = dataList.value.filter(
       (data: TaskDTO) =>
         visibleRowsId.includes(String(data[keyOfData])) &&
         (data.status === TaskStatesEnum.WAITING || data.status === TaskStatesEnum.PROCESSING)
     )
+    refreshTasks.push(...refreshRoot)
+    refreshRoot.forEach((startedRootTask) => {
+      const refreshChildren = startedRootTask.children?.filter(
+        (data: TaskDTO) =>
+          visibleRowsId.includes(String(data[keyOfData])) &&
+          (data.status === TaskStatesEnum.WAITING || data.status === TaskStatesEnum.PROCESSING)
+      )
+      if (notNullish(refreshChildren)) {
+        refreshTasks.push(...refreshChildren)
+      }
+    })
+    return refreshTasks
   }
 
   let refreshTasks = getRefreshTasks()
 
   while (refreshTasks.length > 0) {
-    await taskManageSearchTable.value.refreshData(refreshTasks)
+    await taskManageSearchTable.value.refreshData(refreshTasks, false)
     await new Promise((resolve) => setTimeout(resolve, 500))
     if (isNullish(taskManageSearchTable.value)) {
       break
@@ -255,13 +270,15 @@ async function refreshTask() {
   }
   refreshing = false
 }
+// 防抖动refreshTask
+const debounceRefreshTask = debounce(() => {
+  if (!refreshing) {
+    refreshTask()
+  }
+}, 500)
 // 滚动事件处理函数
 function handleScroll() {
-  debounce(() => {
-    if (!refreshing) {
-      refreshTask()
-    }
-  }, 500)()
+  debounceRefreshTask()
 }
 </script>
 

@@ -123,12 +123,13 @@ function handleScroll() {
   emits('scroll')
 }
 // 更新现有数据
-async function refreshData(waitingUpdate: object[]) {
+// todo 改为基于id列表更新
+async function refreshData(waitingUpdate: object[], updateChildren: boolean) {
   let innerWaitingUpdate: object[]
   let ids: string[]
 
   // 根据treeData确认是否更新数据的下级数据
-  if (props.treeData) {
+  if (props.treeData && updateChildren) {
     let tiledWaitingUpdate: { children: [] }[] = [] // 平铺的树形数据
     // 把所有数据列入tiledWaitingUpdate
     tiledWaitingUpdate = tiledWaitingUpdate.concat(waitingUpdate as { children: [] }[])

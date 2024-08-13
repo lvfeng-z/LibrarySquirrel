@@ -6,6 +6,7 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
 import lodash from 'lodash'
+import { getNode } from '../../utils/TreeUtil'
 
 // props
 const props = withDefaults(
@@ -97,7 +98,7 @@ async function handleDialog(newState: boolean, newFormData?: LocalTag) {
       baseTagSelectData.value = tempNode.children as TreeSelectNode[]
 
       // 查询当前标签对应的节点，并禁用
-      const self = tempNode.getNode(formData.value.id as number)
+      const self = getNode(tempNode, formData.value.id as number)
       if (self !== undefined) {
         self.disabled = true
       }

@@ -1,5 +1,5 @@
-import TreeNode from '../model/utilModels/TreeNode.ts'
-import { notNullish } from './CommonUtil.ts'
+import TreeNode from '../model/util/TreeNode'
+import { notNullish } from './CommonUtil'
 
 /**
  * 递归创建树形列表

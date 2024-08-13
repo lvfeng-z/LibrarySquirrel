@@ -8,6 +8,7 @@ import PageModel from '../../model/util/PageModel.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import { isNullish } from '../../utils/CommonUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
+import { getNode } from '../../utils/TreeUtil'
 
 // props
 const props = defineProps<{
@@ -73,7 +74,7 @@ function getSpanValue() {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = innerTreeSelectData.value
     tempRoot = new TreeSelectNode(tempRoot)
-    const node = tempRoot.getNode(data.value as number)
+    const node = getNode(tempRoot, data.value as number)
     return isNullish(node) ? '-' : node.label
   } else {
     return data.value
