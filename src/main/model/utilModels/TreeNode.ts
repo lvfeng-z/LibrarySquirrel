@@ -1,8 +1,8 @@
 /**
  * 树节点
  */
-export default interface TreeNode<T> {
+export default interface TreeNode {
   id: string | number | undefined | null
   pid: string | number | undefined | null
-  children: T[] | undefined | null
+  children: TreeNode[] | undefined | null
 }

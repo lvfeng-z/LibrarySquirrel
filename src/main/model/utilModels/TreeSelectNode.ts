@@ -3,7 +3,7 @@ import TreeNode from './TreeNode.ts'
 /**
  * 树形选择框选项
  */
-export default class TreeSelectNode implements TreeNode<TreeSelectNode> {
+export default class TreeSelectNode implements TreeNode {
   id: string | number | undefined | null
   pid: string | number | undefined | null
   children: TreeSelectNode[] | undefined | null

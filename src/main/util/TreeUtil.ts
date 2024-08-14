@@ -6,7 +6,7 @@ import { notNullish } from './CommonUtil.ts'
  * @param data 树节点
  * @param pid 父母节点id
  */
-export function buildTree<T extends TreeNode<T>>(
+export function buildTree<T extends TreeNode>(
   data: T[],
   pid: string | number | null | undefined
 ): T[] {
@@ -26,7 +26,7 @@ export function buildTree<T extends TreeNode<T>>(
  * @param root
  * @param id
  */
-export function getNode<T extends TreeNode<T>>(root: T, id: string | number): T | undefined {
+export function getNode<T extends TreeNode>(root: T, id: string | number): T | undefined {
   if (root.id === id) {
     return root
   }
