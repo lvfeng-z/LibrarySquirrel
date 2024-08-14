@@ -11,8 +11,10 @@ import PageModel from '../../model/util/PageModel'
 import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
-import { TreeNode } from 'element-plus'
 import { notNullish } from '../../utils/CommonUtil'
+import TreeNode from '../../model/util/TreeNode'
+import { TreeNode as ElTreeNode } from 'element-plus'
+import { getNode } from '../../utils/TreeUtil'
 
 // props
 const props = withDefaults(
@@ -28,7 +30,7 @@ const props = withDefaults(
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
     lazy?: boolean // 树形数据是否懒加载
-    load?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
+    load?: (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     updateApi?: (ids: string[]) => Promise<never> // 更新数据接口
@@ -123,30 +125,54 @@ function handleScroll() {
   emits('scroll')
 }
 // 更新现有数据
-// todo 改为基于id列表更新
-async function refreshData(waitingUpdate: object[], updateChildren: boolean) {
-  let innerWaitingUpdate: object[]
+async function refreshData(waitingUpdateIds: number[] | string[], updateChildren: boolean) {
+  let waitingUpdateList: object[]
   let ids: string[]
+
+  // 根级节点列入待刷新数组
+  ids = waitingUpdateIds.map((id: number | string) => (typeof id === 'number' ? String(id) : id))
+  waitingUpdateList = dataList.value.filter((data) => ids.includes(data[props.keyOfData]))
 
   // 根据treeData确认是否更新数据的下级数据
   if (props.treeData && updateChildren) {
-    let tiledWaitingUpdate: { children: [] }[] = [] // 平铺的树形数据
-    // 把所有数据列入tiledWaitingUpdate
-    tiledWaitingUpdate = tiledWaitingUpdate.concat(waitingUpdate as { children: [] }[])
+    let tiledWaitingUpdate: TreeNode[] = [] // 平铺的树形数据
+
+    // 把所有根级节点列入tiledWaitingUpdate
+    tiledWaitingUpdate = tiledWaitingUpdate.concat(waitingUpdateList as TreeNode[])
+    // 把所有根级节点的子节点列入tiledWaitingUpdate
     for (let index = 0; index < tiledWaitingUpdate.length; index++) {
       if (
         Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') &&
-        notNullish(tiledWaitingUpdate[index].children) &&
-        tiledWaitingUpdate[index].children.length > 0
+        notNullish(tiledWaitingUpdate[index].children)
       ) {
-        tiledWaitingUpdate = tiledWaitingUpdate.concat(tiledWaitingUpdate[index].children)
+        const children = tiledWaitingUpdate[index].children
+        if (Array.isArray(children)) {
+          tiledWaitingUpdate.push(...(children as TreeNode[]))
+        }
       }
     }
     ids = tiledWaitingUpdate.map((data) => data[props.keyOfData])
-    innerWaitingUpdate = tiledWaitingUpdate
-  } else {
-    ids = waitingUpdate.map((data) => data[props.keyOfData])
-    innerWaitingUpdate = waitingUpdate
+    waitingUpdateList = tiledWaitingUpdate
+  } else if (props.treeData) {
+    // 把所有waitingUpdateIds中对应的子节点列入waitingUpdateList
+    // 根级节点id列表
+    const waitingUpdateRootIds = waitingUpdateList.map(
+      (waitingUpdate) => waitingUpdate[props.keyOfData]
+    )
+    // 叶子节点id列表
+    const waitingUpdateChildIds = waitingUpdateIds.filter(
+      (id) => !waitingUpdateRootIds.includes(id)
+    )
+
+    // 利用树形工具找到叶子节点，列入waitingUpdateList
+    const tempRoot = { id: undefined, pid: undefined, children: dataList.value as TreeNode[] }
+    for (const id of waitingUpdateChildIds) {
+      const child = getNode(tempRoot, id)
+      if (notNullish(child)) {
+        waitingUpdateList.push(child)
+      }
+    }
+    ids = waitingUpdateList.map((data) => data[props.keyOfData])
   }
 
   // 请求更新接口
@@ -161,9 +187,9 @@ async function refreshData(waitingUpdate: object[], updateChildren: boolean) {
       ) {
         // 更新updateParamName指定的属性
         for (const newData of newDataList) {
-          const waitingUpdate = innerWaitingUpdate.find(
+          const waitingUpdate = waitingUpdateList.find(
             (waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData]
-          ) as object
+          )
           if (notNullish(waitingUpdate)) {
             props.updateParamName.forEach((paramName) => {
               waitingUpdate[paramName] = newData[paramName]

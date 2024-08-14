@@ -11,8 +11,9 @@ import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { TreeNode } from 'element-plus'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
-import { debounce } from 'lodash'
+import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
+import { getNode } from '../../utils/TreeUtil'
 
 // onMounted
 onMounted(() => {
@@ -236,29 +237,24 @@ async function selectDir(openFile: boolean) {
 async function refreshTask() {
   refreshing = true
   // 获取需要刷新的任务
-  const getRefreshTasks = (): TaskDTO[] => {
-    const visibleRowsId = taskManageSearchTable.value.getVisibleRows()
-    const refreshTasks: TaskDTO[] = []
-    const refreshRoot = dataList.value.filter(
-      (data: TaskDTO) =>
-        visibleRowsId.includes(String(data[keyOfData])) &&
-        (data.status === TaskStatesEnum.WAITING || data.status === TaskStatesEnum.PROCESSING)
-    )
-    refreshTasks.push(...refreshRoot)
-    refreshRoot.forEach((startedRootTask) => {
-      const refreshChildren = startedRootTask.children?.filter(
-        (data: TaskDTO) =>
-          visibleRowsId.includes(String(data[keyOfData])) &&
-          (data.status === TaskStatesEnum.WAITING || data.status === TaskStatesEnum.PROCESSING)
+  const getRefreshTasks = (): number[] => {
+    // 获取可视区域及附近的行id
+    const visibleRowsId = taskManageSearchTable.value
+      .getVisibleRows(200, 200)
+      .map((id: string) => Number(id))
+    // 利用树形工具找到所有id对应的数据，判断是否需要刷新
+    const tempRoot = new TaskDTO()
+    tempRoot.children = dataList.value
+    return visibleRowsId.filter((id: number) => {
+      const task = getNode<TaskDTO>(tempRoot, id)
+      return (
+        notNullish(task) &&
+        (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING)
       )
-      if (notNullish(refreshChildren)) {
-        refreshTasks.push(...refreshChildren)
-      }
     })
-    return refreshTasks
   }
 
-  let refreshTasks = getRefreshTasks()
+  let refreshTasks: number[] = getRefreshTasks()
 
   while (refreshTasks.length > 0) {
     await taskManageSearchTable.value.refreshData(refreshTasks, false)
@@ -271,14 +267,18 @@ async function refreshTask() {
   refreshing = false
 }
 // 防抖动refreshTask
-const debounceRefreshTask = debounce(() => {
-  if (!refreshing) {
-    refreshTask()
-  }
-}, 500)
+const throttleRefreshTask = throttle(
+  () => {
+    if (!refreshing) {
+      refreshTask()
+    }
+  },
+  500,
+  { leading: true, trailing: true }
+)
 // 滚动事件处理函数
 function handleScroll() {
-  debounceRefreshTask()
+  throttleRefreshTask()
 }
 </script>
 
