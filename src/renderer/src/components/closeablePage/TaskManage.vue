@@ -86,7 +86,18 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: true,
     render: () => {
-      return h(ElIcon, { size: 15 }, h(CircleCheck, null, ''))
+      return h(ElIcon, { size: 25 }, () => {
+        return h(
+          CircleCheck,
+          {
+            style: {
+              color: '#67C23A',
+              fontSize: '20px'
+            }
+          },
+          undefined
+        )
+      })
     }
   },
   {
