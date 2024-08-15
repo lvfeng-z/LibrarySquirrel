@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import { onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { h, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
@@ -9,11 +9,12 @@ import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import { TreeNode } from 'element-plus'
+import { ElIcon, TreeNode } from 'element-plus'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
+import { CircleCheck } from '@element-plus/icons-vue'
 
 // onMounted
 onMounted(() => {
@@ -74,7 +75,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   },
   {
-    type: 'text',
+    type: 'custom',
     defaultDisabled: true,
     dblclickEnable: true,
     name: 'status',
@@ -83,7 +84,10 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 80,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    overHide: true,
+    render: () => {
+      return h(ElIcon, { size: 15 }, h(CircleCheck, null, ''))
+    }
   },
   {
     type: 'datetime',

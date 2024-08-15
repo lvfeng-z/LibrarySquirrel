@@ -47,6 +47,9 @@ const innerTreeSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 // 方法
 // 获取要显示的内容
 function getSpanValue() {
+  if (props.config.type === 'custom') {
+    return
+  }
   if (props.config.type === 'date' || props.config.type === 'datetime') {
     const datetime = new Date(data.value as number)
     const year = datetime.getFullYear() + '-'
@@ -212,6 +215,9 @@ async function requestSelectDataApi(queryStr?: string) {
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
+    <div v-if="props.config.type === 'custom'">
+      <component :is="props.config.render" />
+    </div>
   </div>
 </template>
 

@@ -1,6 +1,5 @@
 // DataTable的表头
 import CommonInputConfig from './CommonInputConfig.ts'
-import { Component, VNode } from 'vue'
 
 interface Thead extends CommonInputConfig {
   name: string // 字段名
@@ -11,13 +10,6 @@ interface Thead extends CommonInputConfig {
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   overHide?: boolean //列超出长度时是否省略
-  render?: (
-    createElement: (
-      tag: string | Component,
-      props?: object,
-      children?: string | VNode | VNode[]
-    ) => VNode
-  ) => VNode | Array<VNode>
 }
 
 export default Thead
