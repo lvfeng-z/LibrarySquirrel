@@ -1,6 +1,6 @@
 import SelectItem from './SelectItem.ts'
 import ApiResponse from './ApiResponse.ts'
-import { Component, VNode } from 'vue'
+import { VNode } from 'vue'
 
 interface CommonInputConfig {
   type:
@@ -23,13 +23,7 @@ interface CommonInputConfig {
   api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
   pagingApi?: boolean // 接口是否分页
   placeholder?: string // 占位符
-  render?: (
-    createElement: (
-      tag: string | Component,
-      props?: object,
-      children?: string | VNode | VNode[]
-    ) => VNode
-  ) => VNode | Array<VNode>
+  render?: (data?) => VNode | undefined
 }
 
 export default CommonInputConfig

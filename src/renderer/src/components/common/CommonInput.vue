@@ -6,7 +6,7 @@ import SelectItem from '../../model/util/SelectItem'
 import lodash from 'lodash'
 import PageModel from '../../model/util/PageModel.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
-import { isNullish } from '../../utils/CommonUtil'
+import { isNullish, notNullish } from '../../utils/CommonUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
 import { getNode } from '../../utils/TreeUtil'
 
@@ -216,7 +216,7 @@ async function requestSelectDataApi(queryStr?: string) {
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
     <div v-if="props.config.type === 'custom'" style="display: grid; justify-items: center">
-      <component :is="props.config.render" />
+      <component :is="notNullish(props.config.render) ? props.config.render(data) : undefined" />
     </div>
   </div>
 </template>

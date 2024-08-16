@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import { h, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
 import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
@@ -14,7 +14,14 @@ import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
-import { CircleCheck } from '@element-plus/icons-vue'
+import {
+  Checked,
+  CircleCheck,
+  CircleClose,
+  MoreFilled,
+  Refresh,
+  VideoPause
+} from '@element-plus/icons-vue'
 
 // onMounted
 onMounted(() => {
@@ -85,10 +92,34 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true,
-    render: () => {
+    render: (data: TaskStatesEnum): VNode => {
+      let icon
+      switch (data) {
+        case TaskStatesEnum.CREATED:
+          icon = Checked
+          break
+        case TaskStatesEnum.PROCESSING:
+          icon = Refresh
+          break
+        case TaskStatesEnum.WAITING:
+          icon = MoreFilled
+          break
+        case TaskStatesEnum.PAUSE:
+          icon = VideoPause
+          break
+        case TaskStatesEnum.FINISHED:
+          icon = CircleCheck
+          break
+        case TaskStatesEnum.PARTLY_FINISHED:
+          icon = CircleCheck
+          break
+        case TaskStatesEnum.FAILED:
+          icon = CircleClose
+          break
+      }
       return h(ElIcon, { size: 25 }, () => {
         return h(
-          CircleCheck,
+          icon,
           {
             style: {
               color: '#67C23A',
