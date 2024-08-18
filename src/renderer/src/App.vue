@@ -16,6 +16,7 @@ import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import LocalAuthorManage from './components/closeablePage/LocalAuthorManage.vue'
+import { isNullish } from './utils/CommonUtil'
 
 // onMounted
 onMounted(() => {
@@ -108,34 +109,28 @@ async function requestWorks() {
       if (tag.extraData['tagType']) {
         // 根据标签状态判断是包含此标签还是排除此标签
         if (tag.state === undefined || tag.state) {
-          if (
-            page.query.includeLocalTagIds === undefined ||
-            page.query.includeLocalTagIds === null
-          ) {
+          if (isNullish(page.query.includeLocalTagIds)) {
             page.query.includeLocalTagIds = []
           }
-          ;(page.query.includeLocalTagIds as string[]).push(tag.value)
+          ;(page.query.includeLocalTagIds as (string | number)[]).push(tag.value)
         } else {
-          if (
-            page.query.excludeLocalTagIds === undefined ||
-            page.query.excludeLocalTagIds === null
-          ) {
+          if (isNullish(page.query.excludeLocalTagIds)) {
             page.query.excludeLocalTagIds = []
           }
-          ;(page.query.excludeLocalTagIds as string[]).push(tag.value)
+          ;(page.query.excludeLocalTagIds as (string | number)[]).push(tag.value)
         }
       } else {
         // 根据标签状态判断是包含此标签还是排除此标签
         if (tag.state === undefined || tag.state) {
-          if (page.query.includeSiteTagIds === undefined || page.query.includeSiteTagIds === null) {
+          if (isNullish(page.query.includeSiteTagIds)) {
             page.query.includeSiteTagIds = []
           }
-          ;(page.query.includeSiteTagIds as string[]).push(tag.value)
+          ;(page.query.includeSiteTagIds as (string | number)[]).push(tag.value)
         } else {
-          if (page.query.excludeSiteTagIds === undefined || page.query.excludeSiteTagIds === null) {
+          if (isNullish(page.query.excludeSiteTagIds)) {
             page.query.excludeSiteTagIds = []
           }
-          ;(page.query.excludeSiteTagIds as string[]).push(tag.value)
+          ;(page.query.excludeSiteTagIds as (string | number)[]).push(tag.value)
         }
       }
     }

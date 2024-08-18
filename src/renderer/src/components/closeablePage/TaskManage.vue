@@ -9,19 +9,11 @@ import InputBox from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import { ElIcon, TreeNode } from 'element-plus'
+import { ElTag, TreeNode } from 'element-plus'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
-import {
-  Checked,
-  CircleCheck,
-  CircleClose,
-  MoreFilled,
-  Refresh,
-  VideoPause
-} from '@element-plus/icons-vue'
 
 // onMounted
 onMounted(() => {
@@ -82,6 +74,17 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   },
   {
+    type: 'datetime',
+    defaultDisabled: true,
+    dblclickEnable: true,
+    name: 'createTime',
+    label: '创建时间',
+    hide: false,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  },
+  {
     type: 'custom',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -93,54 +96,45 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: true,
     render: (data: TaskStatesEnum): VNode => {
-      let icon
+      let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
+      let tagText: string | undefined
       switch (data) {
         case TaskStatesEnum.CREATED:
-          icon = Checked
+          tagType = 'primary'
+          tagText = '已创建'
           break
         case TaskStatesEnum.PROCESSING:
-          icon = Refresh
+          tagType = 'warning'
+          tagText = '进行中'
           break
         case TaskStatesEnum.WAITING:
-          icon = MoreFilled
+          tagType = 'warning'
+          tagText = '等待中'
           break
         case TaskStatesEnum.PAUSE:
-          icon = VideoPause
+          tagType = 'info'
+          tagText = '已暂停'
           break
         case TaskStatesEnum.FINISHED:
-          icon = CircleCheck
+          tagType = 'success'
+          tagText = '完成'
           break
         case TaskStatesEnum.PARTLY_FINISHED:
-          icon = CircleCheck
+          tagType = 'success'
+          tagText = '部分完成'
           break
         case TaskStatesEnum.FAILED:
-          icon = CircleClose
+          tagType = 'danger'
+          tagText = '失败'
           break
       }
-      return h(ElIcon, { size: 25 }, () => {
-        return h(
-          icon,
-          {
-            style: {
-              color: '#67C23A',
-              fontSize: '20px'
-            }
-          },
-          undefined
-        )
-      })
+      const elTag = h(ElTag, { type: tagType }, () => tagText)
+      return h(
+        'div',
+        { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
+        elTag
+      )
     }
-  },
-  {
-    type: 'datetime',
-    defaultDisabled: true,
-    dblclickEnable: true,
-    name: 'createTime',
-    label: '创建时间',
-    hide: false,
-    headerAlign: 'center',
-    dataAlign: 'center',
-    overHide: true
   }
 ])
 // 数据主键
@@ -167,24 +161,24 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     inputSpan: 4,
     selectData: [
       {
-        value: '0',
-        label: '未开始'
+        value: TaskStatesEnum.CREATED,
+        label: '已创建'
       },
       {
-        value: '1',
-        label: '进行中'
-      },
-      {
-        value: '2',
+        value: TaskStatesEnum.PAUSE,
         label: '暂停'
       },
       {
-        value: '3',
+        value: TaskStatesEnum.FINISHED,
         label: '已完成'
       },
       {
-        value: '4',
+        value: TaskStatesEnum.FAILED,
         label: '失败'
+      },
+      {
+        value: TaskStatesEnum.PARTLY_FINISHED,
+        label: '部分完成'
       }
     ]
   }
@@ -406,6 +400,10 @@ function handleScroll() {
               ></el-button>
             </el-button-group>
             <el-progress
+              v-if="
+                row.row.status === TaskStatesEnum.PROCESSING ||
+                row.row.status === TaskStatesEnum.WAITING
+              "
               style="width: 100%"
               :percentage="row.row.schedule?.toFixed(2)"
               text-inside

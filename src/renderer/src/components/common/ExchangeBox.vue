@@ -53,9 +53,9 @@ const lowerLoadMore: Ref<boolean> = computed(() => {
   return lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount
 }) // lower加载更多开关
 const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
-const upperBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // upperBuffer的数据Id
+const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
-const lowerBufferId: Ref<UnwrapRef<Set<string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
+const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
 const searchButtonDisabled = computed(() => {
   return !(
     Object.prototype.hasOwnProperty.call(props.upperApiStaticParams, props.requiredStaticParams) &&

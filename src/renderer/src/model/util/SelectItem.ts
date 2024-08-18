@@ -2,7 +2,7 @@
  * 下拉选择框选项
  */
 export default class SelectItem {
-  value: string
+  value: string | number
   label: string
   secondaryLabel?: string // 用于double-check-tag
   state?: boolean // 用于double-check-tag

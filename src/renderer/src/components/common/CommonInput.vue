@@ -215,9 +215,10 @@ async function requestSelectDataApi(queryStr?: string) {
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
-    <div v-if="props.config.type === 'custom'" style="display: grid; justify-items: center">
-      <component :is="notNullish(props.config.render) ? props.config.render(data) : undefined" />
-    </div>
+    <component
+      :is="notNullish(props.config.render) ? props.config.render(data) : undefined"
+      v-if="props.config.type === 'custom'"
+    />
   </div>
 </template>
 
