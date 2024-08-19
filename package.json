@@ -24,7 +24,7 @@
     "watch": "chcp 65001 & electron-vite dev --watch"
   },
   "engines": {
-    "node": "20.14.0"
+    "node": "20.16.0"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
@@ -34,7 +34,7 @@
     "electron-log": "^5.1.7",
     "electron-store": "^10.0.0",
     "electron-updater": "^6.2.1",
-    "element-plus": "^2.7.8",
+    "element-plus": "^2.8.0",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
@@ -43,19 +43,19 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@rushstack/eslint-patch": "^1.10.4",
     "@types/better-sqlite3": "^7.6.11",
-    "@types/node": "^22.0.0",
-    "@vitejs/plugin-vue": "^5.1.1",
+    "@types/node": "^22.4.0",
+    "@vitejs/plugin-vue": "^5.1.2",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/eslint-config-typescript": "^13.0.0",
-    "electron": "31.3.1",
+    "electron": "31.4.0",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.3.0",
     "eslint": "8.57.0",
     "eslint-plugin-vue": "^9.27.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4",
-    "vite": "^5.3.5",
-    "vue": "^3.4.34",
+    "vite": "^5.4.1",
+    "vue": "^3.4.38",
     "vue-tsc": "^2.0.29"
   }
 }
