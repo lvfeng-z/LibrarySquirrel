@@ -24,6 +24,4 @@ function getWorksNameForDisplay(): string {
   <el-text>{{ getWorksNameForDisplay() }}</el-text>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

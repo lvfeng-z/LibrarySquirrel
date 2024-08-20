@@ -57,9 +57,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
         // 作品信息
         const siteWorksName =
-          worksDTO.siteWorksName === undefined
-            ? 'unknownWorksName'
-            : worksDTO.siteWorksName
+          worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
 
         // 保存路径
         const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`

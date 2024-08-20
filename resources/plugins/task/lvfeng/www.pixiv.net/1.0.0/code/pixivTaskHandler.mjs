@@ -1,12 +1,9 @@
 import fs from 'fs'
 
 export default class PixivTaskHandler {
-  constructor() {
-  }
+  constructor() {}
 
-  create(url) {
-
-  }
+  create(url) {}
 
   async start(tasks) {
     const worksDTOs = []
@@ -22,9 +19,7 @@ export default class PixivTaskHandler {
     return worksDTOs
   }
 
-  retry() {
-
-  }
+  retry() {}
 
   createWorksDTO() {
     return {
