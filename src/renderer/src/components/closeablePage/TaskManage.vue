@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
 import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
-import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
 import Thead from '../../model/util/Thead'
@@ -14,6 +13,7 @@ import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
+import TaskDialog from '../dialogs/TaskDialog.vue'
 
 // onMounted
 onMounted(() => {
@@ -36,6 +36,8 @@ const apis = {
 const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
+// taskDialog的组件实例
+const taskDialogRef = ref()
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   {
@@ -209,6 +211,8 @@ const enum OperationCode {
 }
 // 是否正在刷新数据
 let refreshing: boolean = false
+// 当前dialog绑定数据
+const dialogData: Ref<UnwrapRef<TaskDTO>> = ref(new TaskDTO())
 
 // 方法
 // 保存设置
@@ -238,8 +242,12 @@ function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   }
 }
 // 处理操作栏按钮点击事件
-function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCode) {
+function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
   switch (code) {
+    case OperationCode.VIEW:
+      dialogData.value = row
+      taskDialogRef.value.handleDialog(true)
+      break
     case OperationCode.START:
       apis.taskStartTask([row.id])
       row.status = TaskStatesEnum.WAITING
@@ -263,7 +271,7 @@ function handleOperationButtonClicked(row: UnwrapRef<TaskDTO>, code: OperationCo
 }
 // 选择目录
 async function selectDir(openFile: boolean) {
-  const response = (await apis.dirSelect(openFile)) as ApiResponse
+  const response = await apis.dirSelect(openFile)
   if (ApiUtil.apiResponseCheck(response)) {
     const dirSelectResult = ApiUtil.apiResponseGetData(response) as Electron.OpenDialogReturnValue
     if (!dirSelectResult.canceled) {
@@ -365,47 +373,46 @@ function handleScroll() {
         :tree-data="true"
         @scroll="handleScroll"
       >
-        <template #customOperations="row">
+        <template #customOperations="{ row }">
           <div style="display: flex; flex-direction: column; align-items: center">
             <el-button-group>
               <el-button
                 size="small"
                 icon="View"
-                @click="handleOperationButtonClicked(row.row, OperationCode.VIEW)"
+                @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
               ></el-button>
               <el-button
                 size="small"
                 icon="VideoPlay"
-                @click="handleOperationButtonClicked(row.row, OperationCode.START)"
+                @click="handleOperationButtonClicked(row, OperationCode.START)"
               ></el-button>
               <el-button
                 size="small"
                 icon="VideoPause"
-                @click="handleOperationButtonClicked(row.row, OperationCode.PAUSE)"
+                @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
               ></el-button>
               <el-button
                 size="small"
                 icon="RefreshRight"
-                @click="handleOperationButtonClicked(row.row, OperationCode.RETRY)"
+                @click="handleOperationButtonClicked(row, OperationCode.RETRY)"
               ></el-button>
               <el-button
                 size="small"
                 icon="CircleClose"
-                @click="handleOperationButtonClicked(row.row, OperationCode.CANCEL)"
+                @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
               ></el-button>
               <el-button
                 size="small"
                 icon="Delete"
-                @click="handleOperationButtonClicked(row.row, OperationCode.DELETE)"
+                @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
               ></el-button>
             </el-button-group>
             <el-progress
               v-if="
-                row.row.status === TaskStatesEnum.PROCESSING ||
-                row.row.status === TaskStatesEnum.WAITING
+                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
               "
               style="width: 100%"
-              :percentage="row.row.schedule?.toFixed(2)"
+              :percentage="row.schedule?.toFixed(2)"
               text-inside
               :stroke-width="17"
             ></el-progress>
@@ -413,6 +420,15 @@ function handleScroll() {
         </template>
       </search-table>
     </div>
+    <template #dialog>
+      <task-dialog
+        ref="taskDialogRef"
+        :mode="DialogMode.EDIT"
+        :form-data="dialogData"
+        align-center
+        destroy-on-close
+      />
+    </template>
   </base-closeable-page>
 </template>
 
