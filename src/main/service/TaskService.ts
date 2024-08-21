@@ -621,6 +621,21 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 分页查询任务集合的子任务
+   * @param page
+   */
+  async selectChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>) {
+    if (notNullish(page.query)) {
+      page.query.assignComparator = {
+        ...{ taskName: COMPARATOR.LIKE },
+        ...page.query.assignComparator
+      }
+      page.query.isCollection = false
+    }
+    return await super.selectPage(page)
+  }
+
+  /**
    * 查询状态列表
    * @param ids
    */

@@ -33,6 +33,7 @@ const props = withDefaults(
     load?: (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
+    fixedParam?: Record<string, unknown> // 固定参数
     updateApi?: (ids: string[]) => Promise<never> // 更新数据接口
     updateParamName?: string[] // 要更新的属性名
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
@@ -99,7 +100,7 @@ async function handleSearchButtonClicked() {
   pageCondition.pageSize = pageSize.value
   pageCondition.pageNumber = pageNumber.value
   // 配置查询参数
-  pageCondition.query = { ...new BaseQueryDTO(), ...searchToolbarParams.value }
+  pageCondition.query = { ...new BaseQueryDTO(), ...searchToolbarParams.value, ...props.fixedParam }
   // 配置排序参数
   pageCondition.query.sort = lodash.cloneDeep(innerSort.value)
 

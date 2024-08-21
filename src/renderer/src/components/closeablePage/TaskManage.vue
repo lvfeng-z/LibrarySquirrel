@@ -427,6 +427,7 @@ function handleScroll() {
         :form-data="dialogData"
         align-center
         destroy-on-close
+        width="90%"
       />
     </template>
   </base-closeable-page>

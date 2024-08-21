@@ -347,6 +347,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('task-selectChildrenTaskPage', async (_event, args) => {
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.selectChildrenTaskPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('task-selectScheduleList', async (_event, args) => {
     try {
       const taskService = new TaskService()

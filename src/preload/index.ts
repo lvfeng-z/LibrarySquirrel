@@ -137,6 +137,9 @@ const api = {
   taskGetChildrenTask: (args) => {
     return Electron.ipcRenderer.invoke('task-getChildrenTask', args)
   },
+  taskSelectChildrenTaskPage: (args) => {
+    return Electron.ipcRenderer.invoke('task-selectChildrenTaskPage', args)
+  },
   taskSelectScheduleList: (args) => {
     return Electron.ipcRenderer.invoke('task-selectScheduleList', args)
   },
