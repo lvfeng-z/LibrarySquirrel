@@ -129,7 +129,7 @@ function clearFormData() {
     @save-button-clicked="handleSaveButtonClicked"
     @cancel-button-clicked="handleDialog(false)"
   >
-    <template #default>
+    <template #form>
       <el-row>
         <el-col>
           <el-form-item label="名称">

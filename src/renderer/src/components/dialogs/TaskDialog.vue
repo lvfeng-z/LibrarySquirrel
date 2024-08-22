@@ -27,6 +27,12 @@ defineExpose({
 const apis = {
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage
 }
+// rootAndList实例
+const rootAndList = ref()
+// rootAndList实例
+const rootInfo = ref()
+// 列表高度
+const listHeight: Ref<UnwrapRef<number>> = ref(0)
 // 弹窗开关
 const state = ref(false)
 // 表头
@@ -180,62 +186,70 @@ const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 方法
 function handleDialog(newState: boolean) {
   state.value = newState
+  listHeight.value = rootAndList.value.clientHeight - rootInfo.value.clientHeight
+  console.log(listHeight.value)
 }
 </script>
 
 <template>
   <base-form-dialog v-model:form-data="formData" v-model:state="state" :mode="props.mode">
-    <template #default>
-      <el-row>
-        <el-col>
-          <el-form-item label="名称">
-            <el-input v-model="formData.taskName"></el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col>
-          <el-form-item label="url">
-            <el-input v-model="formData.url"></el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :span="12">
-          <el-form-item label="站点">
-            <el-input v-model="formData.siteDomain"></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="状态">
-            <el-input v-model="formData.status"></el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :span="12">
-          <el-form-item label="创建时间">
-            <el-date-picker v-model="formData.createTime"></el-date-picker>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="修改时间">
-            <el-date-picker v-model="formData.updateTime"></el-date-picker>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <search-table
-        :selectable="true"
-        :thead="thead"
-        :search-api="apis.taskSelectChildrenTaskPage"
-        :fixed-param="{ pid: formData.id }"
-        :drop-down-input-boxes="[]"
-        :key-of-data="keyOfData"
-        :main-input-boxes="mainInputBoxes"
-        :multi-select="true"
-        :changed-rows="changedRows"
-      >
-      </search-table>
+    <template #form>
+      <div ref="rootAndList" style="height: 100%; display: flex; flex-direction: column">
+        <div ref="rootInfo">
+          <el-row>
+            <el-col>
+              <el-form-item label="名称">
+                <el-input v-model="formData.taskName"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col>
+              <el-form-item label="url">
+                <el-input v-model="formData.url"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="站点">
+                <el-input v-model="formData.siteDomain"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="状态">
+                <el-input v-model="formData.status"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="创建时间">
+                <el-date-picker v-model="formData.createTime"></el-date-picker>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="修改时间">
+                <el-date-picker v-model="formData.updateTime"></el-date-picker>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+        <search-table
+          :style="{ height: listHeight + 'px' }"
+          style="flex-grow: 1"
+          :selectable="true"
+          :thead="thead"
+          :search-api="apis.taskSelectChildrenTaskPage"
+          :fixed-param="{ pid: formData.id }"
+          :drop-down-input-boxes="[]"
+          :key-of-data="keyOfData"
+          :main-input-boxes="mainInputBoxes"
+          :multi-select="true"
+          :changed-rows="changedRows"
+        >
+        </search-table>
+      </div>
     </template>
   </base-form-dialog>
 </template>

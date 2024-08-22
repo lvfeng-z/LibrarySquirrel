@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import DialogMode from '../../model/util/DialogMode'
 
 // props
@@ -41,6 +41,10 @@ onMounted(() => {
 const emits = defineEmits(['saveButtonClicked', 'cancelButtonClicked'])
 
 // 变量
+// el-scrollbar组件实例
+const scrollbarRef = ref()
+// el-scrollbar的高度
+const scrollContentHeight: Ref<UnwrapRef<number>> = ref(0)
 // 表单总开关
 const formDisabled = ref(true)
 // 保存按钮开关
@@ -55,33 +59,43 @@ function handleSaveButtonClicked() {
 function handleCancelButtonClicked() {
   emits('cancelButtonClicked')
 }
+// 开启对话框
+function handleChangeState() {
+  nextTick(() => {
+    const dialog = scrollbarRef.value.$el.parentElement.parentElement
+    const headerHeight = dialog.querySelector('.el-dialog__header').clientHeight
+    const footerHeight = dialog.querySelector('.el-dialog__footer').clientHeight
+
+    scrollContentHeight.value = headerHeight + footerHeight
+  })
+}
 </script>
 
 <template>
-  <el-dialog v-model="state" class="dialog-form" center>
+  <el-dialog v-model="state" class="dialog-form1" center @open="handleChangeState">
     <template v-if="props.header" #header>
       <h4>{{ props.header }}</h4>
     </template>
-    <el-scrollbar class="dialog-form-scroll">
-      <div class="dialog-form-scroll-form">
-        <el-form v-model="formData" :disabled="formDisabled">
-          <slot name="default" />
-        </el-form>
-        <el-row>
-          <el-col v-show="saveButtonState" :span="3">
-            <el-button type="primary" @click="handleSaveButtonClicked">保存</el-button>
-          </el-col>
-          <el-col :span="3">
-            <el-button @click="handleCancelButtonClicked">取消</el-button>
-          </el-col>
-        </el-row>
-      </div>
+    <el-scrollbar ref="scrollbarRef">
+      <el-form
+        v-model="formData"
+        :disabled="formDisabled"
+        :style="{ maxHeight: 'calc(90vh - ' + scrollContentHeight + 'px)', marginRight: '10px' }"
+      >
+        <slot name="form" />
+      </el-form>
     </el-scrollbar>
+    <template #footer>
+      <el-row>
+        <el-col v-show="saveButtonState" :span="3">
+          <el-button type="primary" @click="handleSaveButtonClicked">保存</el-button>
+        </el-col>
+        <el-col :span="3">
+          <el-button @click="handleCancelButtonClicked">取消</el-button>
+        </el-col>
+      </el-row>
+    </template>
   </el-dialog>
 </template>
 
-<style scoped>
-.dialog-form-scroll-form {
-  max-height: 90vh;
-}
-</style>
+<style scoped></style>
