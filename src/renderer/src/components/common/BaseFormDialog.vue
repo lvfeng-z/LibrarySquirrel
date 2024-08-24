@@ -72,7 +72,7 @@ function handleChangeState() {
 </script>
 
 <template>
-  <el-dialog v-model="state" class="dialog-form1" center @open="handleChangeState">
+  <el-dialog v-model="state" center @open="handleChangeState">
     <template v-if="props.header" #header>
       <h4>{{ props.header }}</h4>
     </template>

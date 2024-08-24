@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseFormDialog from '../common/BaseFormDialog.vue'
 import DialogMode from '../../model/util/DialogMode'
-import { h, Ref, ref, UnwrapRef, VNode } from 'vue'
+import { h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import SearchTable from '../common/SearchTable.vue'
 import Thead from '../../model/util/Thead'
@@ -27,12 +27,12 @@ defineExpose({
 const apis = {
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage
 }
-// rootAndList实例
-const rootAndList = ref()
-// rootAndList实例
-const rootInfo = ref()
+// baseDialog组件的实例
+const baseDialog = ref()
+// parentTaskInfo的dom元素
+const parentTaskInfo = ref()
 // 列表高度
-const listHeight: Ref<UnwrapRef<number>> = ref(0)
+const heightForSearchTable: Ref<UnwrapRef<number>> = ref(0)
 // 弹窗开关
 const state = ref(false)
 // 表头
@@ -186,16 +186,27 @@ const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 方法
 function handleDialog(newState: boolean) {
   state.value = newState
-  listHeight.value = rootAndList.value.clientHeight - rootInfo.value.clientHeight
-  console.log(listHeight.value)
+  nextTick(() => {
+    const baseDialogHeader =
+      baseDialog.value.$el.parentElement.querySelector('.el-dialog__header').clientHeight
+    const baseDialogFooter =
+      baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer').clientHeight
+    heightForSearchTable.value =
+      parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
+  })
 }
 </script>
 
 <template>
-  <base-form-dialog v-model:form-data="formData" v-model:state="state" :mode="props.mode">
+  <base-form-dialog
+    ref="baseDialog"
+    v-model:form-data="formData"
+    v-model:state="state"
+    :mode="props.mode"
+  >
     <template #form>
-      <div ref="rootAndList" style="height: 100%; display: flex; flex-direction: column">
-        <div ref="rootInfo">
+      <div style="height: 100%; display: flex; flex-direction: column">
+        <div ref="parentTaskInfo">
           <el-row>
             <el-col>
               <el-form-item label="名称">
@@ -236,7 +247,7 @@ function handleDialog(newState: boolean) {
           </el-row>
         </div>
         <search-table
-          :style="{ height: listHeight + 'px' }"
+          :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
           style="flex-grow: 1"
           :selectable="true"
           :thead="thead"
