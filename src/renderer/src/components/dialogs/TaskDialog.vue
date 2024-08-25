@@ -8,6 +8,7 @@ import Thead from '../../model/util/Thead'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
 import InputBox from '../../model/util/InputBox'
+import OperationItem from '../../model/util/OperationItem'
 
 // props
 const props = defineProps<{
@@ -25,6 +26,7 @@ defineExpose({
 // 变量
 // 接口
 const apis = {
+  taskStartTask: window.api.taskStartTask,
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage
 }
 // baseDialog组件的实例
@@ -182,6 +184,27 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
 ])
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
+// 操作栏代码
+const enum OperationCode {
+  START,
+  PAUSE,
+  RETRY,
+  CANCEL,
+  DELETE
+}
+// SearchTable的operationButton
+const operationButton: OperationItem[] = [
+  {
+    label: '保存',
+    icon: 'Checked',
+    buttonType: 'primary',
+    code: 'save',
+    rule: (row) => changedRows.value.includes(row)
+  },
+  { label: '查看', icon: 'view', code: DialogMode.VIEW },
+  { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
+  { label: '删除', icon: 'delete', code: 'delete' }
+]
 
 // 方法
 function handleDialog(newState: boolean) {
@@ -194,6 +217,25 @@ function handleDialog(newState: boolean) {
     heightForSearchTable.value =
       parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
   })
+}
+// 处理操作栏按钮点击事件
+function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
+  switch (code) {
+    case OperationCode.START:
+      apis.taskStartTask([row.id])
+      row.status = TaskStatesEnum.WAITING
+      break
+    case OperationCode.PAUSE:
+      break
+    case OperationCode.RETRY:
+      break
+    case OperationCode.CANCEL:
+      break
+    case OperationCode.DELETE:
+      break
+    default:
+      break
+  }
 }
 </script>
 
@@ -236,12 +278,12 @@ function handleDialog(newState: boolean) {
           <el-row>
             <el-col :span="12">
               <el-form-item label="创建时间">
-                <el-date-picker v-model="formData.createTime"></el-date-picker>
+                <el-date-picker v-model="formData.createTime" type="datetime"></el-date-picker>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="修改时间">
-                <el-date-picker v-model="formData.updateTime"></el-date-picker>
+                <el-date-picker v-model="formData.updateTime" type="datetime"></el-date-picker>
               </el-form-item>
             </el-col>
           </el-row>
@@ -258,7 +300,49 @@ function handleDialog(newState: boolean) {
           :main-input-boxes="mainInputBoxes"
           :multi-select="true"
           :changed-rows="changedRows"
+          :operation-button="operationButton"
+          :custom-operation-button="true"
         >
+          <template #customOperations="{ row }">
+            <div style="display: flex; flex-direction: column; align-items: center">
+              <el-button-group>
+                <el-button
+                  size="small"
+                  icon="VideoPlay"
+                  @click="handleOperationButtonClicked(row, OperationCode.START)"
+                ></el-button>
+                <el-button
+                  size="small"
+                  icon="VideoPause"
+                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
+                ></el-button>
+                <el-button
+                  size="small"
+                  icon="RefreshRight"
+                  @click="handleOperationButtonClicked(row, OperationCode.RETRY)"
+                ></el-button>
+                <el-button
+                  size="small"
+                  icon="CircleClose"
+                  @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
+                ></el-button>
+                <el-button
+                  size="small"
+                  icon="Delete"
+                  @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
+                ></el-button>
+              </el-button-group>
+              <el-progress
+                v-if="
+                  row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
+                "
+                style="width: 100%"
+                :percentage="row.schedule?.toFixed(2)"
+                text-inside
+                :stroke-width="17"
+              ></el-progress>
+            </div>
+          </template>
         </search-table>
       </div>
     </template>
