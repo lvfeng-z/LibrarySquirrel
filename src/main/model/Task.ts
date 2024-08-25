@@ -5,6 +5,11 @@ import BaseModel from './BaseModel.ts'
  */
 export default class Task extends BaseModel {
   /**
+   * 主键
+   */
+  id: number | undefined | null
+
+  /**
    * 是否是任务集合
    */
   isCollection: boolean | undefined | null
@@ -62,6 +67,7 @@ export default class Task extends BaseModel {
   constructor(task?: Task) {
     if (task === undefined) {
       super()
+      this.id = undefined
       this.isCollection = undefined
       this.pid = undefined
       this.taskName = undefined
@@ -75,6 +81,7 @@ export default class Task extends BaseModel {
       this.pluginData = undefined
     } else {
       super(task)
+      this.id = task.id
       this.isCollection = task.isCollection
       this.pid = task.pid
       this.taskName = task.taskName

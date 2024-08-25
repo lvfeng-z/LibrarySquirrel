@@ -16,6 +16,34 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   }
 
   /**
+   * 更新任务状态
+   * @param taskId 任务id
+   */
+  async refreshTaskStatus(taskId: number): Promise<number> {
+    const statement = `
+        with total as (select count(1) as num from task where pid = ${taskId}),
+             finished as (select count(1) as num from task where pid = ${taskId} and status = ${TaskStatesEnum.FINISHED}),
+             faild as (select count(1) as num from task where pid = ${taskId} and status = ${TaskStatesEnum.FAILED})
+        update task set status = (
+            case
+                when (select num from finished) = (select num from total) then ${TaskStatesEnum.FINISHED}
+                when (select num from faild) = (select num from total) then ${TaskStatesEnum.FAILED}
+                when (select num from total) > (select num from finished) and (select num from finished) > 0
+                  then ${TaskStatesEnum.PARTLY_FINISHED}
+            end)
+        where id = ${taskId}`
+
+    const db = this.acquire()
+    try {
+      return db.run(statement).then((runResult) => runResult.changes)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
    * 分页查询任务集合
    * @param page
    */
@@ -106,7 +134,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        union
                        select * from parent
                        union
-                       select * from task where id in (select pid from children)
+                       select id, is_collection, 'root' as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                              update_time, status, plugin_id, plugin_info, plugin_data from task where id in (select pid from children)
                        union
                        select * from task where pid in (select id from parent)`
     const db = this.acquire()

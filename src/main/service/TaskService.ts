@@ -369,8 +369,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             root.status = TaskStatesEnum.FINISHED
           }
           if (TaskStatesEnum.PROCESSING !== root.status) {
-            const tempRoot = new Task(root)
-            this.updateById(tempRoot)
+            this.dao.refreshTaskStatus(root.id as number)
           }
         }
 
