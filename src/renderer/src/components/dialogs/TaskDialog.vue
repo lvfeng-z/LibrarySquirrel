@@ -96,46 +96,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true,
-    render: (data: TaskStatesEnum): VNode => {
-      let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
-      let tagText: string | undefined
-      switch (data) {
-        case TaskStatesEnum.CREATED:
-          tagType = 'primary'
-          tagText = '已创建'
-          break
-        case TaskStatesEnum.PROCESSING:
-          tagType = 'warning'
-          tagText = '进行中'
-          break
-        case TaskStatesEnum.WAITING:
-          tagType = 'warning'
-          tagText = '等待中'
-          break
-        case TaskStatesEnum.PAUSE:
-          tagType = 'info'
-          tagText = '已暂停'
-          break
-        case TaskStatesEnum.FINISHED:
-          tagType = 'success'
-          tagText = '完成'
-          break
-        case TaskStatesEnum.PARTLY_FINISHED:
-          tagType = 'success'
-          tagText = '部分完成'
-          break
-        case TaskStatesEnum.FAILED:
-          tagType = 'danger'
-          tagText = '失败'
-          break
-      }
-      const elTag = h(ElTag, { type: tagType }, () => tagText)
-      return h(
-        'div',
-        { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
-        elTag
-      )
-    }
+    render: getTaskStatusElTag
   }
 ])
 // 数据主键
@@ -145,18 +106,19 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   {
     name: 'taskName',
     type: 'text',
-    placeholder: '输入任务的名称',
+    placeholder: '输入任务的名称查询',
     inputSpan: 13
   },
   {
-    name: 'site_domain',
-    type: 'select',
-    inputSpan: 4,
-    pagingApi: true
+    name: 'siteDomain',
+    type: 'text',
+    placeholder: '输入站点的名称查询',
+    inputSpan: 4
   },
   {
     name: 'status',
     type: 'select',
+    placeholder: '选择状态',
     inputSpan: 4,
     selectData: [
       {
@@ -237,6 +199,47 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       break
   }
 }
+// 获取表示任务状态的ElTag的render函数
+function getTaskStatusElTag(data: TaskStatesEnum): VNode {
+  let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
+  let tagText: string | undefined
+  switch (data) {
+    case TaskStatesEnum.CREATED:
+      tagType = 'primary'
+      tagText = '已创建'
+      break
+    case TaskStatesEnum.PROCESSING:
+      tagType = 'warning'
+      tagText = '进行中'
+      break
+    case TaskStatesEnum.WAITING:
+      tagType = 'warning'
+      tagText = '等待中'
+      break
+    case TaskStatesEnum.PAUSE:
+      tagType = 'info'
+      tagText = '已暂停'
+      break
+    case TaskStatesEnum.FINISHED:
+      tagType = 'success'
+      tagText = '完成'
+      break
+    case TaskStatesEnum.PARTLY_FINISHED:
+      tagType = 'success'
+      tagText = '部分完成'
+      break
+    case TaskStatesEnum.FAILED:
+      tagType = 'danger'
+      tagText = '失败'
+      break
+  }
+  const elTag = h(ElTag, { type: tagType }, () => tagText)
+  return h(
+    'div',
+    { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
+    elTag
+  )
+}
 </script>
 
 <template>
@@ -264,24 +267,22 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
             </el-col>
           </el-row>
           <el-row>
-            <el-col :span="12">
+            <el-col :span="7">
               <el-form-item label="站点">
                 <el-input v-model="formData.siteDomain"></el-input>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="3">
               <el-form-item label="状态">
-                <el-input v-model="formData.status"></el-input>
+                <component :is="getTaskStatusElTag(formData.status as TaskStatesEnum)" />
               </el-form-item>
             </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
+            <el-col :span="7">
               <el-form-item label="创建时间">
                 <el-date-picker v-model="formData.createTime" type="datetime"></el-date-picker>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="7">
               <el-form-item label="修改时间">
                 <el-date-picker v-model="formData.updateTime" type="datetime"></el-date-picker>
               </el-form-item>

@@ -539,7 +539,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   async selectParentPage(page: PageModel<TaskQueryDTO, Task>) {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
-        ...{ taskName: COMPARATOR.LIKE },
+        ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
         ...page.query.assignComparator
       }
     }
@@ -626,7 +626,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   async selectChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>) {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
-        ...{ taskName: COMPARATOR.LIKE },
+        ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
         ...page.query.assignComparator
       }
       page.query.isCollection = false
