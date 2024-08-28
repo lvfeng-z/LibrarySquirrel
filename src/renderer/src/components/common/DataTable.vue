@@ -200,7 +200,10 @@ defineExpose({
       </template>
     </template>
     <el-table-column
-      v-if="props.operationButton !== undefined && props.operationButton.length > 0"
+      v-if="
+        (props.operationButton !== undefined && props.operationButton.length > 0) ||
+        props.customOperationButton
+      "
       fixed="right"
       align="center"
       min-width="104"
