@@ -8,7 +8,6 @@ import Thead from '../../model/util/Thead'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
 import InputBox from '../../model/util/InputBox'
-import OperationItem from '../../model/util/OperationItem'
 
 // props
 const props = defineProps<{
@@ -29,6 +28,8 @@ const apis = {
   taskStartTask: window.api.taskStartTask,
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage
 }
+// childTaskSearchTable组件
+const childTaskSearchTable = ref()
 // baseDialog组件的实例
 const baseDialog = ref()
 // parentTaskInfo的dom元素
@@ -154,19 +155,6 @@ const enum OperationCode {
   CANCEL,
   DELETE
 }
-// SearchTable的operationButton
-const operationButton: OperationItem[] = [
-  {
-    label: '保存',
-    icon: 'Checked',
-    buttonType: 'primary',
-    code: 'save',
-    rule: (row) => changedRows.value.includes(row)
-  },
-  { label: '查看', icon: 'view', code: DialogMode.VIEW },
-  { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
-  { label: '删除', icon: 'delete', code: 'delete' }
-]
 
 // 方法
 function handleDialog(newState: boolean) {
@@ -178,6 +166,8 @@ function handleDialog(newState: boolean) {
       baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer').clientHeight
     heightForSearchTable.value =
       parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
+
+    childTaskSearchTable.value.handleSearchButtonClicked()
   })
 }
 // 处理操作栏按钮点击事件
@@ -290,6 +280,7 @@ function getTaskStatusElTag(data: TaskStatesEnum): VNode {
           </el-row>
         </div>
         <search-table
+          ref="childTaskSearchTable"
           :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
           style="flex-grow: 1"
           :selectable="true"
@@ -301,7 +292,6 @@ function getTaskStatusElTag(data: TaskStatesEnum): VNode {
           :main-input-boxes="mainInputBoxes"
           :multi-select="true"
           :changed-rows="changedRows"
-          :operation-button="operationButton"
           :custom-operation-button="true"
         >
           <template #customOperations="{ row }">

@@ -5,7 +5,6 @@ import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
 import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
-import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { ElTag, TreeNode } from 'element-plus'
@@ -14,6 +13,8 @@ import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
+import PageModel from '../../model/util/PageModel'
+import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 
 // onMounted
 onMounted(() => {
@@ -27,7 +28,7 @@ const apis = {
   taskStartTask: window.api.taskStartTask,
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   taskSelectParentPage: window.api.taskSelectParentPage,
-  taskGetChildrenTask: window.api.taskGetChildrenTask,
+  taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage,
   taskSelectScheduleList: window.api.taskSelectScheduleList,
   dirSelect: window.api.dirSelect
 }
@@ -185,19 +186,6 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
 ])
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
-// SearchTable的operationButton
-const operationButton: OperationItem[] = [
-  {
-    label: '保存',
-    icon: 'Checked',
-    buttonType: 'primary',
-    code: 'save',
-    rule: (row) => changedRows.value.includes(row)
-  },
-  { label: '查看', icon: 'view', code: DialogMode.VIEW },
-  { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
-  { label: '删除', icon: 'delete', code: 'delete' }
-]
 // 操作栏代码
 const enum OperationCode {
   VIEW,
@@ -223,11 +211,21 @@ async function load(
   _treeNode: TreeNode,
   resolve: (data: unknown[]) => void
 ): Promise<void> {
-  const response = await apis.taskGetChildrenTask((row as TaskDTO).id)
+  // 配置分页参数
+  const pageCondition: PageModel<BaseQueryDTO, object> = new PageModel()
+  pageCondition.pageSize = 100
+  pageCondition.pageNumber = 1
+  // 配置查询参数
+  pageCondition.query = { ...new BaseQueryDTO(), ...{ pid: (row as TaskDTO).id } }
+
+  const response = await apis.taskSelectChildrenTaskPage(pageCondition)
   if (ApiUtil.apiResponseCheck(response)) {
-    const data = ApiUtil.apiResponseGetData(response) as TaskDTO[]
+    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+    const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
     ;(row as TaskDTO).children = data
     resolve(data)
+  } else {
+    ApiUtil.apiResponseMsg(response)
   }
 }
 // 给行添加class
@@ -366,7 +364,6 @@ function handleScroll() {
         :load="load"
         :multi-select="true"
         :default-page-size="50"
-        :operation-button="operationButton"
         :custom-operation-button="true"
         :tree-data="true"
         @scroll="handleScroll"
