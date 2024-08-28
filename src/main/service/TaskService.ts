@@ -314,9 +314,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
     // 所有任务设置为等待中
-    await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING)
+    await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING, [
+      TaskStatesEnum.CREATED,
+      TaskStatesEnum.FAILED,
+      TaskStatesEnum.PARTLY_FINISHED,
+      TaskStatesEnum.PAUSE
+    ])
     // 查找id列表对应的所有子任务
-    const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds)
+    const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds, [TaskStatesEnum.WAITING])
 
     // 插件缓存
     const pluginCache: { [id: string]: { plugin: TaskHandler; info: string } } = {}
