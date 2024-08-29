@@ -75,6 +75,14 @@ export default abstract class BaseService<
   }
 
   /**
+   * 批量删除
+   * @param ids id列表
+   */
+  public async deleteBatchById(ids: number[] | string[]): Promise<number> {
+    return this.dao.deleteBatchById(ids)
+  }
+
+  /**
    * 更新
    * @param updateData
    */

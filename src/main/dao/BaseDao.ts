@@ -161,7 +161,28 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await db.run(sql)).changes
+      return db.run(sql).then((runResult) => runResult.changes)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 批量删除
+   * @param ids id列表
+   */
+  public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
+    if (isNullish(ids) || ids.length === 0) {
+      LogUtil.warn(this.childClassName, '批量删除时id列表不能为空')
+      return 0
+    }
+    const idsStr = ids.join(',')
+    const db = this.acquire()
+    try {
+      const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" in (${idsStr})`
+      return db.run(sql).then((runResult) => runResult.changes)
     } finally {
       if (!this.injectedDB) {
         db.release()
