@@ -148,11 +148,11 @@ class TaskStream extends Readable{
           const meaningOfPaths = await waitUserInput
           meaningOfPaths.forEach(meaningOfPath => {
             // 如果含义是作品集，路径作为站点作品集id
-            if (meaningOfPath.type === 'worksSetName') {
+            if (meaningOfPath.type === PathTypeEnum.WORKS_SET_NAME) {
               meaningOfPath.details = { siteWorksSetId: dir }
             }
             // 如果含义是作者，作者角色设置为平级作者
-            if (meaningOfPath.type === 'author') {
+            if (meaningOfPath.type === PathTypeEnum.AUTHOR) {
               meaningOfPath.details.authorRole = 2
             }
           })
