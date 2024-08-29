@@ -125,6 +125,9 @@ const api = {
   taskStartTask: (args) => {
     return Electron.ipcRenderer.invoke('task-startTask', args)
   },
+  taskDeleteTask: (args) => {
+    return Electron.ipcRenderer.invoke('task-deleteTask', args)
+  },
   taskSelectPage: (args) => {
     return Electron.ipcRenderer.invoke('task-selectPage', args)
   },

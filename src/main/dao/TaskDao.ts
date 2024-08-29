@@ -68,7 +68,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
       const whereClauseArray = Object.entries(whereClauses).map(([, value]) => value)
 
       // 查询是集合的或者只有单个任务的
-      whereClauseArray.push('(is_collection = 1 or pid is null)')
+      whereClauseArray.push('(is_collection = 1 or pid is null or pid = 0)')
 
       const temp = super.splicingWhereClauses(whereClauseArray)
       whereClause = StringUtil.isNotBlank(temp) ? temp : ''
@@ -103,22 +103,22 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   ): Promise<number> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
-    const statement = `with children as (select id, is_collection, ifnull(pid, 'root') as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+    const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                                                 update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
-                            parent as (select id, is_collection, 'root' as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                            parent as (select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                                               update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
                        update task set status = ${status} where id in(
-                          select id from children ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : undefined}
+                          select id from children ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                           union
-                          select id from parent ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : undefined}
-                          union
-                          select id
-                          from task
-                          where id in (select pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : undefined}
+                          select id from parent ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                           union
                           select id
                           from task
-                          where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : undefined}
+                          where id in (select pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                          union
+                          select id
+                          from task
+                          where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        )`
     const db = this.acquire()
     try {
@@ -141,23 +141,23 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   ): Promise<TaskDTO[]> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
-    const statement = `with children as (select id, is_collection, ifnull(pid, 'root') as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+    const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                                                 update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
-                            parent as (select id, is_collection, 'root' as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                            parent as (select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                                               update_time, status, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
 
-                       select * from children ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : undefined}
+                       select * from children ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                        union
-                       select * from parent ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : undefined}
+                       select * from parent ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                        union
-                       select id, is_collection, 'root' as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
+                       select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                               update_time, status, plugin_id, plugin_info, plugin_data
                        from task
-                       where id in (select pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : undefined}
+                       where id in (select pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        union
                        select *
                        from task
-                       where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : undefined}`
+                       where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
     const db = this.acquire()
     let sourceTasks: TaskDTO[]
     try {
@@ -169,7 +169,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
       }
     }
 
-    return buildTree(sourceTasks, 'root')
+    return buildTree(sourceTasks, 0)
   }
 
   /**

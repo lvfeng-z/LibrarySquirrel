@@ -26,6 +26,7 @@ onMounted(() => {
 const apis = {
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
+  taskDeleteTask: window.api.taskDeleteTask,
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   taskSelectParentPage: window.api.taskSelectParentPage,
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage,
@@ -231,7 +232,7 @@ async function load(
 // 给行添加class
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   const row = data.row as TaskDTO
-  if (row.hasChildren || isNullish(row.pid)) {
+  if (row.hasChildren || isNullish(row.pid) || row.pid === 0) {
     return 'task-manage-search-table-parent-row'
   } else {
     return 'task-manage-search-table-child-row'
@@ -256,10 +257,12 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       refreshTask()
       break
     case OperationCode.RETRY:
+      console.log('重试')
       break
     case OperationCode.CANCEL:
       break
     case OperationCode.DELETE:
+      deleteTask([row.id as number])
       break
     default:
       break
@@ -324,6 +327,18 @@ const throttleRefreshTask = throttle(
 function handleScroll() {
   throttleRefreshTask()
 }
+// 判断行数据是否可重试
+function retryable(row: TaskDTO) {
+  return row.status === TaskStatesEnum.FINISHED || row.status === TaskStatesEnum.FAILED
+}
+// 删除任务
+async function deleteTask(ids: number[]) {
+  const response = await apis.taskDeleteTask(ids)
+  ApiUtil.apiResponseMsg(response)
+  if (ApiUtil.apiResponseCheck(response)) {
+    await taskManageSearchTable.value.handleSearchButtonClicked()
+  }
+}
 </script>
 
 <template>
@@ -371,36 +386,48 @@ function handleScroll() {
         <template #customOperations="{ row }">
           <div style="display: flex; flex-direction: column; align-items: center">
             <el-button-group>
-              <el-button
-                size="small"
-                icon="View"
-                @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
-              ></el-button>
-              <el-button
-                size="small"
-                icon="VideoPlay"
-                @click="handleOperationButtonClicked(row, OperationCode.START)"
-              ></el-button>
-              <el-button
-                size="small"
-                icon="VideoPause"
-                @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
-              ></el-button>
-              <el-button
-                size="small"
-                icon="RefreshRight"
-                @click="handleOperationButtonClicked(row, OperationCode.RETRY)"
-              ></el-button>
-              <el-button
-                size="small"
-                icon="CircleClose"
-                @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
-              ></el-button>
-              <el-button
-                size="small"
-                icon="Delete"
-                @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
-              ></el-button>
+              <el-tooltip content="详情">
+                <el-button
+                  v-if="(row as TaskDTO).isCollection"
+                  size="small"
+                  icon="View"
+                  @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
+                />
+              </el-tooltip>
+              <el-tooltip :content="retryable(row) ? '重试' : '开始'">
+                <el-button
+                  size="small"
+                  :icon="retryable(row) ? 'RefreshRight' : 'VideoPlay'"
+                  :loading="(row as TaskDTO).status === TaskStatesEnum.PROCESSING"
+                  @click="
+                    handleOperationButtonClicked(
+                      row,
+                      retryable(row) ? OperationCode.RETRY : OperationCode.START
+                    )
+                  "
+                ></el-button>
+              </el-tooltip>
+              <el-tooltip content="暂停">
+                <el-button
+                  size="small"
+                  icon="VideoPause"
+                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
+                />
+              </el-tooltip>
+              <el-tooltip content="取消">
+                <el-button
+                  size="small"
+                  icon="CircleClose"
+                  @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
+                />
+              </el-tooltip>
+              <el-tooltip content="删除">
+                <el-button
+                  size="small"
+                  icon="Delete"
+                  @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
+                />
+              </el-tooltip>
             </el-button-group>
             <el-progress
               v-if="

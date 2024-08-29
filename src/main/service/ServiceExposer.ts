@@ -293,6 +293,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
 
   // TaskService
+  Electron.ipcMain.handle('task-createTask', async (_event, args) => {
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.createTask(args, mainWindow))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('task-startTask', async (_event, args) => {
     try {
       const taskService = new TaskService()
@@ -302,10 +311,10 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-createTask', async (_event, args) => {
+  Electron.ipcMain.handle('task-deleteTask', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.createTask(args, mainWindow))
+      return ApiUtil.response(await taskService.deleteTask(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

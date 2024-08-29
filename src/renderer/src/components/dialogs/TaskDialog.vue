@@ -8,6 +8,7 @@ import Thead from '../../model/util/Thead'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
 import InputBox from '../../model/util/InputBox'
+import ApiUtil from '../../utils/ApiUtil'
 
 // props
 const props = defineProps<{
@@ -26,6 +27,7 @@ defineExpose({
 // 接口
 const apis = {
   taskStartTask: window.api.taskStartTask,
+  taskDeleteTask: window.api.taskDeleteTask,
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage
 }
 // childTaskSearchTable组件
@@ -180,10 +182,12 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
     case OperationCode.PAUSE:
       break
     case OperationCode.RETRY:
+      console.log('重试')
       break
     case OperationCode.CANCEL:
       break
     case OperationCode.DELETE:
+      deleteTask([row.id as number])
       break
     default:
       break
@@ -229,6 +233,18 @@ function getTaskStatusElTag(data: TaskStatesEnum): VNode {
     { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
     elTag
   )
+}
+// 判断行数据是否可重试
+function retryable(row: TaskDTO) {
+  return row.status === TaskStatesEnum.FINISHED || row.status === TaskStatesEnum.FAILED
+}
+// 删除任务
+async function deleteTask(ids: number[]) {
+  const response = await apis.taskDeleteTask(ids)
+  ApiUtil.apiResponseMsg(response)
+  if (ApiUtil.apiResponseCheck(response)) {
+    await childTaskSearchTable.value.handleSearchButtonClicked()
+  }
 }
 </script>
 
@@ -297,31 +313,40 @@ function getTaskStatusElTag(data: TaskStatesEnum): VNode {
           <template #customOperations="{ row }">
             <div style="display: flex; flex-direction: column; align-items: center">
               <el-button-group>
-                <el-button
-                  size="small"
-                  icon="VideoPlay"
-                  @click="handleOperationButtonClicked(row, OperationCode.START)"
-                ></el-button>
-                <el-button
-                  size="small"
-                  icon="VideoPause"
-                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
-                ></el-button>
-                <el-button
-                  size="small"
-                  icon="RefreshRight"
-                  @click="handleOperationButtonClicked(row, OperationCode.RETRY)"
-                ></el-button>
-                <el-button
-                  size="small"
-                  icon="CircleClose"
-                  @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
-                ></el-button>
-                <el-button
-                  size="small"
-                  icon="Delete"
-                  @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
-                ></el-button>
+                <el-tooltip :content="retryable(row) ? '重试' : '开始'">
+                  <el-button
+                    size="small"
+                    :icon="retryable(row) ? 'RefreshRight' : 'VideoPlay'"
+                    :loading="(row as TaskDTO).status === TaskStatesEnum.PROCESSING"
+                    @click="
+                      handleOperationButtonClicked(
+                        row,
+                        retryable(row) ? OperationCode.RETRY : OperationCode.START
+                      )
+                    "
+                  ></el-button>
+                </el-tooltip>
+                <el-tooltip content="暂停">
+                  <el-button
+                    size="small"
+                    icon="VideoPause"
+                    @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
+                  />
+                </el-tooltip>
+                <el-tooltip content="取消">
+                  <el-button
+                    size="small"
+                    icon="CircleClose"
+                    @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
+                  />
+                </el-tooltip>
+                <el-tooltip content="删除">
+                  <el-button
+                    size="small"
+                    icon="Delete"
+                    @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
+                  />
+                </el-tooltip>
               </el-button-group>
               <el-progress
                 v-if="

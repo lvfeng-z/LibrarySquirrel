@@ -492,6 +492,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 删除任务
+   * @param taskIds 任务id列表
+   */
+  async deleteTask(taskIds: number[]): Promise<number> {
+    const waitingDelete: number[] = []
+    const taskTree = await this.dao.selectTaskTreeList(taskIds)
+    for (const task of taskTree) {
+      if (task.status === TaskStatesEnum.WAITING) {
+        throw new Error('不能删除等待开始的任务')
+      } else if (task.isCollection && notNullish(task.children)) {
+        const hasWaiting = task.children.some((child) => child.status === TaskStatesEnum.WAITING)
+        if (hasWaiting) {
+          throw new Error('不能删除等待开始的任务')
+        }
+        waitingDelete.push(task.id as number)
+        const childrenIds = task.children.map((child) => child.id as number)
+        waitingDelete.push(...childrenIds)
+      } else {
+        waitingDelete.push(task.id as number)
+      }
+    }
+    return this.deleteBatchById(waitingDelete)
+  }
+
+  /**
    * 根据id更新
    * @param updateData
    */
