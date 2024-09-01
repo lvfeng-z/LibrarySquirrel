@@ -386,9 +386,8 @@ async function deleteTask(ids: number[]) {
         <template #customOperations="{ row }">
           <div style="display: flex; flex-direction: column; align-items: center">
             <el-button-group>
-              <el-tooltip content="详情">
+              <el-tooltip v-if="(row as TaskDTO).isCollection" content="详情">
                 <el-button
-                  v-if="(row as TaskDTO).isCollection"
                   size="small"
                   icon="View"
                   @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
@@ -445,7 +444,7 @@ async function deleteTask(ids: number[]) {
     <template #dialog>
       <task-dialog
         ref="taskDialogRef"
-        :mode="DialogMode.EDIT"
+        :mode="DialogMode.VIEW"
         :form-data="dialogData"
         align-center
         destroy-on-close

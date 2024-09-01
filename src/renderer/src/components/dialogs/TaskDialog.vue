@@ -295,72 +295,74 @@ async function deleteTask(ids: number[]) {
             </el-col>
           </el-row>
         </div>
-        <search-table
-          ref="childTaskSearchTable"
-          :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
-          style="flex-grow: 1"
-          :selectable="true"
-          :thead="thead"
-          :search-api="apis.taskSelectChildrenTaskPage"
-          :fixed-param="{ pid: formData.id }"
-          :drop-down-input-boxes="[]"
-          :key-of-data="keyOfData"
-          :main-input-boxes="mainInputBoxes"
-          :multi-select="true"
-          :changed-rows="changedRows"
-          :custom-operation-button="true"
-        >
-          <template #customOperations="{ row }">
-            <div style="display: flex; flex-direction: column; align-items: center">
-              <el-button-group>
-                <el-tooltip :content="retryable(row) ? '重试' : '开始'">
-                  <el-button
-                    size="small"
-                    :icon="retryable(row) ? 'RefreshRight' : 'VideoPlay'"
-                    :loading="(row as TaskDTO).status === TaskStatesEnum.PROCESSING"
-                    @click="
-                      handleOperationButtonClicked(
-                        row,
-                        retryable(row) ? OperationCode.RETRY : OperationCode.START
-                      )
-                    "
-                  ></el-button>
-                </el-tooltip>
-                <el-tooltip content="暂停">
-                  <el-button
-                    size="small"
-                    icon="VideoPause"
-                    @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
-                  />
-                </el-tooltip>
-                <el-tooltip content="取消">
-                  <el-button
-                    size="small"
-                    icon="CircleClose"
-                    @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
-                  />
-                </el-tooltip>
-                <el-tooltip content="删除">
-                  <el-button
-                    size="small"
-                    icon="Delete"
-                    @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
-                  />
-                </el-tooltip>
-              </el-button-group>
-              <el-progress
-                v-if="
-                  row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
-                "
-                style="width: 100%"
-                :percentage="row.schedule?.toFixed(2)"
-                text-inside
-                :stroke-width="17"
-              ></el-progress>
-            </div>
-          </template>
-        </search-table>
       </div>
+    </template>
+    <template #afterForm>
+      <search-table
+        ref="childTaskSearchTable"
+        :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
+        style="flex-grow: 1"
+        :selectable="true"
+        :thead="thead"
+        :search-api="apis.taskSelectChildrenTaskPage"
+        :fixed-param="{ pid: formData.id }"
+        :drop-down-input-boxes="[]"
+        :key-of-data="keyOfData"
+        :main-input-boxes="mainInputBoxes"
+        :multi-select="true"
+        :changed-rows="changedRows"
+        :custom-operation-button="true"
+      >
+        <template #customOperations="{ row }">
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <el-button-group>
+              <el-tooltip :content="retryable(row) ? '重试' : '开始'">
+                <el-button
+                  size="small"
+                  :icon="retryable(row) ? 'RefreshRight' : 'VideoPlay'"
+                  :loading="(row as TaskDTO).status === TaskStatesEnum.PROCESSING"
+                  @click="
+                    handleOperationButtonClicked(
+                      row,
+                      retryable(row) ? OperationCode.RETRY : OperationCode.START
+                    )
+                  "
+                ></el-button>
+              </el-tooltip>
+              <el-tooltip content="暂停">
+                <el-button
+                  size="small"
+                  icon="VideoPause"
+                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
+                />
+              </el-tooltip>
+              <el-tooltip content="取消">
+                <el-button
+                  size="small"
+                  icon="CircleClose"
+                  @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
+                />
+              </el-tooltip>
+              <el-tooltip content="删除">
+                <el-button
+                  size="small"
+                  icon="Delete"
+                  @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
+                />
+              </el-tooltip>
+            </el-button-group>
+            <el-progress
+              v-if="
+                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
+              "
+              style="width: 100%"
+              :percentage="row.schedule?.toFixed(2)"
+              text-inside
+              :stroke-width="17"
+            ></el-progress>
+          </div>
+        </template>
+      </search-table>
     </template>
   </base-form-dialog>
 </template>

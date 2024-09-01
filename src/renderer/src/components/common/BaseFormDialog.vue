@@ -84,6 +84,7 @@ function handleChangeState() {
       >
         <slot name="form" />
       </el-form>
+      <slot name="afterForm" />
     </el-scrollbar>
     <template #footer>
       <el-row>
