@@ -26,4 +26,11 @@ export default interface TaskHandler {
    * @return 作品信息（包含资源的数据流）
    */
   retry(task: Task): Promise<WorksDTO>
+
+  /**
+   * 暂停下载任务
+   * @param task 需要暂停的任务
+   * @return 作品信息（包含资源的数据流）
+   */
+  pause(task: Task): Promise<WorksDTO>
 }
