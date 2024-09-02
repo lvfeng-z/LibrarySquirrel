@@ -16,7 +16,6 @@ import LocalTagService from './LocalTagService.ts'
 import DB from '../database/DB.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
-import { ReadStream } from 'node:fs'
 import { AuthorRole } from '../constant/AuthorRole.ts'
 import TaskService from './TaskService.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
@@ -24,6 +23,7 @@ import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/WorksSet.ts'
 import { Limit } from 'p-limit'
 import StringUtil from '../util/StringUtil.ts'
+import { Readable } from 'node:stream'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -67,7 +67,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         worksDTO.workdir = workdir
 
         const pipelinePromise = promisify(
-          (readable: fs.ReadStream, writable: fs.WriteStream, callback) => {
+          (readable: Readable, writable: fs.WriteStream, callback) => {
             let errorOccurred = false
 
             readable.on('error', (err) => {
@@ -105,10 +105,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         // 创建写入Promise
         let saveResourcePromise: Promise<unknown>
         if (isNullish(limit)) {
-          saveResourcePromise = pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
+          saveResourcePromise = pipelinePromise(worksDTO.resourceStream as Readable, writeStream)
         } else {
           saveResourcePromise = limit(() =>
-            pipelinePromise(worksDTO.resourceStream as ReadStream, writeStream)
+            pipelinePromise(worksDTO.resourceStream as Readable, writeStream)
           )
         }
         // 创建任务监听器

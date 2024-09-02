@@ -1,11 +1,11 @@
 import Works from '../Works.ts'
 import Site from '../Site.ts'
 import LocalTag from '../LocalTag.ts'
-import fs from 'fs'
 import LocalAuthorDTO from './LocalAuthorDTO.ts'
 import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../WorksSet.ts'
+import { Readable } from 'node:stream'
 
 /**
  * 作品
@@ -48,7 +48,7 @@ export default class WorksDTO extends Works {
   /**
    * 作品资源的数据流
    */
-  resourceStream: fs.ReadStream | undefined | null
+  resourceStream: Readable | undefined | null
 
   /**
    * 作品资源的文件大小，单位：字节（Bytes）
