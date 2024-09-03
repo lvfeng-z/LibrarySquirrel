@@ -135,12 +135,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       return temp
     })
 
-    // 根据插件返回的任务数组长度判断如何处理
-    if (tasks.length === 1) {
-      // 如果插件返回的的任务列表长度为1，则不需要创建子任务
-      const task = tasks[0]
+    // 给任务赋值的函数
+    const assignTask = (task: Task, pid?: number) => {
       task.status = TaskStatesEnum.CREATED
       task.isCollection = false
+      task.pid = pid
+      task.pluginId = taskPlugin.id as number
+      task.pluginInfo = pluginInfo
+      task.siteDomain = taskPlugin.domain
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -149,9 +151,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
           error
         )
-        return 0
+        return undefined
       }
+    }
 
+    // 根据插件返回的任务数组长度判断如何处理
+    if (tasks.length === 1) {
+      // 如果插件返回的的任务列表长度为1，则不需要创建子任务
+      const task = tasks[0]
+      assignTask(task)
       return super.save(task).then(() => 1)
     } else {
       // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
@@ -162,22 +170,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       const childTasks = tasks
         .map((task) => {
-          task.status = TaskStatesEnum.CREATED
-          task.isCollection = false
-          task.pid = pid
-          task.pluginId = taskPlugin.id as number
-          task.pluginInfo = pluginInfo
-          task.siteDomain = taskPlugin.domain
-          try {
-            task.pluginData = JSON.stringify(task.pluginData)
-          } catch (error) {
-            logUtil.error(
-              'TaskService',
-              `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
-              error
-            )
-            return undefined
-          }
+          assignTask(task, pid)
           return task
         })
         .filter((childTask) => childTask !== undefined) as Task[]
@@ -324,7 +317,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds, [TaskStatesEnum.WAITING])
 
     // 插件缓存
-    const pluginCache: { [id: string]: { plugin: TaskHandler; info: string } } = {}
+    const pluginCache: { [id: string]: TaskHandler } = {}
     const pluginLoader = new PluginLoader(mainWindow)
 
     // 计数器
@@ -389,44 +382,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
           // 加载并缓存插件和插件信息
           let taskHandler: TaskHandler
-          let pluginInfo: string
 
           if (isNullish(pluginCache[task.pluginId])) {
-            // 查询插件信息，用于输出日志
-            const installedPluginsService = new InstalledPluginsService()
-            pluginInfo = JSON.stringify(
-              await installedPluginsService.getById(task.pluginId as number)
-            )
-
             taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
 
-            pluginCache[task.pluginId] = { plugin: taskHandler, info: pluginInfo }
+            pluginCache[task.pluginId] = taskHandler
           } else {
-            taskHandler = pluginCache[task.pluginId].plugin
-            pluginInfo = pluginCache[task.pluginId].info
+            taskHandler = pluginCache[task.pluginId]
           }
 
           const worksDTO = await taskHandler.start(task)
-          // 如果插件未返回任务id，发出警告并跳过此次循环
-          if (
-            !Object.prototype.hasOwnProperty.call(worksDTO, 'includeTaskId') ||
-            worksDTO.includeTaskId === undefined ||
-            worksDTO.includeTaskId === null
-          ) {
-            LogUtil.warn('TaskService', `插件未返回任务的id，plugin: ${pluginInfo}`)
-            return false
-          }
-
-          // 找到插件返回的作品对应的task
-          const taskFilter = tasks.find((task) => task.id == worksDTO.includeTaskId)
-          if (isNullish(taskFilter)) {
-            // 如果插件返回的任务id越界，发出警告并跳过此次循环
-            LogUtil.warn(
-              'TaskService',
-              `插件返回的任务id不可用，taskId: ${worksDTO.includeTaskId}，plugin: ${pluginInfo}`
-            )
-            return false
-          }
 
           // 保存资源
           const saveWorksResourceService = new WorksService()
@@ -444,7 +409,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
                   .then(async (savedWorks) => worksService.saveWorksInfo(savedWorks))
                   .then(async (worksId) => {
                     task.status = TaskStatesEnum.FINISHED
-                    return taskService.finishTask(taskFilter, worksId)
+                    return taskService.finishTask(task, worksId)
                   })
                   .then(() => {
                     counter++
@@ -454,7 +419,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
                   .catch(async (error) => {
                     LogUtil.warn('TaskService', '保存作品失败，error: ', error)
                     task.status = TaskStatesEnum.FAILED
-                    return taskService.taskFailed(taskFilter).then(() => {
+                    return taskService.taskFailed(task).then(() => {
                       handleRootStatus(task.pid as number)
                       return false
                     })

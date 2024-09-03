@@ -200,11 +200,19 @@ const enum OperationCode {
 let refreshing: boolean = false
 // 当前dialog绑定数据
 const dialogData: Ref<UnwrapRef<TaskDTO>> = ref(new TaskDTO())
+// 站点下载dialog的开关
+const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
+// 站点资源的url
+const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
 
 // 方法
-// 保存设置
+// 从本地路径导入
 async function importFromDir(dir: string) {
   await apis.taskCreateTask('file://'.concat(dir))
+}
+// 从站点url导入
+async function importFromSite() {
+  await apis.taskCreateTask(siteSourceUrl.value)
 }
 // 懒加载处理函数
 async function load(
@@ -278,6 +286,14 @@ async function selectDir(openFile: boolean) {
         await importFromDir(dir)
       }
     }
+  }
+}
+// 打开站点下载dialog
+function handleSiteDownloadDialog(_event, newState?: boolean) {
+  if (notNullish(newState)) {
+    siteDownloadState.value = newState
+  } else {
+    siteDownloadState.value = !siteDownloadState.value
   }
 }
 // 刷新任务进度和状态
@@ -357,7 +373,14 @@ async function deleteTask(ids: number[]) {
         </el-dropdown>
       </el-col>
       <el-col class="task-manage-site-import-button-col" :span="12">
-        <el-button size="large" type="primary" icon="Link">从站点下载</el-button>
+        <el-button
+          v-model="siteDownloadState"
+          size="large"
+          type="primary"
+          icon="Link"
+          @click="handleSiteDownloadDialog"
+          >从站点下载
+        </el-button>
       </el-col>
     </el-row>
     <div class="task-manage-search-table-wrapper rounded-margin-box">
@@ -450,6 +473,13 @@ async function deleteTask(ids: number[]) {
         destroy-on-close
         width="90%"
       />
+      <el-dialog v-model="siteDownloadState" center width="90%" align-center destroy-on-close>
+        <template #header>输入url</template>
+        <el-input v-model="siteSourceUrl"></el-input>
+        <template #footer>
+          <el-button type="primary" @click="importFromSite">确定</el-button>
+        </template>
+      </el-dialog>
     </template>
   </base-closeable-page>
 </template>

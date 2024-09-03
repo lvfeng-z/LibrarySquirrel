@@ -1,4 +1,4 @@
-import fs from 'fs'
+import { Readable } from 'node:stream'
 
 export default class PixivTaskHandler {
   pluginTool
@@ -30,35 +30,44 @@ export default class PixivTaskHandler {
    * @return 作品信息
    */
   async start(task) {
-    try {
-      const response = await fetch(task.url);
+    const worksDTO = new WorksDTO()
+    const response = await fetch(task.url)
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data: ${response.statusText}`);
-      }
-
-      // 创建一个 ReadableStream
-      const readableStream = response.body;
-
-      // 将 ReadableStream 转换为 fs.ReadStream
-      this.readStream = new fs.ReadStream(this.targetPath, { flags: 'a+' });
-
-      // 管道化处理
-      readableStream.pipe(this.readStream);
-
-      // 监听 'finish' 事件来知道下载何时完成
-      this.readStream.on('finish', () => {
-        console.log('Download completed.');
-      });
-
-      // 监听 'error' 事件来处理错误
-      this.readStream.on('error', (err) => {
-        console.error('Error occurred during download:', err);
-      });
-    } catch (error) {
-      console.error('Error during download:', error);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.statusText}`)
     }
-    return new WorksDTO()
+
+    // 创建一个 ReadableStream
+    const readableStream = response.body
+
+    // 将 ReadableStream 转换成一个可迭代对象
+    const iterable = {
+      [Symbol.asyncIterator]: async function* () {
+        const reader = readableStream.getReader()
+        try {
+          while (true) {
+            const { value, done } = await reader.read()
+            if (done) return
+            yield value
+          }
+        } finally {
+          reader.releaseLock()
+        }
+      }
+    }
+
+    worksDTO.resourceStream = Readable.from(iterable[Symbol.asyncIterator]())
+
+    // // 监听 'finish' 事件来知道下载何时完成
+    // worksDTO.resourceStream.on('finish', () => {
+    //   console.log('Download completed.');
+    // });
+    //
+    // // 监听 'error' 事件来处理错误
+    // worksDTO.resourceStream.on('error', (err) => {
+    //   console.error('Error occurred during download:', err);
+    // });
+    return worksDTO
   }
 
   /**
