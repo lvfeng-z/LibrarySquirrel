@@ -456,7 +456,7 @@ async function deleteTask(ids: number[]) {
                 row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
               "
               style="width: 100%"
-              :percentage="row.schedule?.toFixed(2)"
+              :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
               text-inside
               :stroke-width="17"
             ></el-progress>
