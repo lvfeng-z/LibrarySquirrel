@@ -392,6 +392,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           }
 
           const worksDTO = await taskHandler.start(task)
+          worksDTO.includeTaskId = task.id
 
           // 保存资源
           const saveWorksResourceService = new WorksService()
