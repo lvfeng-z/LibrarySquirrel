@@ -9,6 +9,7 @@ export default {
       sourcemap: true // 生成源码映射
     }
   ],
+  external: ['axios'],
   plugins: [
     resolve({ extensions: ['.mjs', '.js'] }) // 同时解析ES6模块和CommonJS模块的导入
   ]

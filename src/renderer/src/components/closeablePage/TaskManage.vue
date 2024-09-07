@@ -254,18 +254,15 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       taskDialogRef.value.handleDialog(true)
       break
     case OperationCode.START:
-      apis.taskStartTask([row.id])
-      row.status = TaskStatesEnum.WAITING
-      if (row.isCollection && notNullish(row.children)) {
-        row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
-      }
+      startTask(row)
       refreshTask()
       break
     case OperationCode.PAUSE:
       refreshTask()
       break
     case OperationCode.RETRY:
-      console.log('重试')
+      startTask(row)
+      refreshTask()
       break
     case OperationCode.CANCEL:
       break
@@ -346,6 +343,14 @@ function handleScroll() {
 // 判断行数据是否可重试
 function retryable(row: TaskDTO) {
   return row.status === TaskStatesEnum.FINISHED || row.status === TaskStatesEnum.FAILED
+}
+// 开始任务
+function startTask(row: TaskDTO) {
+  apis.taskStartTask([row.id])
+  row.status = TaskStatesEnum.WAITING
+  if (row.isCollection && notNullish(row.children)) {
+    row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
+  }
 }
 // 删除任务
 async function deleteTask(ids: number[]) {

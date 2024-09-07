@@ -1,4 +1,6 @@
 import { Readable } from 'node:stream'
+import axios from 'axios'
+import * as fs from 'node:fs'
 
 export default class AryionTaskHandler {
   pluginTool
@@ -31,10 +33,88 @@ export default class AryionTaskHandler {
    */
   async start(task) {
     const worksDTO = new WorksDTO()
+    const response = await axios.head(task.url)
+
+    // 获取响应头的一些信息
+    // 文件大小
+    worksDTO.resourceSize = response.headers.get('content-length')
+    // 扩展名
+    const fileType = response.headers.get('content-type')
+    switch (fileType) {
+      case 'video/mp4':
+        worksDTO.filenameExtension = '.mp4'
+        break
+    }
+    // 建议名称
+    const contentDisposition = response.headers.get('content-disposition')
+    if (contentDisposition) {
+      // 使用正则表达式匹配 'filename' 或 'filename*' 参数
+      const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
+      const match = contentDisposition.match(regex)
+
+      if (match && match[1] || match[2]) {
+        // 提取文件名
+        worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
+      }
+    }
+
+    const config = {
+      url: task.url,
+      responseType: 'stream',
+      headers: {
+        Range: `bytes=${0}-`
+      }
+    }
+
+    const stream = await axios.request(config)
+
+    worksDTO.resourceStream = stream.data
+
+    // 添加暂停和恢复的控制逻辑
+    // process.on('SIGINT', () => {
+    //   if (!downloadPaused) {
+    //     pauseDownload(stream, writerStream);
+    //   } else {
+    //     resumeDownload(stream, writerStream);
+    //   }
+    // });
+    return worksDTO
+  }
+
+  /**
+   * 开始任务
+   * @param task 需开始的任务数组
+   * @return 作品信息
+   */
+  async fetchStart(task) {
+    const worksDTO = new WorksDTO()
     const response = await fetch(task.url)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.statusText}`)
+    }
+
+    // 获取响应头的一些信息
+    // 文件大小
+    worksDTO.resourceSize = response.headers.get('content-length')
+    // 扩展名
+    const fileType = response.headers.get('content-type')
+    switch (fileType) {
+      case 'video/mp4':
+        worksDTO.filenameExtension = '.mp4'
+        break
+    }
+    // 建议名称
+    const contentDisposition = response.headers.get('content-disposition')
+    if (contentDisposition) {
+      // 使用正则表达式匹配 'filename' 或 'filename*' 参数
+      const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/;
+      const match = contentDisposition.match(regex);
+
+      if (match && match[1] || match[2]) {
+        // 提取文件名
+        worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
+      }
     }
 
     // 创建一个 ReadableStream
@@ -58,15 +138,6 @@ export default class AryionTaskHandler {
 
     worksDTO.resourceStream = Readable.from(iterable[Symbol.asyncIterator]())
 
-    // // 监听 'finish' 事件来知道下载何时完成
-    // worksDTO.resourceStream.on('finish', () => {
-    //   console.log('Download completed.');
-    // });
-    //
-    // // 监听 'error' 事件来处理错误
-    // worksDTO.resourceStream.on('error', (err) => {
-    //   console.error('Error occurred during download:', err);
-    // });
     return worksDTO
   }
 
@@ -84,7 +155,19 @@ export default class AryionTaskHandler {
    * @param task 需要暂停的任务
    * @return 作品信息
    */
-  pause(task) {}
+  pause(task) {
+    task.stream.data.pause()
+  }
+
+  /**
+   * 恢复下载任务
+   * @param task 需要恢复的任务
+   * @return 作品信息
+   */
+  resume(task) {
+    const downloadedBytes = fs.statSync(task.pendingDownloadPath).size
+    task.stream.data.resume()
+  }
 
   /**
    * 在含义列表中查找对应类型的含义
@@ -131,9 +214,9 @@ class WorksDTO {
    */
   nickName
   /**
-   * 作品所属作品集
+   * 建议名称
    */
-  worksSets
+  suggestedName
   /**
    * 收录方式（0：本地导入，1：站点下载）
    */
@@ -176,6 +259,7 @@ class WorksDTO {
     this.siteUploadTime = undefined
     this.siteUpdateTime = undefined
     this.nickName = undefined
+    this.suggestedName = undefined
     this.includeMode = undefined
     this.includeTaskId = undefined
     this.localAuthors = undefined
@@ -242,6 +326,10 @@ class Task {
   siteWorksId
   url
   status
+  /**
+   * 下载中的文件路径
+   */
+  pendingDownloadPath
   pluginId
   pluginInfo
   pluginData
@@ -255,6 +343,7 @@ class Task {
     this.siteWorksId = undefined
     this.url = undefined
     this.status = undefined
+    this.pendingDownloadPath = undefined
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined
