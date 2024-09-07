@@ -34,7 +34,7 @@ function toObjAcceptedBySqlite3(obj: object | undefined): Record<string, unknown
   }
   return Object.fromEntries(
     Object.entries(obj)
-      .filter(([, value]) => value !== undefined || typeof value !== 'function')
+      .filter(([, value]) => value !== undefined && typeof value !== 'function')
       .map(([key, value]) => {
         if (typeof value === 'boolean') {
           return [key, value ? 1 : 0]
