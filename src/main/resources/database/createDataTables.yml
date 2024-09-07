@@ -178,22 +178,23 @@ tables:
   - name: task
     sql: |
       create table if not exists task (
-        id             integer not null
+        id                    integer not null
         constraint task_pk
         primary key autoincrement,
-        is_collection  integer(1),
-        pid            integer,
-        task_name      text,
-        site_domain    text,
-        local_works_id integer,
-        site_works_id  text,
-        url            text,
-        create_time    integer,
-        update_time    integer,
-        status         smallint,
-        plugin_id      integer,
-        plugin_info    text,
-        plugin_data    text
+        is_collection         integer(1),
+        pid                   integer,
+        task_name             text,
+        site_domain           text,
+        local_works_id        integer,
+        site_works_id         text,
+        url                   text,
+        create_time           integer,
+        update_time           integer,
+        status                smallint,
+        pending_download_path integer,
+        plugin_id             integer,
+        plugin_info           text,
+        plugin_data           text
       );
 
   - name: task_plugin_listener

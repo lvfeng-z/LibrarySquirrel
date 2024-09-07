@@ -24,6 +24,7 @@ import WorksSet from '../model/WorksSet.ts'
 import { Limit } from 'p-limit'
 import StringUtil from '../util/StringUtil.ts'
 import { Readable } from 'node:stream'
+import Task from '../model/Task.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -67,7 +68,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         worksDTO.filePath = path.join(relativeSavePath, fileName)
         worksDTO.workdir = workdir
 
-        const pipelinePromise = promisify(
+        const pipelineWritePromise = promisify(
           (readable: Readable, writable: fs.WriteStream, callback) => {
             let errorOccurred = false
 
@@ -97,30 +98,41 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         // 创建保存目录
         await FileSysUtil.createDirIfNotExists(fullSavePath)
         // 创建写入流
-        const writeStream = fs.createWriteStream(path.join(fullSavePath, fileName))
+        const fullPath = path.join(fullSavePath, fileName)
+        const writeStream = fs.createWriteStream(fullPath)
         // 数据写入量追踪器
-        const bytesWrittenTracker = {
+        const taskTracker = {
+          readStream: worksDTO.resourceStream,
           writeStream: writeStream,
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
+        // 文件的写入路径保存到任务中
+        const taskService = new TaskService()
+        const sourceTask = new Task()
+        sourceTask.id = worksDTO.includeTaskId
+        sourceTask.pendingDownloadPath = fullPath
         // 创建写入Promise
         let saveResourcePromise: Promise<unknown>
         if (isNullish(limit)) {
-          saveResourcePromise = pipelinePromise(worksDTO.resourceStream as Readable, writeStream)
-        } else {
-          saveResourcePromise = limit(() =>
-            pipelinePromise(worksDTO.resourceStream as Readable, writeStream)
+          saveResourcePromise = pipelineWritePromise(
+            worksDTO.resourceStream as Readable,
+            writeStream
           )
+          taskService.updateById(sourceTask)
+        } else {
+          saveResourcePromise = limit(() => {
+            pipelineWritePromise(worksDTO.resourceStream as Readable, writeStream)
+            taskService.updateById(sourceTask)
+          })
         }
         // 创建任务监听器
-        const taskService = new TaskService()
         if (isNullish(worksDTO.includeTaskId)) {
           const msg = '创建任务监听器时，任务id意外为空'
           LogUtil.warn('WorksService', msg)
         } else {
           taskService.addTaskTracker(
             String(worksDTO.includeTaskId),
-            bytesWrittenTracker,
+            taskTracker,
             saveResourcePromise
           )
         }

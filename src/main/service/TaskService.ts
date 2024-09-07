@@ -680,13 +680,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 新增任务跟踪
-   * @param emitName
-   * @param bytesWrittenTracker
-   * @param taskEndHandler
+   * @param emitName 事件名称，会在全局变量taskTracker中创建以此为名的事件
+   * @param taskTracker 任务追踪器，包含任务的读取和写入流，以及资源大小
+   * @param taskEndHandler 任务完成的承诺，得到解决后会清除对应的追踪事件
    */
   public addTaskTracker(
     emitName: string,
-    bytesWrittenTracker: { writeStream: fs.WriteStream; bytesSum: number },
+    taskTracker: { readStream: Readable; writeStream: fs.WriteStream; bytesSum: number },
     taskEndHandler: Promise<unknown>
   ) {
     // 检查全局变量是否存在
@@ -694,7 +694,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       global.taskTracker = new EventEmitter()
     }
     global.taskTracker.on(emitName, (callback: (schedule: number) => unknown) =>
-      callback((bytesWrittenTracker.writeStream.bytesWritten / bytesWrittenTracker.bytesSum) * 100)
+      callback((taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100)
     )
     // 确认任务结束后，延迟2秒清除其监听器
     taskEndHandler.then(() =>
