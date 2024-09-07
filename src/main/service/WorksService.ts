@@ -61,6 +61,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
         // 保存路径
         const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
+        worksDTO.fileName = fileName
         const relativeSavePath = path.join('/includeDir', authorName)
         const fullSavePath = path.join(workdir, relativeSavePath)
         worksDTO.filePath = path.join(relativeSavePath, fileName)

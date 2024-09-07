@@ -10,6 +10,10 @@ export default class Works extends BaseModel {
    */
   filePath: string | undefined | null
   /**
+   * 文件名称
+   */
+  fileName: string | undefined | null
+  /**
    * 扩展名
    */
   filenameExtension: string | undefined | null
@@ -50,6 +54,10 @@ export default class Works extends BaseModel {
    */
   nickName: string | undefined | null
   /**
+   * 建议名称
+   */
+  suggestedName: string | undefined | null
+  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode: number | undefined | null
@@ -66,6 +74,7 @@ export default class Works extends BaseModel {
     if (isNullish(works)) {
       super()
       this.filePath = undefined
+      this.fileName = undefined
       this.filenameExtension = undefined
       this.workdir = undefined
       this.siteId = undefined
@@ -76,12 +85,14 @@ export default class Works extends BaseModel {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
+      this.suggestedName = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
     } else {
       super(works)
       this.filePath = works.filePath
+      this.fileName = works.fileName
       this.filenameExtension = works.filenameExtension
       this.workdir = works.workdir
       this.siteId = works.siteId
@@ -92,6 +103,7 @@ export default class Works extends BaseModel {
       this.siteUploadTime = works.siteUploadTime
       this.siteUpdateTime = works.siteUpdateTime
       this.nickName = works.nickName
+      this.suggestedName = works.suggestedName
       this.includeMode = works.includeMode
       this.includeTaskId = works.includeTaskId
       this.lastViewed = works.lastViewed

@@ -28,6 +28,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   filePath: string | undefined | null
   /**
+   * 文件名称
+   */
+  fileName: string | undefined | null
+  /**
    * 扩展名
    */
   filenameExtension: string | undefined | null
@@ -64,6 +68,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   nickName: string | undefined | null
   /**
+   * 建议名称
+   */
+  suggestedName: string | undefined | null
+  /**
    * 收录方式（0：本地导入，1：站点下载）
    */
   includeMode: number | undefined | null
@@ -84,6 +92,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeSiteTagIds = undefined
       this.includeSiteTagIds = undefined
       this.filePath = undefined
+      this.fileName = undefined
       this.filenameExtension = undefined
       this.siteId = undefined
       this.siteWorksId = undefined
@@ -93,6 +102,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
+      this.suggestedName = undefined
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
@@ -103,6 +113,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
       this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
       this.filePath = worksQueryDTO.filePath
+      this.fileName = worksQueryDTO.fileName
       this.filenameExtension = worksQueryDTO.filenameExtension
       this.siteId = worksQueryDTO.siteId
       this.siteWorksId = worksQueryDTO.siteWorksId
@@ -112,6 +123,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUploadTime = worksQueryDTO.siteUploadTime
       this.siteUpdateTime = worksQueryDTO.siteUpdateTime
       this.nickName = worksQueryDTO.nickName
+      this.suggestedName = worksQueryDTO.suggestedName
       this.includeMode = worksQueryDTO.includeMode
       this.includeTaskId = worksQueryDTO.includeTaskId
       this.lastViewed = worksQueryDTO.lastViewed
