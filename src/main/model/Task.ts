@@ -55,6 +55,11 @@ export default class Task extends BaseModel {
   pendingDownloadPath: string | undefined | null
 
   /**
+   * 资源是否支持续传
+   */
+  continuable: boolean | undefined | null
+
+  /**
    * 插件id
    */
   pluginId: number | undefined | null
@@ -82,6 +87,7 @@ export default class Task extends BaseModel {
       this.url = undefined
       this.status = undefined
       this.pendingDownloadPath = undefined
+      this.continuable = undefined
       this.pluginId = undefined
       this.pluginInfo = undefined
       this.pluginData = undefined
@@ -97,6 +103,7 @@ export default class Task extends BaseModel {
       this.url = task.url
       this.status = task.status
       this.pendingDownloadPath = task.pendingDownloadPath
+      this.continuable = task.continuable
       this.pluginId = task.pluginId
       this.pluginInfo = task.pluginInfo
       if (typeof task.pluginData === 'string') {

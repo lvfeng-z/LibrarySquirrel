@@ -192,6 +192,7 @@ tables:
         update_time           integer,
         status                smallint,
         pending_download_path integer,
+        continuable           integer(1),
         plugin_id             integer,
         plugin_info           text,
         plugin_data           text

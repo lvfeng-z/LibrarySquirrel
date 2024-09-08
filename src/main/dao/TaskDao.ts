@@ -104,9 +104,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
     const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                                status, pending_download_path, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
+                                                status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
                             parent as (select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                              status, pending_download_path, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
+                                              status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
                        update task set status = ${status} where id in(
                           select id from children ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                           union
@@ -142,16 +142,16 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
     const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                                status, pending_download_path, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
+                                                status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
                             parent as (select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                              status, pending_download_path, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
+                                              status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
 
                        select * from children ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                        union
                        select * from parent ${notNullish(includeStatus) ? 'where status in (' + statusStr + ')' : ''}
                        union
                        select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
-                              update_time, status, pending_download_path, plugin_id, plugin_info, plugin_data
+                              update_time, status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data
                        from task
                        where id in (select pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        union

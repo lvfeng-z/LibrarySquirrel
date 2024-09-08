@@ -26,6 +26,7 @@ import StringUtil from '../util/StringUtil.ts'
 import { Readable } from 'node:stream'
 import Task from '../model/Task.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
+import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -37,7 +38,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @param limit 保存线程并发限制
    */
-  async saveWorksResource(worksDTO: WorksDTO, limit?: Limit): Promise<WorksDTO> {
+  async saveWorksResource(worksDTO: WorksPluginDTO, limit?: Limit): Promise<WorksDTO> {
     // 读取设置中的工作目录信息
     const settings = SettingsService.getSettings() as { workdir: string }
     const workdir = settings.workdir

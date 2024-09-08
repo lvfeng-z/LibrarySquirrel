@@ -1,8 +1,9 @@
 import Task from '../model/Task.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
+import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
+import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 
 export default interface TaskHandler {
   pluginTool: PluginTool
@@ -19,14 +20,14 @@ export default interface TaskHandler {
    * @param task 需开始的任务
    * @return 作品信息（包含资源的数据流）
    */
-  start(task: Task): Promise<WorksDTO>
+  start(task: Task): Promise<WorksPluginDTO>
 
   /**
    * 重试下载任务
    * @param task 需要重试的任务
    * @return 作品信息（包含资源的数据流）
    */
-  retry(task: Task): Promise<WorksDTO>
+  retry(task: Task): Promise<WorksPluginDTO>
 
   /**
    * 暂停下载任务
@@ -40,5 +41,5 @@ export default interface TaskHandler {
    * @param task 需要暂停的任务
    * @return 接续已下载的文件的流
    */
-  resume(task: Task): Promise<Readable>
+  resume(task: TaskPluginDTO): Promise<PluginResumeResponse>
 }

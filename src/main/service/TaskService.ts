@@ -28,6 +28,8 @@ import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
 import StringUtil from '../util/StringUtil.ts'
 import { promisify } from 'node:util'
+import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
+import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -400,8 +402,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             taskHandler = pluginCache[task.pluginId]
           }
 
-          const worksDTO = await taskHandler.start(task)
+          const worksDTO: WorksPluginDTO = await taskHandler.start(task)
           worksDTO.includeTaskId = task.id
+
+          // 远程资源是否可接续
+          task.continuable = worksDTO.continuable
+          await this.updateById(task)
 
           // 保存资源
           const saveWorksResourceService = new WorksService()
@@ -617,14 +623,24 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       )
 
       // 调用插件的pause方法
-      taskHandler.resume(taskPluginDTO).then((resourceStream: Readable) => {
+      taskHandler.resume(taskPluginDTO).then((response: PluginResumeResponse) => {
         // 根据未完成的文件创建接续写入流
         if (isNullish(child.pendingDownloadPath) || StringUtil.isBlank(child.pendingDownloadPath)) {
-          LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空')
+          LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
           return
         }
-        const writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
-        writeStreamPromise(resourceStream, writeStream)
+        // 判断返回的流是否可接续在已下载部分末尾
+        if (response.continuable) {
+          if (isNullish(response.remoteStream)) {
+            LogUtil.error('TaskService', '恢复任务时，插件未返回读取流，taskId: ', child.id)
+            return
+          }
+          const writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
+          writeStreamPromise(response.remoteStream, writeStream)
+        } else {
+          // todo 继续下载的情况下，作品信息还没有保存到数据库，同时插件的继续下载函数不返回作品信息，导致下载完成后没有办法保存作品信息，应该把作品创建时保存资源和作品信息的顺序调整未先保存作品信息，在保存资源
+          fs.unlinkSync(child.pendingDownloadPath)
+        }
       })
     }
 
