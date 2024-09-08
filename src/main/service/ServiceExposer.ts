@@ -383,6 +383,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('task-resumeTaskTree', async (_event, args) => {
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.resumeTaskTree(args, mainWindow))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 
   // WorksService
   Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {

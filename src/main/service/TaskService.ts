@@ -467,6 +467,193 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 暂停任务
+   * @param ids id列表
+   * @param mainWindow
+   */
+  public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
+    const taskTree = await this.dao.selectTaskTreeList(ids)
+
+    // 插件缓存
+    const pluginCache: { [id: string]: TaskHandler } = {}
+    const pluginLoader = new PluginLoader(mainWindow)
+
+    // 暂停任务的函数
+    const pauseSingleTask = async (child: Task) => {
+      // 加载并缓存插件和插件信息
+      let taskHandler: TaskHandler
+      if (isNullish(child.pluginId)) {
+        LogUtil.error('TaskService', '暂停任务时，任务的pluginId意外为空，taskId: ', child.id)
+        return
+      }
+
+      if (isNullish(pluginCache[child.pluginId])) {
+        try {
+          taskHandler = await pluginLoader.loadTaskPlugin(child.pluginId as number)
+          pluginCache[child.pluginId] = taskHandler
+        } catch (error) {
+          const msg = `暂停任务时，加载插件失败，error: ${error}`
+          LogUtil.error('TaskService', msg)
+          return
+        }
+      } else {
+        taskHandler = pluginCache[child.pluginId]
+      }
+
+      // 创建TaskPluginDTO对象
+      const taskPluginDTO = new TaskPluginDTO(child)
+      const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
+      if (isNullish(taskTracker)) {
+        LogUtil.info('TaskService', '暂停任务时，任务追踪器不存在，taskId: ', child.id)
+        return
+      }
+      if (isNullish(taskTracker.readStream)) {
+        LogUtil.error('TaskService', '暂停任务时，任务追踪器的读取流不存在，taskId: ', child.id)
+        return
+      }
+      taskPluginDTO.remoteStream = taskTracker.readStream
+
+      // 调用插件的pause方法
+      taskHandler.pause(taskPluginDTO).then(() => {
+        this.pauseTask(child)
+      })
+    }
+
+    for (const parent of taskTree) {
+      // 处理parent为单个任务的情况
+      if (!parent.isCollection) {
+        pauseSingleTask(parent)
+        continue
+      }
+
+      // 处理下级任务
+      const children = parent.children
+      if (isNullish(children) || children.length < 1) {
+        continue
+      }
+
+      for (const child of children) {
+        pauseSingleTask(child)
+      }
+    }
+  }
+
+  /**
+   * 恢复任务
+   * @param ids id列表
+   * @param mainWindow
+   */
+  public async resumeTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
+    const taskTree = await this.dao.selectTaskTreeList(ids)
+
+    // 插件缓存
+    const pluginCache: { [id: string]: TaskHandler } = {}
+    const pluginLoader = new PluginLoader(mainWindow)
+
+    // 恢复任务的函数
+    const resumeSingleTask = async (child: Task) => {
+      // 加载并缓存插件和插件信息
+      let taskHandler: TaskHandler
+      if (isNullish(child.pluginId)) {
+        LogUtil.warn('TaskService', '恢复任务时，任务的pluginId意外为空，taskId: ', child.id)
+        return
+      }
+
+      if (isNullish(pluginCache[child.pluginId])) {
+        try {
+          taskHandler = await pluginLoader.loadTaskPlugin(child.pluginId as number)
+          pluginCache[child.pluginId] = taskHandler
+        } catch (error) {
+          const msg = `恢复任务时，加载插件失败，error: ${error}`
+          LogUtil.error('TaskService', msg)
+          return
+        }
+      } else {
+        taskHandler = pluginCache[child.pluginId]
+      }
+
+      // 创建TaskPluginDTO对象
+      const taskPluginDTO = new TaskPluginDTO(child)
+      // todo 如果追踪器已经不存在，则创建一个新的追踪器，读取流由插件从远程获取，否则插件尝试恢复读取流，如果恢复不成功，再重新从远程获取
+      // let taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
+      // if (isNullish(taskTracker)) {
+      //   // 创建一个追踪器
+      //   taskTracker = {
+      //     bytesSum: 1,
+      //     readStream: new Readable(),
+      //     writeStream: new Writable()
+      //   }
+      // }
+      // if (isNullish(taskTracker.readStream)) {
+      //   LogUtil.info('TaskService', '恢复任务时，任务追踪器的读取流不存在，taskId: ', child.id)
+      //   return
+      // }
+      // taskPluginDTO.remoteStream = taskTracker.readStream
+
+      const writeStreamPromise = promisify(
+        (readable: Readable, writable: fs.WriteStream, callback) => {
+          let errorOccurred = false
+
+          readable.on('error', (err) => {
+            errorOccurred = true
+            LogUtil.error('WorksService', `readable出错${err}`)
+            callback(err)
+          })
+
+          writable.on('error', (err) => {
+            errorOccurred = true
+            LogUtil.error('WorksService', `writable出错${err}`)
+            callback(err)
+          })
+
+          readable.on('end', () => {
+            if (!errorOccurred) {
+              writable.end()
+              callback(null)
+            }
+          })
+          readable.pipe(writable)
+        }
+      )
+
+      // 调用插件的pause方法
+      taskHandler.resume(taskPluginDTO).then((resourceStream: Readable) => {
+        // 根据未完成的文件创建接续写入流
+        if (isNullish(child.pendingDownloadPath) || StringUtil.isBlank(child.pendingDownloadPath)) {
+          LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空')
+          return
+        }
+        const writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
+        writeStreamPromise(resourceStream, writeStream)
+      })
+    }
+
+    // 读取设置中的最大并行数
+    const settings = SettingsService.getSettings()
+    const maxSaveWorksPromise =
+      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
+    const limit = pLimit(maxSaveWorksPromise)
+
+    for (const parent of taskTree) {
+      // 处理parent为单个任务的情况
+      if (!parent.isCollection) {
+        limit(() => resumeSingleTask(parent))
+        continue
+      }
+
+      // 处理下级任务
+      const children = parent.children
+      if (isNullish(children) || children.length < 1) {
+        continue
+      }
+
+      for (const child of children) {
+        limit(() => resumeSingleTask(child))
+      }
+    }
+  }
+
+  /**
    * 删除任务
    * @param taskIds 任务id列表
    */

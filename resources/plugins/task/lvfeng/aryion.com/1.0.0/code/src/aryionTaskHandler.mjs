@@ -156,7 +156,7 @@ export default class AryionTaskHandler {
    * @return 作品信息
    */
   pause(task) {
-    task.remoteStream.data.pause()
+    task.remoteStream.pause()
   }
 
   /**
@@ -164,9 +164,20 @@ export default class AryionTaskHandler {
    * @param task 需要恢复的任务
    * @return 作品信息
    */
-  resume(task) {
+  async resume(task) {
     const downloadedBytes = fs.statSync(task.pendingDownloadPath).size
-    task.remoteStream.data.resume()
+
+    const config = {
+      url: task.url,
+      responseType: 'stream',
+      headers: {
+        Range: `bytes=${downloadedBytes}-`
+      }
+    }
+
+    const stream = await axios.request(config)
+
+    return stream.data
   }
 
   /**

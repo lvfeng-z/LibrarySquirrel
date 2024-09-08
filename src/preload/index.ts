@@ -149,6 +149,9 @@ const api = {
   taskPauseTaskTree: (args) => {
     return Electron.ipcRenderer.invoke('task-pauseTaskTree', args)
   },
+  taskResumeTaskTree: (args) => {
+    return Electron.ipcRenderer.invoke('task-resumeTaskTree', args)
+  },
 
   // Works
   worksQueryPage: (args) => {

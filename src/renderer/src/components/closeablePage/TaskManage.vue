@@ -32,6 +32,7 @@ const apis = {
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage,
   taskSelectScheduleList: window.api.taskSelectScheduleList,
   taskPauseTaskTree: window.api.taskPauseTaskTree,
+  taskResumeTaskTree: window.api.taskResumeTaskTree,
   dirSelect: window.api.dirSelect
 }
 // DataTable的数据
@@ -193,6 +194,7 @@ const enum OperationCode {
   VIEW,
   START,
   PAUSE,
+  RESUME,
   RETRY,
   CANCEL,
   DELETE
@@ -260,6 +262,10 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       break
     case OperationCode.PAUSE:
       apis.taskPauseTaskTree([row.id])
+      refreshTask()
+      break
+    case OperationCode.RESUME:
+      apis.taskResumeTaskTree([row.id])
       refreshTask()
       break
     case OperationCode.RETRY:
@@ -441,6 +447,13 @@ async function deleteTask(ids: number[]) {
                   size="small"
                   icon="VideoPause"
                   @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
+                />
+              </el-tooltip>
+              <el-tooltip content="恢复">
+                <el-button
+                  size="small"
+                  icon="VideoPlay"
+                  @click="handleOperationButtonClicked(row, OperationCode.RESUME)"
                 />
               </el-tooltip>
               <el-tooltip content="取消">

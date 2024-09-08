@@ -40,5 +40,5 @@ export default interface TaskHandler {
    * @param task 需要暂停的任务
    * @return 接续已下载的文件的流
    */
-  resume(task: Task): Readable
+  resume(task: Task): Promise<Readable>
 }
