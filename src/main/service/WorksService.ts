@@ -112,6 +112,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         const sourceTask = new Task()
         sourceTask.id = worksDTO.includeTaskId
         sourceTask.pendingDownloadPath = fullPath
+        await taskService.updateById(sourceTask)
         // 创建写入Promise
         let saveResourceFinishPromise: Promise<unknown>
         if (isNullish(limit)) {
@@ -119,12 +120,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             worksDTO.resourceStream as Readable,
             writeStream
           )
-          taskService.updateById(sourceTask)
         } else {
-          saveResourceFinishPromise = limit(() => {
-            taskService.updateById(sourceTask)
-            return writeStreamPromise(worksDTO.resourceStream as Readable, writeStream)
-          })
+          saveResourceFinishPromise = limit(() =>
+            writeStreamPromise(worksDTO.resourceStream as Readable, writeStream)
+          )
         }
         // 创建任务监听器
         if (isNullish(worksDTO.includeTaskId)) {

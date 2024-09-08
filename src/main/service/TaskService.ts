@@ -25,6 +25,9 @@ import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import SettingsService from './SettingsService.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
+import fs from 'fs'
+import StringUtil from '../util/StringUtil.ts'
+import { promisify } from 'node:util'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -87,10 +90,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         } else if (pluginResponse instanceof Readable) {
           return this.handlePluginTaskStream(pluginResponse, url, taskPlugin, parentTask, 100, 200)
         } else {
-          logUtil.warn('TaskService', '插件返回了不支持的类型')
+          logUtil.error('TaskService', '插件返回了不支持的类型')
         }
       } catch (error) {
-        logUtil.warn(
+        logUtil.error(
           'TaskService',
           `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`,
           error
@@ -376,7 +379,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           // 校验任务的插件id
           if (isNullish(task.pluginId)) {
             const msg = `任务的插件id意外为空，taskId: ${task.id}`
-            LogUtil.warn('TaskService', msg)
+            LogUtil.error('TaskService', msg)
             return false
           }
 
@@ -390,7 +393,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
               pluginCache[task.pluginId] = taskHandler
             } catch (error) {
               const msg = `暂停任务时，加载插件失败，error: ${error}`
-              LogUtil.warn('TaskService', msg)
+              LogUtil.error('TaskService', msg)
               return false
             }
           } else {
@@ -402,7 +405,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
           // 保存资源
           const saveWorksResourceService = new WorksService()
-          const saveResourceProcess = saveWorksResourceService.saveWorksResource(worksDTO, limit)
+          const savedWorks = await saveWorksResourceService.saveWorksResource(worksDTO, limit)
 
           // 保存作品信息和修改任务状态的事务
           const db = new DB('TaskService')
@@ -412,8 +415,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
                 const taskService = new TaskService(transactionDB)
                 const worksService = new WorksService(transactionDB)
 
-                return saveResourceProcess
-                  .then(async (savedWorks) => worksService.saveWorksInfo(savedWorks))
+                return worksService
+                  .saveWorksInfo(savedWorks)
                   .then(async (worksId) => {
                     task.status = TaskStatesEnum.FINISHED
                     return taskService.finishTask(task, worksId)
@@ -424,7 +427,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
                     return true
                   })
                   .catch(async (error) => {
-                    LogUtil.warn('TaskService', '保存作品失败，error: ', error)
+                    LogUtil.error('TaskService', '保存作品失败，error: ', error)
                     task.status = TaskStatesEnum.FAILED
                     return taskService.taskFailed(task).then(() => {
                       handleRootStatus(task.pid as number)
@@ -697,78 +700,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     result = result.concat(noListener)
     return result
-  }
-
-  /**
-   * 暂停任务
-   * @param ids id列表
-   * @param mainWindow
-   */
-  public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
-    const taskTree = await this.dao.selectTaskTreeList(ids)
-
-    // 插件缓存
-    const pluginCache: { [id: string]: TaskHandler } = {}
-    const pluginLoader = new PluginLoader(mainWindow)
-
-    // 暂停任务的函数
-    const pauseSingleTask = async (child: Task) => {
-      // 加载并缓存插件和插件信息
-      let taskHandler: TaskHandler
-      if (isNullish(child.pluginId)) {
-        LogUtil.warn('TaskService', '暂停任务时，任务的pluginId意外为空，taskId: ', child.id)
-        return
-      }
-
-      if (isNullish(pluginCache[child.pluginId])) {
-        try {
-          taskHandler = await pluginLoader.loadTaskPlugin(child.pluginId as number)
-          pluginCache[child.pluginId] = taskHandler
-        } catch (error) {
-          const msg = `暂停任务时，加载插件失败，error: ${error}`
-          LogUtil.warn('TaskService', msg)
-          return
-        }
-      } else {
-        taskHandler = pluginCache[child.pluginId]
-      }
-
-      // 创建TaskPluginDTO对象
-      const taskPluginDTO = new TaskPluginDTO(child)
-      const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
-      if (isNullish(taskTracker)) {
-        LogUtil.info('TaskService', '暂停任务时，任务追踪器不存在，taskId: ', child.id)
-        return
-      }
-      if (isNullish(taskTracker.readStream)) {
-        LogUtil.info('TaskService', '暂停任务时，任务追踪器的读取流不存在，taskId: ', child.id)
-        return
-      }
-      taskPluginDTO.remoteStream = taskTracker.readStream
-
-      // 调用插件的pause方法
-      taskHandler.pause(taskPluginDTO).then(() => {
-        this.pauseTask(child)
-      })
-    }
-
-    for (const parent of taskTree) {
-      // 处理parent为单个任务的情况
-      if (!parent.isCollection) {
-        pauseSingleTask(parent)
-        continue
-      }
-
-      // 处理下级任务
-      const children = parent.children
-      if (isNullish(children) || children.length < 1) {
-        continue
-      }
-
-      for (const child of children) {
-        pauseSingleTask(child)
-      }
-    }
   }
 
   /**
