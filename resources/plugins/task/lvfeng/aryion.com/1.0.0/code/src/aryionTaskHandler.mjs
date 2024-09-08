@@ -156,7 +156,7 @@ export default class AryionTaskHandler {
    * @return 作品信息
    */
   pause(task) {
-    task.stream.data.pause()
+    task.remoteStream.data.pause()
   }
 
   /**
@@ -166,7 +166,7 @@ export default class AryionTaskHandler {
    */
   resume(task) {
     const downloadedBytes = fs.statSync(task.pendingDownloadPath).size
-    task.stream.data.resume()
+    task.remoteStream.data.resume()
   }
 
   /**

@@ -31,6 +31,7 @@ const apis = {
   taskSelectParentPage: window.api.taskSelectParentPage,
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage,
   taskSelectScheduleList: window.api.taskSelectScheduleList,
+  taskPauseTaskTree: window.api.taskPauseTaskTree,
   dirSelect: window.api.dirSelect
 }
 // DataTable的数据
@@ -258,6 +259,7 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       refreshTask()
       break
     case OperationCode.PAUSE:
+      apis.taskPauseTaskTree([row.id])
       refreshTask()
       break
     case OperationCode.RETRY:

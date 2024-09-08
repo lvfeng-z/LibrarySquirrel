@@ -98,6 +98,13 @@ export default class LocalTaskHandler {
   pause(task) {}
 
   /**
+   * 暂停下载任务
+   * @param task 需要暂停的任务
+   * @return 作品信息
+   */
+  resume(task) {}
+
+  /**
    * 在含义列表中查找对应类型的含义
    * @param meaningOfPaths 含义列表
    * @param type 类型
