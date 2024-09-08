@@ -69,7 +69,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         worksDTO.filePath = path.join(relativeSavePath, fileName)
         worksDTO.workdir = workdir
 
-        const pipelineWritePromise = promisify(
+        const writeStreamPromise = promisify(
           (readable: Readable, writable: fs.WriteStream, callback) => {
             let errorOccurred = false
 
@@ -113,17 +113,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         sourceTask.id = worksDTO.includeTaskId
         sourceTask.pendingDownloadPath = fullPath
         // 创建写入Promise
-        let saveResourcePromise: Promise<unknown>
+        let saveResourceFinishPromise: Promise<unknown>
         if (isNullish(limit)) {
-          saveResourcePromise = pipelineWritePromise(
+          saveResourceFinishPromise = writeStreamPromise(
             worksDTO.resourceStream as Readable,
             writeStream
           )
           taskService.updateById(sourceTask)
         } else {
-          saveResourcePromise = limit(() => {
-            pipelineWritePromise(worksDTO.resourceStream as Readable, writeStream)
+          saveResourceFinishPromise = limit(() => {
             taskService.updateById(sourceTask)
+            return writeStreamPromise(worksDTO.resourceStream as Readable, writeStream)
           })
         }
         // 创建任务监听器
@@ -134,11 +134,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           taskService.addTaskTracker(
             String(worksDTO.includeTaskId),
             taskTracker,
-            saveResourcePromise
+            saveResourceFinishPromise
           )
         }
 
-        return saveResourcePromise.then(() => worksDTO)
+        return saveResourceFinishPromise.then(() => worksDTO)
       } catch (error) {
         const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
         LogUtil.error('WorksService', msg)
