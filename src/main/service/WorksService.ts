@@ -25,6 +25,7 @@ import { Limit } from 'p-limit'
 import StringUtil from '../util/StringUtil.ts'
 import { Readable } from 'node:stream'
 import Task from '../model/Task.ts'
+import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -101,7 +102,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         const fullPath = path.join(fullSavePath, fileName)
         const writeStream = fs.createWriteStream(fullPath)
         // 数据写入量追踪器
-        const taskTracker = {
+        const taskTracker: TaskTracker = {
           readStream: worksDTO.resourceStream,
           writeStream: writeStream,
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize

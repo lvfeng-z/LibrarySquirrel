@@ -2,6 +2,7 @@ import Task from '../model/Task.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
+import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 
 export default interface TaskHandler {
   pluginTool: PluginTool
@@ -32,5 +33,12 @@ export default interface TaskHandler {
    * @param task 需要暂停的任务
    * @return 作品信息（包含资源的数据流）
    */
-  pause(task: Task): Promise<WorksDTO>
+  pause(task: TaskPluginDTO): Promise<void>
+
+  /**
+   * 暂停下载任务
+   * @param task 需要暂停的任务
+   * @return 接续已下载的文件的流
+   */
+  resume(task: Task): Readable
 }

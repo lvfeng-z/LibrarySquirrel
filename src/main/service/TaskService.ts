@@ -22,9 +22,9 @@ import TaskDTO from '../model/dto/TaskDTO.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
-import { EventEmitter } from 'node:events'
-import fs from 'fs'
 import SettingsService from './SettingsService.ts'
+import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
+import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -384,9 +384,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           let taskHandler: TaskHandler
 
           if (isNullish(pluginCache[task.pluginId])) {
-            taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
+            try {
+              taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
 
-            pluginCache[task.pluginId] = taskHandler
+              pluginCache[task.pluginId] = taskHandler
+            } catch (error) {
+              const msg = `暂停任务时，加载插件失败，error: ${error}`
+              LogUtil.warn('TaskService', msg)
+              return false
+            }
           } else {
             taskHandler = pluginCache[task.pluginId]
           }
@@ -503,6 +509,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task = new Task(task)
     task.status = TaskStatesEnum.FINISHED
     task.localWorksId = worksId
+    if (notNullish(task.id)) {
+      return this.updateById(task)
+    } else {
+      const msg = '任务标记为完成时，任务id意外为空'
+      LogUtil.error('TaskService', msg)
+      throw new Error(msg)
+    }
+  }
+
+  /**
+   * 暂停任务
+   * @param task 任务信息
+   */
+  pauseTask(task: Task) {
+    task = new Task()
+    task.status = TaskStatesEnum.PAUSE
     if (notNullish(task.id)) {
       return this.updateById(task)
     } else {
@@ -643,30 +665,29 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param ids id列表
    */
   public async selectScheduleList(ids: number[]): Promise<TaskScheduleDTO[]> {
-    // 检查全局变量是否存在
-    if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
-      return []
-    }
     let result: TaskScheduleDTO[] = []
     // 没有监听器的任务
     const noListenerIds: number[] = []
     ids.forEach((id: number) => {
       const listenerName = String(id)
-      // 如果有监听器，则从监听器获取任务进度，否则从数据库查询任务状态
-      if (global.taskTracker.listenerCount(listenerName) > 0) {
+      // 如果有追踪器，则从追踪器获取任务进度，否则从数据库查询任务状态
+      const taskTracker = this.getTaskTracker(id)
+      if (notNullish(taskTracker)) {
         const temp: TaskScheduleDTO = new TaskScheduleDTO()
         temp.id = id
-        global.taskTracker.emit(listenerName, (schedule: number) => {
-          temp.schedule = schedule
-          // 如果进度已经达到了100%，将状态设为完成，并且清除这个监听器
-          if (schedule >= 100) {
-            global.taskTracker.removeAllListeners(listenerName)
-            temp.status = TaskStatesEnum.FINISHED
-          } else {
-            temp.status = TaskStatesEnum.PROCESSING
-          }
-          result.push(temp)
-        })
+        if (taskTracker.bytesSum === 0) {
+          temp.schedule = 0
+        } else {
+          temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
+        }
+        // 如果进度已经达到了100%，将状态设为完成，并且清除这个监听器
+        if (temp.schedule >= 100) {
+          delete global.taskTracker[listenerName]
+          temp.status = TaskStatesEnum.FINISHED
+        } else {
+          temp.status = TaskStatesEnum.PROCESSING
+        }
+        result.push(temp)
       } else {
         noListenerIds.push(id)
       }
@@ -679,26 +700,107 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 暂停任务
+   * @param ids id列表
+   * @param mainWindow
+   */
+  public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
+    const taskTree = await this.dao.selectTaskTreeList(ids)
+
+    // 插件缓存
+    const pluginCache: { [id: string]: TaskHandler } = {}
+    const pluginLoader = new PluginLoader(mainWindow)
+
+    // 暂停任务的函数
+    const pauseSingleTask = async (child: Task) => {
+      // 加载并缓存插件和插件信息
+      let taskHandler: TaskHandler
+      if (isNullish(child.pluginId)) {
+        LogUtil.warn('TaskService', '暂停任务时，任务的pluginId意外为空，taskId: ', child.id)
+        return
+      }
+
+      if (isNullish(pluginCache[child.pluginId])) {
+        try {
+          taskHandler = await pluginLoader.loadTaskPlugin(child.pluginId as number)
+          pluginCache[child.pluginId] = taskHandler
+        } catch (error) {
+          const msg = `暂停任务时，加载插件失败，error: ${error}`
+          LogUtil.warn('TaskService', msg)
+          return
+        }
+      } else {
+        taskHandler = pluginCache[child.pluginId]
+      }
+
+      // 创建TaskPluginDTO对象
+      const taskPluginDTO = new TaskPluginDTO(child)
+      const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
+      if (isNullish(taskTracker)) {
+        LogUtil.info('TaskService', '暂停任务时，任务追踪器不存在，taskId: ', child.id)
+        return
+      }
+      if (isNullish(taskTracker.readStream)) {
+        LogUtil.info('TaskService', '暂停任务时，任务追踪器的读取流不存在，taskId: ', child.id)
+        return
+      }
+      taskPluginDTO.remoteStream = taskTracker.readStream
+
+      // 调用插件的pause方法
+      taskHandler.pause(taskPluginDTO).then(() => {
+        this.pauseTask(child)
+      })
+    }
+
+    for (const parent of taskTree) {
+      // 处理parent为单个任务的情况
+      if (!parent.isCollection) {
+        pauseSingleTask(parent)
+        continue
+      }
+
+      // 处理下级任务
+      const children = parent.children
+      if (isNullish(children) || children.length < 1) {
+        continue
+      }
+
+      for (const child of children) {
+        pauseSingleTask(child)
+      }
+    }
+  }
+
+  /**
    * 新增任务跟踪
-   * @param emitName 事件名称，会在全局变量taskTracker中创建以此为名的事件
+   * @param taskId 任务id，会在全局变量taskTracker中创建以此为名的属性
    * @param taskTracker 任务追踪器，包含任务的读取和写入流，以及资源大小
    * @param taskEndHandler 任务完成的承诺，得到解决后会清除对应的追踪事件
    */
   public addTaskTracker(
-    emitName: string,
-    taskTracker: { readStream: Readable; writeStream: fs.WriteStream; bytesSum: number },
+    taskId: string,
+    taskTracker: TaskTracker,
     taskEndHandler: Promise<unknown>
   ) {
     // 检查全局变量是否存在
     if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
-      global.taskTracker = new EventEmitter()
+      global.taskTracker = {}
     }
-    global.taskTracker.on(emitName, (callback: (schedule: number) => unknown) =>
-      callback((taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100)
-    )
-    // 确认任务结束后，延迟2秒清除其监听器
-    taskEndHandler.then(() =>
-      setTimeout(() => global.taskTracker.removeAllListeners(emitName), 2000)
-    )
+    global.taskTracker[taskId] = taskTracker
+    // 确认任务结束后，延迟2秒清除其追踪器
+    taskEndHandler.then(() => setTimeout(() => delete global.taskTracker[taskId], 2000))
+  }
+
+  /**
+   * 获取任务跟踪器
+   * @param taskId
+   */
+  public getTaskTracker(taskId: number): TaskTracker | undefined {
+    // 检查全局变量是否存在
+    if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
+      return
+    }
+    const listenerName = String(taskId)
+    return global.taskTracker[listenerName]
   }
 }

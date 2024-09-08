@@ -146,6 +146,9 @@ const api = {
   taskSelectScheduleList: (args) => {
     return Electron.ipcRenderer.invoke('task-selectScheduleList', args)
   },
+  taskPauseTaskTree: (args) => {
+    return Electron.ipcRenderer.invoke('task-pauseTaskTree', args)
+  },
 
   // Works
   worksQueryPage: (args) => {
