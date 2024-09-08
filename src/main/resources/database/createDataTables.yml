@@ -237,6 +237,7 @@ tables:
         include_mode          integer,
         include_task_id       integer,
         last_viewed           integer,
+        resource_complete     integer(1),
         create_time           integer,
         update_time           integer
       );

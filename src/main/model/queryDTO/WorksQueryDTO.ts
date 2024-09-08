@@ -83,6 +83,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    * 最后一次查看的时间
    */
   lastViewed: number | undefined | null
+  /**
+   * 资源保存完成
+   */
+  resourceComplete: boolean | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
     if (isNullish(worksQueryDTO)) {
@@ -106,6 +110,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
+      this.resourceComplete = undefined
     } else {
       super(worksQueryDTO)
       this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
@@ -127,6 +132,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.includeMode = worksQueryDTO.includeMode
       this.includeTaskId = worksQueryDTO.includeTaskId
       this.lastViewed = worksQueryDTO.lastViewed
+      this.resourceComplete = worksQueryDTO.resourceComplete
     }
   }
 }

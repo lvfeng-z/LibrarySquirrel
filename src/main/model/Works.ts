@@ -69,6 +69,10 @@ export default class Works extends BaseModel {
    * 最后一次查看的时间
    */
   lastViewed: number | undefined | null
+  /**
+   * 资源保存完成
+   */
+  resourceComplete: boolean | undefined | null
 
   constructor(works?: Works) {
     if (isNullish(works)) {
@@ -89,6 +93,7 @@ export default class Works extends BaseModel {
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
+      this.resourceComplete = undefined
     } else {
       super(works)
       this.filePath = works.filePath
@@ -107,6 +112,7 @@ export default class Works extends BaseModel {
       this.includeMode = works.includeMode
       this.includeTaskId = works.includeTaskId
       this.lastViewed = works.lastViewed
+      this.resourceComplete = works.resourceComplete
     }
   }
 }
