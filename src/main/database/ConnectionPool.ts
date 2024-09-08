@@ -147,14 +147,14 @@ export class ConnectionPool {
   /**
    * 获取虚拟锁
    */
-  public async acquireVisualLock(): Promise<void> {
+  public async acquireVisualLock(requester: string): Promise<void> {
     return new Promise((resolve) => {
       if (!this.visualLocked) {
-        LogUtil.debug(this.type(), '虚拟锁已锁定')
+        LogUtil.debug(this.type(), `虚拟锁已被${requester}锁定`)
         this.visualLocked = true
         resolve()
       } else {
-        LogUtil.debug(this.type(), '虚拟锁处于锁定状态，进入等待队列')
+        LogUtil.debug(this.type(), `虚拟锁处于锁定状态，${requester}进入等待队列`)
         this.visualLockQueue.push(() => resolve())
       }
     })
@@ -163,15 +163,15 @@ export class ConnectionPool {
   /**
    * 释放虚拟锁
    */
-  public releaseVisualLock(): void {
+  public releaseVisualLock(requester: string): void {
     if (this.visualLockQueue.length > 0) {
-      LogUtil.debug(this.type(), '虚拟锁转交下一个请求者')
+      LogUtil.debug(this.type(), `虚拟锁转交下一个请求者${requester}`)
       const next = this.visualLockQueue.shift()
       if (next) {
         next()
       }
     } else {
-      LogUtil.debug(this.type(), '释放虚拟锁')
+      LogUtil.debug(this.type(), `${requester}释放虚拟锁`)
       this.visualLocked = false
     }
   }

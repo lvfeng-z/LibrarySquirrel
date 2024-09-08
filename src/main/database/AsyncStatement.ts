@@ -23,10 +23,17 @@ export default class AsyncStatement {
    */
   private readonly injectedLock: boolean
 
-  constructor(statement: Database.Statement, holdingVisualLock: boolean) {
+  /**
+   * 调用者
+   * @private
+   */
+  private readonly caller: string
+
+  constructor(statement: Database.Statement, holdingVisualLock: boolean, caller: string) {
     this.statement = statement
     this.holdingVisualLock = holdingVisualLock
     this.injectedLock = holdingVisualLock
+    this.caller = caller
   }
 
   /**
@@ -37,7 +44,7 @@ export default class AsyncStatement {
     try {
       // 获取虚拟的排它锁
       if (!this.holdingVisualLock) {
-        await global.writingConnectionPool.acquireVisualLock()
+        await global.writingConnectionPool.acquireVisualLock(this.caller)
         this.holdingVisualLock = true
       }
       const runResult = this.statement.run(...params)
@@ -49,7 +56,7 @@ export default class AsyncStatement {
     } finally {
       // 释放虚拟的排它锁
       if (this.holdingVisualLock && !this.injectedLock) {
-        global.writingConnectionPool.releaseVisualLock()
+        global.writingConnectionPool.releaseVisualLock(this.caller)
       }
     }
   }

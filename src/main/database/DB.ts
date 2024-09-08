@@ -106,7 +106,7 @@ export default class DB {
     const connectionPromise = this.acquire(readOrWrite)
     return connectionPromise.then((connection) => {
       const stmt = connection.prepare(statement)
-      return new AsyncStatement(stmt, this.holdingVisualLock)
+      return new AsyncStatement(stmt, this.holdingVisualLock, this.caller)
     })
   }
 
@@ -149,7 +149,7 @@ export default class DB {
     try {
       // 开启事务之前获取虚拟的排它锁
       if (!this.holdingVisualLock) {
-        await global.writingConnectionPool.acquireVisualLock()
+        await global.writingConnectionPool.acquireVisualLock(this.caller)
         this.holdingVisualLock = true
       }
 
