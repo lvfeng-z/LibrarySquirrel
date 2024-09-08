@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream'
-import axios from 'axios'
+import axios, { AxiosHeaders } from 'axios'
 import * as fs from 'node:fs'
 
 export default class AryionTaskHandler {
@@ -33,16 +33,25 @@ export default class AryionTaskHandler {
    */
   async start(task) {
     const worksDTO = new WorksDTO()
-    const response = await axios.head(task.url)
+    const header = new AxiosHeaders('Range: bytes=0-1')
+    const headConfig = {
+      headers: header
+    }
+    const response = await axios.head(task.url, headConfig)
 
     // 获取响应头的一些信息
     // 文件大小
     worksDTO.resourceSize = response.headers.get('content-length')
+    // 是否支持接续
+    worksDTO.continuable = response.status === 206
     // 扩展名
     const fileType = response.headers.get('content-type')
     switch (fileType) {
       case 'video/mp4':
         worksDTO.filenameExtension = '.mp4'
+        break
+      case 'image/png':
+        worksDTO.filenameExtension = '.png'
         break
     }
     // 建议名称
@@ -60,24 +69,13 @@ export default class AryionTaskHandler {
 
     const config = {
       url: task.url,
-      responseType: 'stream',
-      headers: {
-        Range: `bytes=${0}-`
-      }
+      responseType: 'stream'
     }
 
     const stream = await axios.request(config)
 
     worksDTO.resourceStream = stream.data
 
-    // 添加暂停和恢复的控制逻辑
-    // process.on('SIGINT', () => {
-    //   if (!downloadPaused) {
-    //     pauseDownload(stream, writerStream);
-    //   } else {
-    //     resumeDownload(stream, writerStream);
-    //   }
-    // });
     return worksDTO
   }
 
@@ -260,6 +258,10 @@ class WorksDTO {
    * 作品资源的文件大小，单位：字节（Bytes）
    */
   resourceSize
+  /**
+   * 资源是否支持续传
+   */
+  continuable
 
   constructor() {
     this.siteId = undefined
@@ -279,6 +281,7 @@ class WorksDTO {
     this.siteTags = undefined
     this.resourceStream = undefined
     this.resourceSize = undefined
+    this.continuable = undefined
   }
 }
 
