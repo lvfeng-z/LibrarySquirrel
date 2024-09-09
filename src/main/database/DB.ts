@@ -1,8 +1,9 @@
 import BetterSqlite3 from 'better-sqlite3'
+import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
-import Database from 'better-sqlite3'
+import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 
 /**
  * 数据库链接池封装
@@ -115,11 +116,11 @@ export default class DB {
    */
   public release() {
     if (this.readingConnection != undefined) {
-      global.readingConnectionPool.release(this.readingConnection)
+      GlobalVarManager.get(GlobalVars.READING_CONNECTION_POOL).release(this.readingConnection)
       this.readingConnection = undefined
     }
     if (this.writingConnection != undefined) {
-      global.writingConnectionPool.release(this.writingConnection)
+      GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).release(this.writingConnection)
       this.writingConnection = undefined
     }
   }
@@ -149,7 +150,9 @@ export default class DB {
     try {
       // 开启事务之前获取虚拟的排它锁
       if (!this.holdingVisualLock) {
-        await global.writingConnectionPool.acquireVisualLock(this.caller)
+        await GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).acquireVisualLock(
+          this.caller
+        )
         this.holdingVisualLock = true
       }
 
@@ -171,7 +174,7 @@ export default class DB {
         LogUtil.info(this.caller, `${name}，ROLLBACK`)
 
         // 释放虚拟的排它锁
-        global.writingConnectionPool.releaseVisualLock()
+        GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
@@ -184,7 +187,7 @@ export default class DB {
     } finally {
       // 释放虚拟的排它锁
       if (this.holdingVisualLock && isStartPoint) {
-        global.writingConnectionPool.releaseVisualLock()
+        GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
         this.holdingVisualLock = false
       }
     }
@@ -202,8 +205,9 @@ export default class DB {
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection =
-            (await global.readingConnectionPool.acquire()) as BetterSqlite3.Database
+          this.readingConnection = (await GlobalVarManager.get(
+            GlobalVars.READING_CONNECTION_POOL
+          ).acquire()) as BetterSqlite3.Database
           this.readingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.readingConnection.function('REGEXP', (pattern, string) => {
@@ -220,8 +224,9 @@ export default class DB {
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection =
-            (await global.writingConnectionPool.acquire()) as BetterSqlite3.Database
+          this.writingConnection = (await GlobalVarManager.get(
+            GlobalVars.WRITING_CONNECTION_POOL
+          ).acquire()) as BetterSqlite3.Database
           this.writingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.writingConnection.function('REGEXP', (pattern, string) => {

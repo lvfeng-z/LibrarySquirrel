@@ -1,11 +1,12 @@
-import SettingsUtil from '../util/SettingsUtil.ts'
+import { defaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from '../model/utilModels/Settings.ts'
+import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 
 /**
  * 全量获取配置
  */
 function getSettings(): Settings {
-  return global.settings.get()
+  return global.SETTINGS.get()
 }
 
 /**
@@ -13,7 +14,7 @@ function getSettings(): Settings {
  */
 function saveSettings(settings: { path: string; value: unknown }[]) {
   for (const setting of settings) {
-    global.settings.set(setting.path, setting.value)
+    GlobalVarManager.get(GlobalVars.SETTINGS).set(setting.path, setting.value)
   }
 }
 
@@ -21,7 +22,7 @@ function saveSettings(settings: { path: string; value: unknown }[]) {
  * 重置配置
  */
 function resetSettings() {
-  SettingsUtil.defaultSettings()
+  defaultSettings()
 }
 export default {
   getSettings,

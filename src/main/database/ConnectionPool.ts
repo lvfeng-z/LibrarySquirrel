@@ -1,14 +1,5 @@
 import Database from 'better-sqlite3'
-import DatabaseUtil from '../util/DatabaseUtil.ts'
-import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-
-// 定义连接池配置
-export const POOL_CONFIG = {
-  maxConnections: 10, // 最大连接数
-  idleTimeout: 30000, // 连接空闲超时时间（毫秒）
-  databasePath: DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
-}
 
 interface ConnectionPoolConfig {
   maxConnections: number
@@ -243,9 +234,4 @@ export class ConnectionPool {
   //     )
   //   })
   // }
-}
-
-export default {
-  ConnectionPool,
-  POOL_CONFIG
 }

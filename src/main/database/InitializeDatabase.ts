@@ -6,8 +6,8 @@ import Database from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import logUtil from '../util/LogUtil.ts'
 import createDataTables from '../resources/database/createDataTables.yml?asset'
-import ConnectionPool from './ConnectionPool.ts'
 import DB from './DB.ts'
+import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 
 /**
  * @Description: 初始化数据库，同时创建一个全局连接池实例
@@ -25,13 +25,8 @@ async function InitializeDB() {
   logUtil.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
-  global.readingConnectionPool = new ConnectionPool.ConnectionPool(true, ConnectionPool.POOL_CONFIG)
-  logUtil.info('InitializeDataBase', '已创建读取连接池')
-  global.writingConnectionPool = new ConnectionPool.ConnectionPool(
-    false,
-    ConnectionPool.POOL_CONFIG
-  )
-  logUtil.info('InitializeDataBase', '已创建写入连接池')
+  GlobalVarManager.create(GlobalVars.READING_CONNECTION_POOL)
+  GlobalVarManager.create(GlobalVars.WRITING_CONNECTION_POOL)
 
   // 创建数据表
   // 读取当前数据库的数据表

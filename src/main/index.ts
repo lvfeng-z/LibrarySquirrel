@@ -8,7 +8,7 @@ import logUtil from './util/LogUtil.ts'
 import LogUtil from './util/LogUtil.ts'
 import fs from 'fs/promises'
 import FileSysUtil from './util/FileSysUtil.ts'
-import SettingsUtil from './util/SettingsUtil.ts'
+import { GlobalVarManager, GlobalVars } from './GlobalVar.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -45,7 +45,7 @@ function createWindow(): Electron.BrowserWindow {
 }
 
 // 初始化设置配置
-SettingsUtil.initializeSettingsConfig()
+GlobalVarManager.create(GlobalVars.SETTINGS)
 
 // 在ready之前注册一个自定义协议，用来加载本地文件
 Electron.protocol.registerSchemesAsPrivileged([
@@ -77,7 +77,7 @@ Electron.app.whenReady().then(() => {
 
   // 如何响应前面的workdir-resource自定义协议的请求
   Electron.protocol.handle('workdir-resource', async (request) => {
-    const workdir = global.settings.get('workdir') as string
+    const workdir = GlobalVarManager.get(GlobalVars.SETTINGS).get('workdir') as string
 
     // 使用正则表达式测试URL是否符合预期格式
     if (!/^workdir-resource:\/\/workdir\//i.test(request.url)) {

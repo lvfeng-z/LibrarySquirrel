@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
+import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 
 /**
  * 封装的Better-SQLit3 Statement类
@@ -44,7 +45,9 @@ export default class AsyncStatement {
     try {
       // 获取虚拟的排它锁
       if (!this.holdingVisualLock) {
-        await global.writingConnectionPool.acquireVisualLock(this.caller)
+        await GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).acquireVisualLock(
+          this.caller
+        )
         this.holdingVisualLock = true
       }
       const runResult = this.statement.run(...params)
@@ -56,7 +59,7 @@ export default class AsyncStatement {
     } finally {
       // 释放虚拟的排它锁
       if (this.holdingVisualLock && !this.injectedLock) {
-        global.writingConnectionPool.releaseVisualLock(this.caller)
+        GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
       }
     }
   }

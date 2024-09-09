@@ -30,6 +30,7 @@ import StringUtil from '../util/StringUtil.ts'
 import { promisify } from 'node:util'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
+import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -624,25 +625,29 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       )
 
       // 调用插件的pause方法
-      taskHandler.resume(taskPluginDTO).then((response: PluginResumeResponse) => {
-        // 根据未完成的文件创建接续写入流
-        if (StringUtil.isBlank(child.pendingDownloadPath)) {
-          LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
-          return
-        }
-        // 判断返回的流是否可接续在已下载部分末尾
-        if (response.continuable) {
-          if (isNullish(response.remoteStream)) {
-            LogUtil.error('TaskService', '恢复任务时，插件未返回读取流，taskId: ', child.id)
-            return
-          }
-          const writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
-          writeStreamPromise(response.remoteStream, writeStream)
-        } else {
-          // todo 删除原有资源，保存新的资源
-          fs.unlinkSync(child.pendingDownloadPath)
-        }
-      })
+      const response: PluginResumeResponse = await taskHandler.resume(taskPluginDTO)
+
+      // 根据未完成的文件创建接续写入流
+      if (StringUtil.isBlank(child.pendingDownloadPath)) {
+        LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
+        return
+      }
+
+      if (isNullish(response.remoteStream)) {
+        LogUtil.error('TaskService', '恢复任务时，插件未返回读取流，taskId: ', child.id)
+        return
+      }
+
+      // 判断返回的流是否可接续在已下载部分末尾
+      let writeStream: fs.WriteStream
+      if (response.continuable) {
+        writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
+      } else {
+        // todo 删除原有资源，保存新的资源
+        fs.unlinkSync(child.pendingDownloadPath)
+        writeStream = fs.createWriteStream(child.pendingDownloadPath)
+      }
+      writeStreamPromise(response.remoteStream, writeStream)
     }
 
     // 读取设置中的最大并行数
@@ -889,7 +894,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
         // 如果进度已经达到了100%，将状态设为完成，并且清除这个监听器
         if (temp.schedule >= 100) {
-          delete global.taskTracker[listenerName]
+          delete GlobalVarManager.get(GlobalVars.TASK_TRACKER).taskTracker[listenerName]
           temp.status = TaskStatesEnum.FINISHED
         } else {
           temp.status = TaskStatesEnum.PROCESSING
@@ -919,11 +924,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   ) {
     // 检查全局变量是否存在
     if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
-      global.taskTracker = {}
+      GlobalVarManager.create(GlobalVars.TASK_TRACKER)
     }
-    global.taskTracker[taskId] = taskTracker
+    GlobalVarManager.get(GlobalVars.TASK_TRACKER)[taskId] = taskTracker
     // 确认任务结束后，延迟2秒清除其追踪器
-    taskEndHandler.then(() => setTimeout(() => delete global.taskTracker[taskId], 2000))
+    taskEndHandler.then(() =>
+      setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[taskId], 2000)
+    )
   }
 
   /**
@@ -936,6 +943,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       return
     }
     const listenerName = String(taskId)
-    return global.taskTracker[listenerName]
+    return GlobalVarManager.get(GlobalVars.TASK_TRACKER)[listenerName]
   }
 }
