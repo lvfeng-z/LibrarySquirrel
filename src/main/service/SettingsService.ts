@@ -6,7 +6,7 @@ import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
  * 全量获取配置
  */
 function getSettings(): Settings {
-  return global.SETTINGS.get()
+  return GlobalVarManager.get(GlobalVars.SETTINGS).store as Settings
 }
 
 /**
