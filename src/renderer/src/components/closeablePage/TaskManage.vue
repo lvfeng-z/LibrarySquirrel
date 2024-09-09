@@ -472,9 +472,7 @@ async function deleteTask(ids: number[]) {
               </el-tooltip>
             </el-button-group>
             <el-progress
-              v-if="
-                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
-              "
+              v-if="row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.PAUSE"
               style="width: 100%"
               :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
               text-inside
