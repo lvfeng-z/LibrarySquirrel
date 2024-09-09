@@ -1,12 +1,12 @@
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import path from 'path'
 import DB from '../database/DB.ts'
-import FileSysUtil from './FileSysUtil.ts'
+import { getRootDir } from './FileSysUtil.ts'
 
 /**
  * 查询数据库所有数据表的名称
  */
-async function listAllDataTables(): Promise<string[]> {
+export async function listAllDataTables(): Promise<string[]> {
   const db = new DB('DatabaseUtil')
   try {
     const statement = "select name from sqlite_master where name != 'sqlite_sequence'"
@@ -21,14 +21,14 @@ async function listAllDataTables(): Promise<string[]> {
 /**
  * 获取数据库文件路径
  */
-function getDataBasePath() {
-  return path.join(FileSysUtil.getRootDir(), DataBaseConstant.DB_PATH)
+export function getDataBasePath() {
+  return path.join(getRootDir(), DataBaseConstant.DB_PATH)
 }
 
 /**
  * 基于对象生成一个sqlite3接受的纯对象
  */
-function toObjAcceptedBySqlite3(obj: object | undefined): Record<string, unknown> {
+export function toObjAcceptedBySqlite3(obj: object | undefined): Record<string, unknown> {
   if (obj === undefined) {
     return {}
   }
@@ -45,10 +45,4 @@ function toObjAcceptedBySqlite3(obj: object | undefined): Record<string, unknown
         return [key, value]
       })
   )
-}
-
-export default {
-  listAllDataTables,
-  getDataBasePath,
-  toObjAcceptedBySqlite3
 }

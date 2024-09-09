@@ -6,7 +6,7 @@ import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import logUtil from '../util/LogUtil.ts'
-import DatabaseUtil from '../util/DatabaseUtil.ts'
+import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
@@ -63,7 +63,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       entity.updateTime = Date.now()
 
       // 转换为sqlite3接受的数据类型
-      const plainObject = DatabaseUtil.toObjAcceptedBySqlite3(entity)
+      const plainObject = toObjAcceptedBySqlite3(entity)
 
       const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
       const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
@@ -99,7 +99,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         entity.createTime = Date.now()
         entity.updateTime = Date.now()
         // 转换为sqlite3接受的数据类型
-        return DatabaseUtil.toObjAcceptedBySqlite3(entity)
+        return toObjAcceptedBySqlite3(entity)
       })
       plainObject = ObjectUtil.alignProperties(plainObject, null)
       // 按照第一个对象的属性设置insert子句的value部分
@@ -207,7 +207,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       updateData.updateTime = Date.now()
 
       // 生成一个不包含值为undefined的属性的对象
-      const existingValue = DatabaseUtil.toObjAcceptedBySqlite3(updateData)
+      const existingValue = toObjAcceptedBySqlite3(updateData)
       const keys = Object.keys(existingValue)
       const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
       const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
@@ -235,7 +235,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       let plainObjects = entities.map((entity) => {
         entity.updateTime = Date.now()
         // 转换为sqlite3接受的数据类型
-        return DatabaseUtil.toObjAcceptedBySqlite3(entity)
+        return toObjAcceptedBySqlite3(entity)
       })
       plainObjects = ObjectUtil.alignProperties(plainObjects, null)
       // 按照第一个对象的属性设置update子句的value部分
@@ -273,7 +273,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         entity.createTime = Date.now()
         entity.updateTime = Date.now()
         // 转换为sqlite3接受的数据类型
-        return DatabaseUtil.toObjAcceptedBySqlite3(entity)
+        return toObjAcceptedBySqlite3(entity)
       })
       plainObject = ObjectUtil.alignProperties(plainObject, null)
       // 按照第一个对象的属性设置insert子句的value部分
@@ -824,7 +824,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         fromClause = this.tableName
       }
       // 查询数据总量，计算页码数量
-      const notNullishValue = DatabaseUtil.toObjAcceptedBySqlite3(page.query)
+      const notNullishValue = toObjAcceptedBySqlite3(page.query)
       let countSql = `SELECT COUNT(*) AS total FROM ${fromClause}`
       if (whereClause !== undefined) {
         const tempWhereClause = StringUtil.concatPrefixIfNotPresent(whereClause, 'where ')

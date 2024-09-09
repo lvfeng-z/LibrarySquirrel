@@ -1,6 +1,6 @@
 import DB from '../database/DB.ts'
 import Database from 'better-sqlite3'
-import DatabaseUtil from '../util/DatabaseUtil.ts'
+import { getDataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import pLimit from 'p-limit'
 
@@ -29,7 +29,7 @@ async function insertLocalTag10W() {
 }
 
 async function transactionTest() {
-  const db = new Database(DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME)
+  const db = new Database(getDataBasePath() + DataBaseConstant.DB_FILE_NAME)
   const p1 = db.prepare(
     "insert into site_author (site_author_id, site_author_name) values (1, 'test1')"
   )

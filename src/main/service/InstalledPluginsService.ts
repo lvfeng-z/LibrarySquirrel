@@ -1,6 +1,6 @@
 import Path from 'path'
 import InstalledPluginsDao from '../dao/InstalledPluginsDao.ts'
-import FileSysUtil from '../util/FileSysUtil.ts'
+import { getRootDir } from '../util/FileSysUtil.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import BaseService from './BaseService.ts'
 import InstalledPluginsQueryDTO from '../model/queryDTO/InstalledPluginsQueryDTO.ts'
@@ -35,7 +35,7 @@ export default class InstalledPluginsService extends BaseService<
 
     return Path.join(
       'file://',
-      FileSysUtil.getRootDir(),
+      getRootDir(),
       resourcePath,
       installedPlugin.author as string,
       installedPlugin.domain as string,

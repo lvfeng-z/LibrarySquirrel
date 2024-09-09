@@ -8,7 +8,7 @@ import SettingsService from '../service/SettingsService.ts'
  * 检查目录是否存在，如果不存在则创建此目录
  * @param dirPath
  */
-async function createDirIfNotExists(dirPath: string): Promise<void> {
+export async function createDirIfNotExists(dirPath: string): Promise<void> {
   try {
     await fs.access(dirPath, fs.constants.F_OK | fs.constants.W_OK)
   } catch (error: any) {
@@ -27,7 +27,7 @@ async function createDirIfNotExists(dirPath: string): Promise<void> {
  * 将类似 Unix 风格但以盘符开头的路径转换为标准的 Windows 路径格式
  * @param originalPath
  */
-function convertPath(originalPath) {
+export function convertPath(originalPath) {
   const match = originalPath.match(/^\/([a-zA-Z])\/(.*)$/)
   if (match) {
     // 为 Windows 系统转换路径格式
@@ -40,7 +40,7 @@ function convertPath(originalPath) {
 /**
  * 获得应用当前的根目录
  */
-function getRootDir(): string {
+export function getRootDir(): string {
   let root: string
   const NODE_ENV = process.env.NODE_ENV
   if (NODE_ENV == 'development') {
@@ -54,7 +54,7 @@ function getRootDir(): string {
 /**
  * 打开一个
  */
-async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
+export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
   const defaultPath = SettingsService.getSettings()['workdir']
   const properties: Array<'openFile' | 'openDirectory' | 'multiSelections'> = ['multiSelections']
   if (openFile) {
@@ -66,11 +66,4 @@ async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnVa
     defaultPath: defaultPath,
     properties: properties
   })
-}
-
-export default {
-  createDirIfNotExists,
-  convertPath,
-  getRootDir,
-  dirSelect
 }

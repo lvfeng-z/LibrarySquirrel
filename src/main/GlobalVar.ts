@@ -3,7 +3,7 @@ import { ConnectionPool } from './database/ConnectionPool.ts'
 import Store from 'electron-store'
 import { defaultSettings } from './util/SettingsUtil.ts'
 import { TaskTracker } from './model/utilModels/TaskTracker.ts'
-import DatabaseUtil from './util/DatabaseUtil.ts'
+import { getDataBasePath } from './util/DatabaseUtil.ts'
 import DataBaseConstant from './constant/DataBaseConstant.ts'
 
 export enum GlobalVars {
@@ -23,7 +23,7 @@ type GlobalVarsMapping = {
 const POOL_CONFIG = {
   maxConnections: 10, // 最大连接数
   idleTimeout: 30000, // 连接空闲超时时间（毫秒）
-  databasePath: DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
+  databasePath: getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
 }
 export class GlobalVarManager {
   public static create(globalVar: GlobalVars) {

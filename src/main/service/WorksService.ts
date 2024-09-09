@@ -7,7 +7,7 @@ import SettingsService from './SettingsService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
 import { promisify } from 'node:util'
-import FileSysUtil from '../util/FileSysUtil.ts'
+import { createDirIfNotExists } from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
@@ -128,7 +128,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       }
 
       try {
-        await FileSysUtil.createDirIfNotExists(worksDTO.fullSaveDir)
+        await createDirIfNotExists(worksDTO.fullSaveDir)
         // 创建写入流
         const fullPath = path.join(worksDTO.fullSaveDir, worksDTO.fileName)
         const writeStream = fs.createWriteStream(fullPath)

@@ -3,7 +3,7 @@ import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import WorksSet from '../model/WorksSet.ts'
 import DB from '../database/DB.ts'
 import LogUtil from '../util/LogUtil.ts'
-import DatabaseUtil from '../util/DatabaseUtil.ts'
+import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import { notNullish } from '../util/CommonUtil.ts'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
@@ -27,7 +27,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
     const whereClause = whereClauseAndQuery.whereClause
     let modifiedQuery
     if (notNullish(whereClauseAndQuery.query)) {
-      modifiedQuery = DatabaseUtil.toObjAcceptedBySqlite3(whereClauseAndQuery.query)
+      modifiedQuery = toObjAcceptedBySqlite3(whereClauseAndQuery.query)
     }
     const statement = `select *
                        from works_set ${whereClause}`

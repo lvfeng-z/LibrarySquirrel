@@ -7,7 +7,7 @@ import ServiceExposer from './service/ServiceExposer.ts'
 import logUtil from './util/LogUtil.ts'
 import LogUtil from './util/LogUtil.ts'
 import fs from 'fs/promises'
-import FileSysUtil from './util/FileSysUtil.ts'
+import { convertPath } from './util/FileSysUtil.ts'
 import { GlobalVarManager, GlobalVars } from './GlobalVar.ts'
 
 function createWindow(): Electron.BrowserWindow {
@@ -44,9 +44,6 @@ function createWindow(): Electron.BrowserWindow {
   return mainWindow
 }
 
-// 初始化设置配置
-GlobalVarManager.create(GlobalVars.SETTINGS)
-
 // 在ready之前注册一个自定义协议，用来加载本地文件
 Electron.protocol.registerSchemesAsPrivileged([
   {
@@ -75,6 +72,9 @@ Electron.app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // 初始化设置配置
+  GlobalVarManager.create(GlobalVars.SETTINGS)
+
   // 如何响应前面的workdir-resource自定义协议的请求
   Electron.protocol.handle('workdir-resource', async (request) => {
     const workdir = GlobalVarManager.get(GlobalVars.SETTINGS).get('workdir') as string
@@ -90,8 +90,7 @@ Electron.app.whenReady().then(() => {
       const decodedUrl = decodeURIComponent(
         Path.join(workdir, request.url.replace(/^workdir-resource:\/\/workdir\//i, ''))
       )
-      const fullPath =
-        process.platform === 'win32' ? FileSysUtil.convertPath(decodedUrl) : decodedUrl
+      const fullPath = process.platform === 'win32' ? convertPath(decodedUrl) : decodedUrl
 
       const data = await fs.readFile(fullPath) // 异步读取文件
       return new Response(data) // 返回文件
