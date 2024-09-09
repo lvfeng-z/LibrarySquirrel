@@ -331,6 +331,117 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 任务等待列表
     const activeProcesses: Promise<boolean>[] = []
 
+    // 处理任务集合的状态的函数
+    const handleRootStatus = (rootId: number) => {
+      const root = taskTree.find((task) => task.id === rootId)
+      if (isNullish(root)) {
+        return
+      }
+
+      if (notNullish(root.children) && root.children.length > 0) {
+        const processing = root.children.some((child) => TaskStatesEnum.PROCESSING === child.status)
+        if (processing) {
+          return
+        } else {
+          const finished = root.children.filter(
+            (child) => TaskStatesEnum.FINISHED === child.status
+          ).length
+          const failed = root.children.filter(
+            (child) => TaskStatesEnum.FAILED === child.status
+          ).length
+          if (finished > 0 && failed > 0) {
+            root.status = TaskStatesEnum.PARTLY_FINISHED
+          } else if (finished > 0) {
+            root.status = TaskStatesEnum.FINISHED
+          } else {
+            root.status = TaskStatesEnum.FAILED
+          }
+        }
+      } else {
+        root.status = TaskStatesEnum.FINISHED
+      }
+      if (TaskStatesEnum.PROCESSING !== root.status) {
+        this.dao.refreshTaskStatus(root.id as number)
+      }
+    }
+
+    // 保存作品资源和作品信息的函数
+    const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
+      // 校验任务的插件id
+      if (isNullish(task.pluginId)) {
+        const msg = `任务的插件id意外为空，taskId: ${task.id}`
+        LogUtil.error('TaskService', msg)
+        return false
+      }
+
+      // 加载并缓存插件和插件信息
+      let taskHandler: TaskHandler
+
+      if (isNullish(pluginCache[task.pluginId])) {
+        try {
+          taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
+
+          pluginCache[task.pluginId] = taskHandler
+        } catch (error) {
+          const msg = `暂停任务时，加载插件失败，error: ${error}`
+          LogUtil.error('TaskService', msg)
+          return false
+        }
+      } else {
+        taskHandler = pluginCache[task.pluginId]
+      }
+
+      const worksDTO: WorksPluginDTO = await taskHandler.start(task)
+      worksDTO.includeTaskId = task.id
+
+      // 保存远程资源是否可接续
+      task.continuable = worksDTO.continuable
+      const updateContinuableTask = new Task(task)
+      await this.updateById(updateContinuableTask)
+
+      // 生成作品保存用的信息
+      const saveWorksInfoService = new WorksService()
+      const worksSaveInfo = saveWorksInfoService.generateWorksSaveInfo(worksDTO)
+
+      // 保存作品信息
+      await saveWorksInfoService.saveWorksInfo(worksSaveInfo)
+
+      // 保存作品资源和修改任务状态的事务
+      const db = new DB('TaskService')
+      try {
+        return await db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
+          async (transactionDB) => {
+            const taskService = new TaskService(transactionDB)
+            const worksService = new WorksService(transactionDB)
+
+            return worksService
+              .saveWorksResource(worksSaveInfo, limit)
+              .then(async (savedWorks) => {
+                task.status = TaskStatesEnum.FINISHED
+                await worksService.resourceFinished(savedWorks.id as number)
+                return taskService.finishTask(task, savedWorks.id as number)
+              })
+              .then(() => {
+                counter++
+                handleRootStatus(task.pid as number)
+                return true
+              })
+              .catch(async (error) => {
+                LogUtil.error('TaskService', '保存作品失败，error: ', error)
+                task.status = TaskStatesEnum.FAILED
+                return taskService.taskFailed(task).then(() => {
+                  handleRootStatus(task.pid as number)
+                  return false
+                })
+              })
+          },
+          'startTask'
+        )
+      } finally {
+        db.release()
+      }
+    }
+
     for (const parent of taskTree) {
       const isCollection = notNullish(parent.children) && parent.children.length > 0
       const tasks = isCollection ? (parent.children as TaskDTO[]) : [parent]
@@ -339,131 +450,21 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       await this.dao.updateById(parent.id as number, tempParent)
 
       // 尝试开始任务
-      try {
-        // 处理任务集合的状态
-        const handleRootStatus = (rootId: number) => {
-          const root = taskTree.find((task) => task.id === rootId)
-          if (isNullish(root)) {
-            return
-          }
+      // 读取设置中的最大并行数
+      const settings = SettingsService.getSettings()
+      const maxSaveWorksPromise =
+        settings.importSettings.maxParallelImport >= 1
+          ? settings.importSettings.maxParallelImport
+          : 1
+      const limit = pLimit(maxSaveWorksPromise)
 
-          if (notNullish(root.children) && root.children.length > 0) {
-            const processing = root.children.some(
-              (child) => TaskStatesEnum.PROCESSING === child.status
-            )
-            if (processing) {
-              return
-            } else {
-              const finished = root.children.filter(
-                (child) => TaskStatesEnum.FINISHED === child.status
-              ).length
-              const failed = root.children.filter(
-                (child) => TaskStatesEnum.FAILED === child.status
-              ).length
-              if (finished > 0 && failed > 0) {
-                root.status = TaskStatesEnum.PARTLY_FINISHED
-              } else if (finished > 0) {
-                root.status = TaskStatesEnum.FINISHED
-              } else {
-                root.status = TaskStatesEnum.FAILED
-              }
-            }
-          } else {
-            root.status = TaskStatesEnum.FINISHED
-          }
-          if (TaskStatesEnum.PROCESSING !== root.status) {
-            this.dao.refreshTaskStatus(root.id as number)
-          }
-        }
-
-        // 用于并行保存的过程
-        const savingProcess = async (task: Task, limit: pLimit.Limit): Promise<boolean> => {
-          // 校验任务的插件id
-          if (isNullish(task.pluginId)) {
-            const msg = `任务的插件id意外为空，taskId: ${task.id}`
-            LogUtil.error('TaskService', msg)
-            return false
-          }
-
-          // 加载并缓存插件和插件信息
-          let taskHandler: TaskHandler
-
-          if (isNullish(pluginCache[task.pluginId])) {
-            try {
-              taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
-
-              pluginCache[task.pluginId] = taskHandler
-            } catch (error) {
-              const msg = `暂停任务时，加载插件失败，error: ${error}`
-              LogUtil.error('TaskService', msg)
-              return false
-            }
-          } else {
-            taskHandler = pluginCache[task.pluginId]
-          }
-
-          const worksDTO: WorksPluginDTO = await taskHandler.start(task)
-          worksDTO.includeTaskId = task.id
-
-          // 远程资源是否可接续
-          task.continuable = worksDTO.continuable
-          await this.updateById(task)
-
-          // 保存资源
-          const saveWorksResourceService = new WorksService()
-          const savedWorks = await saveWorksResourceService.saveWorksResource(worksDTO, limit)
-
-          // 保存作品信息和修改任务状态的事务
-          const db = new DB('TaskService')
-          try {
-            return await db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
-              async (transactionDB) => {
-                const taskService = new TaskService(transactionDB)
-                const worksService = new WorksService(transactionDB)
-
-                return worksService
-                  .saveWorksInfo(savedWorks)
-                  .then(async (worksId) => {
-                    task.status = TaskStatesEnum.FINISHED
-                    return taskService.finishTask(task, worksId)
-                  })
-                  .then(() => {
-                    counter++
-                    handleRootStatus(task.pid as number)
-                    return true
-                  })
-                  .catch(async (error) => {
-                    LogUtil.error('TaskService', '保存作品失败，error: ', error)
-                    task.status = TaskStatesEnum.FAILED
-                    return taskService.taskFailed(task).then(() => {
-                      handleRootStatus(task.pid as number)
-                      return false
-                    })
-                  })
-              },
-              'startTask'
-            )
-          } finally {
-            db.release()
-          }
-        }
-
-        // 读取设置中的最大并行数
-        const settings = SettingsService.getSettings()
-        const maxSaveWorksPromise =
-          settings.importSettings.maxParallelImport >= 1
-            ? settings.importSettings.maxParallelImport
-            : 1
-        const limit = pLimit(maxSaveWorksPromise)
-
-        for (const task of tasks) {
-          task.status = TaskStatesEnum.PROCESSING
-          const activeProcess = savingProcess(task, limit)
-          activeProcesses.push(activeProcess)
-        }
-      } catch (error) {
-        LogUtil.error('TaskService', '开始任务时出错，error: ', error)
-        throw error
+      for (const task of tasks) {
+        task.status = TaskStatesEnum.PROCESSING
+        const activeProcess = savingProcess(task, limit).catch((error) => {
+          LogUtil.error('TaskService', '开始任务时出错，error: ', error)
+          throw error
+        })
+        activeProcesses.push(activeProcess)
       }
     }
 
@@ -625,7 +626,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 调用插件的pause方法
       taskHandler.resume(taskPluginDTO).then((response: PluginResumeResponse) => {
         // 根据未完成的文件创建接续写入流
-        if (isNullish(child.pendingDownloadPath) || StringUtil.isBlank(child.pendingDownloadPath)) {
+        if (StringUtil.isBlank(child.pendingDownloadPath)) {
           LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
           return
         }
@@ -638,7 +639,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           const writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
           writeStreamPromise(response.remoteStream, writeStream)
         } else {
-          // todo 继续下载的情况下，作品信息还没有保存到数据库，同时插件的继续下载函数不返回作品信息，导致下载完成后没有办法保存作品信息，应该把作品创建时保存资源和作品信息的顺序调整未先保存作品信息，在保存资源
+          // todo 删除原有资源，保存新的资源
           fs.unlinkSync(child.pendingDownloadPath)
         }
       })

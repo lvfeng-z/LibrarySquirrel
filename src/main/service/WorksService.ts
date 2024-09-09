@@ -27,6 +27,7 @@ import { Readable } from 'node:stream'
 import Task from '../model/Task.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
+import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -34,73 +35,102 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   /**
-   * 保存作品资源
-   * @param worksDTO
-   * @param limit 保存线程并发限制
+   * 生成保存作品用的信息
+   * @param worksDTO 插件返回的作品DTO
    */
-  async saveWorksResource(worksDTO: WorksPluginDTO, limit?: Limit): Promise<WorksDTO> {
+  public generateWorksSaveInfo(worksDTO: WorksPluginDTO): WorksSaveDTO {
+    const result = new WorksSaveDTO(worksDTO)
     // 读取设置中的工作目录信息
     const settings = SettingsService.getSettings() as { workdir: string }
     const workdir = settings.workdir
     if (StringUtil.isBlank(workdir)) {
-      const msg = `保存资源时，工作目录意外为空，taskId: ${worksDTO.includeTaskId}`
+      const msg = `保存资源时，工作目录意外为空，taskId: ${result.includeTaskId}`
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
+    try {
+      // 处理作者信息
+      const tempName = this.getAuthorNameFromAuthorDTO(result)
+      const authorName = tempName === undefined ? 'unknownAuthor' : tempName
+
+      // 作品信息
+      const siteWorksName =
+        result.siteWorksName === undefined ? 'unknownWorksName' : result.siteWorksName
+
+      // 资源状态
+      result.resourceComplete = false
+
+      // 保存路径
+      const fileName = `${authorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
+      const relativeSavePath = path.join('/includeDir', authorName)
+      result.fileName = fileName
+      result.fullSaveDir = path.join(workdir, relativeSavePath)
+      result.filePath = path.join(relativeSavePath, fileName)
+      result.workdir = workdir
+
+      return result
+    } catch (error) {
+      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
+      LogUtil.error('WorksService', msg)
+      throw error
+    }
+  }
+
+  /**
+   * 保存作品资源
+   * @param worksDTO
+   * @param limit 保存线程并发限制
+   */
+  async saveWorksResource(worksDTO: WorksSaveDTO, limit?: Limit): Promise<WorksDTO> {
     // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
     if (
       Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
       worksDTO.resourceStream !== undefined &&
       worksDTO.resourceStream !== null
     ) {
+      const writeStreamPromise = promisify(
+        (readable: Readable, writable: fs.WriteStream, callback) => {
+          let errorOccurred = false
+
+          readable.on('error', (err) => {
+            errorOccurred = true
+            LogUtil.error('WorksService', `readable出错${err}`)
+            callback(err)
+          })
+
+          writable.on('error', (err) => {
+            errorOccurred = true
+            LogUtil.error('WorksService', `writable出错${err}`)
+            callback(err)
+          })
+
+          readable.on('end', () => {
+            if (!errorOccurred) {
+              writable.end()
+              callback(null)
+            }
+          })
+          readable.pipe(writable)
+        }
+      )
+
+      // 保存资源
+      // 创建保存目录
+      if (StringUtil.isBlank(worksDTO.fullSaveDir)) {
+        const msg = `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
+        LogUtil.error('WorksService', msg)
+        throw new Error(msg)
+      }
+      if (StringUtil.isBlank(worksDTO.fileName)) {
+        const msg = `保存作品资源时，作品的fileName意外为空，worksId: ${worksDTO.id}`
+        LogUtil.error('WorksService', msg)
+        throw new Error(msg)
+      }
+
       try {
-        // 处理作者信息
-        const tempName = this.getAuthorNameFromAuthorDTO(worksDTO)
-        const authorName = tempName === undefined ? 'unknownAuthor' : tempName
-
-        // 作品信息
-        const siteWorksName =
-          worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
-
-        // 保存路径
-        const fileName = `${authorName}_${siteWorksName}_${Math.random()}${worksDTO.filenameExtension}`
-        worksDTO.fileName = fileName
-        const relativeSavePath = path.join('/includeDir', authorName)
-        const fullSavePath = path.join(workdir, relativeSavePath)
-        worksDTO.filePath = path.join(relativeSavePath, fileName)
-        worksDTO.workdir = workdir
-
-        const writeStreamPromise = promisify(
-          (readable: Readable, writable: fs.WriteStream, callback) => {
-            let errorOccurred = false
-
-            readable.on('error', (err) => {
-              errorOccurred = true
-              LogUtil.error('WorksService', `readable出错${err}`)
-              callback(err)
-            })
-
-            writable.on('error', (err) => {
-              errorOccurred = true
-              LogUtil.error('WorksService', `writable出错${err}`)
-              callback(err)
-            })
-
-            readable.on('end', () => {
-              if (!errorOccurred) {
-                writable.end()
-                callback(null)
-              }
-            })
-            readable.pipe(writable)
-          }
-        )
-
-        // 保存资源
-        // 创建保存目录
-        await FileSysUtil.createDirIfNotExists(fullSavePath)
+        await FileSysUtil.createDirIfNotExists(worksDTO.fullSaveDir)
         // 创建写入流
-        const fullPath = path.join(fullSavePath, fileName)
+        const fullPath = path.join(worksDTO.fullSaveDir, worksDTO.fileName)
         const writeStream = fs.createWriteStream(fullPath)
         // 数据写入量追踪器
         const taskTracker: TaskTracker = {
@@ -109,7 +139,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
         // 文件的写入路径保存到任务中
-        const taskService = new TaskService()
+        let taskService: TaskService
+        if (this.injectedDB) {
+          taskService = new TaskService(this.db)
+        } else {
+          taskService = new TaskService()
+        }
         const sourceTask = new Task()
         sourceTask.id = worksDTO.includeTaskId
         sourceTask.pendingDownloadPath = fullPath
@@ -261,6 +296,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         db.release()
       }
     }
+  }
+
+  /**
+   * 作品的资源状态改为已完成
+   * @param worksId 作品id
+   */
+  public async resourceFinished(worksId: number) {
+    const works = new Works()
+    works.id = worksId
+    works.resourceComplete = true
+    return this.updateById(works)
   }
 
   /**
