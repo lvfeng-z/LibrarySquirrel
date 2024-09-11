@@ -2,9 +2,8 @@ import Electron from 'electron'
 import Path from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import InitializeDatabase from './database/InitializeDatabase.ts'
+import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
-import logUtil from './util/LogUtil.ts'
 import LogUtil from './util/LogUtil.ts'
 import fs from 'fs/promises'
 import { convertPath } from './util/FileSysUtil.ts'
@@ -72,8 +71,13 @@ Electron.app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 初始化设置配置
-  GlobalVarManager.create(GlobalVars.SETTINGS)
+  // IPC test
+  Electron.ipcMain.on('ping', () => console.log('pong'))
+
+  const mainWindow = createWindow()
+
+  // 配置日志
+  LogUtil.initializeLogSetting()
 
   // 如何响应前面的workdir-resource自定义协议的请求
   Electron.protocol.handle('workdir-resource', async (request) => {
@@ -100,16 +104,14 @@ Electron.app.whenReady().then(() => {
     }
   })
 
-  // 配置日志设置
-  logUtil.initializeLogSetting()
+  // 初始化设置
+  GlobalVarManager.create(GlobalVars.SETTINGS)
 
-  // IPC test
-  Electron.ipcMain.on('ping', () => console.log('pong'))
-
-  const mainWindow = createWindow()
+  // 初始化任务追踪器
+  GlobalVarManager.create(GlobalVars.TASK_TRACKER)
 
   // 初始化数据库
-  InitializeDatabase.InitializeDB().then(() => {
+  InitializeDB().then(() => {
     ServiceExposer.exposeService(mainWindow)
   })
 

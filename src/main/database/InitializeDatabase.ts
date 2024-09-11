@@ -13,7 +13,7 @@ import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
  * @Description: 初始化数据库，同时创建一个全局连接池实例
  * @CreationDate 2023-05-10 13:44:48
  */
-async function InitializeDB() {
+export async function InitializeDB() {
   const dbPath = getDataBasePath()
   // 确认数据库文件路径是否存在
   await createDirIfNotExists(dbPath)
@@ -58,8 +58,4 @@ async function InitializeDB() {
       }
     }
   })
-}
-
-export default {
-  InitializeDB
 }
