@@ -31,6 +31,7 @@ import { promisify } from 'node:util'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
+import path from 'path'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -406,21 +407,30 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 保存作品信息
       await saveWorksInfoService.saveWorksInfo(worksSaveInfo)
+      // 文件的写入路径保存到任务中
+      const sourceTask = new Task()
+      sourceTask.id = worksSaveInfo.includeTaskId
+      sourceTask.pendingDownloadPath = path.join(
+        worksSaveInfo.fullSaveDir as string,
+        worksSaveInfo.fileName as string
+      )
+      await this.updateById(sourceTask)
+      const saveResourcePromise = saveWorksInfoService.saveWorksResource(worksSaveInfo, limit)
 
       // 保存作品资源和修改任务状态的事务
       const db = new DB('TaskService')
       try {
-        return await db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
+        return db.nestedTransaction<(db: DB) => Promise<boolean>, boolean>(
           async (transactionDB) => {
             const taskService = new TaskService(transactionDB)
             const worksService = new WorksService(transactionDB)
 
-            return worksService
-              .saveWorksResource(worksSaveInfo, limit)
+            return saveResourcePromise
               .then(async (savedWorks) => {
                 task.status = TaskStatesEnum.FINISHED
-                await worksService.resourceFinished(savedWorks.id as number)
-                return taskService.finishTask(task, savedWorks.id as number)
+                return taskService
+                  .finishTask(task, savedWorks.id as number)
+                  .then(() => worksService.resourceFinished(savedWorks.id as number))
               })
               .then(() => {
                 counter++
@@ -881,7 +891,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 没有监听器的任务
     const noListenerIds: number[] = []
     ids.forEach((id: number) => {
-      const listenerName = String(id)
+      // const listenerName = String(id)
       // 如果有追踪器，则从追踪器获取任务进度，否则从数据库查询任务状态
       const taskTracker = this.getTaskTracker(id)
       if (notNullish(taskTracker)) {
@@ -894,7 +904,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
         // 如果进度已经达到了100%，将状态设为完成，并且清除这个监听器
         if (temp.schedule >= 100) {
-          delete GlobalVarManager.get(GlobalVars.TASK_TRACKER).taskTracker[listenerName]
+          // delete GlobalVarManager.get(GlobalVars.TASK_TRACKER).taskTracker[listenerName]
           temp.status = TaskStatesEnum.FINISHED
         } else {
           temp.status = TaskStatesEnum.PROCESSING
@@ -918,18 +928,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskEndHandler 任务完成的承诺，得到解决后会清除对应的追踪事件
    */
   public addTaskTracker(
-    taskId: string,
+    taskId: number,
     taskTracker: TaskTracker,
     taskEndHandler: Promise<unknown>
   ) {
-    // 检查全局变量是否存在
-    if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
-      GlobalVarManager.create(GlobalVars.TASK_TRACKER)
-    }
-    GlobalVarManager.get(GlobalVars.TASK_TRACKER)[taskId] = taskTracker
+    const trackerName = String(taskId)
+    GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName] = taskTracker
     // 确认任务结束后，延迟2秒清除其追踪器
     taskEndHandler.then(() =>
-      setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[taskId], 2000)
+      setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
     )
   }
 
@@ -938,10 +945,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskId
    */
   public getTaskTracker(taskId: number): TaskTracker | undefined {
-    // 检查全局变量是否存在
-    if (!Object.prototype.hasOwnProperty.call(global, 'taskTracker')) {
-      return
-    }
     const listenerName = String(taskId)
     return GlobalVarManager.get(GlobalVars.TASK_TRACKER)[listenerName]
   }

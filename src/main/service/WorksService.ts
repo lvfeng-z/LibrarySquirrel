@@ -24,7 +24,6 @@ import WorksSet from '../model/WorksSet.ts'
 import { Limit } from 'p-limit'
 import StringUtil from '../util/StringUtil.ts'
 import { Readable } from 'node:stream'
-import Task from '../model/Task.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
@@ -91,6 +90,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const writeStreamPromise = promisify(
         (readable: Readable, writable: fs.WriteStream, callback) => {
           let errorOccurred = false
+          let finished = false
 
           readable.on('error', (err) => {
             errorOccurred = true
@@ -104,13 +104,30 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             callback(err)
           })
 
-          readable.on('end', () => {
+          // 监听 writable 的 finish 事件，表示所有数据已被写入
+          writable.on('finish', () => {
+            finished = true
             if (!errorOccurred) {
-              writable.end()
               callback(null)
             }
           })
+
+          // 当 readable 结束时，结束 writable 的写入
+          readable.on('end', () => {
+            if (!errorOccurred) {
+              writable.end() // 结束写入流
+            }
+          })
+
+          // 立即开始管道传输
           readable.pipe(writable)
+
+          // 如果 readable 或 writable 在 pipe 过程中发生错误，则结束 writable
+          readable.on('close', () => {
+            if (!finished && !errorOccurred) {
+              writable.destroy(new Error('Write stream was closed prematurely'))
+            }
+          })
         }
       )
 
@@ -138,17 +155,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           writeStream: writeStream,
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
-        // 文件的写入路径保存到任务中
-        let taskService: TaskService
-        if (this.injectedDB) {
-          taskService = new TaskService(this.db)
-        } else {
-          taskService = new TaskService()
-        }
-        const sourceTask = new Task()
-        sourceTask.id = worksDTO.includeTaskId
-        sourceTask.pendingDownloadPath = fullPath
-        await taskService.updateById(sourceTask)
         // 创建写入Promise
         let saveResourceFinishPromise: Promise<unknown>
         if (isNullish(limit)) {
@@ -166,11 +172,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           const msg = '创建任务监听器时，任务id意外为空'
           LogUtil.warn('WorksService', msg)
         } else {
-          taskService.addTaskTracker(
-            String(worksDTO.includeTaskId),
-            taskTracker,
-            saveResourceFinishPromise
-          )
+          const taskService = new TaskService()
+          taskService.addTaskTracker(worksDTO.includeTaskId, taskTracker, saveResourceFinishPromise)
         }
 
         return saveResourceFinishPromise.then(() => worksDTO)
