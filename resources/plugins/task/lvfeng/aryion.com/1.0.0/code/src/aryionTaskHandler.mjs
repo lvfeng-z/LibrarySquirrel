@@ -33,39 +33,8 @@ export default class AryionTaskHandler {
    */
   async start(task) {
     const worksDTO = new WorksDTO()
-    const header = new AxiosHeaders('Range: bytes=0-1')
-    const headConfig = {
-      headers: header
-    }
-    const response = await axios.head(task.url, headConfig)
 
-    // 获取响应头的一些信息
-    // 文件大小
-    worksDTO.resourceSize = response.headers.get('content-length')
-    // 是否支持接续
-    worksDTO.continuable = response.status === 206
-    // 扩展名
-    const fileType = response.headers.get('content-type')
-    switch (fileType) {
-      case 'video/mp4':
-        worksDTO.filenameExtension = '.mp4'
-        break
-      case 'image/png':
-        worksDTO.filenameExtension = '.png'
-        break
-    }
-    // 建议名称
-    const contentDisposition = response.headers.get('content-disposition')
-    if (contentDisposition) {
-      // 使用正则表达式匹配 'filename' 或 'filename*' 参数
-      const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
-      const match = contentDisposition.match(regex)
-
-      if (match && match[1] || match[2]) {
-        // 提取文件名
-        worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
-      }
-    }
+    await this.tryUrl(task, worksDTO)
 
     const config = {
       url: task.url,
@@ -176,6 +145,94 @@ export default class AryionTaskHandler {
     const stream = await axios.request(config)
 
     return stream.data
+  }
+
+  /**
+   *
+   * @param task
+   * @param worksDTO
+   */
+  async tryUrl(task, worksDTO) {
+    let response
+    try {
+      const header = new AxiosHeaders('Range: bytes=0-1')
+      const headConfig = {
+        headers: header
+      }
+      response = await axios.head(task.url, headConfig)
+
+      console.log(response.headers)
+
+      // 获取响应头的一些信息
+      // 文件大小
+      worksDTO.resourceSize = response.headers.get('content-length')
+      // 是否支持接续
+      worksDTO.continuable = response.status === 206
+      // 扩展名
+      const fileType = response.headers.get('content-type')
+      switch (fileType) {
+        case 'video/mp4':
+          worksDTO.filenameExtension = '.mp4'
+          break
+        case 'image/png':
+          worksDTO.filenameExtension = '.png'
+          break
+        case 'image/jpeg':
+          worksDTO.filenameExtension = '.jpeg'
+      }
+      // 建议名称
+      const contentDisposition = response.headers.get('content-disposition')
+      if (contentDisposition) {
+        // 使用正则表达式匹配 'filename' 或 'filename*' 参数
+        const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
+        const match = contentDisposition.match(regex)
+
+        if (match && match[1] || match[2]) {
+          // 提取文件名
+          worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
+        }
+      }
+    } catch (error) {
+      const header = new AxiosHeaders('Range: bytes=0-')
+      const headConfig = {
+        headers: header
+      }
+      response = await axios.get(task.url, headConfig)
+
+      console.log(response.headers)
+
+      // 获取响应头的一些信息
+      // 文件大小
+      worksDTO.resourceSize = response.headers.get('content-length')
+      // 是否支持接续
+      worksDTO.continuable = response.status === 206
+      // 扩展名
+      const fileType = response.headers.get('content-type')
+      switch (fileType) {
+        case 'video/mp4':
+          worksDTO.filenameExtension = '.mp4'
+          break
+        case 'image/png':
+          worksDTO.filenameExtension = '.png'
+          break
+        case 'image/jpeg':
+          worksDTO.filenameExtension = '.jpeg'
+      }
+      // 建议名称
+      const contentDisposition = response.headers.get('content-disposition')
+      if (contentDisposition) {
+        // 使用正则表达式匹配 'filename' 或 'filename*' 参数
+        const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
+        const match = contentDisposition.match(regex)
+
+        if (match && match[1] || match[2]) {
+          // 提取文件名
+          worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
+        }
+      }
+      // 资源
+      worksDTO.resourceStream = response.data
+    }
   }
 
   /**
