@@ -199,6 +199,58 @@ const enum OperationCode {
   CANCEL,
   DELETE
 }
+// 任务状态与操作按钮状态的对应关系
+const taskStatusMapping: {
+  [K in TaskStatesEnum]: {
+    tooltip: string
+    icon: string
+    operation: OperationCode
+    processing: boolean
+  }
+} = {
+  [TaskStatesEnum.CREATED]: {
+    tooltip: '开始',
+    icon: 'VideoPlay',
+    operation: OperationCode.START,
+    processing: false
+  },
+  [TaskStatesEnum.PROCESSING]: {
+    tooltip: '暂停',
+    icon: 'VideoPause',
+    operation: OperationCode.PAUSE,
+    processing: true
+  },
+  [TaskStatesEnum.WAITING]: {
+    tooltip: '等待中',
+    icon: 'Loading',
+    operation: OperationCode.START,
+    processing: true
+  },
+  [TaskStatesEnum.PAUSE]: {
+    tooltip: '继续',
+    icon: 'RefreshRight',
+    operation: OperationCode.RESUME,
+    processing: false
+  },
+  [TaskStatesEnum.FINISHED]: {
+    tooltip: '再次下载',
+    icon: 'RefreshRight',
+    operation: OperationCode.RETRY,
+    processing: false
+  },
+  [TaskStatesEnum.PARTLY_FINISHED]: {
+    tooltip: '开始',
+    icon: 'VideoPlay',
+    operation: OperationCode.START,
+    processing: false
+  },
+  [TaskStatesEnum.FAILED]: {
+    tooltip: '重试',
+    icon: 'RefreshRight',
+    operation: OperationCode.RETRY,
+    processing: false
+  }
+}
 // 是否正在刷新数据
 let refreshing: boolean = false
 // 当前dialog绑定数据
@@ -290,6 +342,8 @@ async function selectDir(openFile: boolean) {
       for (const dir of dirSelectResult.filePaths) {
         await importFromDir(dir)
       }
+      // 刷新一次列表
+      taskManageSearchTable.value.handleSearchButtonClicked()
     }
   }
 }
@@ -348,9 +402,18 @@ const throttleRefreshTask = throttle(
 function handleScroll() {
   throttleRefreshTask()
 }
-// 判断行数据是否可重试
-function retryable(row: TaskDTO) {
-  return row.status === TaskStatesEnum.FINISHED || row.status === TaskStatesEnum.FAILED
+// 任务状态映射为按钮状态
+function mapToButtonStatus(row: TaskDTO): {
+  tooltip: string
+  icon: string
+  operation: OperationCode
+  processing: boolean
+} {
+  if (notNullish(row.status)) {
+    return taskStatusMapping[row.status]
+  } else {
+    return taskStatusMapping['0']
+  }
 }
 // 开始任务
 function startTask(row: TaskDTO) {
@@ -429,32 +492,13 @@ async function deleteTask(ids: number[]) {
                   @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
                 />
               </el-tooltip>
-              <el-tooltip :content="retryable(row) ? '重试' : '开始'">
+              <el-tooltip :content="mapToButtonStatus(row).tooltip">
                 <el-button
                   size="small"
-                  :icon="retryable(row) ? 'RefreshRight' : 'VideoPlay'"
-                  :loading="(row as TaskDTO).status === TaskStatesEnum.PROCESSING"
-                  @click="
-                    handleOperationButtonClicked(
-                      row,
-                      retryable(row) ? OperationCode.RETRY : OperationCode.START
-                    )
-                  "
+                  :icon="mapToButtonStatus(row).icon"
+                  :loading="mapToButtonStatus(row).processing"
+                  @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
                 ></el-button>
-              </el-tooltip>
-              <el-tooltip content="暂停">
-                <el-button
-                  size="small"
-                  icon="VideoPause"
-                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
-                />
-              </el-tooltip>
-              <el-tooltip content="恢复">
-                <el-button
-                  size="small"
-                  icon="VideoPlay"
-                  @click="handleOperationButtonClicked(row, OperationCode.RESUME)"
-                />
               </el-tooltip>
               <el-tooltip content="取消">
                 <el-button
