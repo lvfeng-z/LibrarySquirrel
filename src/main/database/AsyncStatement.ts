@@ -13,13 +13,13 @@ export default class AsyncStatement {
   private statement: Database.Statement
 
   /**
-   * 是否持有虚拟锁
+   * 是否持有排他锁
    * @private
    */
   private holdingVisualLock: boolean
 
   /**
-   * 虚拟锁是不是注入的
+   * 排他锁是不是注入的
    * @private
    */
   private readonly injectedLock: boolean
@@ -43,10 +43,11 @@ export default class AsyncStatement {
    */
   async run(...params: unknown[]): Promise<Database.RunResult> {
     try {
-      // 获取虚拟的排它锁
+      // 获取排他锁
       if (!this.holdingVisualLock) {
         await GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).acquireVisualLock(
-          this.caller
+          this.caller,
+          this.statement.source
         )
         this.holdingVisualLock = true
       }
@@ -57,7 +58,7 @@ export default class AsyncStatement {
       )
       return runResult
     } finally {
-      // 释放虚拟的排它锁
+      // 释放排他锁
       if (this.holdingVisualLock && !this.injectedLock) {
         GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
       }

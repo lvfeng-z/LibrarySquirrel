@@ -21,7 +21,6 @@ import TaskService from './TaskService.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/WorksSet.ts'
-import { Limit } from 'p-limit'
 import StringUtil from '../util/StringUtil.ts'
 import { Readable } from 'node:stream'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
@@ -78,9 +77,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   /**
    * 保存作品资源
    * @param worksDTO
-   * @param limit 保存线程并发限制
    */
-  async saveWorksResource(worksDTO: WorksSaveDTO, limit?: Limit): Promise<WorksDTO> {
+  async saveWorksResource(worksDTO: WorksSaveDTO): Promise<WorksDTO> {
     // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
     if (
       Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
@@ -90,7 +88,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const writeStreamPromise = promisify(
         (readable: Readable, writable: fs.WriteStream, callback) => {
           let errorOccurred = false
-          let finished = false
 
           readable.on('error', (err) => {
             errorOccurred = true
@@ -104,30 +101,13 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             callback(err)
           })
 
-          // 监听 writable 的 finish 事件，表示所有数据已被写入
-          writable.on('finish', () => {
-            finished = true
+          readable.on('end', () => {
             if (!errorOccurred) {
+              writable.end()
               callback(null)
             }
           })
-
-          // 当 readable 结束时，结束 writable 的写入
-          readable.on('end', () => {
-            if (!errorOccurred) {
-              writable.end() // 结束写入流
-            }
-          })
-
-          // 立即开始管道传输
           readable.pipe(writable)
-
-          // 如果 readable 或 writable 在 pipe 过程中发生错误，则结束 writable
-          readable.on('close', () => {
-            if (!finished && !errorOccurred) {
-              writable.destroy(new Error('Write stream was closed prematurely'))
-            }
-          })
         }
       )
 
@@ -156,17 +136,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
         // 创建写入Promise
-        let saveResourceFinishPromise: Promise<unknown>
-        if (isNullish(limit)) {
-          saveResourceFinishPromise = writeStreamPromise(
-            worksDTO.resourceStream as Readable,
-            writeStream
-          )
-        } else {
-          saveResourceFinishPromise = limit(() =>
-            writeStreamPromise(worksDTO.resourceStream as Readable, writeStream)
-          )
-        }
+        const saveResourceFinishPromise: Promise<unknown> = writeStreamPromise(
+          worksDTO.resourceStream as Readable,
+          writeStream
+        )
         // 创建任务监听器
         if (isNullish(worksDTO.includeTaskId)) {
           const msg = '创建任务监听器时，任务id意外为空'
@@ -208,92 +181,97 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       db = new DB('WorksService')
     }
     try {
-      const worksId = await db.nestedTransaction(async (transactionDB) => {
-        try {
-          // 如果worksSets不为空，则此作品是作品集中的作品
-          if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
-            // 遍历处理作品集数组
-            for (const worksSet of worksDTO.worksSets) {
-              if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
-                const taskService = new TaskService(transactionDB)
-                const includeTask = await taskService.getById(worksDTO.includeTaskId)
-                const rootTaskId = includeTask.pid
-                const siteWorksSetId = worksSet.siteWorksSetId
+      return db
+        .nestedTransaction(async (transactionDB): Promise<number> => {
+          try {
+            // 如果worksSets不为空，则此作品是作品集中的作品
+            if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
+              // 遍历处理作品集数组
+              for (const worksSet of worksDTO.worksSets) {
+                if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
+                  const taskService = new TaskService(transactionDB)
+                  const includeTask = await taskService.getById(worksDTO.includeTaskId)
+                  const rootTaskId = includeTask.pid
+                  const siteWorksSetId = worksSet.siteWorksSetId
 
-                if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
-                  const worksSetService = new WorksSetService(transactionDB)
-                  const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
-                    siteWorksSetId,
-                    rootTaskId
-                  )
-                  if (isNullish(oldWorksSet)) {
-                    const tempWorksSet = new WorksSet(worksSet)
-                    tempWorksSet.includeTaskId = rootTaskId
-                    await worksSetService.save(tempWorksSet)
-                    worksSetService.link([worksDTO], tempWorksSet)
+                  if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
+                    const worksSetService = new WorksSetService(transactionDB)
+                    const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
+                      siteWorksSetId,
+                      rootTaskId
+                    )
+                    if (isNullish(oldWorksSet)) {
+                      const tempWorksSet = new WorksSet(worksSet)
+                      tempWorksSet.includeTaskId = rootTaskId
+                      await worksSetService.save(tempWorksSet)
+                      worksSetService.link([worksDTO], tempWorksSet)
+                    } else {
+                      worksSetService.link([worksDTO], oldWorksSet)
+                    }
                   } else {
-                    worksSetService.link([worksDTO], oldWorksSet)
+                    LogUtil.warn(
+                      'WorksService',
+                      `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
+                    )
                   }
-                } else {
-                  LogUtil.warn(
-                    'WorksService',
-                    `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
-                  )
                 }
               }
             }
-          }
 
-          // 保存站点
-          if (notNullish(site)) {
-            const siteService = new SiteService(transactionDB)
-            await siteService.saveOnNotExistByDomain(site)
-          }
-          // 保存站点作者
-          if (notNullish(siteAuthors)) {
-            const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
-          }
-          // 保存站点标签
-          if (notNullish(siteTags) && siteTags.length > 0) {
-            const siteTagService = new SiteTagService(transactionDB)
-            await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
-          }
+            // 保存站点
+            if (notNullish(site)) {
+              const siteService = new SiteService(transactionDB)
+              await siteService.saveOnNotExistByDomain(site)
+            }
+            // 保存站点作者
+            if (notNullish(siteAuthors)) {
+              const siteAuthorService = new SiteAuthorService(transactionDB)
+              await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
+            }
+            // 保存站点标签
+            if (notNullish(siteTags) && siteTags.length > 0) {
+              const siteTagService = new SiteTagService(transactionDB)
+              await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
+            }
 
-          // 保存作品
-          const works = new Works(worksDTO)
-          const worksService = new WorksService(transactionDB)
-          worksDTO.id = (await worksService.save(works)) as number
+            // 保存作品
+            const works = new Works(worksDTO)
+            const worksService = new WorksService(transactionDB)
+            worksDTO.id = (await worksService.save(works)) as number
 
-          // 关联作品和本地作者
-          if (notNullish(localAuthors) && localAuthors.length > 0) {
-            const localAuthorService = new LocalAuthorService(transactionDB)
-            await localAuthorService.link(localAuthors, worksDTO)
-          }
-          // 关联作品和本地标签
-          if (localTags !== undefined && localTags != null && localTags.length > 0) {
-            const localTagService = new LocalTagService(transactionDB)
-            await localTagService.link(localTags, worksDTO)
-          }
-          // 关联作品和站点作者
-          if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
-            const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.link(siteAuthors, worksDTO)
-          }
-          // 关联作品和站点标签
-          if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
-            const siteTagService = new SiteTagService(transactionDB)
-            await siteTagService.link(siteTags, worksDTO)
-          }
+            // 关联作品和本地作者
+            if (notNullish(localAuthors) && localAuthors.length > 0) {
+              const localAuthorService = new LocalAuthorService(transactionDB)
+              await localAuthorService.link(localAuthors, worksDTO)
+            }
+            // 关联作品和本地标签
+            if (localTags !== undefined && localTags != null && localTags.length > 0) {
+              const localTagService = new LocalTagService(transactionDB)
+              await localTagService.link(localTags, worksDTO)
+            }
+            // 关联作品和站点作者
+            if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
+              const siteAuthorService = new SiteAuthorService(transactionDB)
+              await siteAuthorService.link(siteAuthors, worksDTO)
+            }
+            // 关联作品和站点标签
+            if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
+              const siteTagService = new SiteTagService(transactionDB)
+              await siteTagService.link(siteTags, worksDTO)
+            }
 
-          return worksDTO.id
-        } catch (error) {
-          LogUtil.warn('WorksService', '保存作品时出错')
-          throw error
-        }
-      }, 'saveWorks')
-
-      return worksId as Promise<number>
+            return worksDTO.id
+          } catch (error) {
+            LogUtil.warn('WorksService', '保存作品时出错')
+            throw error
+          }
+        }, '保存作品信息')
+        .finally(() => {
+          if (!this.injectedDB) {
+            db.release()
+          }
+        })
+        .then()
     } finally {
       if (!this.injectedDB) {
         db.release()

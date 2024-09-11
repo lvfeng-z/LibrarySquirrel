@@ -40,7 +40,7 @@ export default class DB {
    */
   private savepointCounter = 0
   /**
-   * 是否持有虚拟锁
+   * 是否持有排他锁
    * @private
    */
   private holdingVisualLock: boolean
@@ -101,10 +101,10 @@ export default class DB {
   /**
    * 预处理语句
    * @param statement 语句
-   * @param readOrWrite 读还是写（true：读，false：写）
+   * @param readOnly 读还是写（true：读，false：写）
    */
-  public async prepare(statement: string, readOrWrite: boolean): Promise<AsyncStatement> {
-    const connectionPromise = this.acquire(readOrWrite)
+  public async prepare(statement: string, readOnly: boolean): Promise<AsyncStatement> {
+    const connectionPromise = this.acquire(readOnly)
     return connectionPromise.then((connection) => {
       const stmt = connection.prepare(statement)
       return new AsyncStatement(stmt, this.holdingVisualLock, this.caller)
@@ -136,11 +136,11 @@ export default class DB {
   /**
    * 可嵌套的事务
    * @param fn 事务代码
-   * @param name
+   * @param operation 操作说明
    */
   public async nestedTransaction<F extends (db: DB) => Promise<R>, R>(
     fn: F,
-    name: string
+    operation: string
   ): Promise<R> {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
@@ -148,44 +148,45 @@ export default class DB {
     // 创建一个当前层级的保存点
     const savepointName = `sp${this.savepointCounter++}`
     try {
-      // 开启事务之前获取虚拟的排它锁
+      // 开启事务之前获取排他锁
       if (!this.holdingVisualLock) {
         await GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).acquireVisualLock(
-          this.caller
+          this.caller,
+          operation
         )
         this.holdingVisualLock = true
       }
 
       connection.exec(`SAVEPOINT ${savepointName}`)
-      LogUtil.debug(this.caller, `${name}，SAVEPOINT ${savepointName}`)
+      LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
 
       const result = await fn(this)
 
       // 事务代码顺利执行的话释放此保存点
       connection.exec(`RELEASE ${savepointName}`)
       this.savepointCounter--
-      LogUtil.debug(this.caller, `${name}，RELEASE ${savepointName}，result: ${result}`)
+      LogUtil.debug(this.caller, `${operation}，RELEASE ${savepointName}，result: ${result}`)
 
       return result
     } catch (error) {
-      // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排它锁一直存在
+      // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排他锁一直无法释放
       if (isStartPoint) {
         connection.exec(`ROLLBACK`)
-        LogUtil.info(this.caller, `${name}，ROLLBACK`)
+        LogUtil.info(this.caller, `${operation}，ROLLBACK`)
 
-        // 释放虚拟的排它锁
+        // 释放排他锁
         GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-        LogUtil.info(this.caller, `${name}，ROLLBACK TO SAVEPOINT ${savepointName}`)
+        LogUtil.info(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
       }
 
       this.savepointCounter = 0
       LogUtil.error(this.caller, error)
       throw error
     } finally {
-      // 释放虚拟的排它锁
+      // 释放排他锁
       if (this.holdingVisualLock && isStartPoint) {
         GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
         this.holdingVisualLock = false
@@ -195,11 +196,11 @@ export default class DB {
 
   /**
    * 请求链接
-   * @param readOrWrite 读还是写（true：读，false：写）
+   * @param readOnly 读还是写（true：读，false：写）
    * @private
    */
-  private async acquire(readOrWrite: boolean): Promise<BetterSqlite3.Database> {
-    if (readOrWrite) {
+  private async acquire(readOnly: boolean): Promise<BetterSqlite3.Database> {
+    if (readOnly) {
       if (this.readingConnection != undefined) {
         return this.readingConnection
       }
