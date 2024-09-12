@@ -205,6 +205,71 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   ): Promise<number> {
     // 最终用于返回的Promise
     return new Promise<number>((resolve) => {
+      // error事件处理函数
+      pluginResponseTaskStream.on('error', (error) => {
+        LogUtil.error('TaskService', '插件报错: ', error)
+      })
+
+      // data事件处理函数
+      pluginResponseTaskStream.on('data', async (chunk) => {
+        itemCount++
+        // 如果任务集合尚未保存且任务数大于1，则先保存任务集合
+        if (parentTaskProcess === undefined && itemCount > 1) {
+          parentTaskProcess = parentTaskProcessing()
+          parentTask.id = await parentTaskProcess
+          // 更新pid
+          taskQueue.forEach((task) => (task.pid = parentTask.id as number))
+        }
+
+        // 等待任务集合完成
+        await parentTaskProcess
+        // 创建任务对象
+        const task = chunk as Task
+        task.pluginId = taskPlugin.id as number
+        task.pluginInfo = pluginInfo
+        task.status = TaskStatesEnum.CREATED
+        task.siteDomain = taskPlugin.domain
+        task.isCollection = false
+        task.pid = parentTask.id as number
+
+        // 将任务添加到队列
+        taskQueue.push(task)
+
+        // 如果队列中的任务数量超过上限，则暂停流
+        if (taskQueue.length >= maxQueueLength && !isPaused) {
+          LogUtil.info(
+            'TaskService',
+            `任务队列超过${maxQueueLength}个，暂停任务流，已经收到${itemCount}个任务`
+          )
+          pluginResponseTaskStream.pause()
+          isPaused = true
+        }
+
+        // 每batchSize个任务处理一次
+        if (taskQueue.length % batchSize === 0) {
+          await processTasks()
+        }
+      })
+
+      // end事件处理函数
+      pluginResponseTaskStream.on('end', async () => {
+        try {
+          // 所有数据读取完毕
+          if (itemCount === 0) {
+            logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+          } else if (itemCount === 1) {
+            await super.save(taskQueue[0])
+          } else if (taskQueue.length > 0) {
+            await processTasks()
+          }
+          resolve(itemCount)
+        } catch (error) {
+          LogUtil.error('TaskService', '处理任务流结束事件时出错，error:', error)
+        } finally {
+          LogUtil.info('TaskService', `任务流结束，创建了${itemCount}个任务`)
+        }
+      })
+
       // 查询插件信息，用于输出日志
       const pluginInfo = JSON.stringify(taskPlugin)
       // 任务计数
