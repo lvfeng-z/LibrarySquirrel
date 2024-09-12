@@ -32,6 +32,7 @@ import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
+import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -43,14 +44,20 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param url 作品/作品集所在url
    * @param mainWindow
    */
-  async createTask(url: string, mainWindow: Electron.BrowserWindow): Promise<number> {
+  async createTask(url: string, mainWindow: Electron.BrowserWindow): Promise<TaskCreateResponse> {
     // 查询监听此url的插件
     const taskPluginListenerService = new TaskPluginListenerService()
     const taskPlugins = await taskPluginListenerService.getListener(url)
 
     if (taskPlugins.length === 0) {
-      logUtil.info('TaskService', '没有监听此链接的插件，url: ', url)
-      return 0
+      const msg = `没有监听此链接的插件，url: ${url}`
+      logUtil.info('TaskService', msg)
+      return new TaskCreateResponse({
+        succeed: false,
+        addedQuantity: 0,
+        msg: msg,
+        plugin: undefined
+      })
     }
 
     // 插件加载器
@@ -90,9 +97,33 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         // 分别处理数组类型和流类型的响应值
         if (Array.isArray(pluginResponse)) {
-          return this.handlePluginTaskArray(pluginResponse, url, taskPlugin, parentTask)
+          const addedQuantity = await this.handlePluginTaskArray(
+            pluginResponse,
+            url,
+            taskPlugin,
+            parentTask
+          )
+          return new TaskCreateResponse({
+            succeed: true,
+            addedQuantity: addedQuantity,
+            msg: '创建成功',
+            plugin: taskPlugin
+          })
         } else if (pluginResponse instanceof Readable) {
-          return this.handlePluginTaskStream(pluginResponse, url, taskPlugin, parentTask, 100, 200)
+          const addedQuantity = await this.handlePluginTaskStream(
+            pluginResponse,
+            url,
+            taskPlugin,
+            parentTask,
+            100,
+            200
+          )
+          return new TaskCreateResponse({
+            succeed: true,
+            addedQuantity: addedQuantity,
+            msg: '创建成功',
+            plugin: taskPlugin
+          })
         } else {
           logUtil.error('TaskService', '插件返回了不支持的类型')
         }
@@ -106,7 +137,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 未能在循环中返回，则返回0
-    return 0
+    const msg = `尝试了所有插件均未成功，url: ${url}`
+    logUtil.info('TaskService', msg)
+    return new TaskCreateResponse({ succeed: false, addedQuantity: 0, msg: msg, plugin: undefined })
   }
 
   /**
@@ -309,66 +342,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           super.saveBatch(taskBuffer).then()
         }
       }
-
-      // data事件处理函数
-      pluginResponseTaskStream.on('data', async (chunk) => {
-        itemCount++
-        // 如果任务集合尚未保存且任务数大于1，则先保存任务集合
-        if (parentTaskProcess === undefined && itemCount > 1) {
-          parentTaskProcess = parentTaskProcessing()
-          parentTask.id = await parentTaskProcess
-          // 更新pid
-          taskQueue.forEach((task) => (task.pid = parentTask.id as number))
-        }
-
-        // 等待任务集合完成
-        await parentTaskProcess
-        // 创建任务对象
-        const task = chunk as Task
-        task.pluginId = taskPlugin.id as number
-        task.pluginInfo = pluginInfo
-        task.status = TaskStatesEnum.CREATED
-        task.siteDomain = taskPlugin.domain
-        task.isCollection = false
-        task.pid = parentTask.id as number
-
-        // 将任务添加到队列
-        taskQueue.push(task)
-
-        // 如果队列中的任务数量超过上限，则暂停流
-        if (taskQueue.length >= maxQueueLength && !isPaused) {
-          LogUtil.info(
-            'TaskService',
-            `任务队列超过${maxQueueLength}个，暂停任务流，已经收到${itemCount}个任务`
-          )
-          pluginResponseTaskStream.pause()
-          isPaused = true
-        }
-
-        // 每batchSize个任务处理一次
-        if (taskQueue.length % batchSize === 0) {
-          await processTasks()
-        }
-      })
-
-      // end事件处理函数
-      pluginResponseTaskStream.on('end', async () => {
-        try {
-          // 所有数据读取完毕
-          if (itemCount === 0) {
-            logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
-          } else if (itemCount === 1) {
-            await super.save(taskQueue[0])
-          } else if (taskQueue.length > 0) {
-            await processTasks()
-          }
-          resolve(itemCount)
-        } catch (error) {
-          LogUtil.error('TaskService', '处理任务流结束事件时出错，error:', error)
-        } finally {
-          LogUtil.info('TaskService', `任务流结束，创建了${itemCount}个任务`)
-        }
-      })
     })
   }
 

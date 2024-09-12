@@ -7,7 +7,7 @@ import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import { ElTag, TreeNode } from 'element-plus'
+import { ElMessage, ElTag, TreeNode } from 'element-plus'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
@@ -15,6 +15,7 @@ import { getNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
 import PageModel from '../../model/util/PageModel'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
+import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 
 // onMounted
 onMounted(() => {
@@ -263,11 +264,42 @@ const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
 // 方法
 // 从本地路径导入
 async function importFromDir(dir: string) {
-  await apis.taskCreateTask('file://'.concat(dir))
+  const response = await apis.taskCreateTask('file://'.concat(dir))
+  if (ApiUtil.apiResponseCheck(response)) {
+    const data = ApiUtil.apiResponseGetData(response) as TaskCreateResponse
+    if (data.succeed) {
+      ElMessage({
+        type: 'success',
+        message: `${data.plugin?.author}.${data.plugin?.domain}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+      })
+    } else {
+      ElMessage({
+        type: 'error',
+        message: data.msg as string
+      })
+    }
+  }
 }
 // 从站点url导入
 async function importFromSite() {
-  await apis.taskCreateTask(siteSourceUrl.value)
+  const response = await apis.taskCreateTask(siteSourceUrl.value)
+  if (ApiUtil.apiResponseCheck(response)) {
+    siteDownloadState.value = false
+    const data = ApiUtil.apiResponseGetData(response) as TaskCreateResponse
+    if (data.succeed) {
+      ElMessage({
+        type: 'success',
+        message: `${data.plugin?.author}.${data.plugin?.domain}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+      })
+    } else {
+      ElMessage({
+        type: 'error',
+        message: data.msg as string
+      })
+    }
+  }
+  // 刷新一次列表
+  taskManageSearchTable.value.handleSearchButtonClicked()
 }
 // 懒加载处理函数
 async function load(
@@ -535,11 +567,16 @@ async function deleteTask(ids: number[]) {
         destroy-on-close
         width="90%"
       />
-      <el-dialog v-model="siteDownloadState" center width="90%" align-center destroy-on-close>
-        <template #header>输入url</template>
-        <el-input v-model="siteSourceUrl"></el-input>
+      <el-dialog v-model="siteDownloadState" center width="80%" align-center destroy-on-close>
+        <el-input
+          v-model="siteSourceUrl"
+          type="textarea"
+          :rows="6"
+          placeholder="输入url"
+        ></el-input>
         <template #footer>
           <el-button type="primary" @click="importFromSite">确定</el-button>
+          <el-button @click="siteDownloadState = false">取消</el-button>
         </template>
       </el-dialog>
     </template>
