@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import BaseCloseablePage from './BaseCloseablePage.vue'
-import { onBeforeMount, reactive, ref } from 'vue'
+import { onBeforeMount, reactive, Ref, ref, UnwrapRef } from 'vue'
 import lodash from 'lodash'
+import { Settings } from '../../model/util/Settings'
 
 //onBeforeMount
 onBeforeMount(() => {
@@ -15,7 +16,15 @@ const apis = reactive({
   settingsResetSettings: window.api.settingsResetSettings
 }) // 接口
 const activeName = ref([1]) // 默认展开的折叠面板
-const settings = ref({ workdir: '' }) // 设置
+// 设置
+const settings: Ref<UnwrapRef<Settings>> = ref({
+  initialized: true,
+  programVersion: '',
+  workdir: '',
+  importSettings: {
+    maxParallelImport: 1
+  }
+})
 const oldSettings = ref() // 原设置
 
 // 方法
@@ -61,7 +70,12 @@ function resetSettings() {
     <el-scrollbar>
       <el-collapse v-model="activeName">
         <el-collapse-item title="工作目录" :name="1">
-          <el-input v-model="settings.workdir"></el-input>
+          <el-row>
+            <el-input v-model="settings.workdir"></el-input>
+          </el-row>
+          <el-row>
+            <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
+          </el-row>
         </el-collapse-item>
       </el-collapse>
       <el-row>

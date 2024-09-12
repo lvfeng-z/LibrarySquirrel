@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { futimes } from 'node:fs'
 
 declare global {
   interface Window {
@@ -63,6 +64,8 @@ declare global {
       taskGetChildrenTask: function
       taskSelectChildrenTaskPage: function
       taskSelectScheduleList: function
+      taskPauseTaskTree: function
+      taskResumeTaskTree: function
 
       // Works
       worksQueryPage: function

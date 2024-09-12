@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
+import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 
 /**
  * 封装的Better-SQLit3 Statement类
@@ -12,21 +13,28 @@ export default class AsyncStatement {
   private statement: Database.Statement
 
   /**
-   * 是否持有虚拟锁
+   * 是否持有排他锁
    * @private
    */
   private holdingVisualLock: boolean
 
   /**
-   * 虚拟锁是不是注入的
+   * 排他锁是不是注入的
    * @private
    */
   private readonly injectedLock: boolean
 
-  constructor(statement: Database.Statement, holdingVisualLock: boolean) {
+  /**
+   * 调用者
+   * @private
+   */
+  private readonly caller: string
+
+  constructor(statement: Database.Statement, holdingVisualLock: boolean, caller: string) {
     this.statement = statement
     this.holdingVisualLock = holdingVisualLock
     this.injectedLock = holdingVisualLock
+    this.caller = caller
   }
 
   /**
@@ -35,9 +43,12 @@ export default class AsyncStatement {
    */
   async run(...params: unknown[]): Promise<Database.RunResult> {
     try {
-      // 获取虚拟的排它锁
+      // 获取排他锁
       if (!this.holdingVisualLock) {
-        await global.writingConnectionPool.acquireVisualLock()
+        await GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).acquireVisualLock(
+          this.caller,
+          this.statement.source
+        )
         this.holdingVisualLock = true
       }
       const runResult = this.statement.run(...params)
@@ -47,9 +58,9 @@ export default class AsyncStatement {
       )
       return runResult
     } finally {
-      // 释放虚拟的排它锁
+      // 释放排他锁
       if (this.holdingVisualLock && !this.injectedLock) {
-        global.writingConnectionPool.releaseVisualLock()
+        GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
       }
     }
   }

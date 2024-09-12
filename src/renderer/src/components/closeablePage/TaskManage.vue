@@ -7,7 +7,7 @@ import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import { ElTag, TreeNode } from 'element-plus'
+import { ElMessage, ElTag, TreeNode } from 'element-plus'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
@@ -15,6 +15,7 @@ import { getNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
 import PageModel from '../../model/util/PageModel'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
+import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 
 // onMounted
 onMounted(() => {
@@ -31,6 +32,8 @@ const apis = {
   taskSelectParentPage: window.api.taskSelectParentPage,
   taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage,
   taskSelectScheduleList: window.api.taskSelectScheduleList,
+  taskPauseTaskTree: window.api.taskPauseTaskTree,
+  taskResumeTaskTree: window.api.taskResumeTaskTree,
   dirSelect: window.api.dirSelect
 }
 // DataTable的数据
@@ -192,9 +195,62 @@ const enum OperationCode {
   VIEW,
   START,
   PAUSE,
+  RESUME,
   RETRY,
   CANCEL,
   DELETE
+}
+// 任务状态与操作按钮状态的对应关系
+const taskStatusMapping: {
+  [K in TaskStatesEnum]: {
+    tooltip: string
+    icon: string
+    operation: OperationCode
+    processing: boolean
+  }
+} = {
+  [TaskStatesEnum.CREATED]: {
+    tooltip: '开始',
+    icon: 'VideoPlay',
+    operation: OperationCode.START,
+    processing: false
+  },
+  [TaskStatesEnum.PROCESSING]: {
+    tooltip: '暂停',
+    icon: 'VideoPause',
+    operation: OperationCode.PAUSE,
+    processing: true
+  },
+  [TaskStatesEnum.WAITING]: {
+    tooltip: '等待中',
+    icon: 'Loading',
+    operation: OperationCode.START,
+    processing: true
+  },
+  [TaskStatesEnum.PAUSE]: {
+    tooltip: '继续',
+    icon: 'RefreshRight',
+    operation: OperationCode.RESUME,
+    processing: false
+  },
+  [TaskStatesEnum.FINISHED]: {
+    tooltip: '再次下载',
+    icon: 'RefreshRight',
+    operation: OperationCode.RETRY,
+    processing: false
+  },
+  [TaskStatesEnum.PARTLY_FINISHED]: {
+    tooltip: '开始',
+    icon: 'VideoPlay',
+    operation: OperationCode.START,
+    processing: false
+  },
+  [TaskStatesEnum.FAILED]: {
+    tooltip: '重试',
+    icon: 'RefreshRight',
+    operation: OperationCode.RETRY,
+    processing: false
+  }
 }
 // 是否正在刷新数据
 let refreshing: boolean = false
@@ -208,11 +264,42 @@ const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
 // 方法
 // 从本地路径导入
 async function importFromDir(dir: string) {
-  await apis.taskCreateTask('file://'.concat(dir))
+  const response = await apis.taskCreateTask('file://'.concat(dir))
+  if (ApiUtil.apiResponseCheck(response)) {
+    const data = ApiUtil.apiResponseGetData(response) as TaskCreateResponse
+    if (data.succeed) {
+      ElMessage({
+        type: 'success',
+        message: `${data.plugin?.author}.${data.plugin?.domain}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+      })
+    } else {
+      ElMessage({
+        type: 'error',
+        message: data.msg as string
+      })
+    }
+  }
 }
 // 从站点url导入
 async function importFromSite() {
-  await apis.taskCreateTask(siteSourceUrl.value)
+  const response = await apis.taskCreateTask(siteSourceUrl.value)
+  if (ApiUtil.apiResponseCheck(response)) {
+    siteDownloadState.value = false
+    const data = ApiUtil.apiResponseGetData(response) as TaskCreateResponse
+    if (data.succeed) {
+      ElMessage({
+        type: 'success',
+        message: `${data.plugin?.author}.${data.plugin?.domain}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+      })
+    } else {
+      ElMessage({
+        type: 'error',
+        message: data.msg as string
+      })
+    }
+  }
+  // 刷新一次列表
+  taskManageSearchTable.value.handleSearchButtonClicked()
 }
 // 懒加载处理函数
 async function load(
@@ -258,6 +345,11 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       refreshTask()
       break
     case OperationCode.PAUSE:
+      apis.taskPauseTaskTree([row.id])
+      refreshTask()
+      break
+    case OperationCode.RESUME:
+      apis.taskResumeTaskTree([row.id])
       refreshTask()
       break
     case OperationCode.RETRY:
@@ -282,6 +374,8 @@ async function selectDir(openFile: boolean) {
       for (const dir of dirSelectResult.filePaths) {
         await importFromDir(dir)
       }
+      // 刷新一次列表
+      taskManageSearchTable.value.handleSearchButtonClicked()
     }
   }
 }
@@ -340,9 +434,18 @@ const throttleRefreshTask = throttle(
 function handleScroll() {
   throttleRefreshTask()
 }
-// 判断行数据是否可重试
-function retryable(row: TaskDTO) {
-  return row.status === TaskStatesEnum.FINISHED || row.status === TaskStatesEnum.FAILED
+// 任务状态映射为按钮状态
+function mapToButtonStatus(row: TaskDTO): {
+  tooltip: string
+  icon: string
+  operation: OperationCode
+  processing: boolean
+} {
+  if (notNullish(row.status)) {
+    return taskStatusMapping[row.status]
+  } else {
+    return taskStatusMapping['0']
+  }
 }
 // 开始任务
 function startTask(row: TaskDTO) {
@@ -421,25 +524,13 @@ async function deleteTask(ids: number[]) {
                   @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
                 />
               </el-tooltip>
-              <el-tooltip :content="retryable(row) ? '重试' : '开始'">
+              <el-tooltip :content="mapToButtonStatus(row).tooltip">
                 <el-button
                   size="small"
-                  :icon="retryable(row) ? 'RefreshRight' : 'VideoPlay'"
-                  :loading="(row as TaskDTO).status === TaskStatesEnum.PROCESSING"
-                  @click="
-                    handleOperationButtonClicked(
-                      row,
-                      retryable(row) ? OperationCode.RETRY : OperationCode.START
-                    )
-                  "
+                  :icon="mapToButtonStatus(row).icon"
+                  :loading="mapToButtonStatus(row).processing"
+                  @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
                 ></el-button>
-              </el-tooltip>
-              <el-tooltip content="暂停">
-                <el-button
-                  size="small"
-                  icon="VideoPause"
-                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
-                />
               </el-tooltip>
               <el-tooltip content="取消">
                 <el-button
@@ -457,9 +548,7 @@ async function deleteTask(ids: number[]) {
               </el-tooltip>
             </el-button-group>
             <el-progress
-              v-if="
-                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
-              "
+              v-if="row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.PAUSE"
               style="width: 100%"
               :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
               text-inside
@@ -478,11 +567,16 @@ async function deleteTask(ids: number[]) {
         destroy-on-close
         width="90%"
       />
-      <el-dialog v-model="siteDownloadState" center width="90%" align-center destroy-on-close>
-        <template #header>输入url</template>
-        <el-input v-model="siteSourceUrl"></el-input>
+      <el-dialog v-model="siteDownloadState" center width="80%" align-center destroy-on-close>
+        <el-input
+          v-model="siteSourceUrl"
+          type="textarea"
+          :rows="6"
+          placeholder="输入url"
+        ></el-input>
         <template #footer>
           <el-button type="primary" @click="importFromSite">确定</el-button>
+          <el-button @click="siteDownloadState = false">取消</el-button>
         </template>
       </el-dialog>
     </template>

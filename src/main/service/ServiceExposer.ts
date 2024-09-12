@@ -14,7 +14,7 @@ import LocalAuthorService from './LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import AutoExplainPathService from './AutoExplainPathService.ts'
-import FileSysUtil from '../util/FileSysUtil.ts'
+import { dirSelect } from '../util/FileSysUtil.ts'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -374,6 +374,24 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('task-pauseTaskTree', async (_event, args) => {
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.pauseTaskTree(args, mainWindow))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('task-resumeTaskTree', async (_event, args) => {
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.resumeTaskTree(args, mainWindow))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 
   // WorksService
   Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
@@ -399,7 +417,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
 
   // FileSysUtil
   Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, args): Promise<ApiUtil> => {
-    const result = await FileSysUtil.dirSelect(args)
+    const result = await dirSelect(args)
     return ApiUtil.response(result)
   })
 }

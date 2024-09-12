@@ -77,6 +77,8 @@ export default class LocalTaskHandler {
     // 处理资源
     worksDTO.resourceStream = fs.createReadStream(task.url)
     worksDTO.resourceSize = stats.size
+    // 处理是否可续传
+    worksDTO.continuable = false
 
     return worksDTO
   }
@@ -96,6 +98,13 @@ export default class LocalTaskHandler {
    * @return 作品信息
    */
   pause(task) {}
+
+  /**
+   * 暂停下载任务
+   * @param task 需要暂停的任务
+   * @return 作品信息
+   */
+  resume(task) {}
 
   /**
    * 在含义列表中查找对应类型的含义
@@ -143,10 +152,13 @@ class TaskStream extends Readable{
     let bufferFilled = false
     // 迭代到路径指向文件或者栈为空为止
     while (!bufferFilled) {
-      // 获取并移除栈顶元素
-      const dirInfo = this.stack.pop()
-      const dir = dirInfo.dir
       try {
+        // 获取并移除栈顶元素
+        const dirInfo = this.stack.pop()
+        if (dirInfo === undefined) {
+          continue
+        }
+        const dir = dirInfo.dir
         const stats = await fs.promises.stat(dir)
 
         if (stats.isDirectory()) {
@@ -184,16 +196,15 @@ class TaskStream extends Readable{
           task.pluginData = { meaningOfPaths: dirInfo.meaningOfPaths }
           this.push(task)
           bufferFilled = true
-
-          if(this.stack.length === 0) {
-            this.push(null)
-            bufferFilled = true
-          }
         }
       } catch (err) {
-        console.error(`Error reading ${dir}: ${err}`)
-        // 停止流
+        // 触发错误事件
         this.emit('error', err)
+      } finally {
+        if(this.stack.length === 0) {
+          this.push(null)
+          bufferFilled = true
+        }
       }
     }
   }
@@ -233,9 +244,9 @@ class WorksDTO {
    */
   nickName
   /**
-   * 作品所属作品集
+   * 建议名称
    */
-  worksSets
+  suggestedName
   /**
    * 收录方式（0：本地导入，1：站点下载）
    */
@@ -268,6 +279,10 @@ class WorksDTO {
    * 作品资源的文件大小，单位：字节（Bytes）
    */
   resourceSize
+  /**
+   * 资源是否支持续传
+   */
+  continuable
 
   constructor() {
     this.siteId = undefined
@@ -278,6 +293,7 @@ class WorksDTO {
     this.siteUploadTime = undefined
     this.siteUpdateTime = undefined
     this.nickName = undefined
+    this.suggestedName = undefined
     this.includeMode = undefined
     this.includeTaskId = undefined
     this.localAuthors = undefined
@@ -286,6 +302,7 @@ class WorksDTO {
     this.siteTags = undefined
     this.resourceStream = undefined
     this.resourceSize = undefined
+    this.continuable = undefined
   }
 }
 
@@ -344,6 +361,10 @@ class Task {
   siteWorksId
   url
   status
+  /**
+   * 下载中的文件路径
+   */
+  pendingDownloadPath
   pluginId
   pluginInfo
   pluginData
@@ -357,6 +378,7 @@ class Task {
     this.siteWorksId = undefined
     this.url = undefined
     this.status = undefined
+    this.pendingDownloadPath = undefined
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined

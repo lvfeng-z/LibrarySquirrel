@@ -1,14 +1,5 @@
 import Database from 'better-sqlite3'
-import DatabaseUtil from '../util/DatabaseUtil.ts'
-import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-
-// 定义连接池配置
-export const POOL_CONFIG = {
-  maxConnections: 10, // 最大连接数
-  idleTimeout: 30000, // 连接空闲超时时间（毫秒）
-  databasePath: DatabaseUtil.getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
-}
 
 interface ConnectionPoolConfig {
   maxConnections: number
@@ -23,7 +14,7 @@ export class ConnectionPool {
    * 读取连接池还是写入连接池（true：读取，false：写入）
    * @private
    */
-  private readonly readOrWrite: boolean
+  private readonly readOnly: boolean
   /**
    * 配置
    * @private
@@ -50,13 +41,13 @@ export class ConnectionPool {
    */
   private visualLocked: boolean
   /**
-   * 虚拟排它锁的请求队列
+   * 虚拟排他锁的请求队列
    * @private
    */
   private visualLockQueue: (() => void)[]
 
-  constructor(readOrWrite: boolean, config: ConnectionPoolConfig) {
-    this.readOrWrite = readOrWrite
+  constructor(readOnly: boolean, config: ConnectionPoolConfig) {
+    this.readOnly = readOnly
     this.config = config
     this.connections = Array(this.config.maxConnections).fill(undefined)
     this.connectionExtra = []
@@ -145,33 +136,33 @@ export class ConnectionPool {
   }
 
   /**
-   * 获取虚拟锁
+   * 获取排他锁
    */
-  public async acquireVisualLock(): Promise<void> {
+  public async acquireVisualLock(requester: string, operation: string): Promise<void> {
     return new Promise((resolve) => {
       if (!this.visualLocked) {
-        LogUtil.debug(this.type(), '虚拟锁已锁定')
+        LogUtil.debug(this.type(), `${requester}锁定排他锁，操作：${operation}`)
         this.visualLocked = true
         resolve()
       } else {
-        LogUtil.debug(this.type(), '虚拟锁处于锁定状态，进入等待队列')
+        LogUtil.debug(this.type(), `排他锁处于锁定状态，${requester}进入等待队列`)
         this.visualLockQueue.push(() => resolve())
       }
     })
   }
 
   /**
-   * 释放虚拟锁
+   * 释放排他锁
    */
-  public releaseVisualLock(): void {
+  public releaseVisualLock(requester: string): void {
     if (this.visualLockQueue.length > 0) {
-      LogUtil.debug(this.type(), '虚拟锁转交下一个请求者')
+      LogUtil.debug(this.type(), `排他锁转交下一个请求者${requester}`)
       const next = this.visualLockQueue.shift()
       if (next) {
         next()
       }
     } else {
-      LogUtil.debug(this.type(), '释放虚拟锁')
+      LogUtil.debug(this.type(), `${requester}释放排他锁`)
       this.visualLocked = false
     }
   }
@@ -226,7 +217,7 @@ export class ConnectionPool {
   }
 
   private type(): string {
-    return this.readOrWrite ? 'readingConnectionPool' : 'writingConnectionPool'
+    return this.readOnly ? 'readingConnectionPool' : 'writingConnectionPool'
   }
 
   // private log(msg: string) {
@@ -243,9 +234,4 @@ export class ConnectionPool {
   //     )
   //   })
   // }
-}
-
-export default {
-  ConnectionPool,
-  POOL_CONFIG
 }

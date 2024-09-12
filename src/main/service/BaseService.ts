@@ -2,7 +2,6 @@ import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import BaseModel from '../model/BaseModel.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import BaseDao from '../dao/BaseDao.ts'
-import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
@@ -87,7 +86,7 @@ export default abstract class BaseService<
    * @param updateData
    */
   public async updateById(updateData: Model): Promise<number> {
-    if (StringUtil.isBlank(updateData.id)) {
+    if (isNullish(updateData.id)) {
       const msg = '更新数据时，id不能为空'
       LogUtil.error(this.childClassName, msg)
       throw new Error(msg)
