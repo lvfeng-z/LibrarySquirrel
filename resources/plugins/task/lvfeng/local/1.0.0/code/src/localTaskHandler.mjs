@@ -152,10 +152,13 @@ class TaskStream extends Readable{
     let bufferFilled = false
     // 迭代到路径指向文件或者栈为空为止
     while (!bufferFilled) {
-      // 获取并移除栈顶元素
-      const dirInfo = this.stack.pop()
-      const dir = dirInfo.dir
       try {
+        // 获取并移除栈顶元素
+        const dirInfo = this.stack.pop()
+        if (dirInfo === undefined) {
+          continue
+        }
+        const dir = dirInfo.dir
         const stats = await fs.promises.stat(dir)
 
         if (stats.isDirectory()) {
@@ -193,16 +196,15 @@ class TaskStream extends Readable{
           task.pluginData = { meaningOfPaths: dirInfo.meaningOfPaths }
           this.push(task)
           bufferFilled = true
-
-          if(this.stack.length === 0) {
-            this.push(null)
-            bufferFilled = true
-          }
         }
       } catch (err) {
-        console.error(`Error reading ${dir}: ${err}`)
-        // 停止流
+        // 触发错误事件
         this.emit('error', err)
+      } finally {
+        if(this.stack.length === 0) {
+          this.push(null)
+          bufferFilled = true
+        }
       }
     }
   }
