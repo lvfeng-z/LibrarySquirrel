@@ -79,15 +79,17 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
 
     // 查询
     const db = this.acquire()
-    try {
-      const rows = (await db.all(statement, modifiedPage.query)) as object[]
-      modifiedPage.data = super.getResultTypeDataList<Task>(rows)
-      return modifiedPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, modifiedPage.query)
+      .then((rows) => {
+        modifiedPage.data = super.getResultTypeDataList<Task>(rows)
+        return modifiedPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -158,10 +160,10 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        select *
                        from task
                        where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
-    const db = this.acquire()
     let sourceTasks: TaskDTO[]
+    const db = this.acquire()
     try {
-      const rows = (await db.all(statement)) as object[]
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
       sourceTasks = super.getResultTypeDataList<TaskDTO>(rows)
     } finally {
       if (!this.injectedDB) {
@@ -182,14 +184,14 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        FROM "${this.tableName}"
                        WHERE id in (${idsStr})`
     const db = this.acquire()
-    try {
-      const rows = (await db.all(statement)) as object[]
-      return super.getResultTypeDataList<TaskScheduleDTO>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => super.getResultTypeDataList<TaskScheduleDTO>(rows))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   protected getPrimaryKeyColumnName(): string {

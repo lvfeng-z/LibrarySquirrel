@@ -23,8 +23,9 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const db = this.acquire()
     try {
       const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id in ${siteAuthorIs.join(',')}`
-      const rows = (await db.all(statement)) as object[]
-      return this.getResultTypeDataList<SiteAuthor>(rows)
+      return db
+        .all<unknown[], Record<string, unknown>>(statement)
+        .then((rows) => this.getResultTypeDataList<SiteAuthor>(rows))
     } finally {
       if (!this.injectedDB) {
         db.release()

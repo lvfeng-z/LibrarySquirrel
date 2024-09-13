@@ -5,7 +5,6 @@ import BaseModel from '../model/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
-import logUtil from '../util/LogUtil.ts'
 import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
@@ -56,29 +55,25 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entity
    */
   public async save(entity: Model): Promise<number | string> {
+    // 设置createTime和updateTime
+    entity.createTime = Date.now()
+    entity.updateTime = Date.now()
+
+    // 转换为sqlite3接受的数据类型
+    const plainObject = toObjAcceptedBySqlite3(entity)
+
+    const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
+    const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
+    const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
     const db = this.acquire()
-    try {
-      // 设置createTime和updateTime
-      entity.createTime = Date.now()
-      entity.updateTime = Date.now()
-
-      // 转换为sqlite3接受的数据类型
-      const plainObject = toObjAcceptedBySqlite3(entity)
-
-      const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
-      const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
-      const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-      try {
-        return (await db.run(sql, plainObject)).lastInsertRowid as number
-      } catch (error) {
-        logUtil.error('BaseDao', 'save方法error: ', error)
-        throw error
-      }
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .run(sql, plainObject)
+      .then((runResult) => runResult.lastInsertRowid as number)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -87,70 +82,71 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    const db = this.acquire()
-    try {
-      if (isNullish(entities) || entities.length === 0) {
-        throw new Error('保存的对象不能为空')
-      }
-
-      // 对齐所有属性
-      // 设置createTime和updateTime
-      let plainObject = entities.map((entity) => {
-        entity.createTime = Date.now()
-        entity.updateTime = Date.now()
-        // 转换为sqlite3接受的数据类型
-        return toObjAcceptedBySqlite3(entity)
-      })
-      plainObject = ObjectUtil.alignProperties(plainObject, null)
-      // 按照第一个对象的属性设置insert子句的value部分
-      const keys = Object.keys(plainObject[0])
-        // .filter((key) => 'id' !== key)
-        .map((key) => StringUtil.camelToSnakeCase(key))
-      let insertClause: string
-      if (isNullish(ignore) || !ignore) {
-        insertClause = `INSERT INTO "${this.tableName}" (${keys})`
-      } else {
-        insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${keys})`
-      }
-      const valuesClauses: string[] = []
-
-      // 存储编号后的所有属性
-      let numberedProperties = {}
-
-      let index = 0
-      plainObject.forEach((entity) => {
-        // 给对象的属性编号，放进新的对象中
-        const tempNumberedProperties = Object.fromEntries(
-          Object.entries(entity).map(([key, value]) => [
-            StringUtil.camelToSnakeCase(key).concat(String(index)),
-            value
-          ])
-        )
-
-        // 获取values子句
-        valuesClauses.push(
-          Object.keys(tempNumberedProperties)
-            .map((key) => '@'.concat(key))
-            .join()
-        )
-
-        // 编号后的对象的所有属性放进一个对象中
-        numberedProperties = { ...numberedProperties, ...tempNumberedProperties }
-
-        index++
-      })
-
-      const valuesClause =
-        'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
-
-      const statement = insertClause.concat(' ', valuesClause)
-
-      return (await db.run(statement, numberedProperties)).changes as number
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    if (isNullish(entities) || entities.length === 0) {
+      throw new Error('保存的对象不能为空')
     }
+
+    // 对齐所有属性
+    // 设置createTime和updateTime
+    let plainObject = entities.map((entity) => {
+      entity.createTime = Date.now()
+      entity.updateTime = Date.now()
+      // 转换为sqlite3接受的数据类型
+      return toObjAcceptedBySqlite3(entity)
+    })
+    plainObject = ObjectUtil.alignProperties(plainObject, null)
+    // 按照第一个对象的属性设置insert子句的value部分
+    const keys = Object.keys(plainObject[0])
+      // .filter((key) => 'id' !== key)
+      .map((key) => StringUtil.camelToSnakeCase(key))
+    let insertClause: string
+    if (isNullish(ignore) || !ignore) {
+      insertClause = `INSERT INTO "${this.tableName}" (${keys})`
+    } else {
+      insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${keys})`
+    }
+    const valuesClauses: string[] = []
+
+    // 存储编号后的所有属性
+    let numberedProperties = {}
+
+    let index = 0
+    plainObject.forEach((entity) => {
+      // 给对象的属性编号，放进新的对象中
+      const tempNumberedProperties = Object.fromEntries(
+        Object.entries(entity).map(([key, value]) => [
+          StringUtil.camelToSnakeCase(key).concat(String(index)),
+          value
+        ])
+      )
+
+      // 获取values子句
+      valuesClauses.push(
+        Object.keys(tempNumberedProperties)
+          .map((key) => '@'.concat(key))
+          .join()
+      )
+
+      // 编号后的对象的所有属性放进一个对象中
+      numberedProperties = { ...numberedProperties, ...tempNumberedProperties }
+
+      index++
+    })
+
+    const valuesClause =
+      'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
+
+    const statement = insertClause.concat(' ', valuesClause)
+
+    const db = this.acquire()
+    return db
+      .run(statement, numberedProperties)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -201,22 +197,23 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       LogUtil.error('BaseDao', msg)
       throw new Error(msg)
     }
-    const db = this.acquire()
-    try {
-      // 设置createTime和updateTime
-      updateData.updateTime = Date.now()
+    // 设置createTime和updateTime
+    updateData.updateTime = Date.now()
 
-      // 生成一个不包含值为undefined的属性的对象
-      const existingValue = toObjAcceptedBySqlite3(updateData)
-      const keys = Object.keys(existingValue)
-      const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
-      const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return (await db.run(statement, existingValue)).changes
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    // 生成一个不包含值为undefined的属性的对象
+    const existingValue = toObjAcceptedBySqlite3(updateData)
+    const keys = Object.keys(existingValue)
+    const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
+    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
+    const db = this.acquire()
+    return db
+      .run(statement, existingValue)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -261,85 +258,91 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
-    const db = this.acquire()
-    try {
-      if (isNullish(entities) || entities.length === 0) {
-        throw new Error('保存的对象不能为空')
-      }
-
-      // 对齐所有属性
-      // 设置createTime和updateTime
-      let plainObject = entities.map((entity) => {
-        entity.createTime = Date.now()
-        entity.updateTime = Date.now()
-        // 转换为sqlite3接受的数据类型
-        return toObjAcceptedBySqlite3(entity)
-      })
-      plainObject = ObjectUtil.alignProperties(plainObject, null)
-      // 按照第一个对象的属性设置insert子句的value部分
-      const keys = Object.keys(plainObject[0])
-        // .filter((key) => 'id' !== key)
-        .map((key) => StringUtil.camelToSnakeCase(key))
-      const insertClause = `INSERT OR REPLACE INTO "${this.tableName}" (${keys})`
-      const valuesClauses: string[] = []
-
-      // 存储编号后的所有属性
-      let numberedProperties = {}
-
-      let index = 0
-      plainObject.forEach((entity) => {
-        // 给对象的属性编号，放进新的对象中
-        const tempNumberedProperties = Object.fromEntries(
-          Object.entries(entity).map(([key, value]) => [
-            StringUtil.camelToSnakeCase(key).concat(String(index)),
-            value
-          ])
-        )
-
-        // 获取values子句
-        valuesClauses.push(
-          Object.keys(tempNumberedProperties)
-            .map((key) => '@'.concat(key))
-            .join()
-        )
-
-        // 编号后的对象的所有属性放进一个对象中
-        numberedProperties = { ...numberedProperties, ...tempNumberedProperties }
-
-        index++
-      })
-
-      const valuesClause =
-        'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
-
-      const statement = insertClause.concat(' ', valuesClause)
-
-      return (await db.run(statement, numberedProperties)).changes as number
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    if (isNullish(entities) || entities.length === 0) {
+      throw new Error('保存的对象不能为空')
     }
+
+    // 对齐所有属性
+    // 设置createTime和updateTime
+    let plainObject = entities.map((entity) => {
+      entity.createTime = Date.now()
+      entity.updateTime = Date.now()
+      // 转换为sqlite3接受的数据类型
+      return toObjAcceptedBySqlite3(entity)
+    })
+    plainObject = ObjectUtil.alignProperties(plainObject, null)
+    // 按照第一个对象的属性设置insert子句的value部分
+    const keys = Object.keys(plainObject[0])
+      // .filter((key) => 'id' !== key)
+      .map((key) => StringUtil.camelToSnakeCase(key))
+    const insertClause = `INSERT OR REPLACE INTO "${this.tableName}" (${keys})`
+    const valuesClauses: string[] = []
+
+    // 存储编号后的所有属性
+    let numberedProperties = {}
+
+    let index = 0
+    plainObject.forEach((entity) => {
+      // 给对象的属性编号，放进新的对象中
+      const tempNumberedProperties = Object.fromEntries(
+        Object.entries(entity).map(([key, value]) => [
+          StringUtil.camelToSnakeCase(key).concat(String(index)),
+          value
+        ])
+      )
+
+      // 获取values子句
+      valuesClauses.push(
+        Object.keys(tempNumberedProperties)
+          .map((key) => '@'.concat(key))
+          .join()
+      )
+
+      // 编号后的对象的所有属性放进一个对象中
+      numberedProperties = { ...numberedProperties, ...tempNumberedProperties }
+
+      index++
+    })
+
+    const valuesClause =
+      'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
+
+    const statement = insertClause.concat(' ', valuesClause)
+
+    const db = this.acquire()
+    return db
+      .run(statement, numberedProperties)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
    * 主键查询
    * @param id
    */
-  public async getById(id: PrimaryKey): Promise<Model> {
+  public async getById(id: PrimaryKey): Promise<Model | undefined> {
+    const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
     const db = this.acquire()
-    try {
-      const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
-      let result = (await db.get(statement, { id: id })) as object
-      if (result) {
-        result = this.getResultTypeData(result as Record<string, unknown>)
-      }
-      return result as Model
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .get<unknown[], Record<string, unknown>>(statement, {
+        [this.getPrimaryKeyColumnName()]: id
+      })
+      .then((result) => {
+        if (notNullish(result)) {
+          return this.getResultTypeData<Model>(result)
+        } else {
+          return undefined
+        }
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -347,40 +350,40 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param page
    */
   public async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
-    const db = this.acquire()
-    try {
-      // 生成where字句
-      let whereClause
-      const modifiedPage = new PageModel(page)
-      if (page.query) {
-        const whereClauseAndQuery = this.getWhereClause(page.query)
-        whereClause = whereClauseAndQuery.whereClause
+    // 生成where字句
+    let whereClause
+    const modifiedPage = new PageModel(page)
+    if (page.query) {
+      const whereClauseAndQuery = this.getWhereClause(page.query)
+      whereClause = whereClauseAndQuery.whereClause
 
-        // modifiedPage存储修改过的查询条件
-        modifiedPage.query = whereClauseAndQuery.query
-      }
-
-      // 拼接查询语句
-      let statement = `SELECT * FROM "${this.tableName}"`
-      if (whereClause !== undefined) {
-        statement = statement.concat(' ', whereClause)
-      }
-      // 拼接排序和分页字句
-      statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
-
-      // 查询
-      const query = modifiedPage.query?.getQueryObject()
-      const rows = (await db.all(statement, query === undefined ? {} : query)) as object[]
-
-      // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
-      modifiedPage.data = this.getResultTypeDataList<Model>(rows)
-
-      return modifiedPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+      // modifiedPage存储修改过的查询条件
+      modifiedPage.query = whereClauseAndQuery.query
     }
+
+    // 拼接查询语句
+    let statement = `SELECT * FROM "${this.tableName}"`
+    if (whereClause !== undefined) {
+      statement = statement.concat(' ', whereClause)
+    }
+    // 拼接排序和分页字句
+    statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
+
+    // 查询
+    const query = modifiedPage.query?.getQueryObject()
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
+      .then((rows) => {
+        // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
+        modifiedPage.data = this.getResultTypeDataList<Model>(rows)
+        return modifiedPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -388,38 +391,36 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param query
    */
   public async selectList(query?: Query): Promise<Model[]> {
-    const db = this.acquire()
-    try {
-      let statement = `SELECT * FROM "${this.tableName}"`
-      // 生成where字句
-      let modifiedQuery = lodash.cloneDeep(query)
-      if (modifiedQuery !== undefined) {
-        const whereClauseAndQuery = this.getWhereClause(modifiedQuery)
-        const whereClause = whereClauseAndQuery.whereClause
-        modifiedQuery = whereClauseAndQuery.query
+    let statement = `SELECT * FROM "${this.tableName}"`
+    // 生成where字句
+    let modifiedQuery = lodash.cloneDeep(query)
+    if (modifiedQuery !== undefined) {
+      const whereClauseAndQuery = this.getWhereClause(modifiedQuery)
+      const whereClause = whereClauseAndQuery.whereClause
+      modifiedQuery = whereClauseAndQuery.query
 
-        // 拼接查询语句
-        if (whereClause !== undefined) {
-          statement = statement.concat(' ', whereClause)
-        }
-
-        // 拼接排序字句
-        if (modifiedQuery !== undefined) {
-          statement = this.sorter(statement, modifiedQuery.sort)
-        }
+      // 拼接查询语句
+      if (whereClause !== undefined) {
+        statement = statement.concat(' ', whereClause)
       }
 
-      // 查询
-      const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.getQueryObject())
-      const rows = (await db.all(statement, nonUndefinedValue)) as object[]
-
-      // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
-      return this.getResultTypeDataList<Model>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
+      // 拼接排序字句
+      if (modifiedQuery !== undefined) {
+        statement = this.sorter(statement, modifiedQuery.sort)
       }
     }
+
+    // 查询
+    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.getQueryObject())
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, nonUndefinedValue)
+      .then((rows) => this.getResultTypeDataList<Model>(rows))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -427,22 +428,20 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async selectListByIds(ids: number[] | string[]): Promise<Model[]> {
+    const idStr = ids.join(',')
+    const statement = `SELECT * FROM "${this.tableName}" WHERE ${this.getPrimaryKeyColumnName()} IN (${idStr})`
+    // 生成where字句
+
+    // 查询
     const db = this.acquire()
-    try {
-      const idStr = ids.join(',')
-      const statement = `SELECT * FROM "${this.tableName}" WHERE ${this.getPrimaryKeyColumnName()} IN (${idStr})`
-      // 生成where字句
-
-      // 查询
-      const rows = (await db.all(statement)) as object[]
-
-      // 结果集中的元素的属性名从snakeCase转换为camelCase，并返回
-      return this.getResultTypeDataList<Model>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => this.getResultTypeDataList<Model>(rows))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -455,42 +454,38 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     secondaryLabelName?: string
   ): Promise<SelectItem[]> {
     const db = this.acquire()
-    try {
-      // 拼接select子句
-      let selectClause: string
-      const valueCol = StringUtil.camelToSnakeCase(valueName)
-      const labelCol = StringUtil.camelToSnakeCase(labelName)
-      let secondaryLabelCol: string | undefined
-      if (secondaryLabelName !== undefined) {
-        secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
-        selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel from ${this.tableName}`
-      } else {
-        selectClause = `select ${valueCol} as "value", ${labelCol} as label from ${this.tableName}`
-      }
-
-      // 拼接where子句
-      const whereClauseAndQuery = this.getWhereClause(query)
-      const modifiedQuery = whereClauseAndQuery.query
-
-      // 拼接sql语句
-      let statement = selectClause
-      if (whereClauseAndQuery.whereClause !== undefined) {
-        statement = statement.concat(' ', whereClauseAndQuery.whereClause)
-      }
-
-      // 查询
-      const queryObj = modifiedQuery?.getQueryObject()
-      const rows = await db.all(statement, queryObj === undefined ? {} : queryObj)
-
-      return rows.map((row) => new SelectItem(row as SelectItem))
-    } catch (error) {
-      LogUtil.error(this.childClassName, error)
-      throw error
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    // 拼接select子句
+    let selectClause: string
+    const valueCol = StringUtil.camelToSnakeCase(valueName)
+    const labelCol = StringUtil.camelToSnakeCase(labelName)
+    let secondaryLabelCol: string | undefined
+    if (secondaryLabelName !== undefined) {
+      secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
+      selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel from ${this.tableName}`
+    } else {
+      selectClause = `select ${valueCol} as "value", ${labelCol} as label from ${this.tableName}`
     }
+
+    // 拼接where子句
+    const whereClauseAndQuery = this.getWhereClause(query)
+    const modifiedQuery = whereClauseAndQuery.query
+
+    // 拼接sql语句
+    let statement = selectClause
+    if (whereClauseAndQuery.whereClause !== undefined) {
+      statement = statement.concat(' ', whereClauseAndQuery.whereClause)
+    }
+
+    // 查询
+    const queryObj = modifiedQuery?.getQueryObject()
+    return db
+      .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
+      .then((rows) => rows.map((row) => new SelectItem(row)))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -502,56 +497,53 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     labelName: string,
     secondaryLabelName?: string
   ): Promise<PageModel<Query, SelectItem>> {
-    const db = this.acquire()
-    try {
-      // 拼接select子句
-      let selectClause: string
-      const valueCol = StringUtil.camelToSnakeCase(valueName)
-      const labelCol = StringUtil.camelToSnakeCase(labelName)
-      let secondaryLabelCol: string | undefined
-      if (secondaryLabelName !== undefined) {
-        secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
-        selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel
+    // 拼接select子句
+    let selectClause: string
+    const valueCol = StringUtil.camelToSnakeCase(valueName)
+    const labelCol = StringUtil.camelToSnakeCase(labelName)
+    let secondaryLabelCol: string | undefined
+    if (secondaryLabelName !== undefined) {
+      secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
+      selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel
                         from ${this.tableName}`
-      } else {
-        selectClause = `select ${valueCol} as "value", ${labelCol} as label
+    } else {
+      selectClause = `select ${valueCol} as "value", ${labelCol} as label
                         from ${this.tableName}`
-      }
-
-      // 拼接where子句
-      page = new PageModel<Query, Model>(page)
-      const whereClauseAndQuery = this.getWhereClause(page.query)
-
-      // 创建一个新的PageModel实例存储修改过的查询条件
-      const modifiedPage = new PageModel(page)
-      modifiedPage.query = whereClauseAndQuery.query
-
-      const whereClause = whereClauseAndQuery.whereClause
-      let statement = selectClause
-      if (whereClause !== undefined) {
-        statement = selectClause.concat(' ', whereClause)
-      }
-
-      // 分页和排序
-      statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
-
-      // 查询
-      const query = modifiedPage.query?.getQueryObject()
-      const rows = await db.all(statement, query === undefined ? {} : query)
-
-      // 处理查询结果
-      const selectItems = rows.map((row) => new SelectItem(row as SelectItem))
-      const result = modifiedPage.transform<SelectItem>()
-      result.data = selectItems
-      return result
-    } catch (error) {
-      LogUtil.error(this.childClassName, error)
-      throw error
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
     }
+
+    // 拼接where子句
+    page = new PageModel<Query, Model>(page)
+    const whereClauseAndQuery = this.getWhereClause(page.query)
+
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new PageModel(page)
+    modifiedPage.query = whereClauseAndQuery.query
+
+    const whereClause = whereClauseAndQuery.whereClause
+    let statement = selectClause
+    if (whereClause !== undefined) {
+      statement = selectClause.concat(' ', whereClause)
+    }
+
+    // 分页和排序
+    statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
+
+    // 查询
+    const query = modifiedPage.query?.getQueryObject()
+    const db = this.acquire()
+    return db
+      .all<unknown[], SelectItem>(statement, query === undefined ? {} : query)
+      .then((rows) => {
+        const selectItems = rows.map((row) => new SelectItem(row))
+        const result = modifiedPage.transform<SelectItem>()
+        result.data = selectItems
+        return result
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -907,8 +899,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param dataList
    * @protected
    */
-  protected getResultTypeDataList<Result>(dataList: object[]): Result[] {
-    return dataList.map((row) => this.getResultTypeData(row as Record<string, unknown>))
+  protected getResultTypeDataList<Result>(dataList: Record<string, unknown>[]): Result[] {
+    return dataList.map((row) => this.getResultTypeData(row))
   }
 
   /**

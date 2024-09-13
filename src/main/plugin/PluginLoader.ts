@@ -8,8 +8,9 @@ import { MeaningOfPath } from '../model/utilModels/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
-import { notNullish } from '../util/CommonUtil.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
+import StringUtil from '../util/StringUtil.ts'
 
 export default class PluginLoader {
   /**
@@ -36,6 +37,11 @@ export default class PluginLoader {
   public async loadTaskPlugin(pluginId: number) {
     const installedPluginsService = new InstalledPluginsService()
     const classPath = await installedPluginsService.getClassPathById(pluginId)
+    if (StringUtil.isBlank(classPath)) {
+      const msg = '未获取到插件信息'
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
     const module = await import(classPath)
     const taskPlugin = new module.default(this.pluginTool)
 
@@ -103,6 +109,11 @@ export default class PluginLoader {
               const localAuthorService = new LocalAuthorService()
               if (notNullish(meaningOfPath.id)) {
                 const localAuthor = await localAuthorService.getById(meaningOfPath.id)
+                if (isNullish(localAuthor)) {
+                  const msg = '附加目录含义中的作者信息时，未查询到作者'
+                  LogUtil.error('PluginLoader', msg)
+                  throw new Error(msg)
+                }
                 meaningOfPath.name = localAuthor.localAuthorName
                 meaningOfPath.details = localAuthor
               }
@@ -111,6 +122,11 @@ export default class PluginLoader {
               const localTagService = new LocalTagService()
               if (notNullish(meaningOfPath.id)) {
                 const localTag = await localTagService.getById(meaningOfPath.id)
+                if (isNullish(localTag)) {
+                  const msg = '附加目录含义中的标签信息时，未查询到作者'
+                  LogUtil.error('PluginLoader', msg)
+                  throw new Error(msg)
+                }
                 meaningOfPath.name = localTag.localTagName
                 meaningOfPath.details = localTag
               }
@@ -119,6 +135,11 @@ export default class PluginLoader {
               const siteService = new SiteService()
               if (notNullish(meaningOfPath.id)) {
                 const site = await siteService.getById(meaningOfPath.id)
+                if (isNullish(site)) {
+                  const msg = '附加目录含义中的站点信息时，未查询到作者'
+                  LogUtil.error('PluginLoader', msg)
+                  throw new Error(msg)
+                }
                 meaningOfPath.name = site.siteName
                 meaningOfPath.details = site
               }

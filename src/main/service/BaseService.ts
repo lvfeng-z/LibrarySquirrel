@@ -120,7 +120,7 @@ export default abstract class BaseService<
    * 主键查询
    * @param id
    */
-  public async getById(id: number | string): Promise<Model> {
+  public async getById(id: number | string): Promise<Model | undefined> {
     return this.dao.getById(id)
   }
 

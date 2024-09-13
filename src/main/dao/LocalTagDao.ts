@@ -48,12 +48,10 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param depth 查询深度
    */
   async selectTreeNode(rootId: number, depth?: number) {
-    const db = this.acquire()
-    try {
-      if (depth === undefined || depth < 0) {
-        depth = 10
-      }
-      const statement = `WITH RECURSIVE treeNode AS
+    if (depth === undefined || depth < 0) {
+      depth = 10
+    }
+    const statement = `WITH RECURSIVE treeNode AS
          (
            SELECT *, 1 AS level
            FROM local_tag
@@ -65,13 +63,15 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
            WHERE treeNode.level < @depth
          )
          SELECT * FROM treeNode`
-      const result = (await db.all(statement, { rootId: rootId, depth: depth })) as object[]
-      return this.getResultTypeDataList<LocalTag>(result)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth })
+      .then((result) => this.getResultTypeDataList<LocalTag>(result))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -79,9 +79,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param nodeId 节点id
    */
   async selectParentNode(nodeId: number) {
-    const db = this.acquire()
-    try {
-      const statement = `WITH RECURSIVE parentNode AS
+    const statement = `WITH RECURSIVE parentNode AS
         (
           SELECT *
           FROM local_tag
@@ -92,13 +90,15 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
             JOIN parentNode ON local_tag.id = parentNode.base_local_tag_id
         )
         SELECT * FROM parentNode`
-      const result = (await db.all(statement, { nodeId: nodeId })) as object[]
-      return this.getResultTypeDataList<LocalTag>(result)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, { nodeId: nodeId })
+      .then((result) => this.getResultTypeDataList<LocalTag>(result))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -107,19 +107,18 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    */
   async getByWorksId(worksId: number): Promise<LocalTag[]> {
     const statement = `select t1.*
-                              from local_tag t1
-                                inner join re_works_tag t2 on t1.id = t2.local_tag_id
-                                inner join works t3 on t2.works_id = t3.id
-                              where t3.id = ${worksId}`
+                       from local_tag t1
+                              inner join re_works_tag t2 on t1.id = t2.local_tag_id
+                              inner join works t3 on t2.works_id = t3.id
+                       where t3.id = ${worksId}`
     const db = this.acquire()
-    try {
-      return db
-        .all<[], LocalTag>(statement)
-        .then((runResult) => super.getResultTypeDataList<LocalTag>(runResult))
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((runResult) => super.getResultTypeDataList<LocalTag>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 }

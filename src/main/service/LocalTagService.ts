@@ -56,6 +56,11 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         if (parentTagIds.includes(localTag.id)) {
           // 查询要修改的标签原本的数据
           const old = await this.dao.getById(localTag.id)
+          if (isNullish(old)) {
+            const msg = '修改本地标签时，原标签信息意外为空'
+            LogUtil.error('LocalTagService', msg)
+            throw new Error(msg)
+          }
 
           const newBaseLocalTag = new LocalTag()
           newBaseLocalTag.id = localTag.baseLocalTagId

@@ -26,32 +26,34 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
   async getListenerPage(
     page: PageModel<AutoExplainPathQueryDTO, AutoExplainPath>
   ): Promise<PageModel<AutoExplainPathQueryDTO, AutoExplainPath>> {
-    const db = this.acquire()
-    try {
-      const path = page.query?.path
-      // 校验
-      if (StringUtil.isBlank(path)) {
-        const msg = '分页查询自动解释时，path不能为空'
-        LogUtil.error('', msg)
-        throw new Error(msg)
-      }
-      const resultPage = lodash.cloneDeep(page)
-
-      // 组装sql
-      const selectClause = `select * from auto_explain_path`
-      const whereClause = `'${path}' REGEXP regular_expression`
-      let statement = selectClause.concat(' where ', whereClause)
-
-      // 查询和转换
-      statement = await super.sorterAndPager(statement, whereClause, resultPage)
-      const rows = (await db.all(statement)) as object[]
-      resultPage.data = super.getResultTypeDataList<AutoExplainPath>(rows)
-      return resultPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    const path = page.query?.path
+    // 校验
+    if (StringUtil.isBlank(path)) {
+      const msg = '分页查询自动解释时，path不能为空'
+      LogUtil.error('', msg)
+      throw new Error(msg)
     }
+
+    // 组装sql
+    const selectClause = `select * from auto_explain_path`
+    const whereClause = `'${path}' REGEXP regular_expression`
+    let statement = selectClause.concat(' where ', whereClause)
+
+    // 查询和转换
+    const resultPage = lodash.cloneDeep(page)
+    statement = await super.sorterAndPager(statement, whereClause, resultPage)
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => {
+        resultPage.data = super.getResultTypeDataList<AutoExplainPath>(rows)
+        return resultPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -59,15 +61,15 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
    * @param path
    */
   async getListenerList(path: string): Promise<AutoExplainPath[]> {
+    const statement = `select * from auto_explain_path where '${path}' REGEXP regular_expression`
     const db = this.acquire()
-    try {
-      const statement = `select * from auto_explain_path where '${path}' REGEXP regular_expression`
-      const rows = (await db.all(statement)) as object[]
-      return super.getResultTypeDataList<AutoExplainPath>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => super.getResultTypeDataList<AutoExplainPath>(rows))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 }

@@ -55,7 +55,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
         )
         this.holdingVisualLock = true
       }
-      const runResult = this.statement.run(params)
+      const runResult = this.statement.run(...params)
       LogUtil.debug(
         'AsyncStatement',
         `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
@@ -83,7 +83,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     return this.statement.all(...params)
   }
   iterate(...params: BindParameters): IterableIterator<Result> {
-    return this.statement.iterate(params)
+    return this.statement.iterate(...params)
   }
   pluck(toggleState?: boolean): Database.Statement<BindParameters, Result> {
     return this.statement.pluck(toggleState)

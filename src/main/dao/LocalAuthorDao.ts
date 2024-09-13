@@ -28,22 +28,23 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                        where t2.works_id in (${worksIds.join(',')})`
     const db = this.acquire()
     try {
-      const rows = (await db.all(statement)) as object[]
-      type relationShipType = LocalAuthorDTO & { worksId: number }
-      const relationShips = this.getResultTypeDataList(rows) as relationShipType[]
+      return db.all<unknown[], Record<string, unknown>>(statement).then((rows) => {
+        type relationShipType = LocalAuthorDTO & { worksId: number }
+        const relationShips = this.getResultTypeDataList<relationShipType>(rows)
 
-      // 返回一个worksId为键，相同worksId的元素为数组为值的Map
-      return relationShips.reduce(
-        (map: Map<number, LocalAuthorDTO[]>, relationShip: relationShipType) => {
-          const worksId = relationShip.worksId
-          if (!map.has(worksId)) {
-            map.set(worksId, [])
-          }
-          map.get(worksId)?.push(relationShip)
-          return map
-        },
-        new Map<number, LocalAuthorDTO[]>()
-      )
+        // 返回一个worksId为键，相同worksId的元素为数组为值的Map
+        return relationShips.reduce(
+          (map: Map<number, LocalAuthorDTO[]>, relationShip: relationShipType) => {
+            const worksId = relationShip.worksId
+            if (!map.has(worksId)) {
+              map.set(worksId, [])
+            }
+            map.get(worksId)?.push(relationShip)
+            return map
+          },
+          new Map<number, LocalAuthorDTO[]>()
+        )
+      })
     } finally {
       if (!this.injectedDB) {
         db.release()

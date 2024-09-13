@@ -22,14 +22,14 @@ export default class TaskPluginListenerDao extends BaseDao<
    */
   async getListener(url: string) {
     const db = this.acquire()
-    try {
-      const statement = `select distinct t1.* from installed_plugins t1 inner join task_plugin_listener t2 on t1.id = t2.plugin_id where '${url}' REGEXP t2.listener order by t1.sort_num`
-      const result = (await db.all(statement)) as object[]
-      return this.getResultTypeDataList<InstalledPlugins>(result)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const statement = `select distinct t1.* from installed_plugins t1 inner join task_plugin_listener t2 on t1.id = t2.plugin_id where '${url}' REGEXP t2.listener order by t1.sort_num`
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((result) => this.getResultTypeDataList<InstalledPlugins>(result))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 }
