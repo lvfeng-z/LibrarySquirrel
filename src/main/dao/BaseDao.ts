@@ -369,7 +369,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      const rows = (await db.all(statement, modifiedPage.query?.getQueryObject())) as object[]
+      const query = modifiedPage.query?.getQueryObject()
+      const rows = (await db.all(statement, query === undefined ? {} : query)) as object[]
 
       // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
       modifiedPage.data = this.getResultTypeDataList<Model>(rows)
@@ -478,7 +479,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
 
       // 查询
-      const rows = await db.all(statement, modifiedQuery?.getQueryObject())
+      const queryObj = modifiedQuery?.getQueryObject()
+      const rows = await db.all(statement, queryObj === undefined ? {} : queryObj)
 
       return rows.map((row) => new SelectItem(row as SelectItem))
     } catch (error) {
@@ -534,7 +536,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
       // 查询
-      const rows = await db.all(statement, modifiedPage.query?.getQueryObject())
+      const query = modifiedPage.query?.getQueryObject()
+      const rows = await db.all(statement, query === undefined ? {} : query)
 
       // 处理查询结果
       const selectItems = rows.map((row) => new SelectItem(row as SelectItem))

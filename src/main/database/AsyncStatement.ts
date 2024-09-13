@@ -5,12 +5,12 @@ import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 /**
  * 封装的Better-SQLit3 Statement类
  */
-export default class AsyncStatement {
+export default class AsyncStatement<BindParameters extends unknown[], Result = unknown> {
   /**
    * Better-SQLit3的Statement对象
    * @private
    */
-  private statement: Database.Statement
+  private statement: Database.Statement<BindParameters, Result>
 
   /**
    * 是否持有排他锁
@@ -30,7 +30,11 @@ export default class AsyncStatement {
    */
   private readonly caller: string
 
-  constructor(statement: Database.Statement, holdingVisualLock: boolean, caller: string) {
+  constructor(
+    statement: Database.Statement<BindParameters, Result>,
+    holdingVisualLock: boolean,
+    caller: string
+  ) {
     this.statement = statement
     this.holdingVisualLock = holdingVisualLock
     this.injectedLock = holdingVisualLock
@@ -41,7 +45,7 @@ export default class AsyncStatement {
    * run方法的封装
    * @param params
    */
-  async run(...params: unknown[]): Promise<Database.RunResult> {
+  async run(...params: BindParameters): Promise<Database.RunResult> {
     try {
       // 获取排他锁
       if (!this.holdingVisualLock) {
@@ -51,7 +55,7 @@ export default class AsyncStatement {
         )
         this.holdingVisualLock = true
       }
-      const runResult = this.statement.run(...params)
+      const runResult = this.statement.run(params)
       LogUtil.debug(
         'AsyncStatement',
         `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
@@ -64,39 +68,39 @@ export default class AsyncStatement {
       }
     }
   }
-  get(...params: unknown[]): unknown | undefined {
+  get(...params: BindParameters): undefined | Result {
     LogUtil.debug(
       'AsyncStatement',
       `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
     )
     return this.statement.get(...params)
   }
-  all(...params: unknown[]): unknown[] {
+  all(...params: BindParameters): Result[] {
     LogUtil.debug(
       'AsyncStatement',
       `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
     )
-    return this.statement.all(...params) as unknown[]
+    return this.statement.all(...params)
   }
-  iterate(...params: unknown[]): IterableIterator<unknown> {
-    return this.statement.iterate(...params) as IterableIterator<unknown>
+  iterate(...params: BindParameters): IterableIterator<Result> {
+    return this.statement.iterate(params)
   }
-  pluck(toggleState?: boolean): Database.Statement {
-    return this.statement.pluck(toggleState) as Database.Statement
+  pluck(toggleState?: boolean): Database.Statement<BindParameters, Result> {
+    return this.statement.pluck(toggleState)
   }
-  expand(toggleState?: boolean): Database.Statement {
-    return this.statement.expand(toggleState) as Database.Statement
+  expand(toggleState?: boolean): Database.Statement<BindParameters, Result> {
+    return this.statement.expand(toggleState)
   }
-  raw(toggleState?: boolean): Database.Statement {
-    return this.statement.raw(toggleState) as Database.Statement
+  raw(toggleState?: boolean): Database.Statement<BindParameters, Result> {
+    return this.statement.raw(toggleState)
   }
-  bind(...params: unknown[]): Database.Statement {
-    return this.statement.bind(...params) as Database.Statement
+  bind(...params: BindParameters): Database.Statement<BindParameters, Result> {
+    return this.statement.bind(...params)
   }
   columns(): Database.ColumnDefinition[] {
     return this.statement.columns()
   }
-  safeIntegers(toggleState?: boolean): Database.Statement {
-    return this.statement.safeIntegers(toggleState) as Database.Statement
+  safeIntegers(toggleState?: boolean): Database.Statement<BindParameters, Result> {
+    return this.statement.safeIntegers(toggleState)
   }
 }

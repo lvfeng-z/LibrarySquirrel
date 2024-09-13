@@ -64,20 +64,33 @@ export default class DB {
    * @param statement
    * @param params
    */
-  public async run(statement: string, ...params: unknown[]): Promise<Database.RunResult> {
-    return await (await this.prepare(statement, false)).run(...params)
-  }
-  public async get(statement: string, ...params: unknown[]): Promise<unknown | undefined> {
-    return await (await this.prepare(statement, true)).get(...params)
-  }
-  public async all(statement: string, ...params: unknown[]): Promise<unknown[]> {
-    return (await this.prepare(statement, true)).all(...params)
-  }
-  public async iterate(
+  public async run<BindParameters extends unknown[], Result = unknown>(
     statement: string,
-    ...params: unknown[]
-  ): Promise<IterableIterator<unknown>> {
-    return (await this.prepare(statement, true)).iterate(...params)
+    ...params: BindParameters
+  ): Promise<Database.RunResult> {
+    return await (await this.prepare<BindParameters, Result>(statement, false)).run(...params)
+  }
+  public async get<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    ...params: BindParameters
+  ): Promise<Result | undefined> {
+    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) =>
+      asyncStatement.get(...params)
+    )
+  }
+  public async all<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    ...params: BindParameters
+  ): Promise<Result[]> {
+    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) =>
+      asyncStatement.all(...params)
+    )
+  }
+  public async iterate<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    ...params: BindParameters
+  ): Promise<IterableIterator<Result>> {
+    return (await this.prepare<BindParameters, Result>(statement, true)).iterate(...params)
   }
   public async pluck(statement: string, toggleState?: boolean): Promise<Database.Statement> {
     return (await this.prepare(statement, true)).pluck(toggleState)
@@ -88,8 +101,13 @@ export default class DB {
   public async raw(statement: string, toggleState?: boolean): Promise<Database.Statement> {
     return (await this.prepare(statement, true)).raw(toggleState)
   }
-  public async bind(statement: string, ...params: unknown[]): Promise<Database.Statement> {
-    return (await this.prepare(statement, true)).bind(...params)
+  public async bind<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    ...params: BindParameters
+  ): Promise<Database.Statement<BindParameters, Result>> {
+    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) =>
+      asyncStatement.bind(...params)
+    )
   }
   public async columns(statement: string): Promise<Database.ColumnDefinition[]> {
     return (await this.prepare(statement, true)).columns()
@@ -103,11 +121,14 @@ export default class DB {
    * @param statement 语句
    * @param readOnly 读还是写（true：读，false：写）
    */
-  public async prepare(statement: string, readOnly: boolean): Promise<AsyncStatement> {
+  public async prepare<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    readOnly: boolean
+  ): Promise<AsyncStatement<BindParameters, Result>> {
     const connectionPromise = this.acquire(readOnly)
     return connectionPromise.then((connection) => {
-      const stmt = connection.prepare(statement)
-      return new AsyncStatement(stmt, this.holdingVisualLock, this.caller)
+      const stmt = connection.prepare<BindParameters, Result>(statement)
+      return new AsyncStatement<BindParameters, Result>(stmt, this.holdingVisualLock, this.caller)
     })
   }
 
