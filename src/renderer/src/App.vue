@@ -220,7 +220,7 @@ async function handleTest() {
         <div class="mainPage-searchbar">
           <el-row>
             <el-col style="display: flex; justify-content: center" :span="2">
-              <el-button @click="handleTest"> 测试 </el-button>
+              <el-button @click="handleTest">测试</el-button>
             </el-col>
             <el-col :span="20">
               <el-select
@@ -254,7 +254,7 @@ async function handleTest() {
               </el-select>
             </el-col>
             <el-col style="display: flex; justify-content: center" :span="2">
-              <el-button @click="requestWorks"> 搜索 </el-button>
+              <el-button @click="requestWorks">搜索</el-button>
             </el-col>
           </el-row>
         </div>

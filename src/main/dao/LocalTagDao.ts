@@ -100,4 +100,26 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       }
     }
   }
+
+  /**
+   * 查询作品的本地标签
+   * @param worksId 作品id
+   */
+  async getByWorksId(worksId: number): Promise<LocalTag[]> {
+    const statement = `select t1.*
+                              from local_tag t1
+                                inner join re_works_tag t2 on t1.id = t2.local_tag_id
+                                inner join works t3 on t2.works_id = t3.id
+                              where t3.id = ${worksId}`
+    const db = this.acquire()
+    try {
+      return db
+        .all<[], LocalTag>(statement)
+        .then((runResult) => super.getResultTypeDataList<LocalTag>(runResult))
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
 }

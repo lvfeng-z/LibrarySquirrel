@@ -321,6 +321,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   /**
+   * 查询作品的完整信息
+   * @param worksId 作品id
+   */
+  async getFullWorksInfoById(worksId: string) {
+    const baseWorksInfo = await super.getById(worksId)
+
+    //
+    return baseWorksInfo
+  }
+
+  /**
    * 从作品信息中提取用于文件名的作者名称
    * @param worksDTO
    * @private

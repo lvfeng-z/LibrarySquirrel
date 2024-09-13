@@ -11,6 +11,9 @@ const props = defineProps<{
   width?: number
 }>()
 
+// 事件
+const emit = defineEmits(['imageClicked'])
+
 // 变量
 const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> =
   ref('contain')
@@ -28,6 +31,10 @@ function handleElImageFit(event) {
   console.log('imageWidth', event.target.naturalWidth)
   imageFit.value = 'contain'
 }
+// 处理图片被点击
+function handleImageClicked() {
+  emit('imageClicked', props.works)
+}
 </script>
 <template>
   <div class="works-display-case">
@@ -36,6 +43,7 @@ function handleElImageFit(event) {
       class="works-display-case-image"
       :src="`workdir-resource://workdir/${props.works.filePath}`"
       @load="handleElImageFit"
+      @click="handleImageClicked"
     ></el-image>
     <works-info class="works-display-case-works-info" :works="works"></works-info>
     <author-info

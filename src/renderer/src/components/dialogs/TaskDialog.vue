@@ -218,9 +218,9 @@ function handleDialog(newState: boolean) {
   state.value = newState
   nextTick(() => {
     const baseDialogHeader =
-      baseDialog.value.$el.parentElement.querySelector('.el-dialog__header').clientHeight
+      baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
     const baseDialogFooter =
-      baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer').clientHeight
+      baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
     heightForSearchTable.value =
       parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
 
