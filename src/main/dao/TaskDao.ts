@@ -34,13 +34,14 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
         where id = ${taskId}`
 
     const db = this.acquire()
-    try {
-      return db.run(statement).then((runResult) => runResult.changes)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .run(statement)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -123,13 +124,14 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                           where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        )`
     const db = this.acquire()
-    try {
-      return db.run(statement).then((runResult) => runResult.changes)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .run(statement)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -162,16 +164,17 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        where pid in (select id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
     let sourceTasks: TaskDTO[]
     const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
-      sourceTasks = super.getResultTypeDataList<TaskDTO>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
-
-    return buildTree(sourceTasks, 0)
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => {
+        sourceTasks = super.getResultTypeDataList<TaskDTO>(rows)
+        return buildTree(sourceTasks, 0)
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**

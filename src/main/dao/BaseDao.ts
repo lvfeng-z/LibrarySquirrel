@@ -154,15 +154,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async deleteById(id: PrimaryKey): Promise<number> {
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
     const db = this.acquire()
-    try {
-      const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
-      return db.run(sql).then((runResult) => runResult.changes)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .run(sql)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -175,15 +176,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       return 0
     }
     const idsStr = ids.join(',')
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" in (${idsStr})`
     const db = this.acquire()
-    try {
-      const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" in (${idsStr})`
-      return db.run(sql).then((runResult) => runResult.changes)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .run(sql)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**

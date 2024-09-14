@@ -32,25 +32,27 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
     const statement = `select *
                        from works_set ${whereClause}`
     const db = super.acquire()
-    try {
-      const rows = (await db.all(statement, modifiedQuery)) as Record<string, unknown>[]
-      const result = super.getResultTypeDataList(rows) as WorksSet[]
-      if (result.length > 1) {
-        LogUtil.warn(
-          'WorksSetDao',
-          `同一站点作品集id和导入任务id下，存在多个作品集，siteWorksSetId: ${siteWorksSetId}，taskId: ${taskId}`
-        )
-      }
-      if (result.length > 0) {
-        return result[0]
-      } else {
-        return undefined
-      }
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+      .then((rows) => {
+        const result = super.getResultTypeDataList(rows) as WorksSet[]
+        if (result.length > 1) {
+          LogUtil.warn(
+            'WorksSetDao',
+            `同一站点作品集id和导入任务id下，存在多个作品集，siteWorksSetId: ${siteWorksSetId}，taskId: ${taskId}`
+          )
+        }
+        if (result.length > 0) {
+          return result[0]
+        } else {
+          return undefined
+        }
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   protected getPrimaryKeyColumnName(): string {

@@ -14,19 +14,21 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
    */
   public async getIdDomainRecord(domains: string[]): Promise<Record<string, number>> {
     const db = this.acquire()
-    try {
-      const statement = `SELECT site_domain as siteDomain, id
+    const statement = `SELECT site_domain as siteDomain, id
          FROM site
          WHERE site_domain in (${domains.join(',')})`
-      const rows = (await db.all(statement)) as object[]
-      const result: Record<string, number> = {}
-      rows.forEach((row) => (result[row['siteDomain']] = row['id']))
-      return result
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    return db
+      .all<unknown[], Record<string, string | number>>(statement)
+      .then((rows) => {
+        const result: Record<string, number> = {}
+        rows.forEach((row) => (result[row['siteDomain']] = <number>row['id']))
+        return result
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   protected getPrimaryKeyColumnName(): string {

@@ -14,32 +14,30 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   }
 
   public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
+    const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`
+    let where = ''
+    const columns: string[] = []
+    const values: string[] = []
+
+    if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
+      columns.push('local_tag_name like ?')
+      values.push('%' + queryDTO.keyword + '%')
+    }
+
+    if (columns.length == 1) {
+      where = ' where ' + columns.toString()
+    } else if (columns.length > 1) {
+      where = ' where ' + columns.join(' and ')
+    }
+
+    const sql: string = selectFrom + where
+
     const db = this.acquire()
-    try {
-      const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`
-      let where = ''
-      const columns: string[] = []
-      const values: string[] = []
-
-      if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
-        columns.push('local_tag_name like ?')
-        values.push('%' + queryDTO.keyword + '%')
-      }
-
-      if (columns.length == 1) {
-        where = ' where ' + columns.toString()
-      } else if (columns.length > 1) {
-        where = ' where ' + columns.join(' and ')
-      }
-
-      const sql: string = selectFrom + where
-
-      return (await db.all(sql, values)) as SelectItem[]
-    } finally {
+    return db.all<unknown[], SelectItem>(sql, values).finally(() => {
       if (!this.injectedDB) {
         db.release()
       }
-    }
+    })
   }
 
   /**
@@ -105,7 +103,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * 查询作品的本地标签
    * @param worksId 作品id
    */
-  async getByWorksId(worksId: number): Promise<LocalTag[]> {
+  async listByWorksId(worksId: number): Promise<LocalTag[]> {
     const statement = `select t1.*
                        from local_tag t1
                               inner join re_works_tag t2 on t1.id = t2.local_tag_id

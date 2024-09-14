@@ -27,8 +27,9 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                               inner join re_works_author t2 on t1.id = t2.local_author_id
                        where t2.works_id in (${worksIds.join(',')})`
     const db = this.acquire()
-    try {
-      return db.all<unknown[], Record<string, unknown>>(statement).then((rows) => {
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => {
         type relationShipType = LocalAuthorDTO & { worksId: number }
         const relationShips = this.getResultTypeDataList<relationShipType>(rows)
 
@@ -45,14 +46,35 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
           new Map<number, LocalAuthorDTO[]>()
         )
       })
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   protected getPrimaryKeyColumnName(): string {
     return 'id'
+  }
+
+  /**
+   * 查询作品的本地标签
+   * @param worksId 作品id
+   */
+  async listByWorksId(worksId: number): Promise<LocalAuthorDTO[]> {
+    const statement = `select t1.*, t2.author_role
+                       from local_author t1
+                              inner join re_works_author t2 on t1.id = t2.local_author_id
+                              inner join works t3 on t2.works_id = t3.id
+                       where t3.id = ${worksId}`
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((runResult) => super.getResultTypeDataList<LocalAuthorDTO>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 }
