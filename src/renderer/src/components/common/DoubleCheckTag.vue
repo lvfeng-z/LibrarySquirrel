@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SelectItem from '../../model/util/SelectItem'
+import { notNullish } from '../../utils/CommonUtil'
 
 // props
 const props = withDefaults(
@@ -39,6 +40,7 @@ function handleClicked(right: boolean) {
       {{ props.item.label }}
     </el-check-tag>
     <el-check-tag
+      v-if="notNullish(props.item.secondaryLabel)"
       class="double-check-tag-tag"
       :type="props.rightTagType"
       checked

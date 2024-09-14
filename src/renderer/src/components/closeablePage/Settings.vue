@@ -15,7 +15,6 @@ const apis = reactive({
   settingsSaveSettings: window.api.settingsSaveSettings,
   settingsResetSettings: window.api.settingsResetSettings
 }) // 接口
-const activeName = ref([1]) // 默认展开的折叠面板
 // 设置
 const settings: Ref<UnwrapRef<Settings>> = ref({
   initialized: true,
@@ -68,16 +67,14 @@ function resetSettings() {
 <template>
   <base-closeable-page>
     <el-scrollbar>
-      <el-collapse v-model="activeName">
-        <el-collapse-item title="工作目录" :name="1">
-          <el-row>
-            <el-input v-model="settings.workdir"></el-input>
-          </el-row>
-          <el-row>
-            <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
-          </el-row>
-        </el-collapse-item>
-      </el-collapse>
+      <el-descriptions direction="vertical" :column="1">
+        <el-descriptions-item label="工作目录">
+          <el-input v-model="settings.workdir"></el-input>
+        </el-descriptions-item>
+        <el-descriptions-item label="最大并发下载数">
+          <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
+        </el-descriptions-item>
+      </el-descriptions>
       <el-row>
         <el-col :span="6">
           <el-button type="primary" @click="saveSettings">保存</el-button>
