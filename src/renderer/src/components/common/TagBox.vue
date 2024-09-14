@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import DoubleCheckTag from './DoubleCheckTag.vue'
 import SelectItem from '../../model/util/SelectItem'
-import { computed, Ref, ref, UnwrapRef } from 'vue'
-import { notNullish } from '../../utils/CommonUtil'
+import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
+import { isNullish, notNullish } from '../../utils/CommonUtil'
 
 // props
 const props = defineProps<{
-  load: () => Promise<unknown>
+  load?: () => Promise<unknown>
   showLoadButton?: boolean
 }>()
 
@@ -14,7 +14,21 @@ const props = defineProps<{
 const dataList = defineModel<SelectItem[]>('dataList', { default: () => [] })
 
 // 事件
-const emit = defineEmits(['tagClicked'])
+const emit = defineEmits(['tagLeftClicked', 'tagRightClicked'])
+
+// watch
+// 监听dataList变化，更新是否充满的状态
+watch(dataList, () => {
+  nextTick(() => {
+    if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
+      const scrollHeight = scrollbar.value.wrapRef.clientHeight
+      const dataRowHeight = dataRow.value.$el.offsetHeight
+      notFull.value = dataRowHeight <= scrollHeight
+    } else {
+      notFull.value = true
+    }
+  })
+})
 
 // 变量
 // el-scrollbar组件的实例
@@ -24,20 +38,15 @@ const dataRow = ref()
 // loading开关
 const loading: Ref<UnwrapRef<boolean>> = ref(false)
 // 是否未填满
-const notFull: Ref<UnwrapRef<boolean>> = computed(() => {
-  if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
-    const scrollHeight = scrollbar.value.wrapRef.clientHeight
-    const dataRowHeight = dataRow.value.$el.clientHeight
-    return dataRowHeight <= scrollHeight
-  } else {
-    return false
-  }
-})
+const notFull: Ref<UnwrapRef<boolean>> = ref(true)
 
 // 方法
 // 处理DataScroll滚动事件
 async function handleDataScroll() {
   try {
+    if (isNullish(props.load)) {
+      return
+    }
     loading.value = true
     // 获得滚动条包裹的 ref 对象
     const scrollWrapper = scrollbar.value.wrapRef
@@ -57,8 +66,12 @@ async function handleDataScroll() {
   }
 }
 // 处理tag被点击事件
-function handleCheckTagClicked(tag: SelectItem) {
-  emit('tagClicked', tag)
+function handleCheckTagClicked(tag: SelectItem, left: boolean) {
+  if (left) {
+    emit('tagLeftClicked', tag)
+  } else {
+    emit('tagRightClicked', tag)
+  }
 }
 
 // 暴露
@@ -77,8 +90,8 @@ defineExpose({ scrollbar, notFull })
         <div class="tag-box-select-item">
           <double-check-tag
             :item="item"
-            @left-clicked="handleCheckTagClicked(item)"
-            @right-clicked="handleCheckTagClicked(item)"
+            @left-clicked="handleCheckTagClicked(item, true)"
+            @right-clicked="handleCheckTagClicked(item, false)"
           >
           </double-check-tag>
         </div>
@@ -86,7 +99,9 @@ defineExpose({ scrollbar, notFull })
     </el-row>
   </el-scrollbar>
   <el-row v-show="showLoadButton">
-    <el-check-tag style="width: 100%" @click="props.load()"> 加载更多... </el-check-tag>
+    <el-check-tag style="width: 100%" @click="notNullish(props.load) ? props.load() : undefined">
+      加载更多...
+    </el-check-tag>
   </el-row>
 </template>
 

@@ -5,11 +5,11 @@ import { computed, Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
-import DoubleCheckTag from './DoubleCheckTag.vue'
 import PageModel from '../../model/util/PageModel'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import TagBox from './TagBox.vue'
+import { notNullish } from '../../utils/CommonUtil'
 
 // props
 const props = defineProps<{
@@ -45,16 +45,30 @@ const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
 ) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
-const upperScroll = ref() // upperDataScrollBar的组件实例
-const lowerTagBox = ref() // lowerDataScrollBar的组件实例
-const upperLoadMore: Ref<boolean> = computed(() => {
-  return upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount
-}) // upper加载更多开关
-const lowerLoadMore: Ref<boolean> = computed(() => {
-  return (
-    lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount && lowerTagBox.value.notFull
-  )
-}) // lower加载更多开关
+const upperTagBox = ref() // upperTagBox组件的实例
+const lowerTagBox = ref() // lowerTagBox组件的实例
+// upper加载更多开关
+const upperLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
+  if (notNullish(upperTagBox.value)) {
+    return (
+      upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount &&
+      upperTagBox.value.notFull
+    )
+  } else {
+    return false
+  }
+})
+// lower加载更多开关
+const lowerLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
+  if (notNullish(lowerTagBox.value)) {
+    return (
+      lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount &&
+      lowerTagBox.value.notFull
+    )
+  } else {
+    return false
+  }
+})
 const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
@@ -229,34 +243,13 @@ async function requestNextPage(upperOrLower: boolean) {
     }
   }
 }
-// 处理DataScroll滚动事件
-async function handleDataScroll(_event, upperOrLower: boolean) {
-  // 获得滚动条包裹的 ref 对象
-  let scrollWrapper
-  if (upperOrLower) {
-    scrollWrapper = upperScroll.value.wrapRef
-  } else {
-    scrollWrapper = lowerTagBox.value.wrapRef
-  }
-
-  if (scrollWrapper) {
-    const scrollHeight = scrollWrapper.scrollHeight
-    const scrollTop = scrollWrapper.scrollTop
-    const height = scrollWrapper.clientHeight
-
-    // 判断是否滚动到底部
-    if (scrollTop + height + 0.5 >= scrollHeight) {
-      await requestNextPage(upperOrLower)
-    }
-  }
-}
 // 滚动条位置重置(移动至顶端)
 function resetScrollBarPosition(upperOrLower?: boolean) {
   if (upperOrLower === undefined) {
-    upperScroll.value.setScrollTop(0)
+    upperTagBox.value.scrollbar.setScrollTop(0)
     lowerTagBox.value.scrollbar.setScrollTop(0)
   } else if (upperOrLower) {
-    upperScroll.value.setScrollTop(0)
+    upperTagBox.value.scrollbar.setScrollTop(0)
   } else {
     lowerTagBox.value.scrollbar.setScrollTop(0)
   }
@@ -282,25 +275,14 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
           </SearchToolbar>
         </div>
         <div class="exchange-box-upper-data">
-          <el-scrollbar ref="upperScroll" @scroll="handleDataScroll($event, true)">
-            <el-row>
-              <template v-for="item in upperData" :key="item.value">
-                <div class="exchange-box-upperLower-data-item">
-                  <double-check-tag
-                    :item="item"
-                    @left-clicked="handleCheckTagClick(item, 'upperData')"
-                    @right-clicked="handleCheckTagClick(item, 'upperData')"
-                  >
-                  </double-check-tag>
-                </div>
-              </template>
-            </el-row>
-            <el-row v-show="upperLoadMore">
-              <el-check-tag style="width: 100%" @click="requestNextPage(true)">
-                加载更多...
-              </el-check-tag>
-            </el-row>
-          </el-scrollbar>
+          <tag-box
+            ref="upperTagBox"
+            v-model:data-list="upperData"
+            :load="() => requestNextPage(true)"
+            :show-load-button="upperLoadMore"
+            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
+            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
+          />
         </div>
       </div>
     </div>
@@ -312,7 +294,8 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
             class="exchange-box-middle-confirm-button"
             type="primary"
             @click="handleExchangeConfirm"
-            >确认
+          >
+            确认
           </el-check-tag>
         </div>
         <div class="exchange-box-middle-clear">
@@ -321,42 +304,25 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
             class="exchange-box-middle-clear-button"
             type="info"
             @click="handleClearButtonClicked"
-            >清空</el-check-tag
           >
+            清空
+          </el-check-tag>
         </div>
       </div>
       <div class="exchange-box-middle-buffer">
         <div class="exchange-box-middle-buffer-upper">
-          <el-scrollbar>
-            <el-row>
-              <template v-for="item in upperBufferData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item">
-                  <double-check-tag
-                    :item="item"
-                    @left-clicked="handleCheckTagClick(item, 'upperBuffer')"
-                    @right-clicked="handleCheckTagClick(item, 'upperBuffer')"
-                  >
-                  </double-check-tag>
-                </div>
-              </template>
-            </el-row>
-          </el-scrollbar>
+          <tag-box
+            v-model:data-list="upperBufferData"
+            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
+            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
+          />
         </div>
         <div class="exchange-box-middle-buffer-lower">
-          <el-scrollbar>
-            <el-row>
-              <template v-for="item in lowerBufferData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item">
-                  <double-check-tag
-                    :item="item"
-                    @left-clicked="handleCheckTagClick(item, 'lowerBuffer')"
-                    @right-clicked="handleCheckTagClick(item, 'lowerBuffer')"
-                  >
-                  </double-check-tag>
-                </div>
-              </template>
-            </el-row>
-          </el-scrollbar>
+          <tag-box
+            v-model:data-list="lowerBufferData"
+            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
+            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
+          />
         </div>
       </div>
     </div>
@@ -371,6 +337,8 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
             v-model:data-list="lowerData"
             :load="() => requestNextPage(false)"
             :show-load-button="lowerLoadMore"
+            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
+            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           />
         </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
@@ -426,11 +394,6 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 100%;
   height: calc(100% - 32px);
   background-color: #ffffff;
-}
-.exchange-box-upperLower-data-item {
-  margin: 2px;
-  word-break: break-all;
-  word-wrap: break-word;
 }
 .exchange-box-middle {
   display: flex;
