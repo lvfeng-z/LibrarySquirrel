@@ -111,5 +111,10 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
 
         return modifiedPage
       })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 }

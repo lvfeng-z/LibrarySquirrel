@@ -231,8 +231,8 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
   }
-  ApiUtil.apiResponseMsgNoSuccess(upperResponse)
-  ApiUtil.apiResponseMsgNoSuccess(lowerResponse)
+  ApiUtil.apiResponseMsg(upperResponse)
+  ApiUtil.apiResponseMsg(lowerResponse)
   if (ApiUtil.apiResponseCheck(lowerResponse) && ApiUtil.apiResponseCheck(upperResponse)) {
     siteTagExchangeBox.value.refreshData()
   }

@@ -9,6 +9,7 @@ import DoubleCheckTag from './DoubleCheckTag.vue'
 import PageModel from '../../model/util/PageModel'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
+import TagBox from './TagBox.vue'
 
 // props
 const props = defineProps<{
@@ -45,12 +46,14 @@ const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperScroll = ref() // upperDataScrollBar的组件实例
-const lowerScroll = ref() // lowerDataScrollBar的组件实例
+const lowerTagBox = ref() // lowerDataScrollBar的组件实例
 const upperLoadMore: Ref<boolean> = computed(() => {
   return upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount
 }) // upper加载更多开关
 const lowerLoadMore: Ref<boolean> = computed(() => {
-  return lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount
+  return (
+    lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount && lowerTagBox.value.notFull
+  )
 }) // lower加载更多开关
 const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
@@ -233,7 +236,7 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
   if (upperOrLower) {
     scrollWrapper = upperScroll.value.wrapRef
   } else {
-    scrollWrapper = lowerScroll.value.wrapRef
+    scrollWrapper = lowerTagBox.value.wrapRef
   }
 
   if (scrollWrapper) {
@@ -251,11 +254,11 @@ async function handleDataScroll(_event, upperOrLower: boolean) {
 function resetScrollBarPosition(upperOrLower?: boolean) {
   if (upperOrLower === undefined) {
     upperScroll.value.setScrollTop(0)
-    lowerScroll.value.setScrollTop(0)
+    lowerTagBox.value.scrollbar.setScrollTop(0)
   } else if (upperOrLower) {
     upperScroll.value.setScrollTop(0)
   } else {
-    lowerScroll.value.setScrollTop(0)
+    lowerTagBox.value.scrollbar.setScrollTop(0)
   }
 }
 </script>
@@ -363,25 +366,12 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
       </div>
       <div class="exchange-box-lower-main">
         <div class="exchange-box-lower-data">
-          <el-scrollbar ref="lowerScroll" @scroll="handleDataScroll($event, false)">
-            <el-row class="exchange-box-lower-data-scroll-row">
-              <template v-for="item in lowerData" :key="item.id">
-                <div class="exchange-box-upperLower-data-item">
-                  <double-check-tag
-                    :item="item"
-                    @left-clicked="handleCheckTagClick(item, 'lowerData')"
-                    @right-clicked="handleCheckTagClick(item, 'lowerData')"
-                  >
-                  </double-check-tag>
-                </div>
-              </template>
-            </el-row>
-            <el-row v-show="lowerLoadMore">
-              <el-check-tag style="width: 100%" @click="requestNextPage(false)">
-                加载更多...
-              </el-check-tag>
-            </el-row>
-          </el-scrollbar>
+          <tag-box
+            ref="lowerTagBox"
+            v-model:data-list="lowerData"
+            :load="() => requestNextPage(false)"
+            :show-load-button="lowerLoadMore"
+          />
         </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
