@@ -6,6 +6,10 @@ import { isNullish } from '../util/CommonUtil.ts'
  */
 export default class Works extends BaseModel {
   /**
+   * 主键
+   */
+  id: number | undefined | null
+  /**
    * 文件存储路径（文件相对于工作目录的相对路径）
    */
   filePath: string | undefined | null
@@ -77,6 +81,7 @@ export default class Works extends BaseModel {
   constructor(works?: Works) {
     if (isNullish(works)) {
       super()
+      this.id = undefined
       this.filePath = undefined
       this.fileName = undefined
       this.filenameExtension = undefined
@@ -96,6 +101,7 @@ export default class Works extends BaseModel {
       this.resourceComplete = undefined
     } else {
       super(works)
+      this.id = works.id
       this.filePath = works.filePath
       this.fileName = works.fileName
       this.filenameExtension = works.filenameExtension

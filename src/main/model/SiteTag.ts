@@ -1,4 +1,5 @@
 import BaseModel from './BaseModel.ts'
+import { isNullish } from '../util/CommonUtil.ts'
 
 /**
  * 站点标签
@@ -33,14 +34,25 @@ export default class SiteTag extends BaseModel {
    */
   localTagId: number | undefined | null
 
-  constructor(siteTag: SiteTag) {
-    super(siteTag)
-    this.id = siteTag.id
-    this.siteId = siteTag.siteId
-    this.siteTagId = siteTag.siteTagId
-    this.siteTagName = siteTag.siteTagName
-    this.baseSiteTagId = siteTag.baseSiteTagId
-    this.description = siteTag.description
-    this.localTagId = siteTag.localTagId
+  constructor(siteTag?: SiteTag) {
+    if (isNullish(siteTag)) {
+      super()
+      this.id = undefined
+      this.siteId = undefined
+      this.siteTagId = undefined
+      this.siteTagName = undefined
+      this.baseSiteTagId = undefined
+      this.description = undefined
+      this.localTagId = undefined
+    } else {
+      super(siteTag)
+      this.id = siteTag.id
+      this.siteId = siteTag.siteId
+      this.siteTagId = siteTag.siteTagId
+      this.siteTagName = siteTag.siteTagName
+      this.baseSiteTagId = siteTag.baseSiteTagId
+      this.description = siteTag.description
+      this.localTagId = siteTag.localTagId
+    }
   }
 }

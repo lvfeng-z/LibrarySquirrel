@@ -6,15 +6,12 @@ import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../WorksSet.ts'
 import { Readable } from 'node:stream'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品
  */
 export default class WorksDTO extends Works {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 站点
    */
@@ -55,10 +52,9 @@ export default class WorksDTO extends Works {
    */
   resourceSize: number | undefined | null
 
-  constructor(works?: WorksDTO) {
-    if (works === undefined) {
+  constructor(works?: WorksDTO | Works) {
+    if (isNullish(works)) {
       super()
-      this.id = undefined
       this.site = undefined
       this.localAuthors = undefined
       this.siteAuthors = undefined
@@ -67,9 +63,8 @@ export default class WorksDTO extends Works {
       this.worksSets = undefined
       this.resourceStream = undefined
       this.resourceSize = undefined
-    } else {
+    } else if (works instanceof WorksDTO) {
       super(works)
-      this.id = works.id
       this.site = works.site
       this.localAuthors = works.localAuthors
       this.localTags = works.localTags
@@ -78,6 +73,16 @@ export default class WorksDTO extends Works {
       this.worksSets = works.worksSets
       this.resourceStream = works.resourceStream
       this.resourceSize = works.resourceSize
+    } else {
+      super(works)
+      this.site = undefined
+      this.localAuthors = undefined
+      this.siteAuthors = undefined
+      this.localTags = undefined
+      this.siteTags = undefined
+      this.worksSets = undefined
+      this.resourceStream = undefined
+      this.resourceSize = undefined
     }
   }
 }

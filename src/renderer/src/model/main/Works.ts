@@ -6,6 +6,10 @@ import { isNullish } from '../../utils/CommonUtil'
  */
 export default class Works extends BaseModel {
   /**
+   * 主键
+   */
+  id: number | undefined | null
+  /**
    * 文件存储路径（文件相对于工作目录的相对路径）
    */
   filePath: string | undefined | null
@@ -69,10 +73,15 @@ export default class Works extends BaseModel {
    * 最后一次查看的时间
    */
   lastViewed: number | undefined | null
+  /**
+   * 资源保存完成
+   */
+  resourceComplete: boolean | undefined | null
 
   constructor(works?: Works) {
     if (isNullish(works)) {
       super()
+      this.id = undefined
       this.filePath = undefined
       this.fileName = undefined
       this.filenameExtension = undefined
@@ -89,8 +98,10 @@ export default class Works extends BaseModel {
       this.includeMode = undefined
       this.includeTaskId = undefined
       this.lastViewed = undefined
+      this.resourceComplete = undefined
     } else {
       super(works)
+      this.id = works.id
       this.filePath = works.filePath
       this.fileName = works.fileName
       this.filenameExtension = works.filenameExtension
@@ -107,6 +118,7 @@ export default class Works extends BaseModel {
       this.includeMode = works.includeMode
       this.includeTaskId = works.includeTaskId
       this.lastViewed = works.lastViewed
+      this.resourceComplete = works.resourceComplete
     }
   }
 }
