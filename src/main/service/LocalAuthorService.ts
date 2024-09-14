@@ -113,4 +113,12 @@ export default class LocalAuthorService extends BaseService<
   ): Promise<Map<number, LocalAuthorDTO[]>> {
     return this.dao.getWorksAuthorRelationShip(worksIds)
   }
+
+  /**
+   * 查询作品的本地作者
+   * @param worksId 作品id
+   */
+  async listByWorksId(worksId: number): Promise<LocalAuthorDTO[]> {
+    return this.dao.listByWorksId(worksId)
+  }
 }

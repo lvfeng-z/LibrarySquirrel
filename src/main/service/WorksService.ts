@@ -328,11 +328,25 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 查询作品的完整信息
    * @param worksId 作品id
    */
-  async getFullWorksInfoById(worksId: string) {
+  async getFullWorksInfoById(worksId: number): Promise<WorksDTO | undefined> {
     const baseWorksInfo = await super.getById(worksId)
+    const worksDTO = new WorksDTO(baseWorksInfo)
 
-    //
-    return baseWorksInfo
+    // 本地作者
+    const localAuthorService = new LocalAuthorService()
+    worksDTO.localAuthors = await localAuthorService.listByWorksId(worksId)
+
+    // 本地标签
+    const localTagService = new LocalTagService()
+    worksDTO.localTags = await localTagService.listByWorksId(worksId)
+
+    // 站点信息
+    const siteService = new SiteService()
+    if (notNullish(worksDTO.siteId)) {
+      worksDTO.site = await siteService.getById(worksDTO.siteId)
+    }
+
+    return worksDTO
   }
 
   /**

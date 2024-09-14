@@ -39,6 +39,7 @@ function handleImageClicked(works: WorksDTO) {
   <works-dialog
     v-if="worksDialogState"
     v-model="worksDialogState"
+    width="90%"
     :works="worksDialogResources"
   ></works-dialog>
 </template>

@@ -212,7 +212,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 查询作品的本地标签
    * @param worksId 作品id
    */
-  async getByWorksId(worksId: number): Promise<LocalTag[]> {
-    return this.dao.getByWorksId(worksId)
+  async listByWorksId(worksId: number): Promise<LocalTag[]> {
+    return this.dao.listByWorksId(worksId)
   }
 }

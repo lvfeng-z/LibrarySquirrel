@@ -4,6 +4,7 @@ import { computed, nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { isNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
+import ApiUtil from '../../utils/ApiUtil'
 
 // props
 const props = defineProps<{
@@ -12,6 +13,7 @@ const props = defineProps<{
 
 // onMounted
 onMounted(() => {
+  getWorksInfo()
   nextTick(() => {
     const baseDialogHeader =
       baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
@@ -28,47 +30,56 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
-  worksSelectById: window.api.worksSelectById
+  worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
 }
-// const isWide = ref(false)
 // el-dialog组件实例
 const baseDialog = ref()
 // 图像高度
 const heightForImage: Ref<UnwrapRef<number>> = ref(0)
+// 作品信息
+const worksFullInfo: Ref<UnwrapRef<WorksDTO>> = ref(new WorksDTO())
+// 本地作者
+const localAuthor: Ref<UnwrapRef<string>> = computed(() => {
+  const names = worksFullInfo.value.localAuthors?.map((localAuthor) => localAuthor.localAuthorName)
+  return isNullish(names) ? '' : names.join(',')
+})
 // 本地标签
 const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
-  const r = props.works[0].localTags?.map(
+  const result = worksFullInfo.value.localTags?.map(
     (localTag) =>
       new SelectItem({
         value: localTag.id as number,
         label: localTag.localTagName as string
       })
   )
-  console.log(r)
-  return r
+  return isNullish(result) ? [] : result
 })
 
 // 方法
 // 查询作品信息
-function getWorksInfo() {}
-// function changeWide() {
-//   isWide.value = !isWide.value
-// }
+async function getWorksInfo() {
+  const response = await apis.worksGetFullWorksInfoById(props.works[0].id)
+  if (ApiUtil.apiResponseCheck(response)) {
+    worksFullInfo.value = ApiUtil.apiResponseGetData(response) as WorksDTO
+  }
+}
 </script>
 <template>
   <el-dialog ref="baseDialog" top="50px">
     <div class="limiter">
-      <el-scrollbar>
-        <el-image fit="contain" :src="`workdir-resource://workdir/${props.works[0].filePath}`">
-        </el-image>
+      <el-scrollbar style="max-width: 55%">
+        <div style="margin-right: 10px">
+          <el-image fit="contain" :src="`workdir-resource://workdir/${props.works[0].filePath}`">
+          </el-image>
+        </div>
       </el-scrollbar>
-      <el-scrollbar>
-        <el-descriptions direction="horizontal">
+      <el-scrollbar style="min-width: 45%">
+        <el-descriptions direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
-            {{ props.works[0].localAuthors[0].localAuthorName }}
+            {{ localAuthor }}
           </el-descriptions-item>
           <el-descriptions-item label="站点">
-            {{ props.works[0].site }}
+            {{ worksFullInfo.site?.siteName }}
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
             <tag-box v-model:data-list="localTags"></tag-box>

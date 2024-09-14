@@ -70,6 +70,7 @@ declare global {
       // Works
       worksQueryPage: function
       worksSaveWorks: function
+      worksGetFullWorksInfoById: function
 
       // FileSysUtil
       dirSelect: function

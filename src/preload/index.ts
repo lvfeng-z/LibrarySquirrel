@@ -160,6 +160,9 @@ const api = {
   worksSaveWorks: (args) => {
     return Electron.ipcRenderer.invoke('works-saveWorks', args)
   },
+  worksGetFullWorksInfoById: (args) => {
+    return Electron.ipcRenderer.invoke('works-getFullWorksInfoById', args)
+  },
 
   // FileSysUtil
   dirSelect: (args) => {
