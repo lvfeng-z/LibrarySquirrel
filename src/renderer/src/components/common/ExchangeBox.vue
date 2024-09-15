@@ -309,20 +309,18 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
         </div>
       </div>
       <div class="exchange-box-middle-buffer">
-        <div class="exchange-box-middle-buffer-upper">
-          <tag-box
-            v-model:data-list="upperBufferData"
-            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
-            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
-          />
-        </div>
-        <div class="exchange-box-middle-buffer-lower">
-          <tag-box
-            v-model:data-list="lowerBufferData"
-            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
-            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
-          />
-        </div>
+        <tag-box
+          v-model:data-list="upperBufferData"
+          class="exchange-box-middle-buffer-upper"
+          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
+          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
+        />
+        <tag-box
+          v-model:data-list="lowerBufferData"
+          class="exchange-box-middle-buffer-lower"
+          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
+          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
+        />
       </div>
     </div>
     <div class="exchange-box-lower">

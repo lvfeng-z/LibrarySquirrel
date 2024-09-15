@@ -99,11 +99,16 @@ defineExpose({ scrollbar, notFull })
         </template>
       </el-row>
     </el-scrollbar>
-    <el-row v-show="showLoadButton">
-      <el-check-tag style="width: 100%" @click="notNullish(props.load) ? props.load() : undefined">
-        加载更多...
-      </el-check-tag>
-    </el-row>
+    <el-check-tag
+      :class="{
+        'tag-box-load-more': true,
+        'tag-box-show-load-more': showLoadButton,
+        'tag-box-hide-load-more': !showLoadButton
+      }"
+      @click="notNullish(props.load) ? props.load() : undefined"
+    >
+      加载更多...
+    </el-check-tag>
   </div>
 </template>
 
@@ -116,5 +121,19 @@ defineExpose({ scrollbar, notFull })
   margin: 2px;
   word-break: break-all;
   word-wrap: break-word;
+}
+.tag-box-load-more {
+  transition:
+    height 0.5s ease,
+    padding 0.5s ease;
+  overflow: hidden;
+}
+.tag-box-show-load-more {
+  height: 16px;
+}
+.tag-box-hide-load-more {
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 </style>
