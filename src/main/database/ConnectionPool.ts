@@ -1,13 +1,24 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 
-interface ConnectionPoolConfig {
+export interface ConnectionPoolConfig {
   maxConnections: number
   idleTimeout: number
   databasePath: string
 }
 
-type WaitingRequest = { resolve: (connection: Database.Database) => void }
+export enum RequestWeight {
+  CRITICAL = 5,
+  HIGH = 4,
+  MEDIUM = 3,
+  LOW = 2,
+  TRIVIAL = 1
+}
+
+type WaitingRequest = {
+  requestWeigh: RequestWeight
+  resolve: (connection: Database.Database) => void
+}
 
 export class ConnectionPool {
   /**
@@ -62,7 +73,7 @@ export class ConnectionPool {
   /**
    * 获取连接
    */
-  public async acquire(): Promise<Database.Database> {
+  public async acquire(requestWeigh: RequestWeight): Promise<Database.Database> {
     return new Promise((resolve, reject) => {
       try {
         let firstIdleIndex = -1
@@ -89,7 +100,7 @@ export class ConnectionPool {
           // this.log('新增链接')
           return
         } else {
-          this.connectionQueue.push({ resolve })
+          this.connectionQueue.push({ requestWeigh: requestWeigh, resolve: resolve })
           LogUtil.debug(
             this.type(),
             `连接池已满，当前等待队列+1，当前长度为：${this.connectionQueue.length}`

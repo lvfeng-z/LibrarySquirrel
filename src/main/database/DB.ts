@@ -4,6 +4,7 @@ import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
+import { RequestWeight } from './ConnectionPool.ts'
 
 /**
  * 数据库链接池封装
@@ -227,9 +228,9 @@ export default class DB {
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection = (await GlobalVarManager.get(
+          this.readingConnection = await GlobalVarManager.get(
             GlobalVars.READING_CONNECTION_POOL
-          ).acquire()) as BetterSqlite3.Database
+          ).acquire(RequestWeight.LOW)
           this.readingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.readingConnection.function('REGEXP', (pattern, string) => {
@@ -246,9 +247,9 @@ export default class DB {
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection = (await GlobalVarManager.get(
+          this.writingConnection = await GlobalVarManager.get(
             GlobalVars.WRITING_CONNECTION_POOL
-          ).acquire()) as BetterSqlite3.Database
+          ).acquire(RequestWeight.LOW)
           this.writingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.writingConnection.function('REGEXP', (pattern, string) => {

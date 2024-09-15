@@ -1,5 +1,5 @@
 import logUtil from './util/LogUtil.ts'
-import { ConnectionPool } from './database/ConnectionPool.ts'
+import { ConnectionPool, ConnectionPoolConfig } from './database/ConnectionPool.ts'
 import Store from 'electron-store'
 import { defaultSettings } from './util/SettingsUtil.ts'
 import { TaskTracker } from './model/utilModels/TaskTracker.ts'
@@ -20,7 +20,7 @@ type GlobalVarsMapping = {
   [GlobalVars.TASK_TRACKER]: Record<string, TaskTracker>
 }
 
-const POOL_CONFIG = {
+const POOL_CONFIG: ConnectionPoolConfig = {
   maxConnections: 10, // 最大连接数
   idleTimeout: 30000, // 连接空闲超时时间（毫秒）
   databasePath: getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
