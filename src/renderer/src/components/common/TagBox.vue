@@ -79,33 +79,39 @@ defineExpose({ scrollbar, notFull })
 </script>
 
 <template>
-  <el-scrollbar
-    ref="scrollbar"
-    v-loading="loading"
-    style="display: flex"
-    @scroll="handleDataScroll"
-  >
-    <el-row ref="dataRow">
-      <template v-for="item in dataList" :key="item.id">
-        <div class="tag-box-select-item">
-          <double-check-tag
-            :item="item"
-            @left-clicked="handleCheckTagClicked(item, true)"
-            @right-clicked="handleCheckTagClicked(item, false)"
-          >
-          </double-check-tag>
-        </div>
-      </template>
+  <div class="tag-box-wrapper">
+    <el-scrollbar
+      ref="scrollbar"
+      v-loading="loading"
+      style="display: flex"
+      @scroll="handleDataScroll"
+    >
+      <el-row ref="dataRow">
+        <template v-for="item in dataList" :key="item.id">
+          <div class="tag-box-select-item">
+            <double-check-tag
+              :item="item"
+              @left-clicked="handleCheckTagClicked(item, true)"
+              @right-clicked="handleCheckTagClicked(item, false)"
+            >
+            </double-check-tag>
+          </div>
+        </template>
+      </el-row>
+    </el-scrollbar>
+    <el-row v-show="showLoadButton">
+      <el-check-tag style="width: 100%" @click="notNullish(props.load) ? props.load() : undefined">
+        加载更多...
+      </el-check-tag>
     </el-row>
-  </el-scrollbar>
-  <el-row v-show="showLoadButton">
-    <el-check-tag style="width: 100%" @click="notNullish(props.load) ? props.load() : undefined">
-      加载更多...
-    </el-check-tag>
-  </el-row>
+  </div>
 </template>
 
 <style scoped>
+.tag-box-wrapper {
+  display: flex;
+  flex-direction: column;
+}
 .tag-box-select-item {
   margin: 2px;
   word-break: break-all;

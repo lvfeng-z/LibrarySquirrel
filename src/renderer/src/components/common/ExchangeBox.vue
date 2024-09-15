@@ -274,16 +274,15 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
           >
           </SearchToolbar>
         </div>
-        <div class="exchange-box-upper-data">
-          <tag-box
-            ref="upperTagBox"
-            v-model:data-list="upperData"
-            :load="() => requestNextPage(true)"
-            :show-load-button="upperLoadMore"
-            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
-            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
-          />
-        </div>
+        <tag-box
+          ref="upperTagBox"
+          v-model:data-list="upperData"
+          class="exchange-box-upper-tag-box"
+          :load="() => requestNextPage(true)"
+          :show-load-button="upperLoadMore"
+          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
+          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
+        />
       </div>
     </div>
     <div class="exchange-box-middle">
@@ -331,16 +330,15 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
         <el-text>{{ lowerTitle }}</el-text>
       </div>
       <div class="exchange-box-lower-main">
-        <div class="exchange-box-lower-data">
-          <tag-box
-            ref="lowerTagBox"
-            v-model:data-list="lowerData"
-            :load="() => requestNextPage(false)"
-            :show-load-button="lowerLoadMore"
-            @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
-            @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
-          />
-        </div>
+        <tag-box
+          ref="lowerTagBox"
+          v-model:data-list="lowerData"
+          class="exchange-box-lower-tag-box"
+          :load="() => requestNextPage(false)"
+          :show-load-button="lowerLoadMore"
+          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
+          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
+        />
         <div class="exchange-box-lower-toolbar z-layer-1">
           <SearchToolbar
             :create-button="false"
@@ -390,7 +388,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 100%;
   height: 32px;
 }
-.exchange-box-upper-data {
+.exchange-box-upper-tag-box {
   width: 100%;
   height: calc(100% - 32px);
   background-color: #ffffff;
@@ -491,9 +489,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
   width: 100%;
   height: 32px;
 }
-.exchange-box-lower-data {
-  display: flex;
-  flex-direction: column;
+.exchange-box-lower-tag-box {
   width: 100%;
   height: calc(100% - 32px);
   background-color: #fbfbfb;
