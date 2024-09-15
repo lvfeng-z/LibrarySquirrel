@@ -56,6 +56,7 @@ declare global {
 
       // Task
       taskStartTask: function
+      taskRetryTask: function
       taskCreateTask: function
       taskDeleteTask: function
       taskSelectPage: function

@@ -346,18 +346,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 开始任务
+   * 处理任务
    * @param taskIds 任务id列表
+   * @param includeStatus 要处理的任务状态
    * @param mainWindow 主窗口实例
    */
-  async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
+  async processTask(
+    taskIds: number[],
+    includeStatus: TaskStatesEnum[],
+    mainWindow: Electron.BrowserWindow
+  ): Promise<number> {
     // 所有任务设置为等待中
-    await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING, [
-      TaskStatesEnum.CREATED,
-      TaskStatesEnum.FAILED,
-      TaskStatesEnum.PARTLY_FINISHED,
-      TaskStatesEnum.PAUSE
-    ])
+    await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING, includeStatus)
     // 查找id列表对应的所有子任务
     const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds, [TaskStatesEnum.WAITING])
 
@@ -505,6 +505,43 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     await Promise.allSettled(activeProcesses)
 
     return counter
+  }
+
+  /**
+   * 开始任务
+   * @param taskIds 任务id列表
+   * @param mainWindow 主窗口实例
+   */
+  async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow) {
+    return this.processTask(
+      taskIds,
+      [
+        TaskStatesEnum.CREATED,
+        TaskStatesEnum.FAILED,
+        TaskStatesEnum.PARTLY_FINISHED,
+        TaskStatesEnum.PAUSE
+      ],
+      mainWindow
+    )
+  }
+
+  /**
+   * 重试任务
+   * @param taskIds 任务id列表
+   * @param mainWindow 主窗口实例
+   */
+  async retryTask(taskIds: number[], mainWindow: Electron.BrowserWindow) {
+    return this.processTask(
+      taskIds,
+      [
+        TaskStatesEnum.CREATED,
+        TaskStatesEnum.FINISHED,
+        TaskStatesEnum.FAILED,
+        TaskStatesEnum.PARTLY_FINISHED,
+        TaskStatesEnum.PAUSE
+      ],
+      mainWindow
+    )
   }
 
   /**

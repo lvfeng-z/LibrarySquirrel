@@ -125,6 +125,9 @@ const api = {
   taskStartTask: (args) => {
     return Electron.ipcRenderer.invoke('task-startTask', args)
   },
+  taskRetryTask: (args) => {
+    return Electron.ipcRenderer.invoke('task-retryTask', args)
+  },
   taskDeleteTask: (args) => {
     return Electron.ipcRenderer.invoke('task-deleteTask', args)
   },

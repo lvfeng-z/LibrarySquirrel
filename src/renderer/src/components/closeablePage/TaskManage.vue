@@ -27,6 +27,7 @@ onMounted(() => {
 const apis = {
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTask,
+  taskRetryTask: window.api.taskRetryTask,
   taskDeleteTask: window.api.taskDeleteTask,
   taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
   taskSelectParentPage: window.api.taskSelectParentPage,
@@ -341,7 +342,7 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       taskDialogRef.value.handleDialog(true)
       break
     case OperationCode.START:
-      startTask(row)
+      startTask(row, false)
       refreshTask()
       break
     case OperationCode.PAUSE:
@@ -353,7 +354,7 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
       refreshTask()
       break
     case OperationCode.RETRY:
-      startTask(row)
+      startTask(row, true)
       refreshTask()
       break
     case OperationCode.CANCEL:
@@ -448,8 +449,12 @@ function mapToButtonStatus(row: TaskDTO): {
   }
 }
 // 开始任务
-function startTask(row: TaskDTO) {
-  apis.taskStartTask([row.id])
+function startTask(row: TaskDTO, retry: boolean) {
+  if (retry) {
+    apis.taskRetryTask([row.id])
+  } else {
+    apis.taskStartTask([row.id])
+  }
   row.status = TaskStatesEnum.WAITING
   if (row.isCollection && notNullish(row.children)) {
     row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
