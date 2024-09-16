@@ -194,8 +194,8 @@ function handleClickOutSide() {
 }
 .dropdown-table-button-wrapper {
   position: absolute;
-  left: calc(50% - 40px);
-  width: 80px;
+  left: calc(50% - 25px);
+  width: 50px;
   height: 13px;
   overflow: hidden;
 }
@@ -208,7 +208,7 @@ function handleClickOutSide() {
   top: -13px;
 }
 .dropdown-table-button {
-  width: 80px;
+  width: 50px;
   height: 30px;
   border-radius: 100% / 100%;
   background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);

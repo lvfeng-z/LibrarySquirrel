@@ -126,7 +126,7 @@ function handleClickOutSide() {
 }
 .side-menu-button-upper {
   width: 40px;
-  height: 60px;
+  height: 100px;
   border-radius: 100% / 100%;
   background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
 }
@@ -144,7 +144,7 @@ function handleClickOutSide() {
 }
 .side-menu-button-lower {
   width: 40px;
-  height: 60px;
+  height: 100px;
   border-radius: 100% / 100%;
   background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
 }

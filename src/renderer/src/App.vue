@@ -42,10 +42,11 @@ const pageState = reactive({
   showTaskManagePage: false,
   showSettingsPage: false
 }) // 悬浮页面开关
-const sideMenuMode: Ref<UnwrapRef<'horizontal' | 'vertical'>> = ref('vertical') // 侧边菜单水平还是垂直
 const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
 const showExplainPath = ref(false) // 解释路径dialog的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
+// 副页面名称
+type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | ''
 
 // 方法
 // 查询标签选择列表
@@ -64,7 +65,7 @@ async function getTagSelectList(keyword) {
   }
 }
 // 开启副页面
-function showFloatPage(pageName) {
+function showFloatPage(pageName: subpages) {
   closeFloatPage()
   pageState.closeablePage = true
   pageState.mainPage = false
@@ -166,7 +167,7 @@ async function handleTest() {
   <div class="ui">
     <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
     <div class="sideMenu z-layer-4">
-      <SideMenu :menu-mode="sideMenuMode" :default-active="['1-1']">
+      <side-menu :default-active="['1-1']">
         <template #default>
           <el-sub-menu index="1">
             <template #title>
@@ -181,23 +182,19 @@ async function handleTest() {
               <el-icon><User /></el-icon>
               <span>作者</span>
             </template>
-            <el-menu-item index="2-1" @click="showFloatPage('LocalAuthorManage')"
-              >本地作者</el-menu-item
-            >
+            <el-menu-item index="2-1" @click="showFloatPage('LocalAuthorManage')">
+              本地作者
+            </el-menu-item>
             <el-menu-item index="2-2">站点作者</el-menu-item>
           </el-sub-menu>
-          <el-sub-menu index="3">
-            <template #title>
-              <el-icon><Star /></el-icon>
-              <span>兴趣点</span>
-            </template>
-          </el-sub-menu>
-          <el-sub-menu index="4">
-            <template #title>
-              <el-icon><Link /></el-icon>
-              <span>站点</span>
-            </template>
-          </el-sub-menu>
+          <el-menu-item index="3">
+            <template #title>收藏</template>
+            <el-icon><Star /></el-icon>
+          </el-menu-item>
+          <el-menu-item index="4" @click="showFloatPage('Settings')">
+            <template #title>站点</template>
+            <el-icon><Link /></el-icon>
+          </el-menu-item>
           <el-sub-menu index="5">
             <template #title>
               <el-icon><List /></el-icon>
@@ -205,15 +202,12 @@ async function handleTest() {
             </template>
             <el-menu-item index="5-1" @click="showFloatPage('TaskManage')">任务管理</el-menu-item>
           </el-sub-menu>
-          <el-sub-menu index="6">
-            <template #title>
-              <el-icon><Setting /></el-icon>
-              <span>设置</span>
-            </template>
-            <el-menu-item index="6-1" @click="showFloatPage('Settings')">设置</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="6" @click="showFloatPage('Settings')">
+            <template #title>设置</template>
+            <el-icon><Setting /></el-icon>
+          </el-menu-item>
         </template>
-      </SideMenu>
+      </side-menu>
     </div>
     <div class="mainSpace">
       <div v-show="pageState.mainPage" class="mainPage margin-box">
@@ -263,7 +257,7 @@ async function handleTest() {
           :works-list="imageList"
         ></works-display-area>
       </div>
-      <div v-if="pageState.closeablePage" class="floatPage">
+      <div v-if="pageState.closeablePage" class="subPage">
         <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
         <local-author-manage
           v-if="pageState.showLocalAuthorManagePage"
@@ -286,6 +280,7 @@ async function handleTest() {
 <style>
 .ui {
   display: flex;
+  flex-direction: row;
   width: 100%;
   height: 100%;
 }
@@ -293,11 +288,7 @@ async function handleTest() {
   width: 100%;
   height: 100%;
   flex-grow: 1;
-  background: ivory;
-}
-.floatPage {
-  width: 100%;
-  height: 100%;
+  background: #fafafa;
 }
 .sideMenu {
   height: 100%;
@@ -310,6 +301,10 @@ async function handleTest() {
   width: 100%;
 }
 .mainPage-works-space {
+  width: 100%;
+  height: 100%;
+}
+.subPage {
   width: 100%;
   height: 100%;
 }
