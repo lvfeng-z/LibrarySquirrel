@@ -9,21 +9,21 @@ import PageModel from '../../model/util/PageModel'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import TagBox from './TagBox.vue'
-import { notNullish } from '../../utils/CommonUtil'
+import { isNullish, notNullish } from '../../utils/CommonUtil'
 
 // props
 const props = defineProps<{
   upperTitle: string // upper的标题
   lowerTitle: string // lower的标题
-  upperMainInputBoxes: InputBox[] // upper的SearchToolbar的主菜单参数
-  upperDropDownInputBoxes: InputBox[] // upper的SearchToolbar的下拉菜单参数
-  lowerMainInputBoxes: InputBox[] // lower的SearchToolbar的主菜单参数
-  lowerDropDownInputBoxes: InputBox[] // lower的SearchToolbar的下拉菜单参数
+  upperMainInputBoxes?: InputBox[] // upper的SearchToolbar的主菜单参数
+  upperDropDownInputBoxes?: InputBox[] // upper的SearchToolbar的下拉菜单参数
+  lowerMainInputBoxes?: InputBox[] // lower的SearchToolbar的主菜单参数
+  lowerDropDownInputBoxes?: InputBox[] // lower的SearchToolbar的下拉菜单参数
   upperSearchApi: (args: object) => Promise<never> // upper的接口
   lowerSearchApi: (args: object) => Promise<never> // lower的接口
   upperApiStaticParams: object // upper的接口固定参数
   lowerApiStaticParams: object // lower的接口固定参数
-  requiredStaticParams: string // 必备的固定参数，固定参数中，此参数为undefined时禁用搜索按钮
+  requiredStaticParams?: string // 必备的固定参数，固定参数中，此参数为undefined时禁用搜索按钮
 }>()
 
 // 事件
@@ -73,12 +73,17 @@ const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的�
 const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
 const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
-const searchButtonDisabled = computed(() => {
-  return !(
-    Object.prototype.hasOwnProperty.call(props.upperApiStaticParams, props.requiredStaticParams) &&
-    props.upperApiStaticParams[props.requiredStaticParams] != undefined
-  )
-}) // 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
+// 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
+const searchButtonDisabled = computed(() =>
+  isNullish(props.requiredStaticParams)
+    ? false
+    : !(
+        Object.prototype.hasOwnProperty.call(
+          props.upperApiStaticParams,
+          props.requiredStaticParams
+        ) && props.upperApiStaticParams[props.requiredStaticParams] != undefined
+      )
+)
 
 // 方法
 // 请求查询接口

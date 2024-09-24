@@ -5,12 +5,13 @@ import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommonInput.vue'
 import lodash from 'lodash'
+import { notNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
-    mainInputBoxes: InputBox[]
-    dropDownInputBoxes: InputBox[]
+    mainInputBoxes?: InputBox[]
+    dropDownInputBoxes?: InputBox[]
     createButton?: boolean
     reverse?: boolean
     searchButtonDisabled?: boolean
@@ -44,52 +45,56 @@ const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框�
 // 处理主搜索栏和下拉搜索框
 function calculateSpan() {
   let spanRest = 24 - (props.createButton ? barButtonSpan.value * 2 : barButtonSpan.value)
-  for (const inputBox of props.mainInputBoxes) {
-    // 储存当前box的长度
-    let boxSpan = 0
-    // 不更改props属性
-    const tempInputBox: InputBox = lodash.cloneDeep(inputBox)
-    // 补充由于JSON转换丢失的函数类型的属性api
-    tempInputBox.api = inputBox.api
+  if (notNullish(props.mainInputBoxes)) {
+    for (const inputBox of props.mainInputBoxes) {
+      // 储存当前box的长度
+      let boxSpan = 0
+      // 不更改props属性
+      const tempInputBox: InputBox = lodash.cloneDeep(inputBox)
+      // 补充由于JSON转换丢失的函数类型的属性api
+      tempInputBox.api = inputBox.api
 
-    // 未设置是否展示标题，默认为false，labelSpan设为0
-    if (tempInputBox.showLabel == undefined) {
-      tempInputBox.showLabel = false
-      tempInputBox.labelSpan = 0
-    }
-
-    if (spanRest > 0) {
-      // 未设置tag长度则设置为2
-      if (tempInputBox.labelSpan == undefined) {
-        tempInputBox.labelSpan = 2
-      }
-      // 未设置input长度则设置为5
-      if (tempInputBox.inputSpan == undefined) {
-        tempInputBox.inputSpan = 5
+      // 未设置是否展示标题，默认为false，labelSpan设为0
+      if (tempInputBox.showLabel == undefined) {
+        tempInputBox.showLabel = false
+        tempInputBox.labelSpan = 0
       }
 
-      // 判断是否能够容纳此box，空间不足就放进dropDownInputBoxes
-      boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
-      spanRest -= boxSpan
-      if (spanRest < 0) {
-        innerDropdownInputBoxes.value.push(tempInputBox)
+      if (spanRest > 0) {
+        // 未设置tag长度则设置为2
+        if (tempInputBox.labelSpan == undefined) {
+          tempInputBox.labelSpan = 2
+        }
+        // 未设置input长度则设置为5
+        if (tempInputBox.inputSpan == undefined) {
+          tempInputBox.inputSpan = 5
+        }
+
+        // 判断是否能够容纳此box，空间不足就放进dropDownInputBoxes
+        boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
+        spanRest -= boxSpan
+        if (spanRest < 0) {
+          innerDropdownInputBoxes.value.push(tempInputBox)
+        } else {
+          innerMainInputBoxes.value.push(tempInputBox)
+        }
       } else {
-        innerMainInputBoxes.value.push(tempInputBox)
+        innerDropdownInputBoxes.value.push(tempInputBox)
       }
-    } else {
-      innerDropdownInputBoxes.value.push(tempInputBox)
+    }
+
+    // 长度不相等，说明有元素被放进dropDownInputBoxes
+    if (innerMainInputBoxes.value.length != props.mainInputBoxes.length) {
+      console.debug(
+        '主搜索栏长度不足以容纳所有mainInputBoxes元素，不能容纳的元素以被移动至dropDownInputBoxes'
+      )
     }
   }
 
-  // 长度不相等，说明有元素被放进dropDownInputBoxes
-  if (innerMainInputBoxes.value.length != props.mainInputBoxes.length) {
-    console.debug(
-      '主搜索栏长度不足以容纳所有mainInputBoxes元素，不能容纳的元素以被移动至dropDownInputBoxes'
-    )
+  if (notNullish(props.dropDownInputBoxes)) {
+    const tempDropdownInputBoxes = lodash.cloneDeep(props.dropDownInputBoxes)
+    innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
   }
-
-  const tempDropdownInputBoxes = lodash.cloneDeep(props.dropDownInputBoxes)
-  innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
 
   // 下拉菜单中有内容则显示下拉菜单，否则不显示
   showDropdownFlag.value = innerDropdownInputBoxes.value.length > 0
