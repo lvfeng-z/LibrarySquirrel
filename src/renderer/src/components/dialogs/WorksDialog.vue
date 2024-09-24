@@ -5,6 +5,8 @@ import { isNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
+import ExchangeBox from '@renderer/components/common/ExchangeBox.vue'
+import InputBox from '@renderer/model/util/InputBox.ts'
 
 // props
 const props = defineProps<{
@@ -54,6 +56,27 @@ const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
   )
   return isNullish(result) ? [] : result
 })
+// 本地标签编辑开关
+const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
+// 站点标签ExchangeBox的mainInputBoxes
+const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
+  {
+    name: 'keyword',
+    type: 'text',
+    placeholder: '搜索标签名称',
+    inputSpan: 20
+  }
+])
+// 站点标签ExchangeBox的DropDownInputBoxes
+const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
+  {
+    name: 'keyword',
+    type: 'text',
+    placeholder: '搜索id',
+    label: 'id',
+    inputSpan: 22
+  }
+])
 
 // 方法
 // 查询作品信息
@@ -73,7 +96,7 @@ async function getWorksInfo() {
           </el-image>
         </div>
       </el-scrollbar>
-      <el-scrollbar style="min-width: 45%">
+      <el-scrollbar style="min-width: 45%; flex-grow: 1">
         <el-descriptions direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
             {{ localAuthor }}
@@ -82,7 +105,25 @@ async function getWorksInfo() {
             {{ worksFullInfo.site?.siteName }}
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
-            <tag-box v-model:data-list="localTags"></tag-box>
+            <el-button @click="localTagEdit = !localTagEdit">编辑</el-button>
+            <tag-box v-show="!localTagEdit" v-model:data-list="localTags" />
+            <exchange-box
+              :class="{
+                'works-dialog-local-tag-exchange-box': true,
+                'works-dialog-local-tag-exchange-box-show': localTagEdit,
+                'works-dialog-local-tag-exchange-box-hide': !localTagEdit
+              }"
+              upper-title="已绑定"
+              lower-title="未绑定"
+              :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+              :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
+              :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+              :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
+              :upper-search-api="() => {}"
+              :lower-search-api="() => {}"
+              :upper-api-static-params="{}"
+              :lower-api-static-params="{}"
+            />
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -95,5 +136,15 @@ async function getWorksInfo() {
   display: flex;
   flex-direction: row;
   height: calc(100vh - 16px - 16px - 16px - 50px - 50px);
+}
+.works-dialog-local-tag-exchange-box {
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+.works-dialog-local-tag-exchange-box-show {
+  height: 500px;
+}
+.works-dialog-local-tag-exchange-box-hide {
+  height: 0;
 }
 </style>
