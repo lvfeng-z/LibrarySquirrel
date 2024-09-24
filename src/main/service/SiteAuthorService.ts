@@ -170,7 +170,7 @@ export default class SiteAuthorService extends BaseService<
       const queryDTO = new SiteAuthorQueryDTO()
       queryDTO.siteAuthorId = siteAuthorId
       queryDTO.siteId = siteId
-      queryDTO.sort = [{ column: 'createTime', order: 'desc' }]
+      queryDTO.sort = [{ column: 'createTime', asc: 'desc' }]
 
       const siteAuthors = await this.dao.selectList(queryDTO)
       if (siteAuthors.length === 1) {

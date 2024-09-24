@@ -865,10 +865,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   protected getSortClause(sortOption: QuerySortOption[]): string {
     let sortClauses: string
     sortClauses = sortOption
-      .filter((item) => item.order === 'asc' || item.order === 'desc')
+      .filter((item) => item.asc === 'asc' || item.asc === 'desc')
       .map((item) => {
         item.column = StringUtil.camelToSnakeCase(item.column)
-        return item.column.concat(' ', item.order)
+        return item.column.concat(' ', item.asc)
       })
       .join(',')
     if (sortClauses !== '') {

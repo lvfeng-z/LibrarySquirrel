@@ -196,6 +196,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('localTag-listSelectItemPageByWorksId', async (_event, args) => {
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.listSelectItemPageByWorksId(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', () => {

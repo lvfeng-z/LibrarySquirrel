@@ -4,6 +4,9 @@ import StringUtil from '../util/StringUtil.ts'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'
+import PageModel from '../model/utilModels/PageModel.js'
+import { COMPARATOR } from '../constant/CrudConstant.js'
+import { isNullish } from '../util/CommonUtil.js'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
@@ -113,6 +116,50 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((runResult) => super.getResultTypeDataList<LocalTag>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 分页查询作品的本地标签
+   * @param page
+   */
+  async selectPageByWorksId(
+    page: PageModel<LocalTagQueryDTO, LocalTag>
+  ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
+    if (isNullish(page.query)) {
+      page.query = new LocalTagQueryDTO()
+    }
+
+    // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
+    if (page.query.boundOnWorksId) {
+      page.query.assignComparator = {
+        ...page.query.assignComparator,
+        ...{ localTagId: COMPARATOR.EQUAL }
+      }
+    } else {
+      page.query.assignComparator = {
+        ...page.query.assignComparator,
+        ...{ localTagId: COMPARATOR.NOT_EQUAL }
+      }
+    }
+
+    const selectClause = 'select t1.*'
+    const fromClause = 'from local_tag t1 inner join re_works_tag t2 on t1.id = t2.local_tag_id'
+    const whereClauseAndQuery = super.getWhereClause(page.query)
+    const whereClause = whereClauseAndQuery.whereClause
+    let statement = selectClause + fromClause + whereClause
+    statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
+    const db = this.acquire()
+    return db
+      .all<unknown[], LocalTag>(statement)
+      .then((rows) => {
+        page.data = rows
+        return page
+      })
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

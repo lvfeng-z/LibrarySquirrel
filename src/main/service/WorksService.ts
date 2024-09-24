@@ -78,7 +78,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 保存作品资源
    * @param worksDTO
    */
-  async saveWorksResource(worksDTO: WorksSaveDTO): Promise<WorksDTO> {
+  public async saveWorksResource(worksDTO: WorksSaveDTO): Promise<WorksDTO> {
     // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
     if (
       Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
@@ -166,7 +166,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 保存作品信息
    * @param worksDTO
    */
-  async saveWorksInfo(worksDTO: WorksDTO): Promise<number> {
+  public async saveWorksInfo(worksDTO: WorksDTO): Promise<number> {
     const site = worksDTO.site
     const siteAuthors = worksDTO.siteAuthors
     const siteTags = worksDTO.siteTags
@@ -298,7 +298,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 根据标签等信息分页查询作品
    * @param page 查询参数
    */
-  async queryPage(
+  public async queryPage(
     page: PageModel<WorksQueryDTO, WorksDTO>
   ): Promise<PageModel<WorksQueryDTO, Works>> {
     page = new PageModel(page)
@@ -328,7 +328,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 查询作品的完整信息
    * @param worksId 作品id
    */
-  async getFullWorksInfoById(worksId: number): Promise<WorksDTO | undefined> {
+  public async getFullWorksInfoById(worksId: number): Promise<WorksDTO | undefined> {
     const baseWorksInfo = await super.getById(worksId)
     const worksDTO = new WorksDTO(baseWorksInfo)
 

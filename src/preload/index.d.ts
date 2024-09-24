@@ -34,6 +34,7 @@ declare global {
       localTagGetTree: function
       localTagGetSelectList: function
       localTagGetSelectItemPage: function
+      localTagListSelectItemPageByWorksId: function
 
       // Settings
       settingsGetSettings: function

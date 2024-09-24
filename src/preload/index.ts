@@ -76,6 +76,9 @@ const api = {
   localTagGetSelectItemPage: (args) => {
     return Electron.ipcRenderer.invoke('localTag-getSelectItemPage', args)
   },
+  localTagListSelectItemPageByWorksId: (args) => {
+    return Electron.ipcRenderer.invoke('localTag-listSelectItemPageByWorksId', args)
+  },
 
   // Settings
   settingsGetSettings: () => {

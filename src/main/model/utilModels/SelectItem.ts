@@ -2,7 +2,7 @@
  * 下拉选择框选项
  */
 export default class SelectItem {
-  value: string | null | undefined
+  value: number | string | null | undefined
   label: string | null | undefined
   secondaryLabel: string | null | undefined
   rootId: string | null | undefined
