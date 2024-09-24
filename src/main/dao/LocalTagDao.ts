@@ -5,8 +5,8 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'
 import PageModel from '../model/utilModels/PageModel.js'
-import { COMPARATOR } from '../constant/CrudConstant.js'
 import { isNullish } from '../util/CommonUtil.js'
+import lodash from 'lodash'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
@@ -133,31 +133,38 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     if (isNullish(page.query)) {
       page.query = new LocalTagQueryDTO()
     }
+    const query = lodash.cloneDeep(page.query)
 
-    // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
-    if (page.query.boundOnWorksId) {
-      page.query.assignComparator = {
-        ...page.query.assignComparator,
-        ...{ localTagId: COMPARATOR.EQUAL }
-      }
-    } else {
-      page.query.assignComparator = {
-        ...page.query.assignComparator,
-        ...{ localTagId: COMPARATOR.NOT_EQUAL }
+    // 调用getWhereClauses前去掉worksId和boundOnWorksId
+    query.worksId = undefined
+    query.boundOnWorksId = undefined
+
+    const selectClause = 'select *'
+    const fromClause = 'from local_tag t1'
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1')
+    const whereClauses = whereClauseAndQuery.whereClauses
+
+    if (
+      Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') &&
+      Object.prototype.hasOwnProperty.call(page.query, 'worksId')
+    ) {
+      const existClause = `exists(select 1 from re_works_tag where works_id = ${page.query.worksId} and t1.id = re_works_tag.local_tag_id)`
+      if (page.query.boundOnWorksId) {
+        whereClauses['worksId'] = existClause
+      } else {
+        whereClauses['worksId'] = 'not ' + existClause
       }
     }
 
-    const selectClause = 'select t1.*'
-    const fromClause = 'from local_tag t1 inner join re_works_tag t2 on t1.id = t2.local_tag_id'
-    const whereClauseAndQuery = super.getWhereClause(page.query)
-    const whereClause = whereClauseAndQuery.whereClause
-    let statement = selectClause + fromClause + whereClause
+    const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
+
+    let statement = selectClause + ' ' + fromClause + ' ' + whereClause
     statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
     const db = this.acquire()
     return db
-      .all<unknown[], LocalTag>(statement)
+      .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
-        page.data = rows
+        page.data = super.getResultTypeDataList<LocalTag>(rows)
         return page
       })
       .finally(() => {

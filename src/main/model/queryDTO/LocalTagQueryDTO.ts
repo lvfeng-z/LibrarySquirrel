@@ -17,12 +17,12 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
   baseLocalTagId: number | null | undefined
 
   /**
-   * 上级标签id
+   * 作品id
    */
   worksId: number | null | undefined
 
   /**
-   * 是查询绑定在worksId上的还是没绑定的
+   * 查询绑定在worksId上的还是没绑定的
    */
   boundOnWorksId: boolean | null | undefined
 

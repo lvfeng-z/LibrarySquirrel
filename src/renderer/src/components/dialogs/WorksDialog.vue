@@ -32,7 +32,8 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
-  worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
+  worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById,
+  localTagListSelectItemPageByWorksId: window.api.localTagListSelectItemPageByWorksId
 }
 // el-dialog组件实例
 const baseDialog = ref()
@@ -119,10 +120,10 @@ async function getWorksInfo() {
               :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
               :lower-main-input-boxes="exchangeBoxMainInputBoxes"
               :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-              :upper-search-api="() => {}"
-              :lower-search-api="() => {}"
-              :upper-api-static-params="{}"
-              :lower-api-static-params="{}"
+              :upper-search-api="apis.localTagListSelectItemPageByWorksId"
+              :lower-search-api="apis.localTagListSelectItemPageByWorksId"
+              :upper-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
+              :lower-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
             />
           </el-descriptions-item>
         </el-descriptions>

@@ -218,12 +218,13 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
 
   /**
    * 分页查询作品的本地标签的SelectItem
-   * @param worksId 作品id
+   * @param page
    */
   async listSelectItemPageByWorksId(
-    worksId: number
+    page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
-    const sourcePage = await this.dao.selectPageByWorksId(worksId)
+    page = new PageModel(page)
+    const sourcePage = await this.dao.selectPageByWorksId(page)
     const sourceData = sourcePage.data
     const resultPage = sourcePage.transform<SelectItem>()
     if (notNullish(sourceData)) {
