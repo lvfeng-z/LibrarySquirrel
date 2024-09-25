@@ -224,7 +224,15 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     page = new PageModel(page)
+    if (notNullish(page.query)) {
+      page.query.assignComparator = {
+        ...{ localTagName: COMPARATOR.LIKE },
+        ...page.query.assignComparator
+      }
+    }
     const sourcePage = await this.dao.selectPageByWorksId(page)
+
+    // 根据localTag数据生成SelectItem
     const sourceData = sourcePage.data
     const resultPage = sourcePage.transform<SelectItem>()
     if (notNullish(sourceData)) {

@@ -162,7 +162,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
     const db = this.acquire()
     return db
-      .all<unknown[], Record<string, unknown>>(statement)
+      .all<unknown[], Record<string, unknown>>(statement, query)
       .then((rows) => {
         page.data = super.getResultTypeDataList<LocalTag>(rows)
         return page
