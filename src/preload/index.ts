@@ -76,8 +76,19 @@ const api = {
   localTagGetSelectItemPage: (args) => {
     return Electron.ipcRenderer.invoke('localTag-getSelectItemPage', args)
   },
+  localTagListByWorksId: (args) => {
+    return Electron.ipcRenderer.invoke('localTag-listByWorksId', args)
+  },
   localTagListSelectItemPageByWorksId: (args) => {
     return Electron.ipcRenderer.invoke('localTag-listSelectItemPageByWorksId', args)
+  },
+
+  // ReWorksTag
+  reWorksTagLink: (arg1, arg2) => {
+    return Electron.ipcRenderer.invoke('reWorksTag-link', arg1, arg2)
+  },
+  reWorksTagUnlink: (arg1, arg2) => {
+    return Electron.ipcRenderer.invoke('reWorksTag-unlink', arg1, arg2)
   },
 
   // Settings

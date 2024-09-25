@@ -15,6 +15,7 @@ import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import AutoExplainPathService from './AutoExplainPathService.ts'
 import { dirSelect } from '../util/FileSysUtil.ts'
+import { ReWorksTagService } from './ReWorksTagService.js'
 
 function exposeService(mainWindow: Electron.BrowserWindow) {
   // test
@@ -196,6 +197,15 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('localTag-listByWorksId', async (_event, args) => {
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.listByWorksId(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('localTag-listSelectItemPageByWorksId', async (_event, args) => {
     const localTagService = new LocalTagService()
     try {
@@ -205,6 +215,32 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
+
+  // ReWorksTagService
+  Electron.ipcMain.handle(
+    'reWorksTag-link',
+    async (_event, localTagIds: number[], worksId: number) => {
+      const reWorksTagService = new ReWorksTagService()
+      try {
+        return ApiUtil.response(await reWorksTagService.link(localTagIds, worksId))
+      } catch (error) {
+        LogUtil.error('ServiceExposer', error)
+        return ApiUtil.error(String(error))
+      }
+    }
+  )
+  Electron.ipcMain.handle(
+    'reWorksTag-unlink',
+    async (_event, localTagIds: number[], worksId: number) => {
+      const reWorksTagService = new ReWorksTagService()
+      try {
+        return ApiUtil.response(await reWorksTagService.unlink(localTagIds, worksId))
+      } catch (error) {
+        LogUtil.error('ServiceExposer', error)
+        return ApiUtil.error(String(error))
+      }
+    }
+  )
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', () => {

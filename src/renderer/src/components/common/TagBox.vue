@@ -18,17 +18,21 @@ const emit = defineEmits(['tagLeftClicked', 'tagRightClicked'])
 
 // watch
 // 监听dataList变化，更新是否充满的状态
-watch(dataList, () => {
-  nextTick(() => {
-    if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
-      const scrollHeight = scrollbar.value.wrapRef.clientHeight
-      const dataRowHeight = dataRow.value.$el.offsetHeight
-      notFull.value = dataRowHeight <= scrollHeight
-    } else {
-      notFull.value = true
-    }
-  })
-})
+watch(
+  dataList,
+  () => {
+    nextTick(() => {
+      if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
+        const scrollHeight = scrollbar.value.wrapRef.clientHeight
+        const dataRowHeight = dataRow.value.$el.offsetHeight
+        notFull.value = dataRowHeight <= scrollHeight + 16 // 滚动条高度加上加载按钮的16px
+      } else {
+        notFull.value = true
+      }
+    })
+  },
+  { deep: true }
+)
 
 // 变量
 // el-scrollbar组件的实例

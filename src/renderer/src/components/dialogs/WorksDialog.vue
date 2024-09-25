@@ -7,6 +7,8 @@ import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ExchangeBox from '@renderer/components/common/ExchangeBox.vue'
 import InputBox from '@renderer/model/util/InputBox.ts'
+import ApiResponse from '@renderer/model/util/ApiResponse.ts'
+import LocalTag from '@renderer/model/main/LocalTag.ts'
 
 // props
 const props = defineProps<{
@@ -33,10 +35,15 @@ onMounted(() => {
 // 接口
 const apis = {
   worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById,
-  localTagListSelectItemPageByWorksId: window.api.localTagListSelectItemPageByWorksId
+  localTagListByWorksId: window.api.localTagListByWorksId,
+  localTagListSelectItemPageByWorksId: window.api.localTagListSelectItemPageByWorksId,
+  reWorksTagLink: window.api.reWorksTagLink,
+  reWorksTagUnlink: window.api.reWorksTagUnlink
 }
 // el-dialog组件实例
 const baseDialog = ref()
+// localTag的ExchangeBox组件
+const localTagExchangeBox = ref()
 // 图像高度
 const heightForImage: Ref<UnwrapRef<number>> = ref(0)
 // 作品信息
@@ -62,20 +69,10 @@ const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   {
-    name: 'keyword',
+    name: 'localTagName',
     type: 'text',
     placeholder: '搜索标签名称',
-    inputSpan: 20
-  }
-])
-// 站点标签ExchangeBox的DropDownInputBoxes
-const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
-    name: 'keyword',
-    type: 'text',
-    placeholder: '搜索id',
-    label: 'id',
-    inputSpan: 22
+    inputSpan: 21
   }
 ])
 
@@ -87,18 +84,42 @@ async function getWorksInfo() {
     worksFullInfo.value = ApiUtil.apiResponseGetData(response) as WorksDTO
   }
 }
+// 处理本地标签exchangeBox确认交换事件
+async function handleLocalTagExchangeConfirm(unbound: SelectItem[], bound: SelectItem[]) {
+  const worksId = worksFullInfo.value.id
+  const boundIds = bound.map((item) => item.value)
+  const unboundIds = unbound.map((item) => item.value)
+  const boundResponse: ApiResponse = await apis.reWorksTagLink(boundIds, worksId)
+  const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(unboundIds, worksId)
+  const upperSuccess = ApiUtil.apiResponseCheck(boundResponse)
+  const lowerSuccess = ApiUtil.apiResponseCheck(unboundResponse)
+  if (upperSuccess && lowerSuccess) {
+    localTagExchangeBox.value.refreshData()
+    ApiUtil.apiResponseMsg(boundResponse)
+    updateWorksLocalTags()
+  }
+}
+// 更新本地标签
+async function updateWorksLocalTags() {
+  const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
+  if (ApiUtil.apiResponseCheck(response)) {
+    worksFullInfo.value.localTags = ApiUtil.apiResponseGetData(response) as LocalTag[]
+  }
+}
 </script>
 <template>
   <el-dialog ref="baseDialog" top="50px">
     <div class="limiter">
-      <el-scrollbar style="max-width: 55%">
-        <div style="margin-right: 10px">
-          <el-image fit="contain" :src="`workdir-resource://workdir/${props.works[0].filePath}`">
-          </el-image>
-        </div>
+      <el-scrollbar style="width: 55%">
+        <el-image
+          style="margin-right: 10px"
+          fit="contain"
+          :src="`workdir-resource://workdir/${props.works[0].filePath}`"
+        >
+        </el-image>
       </el-scrollbar>
-      <el-scrollbar style="min-width: 45%; flex-grow: 1">
-        <el-descriptions direction="horizontal" :column="1">
+      <el-scrollbar style="width: 45%; flex-grow: 1">
+        <el-descriptions style="margin-right: 10px" direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
             {{ localAuthor }}
           </el-descriptions-item>
@@ -106,24 +127,26 @@ async function getWorksInfo() {
             {{ worksFullInfo.site?.siteName }}
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
-            <el-button @click="localTagEdit = !localTagEdit">编辑</el-button>
+            <el-button @click="localTagEdit = !localTagEdit">{{
+              localTagEdit ? '收起' : '编辑'
+            }}</el-button>
             <tag-box v-show="!localTagEdit" v-model:data-list="localTags" />
             <exchange-box
+              ref="localTagExchangeBox"
               :class="{
                 'works-dialog-local-tag-exchange-box': true,
                 'works-dialog-local-tag-exchange-box-show': localTagEdit,
                 'works-dialog-local-tag-exchange-box-hide': !localTagEdit
               }"
-              upper-title="已绑定"
-              lower-title="未绑定"
+              upper-title="已添加标签"
+              lower-title="可选标签"
               :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-              :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
               :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-              :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
               :upper-search-api="apis.localTagListSelectItemPageByWorksId"
               :lower-search-api="apis.localTagListSelectItemPageByWorksId"
               :upper-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
               :lower-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
+              @exchange-confirm="handleLocalTagExchangeConfirm"
             />
           </el-descriptions-item>
         </el-descriptions>

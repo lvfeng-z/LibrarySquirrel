@@ -9,11 +9,7 @@ import BaseService from './BaseService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
 import DB from '../database/DB.ts'
-import ReWorksTag from '../model/ReWorksTag.ts'
-import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
-import { ReWorksTagService } from './ReWorksTagService.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
@@ -25,7 +21,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 保存
    * @param localTag 本地标签
    */
-  async save(localTag: LocalTag) {
+  public async save(localTag: LocalTag) {
     if (isNullish(localTag.baseLocalTagId)) {
       localTag.baseLocalTagId = 0
     }
@@ -36,7 +32,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 修改
    * @param localTag
    */
-  async updateById(localTag: LocalTag) {
+  public async updateById(localTag: LocalTag) {
     if (localTag.id) {
       if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId === localTag.id) {
         const msg = '基础标签不能为自身'
@@ -82,55 +78,6 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   }
 
   /**
-   * 关联作品和标签
-   * @param localTags
-   * @param worksDTO
-   */
-  async link(localTags: LocalTag[], worksDTO: WorksDTO) {
-    // 校验
-    const legalLocalTags = localTags.filter((localTag) => {
-      if (isNullish(localTag)) {
-        LogUtil.warn('LocalTagService', `关联作品和本地标签时，标签意外为空`)
-        return false
-      }
-      if (isNullish(!Object.hasOwn(localTag, 'id') || localTag.id)) {
-        const localTagName = Object.hasOwn(localTag, 'localTagName')
-          ? localTag.localTagName
-          : 'unknown'
-        LogUtil.warn(
-          'LocalTagService',
-          `关联作品和本地标签时，标签id意外为空，localTagName: ${localTagName}`
-        )
-        return false
-      }
-      return true
-    })
-
-    if (legalLocalTags.length === 0) {
-      return 0
-    }
-
-    // 创建关联对象
-    const links = legalLocalTags.map((localTag) => {
-      const reWorksTag = new ReWorksTag()
-      reWorksTag.worksId = worksDTO.id as number
-      reWorksTag.localTagId = localTag.id
-      reWorksTag.tagType = ReWorksTagTypeEnum.LOCAL
-      return reWorksTag
-    })
-
-    // 调用reWorksTagService前区分是否为注入式的DB
-    let reWorksTagService: ReWorksTagService
-    if (this.injectedDB) {
-      reWorksTagService = new ReWorksTagService(this.db)
-    } else {
-      reWorksTagService = new ReWorksTagService()
-    }
-
-    return reWorksTagService.saveBatch(links, true)
-  }
-
-  /**
    * 分页查询
    * @param page
    */
@@ -155,7 +102,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 获取本地标签树形结构
    * @param rootId
    */
-  async getTree(rootId: number) {
+  public async getTree(rootId: number) {
     if (rootId === undefined) {
       rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
     }
@@ -183,7 +130,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 获取SelectItem列表
    * @param queryDTO
    */
-  async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
+  public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
     const result = this.dao.getSelectList(queryDTO)
     // extraData.tagType=true表示这些标签是本地的
     return result.then((res) => {
@@ -198,7 +145,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询SelectItem
    * @param page
    */
-  async getSelectItemPage(
+  public async getSelectItemPage(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
@@ -212,7 +159,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 查询作品的本地标签
    * @param worksId 作品id
    */
-  async listByWorksId(worksId: number): Promise<LocalTag[]> {
+  public async listByWorksId(worksId: number): Promise<LocalTag[]> {
     return this.dao.listByWorksId(worksId)
   }
 
@@ -220,7 +167,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */
-  async listSelectItemPageByWorksId(
+  public async listSelectItemPageByWorksId(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     page = new PageModel(page)

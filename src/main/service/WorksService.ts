@@ -26,6 +26,7 @@ import { Readable } from 'node:stream'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
+import { ReWorksTagService } from './ReWorksTagService.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -250,8 +251,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           }
           // 关联作品和本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
-            const localTagService = new LocalTagService(transactionDB)
-            await localTagService.link(localTags, worksDTO)
+            const localTagIds = localTags
+              .map((localTag) => localTag.id)
+              .filter((localTagId) => notNullish(localTagId))
+            const reWorksTagService = new ReWorksTagService(transactionDB)
+            await reWorksTagService.link(localTagIds, worksDTO.id)
           }
           // 关联作品和站点作者
           if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {

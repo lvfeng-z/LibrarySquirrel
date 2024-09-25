@@ -29,12 +29,18 @@ declare global {
       localTagSave: function
       localTagDeleteById: function
       localTagUpdateById: function
+      localTagLink: function
       localTagSelectPage: function
       localTagGetById: function
       localTagGetTree: function
       localTagGetSelectList: function
       localTagGetSelectItemPage: function
+      localTagListByWorksId: function
       localTagListSelectItemPageByWorksId: function
+
+      // ReWorksTag
+      reWorksTagLink: function
+      reWorksTagUnlink: function
 
       // Settings
       settingsGetSettings: function
