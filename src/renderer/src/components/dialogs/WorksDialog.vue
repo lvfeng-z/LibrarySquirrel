@@ -99,6 +99,15 @@ async function handleLocalTagExchangeConfirm(unbound: SelectItem[], bound: Selec
     updateWorksLocalTags()
   }
 }
+// 处理本地标签编辑按钮的点击事件
+async function handleLocalTagEditClicked() {
+  if (localTagEdit.value) {
+    localTagEdit.value = false
+  } else {
+    localTagEdit.value = true
+    localTagExchangeBox.value.refreshData()
+  }
+}
 // 更新本地标签
 async function updateWorksLocalTags() {
   const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
@@ -127,7 +136,7 @@ async function updateWorksLocalTags() {
             {{ worksFullInfo.site?.siteName }}
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
-            <el-button @click="localTagEdit = !localTagEdit">{{
+            <el-button @click="handleLocalTagEditClicked">{{
               localTagEdit ? '收起' : '编辑'
             }}</el-button>
             <tag-box v-show="!localTagEdit" v-model:data-list="localTags" />
