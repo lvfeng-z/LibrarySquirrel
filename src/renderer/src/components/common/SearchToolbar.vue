@@ -135,7 +135,7 @@ function handleCreateButtonClicked() {
             class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
             style="width: 100%"
           >
-            <ScrollTextBox>{{ item.label }}</ScrollTextBox>
+            <scroll-text-box>{{ item.label }}</scroll-text-box>
           </div>
         </el-col>
         <el-col class="search-toolbar-input" :span="item.inputSpan">
@@ -144,7 +144,7 @@ function handleCreateButtonClicked() {
               v-model:data="params[item.name]"
               class="search-toolbar-input-form-item-input"
               :config="item"
-            ></common-input>
+            />
           </el-form-item>
         </el-col>
       </template>
@@ -161,7 +161,7 @@ function handleCreateButtonClicked() {
         </el-dropdown>
       </el-col>
     </el-row>
-    <DropdownForm
+    <dropdown-form
       v-if="showDropdownFlag"
       ref="dropDownForm"
       v-model:form-data="params"
@@ -169,7 +169,7 @@ function handleCreateButtonClicked() {
       :reverse="reverse"
       :input-boxes="innerDropdownInputBoxes"
     >
-    </DropdownForm>
+    </dropdown-form>
   </div>
 </template>
 

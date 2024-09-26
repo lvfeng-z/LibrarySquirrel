@@ -7,7 +7,7 @@ import { isNullish, notNullish } from '../../utils/CommonUtil'
 // props
 const props = defineProps<{
   load?: () => Promise<unknown>
-  showLoadButton?: boolean
+  hasNextPage?: boolean
 }>()
 
 // model
@@ -22,13 +22,15 @@ watch(
   dataList,
   () => {
     nextTick(() => {
+      let notFull: boolean
       if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
         const scrollHeight = scrollbar.value.wrapRef.clientHeight
         const dataRowHeight = dataRow.value.$el.offsetHeight
-        notFull.value = dataRowHeight <= scrollHeight + 16 // 滚动条高度加上加载按钮的16px
+        notFull = dataRowHeight <= scrollHeight + 28 // 滚动条高度加上加载按钮的28px
       } else {
-        notFull.value = true
+        notFull = true
       }
+      showLoadButton.value = props.hasNextPage && notFull
     })
   },
   { deep: true }
@@ -41,8 +43,8 @@ const scrollbar = ref()
 const dataRow = ref()
 // loading开关
 const loading: Ref<UnwrapRef<boolean>> = ref(false)
-// 是否未填满
-const notFull: Ref<UnwrapRef<boolean>> = ref(true)
+// 显示加载按钮
+const showLoadButton: Ref<UnwrapRef<boolean>> = ref(false)
 
 // 方法
 // 处理DataScroll滚动事件
@@ -79,7 +81,7 @@ function handleCheckTagClicked(tag: SelectItem, left: boolean) {
 }
 
 // 暴露
-defineExpose({ scrollbar, notFull })
+defineExpose({ scrollbar })
 </script>
 
 <template>
@@ -134,6 +136,8 @@ defineExpose({ scrollbar, notFull })
 }
 .tag-box-show-load-more {
   height: 16px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 .tag-box-hide-load-more {
   height: 0;

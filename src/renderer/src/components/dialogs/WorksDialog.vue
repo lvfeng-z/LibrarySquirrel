@@ -99,15 +99,6 @@ async function handleLocalTagExchangeConfirm(unbound: SelectItem[], bound: Selec
     updateWorksLocalTags()
   }
 }
-// 处理本地标签编辑按钮的点击事件
-async function handleLocalTagEditClicked() {
-  if (localTagEdit.value) {
-    localTagEdit.value = false
-  } else {
-    localTagEdit.value = true
-    localTagExchangeBox.value.refreshData()
-  }
-}
 // 更新本地标签
 async function updateWorksLocalTags() {
   const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
@@ -119,7 +110,7 @@ async function updateWorksLocalTags() {
 <template>
   <el-dialog ref="baseDialog" top="50px">
     <div class="limiter">
-      <el-scrollbar style="width: 55%">
+      <el-scrollbar style="max-width: 70%">
         <el-image
           style="margin-right: 10px"
           fit="contain"
@@ -127,7 +118,7 @@ async function updateWorksLocalTags() {
         >
         </el-image>
       </el-scrollbar>
-      <el-scrollbar style="width: 45%; flex-grow: 1">
+      <el-scrollbar style="flex-grow: 1">
         <el-descriptions style="margin-right: 10px" direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
             {{ localAuthor }}
@@ -136,27 +127,28 @@ async function updateWorksLocalTags() {
             {{ worksFullInfo.site?.siteName }}
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
-            <el-button @click="handleLocalTagEditClicked">{{
-              localTagEdit ? '收起' : '编辑'
-            }}</el-button>
-            <tag-box v-show="!localTagEdit" v-model:data-list="localTags" />
-            <exchange-box
-              ref="localTagExchangeBox"
-              :class="{
-                'works-dialog-local-tag-exchange-box': true,
-                'works-dialog-local-tag-exchange-box-show': localTagEdit,
-                'works-dialog-local-tag-exchange-box-hide': !localTagEdit
-              }"
-              upper-title="已添加标签"
-              lower-title="可选标签"
-              :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-              :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-              :upper-search-api="apis.localTagListSelectItemPageByWorksId"
-              :lower-search-api="apis.localTagListSelectItemPageByWorksId"
-              :upper-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
-              :lower-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
-              @exchange-confirm="handleLocalTagExchangeConfirm"
-            />
+            <el-button @click="localTagEdit = true"> 编辑 </el-button>
+            <tag-box v-model:data-list="localTags" />
+            <el-drawer
+              v-model="localTagEdit"
+              size="45%"
+              :with-header="false"
+              @open="localTagExchangeBox.refreshData()"
+            >
+              <exchange-box
+                ref="localTagExchangeBox"
+                style="height: 100%"
+                upper-title="已有标签"
+                lower-title="可选标签"
+                :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+                :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+                :upper-search-api="apis.localTagListSelectItemPageByWorksId"
+                :lower-search-api="apis.localTagListSelectItemPageByWorksId"
+                :upper-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
+                :lower-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
+                @exchange-confirm="handleLocalTagExchangeConfirm"
+              />
+            </el-drawer>
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -169,15 +161,5 @@ async function updateWorksLocalTags() {
   display: flex;
   flex-direction: row;
   height: calc(100vh - 16px - 16px - 16px - 50px - 50px);
-}
-.works-dialog-local-tag-exchange-box {
-  overflow: hidden;
-  transition: height 0.2s ease;
-}
-.works-dialog-local-tag-exchange-box-show {
-  height: 500px;
-}
-.works-dialog-local-tag-exchange-box-hide {
-  height: 0;
 }
 </style>

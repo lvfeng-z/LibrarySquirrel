@@ -50,10 +50,7 @@ const lowerTagBox = ref() // lowerTagBox组件的实例
 // upper加载更多开关
 const upperLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
   if (notNullish(upperTagBox.value)) {
-    return (
-      upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount &&
-      upperTagBox.value.notFull
-    )
+    return upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount
   } else {
     return false
   }
@@ -61,10 +58,7 @@ const upperLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
 // lower加载更多开关
 const lowerLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
   if (notNullish(lowerTagBox.value)) {
-    return (
-      lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount &&
-      lowerTagBox.value.notFull
-    )
+    return lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount
   } else {
     return false
   }
@@ -127,7 +121,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   // 点击搜索按钮后，分页和滚动条位置重置
   if (upperOrLower) {
     upperPageConfig.value = new PageModel<BaseQueryDTO, object>()
-  } else {
+  } else if (!upperOrLower) {
     lowerPageConfig.value = new PageModel<BaseQueryDTO, object>()
   }
   resetScrollBarPosition(upperOrLower)
@@ -135,16 +129,11 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   const newData = await requestApiAndGetData(upperOrLower)
 
   if (newData) {
+    const leached = leachBufferData(newData, upperOrLower)
     if (upperOrLower) {
-      // 过滤掉upperBufferId已包含的数据
-      upperData.value = newData.filter((item: SelectItem) => {
-        return !upperBufferId.value.has(item.value)
-      })
+      upperData.value = leached
     } else {
-      // 过滤掉lowerBufferId已包含的数据
-      lowerData.value = newData.filter((item: SelectItem) => {
-        return !lowerBufferId.value.has(item.value)
-      })
+      lowerData.value = leached
     }
   }
 }
@@ -232,9 +221,10 @@ async function requestNextPage(upperOrLower: boolean) {
   }
 
   // 请求接口
-  const increment = await requestApiAndGetData(upperOrLower)
+  let increment = await requestApiAndGetData(upperOrLower)
   // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
-  if (increment !== undefined && increment !== null && increment.length > 0) {
+  if (notNullish(increment) && increment.length > 0) {
+    increment = leachBufferData(increment, upperOrLower)
     if (upperOrLower) {
       upperData.value = [...upperData.value, ...increment]
     } else {
@@ -257,6 +247,20 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
     upperTagBox.value.scrollbar.setScrollTop(0)
   } else {
     lowerTagBox.value.scrollbar.setScrollTop(0)
+  }
+}
+// 过滤存在于Buffer中的
+function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
+  if (upperOrLower) {
+    // 过滤掉upperBufferId已包含的数据
+    return increment.filter((item: SelectItem) => {
+      return !upperBufferId.value.has(item.value)
+    })
+  } else {
+    // 过滤掉lowerBufferId已包含的数据
+    return increment.filter((item: SelectItem) => {
+      return !lowerBufferId.value.has(item.value)
+    })
   }
 }
 </script>
@@ -284,7 +288,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
           v-model:data-list="upperData"
           class="exchange-box-upper-tag-box"
           :load="() => requestNextPage(true)"
-          :show-load-button="upperLoadMore"
+          :has-next-page="upperLoadMore"
           @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
           @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
         />
@@ -338,7 +342,7 @@ function resetScrollBarPosition(upperOrLower?: boolean) {
           v-model:data-list="lowerData"
           class="exchange-box-lower-tag-box"
           :load="() => requestNextPage(false)"
-          :show-load-button="lowerLoadMore"
+          :has-next-page="lowerLoadMore"
           @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
         />
