@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorksDTO from '../../model/main/dto/WorksDTO'
-import { computed, nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { computed, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { isNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'

@@ -98,10 +98,10 @@ export class ConnectionPool {
   /**
    * 获取连接
    */
-  public async acquire(readOnly: boolean, requestWeigh: RequestWeight): Promise<Connection> {
+  public async acquire(readonly: boolean, requestWeigh: RequestWeight): Promise<Connection> {
     return new Promise((resolve, reject) => {
       try {
-        const connectionArray = readOnly ? this.readConnections : this.writeConnections
+        const connectionArray = readonly ? this.readConnections : this.writeConnections
         // 遍历链接数组，寻找是否有可复用链接，并记录数组的第一个空闲索引
         let firstIdleIndex = -1
         for (let index = 0; index < connectionArray.length; index++) {
@@ -112,7 +112,10 @@ export class ConnectionPool {
             // 分配之前清除超时定时器
             clearTimeout(connection.timeoutId)
             connection.timeoutId = undefined
-            LogUtil.debug('ConnectionPool', `${index}号链接复用，清除定时器`)
+            LogUtil.debug(
+              `ConnectionPool.${readonly ? 'read' : 'write'}`,
+              `${index}号链接复用，清除定时器`
+            )
             connection.occupied = true
             resolve(connection)
             return
@@ -120,19 +123,26 @@ export class ConnectionPool {
         }
         // 如果遍历整个链接数组还没有找到可用的链接，尝试新增链接
         if (firstIdleIndex != -1) {
-          const newConnection = this.createConnection(readOnly, firstIdleIndex)
+          const newConnection = this.createConnection(readonly, firstIdleIndex)
+          newConnection.occupied = true
           connectionArray[firstIdleIndex] = newConnection
           resolve(newConnection)
-          LogUtil.debug('ConnectionPool', '在' + firstIdleIndex + '号新建链接')
+          LogUtil.debug(
+            `ConnectionPool.${readonly ? 'read' : 'write'}`,
+            '在' + firstIdleIndex + '号新建链接'
+          )
           return
         }
-        if (readOnly) {
+        if (readonly) {
           this.readWaitingQueue.push({ requestWeigh: requestWeigh, resolve: resolve })
         } else {
           this.writeWaitingQueue.push({ requestWeigh: requestWeigh, resolve: resolve })
         }
       } catch (e) {
-        LogUtil.error('ConnectionPool', '分配数据库连接时出现未知错误！' + String(e))
+        LogUtil.error(
+          `ConnectionPool.${readonly ? 'read' : 'write'}`,
+          '分配数据库连接时出现未知错误！' + String(e)
+        )
         reject(e)
       }
     })
@@ -140,36 +150,40 @@ export class ConnectionPool {
 
   /**
    * 释放链接
-   * @param readOnly
+   * @param readonly
    * @param index
    */
-  public release(readOnly: boolean, index: number) {
-    const connectionArray = readOnly ? this.readConnections : this.writeConnections
-    const waitingQueue = readOnly ? this.readWaitingQueue : this.writeWaitingQueue
+  public release(readonly: boolean, index: number) {
+    const connectionArray = readonly ? this.readConnections : this.writeConnections
+    const waitingQueue = readonly ? this.readWaitingQueue : this.writeWaitingQueue
     const connection = connectionArray[index]
     if (connection === undefined) {
-      LogUtil.error('ConnectionPool', '释放链接时出错，链接已经处于空闲状态')
+      LogUtil.error(
+        `ConnectionPool.${readonly ? 'read' : 'write'}`,
+        '释放链接时出错，链接已经处于空闲状态'
+      )
       return
     }
     if (!connection.occupied) {
       const msg = `释放${connection.index}号链接时出错，链接已经处于空闲状态`
-      LogUtil.error('ConnectionPool', msg)
+      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, msg)
     }
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开启超时定时器
     if (waitingQueue.length > 0) {
       const request = waitingQueue.shift()
       if (request) {
         LogUtil.debug(
-          'ConnectionPool',
-          this.readConnections.indexOf(connection) +
-            `号链接在释放时被复用，当前等待队列长度为：${waitingQueue.length}`
+          `ConnectionPool.${readonly ? 'read' : 'write'}`,
+          `${index}号链接在释放时被复用，当前等待队列长度为：${waitingQueue.length}`
         )
-        // this.log('链接复用')
         request.resolve(connection)
       }
     } else {
       connection.occupied = false
-      LogUtil.debug('ConnectionPool', `${connection.index}号链接已释放`)
+      LogUtil.debug(
+        `ConnectionPool.${readonly ? 'read' : 'write'}`,
+        `${connection.index}号链接已释放`
+      )
       this.setupIdleTimeout(connection)
     }
   }
@@ -180,11 +194,11 @@ export class ConnectionPool {
   public async acquireVisualLock(requester: string, operation: string): Promise<void> {
     return new Promise((resolve) => {
       if (!this.writeLocked) {
-        LogUtil.debug('ConnectionPool', `${requester}锁定排他锁，操作：${operation}`)
+        LogUtil.debug('ConnectionPool.write', `${requester}锁定排他锁，操作：${operation}`)
         this.writeLocked = true
         resolve()
       } else {
-        LogUtil.debug('ConnectionPool', `排他锁处于锁定状态，${requester}进入等待队列`)
+        LogUtil.debug('ConnectionPool.write', `排他锁处于锁定状态，${requester}进入等待队列`)
         this.writeLockQueue.push(() => resolve())
       }
     })
@@ -195,13 +209,13 @@ export class ConnectionPool {
    */
   public releaseVisualLock(requester: string): void {
     if (this.writeLockQueue.length > 0) {
-      LogUtil.debug('ConnectionPool', `排他锁转交下一个请求者${requester}`)
+      LogUtil.debug('ConnectionPool.write', `排他锁转交下一个请求者${requester}`)
       const next = this.writeLockQueue.shift()
       if (next) {
         next()
       }
     } else {
-      LogUtil.debug('ConnectionPool', `${requester}释放排他锁`)
+      LogUtil.debug('ConnectionPool.write', `${requester}释放排他锁`)
       this.writeLocked = false
     }
   }
@@ -209,9 +223,9 @@ export class ConnectionPool {
   /**
    * 创建一个新链接返回
    */
-  private createConnection(readOnly: boolean, index: number): Connection {
-    return new Connection(this.config.databasePath, index, readOnly, () =>
-      this.release(readOnly, index)
+  private createConnection(readonly: boolean, index: number): Connection {
+    return new Connection(this.config.databasePath, index, readonly, () =>
+      this.release(readonly, index)
     )
   }
 
@@ -229,7 +243,7 @@ export class ConnectionPool {
     // 将定时器ID与连接关联，便于后续清理
     connection.timeoutId = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
     LogUtil.debug(
-      'ConnectionPool',
+      `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
       `${connection.index}号链接已设置定时器，timeoutId=${connection.timeoutId}`
     )
   }
@@ -244,12 +258,18 @@ export class ConnectionPool {
     // 关闭链接后清理定时器
     clearTimeout(connection.timeoutId)
     connection.timeoutId = undefined
-    LogUtil.debug('ConnectionPool', `${connection.index}号链接的定时器被清除`)
+    LogUtil.debug(
+      `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
+      `${connection.index}号链接的定时器被清除`
+    )
     // 关闭数据库连接
     connection.connection.close()
     const connectionArray = connection.readonly ? this.readConnections : this.writeConnections
     connectionArray[connection.index] = undefined
-    LogUtil.debug('ConnectionPool', `${connection.index}号链接已超时关闭`)
+    LogUtil.debug(
+      `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
+      `${connection.index}号链接已超时关闭`
+    )
   }
 
   // private log(msg: string) {
