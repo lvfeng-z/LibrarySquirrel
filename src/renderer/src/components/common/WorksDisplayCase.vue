@@ -26,9 +26,9 @@ const caseHeight: Ref<UnwrapRef<string>> = ref(
 
 // 方法
 // 判断el-image使用什么模式
-function handleElImageFit(event) {
-  console.log('imageHeight', event.target.naturalHeight)
-  console.log('imageWidth', event.target.naturalWidth)
+function handleElImageFit() {
+  // console.log('imageHeight', event.target.naturalHeight)
+  // console.log('imageWidth', event.target.naturalWidth)
   imageFit.value = 'contain'
 }
 // 处理图片被点击

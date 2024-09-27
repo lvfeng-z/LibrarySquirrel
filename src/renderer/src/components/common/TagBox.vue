@@ -26,7 +26,8 @@ watch(
       if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
         const scrollHeight = scrollbar.value.wrapRef.clientHeight
         const dataRowHeight = dataRow.value.$el.offsetHeight
-        notFull = dataRowHeight <= scrollHeight + 28 // 滚动条高度加上加载按钮的28px
+        const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
+        notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
       } else {
         notFull = true
       }
@@ -41,6 +42,8 @@ watch(
 const scrollbar = ref()
 // el-row组件的实例
 const dataRow = ref()
+// 加载按钮的实例
+const loadMoreButton = ref()
 // loading开关
 const loading: Ref<UnwrapRef<boolean>> = ref(false)
 // 显示加载按钮
@@ -63,7 +66,7 @@ async function handleDataScroll() {
       const height = scrollWrapper.clientHeight
 
       // 判断是否滚动到底部
-      if (scrollTop + height + 0.5 >= scrollHeight) {
+      if (scrollTop + height + 1 >= scrollHeight) {
         await props.load()
       }
     }
@@ -106,6 +109,7 @@ defineExpose({ scrollbar })
       </el-row>
     </el-scrollbar>
     <el-check-tag
+      ref="loadMoreButton"
       :class="{
         'tag-box-load-more': true,
         'tag-box-show-load-more': showLoadButton,
@@ -135,7 +139,6 @@ defineExpose({ scrollbar })
   overflow: hidden;
 }
 .tag-box-show-load-more {
-  height: 16px;
   padding-top: 6px;
   padding-bottom: 6px;
 }

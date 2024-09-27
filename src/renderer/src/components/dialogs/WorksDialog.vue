@@ -18,17 +18,17 @@ const props = defineProps<{
 // onMounted
 onMounted(() => {
   getWorksInfo()
-  nextTick(() => {
-    const baseDialogHeader =
-      baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
-    const baseDialogFooter =
-      baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
-    heightForImage.value = isNullish(baseDialogHeader)
-      ? 0
-      : baseDialogHeader + isNullish(baseDialogFooter)
-        ? 0
-        : baseDialogFooter
-  })
+  // nextTick(() => {
+  //   const baseDialogHeader =
+  //     baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
+  //   const baseDialogFooter =
+  //     baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
+  //   heightForImage.value = isNullish(baseDialogHeader)
+  //     ? 0
+  //     : baseDialogHeader + isNullish(baseDialogFooter)
+  //       ? 0
+  //       : baseDialogFooter
+  // })
 })
 
 // 变量
@@ -45,7 +45,9 @@ const baseDialog = ref()
 // localTag的ExchangeBox组件
 const localTagExchangeBox = ref()
 // 图像高度
-const heightForImage: Ref<UnwrapRef<number>> = ref(0)
+// const heightForImage: Ref<UnwrapRef<number>> = ref(0)
+// 图像宽度
+// const widthForImage: Ref<UnwrapRef<number>> = ref(0)
 // 作品信息
 const worksFullInfo: Ref<UnwrapRef<WorksDTO>> = ref(new WorksDTO())
 // 本地作者
@@ -110,15 +112,17 @@ async function updateWorksLocalTags() {
 <template>
   <el-dialog ref="baseDialog" top="50px">
     <div class="limiter">
-      <el-scrollbar style="max-width: 70%">
-        <el-image
-          style="margin-right: 10px"
-          fit="contain"
-          :src="`workdir-resource://workdir/${props.works[0].filePath}`"
-        >
-        </el-image>
+      <el-scrollbar style="max-width: 60%">
+        <picture>
+          <el-image
+            style="margin-right: 10px"
+            fit="contain"
+            :src="`workdir-resource://workdir/${props.works[0].filePath}`"
+          >
+          </el-image>
+        </picture>
       </el-scrollbar>
-      <el-scrollbar style="flex-grow: 1">
+      <el-scrollbar>
         <el-descriptions style="margin-right: 10px" direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
             {{ localAuthor }}
