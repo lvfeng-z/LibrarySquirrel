@@ -166,49 +166,47 @@ async function handleTest() {
 <template>
   <div class="ui">
     <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-    <div class="sideMenu z-layer-4">
-      <side-menu :default-active="['1-1']">
-        <template #default>
-          <el-sub-menu index="1">
-            <template #title>
-              <el-icon><CollectionTag /></el-icon>
-              <span>标签</span>
-            </template>
-            <el-menu-item index="1-1" @click="showFloatPage('TagManage')">本地标签</el-menu-item>
-            <el-menu-item index="1-2">站点标签</el-menu-item>
-          </el-sub-menu>
-          <el-sub-menu index="2">
-            <template #title>
-              <el-icon><User /></el-icon>
-              <span>作者</span>
-            </template>
-            <el-menu-item index="2-1" @click="showFloatPage('LocalAuthorManage')">
-              本地作者
-            </el-menu-item>
-            <el-menu-item index="2-2">站点作者</el-menu-item>
-          </el-sub-menu>
-          <el-menu-item index="3">
-            <template #title>收藏</template>
-            <el-icon><Star /></el-icon>
+    <side-menu class="sideMenu z-layer-4" :default-active="['1-1']">
+      <template #default>
+        <el-sub-menu index="1">
+          <template #title>
+            <el-icon><CollectionTag /></el-icon>
+            <span>标签</span>
+          </template>
+          <el-menu-item index="1-1" @click="showFloatPage('TagManage')">本地标签</el-menu-item>
+          <el-menu-item index="1-2">站点标签</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="2">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span>作者</span>
+          </template>
+          <el-menu-item index="2-1" @click="showFloatPage('LocalAuthorManage')">
+            本地作者
           </el-menu-item>
-          <el-menu-item index="4" @click="showFloatPage('Settings')">
-            <template #title>站点</template>
-            <el-icon><Link /></el-icon>
-          </el-menu-item>
-          <el-sub-menu index="5">
-            <template #title>
-              <el-icon><List /></el-icon>
-              <span>任务</span>
-            </template>
-            <el-menu-item index="5-1" @click="showFloatPage('TaskManage')">任务管理</el-menu-item>
-          </el-sub-menu>
-          <el-menu-item index="6" @click="showFloatPage('Settings')">
-            <template #title>设置</template>
-            <el-icon><Setting /></el-icon>
-          </el-menu-item>
-        </template>
-      </side-menu>
-    </div>
+          <el-menu-item index="2-2">站点作者</el-menu-item>
+        </el-sub-menu>
+        <el-menu-item index="3">
+          <template #title>收藏</template>
+          <el-icon><Star /></el-icon>
+        </el-menu-item>
+        <el-menu-item index="4" @click="showFloatPage('Settings')">
+          <template #title>站点</template>
+          <el-icon><Link /></el-icon>
+        </el-menu-item>
+        <el-sub-menu index="5">
+          <template #title>
+            <el-icon><List /></el-icon>
+            <span>任务</span>
+          </template>
+          <el-menu-item index="5-1" @click="showFloatPage('TaskManage')">任务管理</el-menu-item>
+        </el-sub-menu>
+        <el-menu-item index="6" @click="showFloatPage('Settings')">
+          <template #title>设置</template>
+          <el-icon><Setting /></el-icon>
+        </el-menu-item>
+      </template>
+    </side-menu>
     <div class="mainSpace">
       <div v-show="pageState.mainPage" class="mainPage margin-box">
         <div class="mainPage-searchbar">
