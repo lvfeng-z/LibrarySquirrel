@@ -7,32 +7,28 @@ import { getDataBasePath } from './util/DatabaseUtil.ts'
 import DataBaseConstant from './constant/DataBaseConstant.ts'
 
 export enum GlobalVars {
-  READING_CONNECTION_POOL = 'READING_CONNECTION_POOL',
-  WRITING_CONNECTION_POOL = 'WRITING_CONNECTION_POOL',
+  CONNECTION_POOL = 'CONNECTION_POOL',
   SETTINGS = 'SETTINGS',
   TASK_TRACKER = 'TASK_TRACKER'
 }
 // 映射类型
 type GlobalVarsMapping = {
-  [GlobalVars.READING_CONNECTION_POOL]: ConnectionPool
-  [GlobalVars.WRITING_CONNECTION_POOL]: ConnectionPool
+  [GlobalVars.CONNECTION_POOL]: ConnectionPool
   [GlobalVars.SETTINGS]: Store<Record<string, unknown>>
   [GlobalVars.TASK_TRACKER]: Record<string, TaskTracker>
 }
 
 const POOL_CONFIG: ConnectionPoolConfig = {
-  maxConnections: 10, // 最大连接数
+  maxRead: 10, // 最大连接数
+  maxWrite: 10, // 最大连接数
   idleTimeout: 30000, // 连接空闲超时时间（毫秒）
   databasePath: getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
 }
 export class GlobalVarManager {
   public static create(globalVar: GlobalVars) {
     switch (globalVar) {
-      case GlobalVars.READING_CONNECTION_POOL:
-        this.createReadingConnectionPool()
-        break
-      case GlobalVars.WRITING_CONNECTION_POOL:
-        this.createWritingConnectionPool()
+      case GlobalVars.CONNECTION_POOL:
+        this.createConnectionPool()
         break
       case GlobalVars.SETTINGS:
         this.createSettings()
@@ -49,11 +45,8 @@ export class GlobalVarManager {
 
   public static destroy(globalVar: GlobalVars) {
     switch (globalVar) {
-      case GlobalVars.READING_CONNECTION_POOL:
-        this.destroyReadingConnectionPool()
-        break
-      case GlobalVars.WRITING_CONNECTION_POOL:
-        this.destroyWritingConnectionPool()
+      case GlobalVars.CONNECTION_POOL:
+        this.destroyConnectionPool()
         break
       case GlobalVars.SETTINGS:
         this.destroySettings()
@@ -64,38 +57,21 @@ export class GlobalVarManager {
     }
   }
 
-  // READING_CONNECTION_POOL
+  // CONNECTION_POOL
   /**
-   * 创建读连接池
+   * 创建连接池
    */
-  private static createReadingConnectionPool() {
-    global[GlobalVars.READING_CONNECTION_POOL] = new ConnectionPool(true, POOL_CONFIG)
+  private static createConnectionPool() {
+    global[GlobalVars.CONNECTION_POOL] = new ConnectionPool(POOL_CONFIG)
     logUtil.info('InitializeDataBase', '已创建读取连接池')
   }
 
   /**
-   * 销毁读连接池
+   * 销毁连接池
    */
-  private static destroyReadingConnectionPool() {
-    delete global[GlobalVars.READING_CONNECTION_POOL]
+  private static destroyConnectionPool() {
+    delete global[GlobalVars.CONNECTION_POOL]
     logUtil.info('InitializeDataBase', '已销毁读取连接池')
-  }
-
-  // WRITING_CONNECTION_POOL
-  /**
-   * 创建写连接池
-   */
-  private static createWritingConnectionPool() {
-    global[GlobalVars.WRITING_CONNECTION_POOL] = new ConnectionPool(false, POOL_CONFIG)
-    logUtil.info('InitializeDataBase', '已创建写入连接池')
-  }
-
-  /**
-   * 销毁写连接池
-   */
-  private static destroyWritingConnectionPool() {
-    delete global[GlobalVars.WRITING_CONNECTION_POOL]
-    logUtil.info('InitializeDataBase', '已销毁写入连接池')
   }
 
   // SETTINGS

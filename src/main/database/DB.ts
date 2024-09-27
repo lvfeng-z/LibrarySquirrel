@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
-import { RequestWeight } from './ConnectionPool.ts'
+import { Connection, RequestWeight } from './ConnectionPool.ts'
 
 /**
  * 数据库链接池封装
@@ -14,12 +14,12 @@ export default class DB {
    * 数据库链接
    * @private
    */
-  private readingConnection: BetterSqlite3.Database | undefined = undefined
+  private readingConnection: Connection | undefined = undefined
   /**
    * 数据库链接
    * @private
    */
-  private writingConnection: BetterSqlite3.Database | undefined = undefined
+  private writingConnection: Connection | undefined = undefined
   /**
    * 调用者
    * @private
@@ -29,12 +29,12 @@ export default class DB {
    * acquire请求的缓存，防止异步调用prepare方法时重复请求链接
    * @private
    */
-  private readingAcquirePromise: Promise<BetterSqlite3.Database> | null = null
+  private readingAcquirePromise: Promise<Connection> | null = null
   /**
    * acquire请求的缓存，防止异步调用prepare方法时重复请求链接
    * @private
    */
-  private writingAcquirePromise: Promise<BetterSqlite3.Database> | null = null
+  private writingAcquirePromise: Promise<Connection> | null = null
   /**
    * 事务保存点计数器
    * @private
@@ -138,11 +138,11 @@ export default class DB {
    */
   public release() {
     if (this.readingConnection != undefined) {
-      GlobalVarManager.get(GlobalVars.READING_CONNECTION_POOL).release(this.readingConnection)
+      this.readingConnection.release()
       this.readingConnection = undefined
     }
     if (this.writingConnection != undefined) {
-      GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).release(this.writingConnection)
+      this.writingConnection.release()
       this.writingConnection = undefined
     }
   }
@@ -172,7 +172,7 @@ export default class DB {
     try {
       // 开启事务之前获取排他锁
       if (!this.holdingVisualLock) {
-        await GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).acquireVisualLock(
+        await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireVisualLock(
           this.caller,
           operation
         )
@@ -197,7 +197,7 @@ export default class DB {
         LogUtil.info(this.caller, `${operation}，ROLLBACK`)
 
         // 释放排他锁
-        GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
+        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseVisualLock(this.caller)
       } else {
         // 事务代码出现异常的话回滚至此保存点
         connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
@@ -210,7 +210,7 @@ export default class DB {
     } finally {
       // 释放排他锁
       if (this.holdingVisualLock && isStartPoint) {
-        GlobalVarManager.get(GlobalVars.WRITING_CONNECTION_POOL).releaseVisualLock(this.caller)
+        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseVisualLock(this.caller)
         this.holdingVisualLock = false
       }
     }
@@ -224,42 +224,44 @@ export default class DB {
   private async acquire(readOnly: boolean): Promise<BetterSqlite3.Database> {
     if (readOnly) {
       if (this.readingConnection != undefined) {
-        return this.readingConnection
+        return this.readingConnection.connection
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection = await GlobalVarManager.get(
-            GlobalVars.READING_CONNECTION_POOL
-          ).acquire(RequestWeight.LOW)
+          this.readingConnection = await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquire(
+            true,
+            RequestWeight.LOW
+          )
           this.readingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
-          this.readingConnection.function('REGEXP', (pattern, string) => {
+          this.readingConnection.connection.function('REGEXP', (pattern, string) => {
             const regex = new RegExp(pattern as string)
             return regex.test(string as string) ? 1 : 0
           })
           return this.readingConnection
         })()
       }
-      return this.readingAcquirePromise
+      return this.readingAcquirePromise.then((connection) => connection.connection)
     } else {
       if (this.writingConnection != undefined) {
-        return this.writingConnection
+        return this.writingConnection.connection
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection = await GlobalVarManager.get(
-            GlobalVars.WRITING_CONNECTION_POOL
-          ).acquire(RequestWeight.LOW)
+          this.writingConnection = await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquire(
+            false,
+            RequestWeight.LOW
+          )
           this.writingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
-          this.writingConnection.function('REGEXP', (pattern, string) => {
+          this.writingConnection.connection.function('REGEXP', (pattern, string) => {
             const regex = new RegExp(pattern as string)
             return regex.test(string as string) ? 1 : 0
           })
           return this.writingConnection
         })()
       }
-      return this.writingAcquirePromise
+      return this.writingAcquirePromise.then((connection) => connection.connection)
     }
   }
 

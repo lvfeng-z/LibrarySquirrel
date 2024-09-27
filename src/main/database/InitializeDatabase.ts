@@ -25,8 +25,7 @@ export async function InitializeDB() {
   logUtil.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
-  GlobalVarManager.create(GlobalVars.READING_CONNECTION_POOL)
-  GlobalVarManager.create(GlobalVars.WRITING_CONNECTION_POOL)
+  GlobalVarManager.create(GlobalVars.CONNECTION_POOL)
 
   // 创建数据表
   // 读取当前数据库的数据表
