@@ -6,6 +6,8 @@ import BaseService from './BaseService.ts'
 import InstalledPluginsQueryDTO from '../model/queryDTO/InstalledPluginsQueryDTO.ts'
 import DB from '../database/DB.ts'
 import { isNullish } from '../util/CommonUtil.ts'
+import InstalledPluginsDTO from '../model/dto/InstalledPluginsDTO.ts'
+import LogUtil from '../util/LogUtil.js'
 
 /**
  * 主键查询
@@ -23,7 +25,7 @@ export default class InstalledPluginsService extends BaseService<
   /**
    * 根据id获取插件加载路径
    */
-  async getClassPathById(id: number): Promise<string | undefined> {
+  async getDTOById(id: number): Promise<InstalledPluginsDTO> {
     let resourcePath: string
     const NODE_ENV = process.env.NODE_ENV
     if (NODE_ENV == 'development') {
@@ -34,9 +36,12 @@ export default class InstalledPluginsService extends BaseService<
 
     const installedPlugin = await this.dao.getById(id)
     if (isNullish(installedPlugin)) {
-      return undefined
+      const msg = `加载插件时出错，id: ${id}不可用`
+      LogUtil.error('InstalledPluginsService', msg)
+      throw new Error(msg)
     } else {
-      return Path.join(
+      const dto = new InstalledPluginsDTO(installedPlugin)
+      dto.loadPath = Path.join(
         'file://',
         getRootDir(),
         resourcePath,
@@ -46,6 +51,7 @@ export default class InstalledPluginsService extends BaseService<
         'code',
         installedPlugin.fileName as string
       )
+      return dto
     }
   }
 }

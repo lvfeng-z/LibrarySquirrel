@@ -49,7 +49,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     try {
       // 获取排他锁
       if (!this.holdingVisualLock) {
-        await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireVisualLock(
+        await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireLock(
           this.caller,
           this.statement.source
         )
@@ -64,7 +64,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     } finally {
       // 释放排他锁
       if (this.holdingVisualLock && !this.injectedLock) {
-        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseVisualLock(this.caller)
+        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(this.caller)
       }
     }
   }

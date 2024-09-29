@@ -114,7 +114,7 @@ export class ConnectionPool {
             connection.timeoutId = undefined
             LogUtil.debug(
               `ConnectionPool.${readonly ? 'read' : 'write'}`,
-              `${index}号链接复用，清除定时器`
+              `[${index}]链接复用，清除定时器`
             )
             connection.occupied = true
             resolve(connection)
@@ -129,7 +129,7 @@ export class ConnectionPool {
           resolve(newConnection)
           LogUtil.debug(
             `ConnectionPool.${readonly ? 'read' : 'write'}`,
-            '在' + firstIdleIndex + '号新建链接'
+            `[${firstIdleIndex}]新建链接`
           )
           return
         }
@@ -159,14 +159,16 @@ export class ConnectionPool {
     const connection = connectionArray[index]
     if (connection === undefined) {
       LogUtil.error(
-        `ConnectionPool.${readonly ? 'read' : 'write'}`,
-        '释放链接时出错，链接已经处于空闲状态'
+        `ConnectionPool.${readonly ? 'read' : 'write'}-${index}`,
+        `[${index}]释放链接时出错，链接为空`
       )
       return
     }
     if (!connection.occupied) {
-      const msg = `释放${connection.index}号链接时出错，链接已经处于空闲状态`
-      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, msg)
+      LogUtil.error(
+        `ConnectionPool.${readonly ? 'read' : 'write'}`,
+        `[${index}]释放链接时出错，链接已经处于空闲状态`
+      )
     }
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开启超时定时器
     if (waitingQueue.length > 0) {
@@ -174,16 +176,13 @@ export class ConnectionPool {
       if (request) {
         LogUtil.debug(
           `ConnectionPool.${readonly ? 'read' : 'write'}`,
-          `${index}号链接在释放时被复用，当前等待队列长度为：${waitingQueue.length}`
+          `[${index}]链接在释放时被复用，当前等待队列长度为：${waitingQueue.length}`
         )
         request.resolve(connection)
       }
     } else {
       connection.occupied = false
-      LogUtil.debug(
-        `ConnectionPool.${readonly ? 'read' : 'write'}`,
-        `${connection.index}号链接已释放`
-      )
+      LogUtil.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]链接已释放`)
       this.setupIdleTimeout(connection)
     }
   }
@@ -191,14 +190,17 @@ export class ConnectionPool {
   /**
    * 获取排他锁
    */
-  public async acquireVisualLock(requester: string, operation: string): Promise<void> {
+  public async acquireLock(requester: string, operation: string): Promise<void> {
     return new Promise((resolve) => {
       if (!this.writeLocked) {
         LogUtil.debug('ConnectionPool.write', `${requester}锁定排他锁，操作：${operation}`)
         this.writeLocked = true
         resolve()
       } else {
-        LogUtil.debug('ConnectionPool.write', `排他锁处于锁定状态，${requester}进入等待队列`)
+        LogUtil.debug(
+          'ConnectionPool.write',
+          `排他锁处于锁定状态，${requester}进入等待队列，操作：${operation}`
+        )
         this.writeLockQueue.push(() => resolve())
       }
     })
@@ -207,9 +209,8 @@ export class ConnectionPool {
   /**
    * 释放排他锁
    */
-  public releaseVisualLock(requester: string): void {
+  public releaseLock(requester: string): void {
     if (this.writeLockQueue.length > 0) {
-      LogUtil.debug('ConnectionPool.write', `排他锁转交下一个请求者${requester}`)
       const next = this.writeLockQueue.shift()
       if (next) {
         next()
@@ -244,7 +245,7 @@ export class ConnectionPool {
     connection.timeoutId = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
     LogUtil.debug(
       `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
-      `${connection.index}号链接已设置定时器，timeoutId=${connection.timeoutId}`
+      `[${connection.index}]链接已设置定时器，timeoutId=${connection.timeoutId}`
     )
   }
 
@@ -260,7 +261,7 @@ export class ConnectionPool {
     connection.timeoutId = undefined
     LogUtil.debug(
       `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
-      `${connection.index}号链接的定时器被清除`
+      `[${connection.index}]链接的定时器被清除`
     )
     // 关闭数据库连接
     connection.connection.close()
@@ -268,7 +269,7 @@ export class ConnectionPool {
     connectionArray[connection.index] = undefined
     LogUtil.debug(
       `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
-      `${connection.index}号链接已超时关闭`
+      `[${connection.index}]链接已超时关闭`
     )
   }
 

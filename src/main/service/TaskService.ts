@@ -96,20 +96,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const pluginResponse = await taskHandler.create(url)
 
         // 分别处理数组类型和流类型的响应值
-        if (Array.isArray(pluginResponse)) {
-          const addedQuantity = await this.handlePluginTaskArray(
-            pluginResponse,
-            url,
-            taskPlugin,
-            parentTask
-          )
-          return new TaskCreateResponse({
-            succeed: true,
-            addedQuantity: addedQuantity,
-            msg: '创建成功',
-            plugin: taskPlugin
-          })
-        } else if (pluginResponse instanceof Readable) {
+        if (pluginResponse instanceof Readable) {
           const addedQuantity = await this.handlePluginTaskStream(
             pluginResponse,
             url,
@@ -117,6 +104,19 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             parentTask,
             100,
             200
+          )
+          return new TaskCreateResponse({
+            succeed: true,
+            addedQuantity: addedQuantity,
+            msg: '创建成功',
+            plugin: taskPlugin
+          })
+        } else if (Array.isArray(pluginResponse)) {
+          const addedQuantity = await this.handlePluginTaskArray(
+            pluginResponse,
+            url,
+            taskPlugin,
+            parentTask
           )
           return new TaskCreateResponse({
             succeed: true,
@@ -368,6 +368,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 计数器
     let counter = 0
 
+    // 读取设置中的最大并行数
+    const settings = SettingsService.getSettings()
+    const maxSaveWorksPromise =
+      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
+    const limit = pLimit(maxSaveWorksPromise)
+
     // 加载插件的函数
     const loadPluginProcess = (pluginId: number, taskId): Promise<TaskHandler> => {
       // 加载并缓存插件和插件信息
@@ -420,12 +426,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 保存作品资源和作品信息的函数
-    const savingProcess = async (task: Task): Promise<boolean> => {
+    const savingProcess = async (task: Task): Promise<number> => {
       // 校验任务的插件id
       if (isNullish(task.pluginId)) {
         const msg = `任务的插件id意外为空，taskId: ${task.id}`
         LogUtil.error('TaskService', msg)
-        return false
+        return -1
       }
 
       // 加载插件
@@ -439,9 +445,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const updateContinuableTask = new Task(task)
       await this.updateById(updateContinuableTask)
 
-      const db = new DB('test')
       // 生成作品保存用的信息
-      const worksService = new WorksService(db)
+      const worksService = new WorksService()
       const worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
 
       const sourceTask = new Task()
@@ -450,39 +455,25 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         worksSaveInfo.fullSaveDir as string,
         worksSaveInfo.fileName as string
       )
+
       // 保存作品信息
-      const updatePendingDownloadPathService = new TaskService(db)
       try {
         // 保存作品信息
         const worksId = await worksService.saveWorksInfo(worksSaveInfo)
         // 文件的写入路径保存到任务中
+        const updatePendingDownloadPathService = new TaskService()
         await updatePendingDownloadPathService.updateById(sourceTask)
         // 保存资源
-        await worksService.saveWorksResource(worksSaveInfo)
-
-        // 修改任务状态和作品资源状态
-        task.status = TaskStatesEnum.FINISHED
-        await this.finishTask(task, worksId)
+        await limit(() => worksService.saveWorksResource(worksSaveInfo))
         await worksService.resourceFinished(worksId)
 
         counter++
-        return true
+        return worksId
       } catch (error) {
         LogUtil.error('TaskService', '保存作品失败，error: ', error)
-        task.status = TaskStatesEnum.FAILED
-        await this.taskFailed(task)
-        return false
-      } finally {
-        setTimeout(() => db.release(), 1000)
-        handleRootStatus(task.pid as number)
+        return -1
       }
     }
-
-    // 读取设置中的最大并行数
-    const settings = SettingsService.getSettings()
-    const maxSaveWorksPromise =
-      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    const limit = pLimit(maxSaveWorksPromise)
 
     // 任务等待列表
     const activeProcesses: Promise<boolean>[] = []
@@ -497,10 +488,26 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 尝试开始任务
       for (const task of tasks) {
         task.status = TaskStatesEnum.PROCESSING
-        const activeProcess = savingProcess(task).catch((error) => {
-          LogUtil.error('TaskService', `开始任务时出错，taskId: ${task.id}，error: `, error)
-          return false
-        })
+        const activeProcess = savingProcess(task)
+          .then(async (worksId) => {
+            // 修改任务状态和作品资源状态
+            if (worksId !== -1) {
+              task.status = TaskStatesEnum.FINISHED
+              await this.finishTask(task, worksId)
+              return true
+            } else {
+              task.status = TaskStatesEnum.FAILED
+              await this.taskFailed(task)
+              return false
+            }
+          })
+          .catch(async (error) => {
+            LogUtil.error('TaskService', `开始任务时出错，taskId: ${task.id}，error: `, error)
+            task.status = TaskStatesEnum.FAILED
+            await this.taskFailed(task)
+            return false
+          })
+          .finally(() => handleRootStatus(task.pid as number))
         activeProcesses.push(activeProcess)
       }
     }

@@ -183,93 +183,97 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
     try {
       return db
-        .nestedTransaction(async (transactionDB): Promise<number> => {
-          // 如果worksSets不为空，则此作品是作品集中的作品
-          if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
-            // 遍历处理作品集数组
-            for (const worksSet of worksDTO.worksSets) {
-              if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
-                const taskService = new TaskService(transactionDB)
-                const includeTask = await taskService.getById(worksDTO.includeTaskId)
-                if (isNullish(includeTask)) {
-                  const msg = '修改本地标签时，原标签信息意外为空'
-                  LogUtil.error('LocalTagService', msg)
-                  throw new Error(msg)
-                }
-                const rootTaskId = includeTask.pid
-                const siteWorksSetId = worksSet.siteWorksSetId
-
-                if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
-                  const worksSetService = new WorksSetService(transactionDB)
-                  const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
-                    siteWorksSetId,
-                    rootTaskId
-                  )
-                  if (isNullish(oldWorksSet)) {
-                    const tempWorksSet = new WorksSet(worksSet)
-                    tempWorksSet.includeTaskId = rootTaskId
-                    await worksSetService.save(tempWorksSet)
-                    worksSetService.link([worksDTO], tempWorksSet)
-                  } else {
-                    worksSetService.link([worksDTO], oldWorksSet)
+        .transaction(
+          async (transactionDB): Promise<number> => {
+            // 如果worksSets不为空，则此作品是作品集中的作品
+            if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
+              // 遍历处理作品集数组
+              for (const worksSet of worksDTO.worksSets) {
+                if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
+                  const taskService = new TaskService(transactionDB)
+                  const includeTask = await taskService.getById(worksDTO.includeTaskId)
+                  if (isNullish(includeTask)) {
+                    const msg = '修改本地标签时，原标签信息意外为空'
+                    LogUtil.error('LocalTagService', msg)
+                    throw new Error(msg)
                   }
-                } else {
-                  LogUtil.warn(
-                    'WorksService',
-                    `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
-                  )
+                  const rootTaskId = includeTask.pid
+                  const siteWorksSetId = worksSet.siteWorksSetId
+
+                  if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
+                    const worksSetService = new WorksSetService(transactionDB)
+                    const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
+                      siteWorksSetId,
+                      rootTaskId
+                    )
+                    if (isNullish(oldWorksSet)) {
+                      const tempWorksSet = new WorksSet(worksSet)
+                      tempWorksSet.includeTaskId = rootTaskId
+                      await worksSetService.save(tempWorksSet)
+                      worksSetService.link([worksDTO], tempWorksSet)
+                    } else {
+                      worksSetService.link([worksDTO], oldWorksSet)
+                    }
+                  } else {
+                    LogUtil.warn(
+                      'WorksService',
+                      `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
+                    )
+                  }
                 }
               }
             }
-          }
 
-          // 保存站点
-          if (notNullish(site)) {
-            const siteService = new SiteService(transactionDB)
-            await siteService.saveOnNotExistByDomain(site)
-          }
-          // 保存站点作者
-          if (notNullish(siteAuthors)) {
-            const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
-          }
-          // 保存站点标签
-          if (notNullish(siteTags) && siteTags.length > 0) {
-            const siteTagService = new SiteTagService(transactionDB)
-            await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
-          }
+            // 保存站点
+            if (notNullish(site)) {
+              const siteService = new SiteService(transactionDB)
+              await siteService.saveOnNotExistByDomain(site)
+            }
+            // 保存站点作者
+            if (notNullish(siteAuthors)) {
+              const siteAuthorService = new SiteAuthorService(transactionDB)
+              await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
+            }
+            // 保存站点标签
+            if (notNullish(siteTags) && siteTags.length > 0) {
+              const siteTagService = new SiteTagService(transactionDB)
+              await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
+            }
 
-          // 保存作品
-          const works = new Works(worksDTO)
-          const worksService = new WorksService(transactionDB)
-          worksDTO.id = (await worksService.save(works)) as number
+            // 保存作品
+            const works = new Works(worksDTO)
+            const worksService = new WorksService(transactionDB)
+            worksDTO.id = (await worksService.save(works)) as number
 
-          // 关联作品和本地作者
-          if (notNullish(localAuthors) && localAuthors.length > 0) {
-            const localAuthorService = new LocalAuthorService(transactionDB)
-            await localAuthorService.link(localAuthors, worksDTO)
-          }
-          // 关联作品和本地标签
-          if (localTags !== undefined && localTags != null && localTags.length > 0) {
-            const localTagIds = localTags
-              .map((localTag) => localTag.id)
-              .filter((localTagId) => notNullish(localTagId))
-            const reWorksTagService = new ReWorksTagService(transactionDB)
-            await reWorksTagService.link(localTagIds, worksDTO.id)
-          }
-          // 关联作品和站点作者
-          if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
-            const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.link(siteAuthors, worksDTO)
-          }
-          // 关联作品和站点标签
-          if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
-            const siteTagService = new SiteTagService(transactionDB)
-            await siteTagService.link(siteTags, worksDTO)
-          }
+            // 关联作品和本地作者
+            if (notNullish(localAuthors) && localAuthors.length > 0) {
+              const localAuthorService = new LocalAuthorService(transactionDB)
+              await localAuthorService.link(localAuthors, worksDTO)
+            }
+            // 关联作品和本地标签
+            if (localTags !== undefined && localTags != null && localTags.length > 0) {
+              const localTagIds = localTags
+                .map((localTag) => localTag.id)
+                .filter((localTagId) => notNullish(localTagId))
+              const reWorksTagService = new ReWorksTagService(transactionDB)
+              await reWorksTagService.link(localTagIds, worksDTO.id)
+            }
+            // 关联作品和站点作者
+            if (siteAuthors !== undefined && siteAuthors != null && siteAuthors.length > 0) {
+              const siteAuthorService = new SiteAuthorService(transactionDB)
+              await siteAuthorService.link(siteAuthors, worksDTO)
+            }
+            // 关联作品和站点标签
+            if (siteTags !== undefined && siteTags != null && siteTags.length > 0) {
+              const siteTagService = new SiteTagService(transactionDB)
+              await siteTagService.link(siteTags, worksDTO)
+            }
 
-          return worksDTO.id
-        }, '保存作品信息')
+            return worksDTO.id
+          },
+          `taskId${worksDTO.includeTaskId}`,
+          '保存作品信息'
+        )
         .catch((error) => {
           LogUtil.warn('WorksService', '保存作品时出错')
           throw error

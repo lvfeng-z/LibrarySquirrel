@@ -158,62 +158,67 @@ export default class DB {
   /**
    * 可嵌套的事务
    * @param fn 事务代码
+   * @param identifier 标识
    * @param operation 操作说明
    */
-  public async nestedTransaction<F extends (db: DB) => Promise<R>, R>(
+  public async transaction<F extends (db: DB) => Promise<R>, R>(
     fn: F,
+    identifier: string,
     operation: string
   ): Promise<R> {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0
     // 创建一个当前层级的保存点
-    const savepointName = `sp${this.savepointCounter++}`
-    try {
-      // 开启事务之前获取排他锁
-      if (!this.holdingVisualLock) {
-        await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireVisualLock(
-          this.caller,
-          operation
-        )
-        this.holdingVisualLock = true
-      }
-
-      connection.exec(`SAVEPOINT ${savepointName}`)
-      LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
-
-      const result = await fn(this)
-
-      // 事务代码顺利执行的话释放此保存点
-      connection.exec(`RELEASE ${savepointName}`)
-      this.savepointCounter--
-      LogUtil.debug(this.caller, `${operation}，RELEASE ${savepointName}，result: ${result}`)
-
-      return result
-    } catch (error) {
-      // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排他锁一直无法释放
-      if (isStartPoint) {
-        connection.exec(`ROLLBACK`)
-        LogUtil.info(this.caller, `${operation}，ROLLBACK`)
-
-        // 释放排他锁
-        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseVisualLock(this.caller)
-      } else {
-        // 事务代码出现异常的话回滚至此保存点
-        connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-        LogUtil.info(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
-      }
-
-      this.savepointCounter = 0
-      LogUtil.error(this.caller, error)
-      throw error
-    } finally {
-      // 释放排他锁
-      if (this.holdingVisualLock && isStartPoint) {
-        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseVisualLock(this.caller)
-        this.holdingVisualLock = false
-      }
+    const savepointName = `${identifier}_sp${this.savepointCounter++}`
+    // 开启事务之前获取排他锁
+    if (!this.holdingVisualLock) {
+      await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, operation)
+      this.holdingVisualLock = true
     }
+
+    LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
+    connection.exec(`SAVEPOINT ${savepointName}`)
+
+    return fn(this)
+      .then((result) => {
+        // 事务代码顺利执行的话释放此保存点
+        connection.exec(`RELEASE ${savepointName}`)
+        this.savepointCounter--
+        LogUtil.debug(this.caller, `${operation}，RELEASE ${savepointName}，result: ${result}`)
+
+        return result
+      })
+      .catch((error) => {
+        // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排他锁一直无法释放
+        if (isStartPoint) {
+          connection.exec(`ROLLBACK`)
+          LogUtil.info(this.caller, `${operation}，ROLLBACK`)
+
+          // 释放排他锁
+          GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(
+            `${this.caller}_${identifier}_${operation}`
+          )
+          this.holdingVisualLock = false
+        } else {
+          // 事务代码出现异常的话回滚至此保存点
+          connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
+          LogUtil.info(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
+        }
+
+        this.savepointCounter--
+        LogUtil.error(this.caller, error)
+        throw error
+      })
+      .finally(() => {
+        // 释放排他锁
+        if (this.holdingVisualLock && isStartPoint) {
+          GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(
+            `${this.caller}_${identifier}_${operation}`
+          )
+          this.holdingVisualLock = false
+        }
+      })
   }
 
   /**
