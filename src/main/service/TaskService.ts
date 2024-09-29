@@ -362,11 +362,28 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds, [TaskStatesEnum.WAITING])
 
     // 插件缓存
-    const pluginCache: { [id: string]: TaskHandler } = {}
+    const pluginCache: { [id: string]: Promise<TaskHandler> } = {}
     const pluginLoader = new PluginLoader(mainWindow)
 
     // 计数器
     let counter = 0
+
+    // 加载插件的函数
+    const loadPluginProcess = (pluginId: number, taskId): Promise<TaskHandler> => {
+      // 加载并缓存插件和插件信息
+      let taskHandler: Promise<TaskHandler>
+
+      if (isNullish(pluginCache[pluginId])) {
+        logUtil.info('Test', `${taskId}, 新增插件缓存`)
+        taskHandler = pluginLoader.loadTaskPlugin(pluginId)
+        pluginCache[pluginId] = taskHandler
+        return taskHandler
+      } else {
+        logUtil.info('Test', `${taskId}, 读取插件缓存`)
+        taskHandler = pluginCache[pluginId]
+        return taskHandler
+      }
+    }
 
     // 处理任务集合的状态的函数
     const handleRootStatus = (rootId: number) => {
@@ -411,22 +428,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         return false
       }
 
-      // 加载并缓存插件和插件信息
-      let taskHandler: TaskHandler
-
-      if (isNullish(pluginCache[task.pluginId])) {
-        try {
-          taskHandler = await pluginLoader.loadTaskPlugin(task.pluginId as number)
-
-          pluginCache[task.pluginId] = taskHandler
-        } catch (error) {
-          const msg = `暂停任务时，加载插件失败，error: ${error}`
-          LogUtil.error('TaskService', msg)
-          return false
-        }
-      } else {
-        taskHandler = pluginCache[task.pluginId]
-      }
+      // 加载插件
+      const taskHandler: TaskHandler = await loadPluginProcess(task.pluginId, task.id)
 
       const worksDTO: WorksPluginDTO = await taskHandler.start(task)
       worksDTO.includeTaskId = task.id
@@ -436,8 +439,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const updateContinuableTask = new Task(task)
       await this.updateById(updateContinuableTask)
 
+      const db = new DB('test')
       // 生成作品保存用的信息
-      const worksService = new WorksService()
+      const worksService = new WorksService(db)
       const worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
 
       const sourceTask = new Task()
@@ -447,7 +451,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         worksSaveInfo.fileName as string
       )
       // 保存作品信息
-      const updatePendingDownloadPathService = new TaskService()
+      const updatePendingDownloadPathService = new TaskService(db)
       try {
         // 保存作品信息
         const worksId = await worksService.saveWorksInfo(worksSaveInfo)
@@ -469,6 +473,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         await this.taskFailed(task)
         return false
       } finally {
+        setTimeout(() => db.release(), 1000)
         handleRootStatus(task.pid as number)
       }
     }
@@ -491,12 +496,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 尝试开始任务
       for (const task of tasks) {
-        const activeProcess = limit(async () => {
-          task.status = TaskStatesEnum.PROCESSING
-          return savingProcess(task).catch((error) => {
-            LogUtil.error('TaskService', `开始任务时出错，taskId: ${task.id}，error: `, error)
-            return false
-          })
+        task.status = TaskStatesEnum.PROCESSING
+        const activeProcess = savingProcess(task).catch((error) => {
+          LogUtil.error('TaskService', `开始任务时出错，taskId: ${task.id}，error: `, error)
+          return false
         })
         activeProcesses.push(activeProcess)
       }

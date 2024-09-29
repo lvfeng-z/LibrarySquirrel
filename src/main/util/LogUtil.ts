@@ -3,36 +3,20 @@ import path from 'path'
 import LogConstant from '../constant/LogConstant.ts'
 import { getRootDir } from './FileSysUtil.ts'
 
-function info(module: string, msg: unknown, ...args: unknown[]) {
-  if (args !== undefined && args.length > 0) {
-    log.info(module, ':', msg, args)
-  } else {
-    log.info(module, ':', msg)
-  }
+function info(module: string, ...args: unknown[]) {
+  log.info(module, ':', ...args)
 }
 
-function debug(module: string, msg: unknown, ...args: unknown[]) {
-  if (args !== undefined && args.length > 0) {
-    log.debug(module, ':', msg, args)
-  } else {
-    log.debug(module, ':', msg)
-  }
+function debug(module: string, ...args: unknown[]) {
+  log.debug(module, ':', ...args)
 }
 
-function warn(module: string, msg: unknown, ...args: unknown[]) {
-  if (args !== undefined && args.length > 0) {
-    log.warn(module, ':', msg, args)
-  } else {
-    log.warn(module, ':', msg)
-  }
+function warn(module: string, ...args: unknown[]) {
+  log.warn(module, ':', args)
 }
 
-function error(module: string, msg: unknown, ...args: unknown[]) {
-  if (args !== undefined && args.length > 0) {
-    log.error(module, ':', msg, args)
-  } else {
-    log.error(module, ':', msg)
-  }
+function error(module: string, ...args: unknown[]) {
+  log.error(module, ':', args)
 }
 
 /**

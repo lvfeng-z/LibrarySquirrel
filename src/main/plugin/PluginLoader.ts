@@ -34,7 +34,7 @@ export default class PluginLoader {
    * 加载任务插件
    * @param pluginId
    */
-  public async loadTaskPlugin(pluginId: number) {
+  public async loadTaskPlugin(pluginId: number): Promise<TaskHandler> {
     const installedPluginsService = new InstalledPluginsService()
     const classPath = await installedPluginsService.getClassPathById(pluginId)
     if (StringUtil.isBlank(classPath)) {
