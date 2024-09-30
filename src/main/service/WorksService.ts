@@ -268,9 +268,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             await siteTagService.link(siteTags, worksDTO)
           }
 
-          const test = new Promise((resolve) => setTimeout(resolve, 1000))
-          await test
-
           return worksDTO.id
         }, `保存作品信息，taskId: ${worksDTO.includeTaskId}`)
         .catch((error) => {

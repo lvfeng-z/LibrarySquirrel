@@ -442,7 +442,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 保存远程资源是否可接续
       task.continuable = worksDTO.continuable
-      const updateContinuableTask = new Task(task)
+      const updateContinuableTask = new Task()
+      updateContinuableTask.id = task.id
+      updateContinuableTask.continuable = worksDTO.continuable
       await this.updateById(updateContinuableTask)
 
       // 生成作品保存用的信息
@@ -457,22 +459,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       )
 
       // 保存作品信息
-      try {
-        // 保存作品信息
-        const worksId = await worksService.saveWorksInfo(worksSaveInfo)
-        // 文件的写入路径保存到任务中
-        const updatePendingDownloadPathService = new TaskService()
-        await updatePendingDownloadPathService.updateById(sourceTask)
-        // 保存资源
-        await limit(() => worksService.saveWorksResource(worksSaveInfo))
-        await worksService.resourceFinished(worksId)
+      const worksId = await worksService.saveWorksInfo(worksSaveInfo)
+      // 文件的写入路径保存到任务中
+      const updatePendingDownloadPathService = new TaskService()
+      await updatePendingDownloadPathService.updateById(sourceTask)
+      // 保存资源
+      await limit(() => worksService.saveWorksResource(worksSaveInfo))
+      await worksService.resourceFinished(worksId)
 
-        counter++
-        return worksId
-      } catch (error) {
-        LogUtil.error('TaskService', '保存作品失败，error: ', error)
-        return -1
-      }
+      counter++
+      return worksId
     }
 
     // 任务等待列表
@@ -491,18 +487,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const activeProcess = savingProcess(task)
           .then(async (worksId) => {
             // 修改任务状态和作品资源状态
-            if (worksId !== -1) {
-              task.status = TaskStatesEnum.FINISHED
-              await this.finishTask(task, worksId)
-              return true
-            } else {
-              task.status = TaskStatesEnum.FAILED
-              await this.taskFailed(task)
-              return false
-            }
+            task.status = TaskStatesEnum.FINISHED
+            await this.finishTask(task, worksId)
+            return true
           })
           .catch(async (error) => {
-            LogUtil.error('TaskService', `开始任务时出错，taskId: ${task.id}，error: `, error)
+            LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
             task.status = TaskStatesEnum.FAILED
             await this.taskFailed(task)
             return false
