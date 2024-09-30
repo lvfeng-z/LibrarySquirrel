@@ -23,25 +23,27 @@ function handleImageClicked(works: WorksDTO) {
 </script>
 
 <template>
-  <el-scrollbar>
-    <el-row class="works-display-area">
-      <template v-for="works in props.worksList" :key="works.id">
-        <works-display-case
-          class="works-display-area-works-display-case"
-          :width="235"
-          :height="300"
-          :works="works"
-          @image-clicked="handleImageClicked"
-        ></works-display-case>
-      </template>
-    </el-row>
-  </el-scrollbar>
-  <works-dialog
-    v-if="worksDialogState"
-    v-model="worksDialogState"
-    width="90%"
-    :works="worksDialogResources"
-  ></works-dialog>
+  <div>
+    <el-scrollbar>
+      <el-row class="works-display-area">
+        <template v-for="works in props.worksList" :key="works.id">
+          <works-display-case
+            class="works-display-area-works-display-case"
+            :width="235"
+            :height="300"
+            :works="works"
+            @image-clicked="handleImageClicked"
+          ></works-display-case>
+        </template>
+      </el-row>
+    </el-scrollbar>
+    <works-dialog
+      v-if="worksDialogState"
+      v-model="worksDialogState"
+      width="90%"
+      :works="worksDialogResources"
+    />
+  </div>
 </template>
 
 <style scoped>
