@@ -16,7 +16,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
    * 是否持有排他锁
    * @private
    */
-  private holdingVisualLock: boolean
+  private holdingWriteLock: boolean
 
   /**
    * 排他锁是不是注入的
@@ -32,12 +32,12 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
 
   constructor(
     statement: Database.Statement<BindParameters, Result>,
-    holdingVisualLock: boolean,
+    holdingWriteLock: boolean,
     caller: string
   ) {
     this.statement = statement
-    this.holdingVisualLock = holdingVisualLock
-    this.injectedLock = holdingVisualLock
+    this.holdingWriteLock = holdingWriteLock
+    this.injectedLock = holdingWriteLock
     this.caller = caller
   }
 
@@ -48,12 +48,12 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
   async run(...params: BindParameters): Promise<Database.RunResult> {
     try {
       // 获取排他锁
-      if (!this.holdingVisualLock) {
+      if (!this.holdingWriteLock) {
         await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireLock(
           this.caller,
           this.statement.source
         )
-        this.holdingVisualLock = true
+        this.holdingWriteLock = true
       }
       const runResult = this.statement.run(...params)
       LogUtil.debug(
@@ -63,7 +63,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
       return runResult
     } finally {
       // 释放排他锁
-      if (this.holdingVisualLock && !this.injectedLock) {
+      if (this.holdingWriteLock && !this.injectedLock) {
         GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(this.caller)
       }
     }

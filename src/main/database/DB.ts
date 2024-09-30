@@ -44,7 +44,7 @@ export default class DB {
    * 是否持有排他锁
    * @private
    */
-  private holdingVisualLock: boolean
+  private holdingWriteLock: boolean
 
   constructor(caller: string) {
     if (StringUtil.isNotBlank(caller)) {
@@ -52,7 +52,7 @@ export default class DB {
     } else {
       this.caller = 'unknown'
     }
-    this.holdingVisualLock = false
+    this.holdingWriteLock = false
 
     // 封装类被回收时，释放链接
     const weakThis = new WeakRef(this)
@@ -129,7 +129,7 @@ export default class DB {
     const connectionPromise = this.acquire(readOnly)
     return connectionPromise.then((connection) => {
       const stmt = connection.prepare<BindParameters, Result>(statement)
-      return new AsyncStatement<BindParameters, Result>(stmt, this.holdingVisualLock, this.caller)
+      return new AsyncStatement<BindParameters, Result>(stmt, this.holdingWriteLock, this.caller)
     })
   }
 
@@ -158,23 +158,21 @@ export default class DB {
   /**
    * 可嵌套的事务
    * @param fn 事务代码
-   * @param identifier 标识
    * @param operation 操作说明
    */
   public async transaction<F extends (db: DB) => Promise<R>, R>(
     fn: F,
-    identifier: string,
     operation: string
   ): Promise<R> {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0
     // 创建一个当前层级的保存点
-    const savepointName = `${identifier}_sp${this.savepointCounter++}`
+    const savepointName = `sp${this.savepointCounter++}`
     // 开启事务之前获取排他锁
-    if (!this.holdingVisualLock) {
+    if (!this.holdingWriteLock) {
       await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, operation)
-      this.holdingVisualLock = true
+      this.holdingWriteLock = true
     }
 
     LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
@@ -193,17 +191,17 @@ export default class DB {
         // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排他锁一直无法释放
         if (isStartPoint) {
           connection.exec(`ROLLBACK`)
-          LogUtil.info(this.caller, `${operation}，ROLLBACK`)
+          LogUtil.debug(this.caller, `${operation}，ROLLBACK`)
 
           // 释放排他锁
           GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(
-            `${this.caller}_${identifier}_${operation}`
+            `${this.caller}_${operation}`
           )
-          this.holdingVisualLock = false
+          this.holdingWriteLock = false
         } else {
           // 事务代码出现异常的话回滚至此保存点
           connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-          LogUtil.info(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
+          LogUtil.debug(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
         }
 
         this.savepointCounter--
@@ -212,11 +210,11 @@ export default class DB {
       })
       .finally(() => {
         // 释放排他锁
-        if (this.holdingVisualLock && isStartPoint) {
+        if (this.holdingWriteLock && isStartPoint) {
           GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(
-            `${this.caller}_${identifier}_${operation}`
+            `${this.caller}_${operation}`
           )
-          this.holdingVisualLock = false
+          this.holdingWriteLock = false
         }
       })
   }
