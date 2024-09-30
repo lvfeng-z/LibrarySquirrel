@@ -34,11 +34,11 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
-  worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById,
   localTagListByWorksId: window.api.localTagListByWorksId,
   localTagListSelectItemPageByWorksId: window.api.localTagListSelectItemPageByWorksId,
   reWorksTagLink: window.api.reWorksTagLink,
-  reWorksTagUnlink: window.api.reWorksTagUnlink
+  reWorksTagUnlink: window.api.reWorksTagUnlink,
+  worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
 }
 // el-dialog组件实例
 const baseDialog = ref()
@@ -117,7 +117,7 @@ async function updateWorksLocalTags() {
           <el-image
             style="margin-right: 10px"
             fit="contain"
-            :src="`workdir-resource://workdir/${props.works[0].filePath}`"
+            :src="`resource://workdir/${props.works[0].filePath}?height=108&width=192`"
           >
           </el-image>
         </picture>

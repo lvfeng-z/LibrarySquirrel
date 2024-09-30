@@ -5,8 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import LogUtil from './util/LogUtil.ts'
-import fs from 'fs/promises'
-import { convertPath } from './util/FileSysUtil.ts'
+import { convertPath, getResource } from './util/FileSysUtil.ts'
 import { GlobalVarManager, GlobalVars } from './GlobalVar.ts'
 
 function createWindow(): Electron.BrowserWindow {
@@ -46,7 +45,7 @@ function createWindow(): Electron.BrowserWindow {
 // 在ready之前注册一个自定义协议，用来加载本地文件
 Electron.protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'workdir-resource',
+    scheme: 'resource',
     privileges: {
       secure: true, // 设定此协议为安全协议,在 HTTPS 页面中通过此协议加载的资源不会引发混合内容警告
       supportFetchAPI: true, // 允许此协议通过 Fetch API 被访问
@@ -79,24 +78,27 @@ Electron.app.whenReady().then(() => {
   // 配置日志
   LogUtil.initializeLogSetting()
 
-  // 如何响应前面的workdir-resource自定义协议的请求
-  Electron.protocol.handle('workdir-resource', async (request) => {
+  // 如何响应前面的resource自定义协议的请求
+  Electron.protocol.handle('resource', async (request) => {
     const workdir = GlobalVarManager.get(GlobalVars.SETTINGS).get('workdir') as string
 
     // 使用正则表达式测试URL是否符合预期格式
-    if (!/^workdir-resource:\/\/workdir\//i.test(request.url)) {
+    if (!/^resource:\/\/workdir\//i.test(request.url)) {
       LogUtil.error('main/index.ts', 'Invalid protocol request format:', request.url)
       return new Response('Invalid request format', { status: 400 }) // 返回错误状态码
     }
 
     try {
       // 确保格式正确后，继续处理请求
-      const decodedUrl = decodeURIComponent(
-        Path.join(workdir, request.url.replace(/^workdir-resource:\/\/workdir\//i, ''))
-      )
+      const url = new URL(request.url)
+      const decodedUrl = decodeURIComponent(Path.join(workdir, url.pathname))
       const fullPath = process.platform === 'win32' ? convertPath(decodedUrl) : decodedUrl
+      const heightStr = url.searchParams.get('height')
+      const height = heightStr === null ? undefined : parseInt(heightStr)
+      const widthStr = url.searchParams.get('width')
+      const width = widthStr === null ? undefined : parseInt(widthStr)
 
-      const data = await fs.readFile(fullPath) // 异步读取文件
+      const data = await getResource(fullPath, height, width) // 异步读取文件
       return new Response(data) // 返回文件
     } catch (error) {
       LogUtil.error('Error handling protocol request:', String(error))

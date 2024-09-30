@@ -24,6 +24,7 @@ function saveSettings(settings: { path: string; value: unknown }[]) {
 function resetSettings() {
   defaultSettings()
 }
+
 export default {
   getSettings,
   saveSettings,

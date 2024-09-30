@@ -41,7 +41,7 @@ function handleImageClicked() {
     <el-image
       :fit="imageFit"
       class="works-display-case-image"
-      :src="`workdir-resource://workdir/${props.works.filePath}`"
+      :src="`resource://workdir${props.works.filePath}`"
       @load="handleElImageFit"
       @click="handleImageClicked"
     ></el-image>

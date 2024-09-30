@@ -3,6 +3,8 @@ import fs from 'fs/promises'
 import logUtil from '../util/LogUtil.ts'
 import path from 'path'
 import SettingsService from '../service/SettingsService.ts'
+import sharp from 'sharp'
+import { isNullish } from './CommonUtil.js'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -11,9 +13,9 @@ import SettingsService from '../service/SettingsService.ts'
 export async function createDirIfNotExists(dirPath: string): Promise<void> {
   try {
     await fs.access(dirPath, fs.constants.F_OK | fs.constants.W_OK)
-  } catch (error: any) {
+  } catch (error) {
     // 如果访问目录时出现错误（如目录不存在），则创建目录
-    if (error.code === 'ENOENT') {
+    if ((error as { code: string }).code === 'ENOENT') {
       await fs.mkdir(dirPath, { recursive: true })
       logUtil.info('FileSysUtil', '已创建目录：' + dirPath)
     } else {
@@ -66,4 +68,17 @@ export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogR
     defaultPath: defaultPath,
     properties: properties
   })
+}
+
+export async function getResource(
+  fullPath: string,
+  height?: number,
+  width?: number
+): Promise<Buffer> {
+  const resource = await fs.readFile(fullPath)
+  if (isNullish(height) || isNullish(width)) {
+    return resource
+  } else {
+    return sharp(resource).resize({ height: height, width: width, fit: 'contain' }).toBuffer()
+  }
 }
