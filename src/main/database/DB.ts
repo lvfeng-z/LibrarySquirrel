@@ -175,8 +175,22 @@ export default class DB {
       this.holdingWriteLock = true
     }
 
-    LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
-    connection.exec(`SAVEPOINT ${savepointName}`)
+    try {
+      connection.exec(`SAVEPOINT ${savepointName}`)
+      LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
+    } catch (error) {
+      // 释放排他锁
+      if (this.holdingWriteLock && isStartPoint) {
+        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+        this.holdingWriteLock = false
+      }
+      LogUtil.error(
+        this.caller,
+        `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`,
+        error
+      )
+      throw error
+    }
 
     return fn(this)
       .then((result) => {
