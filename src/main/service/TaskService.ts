@@ -10,7 +10,6 @@ import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
-import pLimit from 'p-limit'
 import Electron from 'electron'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
@@ -22,7 +21,6 @@ import TaskDTO from '../model/dto/TaskDTO.ts'
 import TaskHandler from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
-import SettingsService from './SettingsService.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
@@ -368,11 +366,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 计数器
     let counter = 0
 
-    // 读取设置中的最大并行数
-    const settings = SettingsService.getSettings()
-    const maxSaveWorksPromise =
-      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    const limit = pLimit(maxSaveWorksPromise)
+    // 获取下载限制器
+    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
 
     // 加载插件的函数
     const loadPluginProcess = (pluginId: number, taskId): Promise<TaskHandler> => {
@@ -720,11 +715,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       writeStreamPromise(response.remoteStream, writeStream)
     }
 
-    // 读取设置中的最大并行数
-    const settings = SettingsService.getSettings()
-    const maxSaveWorksPromise =
-      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    const limit = pLimit(maxSaveWorksPromise)
+    // 获取下载限制器
+    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
 
     for (const parent of taskTree) {
       // 处理parent为单个任务的情况

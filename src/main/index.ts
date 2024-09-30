@@ -110,6 +110,9 @@ Electron.app.whenReady().then(() => {
   // 初始化任务追踪器
   GlobalVarManager.create(GlobalVars.TASK_TRACKER)
 
+  // 初始化下载限制器
+  GlobalVarManager.create(GlobalVars.DOWNLOAD_LIMIT)
+
   // 初始化数据库
   InitializeDB().then(() => {
     ServiceExposer.exposeService(mainWindow)
