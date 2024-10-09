@@ -75,7 +75,7 @@ export class GlobalVarManager {
    */
   private static createConnectionPool() {
     global[GlobalVars.CONNECTION_POOL] = new ConnectionPool(POOL_CONFIG)
-    logUtil.info('GlobalVar', '已创建读取连接池')
+    logUtil.info('GlobalVar', '已创建连接池')
   }
 
   /**
@@ -83,7 +83,7 @@ export class GlobalVarManager {
    */
   private static destroyConnectionPool() {
     delete global[GlobalVars.CONNECTION_POOL]
-    logUtil.info('GlobalVar', '已销毁读取连接池')
+    logUtil.info('GlobalVar', '已销毁连接池')
   }
 
   // DOWNLOAD_LIMIT

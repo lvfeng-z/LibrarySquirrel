@@ -78,7 +78,7 @@ export default class LocalTaskHandler {
     worksDTO.resourceStream = fs.createReadStream(task.url)
     worksDTO.resourceSize = stats.size
     // 处理是否可续传
-    worksDTO.continuable = false
+    worksDTO.continuable = true
 
     return worksDTO
   }
@@ -97,7 +97,9 @@ export default class LocalTaskHandler {
    * @param task 需要暂停的任务
    * @return 作品信息
    */
-  pause(task) {}
+  pause(task) {
+
+  }
 
   /**
    * 暂停下载任务
@@ -117,7 +119,7 @@ export default class LocalTaskHandler {
   }
 }
 
-class TaskStream extends Readable{
+class TaskStream extends Readable {
   /**
    * 基础路径
    */
