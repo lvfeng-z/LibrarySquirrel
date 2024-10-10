@@ -1,4 +1,4 @@
-import logUtil from './util/LogUtil.ts'
+import LogUtil from './util/LogUtil.ts'
 import { ConnectionPool, ConnectionPoolConfig } from './database/ConnectionPool.ts'
 import Store from 'electron-store'
 import { defaultSettings } from './util/SettingsUtil.ts'
@@ -75,7 +75,7 @@ export class GlobalVarManager {
    */
   private static createConnectionPool() {
     global[GlobalVars.CONNECTION_POOL] = new ConnectionPool(POOL_CONFIG)
-    logUtil.info('GlobalVar', '已创建连接池')
+    LogUtil.info('GlobalVar', '已创建连接池')
   }
 
   /**
@@ -83,7 +83,7 @@ export class GlobalVarManager {
    */
   private static destroyConnectionPool() {
     delete global[GlobalVars.CONNECTION_POOL]
-    logUtil.info('GlobalVar', '已销毁连接池')
+    LogUtil.info('GlobalVar', '已销毁连接池')
   }
 
   // DOWNLOAD_LIMIT
@@ -105,7 +105,7 @@ export class GlobalVarManager {
    */
   private static destroyDownloadLimit() {
     delete global[GlobalVars.DOWNLOAD_LIMIT]
-    logUtil.info('GlobalVar', '已销毁下载限制器')
+    LogUtil.info('GlobalVar', '已销毁下载限制器')
   }
 
   // SETTINGS
@@ -118,7 +118,7 @@ export class GlobalVarManager {
     if (!settings.get('initialized', false)) {
       defaultSettings()
     }
-    logUtil.info('GlobalVar', '已创建设置')
+    LogUtil.info('GlobalVar', '已创建设置')
   }
 
   /**
@@ -126,7 +126,7 @@ export class GlobalVarManager {
    */
   private static destroySettings() {
     delete global[GlobalVars.SETTINGS]
-    logUtil.info('GlobalVar', '已销毁设置')
+    LogUtil.info('GlobalVar', '已销毁设置')
   }
 
   // TASK_TRACKER
@@ -135,7 +135,7 @@ export class GlobalVarManager {
    */
   private static createTaskTracker() {
     global[GlobalVars.TASK_TRACKER] = {}
-    logUtil.info('GlobalVar', '已创建任务追踪器')
+    LogUtil.info('GlobalVar', '已创建任务追踪器')
   }
 
   /**
@@ -143,6 +143,6 @@ export class GlobalVarManager {
    */
   private static destroyTaskTracker() {
     delete global[GlobalVars.TASK_TRACKER]
-    logUtil.info('GlobalVar', '已销毁任务追踪器')
+    LogUtil.info('GlobalVar', '已销毁任务追踪器')
   }
 }

@@ -4,7 +4,7 @@ import yaml from 'js-yaml'
 import { createDirIfNotExists } from '../util/FileSysUtil.ts'
 import Database from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
-import logUtil from '../util/LogUtil.ts'
+import LogUtil from '../util/LogUtil.ts'
 import createDataTables from '../resources/database/createDataTables.yml?asset'
 import DB from './DB.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
@@ -22,7 +22,7 @@ export async function InitializeDB() {
   const options = {}
   const tempDB = new Database(dbPath + DataBaseConstant.DB_FILE_NAME, options)
   tempDB.close()
-  logUtil.info('InitializeDataBase', '已创建数据库文件')
+  LogUtil.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
   GlobalVarManager.create(GlobalVars.CONNECTION_POOL)
@@ -36,7 +36,7 @@ export async function InitializeDB() {
       const yamlContent = fs.readFileSync(createDataTables, 'utf-8')
       tableNameSqlStatements = yaml.load(yamlContent)
     } catch (e) {
-      logUtil.error('InitializeDataBase', String(e))
+      LogUtil.error('InitializeDataBase', String(e))
       throw e
     }
 
@@ -47,11 +47,11 @@ export async function InitializeDB() {
         for (const tableNameSql of tableNameSqlStatements.tables) {
           if (!currentTables.includes(tableNameSql.name)) {
             await db.exec(tableNameSql.sql)
-            logUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
+            LogUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
           }
         }
       } catch (e) {
-        logUtil.error('InitializeDataBase', String(e))
+        LogUtil.error('InitializeDataBase', String(e))
       } finally {
         db.release()
       }

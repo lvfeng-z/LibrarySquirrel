@@ -2,6 +2,10 @@ import BaseModel from './BaseModel.ts'
 
 export default class InstalledPlugins extends BaseModel {
   /**
+   * 主键
+   */
+  id: number | null | undefined
+  /**
    * 插件类型
    */
   type: number | undefined | null
@@ -34,6 +38,7 @@ export default class InstalledPlugins extends BaseModel {
   constructor(installedPlugins?: InstalledPlugins) {
     if (installedPlugins === undefined) {
       super()
+      this.id = undefined
       this.type = undefined
       this.author = undefined
       this.domain = undefined
@@ -42,6 +47,7 @@ export default class InstalledPlugins extends BaseModel {
       this.sortNum = undefined
     } else {
       super(installedPlugins)
+      this.id = installedPlugins.id
       this.type = installedPlugins.type
       this.author = installedPlugins.author
       this.domain = installedPlugins.domain

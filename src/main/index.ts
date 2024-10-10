@@ -5,7 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import LogUtil from './util/LogUtil.ts'
-import { convertPath, getResource } from './util/FileSysUtil.ts'
+import { convertPath, getWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVarManager, GlobalVars } from './GlobalVar.ts'
 
 function createWindow(): Electron.BrowserWindow {
@@ -98,7 +98,7 @@ Electron.app.whenReady().then(() => {
       const widthStr = url.searchParams.get('width')
       const width = widthStr === null ? undefined : parseInt(widthStr)
 
-      const data = await getResource(fullPath, height, width) // 异步读取文件
+      const data = await getWorksResource(fullPath, height, width) // 异步读取文件
       return new Response(data) // 返回文件
     } catch (error) {
       LogUtil.error('Error handling protocol request:', String(error))
