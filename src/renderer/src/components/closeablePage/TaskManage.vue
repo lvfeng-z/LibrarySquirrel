@@ -533,7 +533,7 @@ async function deleteTask(ids: number[]) {
                 <el-button
                   size="small"
                   :icon="mapToButtonStatus(row).icon"
-                  :loading="mapToButtonStatus(row).processing"
+                  :loading="!(row as TaskDTO).continuable && mapToButtonStatus(row).processing"
                   @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
                 ></el-button>
               </el-tooltip>

@@ -20,7 +20,7 @@ import TaskDTO from '../model/dto/TaskDTO.ts'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
-import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
+import { TaskProcessController, TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
 import StringUtil from '../util/StringUtil.ts'
@@ -29,7 +29,6 @@ import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
-import { pipelineReadWrite } from '../util/FileSysUtil.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -408,6 +407,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 保存作品资源和作品信息的函数
     const savingProcess = async (task: Task): Promise<number> => {
+      if (isNullish(task.id)) {
+        const msg = `任务的任务id意外为空`
+        LogUtil.error('TaskService', msg)
+        return -1
+      }
       // 加载插件
       if (isNullish(task.pluginId)) {
         const msg = `任务的插件id意外为空，taskId: ${task.id}`
@@ -418,6 +422,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       const worksDTO: WorksPluginDTO = await taskHandler.start(task)
       worksDTO.includeTaskId = task.id
+      // 校验插件有没有返回任务资源
+      if (worksDTO.resourceStream === undefined || worksDTO.resourceStream === null) {
+        const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
+        LogUtil.error('WorksService', msg)
+        throw new Error(msg)
+      }
 
       // 保存远程资源是否可接续
       task.continuable = worksDTO.continuable
@@ -430,21 +440,29 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const worksService = new WorksService()
       const worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
 
+      // 保存作品信息
+      const worksId = await worksService.saveWorksInfo(worksSaveInfo)
+      // 文件的写入路径和作品id保存到任务中
       const sourceTask = new Task()
       sourceTask.id = worksSaveInfo.includeTaskId
+      sourceTask.localWorksId = worksId
       sourceTask.pendingDownloadPath = path.join(
         worksSaveInfo.fullSaveDir as string,
         worksSaveInfo.fileName as string
       )
-
-      // 保存作品信息
-      const worksId = await worksService.saveWorksInfo(worksSaveInfo)
-      // 文件的写入路径保存到任务中
       const updatePendingDownloadPathService = new TaskService()
       await updatePendingDownloadPathService.updateById(sourceTask)
+      // 创建任务追踪器
+      const taskProcessController = new TaskProcessController()
+      const taskTracker: TaskTracker = {
+        status: TaskStatesEnum.PROCESSING,
+        readStream: worksDTO.resourceStream,
+        writeStream: undefined,
+        bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize,
+        taskProcessController: taskProcessController
+      }
       // 保存资源
-      await limit(() => worksService.saveWorksResource(worksSaveInfo))
-      await worksService.resourceFinished(worksId)
+      await limit(() => worksService.saveWorksResource(worksSaveInfo, taskTracker))
 
       counter++
       return worksId
@@ -535,11 +553,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
     // 暂停任务的函数
-    const pauseSingleTask = async (child: Task) => {
+    const pauseSingleTask = async (child: Task): Promise<boolean> => {
+      if (isNullish(child.id)) {
+        LogUtil.error('TaskService', '暂停任务时，任务的id意外为空，taskId: ', child.id)
+        return false
+      }
       // 加载插件
       if (isNullish(child.pluginId)) {
         LogUtil.error('TaskService', '暂停任务时，任务的pluginId意外为空，taskId: ', child.id)
-        return
+        return false
       }
       const taskHandler = await pluginLoader.load(child.pluginId)
 
@@ -548,22 +570,28 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
       if (isNullish(taskTracker)) {
         LogUtil.info('TaskService', '暂停任务时，任务追踪器不存在，taskId: ', child.id)
-        return
+        return false
       }
       if (isNullish(taskTracker.readStream)) {
         LogUtil.error('TaskService', '暂停任务时，任务追踪器的读取流不存在，taskId: ', child.id)
-        return
+        return false
       }
       taskPluginDTO.remoteStream = taskTracker.readStream
 
       // 调用插件的pause方法
-      taskHandler.pause(taskPluginDTO).then(() => this.pauseTask(child))
+      taskHandler.pause(taskPluginDTO)
+      this.updateTaskTracker(child.id, { status: TaskStatesEnum.PAUSE })
+      return this.pauseTask(child).then((runResult) => runResult > 0)
     }
+
+    // 任务等待列表
+    const activeProcesses: Promise<boolean>[] = []
 
     for (const parent of taskTree) {
       // 处理parent为单个任务的情况
       if (!parent.isCollection) {
-        pauseSingleTask(parent)
+        const tempProcess = pauseSingleTask(parent)
+        activeProcesses.push(tempProcess)
         continue
       }
 
@@ -574,9 +602,60 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       for (const child of children) {
-        pauseSingleTask(child)
+        const tempProcess = pauseSingleTask(child)
+        activeProcesses.push(tempProcess)
       }
     }
+
+    await Promise.allSettled(activeProcesses)
+  }
+
+  /**
+   *
+   * @param child
+   * @param pluginLoader
+   */
+  async resumeTask(child: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<void> {
+    // 加载插件
+    if (isNullish(child.pluginId)) {
+      LogUtil.error('TaskService', '恢复任务时，任务的pluginId意外为空，taskId: ', child.id)
+      return
+    }
+    const taskHandler: TaskHandler = await pluginLoader.load(child.pluginId)
+
+    // 创建TaskPluginDTO对象
+    const taskPluginDTO = new TaskPluginDTO(child)
+    // todo 如果追踪器已经不存在，则创建一个新的追踪器，读取流由插件从远程获取，否则插件尝试恢复读取流，如果恢复不成功，再重新从远程获取
+    // const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
+    // if (isNullish(taskTracker)) {
+    //   // 创建一个追踪器
+    //   taskTracker = {
+    //     bytesSum: 1,
+    //     readStream: new Readable(),
+    //     writeStream: new Writable()
+    //   }
+    // }
+    // if (isNullish(taskTracker.readStream)) {
+    //   LogUtil.info('TaskService', '恢复任务时，任务追踪器的读取流不存在，taskId: ', child.id)
+    //   return
+    // }
+    // taskPluginDTO.remoteStream = taskTracker.readStream
+
+    // 调用插件的pause方法
+    const response: PluginResumeResponse = await taskHandler.resume(taskPluginDTO)
+
+    // 根据未完成的文件创建接续写入流
+    if (StringUtil.isBlank(child.pendingDownloadPath)) {
+      LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
+      return
+    }
+
+    if (isNullish(response.remoteStream)) {
+      LogUtil.error('TaskService', '恢复任务时，插件未返回读取流，taskId: ', child.id)
+      return
+    }
+
+    // 判断返回的流是否可接续在已下载部分末尾
   }
 
   /**
@@ -590,66 +669,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 插件加载器
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
-    // 恢复任务的函数
-    const resumeSingleTask = async (child: Task) => {
-      // 加载插件
-      if (isNullish(child.pluginId)) {
-        LogUtil.error('TaskService', '恢复任务时，任务的pluginId意外为空，taskId: ', child.id)
-        return
-      }
-      const taskHandler: TaskHandler = await pluginLoader.load(child.pluginId)
-
-      // 创建TaskPluginDTO对象
-      const taskPluginDTO = new TaskPluginDTO(child)
-      // todo 如果追踪器已经不存在，则创建一个新的追踪器，读取流由插件从远程获取，否则插件尝试恢复读取流，如果恢复不成功，再重新从远程获取
-      // let taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
-      // if (isNullish(taskTracker)) {
-      //   // 创建一个追踪器
-      //   taskTracker = {
-      //     bytesSum: 1,
-      //     readStream: new Readable(),
-      //     writeStream: new Writable()
-      //   }
-      // }
-      // if (isNullish(taskTracker.readStream)) {
-      //   LogUtil.info('TaskService', '恢复任务时，任务追踪器的读取流不存在，taskId: ', child.id)
-      //   return
-      // }
-      // taskPluginDTO.remoteStream = taskTracker.readStream
-
-      // 调用插件的pause方法
-      const response: PluginResumeResponse = await taskHandler.resume(taskPluginDTO)
-
-      // 根据未完成的文件创建接续写入流
-      if (StringUtil.isBlank(child.pendingDownloadPath)) {
-        LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
-        return
-      }
-
-      if (isNullish(response.remoteStream)) {
-        LogUtil.error('TaskService', '恢复任务时，插件未返回读取流，taskId: ', child.id)
-        return
-      }
-
-      // 判断返回的流是否可接续在已下载部分末尾
-      let writeStream: fs.WriteStream
-      if (response.continuable) {
-        writeStream = fs.createWriteStream(child.pendingDownloadPath, { flags: 'a' })
-      } else {
-        // todo 删除原有资源，保存新的资源
-        fs.unlinkSync(child.pendingDownloadPath)
-        writeStream = fs.createWriteStream(child.pendingDownloadPath)
-      }
-      pipelineReadWrite(response.remoteStream, writeStream)
-    }
-
     // 获取下载限制器
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
 
     for (const parent of taskTree) {
       // 处理parent为单个任务的情况
       if (!parent.isCollection) {
-        limit(() => resumeSingleTask(parent))
+        limit(() => this.resumeTask(parent, pluginLoader))
         continue
       }
 
@@ -660,7 +686,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       for (const child of children) {
-        limit(() => resumeSingleTask(child))
+        limit(() => this.resumeTask(child, pluginLoader))
       }
     }
   }
@@ -871,23 +897,27 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 没有监听器的任务
     const noListenerIds: number[] = []
     ids.forEach((id: number) => {
-      // const listenerName = String(id)
       // 如果有追踪器，则从追踪器获取任务进度，否则从数据库查询任务状态
       const taskTracker = this.getTaskTracker(id)
       if (notNullish(taskTracker)) {
         const temp: TaskScheduleDTO = new TaskScheduleDTO()
         temp.id = id
-        if (taskTracker.bytesSum === 0) {
-          temp.schedule = 0
-        } else {
-          temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
-        }
-        // 如果进度已经达到了100%，将状态设为完成，并且清除这个监听器
-        if (temp.schedule >= 100) {
-          // delete GlobalVarManager.get(GlobalVars.TASK_TRACKER).taskTracker[listenerName]
-          temp.status = TaskStatesEnum.FINISHED
-        } else {
-          temp.status = TaskStatesEnum.PROCESSING
+        temp.status = taskTracker.status
+        if (
+          taskTracker.status !== TaskStatesEnum.FINISHED &&
+          taskTracker.status !== TaskStatesEnum.FAILED
+        ) {
+          if (taskTracker.bytesSum === 0) {
+            temp.schedule = 0
+          } else {
+            if (notNullish(taskTracker.writeStream)) {
+              temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
+            } else {
+              const msg = `查询任务进度时，写入流意外为空，taskId: ${id}`
+              LogUtil.error('WorksService', msg)
+              temp.schedule = 0
+            }
+          }
         }
         result.push(temp)
       } else {
@@ -914,10 +944,49 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   ) {
     const trackerName = String(taskId)
     GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName] = taskTracker
-    // 确认任务结束后，延迟2秒清除其追踪器
-    taskEndHandler.then(() =>
-      setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
-    )
+    // 确认任务结束或失败后，延迟2秒清除其追踪器
+    taskEndHandler
+      .then(() => {
+        taskTracker.status = TaskStatesEnum.FINISHED
+        setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
+      })
+      .catch(() => {
+        taskTracker.status = TaskStatesEnum.FAILED
+        setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
+      })
+  }
+
+  /**
+   * 获取任务跟踪器
+   * @param taskId 任务id
+   * @param newTaskTracker 新的任务跟踪器属性
+   */
+  public updateTaskTracker(
+    taskId: number,
+    newTaskTracker: {
+      status?: number
+      readStream?: Readable
+      writeStream?: fs.WriteStream
+      bytesSum?: number
+    }
+  ) {
+    const old = this.getTaskTracker(taskId)
+    if (isNullish(old)) {
+      LogUtil.warn('TaskService', `没有找到需要更新的任务跟踪器，taskId: ${taskId}`)
+      return
+    }
+    if (newTaskTracker.status !== undefined) {
+      old.status = newTaskTracker.status
+    }
+    if (newTaskTracker.bytesSum !== undefined) {
+      old.bytesSum = newTaskTracker.bytesSum
+    }
+    if (newTaskTracker.readStream !== undefined) {
+      old.readStream = newTaskTracker.readStream
+    }
+    if (newTaskTracker.writeStream !== undefined) {
+      old.writeStream = newTaskTracker.writeStream
+    }
   }
 
   /**

@@ -98,7 +98,7 @@ export default class LocalTaskHandler {
    * @return 作品信息
    */
   pause(task) {
-
+    task.remoteStream.pause()
   }
 
   /**
@@ -370,6 +370,10 @@ class Task {
   pluginId
   pluginInfo
   pluginData
+  /**
+   * 远程资源流
+   */
+  remoteStream
 
   constructor() {
     this.isCollection = undefined

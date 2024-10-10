@@ -25,6 +25,8 @@ import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
+import { TaskStatesEnum } from '../constant/TaskStatesEnum.js'
+import { Readable } from 'node:stream'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -76,63 +78,84 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   /**
    * 保存作品资源
    * @param worksDTO
+   * @param taskTracker
    */
-  public async saveWorksResource(worksDTO: WorksSaveDTO): Promise<WorksDTO> {
-    // 如果插件返回了任务资源，将资源保存至本地，否则发出警告
-    if (
-      Object.prototype.hasOwnProperty.call(worksDTO, 'resourceStream') &&
-      worksDTO.resourceStream !== undefined &&
-      worksDTO.resourceStream !== null
-    ) {
-      // 保存资源
-      // 创建保存目录
-      if (StringUtil.isBlank(worksDTO.fullSaveDir)) {
-        const msg = `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
-        LogUtil.error('WorksService', msg)
-        throw new Error(msg)
-      }
-      if (StringUtil.isBlank(worksDTO.fileName)) {
-        const msg = `保存作品资源时，作品的fileName意外为空，worksId: ${worksDTO.id}`
-        LogUtil.error('WorksService', msg)
-        throw new Error(msg)
-      }
-
-      try {
-        await createDirIfNotExists(worksDTO.fullSaveDir)
-        // 创建写入流
-        const fullPath = path.join(worksDTO.fullSaveDir, worksDTO.fileName)
-        const writeStream = fs.createWriteStream(fullPath)
-        // 数据写入量追踪器
-        const taskTracker: TaskTracker = {
-          readStream: worksDTO.resourceStream,
-          writeStream: writeStream,
-          bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
-        }
-        // 创建写入Promise
-        const saveResourceFinishPromise: Promise<unknown> = pipelineReadWrite(
-          worksDTO.resourceStream,
-          writeStream
-        )
-        // 创建任务监听器
-        if (isNullish(worksDTO.includeTaskId)) {
-          const msg = '创建任务监听器时，任务id意外为空'
-          LogUtil.warn('WorksService', msg)
-        } else {
-          const taskService = new TaskService()
-          taskService.addTaskTracker(worksDTO.includeTaskId, taskTracker, saveResourceFinishPromise)
-        }
-
-        return saveResourceFinishPromise.then(() => worksDTO)
-      } catch (error) {
-        const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
-        LogUtil.error('WorksService', msg)
-        throw error
-      }
-    } else {
+  public async saveWorksResource(worksDTO: WorksSaveDTO, taskTracker: TaskTracker): Promise<void> {
+    // 校验插件有没有返回任务资源
+    if (worksDTO.resourceStream === undefined || worksDTO.resourceStream === null) {
       const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
+    // 保存资源
+    // 创建保存目录
+    if (StringUtil.isBlank(worksDTO.fullSaveDir)) {
+      const msg = `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
+      LogUtil.error('WorksService', msg)
+      throw new Error(msg)
+    }
+    if (StringUtil.isBlank(worksDTO.fileName)) {
+      const msg = `保存作品资源时，作品的fileName意外为空，worksId: ${worksDTO.id}`
+      LogUtil.error('WorksService', msg)
+      throw new Error(msg)
+    }
+
+    try {
+      await createDirIfNotExists(worksDTO.fullSaveDir)
+      // 创建写入流
+      const fullPath = path.join(worksDTO.fullSaveDir, worksDTO.fileName)
+      const writeStream = fs.createWriteStream(fullPath)
+      taskTracker.writeStream = writeStream
+      // 创建写入Promise
+      const saveResourceFinishPromise: Promise<void> = pipelineReadWrite(
+        worksDTO.resourceStream,
+        writeStream
+      )
+      // 创建任务追踪器
+      if (isNullish(worksDTO.includeTaskId)) {
+        const msg = '创建任务追踪器时，任务id意外为空'
+        LogUtil.warn('WorksService', msg)
+      } else {
+        const taskService = new TaskService()
+        taskService.addTaskTracker(worksDTO.includeTaskId, taskTracker, saveResourceFinishPromise)
+      }
+
+      return saveResourceFinishPromise
+    } catch (error) {
+      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
+      LogUtil.error('WorksService', msg)
+      throw error
+    }
+  }
+
+  public async resumeSaveWorksResource(
+    worksId: number,
+    pendingDownloadPath: string,
+    resumeStream: Readable,
+    continuable: boolean,
+    taskTracker: TaskTracker
+  ): Promise<TaskStatesEnum> {
+    const works = this.getById(worksId)
+    if (isNullish(works)) {
+      const msg = `恢复资源下载时作品id无效worksId: ${worksId}`
+      LogUtil.error('WorksService', msg)
+      throw new Error(msg)
+    }
+
+    let writeStream: fs.WriteStream
+    if (continuable) {
+      writeStream = fs.createWriteStream(pendingDownloadPath, { flags: 'a' })
+    } else {
+      // todo 删除原有资源，从头开始写入
+      fs.unlinkSync(pendingDownloadPath)
+      writeStream = fs.createWriteStream(pendingDownloadPath)
+    }
+    return new Promise((resolve) => {
+      taskTracker.taskProcessController.eventEmitter.on('pause', () =>
+        resolve(TaskStatesEnum.PAUSE)
+      )
+      pipelineReadWrite(resumeStream, writeStream).then(() => resolve(TaskStatesEnum.FINISHED))
+    })
   }
 
   /**
