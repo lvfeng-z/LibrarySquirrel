@@ -1,5 +1,3 @@
-import InstalledPluginsService from '../service/InstalledPluginsService.ts'
-import TaskHandler from './TaskHandler.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PluginTool from './PluginTool.ts'
 import Electron from 'electron'
@@ -10,9 +8,15 @@ import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
-import StringUtil from '../util/StringUtil.ts'
+import PluginFactory from './PluginFactory.js'
+import { BasePlugin } from './BasePlugin.js'
 
-export default class PluginLoader {
+export default class PluginLoader<T extends BasePlugin> {
+  /**
+   * 插件工厂类
+   * @private
+   */
+  private factory: PluginFactory<T>
   /**
    * 主窗口对象
    */
@@ -22,76 +26,36 @@ export default class PluginLoader {
    */
   private pluginTool: PluginTool
 
-  constructor(mainWindow: Electron.BrowserWindow) {
+  /**
+   * 插件缓存
+   * @private
+   */
+  private readonly pluginCache: Record<number, Promise<T>>
+
+  constructor(factory: PluginFactory<T>, mainWindow: Electron.BrowserWindow) {
+    this.factory = factory
     this.mainWindow = mainWindow
     const event = new EventEmitter()
 
     this.attachExplainPathEvents(event)
     this.pluginTool = new PluginTool(event)
+    this.pluginCache = {}
   }
 
-  /**
-   * 加载任务插件
-   * @param pluginId
-   */
-  public async loadTaskPlugin(pluginId: number): Promise<TaskHandler> {
-    const installedPluginsService = new InstalledPluginsService()
-    const pluginDTO = await installedPluginsService.getDTOById(pluginId)
-    const pluginInfo = JSON.stringify(pluginDTO)
-    const loadPath = pluginDTO.loadPath
-    if (StringUtil.isBlank(loadPath)) {
-      const msg = '未获取到插件信息'
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
+  public async load(pluginId: number) {
+    // 加载并缓存插件和插件信息
+    let plugin: Promise<T>
+
+    if (isNullish(this.pluginCache[pluginId])) {
+      LogUtil.info('PluginLoader', `新增插件缓存, pluginId: ${pluginId}`)
+      plugin = this.factory.create(pluginId, this.pluginTool)
+      this.pluginCache[pluginId] = plugin
+      return plugin
+    } else {
+      LogUtil.info('PluginLoader', `读取插件缓存, pluginId: ${pluginId}`)
+      plugin = this.pluginCache[pluginId]
+      return plugin
     }
-
-    const module = await import(loadPath)
-    const taskPlugin = new module.default(this.pluginTool)
-
-    // 验证taskPlugin是否符合TaskHandler接口要求
-    let isTaskHandler: boolean
-    // 查询插件信息，日志用
-    // create方法
-    isTaskHandler = 'create' in taskPlugin && typeof taskPlugin.create === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现create方法`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
-
-    // start方法
-    isTaskHandler = 'start' in taskPlugin && typeof taskPlugin.start === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现start方法`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
-
-    // retry方法
-    isTaskHandler = 'retry' in taskPlugin && typeof taskPlugin.retry === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现retry方法`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
-
-    // pause方法
-    isTaskHandler = 'pause' in taskPlugin && typeof taskPlugin.retry === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现pause方法`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
-
-    // resume方法
-    isTaskHandler = 'resume' in taskPlugin && typeof taskPlugin.retry === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现resume方法`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
-
-    return taskPlugin as TaskHandler
   }
 
   /**

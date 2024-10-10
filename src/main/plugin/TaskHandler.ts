@@ -4,8 +4,14 @@ import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
+import InstalledPluginsService from '../service/InstalledPluginsService.js'
+import StringUtil from '../util/StringUtil.js'
+import LogUtil from '../util/LogUtil.js'
+import { BasePlugin } from './BasePlugin.js'
+import PluginFactory from './PluginFactory.js'
+import { isNullish } from '../util/CommonUtil.js'
 
-export default interface TaskHandler {
+export interface TaskHandler extends BasePlugin {
   pluginTool: PluginTool
 
   /**
@@ -42,4 +48,74 @@ export default interface TaskHandler {
    * @return 接续已下载的文件的流
    */
   resume(task: TaskPluginDTO): Promise<PluginResumeResponse>
+}
+
+export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
+  async create(pluginId: number, pluginTool?: PluginTool): Promise<TaskHandler> {
+    if (isNullish(pluginTool)) {
+      const msg = '创建任务插件时，pluginTool不能为空'
+      LogUtil.error('TaskHandlerFactory', msg)
+      throw new Error(msg)
+    }
+
+    const installedPluginsService = new InstalledPluginsService()
+    const pluginDTO = await installedPluginsService.getDTOById(pluginId)
+    const pluginInfo = JSON.stringify(pluginDTO)
+    const loadPath = pluginDTO.loadPath
+    if (StringUtil.isBlank(loadPath)) {
+      const msg = '未获取到插件信息'
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    const module = await import(loadPath)
+    const response = new module.default(pluginTool)
+
+    // 验证taskPlugin是否符合TaskHandler接口要求
+    let isTaskHandler: boolean
+    // 查询插件信息，日志用
+    // create方法
+    isTaskHandler = 'create' in response && typeof response.create === 'function'
+    if (!isTaskHandler) {
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现create方法`
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    // start方法
+    isTaskHandler = 'start' in response && typeof response.start === 'function'
+    if (!isTaskHandler) {
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现start方法`
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    // retry方法
+    isTaskHandler = 'retry' in response && typeof response.retry === 'function'
+    if (!isTaskHandler) {
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现retry方法`
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    // pause方法
+    isTaskHandler = 'pause' in response && typeof response.retry === 'function'
+    if (!isTaskHandler) {
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现pause方法`
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    // resume方法
+    isTaskHandler = 'resume' in response && typeof response.retry === 'function'
+    if (!isTaskHandler) {
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现resume方法`
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    const taskHandler = response as TaskHandler
+    taskHandler.pluginId = pluginId
+    return taskHandler
+  }
 }

@@ -1,6 +1,5 @@
 import Task from '../model/Task.ts'
 import LogUtil from '../util/LogUtil.ts'
-import logUtil from '../util/LogUtil.ts'
 import TaskDao from '../dao/TaskDao.ts'
 import PluginLoader from '../plugin/PluginLoader.ts'
 import { TaskStatesEnum } from '../constant/TaskStatesEnum.ts'
@@ -18,19 +17,19 @@ import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
-import TaskHandler from '../plugin/TaskHandler.ts'
+import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
 import StringUtil from '../util/StringUtil.ts'
-import { promisify } from 'node:util'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
+import { pipelineReadWrite } from '../util/FileSysUtil.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -49,7 +48,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     if (taskPlugins.length === 0) {
       const msg = `没有监听此链接的插件，url: ${url}`
-      logUtil.info('TaskService', msg)
+      LogUtil.info('TaskService', msg)
       return new TaskCreateResponse({
         succeed: false,
         addedQuantity: 0,
@@ -59,7 +58,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 插件加载器
-    const pluginLoader = new PluginLoader(mainWindow)
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
     // 按照排序尝试每个插件
     for (const taskPlugin of taskPlugins) {
@@ -70,8 +69,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       )
 
       try {
-        // 异步加载插件
-        const taskHandler = await pluginLoader.loadTaskPlugin(taskPlugin.id as number)
+        // 加载插件
+        if (isNullish(taskPlugin.id)) {
+          const msg = `任务的插件id意外为空，taskId: ${taskPlugin.id}`
+          LogUtil.error('TaskService', msg)
+          continue
+        }
+        const taskHandler = await pluginLoader.load(taskPlugin.id)
 
         // 任务集
         const parentTask = new TaskCreateDTO()
@@ -123,10 +127,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             plugin: taskPlugin
           })
         } else {
-          logUtil.error('TaskService', '插件返回了不支持的类型')
+          LogUtil.error('TaskService', '插件返回了不支持的类型')
         }
       } catch (error) {
-        logUtil.error(
+        LogUtil.error(
           'TaskService',
           `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`,
           error
@@ -136,7 +140,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 未能在循环中返回，则返回0
     const msg = `尝试了所有插件均未成功，url: ${url}`
-    logUtil.info('TaskService', msg)
+    LogUtil.info('TaskService', msg)
     return new TaskCreateResponse({ succeed: false, addedQuantity: 0, msg: msg, plugin: undefined })
   }
 
@@ -162,7 +166,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       pluginResponseTasks === null ||
       pluginResponseTasks.length === 0
     ) {
-      logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+      LogUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
       return 0
     }
 
@@ -184,7 +188,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
-        logUtil.error(
+        LogUtil.error(
           'TaskService',
           `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
           error
@@ -287,7 +291,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         try {
           // 所有数据读取完毕
           if (itemCount === 0) {
-            logUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+            LogUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
           } else if (itemCount === 1) {
             await super.save(taskQueue[0])
           } else if (taskQueue.length > 0) {
@@ -359,32 +363,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 查找id列表对应的所有子任务
     const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds, [TaskStatesEnum.WAITING])
 
-    // 插件缓存
-    const pluginCache: { [id: string]: Promise<TaskHandler> } = {}
-    const pluginLoader = new PluginLoader(mainWindow)
+    // 插件加载器
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
     // 计数器
     let counter = 0
 
     // 获取下载限制器
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
-
-    // 加载插件的函数
-    const loadPluginProcess = (pluginId: number, taskId): Promise<TaskHandler> => {
-      // 加载并缓存插件和插件信息
-      let taskHandler: Promise<TaskHandler>
-
-      if (isNullish(pluginCache[pluginId])) {
-        logUtil.info('Test', `${taskId}, 新增插件缓存`)
-        taskHandler = pluginLoader.loadTaskPlugin(pluginId)
-        pluginCache[pluginId] = taskHandler
-        return taskHandler
-      } else {
-        logUtil.info('Test', `${taskId}, 读取插件缓存`)
-        taskHandler = pluginCache[pluginId]
-        return taskHandler
-      }
-    }
 
     // 处理任务集合的状态的函数
     const handleRootStatus = (rootId: number) => {
@@ -422,15 +408,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 保存作品资源和作品信息的函数
     const savingProcess = async (task: Task): Promise<number> => {
-      // 校验任务的插件id
+      // 加载插件
       if (isNullish(task.pluginId)) {
         const msg = `任务的插件id意外为空，taskId: ${task.id}`
         LogUtil.error('TaskService', msg)
         return -1
       }
-
-      // 加载插件
-      const taskHandler: TaskHandler = await loadPluginProcess(task.pluginId, task.id)
+      const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
       const worksDTO: WorksPluginDTO = await taskHandler.start(task)
       worksDTO.includeTaskId = task.id
@@ -547,31 +531,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
     const taskTree = await this.dao.selectTaskTreeList(ids)
 
-    // 插件缓存
-    const pluginCache: { [id: string]: TaskHandler } = {}
-    const pluginLoader = new PluginLoader(mainWindow)
+    // 插件加载器
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
     // 暂停任务的函数
     const pauseSingleTask = async (child: Task) => {
-      // 加载并缓存插件和插件信息
-      let taskHandler: TaskHandler
+      // 加载插件
       if (isNullish(child.pluginId)) {
         LogUtil.error('TaskService', '暂停任务时，任务的pluginId意外为空，taskId: ', child.id)
         return
       }
-
-      if (isNullish(pluginCache[child.pluginId])) {
-        try {
-          taskHandler = await pluginLoader.loadTaskPlugin(child.pluginId as number)
-          pluginCache[child.pluginId] = taskHandler
-        } catch (error) {
-          const msg = `暂停任务时，加载插件失败，error: ${error}`
-          LogUtil.error('TaskService', msg)
-          return
-        }
-      } else {
-        taskHandler = pluginCache[child.pluginId]
-      }
+      const taskHandler = await pluginLoader.load(child.pluginId)
 
       // 创建TaskPluginDTO对象
       const taskPluginDTO = new TaskPluginDTO(child)
@@ -587,9 +557,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       taskPluginDTO.remoteStream = taskTracker.readStream
 
       // 调用插件的pause方法
-      taskHandler.pause(taskPluginDTO).then(() => {
-        this.pauseTask(child)
-      })
+      taskHandler.pause(taskPluginDTO).then(() => this.pauseTask(child))
     }
 
     for (const parent of taskTree) {
@@ -619,31 +587,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async resumeTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
     const taskTree = await this.dao.selectTaskTreeList(ids)
 
-    // 插件缓存
-    const pluginCache: { [id: string]: TaskHandler } = {}
-    const pluginLoader = new PluginLoader(mainWindow)
+    // 插件加载器
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
     // 恢复任务的函数
     const resumeSingleTask = async (child: Task) => {
-      // 加载并缓存插件和插件信息
-      let taskHandler: TaskHandler
+      // 加载插件
       if (isNullish(child.pluginId)) {
-        LogUtil.warn('TaskService', '恢复任务时，任务的pluginId意外为空，taskId: ', child.id)
+        LogUtil.error('TaskService', '恢复任务时，任务的pluginId意外为空，taskId: ', child.id)
         return
       }
-
-      if (isNullish(pluginCache[child.pluginId])) {
-        try {
-          taskHandler = await pluginLoader.loadTaskPlugin(child.pluginId as number)
-          pluginCache[child.pluginId] = taskHandler
-        } catch (error) {
-          const msg = `恢复任务时，加载插件失败，error: ${error}`
-          LogUtil.error('TaskService', msg)
-          return
-        }
-      } else {
-        taskHandler = pluginCache[child.pluginId]
-      }
+      const taskHandler: TaskHandler = await pluginLoader.load(child.pluginId)
 
       // 创建TaskPluginDTO对象
       const taskPluginDTO = new TaskPluginDTO(child)
@@ -662,32 +616,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       //   return
       // }
       // taskPluginDTO.remoteStream = taskTracker.readStream
-
-      const writeStreamPromise = promisify(
-        (readable: Readable, writable: fs.WriteStream, callback) => {
-          let errorOccurred = false
-
-          readable.on('error', (err) => {
-            errorOccurred = true
-            LogUtil.error('WorksService', `readable出错${err}`)
-            callback(err)
-          })
-
-          writable.on('error', (err) => {
-            errorOccurred = true
-            LogUtil.error('WorksService', `writable出错${err}`)
-            callback(err)
-          })
-
-          readable.on('end', () => {
-            if (!errorOccurred) {
-              writable.end()
-              callback(null)
-            }
-          })
-          readable.pipe(writable)
-        }
-      )
 
       // 调用插件的pause方法
       const response: PluginResumeResponse = await taskHandler.resume(taskPluginDTO)
@@ -712,7 +640,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         fs.unlinkSync(child.pendingDownloadPath)
         writeStream = fs.createWriteStream(child.pendingDownloadPath)
       }
-      writeStreamPromise(response.remoteStream, writeStream)
+      pipelineReadWrite(response.remoteStream, writeStream)
     }
 
     // 获取下载限制器
@@ -802,7 +730,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (notNullish(task.id)) {
       return this.updateById(task)
     } else {
-      const msg = '任务标记为完成时，任务id意外为空'
+      const msg = '任务标记为暂停时，任务id意外为空'
       LogUtil.error('TaskService', msg)
       throw new Error(msg)
     }
