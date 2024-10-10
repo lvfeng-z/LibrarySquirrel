@@ -5,6 +5,7 @@ import path from 'path'
 import SettingsService from '../service/SettingsService.ts'
 import sharp from 'sharp'
 import { isNullish } from './CommonUtil.js'
+import { Readable, Writable } from 'node:stream'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -54,7 +55,7 @@ export function getRootDir(): string {
 }
 
 /**
- * 打开一个
+ * 打开一个文件/路径选择弹窗
  */
 export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
   const defaultPath = SettingsService.getSettings()['workdir']
@@ -70,7 +71,13 @@ export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogR
   })
 }
 
-export async function getResource(
+/**
+ * 读取作品资源
+ * @param fullPath 作品路径
+ * @param height 返回图片的高度
+ * @param width 返回图片的宽度
+ */
+export async function getWorksResource(
   fullPath: string,
   height?: number,
   width?: number
@@ -81,4 +88,40 @@ export async function getResource(
   } else {
     return sharp(resource).resize({ height: height, width: width, fit: 'contain' }).toBuffer()
   }
+}
+
+export function pipelineReadWrite(readable: Readable, writable: Writable): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let errorOccurred = false
+
+    readable.on('error', (err) => {
+      errorOccurred = true
+      LogUtil.error('WorksService', `readable出错${err}`)
+      reject(err)
+    })
+
+    writable.on('error', (err) => {
+      errorOccurred = true
+      LogUtil.error('WorksService', `writable出错${err}`)
+      reject(err)
+    })
+
+    readable.on('end', () => {
+      if (!errorOccurred) {
+        writable.end()
+      } else {
+        reject()
+      }
+    })
+
+    writable.on('finish', () => {
+      if (!errorOccurred) {
+        resolve()
+      } else {
+        reject()
+      }
+    })
+
+    readable.pipe(writable)
+  })
 }

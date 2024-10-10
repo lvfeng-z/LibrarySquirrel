@@ -6,8 +6,7 @@ import { WorksDao } from '../dao/WorksDao.ts'
 import SettingsService from './SettingsService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
-import { promisify } from 'node:util'
-import { createDirIfNotExists } from '../util/FileSysUtil.ts'
+import { createDirIfNotExists, pipelineReadWrite } from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
@@ -22,7 +21,6 @@ import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/WorksSet.ts'
 import StringUtil from '../util/StringUtil.ts'
-import { Readable } from 'node:stream'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
@@ -86,32 +84,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       worksDTO.resourceStream !== undefined &&
       worksDTO.resourceStream !== null
     ) {
-      const writeStreamPromise = promisify(
-        (readable: Readable, writable: fs.WriteStream, callback) => {
-          let errorOccurred = false
-
-          readable.on('error', (err) => {
-            errorOccurred = true
-            LogUtil.error('WorksService', `readable出错${err}`)
-            callback(err)
-          })
-
-          writable.on('error', (err) => {
-            errorOccurred = true
-            LogUtil.error('WorksService', `writable出错${err}`)
-            callback(err)
-          })
-
-          readable.on('end', () => {
-            if (!errorOccurred) {
-              writable.end()
-              callback(null)
-            }
-          })
-          readable.pipe(writable)
-        }
-      )
-
       // 保存资源
       // 创建保存目录
       if (StringUtil.isBlank(worksDTO.fullSaveDir)) {
@@ -137,8 +109,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
         }
         // 创建写入Promise
-        const saveResourceFinishPromise: Promise<unknown> = writeStreamPromise(
-          worksDTO.resourceStream as Readable,
+        const saveResourceFinishPromise: Promise<unknown> = pipelineReadWrite(
+          worksDTO.resourceStream,
           writeStream
         )
         // 创建任务监听器
