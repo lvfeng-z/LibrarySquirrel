@@ -406,17 +406,19 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 保存作品资源和作品信息的函数
-    const savingProcess = async (task: Task): Promise<number> => {
+    const savingProcess = async (
+      task: Task
+    ): Promise<{ status: TaskStatesEnum; worksId: number }> => {
       if (isNullish(task.id)) {
         const msg = `任务的任务id意外为空`
         LogUtil.error('TaskService', msg)
-        return -1
+        return { status: TaskStatesEnum.FAILED, worksId: -1 }
       }
       // 加载插件
       if (isNullish(task.pluginId)) {
         const msg = `任务的插件id意外为空，taskId: ${task.id}`
         LogUtil.error('TaskService', msg)
-        return -1
+        return { status: TaskStatesEnum.FAILED, worksId: -1 }
       }
       const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
@@ -462,10 +464,23 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         taskProcessController: taskProcessController
       }
       // 保存资源
-      await limit(() => worksService.saveWorksResource(worksSaveInfo, taskTracker))
+      const savePromise = limit(() => worksService.saveWorksResource(worksSaveInfo, taskTracker))
+      // 添加任务追踪器
+      if (isNullish(worksDTO.includeTaskId)) {
+        const msg = '创建任务追踪器时，任务id意外为空'
+        LogUtil.warn('WorksService', msg)
+      } else {
+        const taskService = new TaskService()
+        taskService.addTaskTracker(worksDTO.includeTaskId, taskTracker, savePromise)
+      }
 
-      counter++
-      return worksId
+      const saveResult = await savePromise
+
+      if (TaskStatesEnum.FINISHED === saveResult) {
+        counter++
+        worksService.resourceFinished(worksId)
+      }
+      return { status: saveResult, worksId: worksId }
     }
 
     // 任务等待列表
@@ -482,10 +497,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       for (const task of tasks) {
         task.status = TaskStatesEnum.PROCESSING
         const activeProcess = savingProcess(task)
-          .then(async (worksId) => {
-            // 修改任务状态和作品资源状态
-            task.status = TaskStatesEnum.FINISHED
-            await this.finishTask(task, worksId)
+          .then(async (processResult) => {
+            // 修改任务状态和作品资源状态(只有完成状态进行修改，暂停状态在暂停函数中处理)
+            if (processResult.status === TaskStatesEnum.FINISHED) {
+              task.status = TaskStatesEnum.FINISHED
+              await this.finishTask(task, processResult.worksId)
+            }
             return true
           })
           .catch(async (error) => {
@@ -580,7 +597,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 调用插件的pause方法
       taskHandler.pause(taskPluginDTO)
+      // 等待写入流处理完所有缓冲区中的数据，断开连接
+      taskTracker.writeStream?.once('drain', () => {
+        taskTracker.readStream.unpipe(taskTracker.writeStream)
+      })
+      // 调用任务控制器的pause方法
+      taskTracker.taskProcessController.pause()
+      // 更新任务追踪器的状态
       this.updateTaskTracker(child.id, { status: TaskStatesEnum.PAUSE })
+      // 更新数据库中任务的状态
       return this.pauseTask(child).then((runResult) => runResult > 0)
     }
 
@@ -751,10 +776,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param task 任务信息
    */
   pauseTask(task: Task) {
-    task = new Task()
-    task.status = TaskStatesEnum.PAUSE
-    if (notNullish(task.id)) {
-      return this.updateById(task)
+    const tempTask = new Task()
+    tempTask.id = task.id
+    tempTask.status = TaskStatesEnum.PAUSE
+    if (notNullish(tempTask.id)) {
+      return this.updateById(tempTask)
     } else {
       const msg = '任务标记为暂停时，任务id意外为空'
       LogUtil.error('TaskService', msg)
@@ -940,15 +966,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public addTaskTracker(
     taskId: number,
     taskTracker: TaskTracker,
-    taskEndHandler: Promise<unknown>
+    taskEndHandler: Promise<TaskStatesEnum>
   ) {
     const trackerName = String(taskId)
     GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName] = taskTracker
     // 确认任务结束或失败后，延迟2秒清除其追踪器
     taskEndHandler
-      .then(() => {
-        taskTracker.status = TaskStatesEnum.FINISHED
-        setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
+      .then((taskStatus) => {
+        taskTracker.status = taskStatus
+        if (taskStatus === TaskStatesEnum.FINISHED) {
+          setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
+        }
       })
       .catch(() => {
         taskTracker.status = TaskStatesEnum.FAILED

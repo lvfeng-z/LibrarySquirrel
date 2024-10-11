@@ -80,7 +80,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @param taskTracker
    */
-  public async saveWorksResource(worksDTO: WorksSaveDTO, taskTracker: TaskTracker): Promise<void> {
+  public async saveWorksResource(
+    worksDTO: WorksSaveDTO,
+    taskTracker: TaskTracker
+  ): Promise<TaskStatesEnum> {
     // 校验插件有没有返回任务资源
     if (worksDTO.resourceStream === undefined || worksDTO.resourceStream === null) {
       const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
@@ -114,16 +117,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         worksDTO.resourceStream,
         writeStream
       )
-      // 创建任务追踪器
-      if (isNullish(worksDTO.includeTaskId)) {
-        const msg = '创建任务追踪器时，任务id意外为空'
-        LogUtil.warn('WorksService', msg)
-      } else {
-        const taskService = new TaskService()
-        taskService.addTaskTracker(worksDTO.includeTaskId, taskTracker, saveResourceFinishPromise)
-      }
 
-      return saveResourceFinishPromise
+      return new Promise((resolve) => {
+        // 收到任务控制器的pause事件时，返回暂停状态
+        taskTracker.taskProcessController.eventEmitter.on('pause', () =>
+          resolve(TaskStatesEnum.PAUSE)
+        )
+        saveResourceFinishPromise.then(() => resolve(TaskStatesEnum.FINISHED))
+      })
     } catch (error) {
       const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
       LogUtil.error('WorksService', msg)
