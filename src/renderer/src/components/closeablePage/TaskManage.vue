@@ -404,7 +404,9 @@ async function refreshTask() {
       const task = getNode<TaskDTO>(tempRoot, id)
       return (
         notNullish(task) &&
-        (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING)
+        (task.status === TaskStatesEnum.WAITING ||
+          task.status === TaskStatesEnum.PROCESSING ||
+          task.status === TaskStatesEnum.PAUSE)
       )
     })
   }

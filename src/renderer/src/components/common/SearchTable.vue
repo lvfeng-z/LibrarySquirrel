@@ -132,7 +132,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
 
   // 根级节点列入待刷新数组
   ids = waitingUpdateIds.map((id: number | string) => (typeof id === 'number' ? String(id) : id))
-  waitingUpdateList = dataList.value.filter((data) => ids.includes(data[props.keyOfData]))
+  waitingUpdateList = dataList.value.filter((data) => ids.includes(String(data[props.keyOfData])))
 
   // 根据treeData确认是否更新数据的下级数据
   if (props.treeData && updateChildren) {
