@@ -26,7 +26,7 @@ import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 import { TaskStatesEnum } from '../constant/TaskStatesEnum.js'
-import { Readable } from 'node:stream'
+import { Readable, Writable } from 'node:stream'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -87,6 +87,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
+    // 保存资源的过程
+    const writeStreamPromise = (readable: Readable, writeable: Writable) =>
+      pipelineReadWrite(readable, writeable)
     // 保存资源
     // 创建保存目录
     if (StringUtil.isBlank(worksDTO.fullSaveDir)) {
@@ -107,7 +110,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const writeStream = fs.createWriteStream(fullPath)
       taskTracker.writeStream = writeStream
       // 创建写入Promise
-      const saveResourceFinishPromise: Promise<void> = pipelineReadWrite(
+      const saveResourceFinishPromise: Promise<void> = writeStreamPromise(
         worksDTO.resourceStream,
         writeStream
       )
@@ -150,11 +153,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       fs.unlinkSync(pendingDownloadPath)
       writeStream = fs.createWriteStream(pendingDownloadPath)
     }
+    // 保存资源的过程
+    const writeStreamPromise = (readable: Readable, writeable: Writable) =>
+      pipelineReadWrite(readable, writeable)
     return new Promise((resolve) => {
       taskTracker.taskProcessController.eventEmitter.on('pause', () =>
         resolve(TaskStatesEnum.PAUSE)
       )
-      pipelineReadWrite(resumeStream, writeStream).then(() => resolve(TaskStatesEnum.FINISHED))
+      writeStreamPromise(resumeStream, writeStream).then(() => resolve(TaskStatesEnum.FINISHED))
     })
   }
 
