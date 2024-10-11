@@ -243,7 +243,7 @@ defineExpose({
     <div class="search-table-data">
       <DataTable
         ref="dataTable"
-        v-model:tableData="dataList"
+        v-model:table-data="dataList"
         class="search-table-data-table"
         :thead="thead"
         :selectable="selectable"
