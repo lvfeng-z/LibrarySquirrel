@@ -85,27 +85,26 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     worksDTO: WorksSaveDTO,
     taskTracker: TaskTracker
   ): Promise<TaskStatesEnum> {
-    // 校验插件有没有返回任务资源
-    if (worksDTO.resourceStream === undefined || worksDTO.resourceStream === null) {
-      const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
-      LogUtil.error('WorksService', msg)
-      throw new Error(msg)
-    }
+    assertNotNullish(
+      worksDTO.resourceStream,
+      'WorksService',
+      `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
+    )
     // 保存资源的过程
     const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
       pipelineReadWrite(readable, writeable)
     // 保存资源
     // 创建保存目录
-    if (StringUtil.isBlank(worksDTO.fullSaveDir)) {
-      const msg = `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
-      LogUtil.error('WorksService', msg)
-      throw new Error(msg)
-    }
-    if (StringUtil.isBlank(worksDTO.fileName)) {
-      const msg = `保存作品资源时，作品的fileName意外为空，worksId: ${worksDTO.id}`
-      LogUtil.error('WorksService', msg)
-      throw new Error(msg)
-    }
+    assertNotNullish(
+      worksDTO.fullSaveDir,
+      'WorksService',
+      `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
+    )
+    assertNotNullish(
+      worksDTO.fileName,
+      'WorksService',
+      `保存作品资源时，作品的fileName意外为空，worksId: ${worksDTO.id}`
+    )
 
     try {
       await createDirIfNotExists(worksDTO.fullSaveDir)

@@ -110,9 +110,9 @@ export default class LocalTaskHandler {
     const result = new PluginResumeResponse()
     if (task.remoteStream === undefined || task.remoteStream === null) {
       if (task.bytesWrote === 0) {
-        task.remoteStream = fs.createWriteStream(task.url)
+        task.remoteStream = fs.createReadStream(task.url)
       } else {
-        task.remoteStream = fs.createWriteStream(task.url, { start: task.bytesWrote })
+        task.remoteStream = fs.createReadStream(task.url, { start: task.bytesWrote })
       }
     } else {
       task.remoteStream.resume()

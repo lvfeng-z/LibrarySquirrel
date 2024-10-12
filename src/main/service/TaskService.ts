@@ -28,6 +28,7 @@ import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
 import { assertNotNullish } from '../util/AssertUtil.js'
+import { createDirIfNotExists } from '../util/FileSysUtil.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -468,13 +469,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 保存资源
       const savePromise = limit(() => worksService.saveWorksResource(worksSaveInfo, taskTracker))
       // 添加任务追踪器
-      if (isNullish(worksDTO.includeTaskId)) {
-        const msg = '创建任务追踪器时，任务id意外为空'
-        LogUtil.warn('WorksService', msg)
-      } else {
-        const taskService = new TaskService()
-        taskService.addTaskTracker(worksDTO.includeTaskId, taskTracker, savePromise)
-      }
+      assertNotNullish(worksDTO.includeTaskId, 'WorksService', '创建任务追踪器时，任务id意外为空')
+      this.addTaskTracker(worksDTO.includeTaskId, taskTracker, savePromise)
 
       const saveResult = await savePromise
 
@@ -677,6 +673,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         .then((stats) => stats.size)
     } catch (error) {
       LogUtil.info('TasService', '恢复任务时，先前下载的文件已经不存在 ', error)
+      await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
       taskPluginDTO.bytesWrote = 0
     }
     const resumeResponse = await taskHandler.resume(taskPluginDTO)
@@ -965,9 +962,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 没有监听器的任务
     const noListenerIds: number[] = []
     ids.forEach((id: number) => {
-      // 如果有追踪器，则从追踪器获取任务进度，否则从数据库查询任务状态
+      // 如果有追踪器且写入流不为空，则从追踪器获取任务进度，否则从数据库查询任务状态
       const taskTracker = this.getTaskTracker(id)
-      if (notNullish(taskTracker)) {
+      if (notNullish(taskTracker) && notNullish(taskTracker.writeStream)) {
         const temp: TaskScheduleDTO = new TaskScheduleDTO()
         temp.id = id
         temp.status = taskTracker.status
@@ -978,11 +975,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           if (taskTracker.bytesSum === 0) {
             temp.schedule = 0
           } else {
-            assertNotNullish(
-              taskTracker.writeStream,
-              'TaskService',
-              `查询任务进度时，写入流意外为空，taskId: ${id}`
-            )
             temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
           }
         }
