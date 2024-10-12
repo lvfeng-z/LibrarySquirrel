@@ -23,12 +23,11 @@ import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { TaskProcessController, TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
-import StringUtil from '../util/StringUtil.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
-import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
+import { assertNotNullish } from '../util/AssertUtil.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -647,50 +646,71 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    *
-   * @param child
+   * @param task
    * @param pluginLoader
    */
-  async resumeTask(child: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<void> {
+  async resumeTask(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<TaskStatesEnum> {
+    assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空，taskId')
+    assertNotNullish(
+      task.localWorksId,
+      'TaskService',
+      `恢复任务时，任务的localWorksId意外为空，taskId: ${task.id}`
+    )
+    assertNotNullish(
+      task.pendingDownloadPath,
+      'TaskService',
+      `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${task.id}`
+    )
     // 加载插件
-    if (isNullish(child.pluginId)) {
-      LogUtil.error('TaskService', '恢复任务时，任务的pluginId意外为空，taskId: ', child.id)
-      return
+    assertNotNullish(
+      task.pluginId,
+      'TaskService',
+      `恢复任务时，任务的pluginId意外为空，taskId: ${task.id}`
+    )
+    const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+
+    // 调用插件的resume函数，获取资源
+    const taskPluginDTO = new TaskPluginDTO(task)
+    try {
+      taskPluginDTO.bytesWrote = await fs.promises
+        .stat(task.pendingDownloadPath)
+        .then((stats) => stats.size)
+    } catch (error) {
+      LogUtil.info('TasService', '恢复任务时，先前下载的文件已经不存在 ', error)
+      taskPluginDTO.bytesWrote = 0
     }
-    const taskHandler: TaskHandler = await pluginLoader.load(child.pluginId)
+    const resumeResponse = await taskHandler.resume(taskPluginDTO)
+    assertNotNullish(
+      resumeResponse.remoteStream,
+      'TaskService',
+      `恢复任务时，插件返回的资源为空，taskId: ${task.id}`
+    )
 
-    // 创建TaskPluginDTO对象
-    const taskPluginDTO = new TaskPluginDTO(child)
-    // todo 如果追踪器已经不存在，则创建一个新的追踪器，读取流由插件从远程获取，否则插件尝试恢复读取流，如果恢复不成功，再重新从远程获取
-    // const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
-    // if (isNullish(taskTracker)) {
-    //   // 创建一个追踪器
-    //   taskTracker = {
-    //     bytesSum: 1,
-    //     readStream: new Readable(),
-    //     writeStream: new Writable()
-    //   }
-    // }
-    // if (isNullish(taskTracker.readStream)) {
-    //   LogUtil.info('TaskService', '恢复任务时，任务追踪器的读取流不存在，taskId: ', child.id)
-    //   return
-    // }
-    // taskPluginDTO.remoteStream = taskTracker.readStream
-
-    // 调用插件的pause方法
-    const response: PluginResumeResponse = await taskHandler.resume(taskPluginDTO)
-
-    // 根据未完成的文件创建接续写入流
-    if (StringUtil.isBlank(child.pendingDownloadPath)) {
-      LogUtil.error('TaskService', '恢复任务时，下载中的文件路径意外为空，taskId: ', child.id)
-      return
+    let writeable: fs.WriteStream
+    if (resumeResponse.continuable) {
+      writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
+    } else {
+      writeable = fs.createWriteStream(task.pendingDownloadPath)
     }
 
-    if (isNullish(response.remoteStream)) {
-      LogUtil.error('TaskService', '恢复任务时，插件未返回读取流，taskId: ', child.id)
-      return
+    let taskTracker = this.getTaskTracker(task.id)
+    if (isNullish(taskTracker)) {
+      // 创建一个追踪器
+      taskTracker = {
+        status: TaskStatesEnum.PAUSE,
+        bytesSum: resumeResponse.resourceSize,
+        readStream: resumeResponse.remoteStream,
+        writeStream: writeable,
+        taskProcessController: new TaskProcessController()
+      }
+    } else {
+      taskTracker.bytesSum = resumeResponse.resourceSize
+      taskTracker.readStream = resumeResponse.remoteStream
+      taskTracker.writeStream = writeable
+      taskTracker.taskProcessController = new TaskProcessController()
     }
-
-    // 判断返回的流是否可接续在已下载部分末尾
+    const worksService = new WorksService()
+    return worksService.resumeSaveWorksResource(task.localWorksId, taskTracker)
   }
 
   /**
@@ -707,10 +727,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 获取下载限制器
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
 
+    const activeProcesses: Promise<TaskStatesEnum>[] = []
     for (const parent of taskTree) {
       // 处理parent为单个任务的情况
       if (!parent.isCollection) {
-        limit(() => this.resumeTask(parent, pluginLoader))
+        const activeProcess = limit(() => this.resumeTask(parent, pluginLoader))
+        activeProcesses.push(activeProcess)
         continue
       }
 
@@ -721,9 +743,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       for (const child of children) {
-        limit(() => this.resumeTask(child, pluginLoader))
+        const activeProcess = limit(() => this.resumeTask(child, pluginLoader))
+        activeProcesses.push(activeProcess)
       }
     }
+
+    await Promise.allSettled(activeProcesses)
+    return
   }
 
   /**
@@ -952,13 +978,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           if (taskTracker.bytesSum === 0) {
             temp.schedule = 0
           } else {
-            if (notNullish(taskTracker.writeStream)) {
-              temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
-            } else {
-              const msg = `查询任务进度时，写入流意外为空，taskId: ${id}`
-              LogUtil.error('WorksService', msg)
-              temp.schedule = 0
-            }
+            assertNotNullish(
+              taskTracker.writeStream,
+              'TaskService',
+              `查询任务进度时，写入流意外为空，taskId: ${id}`
+            )
+            temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
           }
         }
         result.push(temp)

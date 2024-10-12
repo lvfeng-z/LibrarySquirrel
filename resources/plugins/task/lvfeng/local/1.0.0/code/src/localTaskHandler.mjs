@@ -67,10 +67,10 @@ export default class LocalTaskHandler {
     }
     // 处理标签
     const tagInfos = this.getDataFromMeaningOfPath(meaningOfPaths, PathTypeEnum.TAG)
-    worksDTO.localTags = tagInfos.map(tagInfo => tagInfo.details)
+    worksDTO.localTags = tagInfos.map((tagInfo) => tagInfo.details)
     // 处理作者信息
     const authors = this.getDataFromMeaningOfPath(meaningOfPaths, PathTypeEnum.AUTHOR)
-    worksDTO.localAuthors = authors.map(authorInfo => authorInfo.details)
+    worksDTO.localAuthors = authors.map((authorInfo) => authorInfo.details)
 
     // 处理任务id
     worksDTO.includeTaskId = task.id
@@ -89,7 +89,7 @@ export default class LocalTaskHandler {
    * @return 作品信息
    */
   retry(tasks) {
-
+    return this.start(tasks)
   }
 
   /**
@@ -104,9 +104,24 @@ export default class LocalTaskHandler {
   /**
    * 暂停下载任务
    * @param task 需要暂停的任务
-   * @return 作品信息
+   * @return PluginResumeResponse
    */
-  resume(task) {}
+  async resume(task) {
+    const result = new PluginResumeResponse()
+    if (task.remoteStream === undefined || task.remoteStream === null) {
+      if (task.bytesWrote === 0) {
+        task.remoteStream = fs.createWriteStream(task.url)
+      } else {
+        task.remoteStream = fs.createWriteStream(task.url, { start: task.bytesWrote })
+      }
+    } else {
+      task.remoteStream.resume()
+    }
+    result.remoteStream = task.remoteStream
+    const stats = await fs.promises.stat(task.url)
+    result.resourceSize = stats.size
+    return result
+  }
 
   /**
    * 在含义列表中查找对应类型的含义
@@ -115,7 +130,7 @@ export default class LocalTaskHandler {
    * @return {*}
    */
   getDataFromMeaningOfPath(meaningOfPaths, type) {
-    return meaningOfPaths.filter(meaningOfPath => meaningOfPath.type === type)
+    return meaningOfPaths.filter((meaningOfPath) => meaningOfPath.type === type)
   }
 }
 
@@ -141,7 +156,7 @@ class TaskStream extends Readable {
   counter
 
   constructor(directoryPath, pluginTool) {
-    super({ objectMode: true, highWaterMark: 1 });
+    super({ objectMode: true, highWaterMark: 1 })
     this.directoryPath = directoryPath
     this.stack = [{ dir: this.directoryPath, meaningOfPaths: [] }]
     this.pluginTool = pluginTool
@@ -167,7 +182,7 @@ class TaskStream extends Readable {
           // 请求用户解释目录含义
           const waitUserInput = this.pluginTool.explainPath(dir)
           const meaningOfPaths = await waitUserInput
-          meaningOfPaths.forEach(meaningOfPath => {
+          meaningOfPaths.forEach((meaningOfPath) => {
             // 如果含义是作品集，路径作为站点作品集id
             if (meaningOfPath.type === PathTypeEnum.WORKS_SET_NAME) {
               meaningOfPath.details = { siteWorksSetId: dir }
@@ -187,7 +202,10 @@ class TaskStream extends Readable {
             // 把下级目录放进栈的同时，将自身的含义传给下级目录
             const childDir = path.join(dir, entry.name)
             const childMeaningOfPaths = lodash.cloneDeep(dirInfo.meaningOfPaths)
-            const childInfo = lodash.cloneDeep({ dir: childDir, meaningOfPaths: childMeaningOfPaths })
+            const childInfo = lodash.cloneDeep({
+              dir: childDir,
+              meaningOfPaths: childMeaningOfPaths
+            })
             this.stack.push(childInfo)
           }
         } else {
@@ -203,7 +221,7 @@ class TaskStream extends Readable {
         // 触发错误事件
         this.emit('error', err)
       } finally {
-        if(this.stack.length === 0) {
+        if (this.stack.length === 0) {
           this.push(null)
           bufferFilled = true
         }
@@ -374,6 +392,10 @@ class Task {
    * 远程资源流
    */
   remoteStream
+  /**
+   * 已写入数据量
+   */
+  bytesWrote
 
   constructor() {
     this.isCollection = undefined
@@ -388,6 +410,8 @@ class Task {
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined
+    this.remoteStream = undefined
+    this.bytesWrote = undefined
   }
 }
 
@@ -399,4 +423,27 @@ class PathTypeEnum {
   static SITE = 4
   static CREATE_TIME = 5
   static UNKNOWN = 6
+}
+
+class PluginResumeResponse {
+  /**
+   * 提供的流是否可接续在已下载部分的末尾
+   */
+  continuable
+
+  /**
+   * 用于继续下载的读取流
+   */
+  remoteStream
+
+  /**
+   * 资源大小，单位：字节（Bytes）
+   */
+  resourceSize
+
+  constructor() {
+    this.continuable = true
+    this.remoteStream = undefined
+    this.resourceSize = 0
+  }
 }

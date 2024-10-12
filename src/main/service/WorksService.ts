@@ -27,6 +27,7 @@ import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 import { TaskStatesEnum } from '../constant/TaskStatesEnum.js'
 import { Readable, Writable } from 'node:stream'
+import { assertNotNullish } from '../util/AssertUtil.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -135,33 +136,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   /**
    * 恢复保存作品资源
    * @param worksId 作品id
-   * @param pendingDownloadPath 未完成的资源的完整路径
-   * @param resumeStream 读取流
-   * @param continuable 是否可续传
    * @param taskTracker 任务追踪器
    */
   public async resumeSaveWorksResource(
     worksId: number,
-    pendingDownloadPath: string,
-    resumeStream: Readable,
-    continuable: boolean,
     taskTracker: TaskTracker
   ): Promise<TaskStatesEnum> {
     const works = this.getById(worksId)
-    if (isNullish(works)) {
-      const msg = `恢复资源下载时作品id无效worksId: ${worksId}`
-      LogUtil.error('WorksService', msg)
-      throw new Error(msg)
-    }
-
-    let writeStream: fs.WriteStream
-    if (continuable) {
-      writeStream = fs.createWriteStream(pendingDownloadPath, { flags: 'a' })
-    } else {
-      // todo 删除原有资源，从头开始写入
-      fs.unlinkSync(pendingDownloadPath)
-      writeStream = fs.createWriteStream(pendingDownloadPath)
-    }
+    assertNotNullish(works, 'WorksService', `恢复资源下载时作品id无效，worksId: ${worksId}`)
     // 保存资源的过程
     const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
       pipelineReadWrite(readable, writeable)
@@ -169,7 +151,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       taskTracker.taskProcessController.eventEmitter.on('pause', () =>
         resolve(TaskStatesEnum.PAUSE)
       )
-      writeStreamPromise(resumeStream, writeStream).then(() => resolve(TaskStatesEnum.FINISHED))
+      assertNotNullish(
+        taskTracker.writeStream,
+        'WorksService',
+        `恢复资源下载时写入流意外为空，worksId: ${worksId}`
+      )
+      writeStreamPromise(taskTracker.readStream, taskTracker.writeStream).then(() =>
+        resolve(TaskStatesEnum.FINISHED)
+      )
     })
   }
 
