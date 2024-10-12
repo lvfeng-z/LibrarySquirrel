@@ -154,7 +154,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        select id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                               update_time, status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data
                        from task
-                       where id in (select pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                       where id in (select pid from children)
                        union
                        select *
                        from task
