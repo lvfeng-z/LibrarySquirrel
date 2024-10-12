@@ -91,7 +91,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       throw new Error(msg)
     }
     // 保存资源的过程
-    const writeStreamPromise = (readable: Readable, writeable: Writable) =>
+    const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
       pipelineReadWrite(readable, writeable)
     // 保存资源
     // 创建保存目录
@@ -132,6 +132,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
   }
 
+  /**
+   * 恢复保存作品资源
+   * @param worksId 作品id
+   * @param pendingDownloadPath 未完成的资源的完整路径
+   * @param resumeStream 读取流
+   * @param continuable 是否可续传
+   * @param taskTracker 任务追踪器
+   */
   public async resumeSaveWorksResource(
     worksId: number,
     pendingDownloadPath: string,
@@ -155,7 +163,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       writeStream = fs.createWriteStream(pendingDownloadPath)
     }
     // 保存资源的过程
-    const writeStreamPromise = (readable: Readable, writeable: Writable) =>
+    const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
       pipelineReadWrite(readable, writeable)
     return new Promise((resolve) => {
       taskTracker.taskProcessController.eventEmitter.on('pause', () =>
@@ -293,7 +301,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 作品的资源状态改为已完成
    * @param worksId 作品id
    */
-  public async resourceFinished(worksId: number) {
+  public async resourceFinished(worksId: number): Promise<number> {
     const works = new Works()
     works.id = worksId
     works.resourceComplete = true

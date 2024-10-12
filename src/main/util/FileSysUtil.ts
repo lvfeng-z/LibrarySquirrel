@@ -30,7 +30,7 @@ export async function createDirIfNotExists(dirPath: string): Promise<void> {
  * 将类似 Unix 风格但以盘符开头的路径转换为标准的 Windows 路径格式
  * @param originalPath
  */
-export function convertPath(originalPath) {
+export function convertPath(originalPath: string): string {
   const match = originalPath.match(/^\/([a-zA-Z])\/(.*)$/)
   if (match) {
     // 为 Windows 系统转换路径格式

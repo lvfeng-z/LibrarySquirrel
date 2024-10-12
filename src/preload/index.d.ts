@@ -1,5 +1,4 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { futimes } from 'node:fs'
 
 declare global {
   interface Window {
@@ -20,7 +19,7 @@ declare global {
       localAuthorSave: function
       localAuthorDeleteById: function
       localAuthorUpdateById: function
-      localAuthorGetById : function
+      localAuthorGetById: function
       localAuthorQueryPage: function
       localAuthorListSelectItems: function
       localAuthorQuerySelectItemPage: function

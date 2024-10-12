@@ -177,7 +177,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     })
 
     // 给任务赋值的函数
-    const assignTask = (task: Task, pid?: number) => {
+    const assignTask = (task: Task, pid?: number): undefined => {
       task.status = TaskStatesEnum.CREATED
       task.isCollection = false
       task.pid = pid
@@ -316,7 +316,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       let isPaused = false
 
       // 保存任务集的过程
-      const parentTaskProcessing = () => {
+      const parentTaskProcessing = (): Promise<number> => {
         const tempTask = new Task(parentTask)
         const pid = super.save(tempTask) as Promise<number>
         parentTask.saved = true
@@ -324,7 +324,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       // 处理任务队列的函数
-      const processTasks = async () => {
+      const processTasks = async (): Promise<void> => {
         const taskBuffer: Task[] = []
         // 从队列中取出最多batchSize个任务
         while (taskQueue.length > 0 && taskBuffer.length < batchSize) {
@@ -375,7 +375,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
 
     // 处理任务集合的状态的函数
-    const handleRootStatus = (rootId: number) => {
+    const handleRootStatus = (rootId: number): void => {
       const root = taskTree.find((task) => task.id === rootId)
       if (isNullish(root)) {
         return
@@ -511,7 +511,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             return true
           })
           .catch(async (error) => {
-            error++
+            failed++
             LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
             task.status = TaskStatesEnum.FAILED
             await this.taskFailed(task)
@@ -523,7 +523,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     await Promise.allSettled(activeProcesses)
-    LogUtil.info('TaskService', `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`)
+    LogUtil.info(
+      'TaskService',
+      `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
+    )
 
     return succeed
   }
@@ -533,7 +536,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskIds 任务id列表
    * @param mainWindow 主窗口实例
    */
-  async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow) {
+  public async startTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
     return this.processTask(
       taskIds,
       [
@@ -551,7 +554,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskIds 任务id列表
    * @param mainWindow 主窗口实例
    */
-  async retryTask(taskIds: number[], mainWindow: Electron.BrowserWindow) {
+  public async retryTask(taskIds: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
     return this.processTask(
       taskIds,
       [
@@ -727,7 +730,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 删除任务
    * @param taskIds 任务id列表
    */
-  async deleteTask(taskIds: number[]): Promise<number> {
+  public async deleteTask(taskIds: number[]): Promise<number> {
     const waitingDelete: number[] = []
     const taskTree = await this.dao.listTaskTree(taskIds)
     for (const task of taskTree) {
@@ -752,7 +755,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 根据id更新
    * @param updateData
    */
-  async updateById(updateData: Task) {
+  public async updateById(updateData: Task): Promise<number> {
     const temp = lodash.cloneDeep(updateData)
     if (typeof temp.pluginData === 'object') {
       temp.pluginData = JSON.stringify(temp.pluginData)
@@ -765,7 +768,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param task 任务信息
    * @param worksId 本地作品id
    */
-  finishTask(task: Task, worksId: number) {
+  public finishTask(task: Task, worksId: number): Promise<number> {
     task = new Task(task)
     task.status = TaskStatesEnum.FINISHED
     task.localWorksId = worksId
@@ -782,7 +785,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 暂停任务
    * @param task 任务信息
    */
-  pauseTask(task: Task) {
+  public pauseTask(task: Task): Promise<number> {
     const tempTask = new Task()
     tempTask.id = task.id
     tempTask.status = TaskStatesEnum.PAUSE
@@ -799,7 +802,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 任务失败
    * @param task
    */
-  taskFailed(task: Task) {
+  public taskFailed(task: Task): Promise<number> {
     task = new Task(task)
     task.status = TaskStatesEnum.FAILED
     if (notNullish(task.id)) {
@@ -815,7 +818,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询任务集合
    * @param page
    */
-  async queryParentPage(page: PageModel<TaskQueryDTO, Task>) {
+  public async queryParentPage(
+    page: PageModel<TaskQueryDTO, Task>
+  ): Promise<PageModel<TaskQueryDTO, Task>> {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
@@ -839,7 +844,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询parent-children结构的任务
    * @param page
    */
-  async queryTreeDataPage(page: PageModel<TaskQueryDTO, Task>) {
+  public async queryTreeDataPage(
+    page: PageModel<TaskQueryDTO, Task>
+  ): Promise<PageModel<TaskQueryDTO, Task>> {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE },
@@ -892,7 +899,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 获取任务集合的子任务
    * @param pid
    */
-  listChildrenTask(pid: number): Promise<Task[]> {
+  public listChildrenTask(pid: number): Promise<Task[]> {
     const query = new TaskQueryDTO()
     query.pid = pid
     return this.dao.list(query)
@@ -902,7 +909,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询任务集合的子任务
    * @param page
    */
-  async queryChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>) {
+  public async queryChildrenTaskPage(
+    page: PageModel<TaskQueryDTO, Task>
+  ): Promise<PageModel<TaskQueryDTO, Task>> {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
@@ -917,7 +926,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 查询状态列表
    * @param ids
    */
-  public async listStatus(ids: number[]) {
+  public async listStatus(ids: number[]): Promise<TaskScheduleDTO[]> {
     return this.dao.listStatus(ids)
   }
 
@@ -974,7 +983,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskId: number,
     taskTracker: TaskTracker,
     taskEndHandler: Promise<TaskStatesEnum>
-  ) {
+  ): void {
     const trackerName = String(taskId)
     GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName] = taskTracker
     // 确认任务结束或失败后，延迟2秒清除其追踪器
@@ -1004,7 +1013,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       writeStream?: fs.WriteStream
       bytesSum?: number
     }
-  ) {
+  ): void {
     const old = this.getTaskTracker(taskId)
     if (isNullish(old)) {
       LogUtil.warn('TaskService', `没有找到需要更新的任务跟踪器，taskId: ${taskId}`)
