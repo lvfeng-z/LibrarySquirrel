@@ -357,6 +357,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     includeStatus: TaskStatesEnum[],
     mainWindow: Electron.BrowserWindow
   ): Promise<number> {
+    const startTime = Date.now()
     // 所有任务设置为等待中
     await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING, includeStatus)
     // 查找id列表对应的所有子任务
@@ -366,7 +367,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
     // 计数器
-    let counter = 0
+    let succeed = 0
+    let failed = 0
+    let pause = 0
 
     // 获取下载限制器
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
@@ -477,7 +480,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const saveResult = await savePromise
 
       if (TaskStatesEnum.FINISHED === saveResult) {
-        counter++
         worksService.resourceFinished(worksId)
       }
       return { status: saveResult, worksId: worksId }
@@ -499,13 +501,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const activeProcess = savingProcess(task)
           .then(async (processResult) => {
             // 修改任务状态和作品资源状态(只有完成状态进行修改，暂停状态在暂停函数中处理)
-            if (processResult.status === TaskStatesEnum.FINISHED) {
+            if (TaskStatesEnum.FINISHED === processResult.status) {
+              succeed++
               task.status = TaskStatesEnum.FINISHED
               await this.finishTask(task, processResult.worksId)
+            } else if (TaskStatesEnum.PAUSE === processResult.status) {
+              pause++
             }
             return true
           })
           .catch(async (error) => {
+            error++
             LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
             task.status = TaskStatesEnum.FAILED
             await this.taskFailed(task)
@@ -517,8 +523,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     await Promise.allSettled(activeProcesses)
+    LogUtil.info('TaskService', `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`)
 
-    return counter
+    return succeed
   }
 
   /**
