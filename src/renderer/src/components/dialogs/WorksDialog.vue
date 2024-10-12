@@ -35,7 +35,7 @@ onMounted(() => {
 // 接口
 const apis = {
   localTagListByWorksId: window.api.localTagListByWorksId,
-  localTagListSelectItemPageByWorksId: window.api.localTagListSelectItemPageByWorksId,
+  localTagQuerySelectItemPageByWorksId: window.api.localTagQuerySelectItemPageByWorksId,
   reWorksTagLink: window.api.reWorksTagLink,
   reWorksTagUnlink: window.api.reWorksTagUnlink,
   worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
@@ -146,8 +146,8 @@ async function updateWorksLocalTags() {
                 lower-title="可选标签"
                 :upper-main-input-boxes="exchangeBoxMainInputBoxes"
                 :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-                :upper-search-api="apis.localTagListSelectItemPageByWorksId"
-                :lower-search-api="apis.localTagListSelectItemPageByWorksId"
+                :upper-search-api="apis.localTagQuerySelectItemPageByWorksId"
+                :lower-search-api="apis.localTagQuerySelectItemPageByWorksId"
                 :upper-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
                 :lower-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
                 @exchange-confirm="handleLocalTagExchangeConfirm"

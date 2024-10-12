@@ -56,7 +56,7 @@ export default class LocalAuthorService extends BaseService<
    * 分页查询
    * @param page
    */
-  public async selectPage(
+  public async queryPage(
     page: PageModel<LocalAuthorQueryDTO, LocalAuthor>
   ): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
@@ -66,7 +66,7 @@ export default class LocalAuthorService extends BaseService<
           ...page.query.assignComparator
         }
       }
-      return super.selectPage(page)
+      return super.queryPage(page)
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error
@@ -76,11 +76,11 @@ export default class LocalAuthorService extends BaseService<
   /**
    * 查询SelectItem列表
    */
-  public getSelectItems(query: LocalAuthorQueryDTO): Promise<SelectItem[]> {
+  public listSelectItems(query: LocalAuthorQueryDTO): Promise<SelectItem[]> {
     try {
       query = new LocalAuthorQueryDTO(query)
       query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
-      return this.dao.getSelectItems(query, 'id', 'localAuthorName')
+      return this.dao.baseListSelectItems(query, 'id', 'localAuthorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error
@@ -90,14 +90,14 @@ export default class LocalAuthorService extends BaseService<
   /**
    * 分页查询SelectItem
    */
-  public getSelectItemPage(
+  public querySelectItemPage(
     page: PageModel<LocalAuthorQueryDTO, LocalAuthor>
   ): Promise<PageModel<LocalAuthorQueryDTO, SelectItem>> {
     try {
       page = new PageModel(page)
       page.query = new LocalAuthorQueryDTO(page.query)
       page.query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
-      return this.dao.getSelectItemPage(page, 'id', 'localAuthorName')
+      return this.dao.querySelectItemPage(page, 'id', 'localAuthorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error
@@ -108,10 +108,8 @@ export default class LocalAuthorService extends BaseService<
    * 批量获取作品与作者的关联
    * @param worksIds
    */
-  public async getWorksAuthorRelationShip(
-    worksIds: number[]
-  ): Promise<Map<number, LocalAuthorDTO[]>> {
-    return this.dao.getWorksAuthorRelationShip(worksIds)
+  public async listReWorksAuthor(worksIds: number[]): Promise<Map<number, LocalAuthorDTO[]>> {
+    return this.dao.listReWorksAuthor(worksIds)
   }
 
   /**

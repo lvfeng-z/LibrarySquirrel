@@ -26,9 +26,9 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
-  test: window.api.localAuthorGetSelectItems,
+  test: window.api.localAuthorListSelectItems,
   testPLimitTest: window.api.testPLimitTest,
-  localTagGetSelectList: window.api.localTagGetSelectList,
+  localTagListSelectItems: window.api.localTagListSelectItems,
   worksQueryPage: window.api.worksQueryPage
 }
 let loading = false // 主菜单栏加载中开关
@@ -54,7 +54,7 @@ async function getTagSelectList(keyword) {
   loading = true
   try {
     const params = { keyword: keyword }
-    const response = await apis.localTagGetSelectList(params)
+    const response = await apis.localTagListSelectItems(params)
     if (ApiUtil.apiResponseCheck(response)) {
       tagSelectList.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
     }

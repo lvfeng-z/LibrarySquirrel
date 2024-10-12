@@ -128,23 +128,23 @@ export default abstract class BaseService<
    * 分页查询
    * @param page
    */
-  public async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
-    return this.dao.selectPage(page)
+  public async queryPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
+    return this.dao.queryPage(page)
   }
 
   /**
    * 查询列表
    * @param query
    */
-  public async selectList(query: Query): Promise<Model[]> {
-    return this.dao.selectList(query)
+  public async list(query: Query): Promise<Model[]> {
+    return this.dao.list(query)
   }
 
   /**
    * 根据id列表查询
    * @param ids id列表
    */
-  public async selectListByIds(ids: number[] | string[]): Promise<Model[]> {
-    return this.dao.selectListByIds(ids)
+  public async listByIds(ids: number[] | string[]): Promise<Model[]> {
+    return this.dao.listByIds(ids)
   }
 }

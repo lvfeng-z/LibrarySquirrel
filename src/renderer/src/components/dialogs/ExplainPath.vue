@@ -29,9 +29,9 @@ const state = defineModel<boolean>('state', {
 const apis = {
   autoExplainPathGetListenerPage: window.api.autoExplainPathGetListenerPage,
   autoExplainPathGetListenerList: window.api.autoExplainPathGetListenerList,
-  localAuthorGetSelectItemPage: window.api.localAuthorGetSelectItemPage,
-  localTagGetSelectItemPage: window.api.localTagGetSelectItemPage,
-  siteGetSelectItemPage: window.api.siteGetSelectItemPage
+  localAuthorQuerySelectItemPage: window.api.localAuthorQuerySelectItemPage,
+  localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
+  siteQuerySelectItemPage: window.api.siteQuerySelectItemPage
 }
 // 目录含义选择列表
 const meaningTypes = [
@@ -108,11 +108,11 @@ function getInputRowType(pathType: PathTypeEnum) {
 function getInputRowDataApi(pathType: PathTypeEnum): () => ApiResponse {
   switch (pathType) {
     case PathTypeEnum.AUTHOR:
-      return apis.localAuthorGetSelectItemPage
+      return apis.localAuthorQuerySelectItemPage
     case PathTypeEnum.TAG:
-      return apis.localTagGetSelectItemPage
+      return apis.localTagQuerySelectItemPage
     case PathTypeEnum.SITE:
-      return apis.siteGetSelectItemPage
+      return apis.siteQuerySelectItemPage
     default:
       throw new Error('不支持的类型使用了getInputRowDataApi函数')
   }

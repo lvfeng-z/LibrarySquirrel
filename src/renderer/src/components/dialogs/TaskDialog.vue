@@ -29,7 +29,7 @@ defineExpose({
 const apis = {
   taskStartTask: window.api.taskStartTask,
   taskDeleteTask: window.api.taskDeleteTask,
-  taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage
+  taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage
 }
 // childTaskSearchTable组件
 const childTaskSearchTable = ref()
@@ -368,7 +368,7 @@ async function deleteTask(ids: number[]) {
         style="flex-grow: 1"
         :selectable="true"
         :thead="thead"
-        :search-api="apis.taskSelectChildrenTaskPage"
+        :search-api="apis.taskQueryChildrenTaskPage"
         :fixed-param="{ pid: formData.id }"
         :drop-down-input-boxes="[]"
         :key-of-data="keyOfData"

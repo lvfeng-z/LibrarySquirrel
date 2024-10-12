@@ -24,10 +24,11 @@ onMounted(() => {
 const apis = {
   localAuthorDeleteById: window.api.localAuthorDeleteById,
   localAuthorUpdateById: window.api.localAuthorUpdateById,
-  localAuthorSelectPage: window.api.localAuthorSelectPage,
+  localAuthorQueryPage: window.api.localAuthorQueryPage,
   siteAuthorUpdateBindLocalAuthor: window.api.siteAuthorUpdateBindLocalAuthor,
-  siteGetSelectItemPage: window.api.siteGetSelectItemPage,
-  siteAuthorGetBoundOrUnboundInLocalAuthor: window.api.siteAuthorGetBoundOrUnboundInLocalAuthor
+  siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
+  siteAuthorQueryBoundOrUnboundInLocalAuthorPage:
+    window.api.siteAuthorQueryBoundOrUnboundInLocalAuthorPage
 }
 // localAuthorSearchTable的组件实例
 const localAuthorSearchTable = ref()
@@ -124,7 +125,7 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     type: 'select',
     placeholder: '选择站点',
     useApi: true,
-    api: apis.siteGetSelectItemPage,
+    api: apis.siteQuerySelectItemPage,
     pagingApi: true,
     inputSpan: 9
   }
@@ -247,7 +248,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             ]"
             :main-input-boxes="mainInputBoxes"
             :drop-down-input-boxes="dropDownInputBoxes"
-            :search-api="apis.localAuthorSelectPage"
+            :search-api="apis.localAuthorQueryPage"
             :multi-select="false"
             :selectable="true"
             @create-button-clicked="handleCreateButtonClicked"
@@ -261,12 +262,12 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             upper-title="已绑定站点作者"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteAuthorGetBoundOrUnboundInLocalAuthor"
+            :upper-search-api="apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage"
             :upper-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: true }"
             lower-title="可绑定站点作者"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteAuthorGetBoundOrUnboundInLocalAuthor"
+            :lower-search-api="apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage"
             :lower-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: false }"
             required-static-params="localAuthorId"
             @exchange-confirm="handleExchangeBoxConfirm"

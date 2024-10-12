@@ -351,7 +351,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 分页查询
    * @param page
    */
-  public async selectPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
+  public async queryPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
     // 生成where字句
     let whereClause
     const modifiedPage = new PageModel(page)
@@ -392,7 +392,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 查询列表
    * @param query
    */
-  public async selectList(query?: Query): Promise<Model[]> {
+  public async list(query?: Query): Promise<Model[]> {
     let statement = `SELECT * FROM "${this.tableName}"`
     // 生成where字句
     let modifiedQuery = lodash.cloneDeep(query)
@@ -429,7 +429,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 根据id列表查询
    * @param ids id列表
    */
-  public async selectListByIds(ids: number[] | string[]): Promise<Model[]> {
+  public async listByIds(ids: number[] | string[]): Promise<Model[]> {
     const idStr = ids.join(',')
     const statement = `SELECT * FROM "${this.tableName}" WHERE ${this.getPrimaryKeyColumnName()} IN (${idStr})`
     // 生成where字句
@@ -449,7 +449,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 查询SelectItem列表
    */
-  public async getSelectItems(
+  public async baseListSelectItems(
     query: Query,
     valueName: string,
     labelName: string,
@@ -493,7 +493,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 分页查询SelectItem
    */
-  public async getSelectItemPage(
+  public async querySelectItemPage(
     page: PageModel<Query, Model>,
     valueName: string,
     labelName: string,

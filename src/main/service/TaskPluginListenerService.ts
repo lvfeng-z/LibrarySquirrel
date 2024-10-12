@@ -24,7 +24,7 @@ export default class TaskPluginListenerService extends BaseService<
   /**
    * 获取监听此链接的插件
    */
-  getListener(url: string): Promise<InstalledPlugins[]> {
-    return this.dao.getListener(url)
+  listListener(url: string): Promise<InstalledPlugins[]> {
+    return this.dao.listListener(url)
   }
 }

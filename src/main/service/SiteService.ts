@@ -33,12 +33,12 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * 分页查询SelectItem
    * @param page
    */
-  public async getSelectItemPage(page: PageModel<SiteQueryDTO, Site>) {
+  public async querySelectItemPage(page: PageModel<SiteQueryDTO, Site>) {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new SiteQueryDTO(page.query)
       page.query.assignComparator = { siteName: COMPARATOR.LIKE }
     }
-    return this.dao.getSelectItemPage(page, 'id', 'SiteName')
+    return this.dao.querySelectItemPage(page, 'id', 'SiteName')
   }
 
   /**
@@ -49,7 +49,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
     if (StringUtil.isNotBlank(domain)) {
       const query = new SiteQueryDTO()
       query.siteDomain = domain
-      const sites = await this.dao.selectList(query)
+      const sites = await this.dao.list(query)
       if (sites.length === 1) {
         return sites[0]
       }

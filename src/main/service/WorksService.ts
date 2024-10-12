@@ -317,7 +317,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
         if (worksIds.length > 0) {
           const localAuthorService = new LocalAuthorService()
-          const relationShipMap = await localAuthorService.getWorksAuthorRelationShip(worksIds)
+          const relationShipMap = await localAuthorService.listReWorksAuthor(worksIds)
           resultPage.data.forEach((worksDTO) => {
             worksDTO.localAuthors = relationShipMap.get(worksDTO.id as number)
           })

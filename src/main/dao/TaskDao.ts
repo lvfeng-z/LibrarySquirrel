@@ -48,7 +48,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * 分页查询任务集合
    * @param page
    */
-  async selectParentPage(page: PageModel<TaskQueryDTO, Task>) {
+  async queryParentPage(page: PageModel<TaskQueryDTO, Task>) {
     const modifiedPage = new PageModel(page)
     if (isNullish(modifiedPage.query)) {
       modifiedPage.query = new TaskQueryDTO()
@@ -139,10 +139,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * @param taskIds 任务id
    * @param includeStatus 指定的任务状态
    */
-  async selectTaskTreeList(
-    taskIds: number[],
-    includeStatus?: TaskStatesEnum[]
-  ): Promise<TaskDTO[]> {
+  async listTaskTree(taskIds: number[], includeStatus?: TaskStatesEnum[]): Promise<TaskDTO[]> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
     const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
@@ -181,7 +178,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * 查询状态列表
    * @param ids
    */
-  async selectStatusList(ids: number[]): Promise<TaskScheduleDTO[]> {
+  async listStatus(ids: number[]): Promise<TaskScheduleDTO[]> {
     const idsStr = ids.join(',')
     const statement = `SELECT id, status, CASE WHEN status = ${TaskStatesEnum.FINISHED} THEN 100 END as schedule
                        FROM "${this.tableName}"

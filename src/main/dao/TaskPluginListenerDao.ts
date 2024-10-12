@@ -20,7 +20,7 @@ export default class TaskPluginListenerDao extends BaseDao<
    * 获取监听此url的插件
    * @param url
    */
-  async getListener(url: string) {
+  async listListener(url: string): Promise<InstalledPlugins[]> {
     const db = this.acquire()
     const statement = `select distinct t1.* from installed_plugins t1 inner join task_plugin_listener t2 on t1.id = t2.plugin_id where '${url}' REGEXP t2.listener order by t1.sort_num`
     return db

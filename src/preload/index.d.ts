@@ -21,22 +21,22 @@ declare global {
       localAuthorDeleteById: function
       localAuthorUpdateById: function
       localAuthorGetById : function
-      localAuthorSelectPage: function
-      localAuthorGetSelectItems: function
-      localAuthorGetSelectItemPage: function
+      localAuthorQueryPage: function
+      localAuthorListSelectItems: function
+      localAuthorQuerySelectItemPage: function
 
       // LocalTag
       localTagSave: function
       localTagDeleteById: function
       localTagUpdateById: function
       localTagLink: function
-      localTagSelectPage: function
+      localTagQueryPage: function
       localTagGetById: function
       localTagGetTree: function
-      localTagGetSelectList: function
-      localTagGetSelectItemPage: function
+      localTagListSelectItems: function
+      localTagQuerySelectItemPage: function
       localTagListByWorksId: function
-      localTagListSelectItemPageByWorksId: function
+      localTagQuerySelectItemPageByWorksId: function
 
       // ReWorksTag
       reWorksTagLink: function
@@ -48,17 +48,17 @@ declare global {
       settingsResetSettings: function
 
       // Site
-      siteGetSelectItemPage: function
+      siteQuerySelectItemPage: function
 
       // SiteAuthor
       siteAuthorUpdateBindLocalAuthor: function
-      siteAuthorGetBoundOrUnboundInLocalAuthor: function
+      siteAuthorQueryBoundOrUnboundInLocalAuthorPage: function
 
       // SiteTag
       siteTagSave: function
       siteTagUpdateById: function
       siteTagUpdateBindLocalTag: function
-      siteTagGetBoundOrUnboundInLocalTag: function
+      siteTagQueryBoundOrUnboundToLocalTagPage: function
       siteTagGetSelectList: function
 
       // Task
@@ -66,12 +66,12 @@ declare global {
       taskRetryTask: function
       taskCreateTask: function
       taskDeleteTask: function
-      taskSelectPage: function
-      taskSelectParentPage: function
-      taskSelectTreeDataPage: function
-      taskGetChildrenTask: function
-      taskSelectChildrenTaskPage: function
-      taskSelectScheduleList: function
+      taskQueryPage: function
+      taskQueryParentPage: function
+      taskQueryTreeDataPage: function
+      taskListChildrenTask: function
+      taskQueryChildrenTaskPage: function
+      taskListSchedule: function
       taskPauseTaskTree: function
       taskResumeTaskTree: function
 

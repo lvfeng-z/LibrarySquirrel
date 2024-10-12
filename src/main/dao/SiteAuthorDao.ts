@@ -20,7 +20,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 根据站点作者Id列表查询
    * @param siteAuthorIs
    */
-  async selectListBySiteAuthorIds(siteAuthorIs: string[]) {
+  async listBySiteAuthorIds(siteAuthorIs: string[]) {
     const db = this.acquire()
     const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id in ${siteAuthorIs.join(',')}`
     return db
@@ -66,7 +66,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 查询站点作者（附带绑定的本地作者）
    * @param page
    */
-  public async getSiteAuthorWithLocalAuthor(
+  public async listSiteAuthorWithLocalAuthor(
     page: PageModel<SiteAuthorQueryDTO, SiteAuthor>
   ): Promise<SiteAuthorDTO[]> {
     // 没有查询参数，构建一个空的

@@ -16,7 +16,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     return 'id'
   }
 
-  public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
+  public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
     const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`
     let where = ''
     const columns: string[] = []
@@ -127,7 +127,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * 分页查询作品的本地标签
    * @param page
    */
-  async selectPageByWorksId(
+  async queryPageByWorksId(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     if (isNullish(page.query)) {

@@ -43,7 +43,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   async createTask(url: string, mainWindow: Electron.BrowserWindow): Promise<TaskCreateResponse> {
     // 查询监听此url的插件
     const taskPluginListenerService = new TaskPluginListenerService()
-    const taskPlugins = await taskPluginListenerService.getListener(url)
+    const taskPlugins = await taskPluginListenerService.listListener(url)
 
     if (taskPlugins.length === 0) {
       const msg = `没有监听此链接的插件，url: ${url}`
@@ -360,7 +360,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 所有任务设置为等待中
     await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING, includeStatus)
     // 查找id列表对应的所有子任务
-    const taskTree: TaskDTO[] = await this.dao.selectTaskTreeList(taskIds, [TaskStatesEnum.WAITING])
+    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, [TaskStatesEnum.WAITING])
 
     // 插件加载器
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
@@ -564,7 +564,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param mainWindow
    */
   public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
-    const taskTree = await this.dao.selectTaskTreeList(ids)
+    const taskTree = await this.dao.listTaskTree(ids)
 
     // 插件加载器
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
@@ -689,7 +689,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param mainWindow
    */
   public async resumeTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
-    const taskTree = await this.dao.selectTaskTreeList(ids)
+    const taskTree = await this.dao.listTaskTree(ids)
 
     // 插件加载器
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
@@ -722,7 +722,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   async deleteTask(taskIds: number[]): Promise<number> {
     const waitingDelete: number[] = []
-    const taskTree = await this.dao.selectTaskTreeList(taskIds)
+    const taskTree = await this.dao.listTaskTree(taskIds)
     for (const task of taskTree) {
       if (task.status === TaskStatesEnum.WAITING) {
         throw new Error('不能删除等待开始的任务')
@@ -808,14 +808,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询任务集合
    * @param page
    */
-  async selectParentPage(page: PageModel<TaskQueryDTO, Task>) {
+  async queryParentPage(page: PageModel<TaskQueryDTO, Task>) {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
         ...page.query.assignComparator
       }
     }
-    const sourcePage = await this.dao.selectParentPage(page)
+    const sourcePage = await this.dao.queryParentPage(page)
     const resultPage = sourcePage.transform<TaskDTO>()
     const tasks = sourcePage.data
     if (notNullish(tasks) && tasks.length > 0) {
@@ -832,14 +832,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询parent-children结构的任务
    * @param page
    */
-  async selectTreeDataPage(page: PageModel<TaskQueryDTO, Task>) {
+  async queryTreeDataPage(page: PageModel<TaskQueryDTO, Task>) {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE },
         ...page.query.assignComparator
       }
     }
-    const sourcePage = await super.selectPage(page)
+    const sourcePage = await super.queryPage(page)
     const resultPage = sourcePage.transform<TaskDTO>()
 
     // 组装为树形数据
@@ -885,17 +885,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 获取任务集合的子任务
    * @param pid
    */
-  getChildrenTask(pid: number) {
+  listChildrenTask(pid: number): Promise<Task[]> {
     const query = new TaskQueryDTO()
     query.pid = pid
-    return this.dao.selectList(query)
+    return this.dao.list(query)
   }
 
   /**
    * 分页查询任务集合的子任务
    * @param page
    */
-  async selectChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>) {
+  async queryChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>) {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
@@ -903,22 +903,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
       page.query.isCollection = false
     }
-    return await super.selectPage(page)
+    return await super.queryPage(page)
   }
 
   /**
    * 查询状态列表
    * @param ids
    */
-  public async selectStatusList(ids: number[]) {
-    return this.dao.selectStatusList(ids)
+  public async listStatus(ids: number[]) {
+    return this.dao.listStatus(ids)
   }
 
   /**
    * 查询任务进度
    * @param ids id列表
    */
-  public async selectScheduleList(ids: number[]): Promise<TaskScheduleDTO[]> {
+  public async listSchedule(ids: number[]): Promise<TaskScheduleDTO[]> {
     let result: TaskScheduleDTO[] = []
     // 没有监听器的任务
     const noListenerIds: number[] = []
@@ -951,7 +951,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
     })
     // 没有监听器的任务去数据库查询状态
-    const noListener = await this.selectStatusList(noListenerIds)
+    const noListener = await this.listStatus(noListenerIds)
 
     result = result.concat(noListener)
     return result

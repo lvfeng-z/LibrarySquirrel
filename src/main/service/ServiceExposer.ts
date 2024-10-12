@@ -92,31 +92,31 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localAuthor-selectPage', async (_event, args) => {
+  Electron.ipcMain.handle('localAuthor-queryPage', async (_event, args) => {
     const service = new LocalAuthorService()
     args = new PageModel(args)
     try {
-      const page = await service.selectPage(args)
+      const page = await service.queryPage(args)
       return ApiUtil.response(page)
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localAuthor-getSelectItems', async (_event, args) => {
+  Electron.ipcMain.handle('localAuthor-listSelectItems', async (_event, args) => {
     const service = new LocalAuthorService()
     try {
-      const result = await service.getSelectItems(args)
+      const result = await service.listSelectItems(args)
       return ApiUtil.response(result)
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localAuthor-getSelectItemPage', async (_event, args) => {
+  Electron.ipcMain.handle('localAuthor-querySelectItemPage', async (_event, args) => {
     const service = new LocalAuthorService()
     try {
-      const result = await service.getSelectItemPage(args)
+      const result = await service.querySelectItemPage(args)
       return ApiUtil.response(result)
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
@@ -152,10 +152,10 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localTag-selectPage', async (_event, args) => {
+  Electron.ipcMain.handle('localTag-queryPage', async (_event, args) => {
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.selectPage(args))
+      return ApiUtil.response(await localTagService.queryPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -179,19 +179,19 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localTag-getSelectList', async (_event, args) => {
+  Electron.ipcMain.handle('localTag-listSelectItems', async (_event, args) => {
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.getSelectList(args))
+      return ApiUtil.response(await localTagService.listSelectItems(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localTag-getSelectItemPage', async (_event, args) => {
+  Electron.ipcMain.handle('localTag-querySelectItemPage', async (_event, args) => {
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.getSelectItemPage(args))
+      return ApiUtil.response(await localTagService.querySelectItemPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -206,10 +206,10 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('localTag-listSelectItemPageByWorksId', async (_event, args) => {
+  Electron.ipcMain.handle('localTag-querySelectItemPageByWorksId', async (_event, args) => {
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.listSelectItemPageByWorksId(args))
+      return ApiUtil.response(await localTagService.querySelectItemPageByWorksId(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -254,10 +254,10 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   })
 
   // SiteService
-  Electron.ipcMain.handle('site-getSelectItemPage', async (_event, args) => {
+  Electron.ipcMain.handle('site-querySelectItemPage', async (_event, args) => {
     const siteService = new SiteService()
     try {
-      return ApiUtil.response(await siteService.getSelectItemPage(args))
+      return ApiUtil.response(await siteService.querySelectItemPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -274,15 +274,18 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('siteAuthor-getBoundOrUnboundInLocalAuthor', async (_event, args) => {
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.getBoundOrUnboundInLocalAuthor(args))
-    } catch (error) {
-      LogUtil.error('ServiceExposer', error)
-      return ApiUtil.error(String(error))
+  Electron.ipcMain.handle(
+    'siteAuthor-queryBoundOrUnboundInLocalAuthorPage',
+    async (_event, args) => {
+      const siteAuthorService = new SiteAuthorService()
+      try {
+        return ApiUtil.response(await siteAuthorService.queryBoundOrUnboundInLocalAuthorPage(args))
+      } catch (error) {
+        LogUtil.error('ServiceExposer', error)
+        return ApiUtil.error(String(error))
+      }
     }
-  })
+  )
 
   // SiteTagService
   Electron.ipcMain.handle('siteTag-save', async (_event, args) => {
@@ -316,11 +319,11 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
     }
   )
   Electron.ipcMain.handle(
-    'siteTag-getBoundOrUnboundInLocalTag',
+    'siteTag-queryBoundOrUnboundToLocalTagPage',
     async (_event, page: PageModel<SiteTagQueryDTO, SiteTag>) => {
       try {
         const siteTagService = new SiteTagService()
-        return ApiUtil.response(await siteTagService.getBoundOrUnboundInLocalTag(page))
+        return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))
       } catch (error) {
         LogUtil.error('ServiceExposer', error)
         return ApiUtil.error(String(error))
@@ -374,55 +377,55 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-selectPage', async (_event, args) => {
+  Electron.ipcMain.handle('task-queryPage', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.selectPage(args))
+      return ApiUtil.response(await taskService.queryPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-selectParentPage', async (_event, args) => {
+  Electron.ipcMain.handle('task-queryParentPage', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.selectParentPage(args))
+      return ApiUtil.response(await taskService.queryParentPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-selectTreeDataPage', async (_event, args) => {
+  Electron.ipcMain.handle('task-queryTreeDataPage', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.selectTreeDataPage(args))
+      return ApiUtil.response(await taskService.queryTreeDataPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-getChildrenTask', async (_event, args) => {
+  Electron.ipcMain.handle('task-listChildrenTask', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.getChildrenTask(args))
+      return ApiUtil.response(await taskService.listChildrenTask(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-selectChildrenTaskPage', async (_event, args) => {
+  Electron.ipcMain.handle('task-queryChildrenTaskPage', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.selectChildrenTaskPage(args))
+      return ApiUtil.response(await taskService.queryChildrenTaskPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-selectScheduleList', async (_event, args) => {
+  Electron.ipcMain.handle('task-listSchedule', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.selectScheduleList(args))
+      return ApiUtil.response(await taskService.listSchedule(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

@@ -49,7 +49,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询站点标签（附带绑定的本地标签）
    * @param page
    */
-  public async getSiteTagWithLocalTag(
+  public async queryBoundOrUnboundToLocalTagPage(
     page: PageModel<SiteTagQueryDTO, SiteTag>
   ): Promise<SiteTagDTO[]> {
     // 没有查询参数，构建一个空的
@@ -120,7 +120,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询SelectItem列表
    * @param queryDTO
    */
-  public async getSelectList(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
+  public async listSelectItems(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
     const selectFrom = 'select id as value, site_tag_name as label from site_tag'
     let where = ''
     const columns: string[] = []

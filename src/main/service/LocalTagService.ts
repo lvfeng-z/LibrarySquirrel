@@ -81,7 +81,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询
    * @param page
    */
-  public async selectPage(
+  public async queryPage(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     try {
@@ -91,7 +91,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           ...page.query.assignComparator
         }
       }
-      return super.selectPage(page)
+      return super.queryPage(page)
     } catch (error) {
       LogUtil.error('LocalTagService', error)
       throw error
@@ -130,8 +130,8 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 获取SelectItem列表
    * @param queryDTO
    */
-  public async getSelectList(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
-    const result = this.dao.getSelectList(queryDTO)
+  public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
+    const result = this.dao.listSelectItems(queryDTO)
     // extraData.tagType=true表示这些标签是本地的
     return result.then((res) => {
       return res.map((selectItem) => {
@@ -145,14 +145,14 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询SelectItem
    * @param page
    */
-  public async getSelectItemPage(
+  public async querySelectItemPage(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new LocalTagQueryDTO(page.query)
       page.query.assignComparator = { localTagName: COMPARATOR.LIKE }
     }
-    return await this.dao.getSelectItemPage(page, 'id', 'localTagName')
+    return await this.dao.querySelectItemPage(page, 'id', 'localTagName')
   }
 
   /**
@@ -167,7 +167,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */
-  public async listSelectItemPageByWorksId(
+  public async querySelectItemPageByWorksId(
     page: PageModel<LocalTagQueryDTO, LocalTag>
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     page = new PageModel(page)
@@ -177,7 +177,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         ...page.query.assignComparator
       }
     }
-    const sourcePage = await this.dao.selectPageByWorksId(page)
+    const sourcePage = await this.dao.queryPageByWorksId(page)
 
     // 根据localTag数据生成SelectItem
     const sourceData = sourcePage.data

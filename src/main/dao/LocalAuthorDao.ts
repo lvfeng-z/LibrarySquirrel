@@ -12,13 +12,15 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
     super('local_author', 'LocalAuthorDao', db)
   }
 
+  protected getPrimaryKeyColumnName(): string {
+    return 'id'
+  }
+
   /**
    * 批量获取作品与作者的关联
    * @param worksIds
    */
-  public async getWorksAuthorRelationShip(
-    worksIds: number[]
-  ): Promise<Map<number, LocalAuthorDTO[]>> {
+  public async listReWorksAuthor(worksIds: number[]): Promise<Map<number, LocalAuthorDTO[]>> {
     if (worksIds.length === 0) {
       throw new Error('查询作品与作者联系时，作品id列表不能为空')
     }
@@ -51,10 +53,6 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
           db.release()
         }
       })
-  }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
   }
 
   /**

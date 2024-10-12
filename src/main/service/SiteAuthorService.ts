@@ -73,7 +73,7 @@ export default class SiteAuthorService extends BaseService<
    */
   public async saveOrUpdateBatchBySiteAuthorId(siteAuthors: SiteAuthor[]): Promise<number> {
     const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId) as string[]
-    const oldSiteAuthors = await this.dao.selectListBySiteAuthorIds(siteAuthorIds)
+    const oldSiteAuthors = await this.dao.listBySiteAuthorIds(siteAuthorIds)
     const newSiteAuthors: SiteAuthor[] = []
     siteAuthors.forEach((siteAuthor) => {
       if (isNullish(siteAuthor.siteAuthorId)) {
@@ -135,12 +135,12 @@ export default class SiteAuthorService extends BaseService<
    * 查询本地标签绑定或未绑定的站点标签
    * @param page
    */
-  async getBoundOrUnboundInLocalAuthor(page: PageModel<SiteAuthorQueryDTO, SiteAuthor>) {
+  async queryBoundOrUnboundInLocalAuthorPage(page: PageModel<SiteAuthorQueryDTO, SiteAuthor>) {
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new PageModel(page)
     page.query = new SiteAuthorQueryDTO(page.query)
 
-    const results = await this.dao.getSiteAuthorWithLocalAuthor(page)
+    const results = await this.dao.listSiteAuthorWithLocalAuthor(page)
     const selectItems = results.map(
       (result) =>
         new SelectItem({
@@ -172,7 +172,7 @@ export default class SiteAuthorService extends BaseService<
       queryDTO.siteId = siteId
       queryDTO.sort = [{ column: 'createTime', asc: 'desc' }]
 
-      const siteAuthors = await this.dao.selectList(queryDTO)
+      const siteAuthors = await this.dao.list(queryDTO)
       if (siteAuthors.length === 1) {
         return siteAuthors[0]
       }

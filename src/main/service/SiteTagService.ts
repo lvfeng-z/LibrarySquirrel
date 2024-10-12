@@ -73,12 +73,12 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 查询本地标签绑定或未绑定的站点标签
    * @param page
    */
-  async getBoundOrUnboundInLocalTag(page: PageModel<SiteTagQueryDTO, SiteTag>) {
+  async queryBoundOrUnboundToLocalTagPage(page: PageModel<SiteTagQueryDTO, SiteTag>) {
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new PageModel(page)
     page.query = new SiteTagQueryDTO(page.query)
 
-    const results = await this.dao.getSiteTagWithLocalTag(page)
+    const results = await this.dao.queryBoundOrUnboundToLocalTagPage(page)
     const selectItems = results.map(
       (result) =>
         new SelectItem({
@@ -96,7 +96,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   async getSelectList(queryDTO: SiteTagQueryDTO) {
-    return await this.dao.getSelectList(queryDTO)
+    return await this.dao.listSelectItems(queryDTO)
   }
 
   /**

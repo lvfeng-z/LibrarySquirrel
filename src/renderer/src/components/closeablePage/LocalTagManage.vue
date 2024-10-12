@@ -24,13 +24,13 @@ onMounted(() => {
 const apis = {
   localTagDeleteById: window.api.localTagDeleteById,
   localTagUpdateById: window.api.localTagUpdateById,
-  localTagSelectPage: window.api.localTagSelectPage,
-  localTagGetSelectList: window.api.localTagGetSelectList,
+  localTagQueryPage: window.api.localTagQueryPage,
+  localTagListSelectItems: window.api.localTagListSelectItems,
   localTagGetTree: window.api.localTagGetTree,
   siteTagGetSelectList: window.api.siteTagGetSelectList,
   siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
-  siteGetSelectItemPage: window.api.siteGetSelectItemPage,
-  siteTagGetBoundOrUnboundInLocalTag: window.api.siteTagGetBoundOrUnboundInLocalTag
+  siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
+  siteTagQueryBoundOrUnboundToLocalTagPage: window.api.siteTagQueryBoundOrUnboundToLocalTagPage
 }
 // localTagSearchTable的组件实例
 const localTagSearchTable = ref()
@@ -138,7 +138,7 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     type: 'select',
     placeholder: '选择站点',
     useApi: true,
-    api: apis.siteGetSelectItemPage,
+    api: apis.siteQuerySelectItemPage,
     pagingApi: true,
     inputSpan: 9
   }
@@ -258,7 +258,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             ]"
             :main-input-boxes="mainInputBoxes"
             :drop-down-input-boxes="dropDownInputBoxes"
-            :search-api="apis.localTagSelectPage"
+            :search-api="apis.localTagQueryPage"
             :multi-select="false"
             :selectable="true"
             @create-button-clicked="handleCreateButtonClicked"
@@ -272,12 +272,12 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             upper-title="已绑定站点标签"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+            :upper-search-api="apis.siteTagQueryBoundOrUnboundToLocalTagPage"
             :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
             lower-title="可绑定站点标签"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteTagGetBoundOrUnboundInLocalTag"
+            :lower-search-api="apis.siteTagQueryBoundOrUnboundToLocalTagPage"
             :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
             required-static-params="localTagId"
             @exchange-confirm="handleExchangeBoxConfirm"

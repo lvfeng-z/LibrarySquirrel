@@ -29,10 +29,10 @@ const apis = {
   taskStartTask: window.api.taskStartTask,
   taskRetryTask: window.api.taskRetryTask,
   taskDeleteTask: window.api.taskDeleteTask,
-  taskSelectTreeDataPage: window.api.taskSelectTreeDataPage,
-  taskSelectParentPage: window.api.taskSelectParentPage,
-  taskSelectChildrenTaskPage: window.api.taskSelectChildrenTaskPage,
-  taskSelectScheduleList: window.api.taskSelectScheduleList,
+  taskQueryTreeDataPage: window.api.taskQueryTreeDataPage,
+  taskQueryParentPage: window.api.taskQueryParentPage,
+  taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage,
+  taskListSchedule: window.api.taskListSchedule,
   taskPauseTaskTree: window.api.taskPauseTaskTree,
   taskResumeTaskTree: window.api.taskResumeTaskTree,
   dirSelect: window.api.dirSelect
@@ -315,7 +315,7 @@ async function load(
   // 配置查询参数
   pageCondition.query = { ...new BaseQueryDTO(), ...{ pid: (row as TaskDTO).id } }
 
-  const response = await apis.taskSelectChildrenTaskPage(pageCondition)
+  const response = await apis.taskQueryChildrenTaskPage(pageCondition)
   if (ApiUtil.apiResponseCheck(response)) {
     const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
     const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
@@ -506,8 +506,8 @@ async function deleteTask(ids: number[]) {
         class="task-manage-search-table"
         :selectable="true"
         :thead="thead"
-        :search-api="apis.taskSelectParentPage"
-        :update-api="apis.taskSelectScheduleList"
+        :search-api="apis.taskQueryParentPage"
+        :update-api="apis.taskListSchedule"
         :update-param-name="['schedule', 'status']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
