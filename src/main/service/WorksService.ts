@@ -120,7 +120,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       return new Promise((resolve) => {
         // 收到任务控制器的pause事件时，返回暂停状态
-        taskTracker.taskProcessController.eventEmitter.on('pause', () =>
+        taskTracker.taskProcessController.eventEmitter.once('pause', () =>
           resolve(TaskStatesEnum.PAUSE)
         )
         saveResourceFinishPromise.then(() => resolve(TaskStatesEnum.FINISHED))
@@ -147,7 +147,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
       pipelineReadWrite(readable, writeable)
     return new Promise((resolve) => {
-      taskTracker.taskProcessController.eventEmitter.on('pause', () =>
+      taskTracker.taskProcessController.eventEmitter.once('pause', () =>
         resolve(TaskStatesEnum.PAUSE)
       )
       assertNotNullish(

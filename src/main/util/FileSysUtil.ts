@@ -93,35 +93,30 @@ export async function getWorksResource(
 export function pipelineReadWrite(readable: Readable, writable: Writable): Promise<void> {
   return new Promise((resolve, reject) => {
     let errorOccurred = false
-
     readable.on('error', (err) => {
       errorOccurred = true
       LogUtil.error('WorksService', `readable出错${err}`)
       reject(err)
     })
-
     writable.on('error', (err) => {
       errorOccurred = true
       LogUtil.error('WorksService', `writable出错${err}`)
       reject(err)
     })
-
-    readable.on('end', () => {
+    readable.once('end', () => {
       if (!errorOccurred) {
         writable.end()
       } else {
         reject()
       }
     })
-
-    writable.on('finish', () => {
+    writable.once('finish', () => {
       if (!errorOccurred) {
         resolve()
       } else {
         reject()
       }
     })
-
     readable.pipe(writable)
   })
 }
