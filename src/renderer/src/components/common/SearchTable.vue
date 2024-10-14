@@ -34,7 +34,7 @@ const props = withDefaults(
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     fixedParam?: Record<string, unknown> // 固定参数
-    updateApi?: (ids: string[]) => Promise<never> // 更新数据接口
+    updateApi?: (ids: (number | string)[]) => Promise<never> // 更新数据接口
     updateParamName?: string[] // 要更新的属性名
     pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
     createButton?: boolean // 是否展示新增按钮
@@ -127,15 +127,19 @@ function handleScroll() {
 }
 // 更新现有数据
 async function refreshData(waitingUpdateIds: number[] | string[], updateChildren: boolean) {
-  let waitingUpdateList: object[]
-  let ids: string[]
+  const idsStr: (number | string)[] = waitingUpdateIds.map((id: number | string) =>
+    typeof id === 'number' ? String(id) : id
+  )
 
   // 根级节点列入待刷新数组
-  ids = waitingUpdateIds.map((id: number | string) => (typeof id === 'number' ? String(id) : id))
-  waitingUpdateList = dataList.value.filter((data) => ids.includes(String(data[props.keyOfData])))
+  let waitingUpdateList: object[]
+  waitingUpdateList = dataList.value.filter((data) =>
+    idsStr.includes(String(data[props.keyOfData]))
+  )
 
-  // 根据treeData确认是否更新数据的下级数据
+  // 根据treeData确认是否包含哪些下级数据
   if (props.treeData && updateChildren) {
+    // 更新根数据的所有下级数据
     let tiledWaitingUpdate: TreeNode[] = [] // 平铺的树形数据
 
     // 把所有根级节点列入tiledWaitingUpdate
@@ -152,10 +156,9 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
         }
       }
     }
-    ids = tiledWaitingUpdate.map((data) => data[props.keyOfData])
     waitingUpdateList = tiledWaitingUpdate
   } else if (props.treeData) {
-    // 把所有waitingUpdateIds中对应的子节点列入waitingUpdateList
+    // 只更waitingUpdateIds包含的下级数据
     // 根级节点id列表
     const waitingUpdateRootIds = waitingUpdateList.map(
       (waitingUpdate) => waitingUpdate[props.keyOfData]
@@ -173,12 +176,12 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
         waitingUpdateList.push(child)
       }
     }
-    ids = waitingUpdateList.map((data) => data[props.keyOfData])
   }
+  const originalIds = waitingUpdateList.map((data) => data[props.keyOfData])
 
   // 请求更新接口
   if (notNullish(props.updateApi)) {
-    const response = await props.updateApi(ids)
+    const response = await props.updateApi(originalIds)
     if (ApiUtil.apiResponseCheck(response)) {
       const newDataList = ApiUtil.apiResponseGetData(response) as object[]
       if (
