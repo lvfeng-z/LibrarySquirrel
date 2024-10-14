@@ -9,7 +9,9 @@ import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
 import InputBox from '../../model/util/InputBox'
 import ApiUtil from '../../utils/ApiUtil'
-import { notNullish } from '../../utils/CommonUtil'
+import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { getNode } from '@renderer/utils/TreeUtil.ts'
+import { throttle } from 'lodash'
 
 // props
 const props = defineProps<{
@@ -29,7 +31,11 @@ defineExpose({
 const apis = {
   taskStartTask: window.api.taskStartTask,
   taskDeleteTask: window.api.taskDeleteTask,
-  taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage
+  taskRetryTask: window.api.taskRetryTask,
+  taskListSchedule: window.api.taskListSchedule,
+  taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage,
+  taskPauseTaskTree: window.api.taskPauseTaskTree,
+  taskResumeTaskTree: window.api.taskResumeTaskTree
 }
 // childTaskSearchTable组件
 const childTaskSearchTable = ref()
@@ -37,6 +43,8 @@ const childTaskSearchTable = ref()
 const baseDialog = ref()
 // parentTaskInfo的dom元素
 const parentTaskInfo = ref()
+// 下级任务
+const children: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // 列表高度
 const heightForSearchTable: Ref<UnwrapRef<number>> = ref(0)
 // 弹窗开关
@@ -212,6 +220,8 @@ const taskStatusMapping: {
     processing: false
   }
 }
+// 是否正在刷新数据
+let refreshing: boolean = false
 
 // 方法
 function handleDialog(newState: boolean) {
@@ -227,17 +237,73 @@ function handleDialog(newState: boolean) {
     childTaskSearchTable.value.handleSearchButtonClicked()
   })
 }
+// 刷新任务进度和状态
+async function refreshTask() {
+  refreshing = true
+  // 获取需要刷新的任务
+  const getRefreshTasks = (): number[] => {
+    // 获取可视区域及附近的行id
+    const visibleRowsId = childTaskSearchTable.value
+      .getVisibleRows(200, 200)
+      .map((id: string) => Number(id))
+    // 利用树形工具找到所有id对应的数据，判断是否需要刷新
+    const tempRoot = new TaskDTO()
+    tempRoot.children = children.value
+    return visibleRowsId.filter((id: number) => {
+      const task = getNode<TaskDTO>(tempRoot, id)
+      return (
+        notNullish(task) &&
+        (task.status === TaskStatesEnum.WAITING ||
+          task.status === TaskStatesEnum.PROCESSING ||
+          task.status === TaskStatesEnum.PAUSE)
+      )
+    })
+  }
+
+  let refreshTasks: number[] = getRefreshTasks()
+
+  while (refreshTasks.length > 0) {
+    await childTaskSearchTable.value.refreshData(refreshTasks, false)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (isNullish(childTaskSearchTable.value)) {
+      break
+    }
+    refreshTasks = getRefreshTasks()
+  }
+  refreshing = false
+}
+// 防抖动refreshTask
+const throttleRefreshTask = throttle(
+  () => {
+    if (!refreshing) {
+      refreshTask()
+    }
+  },
+  500,
+  { leading: true, trailing: true }
+)
+// 滚动事件处理函数
+function handleScroll() {
+  throttleRefreshTask()
+}
 // 处理操作栏按钮点击事件
 function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
   switch (code) {
     case OperationCode.START:
-      apis.taskStartTask([row.id])
-      row.status = TaskStatesEnum.WAITING
+      startTask(row, false)
+      refreshTask()
       break
     case OperationCode.PAUSE:
+      apis.taskPauseTaskTree([row.id])
+      refreshTask()
+      break
+    case OperationCode.RESUME:
+      apis.taskResumeTaskTree([row.id])
+      refreshTask()
       break
     case OperationCode.RETRY:
-      console.log('重试')
+      startTask(row, true)
+      refreshTask()
       break
     case OperationCode.CANCEL:
       break
@@ -302,6 +368,18 @@ function mapToButtonStatus(row: TaskDTO): {
     return taskStatusMapping['0']
   }
 }
+// 开始任务
+function startTask(row: TaskDTO, retry: boolean) {
+  if (retry) {
+    apis.taskRetryTask([row.id])
+  } else {
+    apis.taskStartTask([row.id])
+  }
+  row.status = TaskStatesEnum.WAITING
+  if (row.isCollection && notNullish(row.children)) {
+    row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
+  }
+}
 // 删除任务
 async function deleteTask(ids: number[]) {
   const response = await apis.taskDeleteTask(ids)
@@ -364,11 +442,14 @@ async function deleteTask(ids: number[]) {
     <template #afterForm>
       <search-table
         ref="childTaskSearchTable"
+        v-model:data-list="children"
         :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
         style="flex-grow: 1"
         :selectable="true"
         :thead="thead"
         :search-api="apis.taskQueryChildrenTaskPage"
+        :update-api="apis.taskListSchedule"
+        :update-param-name="['schedule', 'status']"
         :fixed-param="{ pid: formData.id }"
         :drop-down-input-boxes="[]"
         :key-of-data="keyOfData"
@@ -376,24 +457,25 @@ async function deleteTask(ids: number[]) {
         :multi-select="true"
         :changed-rows="changedRows"
         :custom-operation-button="true"
+        @scroll="handleScroll"
       >
         <template #customOperations="{ row }">
           <div style="display: flex; flex-direction: column; align-items: center">
             <el-button-group>
+              <el-tooltip v-if="(row as TaskDTO).isCollection" content="详情">
+                <el-button
+                  size="small"
+                  icon="View"
+                  @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
+                />
+              </el-tooltip>
               <el-tooltip :content="mapToButtonStatus(row).tooltip">
                 <el-button
                   size="small"
                   :icon="mapToButtonStatus(row).icon"
-                  :loading="mapToButtonStatus(row).processing"
+                  :loading="!(row as TaskDTO).continuable && mapToButtonStatus(row).processing"
                   @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
                 ></el-button>
-              </el-tooltip>
-              <el-tooltip content="暂停">
-                <el-button
-                  size="small"
-                  icon="VideoPause"
-                  @click="handleOperationButtonClicked(row, OperationCode.PAUSE)"
-                />
               </el-tooltip>
               <el-tooltip content="取消">
                 <el-button
@@ -411,9 +493,7 @@ async function deleteTask(ids: number[]) {
               </el-tooltip>
             </el-button-group>
             <el-progress
-              v-if="
-                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING
-              "
+              v-if="row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.PAUSE"
               style="width: 100%"
               :percentage="row.schedule?.toFixed(2)"
               text-inside
