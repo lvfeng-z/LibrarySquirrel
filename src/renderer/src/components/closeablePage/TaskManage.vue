@@ -555,12 +555,21 @@ async function deleteTask(ids: number[]) {
               </el-tooltip>
             </el-button-group>
             <el-progress
-              v-if="row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.PAUSE"
+              v-show="
+                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.PAUSE
+              "
               style="width: 100%"
               :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
               text-inside
-              :stroke-width="17"
-            ></el-progress>
+              :stroke-width="15"
+              striped
+              striped-flow
+              :duration="5"
+            >
+              <template #default="{ percentage }">
+                <span style="font-size: 15px">{{ percentage }}%</span>
+              </template>
+            </el-progress>
           </div>
         </template>
       </search-table>
