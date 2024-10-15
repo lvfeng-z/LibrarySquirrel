@@ -15,7 +15,7 @@ export class TaskProcessController {
    * 事件派发器
    * @private
    */
-  public readonly eventEmitter: EventEmitter
+  private readonly eventEmitter: EventEmitter
 
   constructor() {
     this.eventEmitter = new EventEmitter()
@@ -27,5 +27,13 @@ export class TaskProcessController {
 
   public resume() {
     this.eventEmitter.emit('resume')
+  }
+
+  public oncePause(handler: () => unknown) {
+    this.eventEmitter.once('pause', handler)
+  }
+
+  public onceResume(handler: () => unknown) {
+    this.eventEmitter.emit('resume', handler)
   }
 }
