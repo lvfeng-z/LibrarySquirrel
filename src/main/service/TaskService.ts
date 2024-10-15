@@ -605,6 +605,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       )
       taskPluginDTO.remoteStream = taskTracker.readStream
 
+      // todo 暂停后读取流中可能还有未消费的数据，这部分数据丢失了
       // 调用插件的pause方法
       taskHandler.pause(taskPluginDTO)
       // 等待写入流处理完所有缓冲区中的数据，断开连接
@@ -660,7 +661,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task: Task,
     pluginLoader: PluginLoader<TaskHandler>
   ): Promise<WorksResourceSaveResponse> {
-    assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空，taskId')
+    assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
     assertNotNullish(
       task.localWorksId,
       'TaskService',
@@ -679,17 +680,24 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     )
     const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
-    // 调用插件的resume函数，获取资源
+    // 插件用于恢复下载的任务信息
     const taskPluginDTO = new TaskPluginDTO(task)
+    // 获取任务追踪器中的读取流
+    let taskTracker = this.getTaskTracker(task.id)
+    if (notNullish(taskTracker)) {
+      taskPluginDTO.remoteStream = taskTracker.readStream
+    }
+    // 获取已经下载的数据量
     try {
-      taskPluginDTO.bytesWrote = await fs.promises
+      taskPluginDTO.bytesWritten = await fs.promises
         .stat(task.pendingDownloadPath)
         .then((stats) => stats.size)
     } catch (error) {
       LogUtil.info('TasService', '恢复任务时，先前下载的文件已经不存在 ', error)
       await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
-      taskPluginDTO.bytesWrote = 0
+      taskPluginDTO.bytesWritten = 0
     }
+    // 调用插件的resume函数，获取资源
     const resumeResponse = await taskHandler.resume(taskPluginDTO)
     assertNotNullish(
       resumeResponse.remoteStream,
@@ -700,11 +708,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     let writeable: fs.WriteStream
     if (resumeResponse.continuable) {
       writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
+      writeable.bytesWritten = taskPluginDTO.bytesWritten
     } else {
       writeable = fs.createWriteStream(task.pendingDownloadPath)
     }
 
-    let taskTracker = this.getTaskTracker(task.id)
     if (isNullish(taskTracker)) {
       // 创建一个追踪器
       taskTracker = {

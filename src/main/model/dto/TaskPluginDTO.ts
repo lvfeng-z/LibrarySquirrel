@@ -11,21 +11,21 @@ export class TaskPluginDTO extends Task {
   /**
    * 已写入数据量
    */
-  bytesWrote: number
+  bytesWritten: number
 
   constructor(taskPluginDTO: TaskPluginDTO | Task) {
     if (isNullish(taskPluginDTO)) {
       super()
       this.remoteStream = undefined
-      this.bytesWrote = 0
+      this.bytesWritten = 0
     } else if (taskPluginDTO instanceof TaskPluginDTO) {
       super(taskPluginDTO)
       this.remoteStream = taskPluginDTO.remoteStream
-      this.bytesWrote = taskPluginDTO.bytesWrote
+      this.bytesWritten = taskPluginDTO.bytesWritten
     } else {
       super(taskPluginDTO)
       this.remoteStream = undefined
-      this.bytesWrote = 0
+      this.bytesWritten = 0
     }
   }
 }

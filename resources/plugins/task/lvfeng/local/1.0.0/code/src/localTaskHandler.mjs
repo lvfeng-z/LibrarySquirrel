@@ -109,10 +109,10 @@ export default class LocalTaskHandler {
   async resume(task) {
     const result = new PluginResumeResponse()
     if (task.remoteStream === undefined || task.remoteStream === null) {
-      if (task.bytesWrote === 0) {
+      if (task.bytesWritten === 0) {
         task.remoteStream = fs.createReadStream(task.url)
       } else {
-        task.remoteStream = fs.createReadStream(task.url, { start: task.bytesWrote })
+        task.remoteStream = fs.createReadStream(task.url, { start: task.bytesWritten })
       }
     } else {
       task.remoteStream.resume()
@@ -395,7 +395,7 @@ class Task {
   /**
    * 已写入数据量
    */
-  bytesWrote
+  bytesWritten
 
   constructor() {
     this.isCollection = undefined
@@ -411,7 +411,7 @@ class Task {
     this.pluginInfo = undefined
     this.pluginData = undefined
     this.remoteStream = undefined
-    this.bytesWrote = undefined
+    this.bytesWritten = undefined
   }
 }
 
