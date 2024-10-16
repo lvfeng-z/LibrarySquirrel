@@ -95,29 +95,27 @@ export default class LocalTaskHandler {
   /**
    * 暂停下载任务
    * @param task 需要暂停的任务
-   * @return 作品信息
    */
   pause(task) {
     task.remoteStream.pause()
   }
 
   /**
-   * 暂停下载任务
+   * 继续下载任务
    * @param task 需要暂停的任务
    * @return PluginResumeResponse
    */
   async resume(task) {
     const result = new PluginResumeResponse()
-    if (task.remoteStream === undefined || task.remoteStream === null) {
+    let pausedStream = task.remoteStream
+    if (pausedStream === undefined || pausedStream === null) {
       if (task.bytesWritten === 0) {
-        task.remoteStream = fs.createReadStream(task.url)
+        pausedStream = fs.createReadStream(task.url)
       } else {
-        task.remoteStream = fs.createReadStream(task.url, { start: task.bytesWritten })
+        pausedStream = fs.createReadStream(task.url, { start: task.bytesWritten })
       }
-    } else {
-      task.remoteStream.resume()
     }
-    result.remoteStream = task.remoteStream
+    result.remoteStream = pausedStream
     const stats = await fs.promises.stat(task.url)
     result.resourceSize = stats.size
     return result

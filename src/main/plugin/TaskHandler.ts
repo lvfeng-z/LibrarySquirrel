@@ -38,14 +38,13 @@ export interface TaskHandler extends BasePlugin {
   /**
    * 暂停下载任务
    * @param task 需要暂停的任务
-   * @return 作品信息（包含资源的数据流）
    */
   pause(task: TaskPluginDTO): void
 
   /**
    * 暂停下载任务
    * @param task 需要暂停的任务
-   * @return 接续已下载的文件的流
+   * @return 资源的读取流（必须是暂停状态）、是否可接续、资源大小
    */
   resume(task: TaskPluginDTO): Promise<PluginResumeResponse>
 }

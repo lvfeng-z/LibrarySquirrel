@@ -605,19 +605,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       )
       taskPluginDTO.remoteStream = taskTracker.readStream
 
-      // todo 暂停后读取流中可能还有未消费的数据，这部分数据丢失了
       // 调用插件的pause方法
       taskHandler.pause(taskPluginDTO)
       // 等待写入流处理完所有缓冲区中的数据，断开连接
-      taskTracker.writeStream.once('drain', () => {
-        taskTracker.readStream.unpipe(taskTracker.writeStream)
-        assertNotNullish(
-          taskTracker.writeStream,
-          'TaskService',
-          `暂停任务时，任务追踪器的写入流不存在，taskId: ${child.id}`
-        )
-        taskTracker.writeStream.close()
-      })
+      taskTracker.writeStream.end()
       // 调用任务控制器的pause方法
       taskTracker.taskProcessController.pause()
       // 更新任务追踪器的状态

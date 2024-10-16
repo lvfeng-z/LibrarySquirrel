@@ -6,7 +6,7 @@ import { WorksDao } from '../dao/WorksDao.ts'
 import SettingsService from './SettingsService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
-import { createDirIfNotExists, pipelineReadWrite } from '../util/FileSysUtil.ts'
+import { createDirIfNotExists, connectReadWrite } from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
@@ -92,7 +92,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     )
     // 保存资源的过程
     const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
-      pipelineReadWrite(readable, writeable)
+      connectReadWrite(readable, writeable)
     // 保存资源
     // 创建保存目录
     assertNotNullish(
@@ -143,7 +143,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     assertNotNullish(works, 'WorksService', `恢复资源下载时作品id无效，worksId: ${worksId}`)
     // 保存资源的过程
     const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
-      pipelineReadWrite(readable, writeable)
+      connectReadWrite(readable, writeable)
     return new Promise((resolve) => {
       taskTracker.taskProcessController.oncePause(() => resolve(TaskStatesEnum.PAUSE))
       assertNotNullish(
