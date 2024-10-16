@@ -27,7 +27,7 @@ import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
-import { assertNotNullish } from '../util/AssertUtil.js'
+import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
 import { createDirIfNotExists } from '../util/FileSysUtil.js'
 import WorksResourceSaveResponse from '../model/utilModels/WorksResourceSaveResponse.js'
 
@@ -375,40 +375,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 获取下载限制器
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
 
-    // 处理任务集合的状态的函数
-    const handleRootStatus = (rootId: number): void => {
-      const root = taskTree.find((task) => task.id === rootId)
-      if (isNullish(root)) {
-        return
-      }
-
-      if (notNullish(root.children) && root.children.length > 0) {
-        const processing = root.children.some((child) => TaskStatesEnum.PROCESSING === child.status)
-        if (processing) {
-          return
-        } else {
-          const finished = root.children.filter(
-            (child) => TaskStatesEnum.FINISHED === child.status
-          ).length
-          const failed = root.children.filter(
-            (child) => TaskStatesEnum.FAILED === child.status
-          ).length
-          if (finished > 0 && failed > 0) {
-            root.status = TaskStatesEnum.PARTLY_FINISHED
-          } else if (finished > 0) {
-            root.status = TaskStatesEnum.FINISHED
-          } else {
-            root.status = TaskStatesEnum.FAILED
-          }
-        }
-      } else {
-        root.status = TaskStatesEnum.FINISHED
-      }
-      if (TaskStatesEnum.PROCESSING !== root.status) {
-        this.dao.refreshTaskStatus(root.id as number)
-      }
-    }
-
     // 保存作品资源和作品信息的函数
     const savingProcess = async (task: Task): Promise<WorksResourceSaveResponse> => {
       if (isNullish(task.id)) {
@@ -511,7 +477,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             await this.taskFailed(task)
             return false
           })
-          .finally(() => handleRootStatus(task.pid as number))
+          .finally(() => this.refreshParentTaskStatus(parent))
         activeProcesses.push(activeProcess)
       }
     }
@@ -725,6 +691,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const worksService = new WorksService()
     const resumePromise = worksService.resumeSaveWorksResource(task.localWorksId, taskTracker)
     this.addTaskTracker(task.id, taskTracker, resumePromise)
+    // 更新任务追踪器的状态
+    this.updateTaskTracker(task.id, { status: TaskStatesEnum.PROCESSING })
     return resumePromise.then(() => {
       return {
         status: TaskStatesEnum.FINISHED,
@@ -779,11 +747,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             }
             return true
           })
-          .catch((error) => {
+          .catch(async (error) => {
             failed++
+            await this.taskFailed(child)
             LogUtil.error('TaskService', `任务失败，taskId:${child.id}`, error)
             return false
           })
+          .finally(() => this.refreshParentTaskStatus(parent))
         activeProcesses.push(activeProcess)
       }
     }
@@ -794,6 +764,54 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
     )
     return succeed
+  }
+
+  /**
+   * 根据任务集合的children刷新其状态
+   * @param root 任务集合
+   */
+  public async refreshParentTaskStatus(root: TaskDTO): Promise<boolean> {
+    assertNotNullish(root.isCollection, 'TaskService', '刷新任务集合状态不能为非集合')
+    assertFalse(root.isCollection, 'TaskService', '刷新任务集合状态不能为非集合')
+    const originalStatus = root.status
+    if (notNullish(root.children) && root.children.length > 0) {
+      const processing = root.children.some((child) => TaskStatesEnum.PROCESSING === child.status)
+      if (processing) {
+        return false
+      } else {
+        const finished = root.children.filter(
+          (child) => TaskStatesEnum.FINISHED === child.status
+        ).length
+        const failed = root.children.filter(
+          (child) => TaskStatesEnum.FAILED === child.status
+        ).length
+        if (finished > 0 && failed > 0) {
+          root.status = TaskStatesEnum.PARTLY_FINISHED
+        } else if (finished > 0) {
+          root.status = TaskStatesEnum.FINISHED
+        } else {
+          root.status = TaskStatesEnum.FAILED
+        }
+      }
+    } else {
+      root.status = TaskStatesEnum.FINISHED
+    }
+
+    if (isNullish(originalStatus) || originalStatus !== root.status) {
+      LogUtil.info(
+        'test---------------------------------------------',
+        `originalStatus: ${originalStatus}; newStatus: ${root.status}`
+      )
+      return this.dao
+        .refreshTaskStatus(root.id as number)
+        .then((refreshResult) => refreshResult > 0)
+    } else {
+      LogUtil.info(
+        'test---------------------------------------------',
+        `originalStatus: ${originalStatus}; newStatus: ${root.status}`
+      )
+      return true
+    }
   }
 
   /**
