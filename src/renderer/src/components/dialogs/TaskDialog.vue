@@ -222,6 +222,8 @@ const taskStatusMapping: {
 }
 // 是否正在刷新数据
 let refreshing: boolean = false
+// 防抖动refreshTask
+const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 
 // 方法
 function handleDialog(newState: boolean) {
@@ -274,8 +276,6 @@ async function refreshTask() {
     refreshing = false
   }
 }
-// 防抖动refreshTask
-const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 // 滚动事件处理函数
 function handleScroll() {
   throttleRefreshTask()
@@ -285,19 +285,19 @@ function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
   switch (code) {
     case OperationCode.START:
       startTask(row, false)
-      refreshTask()
+      throttleRefreshTask()
       break
     case OperationCode.PAUSE:
       apis.taskPauseTaskTree([row.id])
-      refreshTask()
+      throttleRefreshTask()
       break
     case OperationCode.RESUME:
       apis.taskResumeTaskTree([row.id])
-      refreshTask()
+      throttleRefreshTask()
       break
     case OperationCode.RETRY:
       startTask(row, true)
-      refreshTask()
+      throttleRefreshTask()
       break
     case OperationCode.CANCEL:
       break

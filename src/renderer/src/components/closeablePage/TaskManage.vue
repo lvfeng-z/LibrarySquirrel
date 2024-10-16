@@ -255,6 +255,8 @@ const taskStatusMapping: {
 }
 // 是否正在刷新数据
 let refreshing: boolean = false
+// 防抖动refreshTask
+const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 // 当前dialog绑定数据
 const dialogData: Ref<UnwrapRef<TaskDTO>> = ref(new TaskDTO())
 // 站点下载dialog的开关
@@ -390,49 +392,41 @@ function handleSiteDownloadDialog(_event, newState?: boolean) {
 }
 // 刷新任务进度和状态
 async function refreshTask() {
-  refreshing = true
-  // 获取需要刷新的任务
-  const getRefreshTasks = (): number[] => {
-    // 获取可视区域及附近的行id
-    const visibleRowsId = taskManageSearchTable.value
-      .getVisibleRows(200, 200)
-      .map((id: string) => Number(id))
-    // 利用树形工具找到所有id对应的数据，判断是否需要刷新
-    const tempRoot = new TaskDTO()
-    tempRoot.children = dataList.value
-    return visibleRowsId.filter((id: number) => {
-      const task = getNode<TaskDTO>(tempRoot, id)
-      return (
-        notNullish(task) &&
-        (task.status === TaskStatesEnum.WAITING ||
-          task.status === TaskStatesEnum.PROCESSING ||
-          task.status === TaskStatesEnum.PAUSE)
-      )
-    })
-  }
-
-  let refreshTasks: number[] = getRefreshTasks()
-
-  while (refreshTasks.length > 0) {
-    await taskManageSearchTable.value.refreshData(refreshTasks, false)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    if (isNullish(taskManageSearchTable.value)) {
-      break
+  if (!refreshing) {
+    refreshing = true
+    // 获取需要刷新的任务
+    const getRefreshTasks = (): number[] => {
+      // 获取可视区域及附近的行id
+      const visibleRowsId = taskManageSearchTable.value
+        .getVisibleRows(200, 200)
+        .map((id: string) => Number(id))
+      // 利用树形工具找到所有id对应的数据，判断是否需要刷新
+      const tempRoot = new TaskDTO()
+      tempRoot.children = dataList.value
+      return visibleRowsId.filter((id: number) => {
+        const task = getNode<TaskDTO>(tempRoot, id)
+        return (
+          notNullish(task) &&
+          (task.status === TaskStatesEnum.WAITING ||
+            task.status === TaskStatesEnum.PROCESSING ||
+            task.status === TaskStatesEnum.PAUSE)
+        )
+      })
     }
-    refreshTasks = getRefreshTasks()
+
+    let refreshTasks: number[] = getRefreshTasks()
+
+    while (refreshTasks.length > 0) {
+      await taskManageSearchTable.value.refreshData(refreshTasks, false)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      if (isNullish(taskManageSearchTable.value)) {
+        break
+      }
+      refreshTasks = getRefreshTasks()
+    }
+    refreshing = false
   }
-  refreshing = false
 }
-// 防抖动refreshTask
-const throttleRefreshTask = throttle(
-  () => {
-    if (!refreshing) {
-      refreshTask()
-    }
-  },
-  500,
-  { leading: true, trailing: true }
-)
 // 滚动事件处理函数
 function handleScroll() {
   throttleRefreshTask()
