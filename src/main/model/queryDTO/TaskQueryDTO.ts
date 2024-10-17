@@ -2,7 +2,7 @@ import BaseQueryDTO from './BaseQueryDTO.ts'
 
 export default class TaskQueryDTO extends BaseQueryDTO {
   /**
-   * 是否是任务集合
+   * 是否是父任务
    */
   isCollection: boolean | undefined | null
 
@@ -32,7 +32,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   siteWorksId: number | undefined | null
 
   /**
-   * 当任务是任务集合时，url存储创建此任务集合所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
+   * 当任务是父任务时，url存储创建此父任务所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
    */
   url: string | undefined | null
 

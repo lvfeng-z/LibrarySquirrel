@@ -45,7 +45,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   }
 
   /**
-   * 分页查询任务集合
+   * 分页查询父任务
    * @param page
    */
   async queryParentPage(page: PageModel<TaskQueryDTO, Task>) {
@@ -68,7 +68,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
       modifiedPage.query = whereClauseAndQuery.query
       const whereClauseArray = Object.entries(whereClauses).map(([, value]) => value)
 
-      // 查询是集合的或者只有单个任务的
+      // 查询是父任务的或者只有单个任务的
       whereClauseArray.push('(is_collection = 1 or pid is null or pid = 0)')
 
       const temp = super.splicingWhereClauses(whereClauseArray)

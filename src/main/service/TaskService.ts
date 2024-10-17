@@ -204,7 +204,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       assignTask(task)
       return super.save(task).then(() => 1)
     } else {
-      // 如果插件返回的的任务列表长度大于1，则创建一个任务集合，所有的任务作为其子任务
+      // 如果插件返回的的任务列表长度大于1，则创建一个父任务，所有的任务作为其子任务
       const tempTask = new Task(parentTask)
       const pid = (await super.save(tempTask)) as number
       parentTask.id = pid
@@ -248,7 +248,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // data事件处理函数
       pluginResponseTaskStream.on('data', async (chunk) => {
         itemCount++
-        // 如果任务集合尚未保存且任务数大于1，则先保存任务集合
+        // 如果父任务尚未保存且任务数大于1，则先保存父任务
         if (parentTaskProcess === undefined && itemCount > 1) {
           parentTaskProcess = parentTaskProcessing()
           parentTask.id = await parentTaskProcess
@@ -256,7 +256,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           taskQueue.forEach((task) => (task.pid = parentTask.id as number))
         }
 
-        // 等待任务集合完成
+        // 等待父任务完成
         await parentTaskProcess
         // 创建任务对象
         const task = chunk as Task
@@ -309,7 +309,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const pluginInfo = JSON.stringify(taskPlugin)
       // 任务计数
       let itemCount = 0
-      // 集合任务存储过程
+      // 父任务存储过程
       let parentTaskProcess: Promise<number>
       // 任务队列
       const taskQueue: Task[] = []
@@ -767,8 +767,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 根据任务集合的children刷新其状态
-   * @param root 任务集合
+   * 根据父任务的children刷新其状态
+   * @param root 父任务
    */
   public async refreshParentTaskStatus(root: TaskDTO): Promise<boolean> {
     assertNotNullish(root.isCollection, 'TaskService', '刷新任务集合状态不能为非集合')
@@ -798,18 +798,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     if (isNullish(originalStatus) || originalStatus !== root.status) {
-      LogUtil.info(
-        'test---------------------------------------------',
-        `originalStatus: ${originalStatus}; newStatus: ${root.status}`
-      )
       return this.dao
         .refreshTaskStatus(root.id as number)
         .then((refreshResult) => refreshResult > 0)
     } else {
-      LogUtil.info(
-        'test---------------------------------------------',
-        `originalStatus: ${originalStatus}; newStatus: ${root.status}`
-      )
       return true
     }
   }
@@ -903,7 +895,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 分页查询任务集合
+   * 分页查询父任务
    * @param page
    */
   public async queryParentPage(
@@ -954,7 +946,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             tasks[index].children = []
           }
 
-          // 查找数组前面这个任务集合的所有任务
+          // 查找数组前面这个父任务的所有任务
           let lessIndex = 0
           while (lessIndex < index) {
             if (tasks[lessIndex].pid === tasks[index].id) {
@@ -965,7 +957,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             }
             lessIndex++
           }
-          // 查找数组后面这个任务集合的所有任务
+          // 查找数组后面这个父任务的所有任务
           let greaterIndex = index + 1
           while (greaterIndex < tasks.length) {
             if (tasks[greaterIndex].pid === tasks[index].id) {
@@ -984,7 +976,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 获取任务集合的子任务
+   * 获取父任务的子任务
    * @param pid
    */
   public listChildrenTask(pid: number): Promise<Task[]> {
@@ -994,7 +986,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 分页查询任务集合的子任务
+   * 分页查询父任务的子任务
    * @param page
    */
   public async queryChildrenTaskPage(
