@@ -13,7 +13,7 @@ import Electron from 'electron'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
@@ -27,7 +27,7 @@ import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
-import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
+import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
 import { createDirIfNotExists } from '../util/FileSysUtil.js'
 import WorksResourceSaveResponse from '../model/utilModels/WorksResourceSaveResponse.js'
 
@@ -449,8 +449,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const activeProcesses: Promise<boolean>[] = []
 
     for (const parent of taskTree) {
-      const isCollection = notNullish(parent.children) && parent.children.length > 0
-      const tasks = isCollection ? (parent.children as TaskDTO[]) : [parent]
+      // 获取要处理的任务
+      let tasks: TaskDTO[]
+      if (parent.isCollection && arrayNotEmpty(parent.children)) {
+        tasks = parent.children
+      } else if (!parent.isCollection) {
+        tasks = [parent]
+      } else {
+        continue
+      }
+      // 更新父任务的状态
       parent.status = TaskStatesEnum.PROCESSING
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
@@ -726,13 +734,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     for (const parent of taskTree) {
       // 处理下级任务
       let children: TaskDTO[] = []
-      if (!parent.isCollection) {
-        children.push(parent)
-      } else if (isNullish(parent.children) || parent.children.length < 1) {
-        continue
-      } else {
+      if (parent.isCollection && arrayNotEmpty(parent.children)) {
         children = parent.children
+      } else if (!parent.isCollection) {
+        children = [parent]
+      } else {
+        continue
       }
+      // 更新父任务的状态
+      parent.status = TaskStatesEnum.PROCESSING
+      const tempParent = new Task(parent)
+      await this.dao.updateById(parent.id as number, tempParent)
 
       for (const child of children) {
         const activeProcess = limit(() => this.resumeTask(child, pluginLoader))
@@ -771,8 +783,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param root 父任务
    */
   public async refreshParentTaskStatus(root: TaskDTO): Promise<boolean> {
-    assertNotNullish(root.isCollection, 'TaskService', '刷新任务集合状态不能为非集合')
-    assertFalse(root.isCollection, 'TaskService', '刷新任务集合状态不能为非集合')
+    assertNotNullish(root.isCollection, 'TaskService', '刷新状态的任务不能为子任务')
+    assertTrue(root.isCollection, 'TaskService', '刷新状态的任务不能为子任务')
     const originalStatus = root.status
     if (notNullish(root.children) && root.children.length > 0) {
       const processing = root.children.some((child) => TaskStatesEnum.PROCESSING === child.status)

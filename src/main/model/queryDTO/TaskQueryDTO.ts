@@ -64,7 +64,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   /**
    * 插件数据
    */
-  pluginData: { [key: string]: unknown } | undefined | null
+  pluginData: { [key: string]: unknown } | string | undefined | null
 
   constructor(task?: TaskQueryDTO) {
     if (task === undefined) {
