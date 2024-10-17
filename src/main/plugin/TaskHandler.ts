@@ -22,27 +22,33 @@ export interface TaskHandler extends BasePlugin {
   create(url: string): Promise<Task[] | Readable>
 
   /**
-   * 开始任务
+   * 生成作品信息
    * @param task 需开始的任务
-   * @return 作品信息（包含资源的数据流）
+   */
+  generateWorksInfo(task: Task): Promise<WorksPluginDTO>
+
+  /**
+   * 获取用于开始任务的读取流
+   * @param task 需开始的任务
    */
   start(task: Task): Promise<WorksPluginDTO>
 
   /**
-   * 重试下载任务
+   * 获取用于重试下载任务的读取流
    * @param task 需要重试的任务
-   * @return 作品信息（包含资源的数据流）
    */
   retry(task: Task): Promise<WorksPluginDTO>
 
   /**
    * 暂停下载任务
+   * @description 暂停读取流
    * @param task 需要暂停的任务
    */
   pause(task: TaskPluginDTO): void
 
   /**
-   * 暂停下载任务
+   * 恢复下载任务
+   * @description 获取用于恢复已停止的下载任务的读取流，这个流必须是暂停状态，continuable表示提供的流是否可接续在已下载部分的末尾
    * @param task 需要暂停的任务
    * @return 资源的读取流（必须是暂停状态）、是否可接续、资源大小
    */
@@ -77,6 +83,14 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     isTaskHandler = 'create' in response && typeof response.create === 'function'
     if (!isTaskHandler) {
       const msg = `加载任务插件时出错，插件${pluginInfo}未实现create方法`
+      LogUtil.error('PluginLoader', msg)
+      throw new Error(msg)
+    }
+
+    // generateWorksInfo方法
+    isTaskHandler = 'generateWorksInfo' in response && typeof response.start === 'function'
+    if (!isTaskHandler) {
+      const msg = `加载任务插件时出错，插件${pluginInfo}未实现generateWorksInfo方法`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }

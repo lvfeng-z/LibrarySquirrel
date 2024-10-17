@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events'
 
 export interface TaskTracker {
   status: number
-  readStream: Readable
+  readStream: Readable | undefined
   writeStream: fs.WriteStream | undefined
   bytesSum: number
   taskProcessController: TaskProcessController

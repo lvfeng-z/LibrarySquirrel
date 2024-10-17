@@ -370,14 +370,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
     const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
-    const worksDTO: WorksPluginDTO = await taskHandler.start(task)
+    // 调用插件的generateWorksInfo方法，获取作品信息
+    const worksDTO: WorksPluginDTO = await taskHandler.generateWorksInfo(task)
     worksDTO.includeTaskId = task.id
-    // 校验插件有没有返回任务资源
-    if (worksDTO.resourceStream === undefined || worksDTO.resourceStream === null) {
-      const msg = `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
-      LogUtil.error('WorksService', msg)
-      throw new Error(msg)
-    }
 
     // 保存远程资源是否可接续
     task.continuable = worksDTO.continuable
@@ -402,11 +397,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     )
     const updatePendingDownloadPathService = new TaskService()
     await updatePendingDownloadPathService.updateById(sourceTask)
+
     // 创建任务追踪器
     const taskProcessController = new TaskProcessController()
     const taskTracker: TaskTracker = {
       status: TaskStatesEnum.PROCESSING,
-      readStream: worksDTO.resourceStream,
+      readStream: undefined,
       writeStream: undefined,
       bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize,
       taskProcessController: taskProcessController
@@ -414,7 +410,19 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 保存资源
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
-    const savePromise = limit(() => worksService.saveWorksResource(worksSaveInfo, taskTracker))
+    const savePromise = limit(async () => {
+      // 调用插件的start方法，获取资源
+      const resourceDTO = await taskHandler.start(task)
+      // 校验插件有没有返回任务资源
+      assertNotNullish(
+        resourceDTO.resourceStream,
+        'WorksService',
+        `保存作品时，插件没有返回资源，taskId: ${worksDTO.includeTaskId}`
+      )
+      taskTracker.readStream = resourceDTO.resourceStream
+      worksSaveInfo.resourceStream = resourceDTO.resourceStream
+      return worksService.saveWorksResource(worksSaveInfo, taskTracker)
+    })
     // 添加任务追踪器
     assertNotNullish(worksDTO.includeTaskId, 'WorksService', '创建任务追踪器时，任务id意外为空')
     this.addTaskTracker(worksDTO.includeTaskId, taskTracker, savePromise)

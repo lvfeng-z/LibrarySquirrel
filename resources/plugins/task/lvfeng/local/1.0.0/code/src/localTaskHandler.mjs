@@ -25,11 +25,11 @@ export default class LocalTaskHandler {
   }
 
   /**
-   * 开始任务
-   * @param task 需开始的任务数组
+   * 生成作品信息
+   * @param task 任务信息
    * @return 作品信息
    */
-  async start(task) {
+  async generateWorksInfo(task) {
     // 保存在pluginData的数据
     const pluginData = JSON.parse(task.pluginData)
     // 含义列表
@@ -74,12 +74,22 @@ export default class LocalTaskHandler {
 
     // 处理任务id
     worksDTO.includeTaskId = task.id
-    // 处理资源
-    worksDTO.resourceStream = fs.createReadStream(task.url)
+    // 处理资源大小
     worksDTO.resourceSize = stats.size
     // 处理是否可续传
     worksDTO.continuable = true
 
+    return worksDTO
+  }
+
+  /**
+   * 获取用于开始下载任务的资源
+   * @param task
+   * @returns {Promise<WorksDTO>}
+   */
+  async start(task) {
+    const worksDTO = new WorksDTO()
+    worksDTO.resourceStream = fs.createReadStream(task.url)
     return worksDTO
   }
 
