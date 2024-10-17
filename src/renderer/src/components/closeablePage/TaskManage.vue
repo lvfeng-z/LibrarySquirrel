@@ -26,8 +26,8 @@ onMounted(() => {
 // 接口
 const apis = {
   taskCreateTask: window.api.taskCreateTask,
-  taskStartTask: window.api.taskStartTask,
-  taskRetryTask: window.api.taskRetryTask,
+  taskStartTask: window.api.taskStartTaskTree,
+  taskRetryTask: window.api.taskRetryTaskTree,
   taskDeleteTask: window.api.taskDeleteTask,
   taskQueryTreeDataPage: window.api.taskQueryTreeDataPage,
   taskQueryParentPage: window.api.taskQueryParentPage,
@@ -529,7 +529,11 @@ async function deleteTask(ids: number[]) {
                 <el-button
                   size="small"
                   :icon="mapToButtonStatus(row).icon"
-                  :loading="!(row as TaskDTO).continuable && mapToButtonStatus(row).processing"
+                  :loading="
+                    mapToButtonStatus(row).processing &&
+                    !(row as TaskDTO).continuable &&
+                    !(row as TaskDTO).isCollection
+                  "
                   @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
                 ></el-button>
               </el-tooltip>

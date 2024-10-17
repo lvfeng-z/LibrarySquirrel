@@ -61,8 +61,8 @@ declare global {
       siteTagGetSelectList: function
 
       // Task
-      taskStartTask: function
-      taskRetryTask: function
+      taskStartTaskTree: function
+      taskRetryTaskTree: function
       taskCreateTask: function
       taskDeleteTask: function
       taskQueryPage: function

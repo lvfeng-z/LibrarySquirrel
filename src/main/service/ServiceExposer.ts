@@ -350,19 +350,19 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-startTask', async (_event, args) => {
+  Electron.ipcMain.handle('task-startTaskTree', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.startTask(args, mainWindow))
+      return ApiUtil.response(await taskService.startTaskTree(args, mainWindow))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('task-retryTask', async (_event, args) => {
+  Electron.ipcMain.handle('task-retryTaskTree', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.retryTask(args, mainWindow))
+      return ApiUtil.response(await taskService.retryTaskTree(args, mainWindow))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

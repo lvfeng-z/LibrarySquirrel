@@ -29,9 +29,9 @@ defineExpose({
 // 变量
 // 接口
 const apis = {
-  taskStartTask: window.api.taskStartTask,
+  taskStartTask: window.api.taskStartTaskTree,
+  taskRetryTask: window.api.taskRetryTaskTree,
   taskDeleteTask: window.api.taskDeleteTask,
-  taskRetryTask: window.api.taskRetryTask,
   taskListSchedule: window.api.taskListSchedule,
   taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage,
   taskPauseTaskTree: window.api.taskPauseTaskTree,

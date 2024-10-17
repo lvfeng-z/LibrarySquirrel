@@ -132,25 +132,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
   /**
    * 恢复保存作品资源
-   * @param worksId 作品id
    * @param taskTracker 任务追踪器
    */
-  public async resumeSaveWorksResource(
-    worksId: number,
-    taskTracker: TaskTracker
-  ): Promise<TaskStatesEnum> {
-    const works = this.getById(worksId)
-    assertNotNullish(works, 'WorksService', `恢复资源下载时作品id无效，worksId: ${worksId}`)
-    // 保存资源的过程
+  public async resumeSaveWorksResource(taskTracker: TaskTracker): Promise<TaskStatesEnum> {
     const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
       pipelineReadWrite(readable, writeable)
     return new Promise((resolve) => {
       taskTracker.taskProcessController.oncePause(() => resolve(TaskStatesEnum.PAUSE))
-      assertNotNullish(
-        taskTracker.writeStream,
-        'WorksService',
-        `恢复资源下载时写入流意外为空，worksId: ${worksId}`
-      )
+      assertNotNullish(taskTracker.writeStream, 'WorksService', `恢复资源下载时写入流意外为空`)
       writeStreamPromise(taskTracker.readStream, taskTracker.writeStream).then(() =>
         resolve(TaskStatesEnum.FINISHED)
       )
