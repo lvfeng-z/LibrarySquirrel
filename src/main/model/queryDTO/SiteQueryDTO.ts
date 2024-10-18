@@ -8,7 +8,7 @@ export default class SiteQueryDTO extends BaseQueryDTO {
   /**
    * 主键
    */
-  id: string | undefined | null
+  id: number | undefined | null
 
   /**
    * 站点名称

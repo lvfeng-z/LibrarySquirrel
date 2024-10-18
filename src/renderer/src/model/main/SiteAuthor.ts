@@ -7,7 +7,7 @@ export default class SiteAuthor extends BaseModel {
   /**
    * 主键
    */
-  id: string | undefined | null
+  id: number | undefined | null
   /**
    * 作者来源站点id
    */

@@ -7,7 +7,7 @@ export default class RePoiTarget extends BaseModel {
   /**
    * 主键
    */
-  id: string | undefined | null
+  id: number | undefined | null
   /**
    * 兴趣点id
    */

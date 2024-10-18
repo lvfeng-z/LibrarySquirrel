@@ -5,7 +5,7 @@ export default class BaseModel {
   /**
    * 主键
    */
-  id: number | string | null | undefined
+  id: Id
 
   /**
    * 创建时间
@@ -29,3 +29,5 @@ export default class BaseModel {
     }
   }
 }
+
+export type Id = number | null | undefined
