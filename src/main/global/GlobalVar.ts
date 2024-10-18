@@ -5,19 +5,18 @@ import { defaultSettings } from '../util/SettingsUtil.ts'
 import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { getDataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
-import pLimit, { Limit } from 'p-limit'
-import SettingsService from '../service/SettingsService.js'
+import { TaskQueue } from './TaskQueue.js'
 
 export enum GlobalVars {
   CONNECTION_POOL = 'CONNECTION_POOL',
-  DOWNLOAD_LIMIT = 'DOWNLOAD_LIMIT',
   SETTINGS = 'SETTINGS',
+  TASK_QUEUE = 'TASK_QUEUE',
   TASK_TRACKER = 'TASK_TRACKER'
 }
 // 映射类型
 type GlobalVarsMapping = {
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
-  [GlobalVars.DOWNLOAD_LIMIT]: Limit
+  [GlobalVars.TASK_QUEUE]: TaskQueue
   [GlobalVars.SETTINGS]: Store<Record<string, unknown>>
   [GlobalVars.TASK_TRACKER]: Record<string, TaskTracker>
 }
@@ -36,7 +35,7 @@ export class GlobalVarManager {
       case GlobalVars.CONNECTION_POOL:
         this.createConnectionPool()
         break
-      case GlobalVars.DOWNLOAD_LIMIT:
+      case GlobalVars.TASK_QUEUE:
         this.createDownloadLimit()
         break
       case GlobalVars.SETTINGS:
@@ -57,7 +56,7 @@ export class GlobalVarManager {
       case GlobalVars.CONNECTION_POOL:
         this.destroyConnectionPool()
         break
-      case GlobalVars.DOWNLOAD_LIMIT:
+      case GlobalVars.TASK_QUEUE:
         this.destroyDownloadLimit()
         break
       case GlobalVars.SETTINGS:
@@ -86,28 +85,6 @@ export class GlobalVarManager {
     LogUtil.info('GlobalVar', '已销毁连接池')
   }
 
-  // DOWNLOAD_LIMIT
-  /**
-   * 创建下载限制器
-   * @private
-   */
-  private static createDownloadLimit() {
-    // 读取设置中的最大并行数
-    const settings = SettingsService.getSettings()
-    const maxSaveWorksPromise =
-      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    global[GlobalVars.DOWNLOAD_LIMIT] = pLimit(maxSaveWorksPromise)
-  }
-
-  /**
-   * 销毁下载限制器
-   * @private
-   */
-  private static destroyDownloadLimit() {
-    delete global[GlobalVars.DOWNLOAD_LIMIT]
-    LogUtil.info('GlobalVar', '已销毁下载限制器')
-  }
-
   // SETTINGS
   /**
    * 创建设置
@@ -127,6 +104,24 @@ export class GlobalVarManager {
   private static destroySettings() {
     delete global[GlobalVars.SETTINGS]
     LogUtil.info('GlobalVar', '已销毁设置')
+  }
+
+  // TASK_QUEUE
+  /**
+   * 创建任务队列
+   * @private
+   */
+  private static createDownloadLimit() {
+    global[GlobalVars.TASK_QUEUE] = new TaskQueue()
+  }
+
+  /**
+   * 销毁任务队列
+   * @private
+   */
+  private static destroyDownloadLimit() {
+    delete global[GlobalVars.TASK_QUEUE]
+    LogUtil.info('GlobalVar', '已销毁任务队列')
   }
 
   // TASK_TRACKER

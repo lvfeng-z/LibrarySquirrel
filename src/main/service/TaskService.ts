@@ -410,8 +410,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 保存资源
-    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
-    const savePromise = limit(async () => {
+    const taskQueue = GlobalVarManager.get(GlobalVars.TASK_QUEUE)
+    const savePromise = taskQueue.addTask(async () => {
       this.taskProcessing(task.id)
       // 调用插件的start方法，获取资源
       const resourceDTO = await taskHandler.start(task)
@@ -717,8 +717,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 恢复下载
-    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
-    const resumePromise = limit(async () => {
+    const taskQueue = GlobalVarManager.get(GlobalVars.TASK_QUEUE)
+    const resumePromise = taskQueue.addTask(async () => {
       this.taskProcessing(task.id)
       // 调用插件的resume函数，获取资源
       const resumeResponse = await taskHandler.resume(taskPluginDTO)
@@ -785,9 +785,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 插件加载器
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
 
-    // 获取下载限制器
-    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
-
     const activeProcesses: Promise<boolean>[] = []
     for (const parent of taskTree) {
       // 处理下级任务
@@ -805,7 +802,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       await this.dao.updateById(parent.id as number, tempParent)
 
       for (const child of children) {
-        const activeProcess = limit(() => this.resumeTask(child, pluginLoader))
+        const activeProcess = this.resumeTask(child, pluginLoader)
           .then(async (processResult) => {
             // 修改任务状态和作品资源状态(只有完成状态进行修改，暂停状态在暂停函数中处理)
             if (TaskStatesEnum.FINISHED === processResult.status) {
