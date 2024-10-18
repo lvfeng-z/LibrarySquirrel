@@ -31,6 +31,7 @@ import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
 import { createDirIfNotExists } from '../util/FileSysUtil.js'
 import WorksResourceSaveResponse from '../model/utilModels/WorksResourceSaveResponse.js'
 import { getNode } from '../util/TreeUtil.js'
+import { Id } from '../model/BaseModel.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -411,6 +412,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 保存资源
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
     const savePromise = limit(async () => {
+      this.taskProcessing(task.id)
       // 调用插件的start方法，获取资源
       const resourceDTO = await taskHandler.start(task)
       // 判断是否需要更新作品数据
@@ -492,7 +494,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             if (TaskStatesEnum.FINISHED === processResult.status) {
               succeed++
               task.status = TaskStatesEnum.FINISHED
-              await this.taskFinished(task, processResult.worksId)
+              await this.taskFinished(task.id, processResult.worksId)
             } else if (TaskStatesEnum.PAUSE === processResult.status) {
               pause++
             }
@@ -502,7 +504,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             failed++
             LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
             task.status = TaskStatesEnum.FAILED
-            await this.taskFailed(task)
+            await this.taskFailed(task.id)
             return false
           })
           .finally(() =>
@@ -615,7 +617,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 更新任务追踪器的状态
     this.updateTaskTracker(task.id, { status: TaskStatesEnum.PAUSE })
     // 更新数据库中任务的状态
-    return this.taskPaused(task).then((runResult) => runResult > 0)
+    return this.taskPaused(task.id).then((runResult) => runResult > 0)
   }
 
   /**
@@ -717,6 +719,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 恢复下载
     const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
     const resumePromise = limit(async () => {
+      this.taskProcessing(task.id)
       // 调用插件的resume函数，获取资源
       const resumeResponse = await taskHandler.resume(taskPluginDTO)
       assertNotNullish(
@@ -808,7 +811,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             if (TaskStatesEnum.FINISHED === processResult.status) {
               succeed++
               child.status = TaskStatesEnum.FINISHED
-              await this.taskFinished(child, processResult.worksId)
+              await this.taskFinished(child.id, processResult.worksId)
             } else if (TaskStatesEnum.PAUSE === processResult.status) {
               pause++
             }
@@ -816,7 +819,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           })
           .catch(async (error) => {
             failed++
-            await this.taskFailed(child)
+            await this.taskFailed(child.id)
             LogUtil.error('TaskService', `任务失败，taskId:${child.id}`, error)
             return false
           })
@@ -848,31 +851,24 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const originalStatus = root.status
     let newStatus: TaskStatesEnum
     if (notNullish(root.children) && root.children.length > 0) {
-      const processing = root.children.some((child) => TaskStatesEnum.PROCESSING === child.status)
-      if (processing) {
-        return TaskStatesEnum.PROCESSING
+      const processing = root.children.filter(
+        (child) => TaskStatesEnum.PROCESSING === child.status
+      ).length
+      const paused = root.children.filter((child) => TaskStatesEnum.PAUSE === child.status).length
+      const finished = root.children.filter(
+        (child) => TaskStatesEnum.FINISHED === child.status
+      ).length
+      const failed = root.children.filter((child) => TaskStatesEnum.FAILED === child.status).length
+      if (processing > 0) {
+        newStatus = TaskStatesEnum.PROCESSING
+      } else if (paused > 0) {
+        newStatus = TaskStatesEnum.PAUSE
+      } else if (finished > 0 && failed > 0) {
+        newStatus = TaskStatesEnum.PARTLY_FINISHED
+      } else if (finished > 0) {
+        newStatus = TaskStatesEnum.FINISHED
       } else {
-        const processing = root.children.filter(
-          (child) => TaskStatesEnum.PROCESSING === child.status
-        ).length
-        const paused = root.children.filter((child) => TaskStatesEnum.PAUSE === child.status).length
-        const finished = root.children.filter(
-          (child) => TaskStatesEnum.FINISHED === child.status
-        ).length
-        const failed = root.children.filter(
-          (child) => TaskStatesEnum.FAILED === child.status
-        ).length
-        if (processing > 0) {
-          newStatus = TaskStatesEnum.PROCESSING
-        } else if (paused > 0) {
-          newStatus = TaskStatesEnum.PAUSE
-        } else if (finished > 0 && failed > 0) {
-          newStatus = TaskStatesEnum.PARTLY_FINISHED
-        } else if (finished > 0) {
-          newStatus = TaskStatesEnum.FINISHED
-        } else {
-          newStatus = TaskStatesEnum.FAILED
-        }
+        newStatus = TaskStatesEnum.FAILED
       }
     } else {
       newStatus = TaskStatesEnum.FINISHED
@@ -925,54 +921,53 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 任务进行中
+   * @param taskId 任务id
+   */
+  public async taskProcessing(taskId: Id): Promise<number> {
+    assertNotNullish(taskId, 'TaskService', '任务标记为进行中时，任务id不能为空')
+    const task = new Task()
+    task.id = taskId
+    task.status = TaskStatesEnum.PROCESSING
+    return this.updateById(task)
+  }
+
+  /**
    * 任务完成
-   * @param task 任务信息
+   * @param taskId 任务id
    * @param worksId 本地作品id
    */
-  public taskFinished(task: Task, worksId: number): Promise<number> {
-    task = new Task(task)
+  public taskFinished(taskId: Id, worksId: number): Promise<number> {
+    assertNotNullish(taskId, 'TaskService', '任务标记为完成时，任务id不能为空')
+    const task = new Task()
+    task.id = taskId
     task.status = TaskStatesEnum.FINISHED
     task.localWorksId = worksId
-    if (notNullish(task.id)) {
-      return this.updateById(task)
-    } else {
-      const msg = '任务标记为完成时，任务id意外为空'
-      LogUtil.error('TaskService', msg)
-      throw new Error(msg)
-    }
+    return this.updateById(task)
   }
 
   /**
    * 暂停任务
-   * @param task 任务信息
+   * @param taskId 任务id
    */
-  public taskPaused(task: Task): Promise<number> {
-    const tempTask = new Task()
-    tempTask.id = task.id
-    tempTask.status = TaskStatesEnum.PAUSE
-    if (notNullish(tempTask.id)) {
-      return this.updateById(tempTask)
-    } else {
-      const msg = '任务标记为暂停时，任务id意外为空'
-      LogUtil.error('TaskService', msg)
-      throw new Error(msg)
-    }
+  public taskPaused(taskId: Id): Promise<number> {
+    assertNotNullish(taskId, 'TaskService', '任务标记为暂停时，任务id不能为空')
+    const task = new Task()
+    task.id = taskId
+    task.status = TaskStatesEnum.PAUSE
+    return this.updateById(task)
   }
 
   /**
    * 任务失败
-   * @param task
+   * @param taskId 任务id
    */
-  public taskFailed(task: Task): Promise<number> {
-    task = new Task(task)
+  public taskFailed(taskId: Id): Promise<number> {
+    assertNotNullish(taskId, 'TaskService', '任务标记为失败时，任务id不能为空')
+    const task = new Task()
+    task.id = taskId
     task.status = TaskStatesEnum.FAILED
-    if (notNullish(task.id)) {
-      return this.dao.updateById(task.id, task)
-    } else {
-      const msg = '任务标记为失败时，任务id意外为空'
-      LogUtil.error('TaskService', msg)
-      throw new Error(msg)
-    }
+    return this.updateById(task)
   }
 
   /**
