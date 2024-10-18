@@ -6,7 +6,7 @@ import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import LogUtil from './util/LogUtil.ts'
 import { convertPath, getWorksResource } from './util/FileSysUtil.ts'
-import { GlobalVarManager, GlobalVars } from './global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from './global/GlobalVar.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -80,7 +80,7 @@ Electron.app.whenReady().then(() => {
 
   // 如何响应前面的resource自定义协议的请求
   Electron.protocol.handle('resource', async (request) => {
-    const workdir = GlobalVarManager.get(GlobalVars.SETTINGS).get('workdir') as string
+    const workdir = GlobalVar.get(GlobalVars.SETTINGS).get('workdir') as string
 
     // 使用正则表达式测试URL是否符合预期格式
     if (!/^resource:\/\/workdir\//i.test(request.url)) {
@@ -107,18 +107,15 @@ Electron.app.whenReady().then(() => {
   })
 
   // 初始化设置
-  GlobalVarManager.create(GlobalVars.SETTINGS)
-
-  // 初始化任务追踪器
-  GlobalVarManager.create(GlobalVars.TASK_TRACKER)
-
-  // 初始化任务队列
-  GlobalVarManager.create(GlobalVars.TASK_QUEUE)
+  GlobalVar.create(GlobalVars.SETTINGS)
 
   // 初始化数据库
   InitializeDB().then(() => {
     ServiceExposer.exposeService(mainWindow)
   })
+
+  // 初始化任务队列
+  GlobalVar.create(GlobalVars.TASK_QUEUE)
 
   Electron.app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the

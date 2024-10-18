@@ -1,17 +1,17 @@
 import settingsTemplate from '../resources/settings/settingsTemplate.json'
 import LogUtil from './LogUtil.ts'
-import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 
 /**
  * 将设置全部重置到默认值
  */
 export function defaultSettings() {
   try {
-    GlobalVarManager.get(GlobalVars.SETTINGS).clear()
-    GlobalVarManager.get(GlobalVars.SETTINGS).set(settingsTemplate)
-    GlobalVarManager.get(GlobalVars.SETTINGS).set('initialized', true)
+    GlobalVar.get(GlobalVars.SETTINGS).clear()
+    GlobalVar.get(GlobalVars.SETTINGS).set(settingsTemplate)
+    GlobalVar.get(GlobalVars.SETTINGS).set('initialized', true)
   } catch (error) {
-    GlobalVarManager.get(GlobalVars.SETTINGS).set('initialized', false)
+    GlobalVar.get(GlobalVars.SETTINGS).set('initialized', false)
     LogUtil.error('SettingsUtil', String(error))
     throw error
   }

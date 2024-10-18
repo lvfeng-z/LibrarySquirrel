@@ -7,7 +7,7 @@ import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
 import createDataTables from '../resources/database/createDataTables.yml?asset'
 import DB from './DB.ts'
-import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 
 /**
  * @Description: 初始化数据库，同时创建一个全局连接池实例
@@ -25,7 +25,7 @@ export async function InitializeDB() {
   LogUtil.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
-  GlobalVarManager.create(GlobalVars.CONNECTION_POOL)
+  GlobalVar.create(GlobalVars.CONNECTION_POOL)
 
   // 创建数据表
   // 读取当前数据库的数据表

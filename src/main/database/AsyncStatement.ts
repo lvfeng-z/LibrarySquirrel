@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
-import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 
 /**
  * 封装的Better-SQLit3 Statement类
@@ -49,7 +49,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     try {
       // 获取排他锁
       if (!this.holdingWriteLock) {
-        await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireLock(
+        await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(
           this.caller,
           this.statement.source
         )
@@ -64,7 +64,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     } finally {
       // 释放排他锁
       if (this.holdingWriteLock && !this.injectedLock) {
-        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(this.caller)
+        GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(this.caller)
       }
     }
   }

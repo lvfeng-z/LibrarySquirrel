@@ -24,7 +24,7 @@ import { TaskProcessController, TaskTracker } from '../model/utilModels/TaskTrac
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
-import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
 import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
@@ -410,30 +410,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 保存资源
-    const taskQueue = GlobalVarManager.get(GlobalVars.TASK_QUEUE)
-    const savePromise = taskQueue.addTask(async () => {
-      this.taskProcessing(task.id)
-      // 调用插件的start方法，获取资源
-      const resourceDTO = await taskHandler.start(task)
-      // 判断是否需要更新作品数据
-      if (resourceDTO.doUpdate) {
-        worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO)
-        worksSaveInfo.id = worksId
-        worksService.updateById(worksSaveInfo)
-      }
-      // 校验插件有没有返回任务资源
-      assertNotNullish(
-        resourceDTO.resourceStream,
-        'WorksService',
-        `保存作品时，插件没有返回资源，taskId: ${worksDTO.includeTaskId}`
-      )
-      taskTracker.readStream = resourceDTO.resourceStream
-      worksSaveInfo.resourceStream = resourceDTO.resourceStream
-      return worksService.saveWorksResource(worksSaveInfo, taskTracker)
-    })
-    // 添加任务追踪器
-    assertNotNullish(worksDTO.includeTaskId, 'WorksService', '创建任务追踪器时，任务id意外为空')
-    this.addTaskTracker(worksDTO.includeTaskId, taskTracker, savePromise)
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const savePromise = taskQueue.push(
+      async () => {
+        this.taskProcessing(task.id)
+        // 调用插件的start方法，获取资源
+        const resourceDTO = await taskHandler.start(task)
+        // 判断是否需要更新作品数据
+        if (resourceDTO.doUpdate) {
+          worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO)
+          worksSaveInfo.id = worksId
+          worksService.updateById(worksSaveInfo)
+        }
+        // 校验插件有没有返回任务资源
+        assertNotNullish(
+          resourceDTO.resourceStream,
+          'WorksService',
+          `保存作品时，插件没有返回资源，taskId: ${worksDTO.includeTaskId}`
+        )
+        taskTracker.readStream = resourceDTO.resourceStream
+        worksSaveInfo.resourceStream = resourceDTO.resourceStream
+        return worksService.saveWorksResource(worksSaveInfo, taskTracker)
+      },
+      task.id,
+      taskTracker
+    )
 
     const saveResult = await savePromise
 
@@ -510,7 +511,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           .finally(() =>
             this.refreshParentTaskStatus(parent).then((newStatus) => {
               assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
-              this.updateTaskTracker(parent.id, { status: newStatus })
+              GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parent.id, {
+                status: newStatus
+              })
             })
           )
         activeProcesses.push(activeProcess)
@@ -586,7 +589,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 创建TaskPluginDTO对象
     const taskPluginDTO = new TaskPluginDTO(task)
-    const taskTracker = this.getTaskTracker(taskPluginDTO.id as number)
+    const taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskPluginDTO.id as number)
 
     assertNotNullish(taskTracker, 'TaskService', `暂停任务时，任务追踪器不存在，taskId: ${task.id}`)
     assertNotNullish(
@@ -615,7 +618,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 调用任务控制器的pause方法
     taskTracker.taskProcessController.pause()
     // 更新任务追踪器的状态
-    this.updateTaskTracker(task.id, { status: TaskStatesEnum.PAUSE })
+    GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(task.id, {
+      status: TaskStatesEnum.PAUSE
+    })
     // 更新数据库中任务的状态
     return this.taskPaused(task.id).then((runResult) => runResult > 0)
   }
@@ -654,7 +659,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
       this.refreshParentTaskStatus(parent).then((newStatus) => {
         assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
-        this.updateTaskTracker(parent.id, { status: newStatus })
+        GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parent.id, {
+          status: newStatus
+        })
       })
     }
 
@@ -692,7 +699,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 插件用于恢复下载的任务信息
     const taskPluginDTO = new TaskPluginDTO(task)
     // 获取任务追踪器
-    let taskTracker = this.getTaskTracker(task.id)
+    let taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(task.id)
     if (isNullish(taskTracker)) {
       // 创建一个追踪器
       taskTracker = {
@@ -717,48 +724,50 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 恢复下载
-    const taskQueue = GlobalVarManager.get(GlobalVars.TASK_QUEUE)
-    const resumePromise = taskQueue.addTask(async () => {
-      this.taskProcessing(task.id)
-      // 调用插件的resume函数，获取资源
-      const resumeResponse = await taskHandler.resume(taskPluginDTO)
-      assertNotNullish(
-        resumeResponse.resourceStream,
-        'TaskService',
-        `恢复任务时，插件返回的资源为空，taskId: ${task.id}`
-      )
-      assertNotNullish(
-        task.pendingDownloadPath,
-        'TaskService',
-        `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${task.id}`
-      )
-      const worksService = new WorksService()
-      // 判断是否需要更新作品数据
-      if (resumeResponse.doUpdate) {
-        const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse)
-        worksSaveInfo.id = task.localWorksId
-        worksService.updateById(worksSaveInfo)
-      }
-      let writeable: fs.WriteStream
-      if (resumeResponse.continuable) {
-        writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
-        writeable.bytesWritten = taskPluginDTO.bytesWritten
-      } else {
-        writeable = fs.createWriteStream(task.pendingDownloadPath)
-      }
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const resumePromise = taskQueue.push(
+      async () => {
+        this.taskProcessing(task.id)
+        // 调用插件的resume函数，获取资源
+        const resumeResponse = await taskHandler.resume(taskPluginDTO)
+        assertNotNullish(
+          resumeResponse.resourceStream,
+          'TaskService',
+          `恢复任务时，插件返回的资源为空，taskId: ${task.id}`
+        )
+        assertNotNullish(
+          task.pendingDownloadPath,
+          'TaskService',
+          `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${task.id}`
+        )
+        const worksService = new WorksService()
+        // 判断是否需要更新作品数据
+        if (resumeResponse.doUpdate) {
+          const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse)
+          worksSaveInfo.id = task.localWorksId
+          worksService.updateById(worksSaveInfo)
+        }
+        let writeable: fs.WriteStream
+        if (resumeResponse.continuable) {
+          writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
+          writeable.bytesWritten = taskPluginDTO.bytesWritten
+        } else {
+          writeable = fs.createWriteStream(task.pendingDownloadPath)
+        }
 
-      // 配置任务追踪器
-      taskTracker.bytesSum = resumeResponse.resourceSize
-      taskTracker.readStream = resumeResponse.resourceStream
-      taskTracker.writeStream = writeable
-      taskTracker.taskProcessController = new TaskProcessController()
+        // 配置任务追踪器
+        taskTracker.bytesSum = resumeResponse.resourceSize
+        taskTracker.readStream = resumeResponse.resourceStream
+        taskTracker.writeStream = writeable
+        taskTracker.taskProcessController = new TaskProcessController()
 
-      return worksService.resumeSaveWorksResource(taskTracker)
-    })
-    // 添加任务追踪器
-    this.addTaskTracker(task.id, taskTracker, resumePromise)
+        return worksService.resumeSaveWorksResource(taskTracker)
+      },
+      task.id,
+      taskTracker
+    )
     // 更新任务追踪器的状态
-    this.updateTaskTracker(task.id, { status: TaskStatesEnum.PROCESSING })
+    taskQueue.updateTracker(task.id, { status: TaskStatesEnum.PROCESSING })
     return resumePromise.then(() => {
       return {
         status: TaskStatesEnum.FINISHED,
@@ -823,7 +832,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           .finally(() =>
             this.refreshParentTaskStatus(parent).then((newStatus) => {
               assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
-              this.updateTaskTracker(parent.id, { status: newStatus })
+              GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parent.id, {
+                status: newStatus
+              })
             })
           )
         activeProcesses.push(activeProcess)
@@ -1093,7 +1104,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const noListenerIds: number[] = []
     ids.forEach((id: number) => {
       // 如果有追踪器且写入流不为空，则从追踪器获取任务进度，否则从数据库查询任务状态
-      const taskTracker = this.getTaskTracker(id)
+      const taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(id)
       if (notNullish(taskTracker) && notNullish(taskTracker.writeStream)) {
         const temp: TaskScheduleDTO = new TaskScheduleDTO()
         temp.id = id
@@ -1118,74 +1129,5 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     result = result.concat(noListener)
     return result
-  }
-
-  /**
-   * 新增任务跟踪
-   * @param taskId 任务id，会在全局变量taskTracker中创建以此为名的属性
-   * @param taskTracker 任务追踪器，包含任务的读取和写入流，以及资源大小
-   * @param taskEndHandler 任务完成的承诺，得到解决后会清除对应的追踪事件
-   */
-  public addTaskTracker(
-    taskId: number,
-    taskTracker: TaskTracker,
-    taskEndHandler: Promise<TaskStatesEnum>
-  ): void {
-    const trackerName = String(taskId)
-    GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName] = taskTracker
-    // 确认任务结束或失败后，延迟2秒清除其追踪器
-    taskEndHandler
-      .then((taskStatus) => {
-        taskTracker.status = taskStatus
-        if (taskStatus === TaskStatesEnum.FINISHED) {
-          setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
-        }
-      })
-      .catch(() => {
-        taskTracker.status = TaskStatesEnum.FAILED
-        setTimeout(() => delete GlobalVarManager.get(GlobalVars.TASK_TRACKER)[trackerName], 2000)
-      })
-  }
-
-  /**
-   * 获取任务跟踪器
-   * @param taskId 任务id
-   * @param newTaskTracker 新的任务跟踪器属性
-   */
-  public updateTaskTracker(
-    taskId: number,
-    newTaskTracker: {
-      status?: number
-      readStream?: Readable
-      writeStream?: fs.WriteStream
-      bytesSum?: number
-    }
-  ): void {
-    const old = this.getTaskTracker(taskId)
-    if (isNullish(old)) {
-      LogUtil.warn('TaskService', `没有找到需要更新的任务跟踪器，taskId: ${taskId}`)
-      return
-    }
-    if (newTaskTracker.status !== undefined) {
-      old.status = newTaskTracker.status
-    }
-    if (newTaskTracker.bytesSum !== undefined) {
-      old.bytesSum = newTaskTracker.bytesSum
-    }
-    if (newTaskTracker.readStream !== undefined) {
-      old.readStream = newTaskTracker.readStream
-    }
-    if (newTaskTracker.writeStream !== undefined) {
-      old.writeStream = newTaskTracker.writeStream
-    }
-  }
-
-  /**
-   * 获取任务跟踪器
-   * @param taskId
-   */
-  public getTaskTracker(taskId: number): TaskTracker | undefined {
-    const listenerName = String(taskId)
-    return GlobalVarManager.get(GlobalVars.TASK_TRACKER)[listenerName]
   }
 }

@@ -1,53 +1,39 @@
 import LogUtil from '../util/LogUtil.ts'
-import { ConnectionPool, ConnectionPoolConfig } from '../database/ConnectionPool.ts'
+import { ConnectionPool } from '../database/ConnectionPool.ts'
 import Store from 'electron-store'
 import { defaultSettings } from '../util/SettingsUtil.ts'
-import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
-import { getDataBasePath } from '../util/DatabaseUtil.ts'
-import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import { TaskQueue } from './TaskQueue.js'
+import { PoolConfig } from './PoolConfig.js'
 
 export enum GlobalVars {
   CONNECTION_POOL = 'CONNECTION_POOL',
   SETTINGS = 'SETTINGS',
-  TASK_QUEUE = 'TASK_QUEUE',
-  TASK_TRACKER = 'TASK_TRACKER'
+  TASK_QUEUE = 'TASK_QUEUE'
 }
 // 映射类型
-type GlobalVarsMapping = {
+type GlobalVarMapping = {
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
   [GlobalVars.TASK_QUEUE]: TaskQueue
   [GlobalVars.SETTINGS]: Store<Record<string, unknown>>
-  [GlobalVars.TASK_TRACKER]: Record<string, TaskTracker>
-}
-
-const POOL_CONFIG: ConnectionPoolConfig = {
-  maxRead: 10, // 最大连接数
-  maxWrite: 10, // 最大连接数
-  idleTimeout: 30000, // 连接空闲超时时间（毫秒）
-  databasePath: getDataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
 }
 
 // todo 设置更改时，一些全局变量也需要更改
-export class GlobalVarManager {
+export class GlobalVar {
   public static create(globalVar: GlobalVars) {
     switch (globalVar) {
       case GlobalVars.CONNECTION_POOL:
         this.createConnectionPool()
         break
       case GlobalVars.TASK_QUEUE:
-        this.createDownloadLimit()
+        this.createTaskQueue()
         break
       case GlobalVars.SETTINGS:
         this.createSettings()
         break
-      case GlobalVars.TASK_TRACKER:
-        this.createTaskTracker()
-        break
     }
   }
 
-  public static get<T extends GlobalVars>(globalVar: T): GlobalVarsMapping[T] {
+  public static get<T extends GlobalVars>(globalVar: T): GlobalVarMapping[T] {
     return global[globalVar as GlobalVars]
   }
 
@@ -57,13 +43,10 @@ export class GlobalVarManager {
         this.destroyConnectionPool()
         break
       case GlobalVars.TASK_QUEUE:
-        this.destroyDownloadLimit()
+        this.destroyTaskQueue()
         break
       case GlobalVars.SETTINGS:
         this.destroySettings()
-        break
-      case GlobalVars.TASK_TRACKER:
-        this.destroyTaskTracker()
         break
     }
   }
@@ -73,7 +56,7 @@ export class GlobalVarManager {
    * 创建连接池
    */
   private static createConnectionPool() {
-    global[GlobalVars.CONNECTION_POOL] = new ConnectionPool(POOL_CONFIG)
+    global[GlobalVars.CONNECTION_POOL] = new ConnectionPool(PoolConfig)
     LogUtil.info('GlobalVar', '已创建连接池')
   }
 
@@ -111,33 +94,17 @@ export class GlobalVarManager {
    * 创建任务队列
    * @private
    */
-  private static createDownloadLimit() {
+  private static createTaskQueue() {
     global[GlobalVars.TASK_QUEUE] = new TaskQueue()
+    LogUtil.info('GlobalVar', '已创建任务队列')
   }
 
   /**
    * 销毁任务队列
    * @private
    */
-  private static destroyDownloadLimit() {
+  private static destroyTaskQueue() {
     delete global[GlobalVars.TASK_QUEUE]
     LogUtil.info('GlobalVar', '已销毁任务队列')
-  }
-
-  // TASK_TRACKER
-  /**
-   * 创建任务追踪器
-   */
-  private static createTaskTracker() {
-    global[GlobalVars.TASK_TRACKER] = {}
-    LogUtil.info('GlobalVar', '已创建任务追踪器')
-  }
-
-  /**
-   * 销毁任务追踪器
-   */
-  private static destroyTaskTracker() {
-    delete global[GlobalVars.TASK_TRACKER]
-    LogUtil.info('GlobalVar', '已销毁任务追踪器')
   }
 }

@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
-import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 import { Connection, RequestWeight } from './ConnectionPool.ts'
 
 /**
@@ -171,7 +171,7 @@ export default class DB {
     const savepointName = `sp${this.savepointCounter++}`
     // 开启事务之前获取排他锁
     if (!this.holdingWriteLock) {
-      await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, operation)
+      await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, operation)
       this.holdingWriteLock = true
     }
 
@@ -181,7 +181,7 @@ export default class DB {
     } catch (error) {
       // 释放排他锁
       if (this.holdingWriteLock && isStartPoint) {
-        GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+        GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
         this.holdingWriteLock = false
       }
       LogUtil.error(
@@ -208,9 +208,7 @@ export default class DB {
           LogUtil.debug(this.caller, `${operation}，ROLLBACK`)
 
           // 释放排他锁
-          GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(
-            `${this.caller}_${operation}`
-          )
+          GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
           this.holdingWriteLock = false
         } else {
           // 事务代码出现异常的话回滚至此保存点
@@ -225,9 +223,7 @@ export default class DB {
       .finally(() => {
         // 释放排他锁
         if (this.holdingWriteLock && isStartPoint) {
-          GlobalVarManager.get(GlobalVars.CONNECTION_POOL).releaseLock(
-            `${this.caller}_${operation}`
-          )
+          GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
           this.holdingWriteLock = false
         }
       })
@@ -245,7 +241,7 @@ export default class DB {
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection = await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquire(
+          this.readingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(
             true,
             RequestWeight.LOW
           )
@@ -265,7 +261,7 @@ export default class DB {
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection = await GlobalVarManager.get(GlobalVars.CONNECTION_POOL).acquire(
+          this.writingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(
             false,
             RequestWeight.LOW
           )
