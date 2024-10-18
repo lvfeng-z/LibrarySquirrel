@@ -505,7 +505,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             await this.taskFailed(task)
             return false
           })
-          .finally(() => this.refreshParentTaskStatus(parent))
+          .finally(() =>
+            this.refreshParentTaskStatus(parent).then((newStatus) => {
+              assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
+              this.updateTaskTracker(parent.id, { status: newStatus })
+            })
+          )
         activeProcesses.push(activeProcess)
       }
     }
@@ -645,7 +650,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const tempProcess = this.pauseTask(child, pluginLoader)
         activeProcesses.push(tempProcess)
       }
-      this.refreshParentTaskStatus(parent)
+      this.refreshParentTaskStatus(parent).then((newStatus) => {
+        assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
+        this.updateTaskTracker(parent.id, { status: newStatus })
+      })
     }
 
     await Promise.allSettled(activeProcesses)
@@ -812,7 +820,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             LogUtil.error('TaskService', `任务失败，taskId:${child.id}`, error)
             return false
           })
-          .finally(() => this.refreshParentTaskStatus(parent))
+          .finally(() =>
+            this.refreshParentTaskStatus(parent).then((newStatus) => {
+              assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
+              this.updateTaskTracker(parent.id, { status: newStatus })
+            })
+          )
         activeProcesses.push(activeProcess)
       }
     }
@@ -829,14 +842,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 根据父任务的children刷新其状态
    * @param root 父任务
    */
-  public async refreshParentTaskStatus(root: TaskDTO): Promise<boolean> {
+  public async refreshParentTaskStatus(root: TaskDTO): Promise<TaskStatesEnum> {
     assertNotNullish(root.isCollection, 'TaskService', '刷新状态的任务不能为子任务')
     assertTrue(root.isCollection, 'TaskService', '刷新状态的任务不能为子任务')
     const originalStatus = root.status
+    let newStatus: TaskStatesEnum
     if (notNullish(root.children) && root.children.length > 0) {
       const processing = root.children.some((child) => TaskStatesEnum.PROCESSING === child.status)
       if (processing) {
-        return false
+        return TaskStatesEnum.PROCESSING
       } else {
         const processing = root.children.filter(
           (child) => TaskStatesEnum.PROCESSING === child.status
@@ -849,27 +863,27 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           (child) => TaskStatesEnum.FAILED === child.status
         ).length
         if (processing > 0) {
-          root.status = TaskStatesEnum.PROCESSING
+          newStatus = TaskStatesEnum.PROCESSING
         } else if (paused > 0) {
-          root.status = TaskStatesEnum.PAUSE
+          newStatus = TaskStatesEnum.PAUSE
         } else if (finished > 0 && failed > 0) {
-          root.status = TaskStatesEnum.PARTLY_FINISHED
+          newStatus = TaskStatesEnum.PARTLY_FINISHED
         } else if (finished > 0) {
-          root.status = TaskStatesEnum.FINISHED
+          newStatus = TaskStatesEnum.FINISHED
         } else {
-          root.status = TaskStatesEnum.FAILED
+          newStatus = TaskStatesEnum.FAILED
         }
       }
     } else {
-      root.status = TaskStatesEnum.FINISHED
+      newStatus = TaskStatesEnum.FINISHED
     }
 
-    if (isNullish(originalStatus) || originalStatus !== root.status) {
-      return this.dao
-        .refreshTaskStatus(root.id as number)
-        .then((refreshResult) => refreshResult > 0)
+    root.status = newStatus
+
+    if (isNullish(originalStatus) || originalStatus !== newStatus) {
+      return this.dao.refreshTaskStatus(root.id as number).then(() => newStatus)
     } else {
-      return true
+      return newStatus
     }
   }
 
