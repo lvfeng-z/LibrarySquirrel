@@ -4,9 +4,9 @@ import { isNullish } from '../../util/CommonUtil.ts'
 
 export class TaskPluginDTO extends Task {
   /**
-   * 远程资源流
+   * 资源流
    */
-  remoteStream: Readable | undefined | null
+  resourceStream: Readable | undefined | null
 
   /**
    * 已写入数据量
@@ -16,15 +16,15 @@ export class TaskPluginDTO extends Task {
   constructor(taskPluginDTO: TaskPluginDTO | Task) {
     if (isNullish(taskPluginDTO)) {
       super()
-      this.remoteStream = undefined
+      this.resourceStream = undefined
       this.bytesWritten = 0
     } else if (taskPluginDTO instanceof TaskPluginDTO) {
       super(taskPluginDTO)
-      this.remoteStream = taskPluginDTO.remoteStream
+      this.resourceStream = taskPluginDTO.resourceStream
       this.bytesWritten = taskPluginDTO.bytesWritten
     } else {
       super(taskPluginDTO)
-      this.remoteStream = undefined
+      this.resourceStream = undefined
       this.bytesWritten = 0
     }
   }

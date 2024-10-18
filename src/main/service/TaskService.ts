@@ -592,7 +592,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       'TaskService',
       `暂停任务时，任务追踪器的写入流不存在，taskId: ${task.id}`
     )
-    taskPluginDTO.remoteStream = taskTracker.readStream
+    taskPluginDTO.resourceStream = taskTracker.readStream
 
     // 断开连接
     taskTracker.readStream.unpipe(taskTracker.writeStream)
@@ -694,7 +694,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
     }
     // 获取任务追踪器中的读取流
-    taskPluginDTO.remoteStream = taskTracker.readStream
+    taskPluginDTO.resourceStream = taskTracker.readStream
     // 读取已下载文件信息，获取已经下载的数据量
     try {
       taskPluginDTO.bytesWritten = await fs.promises

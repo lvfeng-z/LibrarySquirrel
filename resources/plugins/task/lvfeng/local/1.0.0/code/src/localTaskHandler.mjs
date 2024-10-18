@@ -107,7 +107,7 @@ export default class LocalTaskHandler {
    * @param task 需要暂停的任务
    */
   pause(task) {
-    task.remoteStream.pause()
+    task.resourceStream.pause()
   }
 
   /**
@@ -128,6 +128,7 @@ export default class LocalTaskHandler {
       }
     }
     result.resourceStream = pausedStream
+    result.continuable = true
     const stats = await fs.promises.stat(task.url)
     result.resourceSize = stats.size
     return result
@@ -406,7 +407,7 @@ class Task {
   /**
    * 远程资源流
    */
-  remoteStream
+  resourceStream
   /**
    * 已写入数据量
    */
@@ -425,7 +426,7 @@ class Task {
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined
-    this.remoteStream = undefined
+    this.resourceStream = undefined
     this.bytesWritten = undefined
   }
 }
