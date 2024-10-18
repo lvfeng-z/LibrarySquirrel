@@ -116,16 +116,18 @@ export default class LocalTaskHandler {
    * @return PluginResumeResponse
    */
   async resume(task) {
-    const result = new PluginResumeResponse()
-    let pausedStream = task.remoteStream
+    const result = new WorksDTO()
+    let pausedStream = task.resourceStream
     if (pausedStream === undefined || pausedStream === null) {
       if (task.bytesWritten === 0) {
         pausedStream = fs.createReadStream(task.url)
+        result.continuable = false
       } else {
         pausedStream = fs.createReadStream(task.url, { start: task.bytesWritten })
+        result.continuable = true
       }
     }
-    result.remoteStream = pausedStream
+    result.resourceStream = pausedStream
     const stats = await fs.promises.stat(task.url)
     result.resourceSize = stats.size
     return result
@@ -311,6 +313,10 @@ class WorksDTO {
    * 资源是否支持续传
    */
   continuable
+  /**
+   * 是否更新作品数据
+   */
+  doUpdate
 
   constructor() {
     this.siteId = undefined
@@ -330,7 +336,8 @@ class WorksDTO {
     this.siteTags = undefined
     this.resourceStream = undefined
     this.resourceSize = undefined
-    this.continuable = undefined
+    this.continuable = false
+    this.doUpdate = false
   }
 }
 
@@ -431,27 +438,4 @@ class PathTypeEnum {
   static SITE = 4
   static CREATE_TIME = 5
   static UNKNOWN = 6
-}
-
-class PluginResumeResponse {
-  /**
-   * 提供的流是否可接续在已下载部分的末尾
-   */
-  continuable
-
-  /**
-   * 用于继续下载的读取流
-   */
-  remoteStream
-
-  /**
-   * 资源大小，单位：字节（Bytes）
-   */
-  resourceSize
-
-  constructor() {
-    this.continuable = true
-    this.remoteStream = undefined
-    this.resourceSize = 0
-  }
 }

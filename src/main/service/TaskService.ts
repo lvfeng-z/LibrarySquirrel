@@ -383,7 +383,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 生成作品保存用的信息
     const worksService = new WorksService()
-    const worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
+    let worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
 
     // 保存作品信息
     const worksId = await worksService.saveWorksInfo(worksSaveInfo)
@@ -413,6 +413,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const savePromise = limit(async () => {
       // 调用插件的start方法，获取资源
       const resourceDTO = await taskHandler.start(task)
+      // 判断是否需要更新作品数据
+      if (resourceDTO.doUpdate) {
+        worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO)
+        worksSaveInfo.id = worksId
+        worksService.updateById(worksSaveInfo)
+      }
       // 校验插件有没有返回任务资源
       assertNotNullish(
         resourceDTO.resourceStream,
@@ -675,12 +681,21 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 插件用于恢复下载的任务信息
     const taskPluginDTO = new TaskPluginDTO(task)
-    // 获取任务追踪器中的读取流
+    // 获取任务追踪器
     let taskTracker = this.getTaskTracker(task.id)
-    if (notNullish(taskTracker)) {
-      taskPluginDTO.remoteStream = taskTracker.readStream
+    if (isNullish(taskTracker)) {
+      // 创建一个追踪器
+      taskTracker = {
+        status: TaskStatesEnum.PAUSE,
+        bytesSum: 0,
+        readStream: undefined,
+        writeStream: undefined,
+        taskProcessController: new TaskProcessController()
+      }
     }
-    // 获取已经下载的数据量
+    // 获取任务追踪器中的读取流
+    taskPluginDTO.remoteStream = taskTracker.readStream
+    // 读取已下载文件信息，获取已经下载的数据量
     try {
       taskPluginDTO.bytesWritten = await fs.promises
         .stat(task.pendingDownloadPath)
@@ -690,41 +705,46 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
       taskPluginDTO.bytesWritten = 0
     }
-    // 调用插件的resume函数，获取资源
-    const resumeResponse = await taskHandler.resume(taskPluginDTO)
-    assertNotNullish(
-      resumeResponse.remoteStream,
-      'TaskService',
-      `恢复任务时，插件返回的资源为空，taskId: ${task.id}`
-    )
 
-    let writeable: fs.WriteStream
-    if (resumeResponse.continuable) {
-      writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
-      writeable.bytesWritten = taskPluginDTO.bytesWritten
-    } else {
-      writeable = fs.createWriteStream(task.pendingDownloadPath)
-    }
-
-    if (isNullish(taskTracker)) {
-      // 创建一个追踪器
-      taskTracker = {
-        status: TaskStatesEnum.PAUSE,
-        bytesSum: resumeResponse.resourceSize,
-        readStream: resumeResponse.remoteStream,
-        writeStream: writeable,
-        taskProcessController: new TaskProcessController()
+    // 恢复下载
+    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
+    const resumePromise = limit(async () => {
+      // 调用插件的resume函数，获取资源
+      const resumeResponse = await taskHandler.resume(taskPluginDTO)
+      assertNotNullish(
+        resumeResponse.resourceStream,
+        'TaskService',
+        `恢复任务时，插件返回的资源为空，taskId: ${task.id}`
+      )
+      assertNotNullish(
+        task.pendingDownloadPath,
+        'TaskService',
+        `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${task.id}`
+      )
+      const worksService = new WorksService()
+      // 判断是否需要更新作品数据
+      if (resumeResponse.doUpdate) {
+        const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse)
+        worksSaveInfo.id = task.localWorksId
+        worksService.updateById(worksSaveInfo)
       }
-    } else {
+      let writeable: fs.WriteStream
+      if (resumeResponse.continuable) {
+        writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
+        writeable.bytesWritten = taskPluginDTO.bytesWritten
+      } else {
+        writeable = fs.createWriteStream(task.pendingDownloadPath)
+      }
+
+      // 配置任务追踪器
       taskTracker.bytesSum = resumeResponse.resourceSize
-      taskTracker.readStream = resumeResponse.remoteStream
+      taskTracker.readStream = resumeResponse.resourceStream
       taskTracker.writeStream = writeable
       taskTracker.taskProcessController = new TaskProcessController()
-    }
 
-    const worksService = new WorksService()
-    const limit = GlobalVarManager.get(GlobalVars.DOWNLOAD_LIMIT)
-    const resumePromise = limit(() => worksService.resumeSaveWorksResource(taskTracker))
+      return worksService.resumeSaveWorksResource(taskTracker)
+    })
+    // 添加任务追踪器
     this.addTaskTracker(task.id, taskTracker, resumePromise)
     // 更新任务追踪器的状态
     this.updateTaskTracker(task.id, { status: TaskStatesEnum.PROCESSING })

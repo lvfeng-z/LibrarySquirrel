@@ -53,12 +53,17 @@ export default class WorksPluginDTO extends Works {
   /**
    * 作品资源的文件大小，单位：字节（Bytes）
    */
-  resourceSize: number | undefined | null
+  resourceSize: number
 
   /**
    * 资源是否支持续传
    */
   continuable: boolean | undefined | null
+
+  /**
+   * 是否更新作品数据
+   */
+  doUpdate: boolean
 
   constructor(works?: WorksPluginDTO) {
     if (works === undefined) {
@@ -71,8 +76,9 @@ export default class WorksPluginDTO extends Works {
       this.siteTags = undefined
       this.worksSets = undefined
       this.resourceStream = undefined
-      this.resourceSize = undefined
+      this.resourceSize = 0
       this.continuable = undefined
+      this.doUpdate = false
     } else {
       super(works)
       this.id = works.id
@@ -85,6 +91,7 @@ export default class WorksPluginDTO extends Works {
       this.resourceStream = works.resourceStream
       this.resourceSize = works.resourceSize
       this.continuable = works.continuable
+      this.doUpdate = works.doUpdate
     }
   }
 }

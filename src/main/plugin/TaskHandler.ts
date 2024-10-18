@@ -3,7 +3,6 @@ import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
-import PluginResumeResponse from '../model/utilModels/PluginResumeResponse.ts'
 import InstalledPluginsService from '../service/InstalledPluginsService.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
@@ -50,9 +49,8 @@ export interface TaskHandler extends BasePlugin {
    * 恢复下载任务
    * @description 获取用于恢复已停止的下载任务的读取流，这个流必须是暂停状态，continuable表示提供的流是否可接续在已下载部分的末尾
    * @param task 需要暂停的任务
-   * @return 资源的读取流（必须是暂停状态）、是否可接续、资源大小
    */
-  resume(task: TaskPluginDTO): Promise<PluginResumeResponse>
+  resume(task: TaskPluginDTO): Promise<WorksPluginDTO>
 }
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {

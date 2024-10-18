@@ -139,6 +139,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       pipelineReadWrite(readable, writeable)
     return new Promise((resolve) => {
       taskTracker.taskProcessController.oncePause(() => resolve(TaskStatesEnum.PAUSE))
+      assertNotNullish(taskTracker.readStream, 'WorksService', `恢复资源下载时资源流意外为空`)
       assertNotNullish(taskTracker.writeStream, 'WorksService', `恢复资源下载时写入流意外为空`)
       writeStreamPromise(taskTracker.readStream, taskTracker.writeStream).then(() =>
         resolve(TaskStatesEnum.FINISHED)
