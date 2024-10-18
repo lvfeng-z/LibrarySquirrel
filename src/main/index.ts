@@ -6,7 +6,7 @@ import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import LogUtil from './util/LogUtil.ts'
 import { convertPath, getWorksResource } from './util/FileSysUtil.ts'
-import { GlobalVarManager, GlobalVars } from './GlobalVar.ts'
+import { GlobalVarManager, GlobalVars } from './global/GlobalVar.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.

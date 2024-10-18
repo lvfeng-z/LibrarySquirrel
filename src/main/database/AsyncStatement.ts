@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
-import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
+import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
 
 /**
  * 封装的Better-SQLit3 Statement类

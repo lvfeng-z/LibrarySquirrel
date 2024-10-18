@@ -1,6 +1,6 @@
 import { defaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from '../model/utilModels/Settings.ts'
-import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
+import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
 
 /**
  * 全量获取配置

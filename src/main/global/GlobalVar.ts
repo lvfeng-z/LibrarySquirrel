@@ -1,12 +1,12 @@
-import LogUtil from './util/LogUtil.ts'
-import { ConnectionPool, ConnectionPoolConfig } from './database/ConnectionPool.ts'
+import LogUtil from '../util/LogUtil.ts'
+import { ConnectionPool, ConnectionPoolConfig } from '../database/ConnectionPool.ts'
 import Store from 'electron-store'
-import { defaultSettings } from './util/SettingsUtil.ts'
-import { TaskTracker } from './model/utilModels/TaskTracker.ts'
-import { getDataBasePath } from './util/DatabaseUtil.ts'
-import DataBaseConstant from './constant/DataBaseConstant.ts'
+import { defaultSettings } from '../util/SettingsUtil.ts'
+import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
+import { getDataBasePath } from '../util/DatabaseUtil.ts'
+import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import pLimit, { Limit } from 'p-limit'
-import SettingsService from './service/SettingsService.js'
+import SettingsService from '../service/SettingsService.js'
 
 export enum GlobalVars {
   CONNECTION_POOL = 'CONNECTION_POOL',

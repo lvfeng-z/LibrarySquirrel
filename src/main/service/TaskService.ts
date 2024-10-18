@@ -24,7 +24,7 @@ import { TaskProcessController, TaskTracker } from '../model/utilModels/TaskTrac
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
-import { GlobalVarManager, GlobalVars } from '../GlobalVar.ts'
+import { GlobalVarManager, GlobalVars } from '../global/GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
 import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
