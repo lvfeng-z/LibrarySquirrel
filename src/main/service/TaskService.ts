@@ -998,6 +998,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       resultPage.data = tasks.map((task) => {
         const dto = new TaskDTO(task)
         dto.hasChildren = dto.isCollection
+        dto.children = []
         return dto
       })
     }

@@ -7,7 +7,7 @@ import Thead from '../../model/util/Thead'
 import InputBox from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
-import { ElMessage, ElTag, TreeNode } from 'element-plus'
+import { ElMessage, ElTag } from 'element-plus'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
@@ -16,6 +16,7 @@ import TaskDialog from '../dialogs/TaskDialog.vue'
 import PageModel from '../../model/util/PageModel'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
+import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 
 // onMounted
 onMounted(() => {
@@ -305,11 +306,7 @@ async function importFromSite() {
   taskManageSearchTable.value.handleSearchButtonClicked()
 }
 // 懒加载处理函数
-async function load(
-  row: unknown,
-  _treeNode: TreeNode,
-  resolve: (data: unknown[]) => void
-): Promise<void> {
+async function load(row: unknown): Promise<TaskDTO[]> {
   // 配置分页参数
   const pageCondition: PageModel<BaseQueryDTO, object> = new PageModel()
   pageCondition.pageSize = 100
@@ -317,17 +314,19 @@ async function load(
   // 配置查询参数
   pageCondition.query = { ...new BaseQueryDTO(), ...{ pid: (row as TaskDTO).id } }
 
-  const response = await apis.taskQueryChildrenTaskPage(pageCondition)
-  if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
-    const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
-    ;(row as TaskDTO).children = data
-    resolve(data)
-  } else {
-    ApiUtil.apiResponseMsg(response)
-  }
+  return apis.taskQueryChildrenTaskPage(pageCondition).then((response: ApiResponse) => {
+    if (ApiUtil.apiResponseCheck(response)) {
+      const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+      const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
+      ;(row as TaskDTO).children = data
+      return data
+    } else {
+      ApiUtil.apiResponseMsg(response)
+      return []
+    }
+  })
 }
-// 给行添加class
+// 给行添加选择器，用于区分父任务和子任务
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   const row = data.row as TaskDTO
   if (row.hasChildren || isNullish(row.pid) || row.pid === 0) {
@@ -403,6 +402,7 @@ async function refreshTask() {
       // 利用树形工具找到所有id对应的数据，判断是否需要刷新
       const tempRoot = new TaskDTO()
       tempRoot.children = dataList.value
+      console.log(tempRoot)
       return visibleRowsId.filter((id: number) => {
         const task = getNode<TaskDTO>(tempRoot, id)
         return (
@@ -487,7 +487,7 @@ async function deleteTask(ids: number[]) {
           size="large"
           type="primary"
           icon="Link"
-          @click="handleSiteDownloadDialog"
+          @click="console.log(dataList)"
           >从站点下载
         </el-button>
       </el-col>

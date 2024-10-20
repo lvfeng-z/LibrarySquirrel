@@ -11,10 +11,11 @@ import PageModel from '../../model/util/PageModel'
 import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
-import { notNullish } from '../../utils/CommonUtil'
+import { isNullish, notNullish } from '../../utils/CommonUtil'
 import TreeNode from '../../model/util/TreeNode'
 import { TreeNode as ElTreeNode } from 'element-plus'
 import { getNode } from '../../utils/TreeUtil'
+import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
 
 // props
 const props = withDefaults(
@@ -30,7 +31,7 @@ const props = withDefaults(
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
     lazy?: boolean // 树形数据是否懒加载
-    load?: (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
+    load?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
     sort?: QuerySortOption[] // 排序
     searchApi: (args: object) => Promise<never> // 查询接口
     fixedParam?: Record<string, unknown> // 固定参数
@@ -86,6 +87,23 @@ const pageSize = ref(props.defaultPageSize) // 页面大小
 const layout = ref('sizes, prev, pager, next') // 分页栏组件
 const dataCount = ref(3) // 数据总量
 const pagerCount = ref(5) // 显示的分页按钮个数
+// 保存树形数据的resolve方法的map
+const treeInitMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }> =
+  new Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }>()
+const loadd = isNullish(props.load)
+  ? undefined
+  : async (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => {
+      const rowId = (row as TaskDTO).id as number
+      if (!treeInitMap.has(rowId)) {
+        treeInitMap.set(rowId, { treeNode: treeNode, resolve: resolve })
+      }
+      if (notNullish(props.load)) {
+        const result = await props.load(row)
+        console.log('加载children', result)
+        console.log('treeNode', treeNode)
+        resolve(result)
+      }
+    }
 
 // 方法
 // 数据栏
@@ -109,6 +127,18 @@ async function handleSearchButtonClicked() {
     const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
     dataList.value = page.data === undefined ? [] : page.data
     dataCount.value = page.dataCount
+
+    // 刷新子数据
+    if (notNullish(dataList.value)) {
+      dataList.value.forEach((row) => {
+        if (notNullish(props.load) && notNullish(loadd)) {
+          const treeInitItem = treeInitMap.get(row[props.keyOfData])
+          if (notNullish(treeInitItem)) {
+            loadd(row, treeInitItem.treeNode, treeInitItem.resolve)
+          }
+        }
+      })
+    }
   } else {
     ApiUtil.apiResponseMsg(response)
   }
@@ -257,7 +287,7 @@ defineExpose({
         :custom-operation-button="customOperationButton"
         :tree-data="treeData"
         :lazy="props.lazy"
-        :load="props.load"
+        :load="loadd"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
