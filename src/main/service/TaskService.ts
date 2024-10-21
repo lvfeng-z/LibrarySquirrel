@@ -363,9 +363,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       LogUtil.error('TaskService', msg)
       return { status: TaskStatesEnum.FAILED, worksId: -1 }
     }
+    const taskId = task.id
     // 加载插件
     if (isNullish(task.pluginId)) {
-      const msg = `任务的插件id意外为空，taskId: ${task.id}`
+      const msg = `任务的插件id意外为空，taskId: ${taskId}`
       LogUtil.error('TaskService', msg)
       return { status: TaskStatesEnum.FAILED, worksId: -1 }
     }
@@ -373,12 +374,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 调用插件的generateWorksInfo方法，获取作品信息
     const worksDTO: WorksPluginDTO = await taskHandler.generateWorksInfo(task)
-    worksDTO.includeTaskId = task.id
+    worksDTO.includeTaskId = taskId
 
     // 保存远程资源是否可接续
     task.continuable = worksDTO.continuable
     const updateContinuableTask = new Task()
-    updateContinuableTask.id = task.id
+    updateContinuableTask.id = taskId
     updateContinuableTask.continuable = worksDTO.continuable
     await this.updateById(updateContinuableTask)
 
@@ -413,6 +414,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     const savePromise = taskQueue.push(
       async () => {
+        // 先校验是不是暂停状态
+        const tracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskId)
+        if (TaskStatesEnum.PAUSE === tracker.status) {
+          return TaskStatesEnum.PAUSE
+        }
+
+        // 标记为进行中
         this.taskProcessing(task.id)
         // 调用插件的start方法，获取资源
         const resourceDTO = await taskHandler.start(task)
@@ -432,7 +440,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         worksSaveInfo.resourceStream = resourceDTO.resourceStream
         return worksService.saveWorksResource(worksSaveInfo, taskTracker)
       },
-      task.id,
+      taskId,
       taskTracker
     )
 
@@ -585,44 +593,41 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       'TaskService',
       `暂停任务时，任务的pluginId意外为空，taskId: ${task.id}`
     )
+    const taskId = task.id
     const taskHandler = await pluginLoader.load(task.pluginId)
 
     // 创建TaskPluginDTO对象
     const taskPluginDTO = new TaskPluginDTO(task)
-    const taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskPluginDTO.id as number)
+    const taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskId)
 
-    assertNotNullish(taskTracker, 'TaskService', `暂停任务时，任务追踪器不存在，taskId: ${task.id}`)
-    assertNotNullish(
-      taskTracker.readStream,
-      'TaskService',
-      `暂停任务时，任务追踪器的读取流不存在，taskId: ${task.id}`
-    )
-    assertNotNullish(
-      taskTracker.writeStream,
-      'TaskService',
-      `暂停任务时，任务追踪器的写入流不存在，taskId: ${task.id}`
-    )
+    assertNotNullish(taskTracker, 'TaskService', `暂停任务时，任务追踪器不存在，taskId: ${taskId}`)
     taskPluginDTO.resourceStream = taskTracker.readStream
 
-    // 断开连接
-    taskTracker.readStream.unpipe(taskTracker.writeStream)
+    if (notNullish(taskTracker.readStream) && notNullish(taskTracker.writeStream)) {
+      // 断开连接
+      taskTracker.readStream.unpipe(taskTracker.writeStream)
+    }
     // 调用插件的pause方法
     try {
       taskHandler.pause(taskPluginDTO)
     } catch (error) {
       LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
-      taskTracker.readStream.pause()
+      if (notNullish(taskTracker.readStream)) {
+        taskTracker.readStream.pause()
+      }
     }
     // 停止写入
-    taskTracker.writeStream.end()
-    // 调用任务控制器的pause方法
-    taskTracker.taskProcessController.pause()
+    if (notNullish(taskTracker.writeStream)) {
+      taskTracker.writeStream.end()
+    }
     // 更新任务追踪器的状态
-    GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(task.id, {
+    GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(taskId, {
       status: TaskStatesEnum.PAUSE
     })
+    // 调用任务控制器的pause方法
+    taskTracker.taskProcessController.pause()
     // 更新数据库中任务的状态
-    return this.taskPaused(task.id).then((runResult) => runResult > 0)
+    return this.taskPaused(taskId).then((runResult) => runResult > 0)
   }
 
   /**

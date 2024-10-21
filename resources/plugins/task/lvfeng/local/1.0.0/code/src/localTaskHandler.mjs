@@ -107,7 +107,9 @@ export default class LocalTaskHandler {
    * @param task 需要暂停的任务
    */
   pause(task) {
-    task.resourceStream.pause()
+    if (task.resourceStream !== undefined && task.resourceStream !== null) {
+      task.resourceStream.pause()
+    }
   }
 
   /**
