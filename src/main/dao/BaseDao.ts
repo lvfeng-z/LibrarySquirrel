@@ -83,7 +83,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    if (arrayNotEmpty(entities)) {
+    if (!arrayNotEmpty(entities)) {
       LogUtil.warn(this.childClassName, '批量保存的对象不能为空')
       return 0
     }
@@ -173,7 +173,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    if (arrayNotEmpty(ids)) {
+    if (!arrayNotEmpty(ids)) {
       LogUtil.warn(this.childClassName, '批量删除时id列表不能为空')
       return 0
     }

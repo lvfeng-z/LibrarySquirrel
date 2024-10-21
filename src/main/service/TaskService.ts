@@ -911,8 +911,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       if (isNullish(tempTask)) {
         continue
       }
-      if (tempTask.isCollection) {
-        const tempChildren = tempTask.children?.map((child) => child.id)
+      if (tempTask.isCollection && notNullish(tempTask.children)) {
+        const tempChildren = tempTask.children
+          .map((child) => child.id)
+          .filter((id) => notNullish(id))
         if (arrayNotEmpty(tempChildren)) {
           waitingDelete = waitingDelete.concat(tempChildren)
         }

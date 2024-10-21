@@ -6,6 +6,6 @@ export function isNullish(value: unknown): value is undefined | null {
   return !notNullish(value)
 }
 
-export function arrayNotEmpty<T>(value: T | [] | undefined | null): value is [] {
+export function arrayNotEmpty(value: unknown): value is unknown[] {
   return notNullish(value) && Array.isArray(value) && value.length > 0
 }
