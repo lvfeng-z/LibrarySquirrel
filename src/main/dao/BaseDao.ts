@@ -10,7 +10,8 @@ import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
+import { assertNotNullish } from '../util/AssertUtil.js'
 
 type PrimaryKey = string | number
 
@@ -82,8 +83,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    if (isNullish(entities) || entities.length === 0) {
-      throw new Error('保存的对象不能为空')
+    if (arrayNotEmpty(entities)) {
+      LogUtil.warn(this.childClassName, '批量保存的对象不能为空')
+      return 0
     }
 
     // 对齐所有属性
@@ -171,7 +173,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    if (isNullish(ids) || ids.length === 0) {
+    if (arrayNotEmpty(ids)) {
       LogUtil.warn(this.childClassName, '批量删除时id列表不能为空')
       return 0
     }
@@ -194,11 +196,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param updateData
    */
   public async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
-    if (id === undefined) {
-      const msg = '更新时主键不能为空'
-      LogUtil.error('BaseDao', msg)
-      throw new Error(msg)
-    }
+    assertNotNullish(id, this.childClassName, '更新时主键不能为空')
     // 设置createTime和updateTime
     updateData.updateTime = Date.now()
 

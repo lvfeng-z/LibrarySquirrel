@@ -887,10 +887,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       newStatus = TaskStatesEnum.FINISHED
     }
 
-    root.status = newStatus
-
     if (isNullish(originalStatus) || originalStatus !== newStatus) {
-      return this.dao.refreshTaskStatus(root.id as number).then(() => newStatus)
+      const tempRoot = new Task()
+      tempRoot.id = root.id
+      tempRoot.status = newStatus
+      return this.updateById(tempRoot).then(() => newStatus)
     } else {
       return newStatus
     }
@@ -930,7 +931,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (typeof temp.pluginData === 'object') {
       temp.pluginData = JSON.stringify(temp.pluginData)
     }
-    return await super.updateById(temp)
+    return super.updateById(temp)
   }
 
   /**

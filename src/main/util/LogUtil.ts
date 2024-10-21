@@ -25,7 +25,7 @@ function error(module: string, ...args: unknown[]) {
 function initializeLogSetting() {
   const NODE_ENV = process.env.NODE_ENV
   if (NODE_ENV == 'development') {
-    log.transports.file.level = 'info' // 设置文件日志的级别为 debug 或更高
+    log.transports.file.level = 'debug' // 设置文件日志的级别为 debug 或更高
     log.transports.console.level = 'info' // 设置控制台日志的级别为 debug 或更高
   } else {
     log.transports.file.level = 'info' // 设置文件日志的级别为 info 或更高
