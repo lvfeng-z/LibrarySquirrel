@@ -421,6 +421,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
 
         // 标记为进行中
+        taskTracker.status = TaskStatesEnum.PROCESSING
         this.taskProcessing(task.id)
         // 调用插件的start方法，获取资源
         const resourceDTO = await taskHandler.start(task)
@@ -444,12 +445,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       taskTracker
     )
 
-    const saveResult = await savePromise
-
-    if (TaskStatesEnum.FINISHED === saveResult) {
-      worksService.resourceFinished(worksId)
-    }
-    return { status: saveResult, worksId: worksId }
+    return savePromise.then(async (saveResult) => {
+      // 只处理完成的状态
+      if (TaskStatesEnum.FINISHED === saveResult) {
+        worksService.resourceFinished(worksId)
+        return this.taskFinished(task.id, worksId).then(() => {
+          return { status: saveResult, worksId: worksId }
+        })
+      } else {
+        return { status: saveResult, worksId: worksId }
+      }
+    })
   }
   /**
    * 处理任务
@@ -497,13 +503,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 尝试开始任务
       for (const task of tasks) {
         task.status = TaskStatesEnum.PROCESSING
+        // 单个父任务的子任务等待列表
+        const childProcesses: Promise<boolean>[] = []
         const activeProcess = this.processTask(task, pluginLoader)
           .then(async (processResult) => {
-            // 修改任务状态和作品资源状态(只有完成状态进行修改，暂停状态在暂停函数中处理)
             if (TaskStatesEnum.FINISHED === processResult.status) {
               succeed++
               task.status = TaskStatesEnum.FINISHED
-              await this.taskFinished(task.id, processResult.worksId)
             } else if (TaskStatesEnum.PAUSE === processResult.status) {
               pause++
             }
@@ -516,15 +522,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             await this.taskFailed(task.id)
             return false
           })
-          .finally(() =>
-            this.refreshParentTaskStatus(parent).then((newStatus) => {
-              assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
-              GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parent.id, {
-                status: newStatus
-              })
-            })
-          )
         activeProcesses.push(activeProcess)
+        childProcesses.push(activeProcess)
+
+        Promise.allSettled(childProcesses).then(() =>
+          this.refreshParentTaskStatus(parent).then((newStatus) => {
+            assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
+            GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parent.id, {
+              status: newStatus
+            })
+          })
+        )
       }
     }
 
@@ -645,6 +653,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const activeProcesses: Promise<boolean>[] = []
 
     for (const parent of taskTree) {
+      assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
+      const parentId = parent.id
+      // 单个父任务的子任务等待列表
+      const childProcesses: Promise<boolean>[] = []
       // 处理parent为单个任务的情况
       if (!parent.isCollection) {
         const tempProcess = this.pauseTask(parent, pluginLoader)
@@ -659,15 +671,20 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       for (const child of children) {
-        const tempProcess = this.pauseTask(child, pluginLoader)
-        activeProcesses.push(tempProcess)
-      }
-      this.refreshParentTaskStatus(parent).then((newStatus) => {
-        assertNotNullish(parent.id, 'TaskService', '暂停任务树时，父任务id意外为空')
-        GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parent.id, {
-          status: newStatus
+        const tempProcess = this.pauseTask(child, pluginLoader).then((result) => {
+          child.status = TaskStatesEnum.PAUSE
+          return result
         })
-      })
+        activeProcesses.push(tempProcess)
+        childProcesses.push(tempProcess)
+      }
+      Promise.allSettled(childProcesses).then(() =>
+        this.refreshParentTaskStatus(parent).then((newStatus) =>
+          GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(parentId, {
+            status: newStatus
+          })
+        )
+      )
     }
 
     await Promise.allSettled(activeProcesses)
@@ -708,7 +725,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (isNullish(taskTracker)) {
       // 创建一个追踪器
       taskTracker = {
-        status: TaskStatesEnum.PAUSE,
+        status: TaskStatesEnum.WAITING,
         bytesSum: 0,
         readStream: undefined,
         writeStream: undefined,
@@ -732,6 +749,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     const resumePromise = taskQueue.push(
       async () => {
+        // 标记为进行中
+        taskTracker.status = TaskStatesEnum.PROCESSING
         this.taskProcessing(task.id)
         // 调用插件的resume函数，获取资源
         const resumeResponse = await taskHandler.resume(taskPluginDTO)
@@ -787,6 +806,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param mainWindow
    */
   public async resumeTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
+    // 所有暂停的任务设置为等待中
+    await this.dao.setTaskTreeStatus(ids, TaskStatesEnum.WAITING, [TaskStatesEnum.PAUSE])
+
     const taskTree = await this.dao.listTaskTree(ids)
 
     const startTime = Date.now()
