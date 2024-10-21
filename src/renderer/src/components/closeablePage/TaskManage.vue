@@ -318,7 +318,11 @@ async function load(row: unknown): Promise<TaskDTO[]> {
     if (ApiUtil.apiResponseCheck(response)) {
       const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
       const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
-      ;(row as TaskDTO).children = data
+      // 子任务列表赋值给对应的父任务的children
+      const parent = dataList.value.find((task) => (row as TaskDTO).id === task.id)
+      if (notNullish(parent)) {
+        parent.children = data
+      }
       return data
     } else {
       ApiUtil.apiResponseMsg(response)
@@ -487,7 +491,7 @@ async function deleteTask(ids: number[]) {
           size="large"
           type="primary"
           icon="Link"
-          @click="console.log(dataList)"
+          @click="handleSiteDownloadDialog"
           >从站点下载
         </el-button>
       </el-col>

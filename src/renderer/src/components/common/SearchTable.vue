@@ -46,7 +46,8 @@ const props = withDefaults(
     createButton: false,
     pageCondition: () => new PageModel<BaseQueryDTO, object>(),
     pageSizes: () => [10, 20, 30, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 10,
+    lazy: false
   }
 )
 
@@ -87,21 +88,20 @@ const pageSize = ref(props.defaultPageSize) // 页面大小
 const layout = ref('sizes, prev, pager, next') // 分页栏组件
 const dataCount = ref(3) // 数据总量
 const pagerCount = ref(5) // 显示的分页按钮个数
-// 保存树形数据的resolve方法的map
-const treeInitMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }> =
+// 保存树形数据的子数据resolve方法的map，用于在除首次加载之外的时机刷新子数据
+const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }> =
   new Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }>()
-const loadd = isNullish(props.load)
+// 把向treeRefreshMap写入数据和props.load封装在一起的函数
+const wrappedLoad = isNullish(props.load)
   ? undefined
   : async (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => {
       const rowId = (row as TaskDTO).id as number
-      if (!treeInitMap.has(rowId)) {
-        treeInitMap.set(rowId, { treeNode: treeNode, resolve: resolve })
+      if (!treeRefreshMap.has(rowId)) {
+        treeRefreshMap.set(rowId, { treeNode: treeNode, resolve: resolve })
       }
       if (notNullish(props.load)) {
-        const result = await props.load(row)
-        console.log('加载children', result)
-        console.log('treeNode', treeNode)
-        resolve(result)
+        const children = await props.load(row)
+        resolve(children)
       }
     }
 
@@ -131,10 +131,10 @@ async function handleSearchButtonClicked() {
     // 刷新子数据
     if (notNullish(dataList.value)) {
       dataList.value.forEach((row) => {
-        if (notNullish(props.load) && notNullish(loadd)) {
-          const treeInitItem = treeInitMap.get(row[props.keyOfData])
+        if (notNullish(props.load) && notNullish(wrappedLoad)) {
+          const treeInitItem = treeRefreshMap.get(row[props.keyOfData])
           if (notNullish(treeInitItem)) {
-            loadd(row, treeInitItem.treeNode, treeInitItem.resolve)
+            wrappedLoad(row, treeInitItem.treeNode, treeInitItem.resolve)
           }
         }
       })
@@ -287,7 +287,7 @@ defineExpose({
         :custom-operation-button="customOperationButton"
         :tree-data="treeData"
         :lazy="props.lazy"
-        :load="loadd"
+        :load="wrappedLoad"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
