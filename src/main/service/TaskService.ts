@@ -449,6 +449,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return savePromise.then(async (saveResult) => {
       // 只处理完成的状态
       if (TaskStatesEnum.FINISHED === saveResult) {
+        taskTracker.status = TaskStatesEnum.FINISHED
         worksService.resourceFinished(worksId)
         return this.taskFinished(task.id, worksId).then(() => {
           return { status: saveResult, worksId: worksId }
@@ -611,33 +612,37 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(taskTracker, 'TaskService', `暂停任务时，任务追踪器不存在，taskId: ${taskId}`)
     taskPluginDTO.resourceStream = taskTracker.readStream
 
-    if (notNullish(taskTracker.readStream) && notNullish(taskTracker.writeStream)) {
-      // 断开连接
-      taskTracker.readStream.unpipe(taskTracker.writeStream)
-    }
-    // 调用插件的pause方法
-    try {
-      taskHandler.pause(taskPluginDTO)
-    } catch (error) {
-      LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
-      if (notNullish(taskTracker.readStream)) {
-        taskTracker.readStream.pause()
+    if (TaskStatesEnum.FINISHED !== taskTracker.status) {
+      // 调用任务控制器的pause方法
+      taskTracker.taskProcessController.pause()
+      if (notNullish(taskTracker.readStream) && notNullish(taskTracker.writeStream)) {
+        // 断开连接
+        taskTracker.readStream.unpipe(taskTracker.writeStream)
       }
+      // 调用插件的pause方法
+      try {
+        taskHandler.pause(taskPluginDTO)
+      } catch (error) {
+        LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
+        if (notNullish(taskTracker.readStream)) {
+          taskTracker.readStream.pause()
+        }
+      }
+      // 停止写入
+      if (notNullish(taskTracker.writeStream)) {
+        taskTracker.writeStream.end()
+      }
+      // 更新任务追踪器的状态
+      GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(taskId, {
+        status: TaskStatesEnum.PAUSE
+      })
+      // 更新任务树的状态
+      task.status = TaskStatesEnum.PAUSE
+      // 更新数据库中任务的状态
+      return this.taskPaused(taskId).then((runResult) => runResult > 0)
+    } else {
+      return false
     }
-    // 停止写入
-    if (notNullish(taskTracker.writeStream)) {
-      taskTracker.writeStream.end()
-    }
-    // 更新任务追踪器的状态
-    GlobalVar.get(GlobalVars.TASK_QUEUE).updateTracker(taskId, {
-      status: TaskStatesEnum.PAUSE
-    })
-    // 调用任务控制器的pause方法
-    taskTracker.taskProcessController.pause()
-    // 更新任务树的状态
-    task.status = TaskStatesEnum.PAUSE
-    // 更新数据库中任务的状态
-    return this.taskPaused(taskId).then((runResult) => runResult > 0)
   }
 
   /**
@@ -803,6 +808,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return resumePromise.then(async (saveResult) => {
       // 只处理完成的状态
       if (TaskStatesEnum.FINISHED === saveResult) {
+        taskTracker.status = TaskStatesEnum.FINISHED
         worksService.resourceFinished(worksId)
         return this.taskFinished(task.id, worksId).then(() => {
           return { status: saveResult, worksId: worksId }
