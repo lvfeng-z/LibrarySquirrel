@@ -9,10 +9,16 @@ import LogUtil from '../util/LogUtil.js'
 
 export class TaskQueue {
   /**
+   * 异步限制器
+   * @private
+   */
+  private limit: pLimit.Limit
+
+  /**
    * 任务队列
    * @private
    */
-  private queue: pLimit.Limit
+  private queue: []
 
   /**
    * 任务追踪器
@@ -25,7 +31,7 @@ export class TaskQueue {
     const settings = SettingsService.getSettings()
     const maxSaveWorksPromise =
       settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    this.queue = pLimit(maxSaveWorksPromise)
+    this.limit = pLimit(maxSaveWorksPromise)
     this.taskTrackers = {}
   }
 
@@ -42,7 +48,7 @@ export class TaskQueue {
     taskId: number,
     taskTracker: TaskTracker
   ): Promise<TaskStatesEnum> {
-    const taskPromise = this.queue(task)
+    const taskPromise = this.limit(task)
     this.addTracker(taskId, taskTracker, taskPromise)
     return taskPromise
   }
