@@ -421,6 +421,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
 
         // 标记为进行中
+        task.status = TaskStatesEnum.PROCESSING
         taskTracker.status = TaskStatesEnum.PROCESSING
         this.taskProcessing(task.id)
         // 调用插件的start方法，获取资源
@@ -502,7 +503,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 尝试开始任务
       for (const task of tasks) {
-        task.status = TaskStatesEnum.PROCESSING
         // 单个父任务的子任务等待列表
         const childProcesses: Promise<boolean>[] = []
         const activeProcess = this.processTask(task, pluginLoader)
@@ -595,13 +595,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async pauseTask(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<boolean> {
     assertNotNullish(task.id, 'TaskService', `暂停任务时，任务的id意外为空，taskId: ${task.id}`)
+    const taskId = task.id
     // 加载插件
     assertNotNullish(
       task.pluginId,
       'TaskService',
-      `暂停任务时，任务的pluginId意外为空，taskId: ${task.id}`
+      `暂停任务时，任务的pluginId意外为空，taskId: ${taskId}`
     )
-    const taskId = task.id
     const taskHandler = await pluginLoader.load(task.pluginId)
 
     // 创建TaskPluginDTO对象
@@ -634,6 +634,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     })
     // 调用任务控制器的pause方法
     taskTracker.taskProcessController.pause()
+    // 更新任务树的状态
+    task.status = TaskStatesEnum.PAUSE
     // 更新数据库中任务的状态
     return this.taskPaused(taskId).then((runResult) => runResult > 0)
   }
@@ -671,10 +673,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       for (const child of children) {
-        const tempProcess = this.pauseTask(child, pluginLoader).then((result) => {
-          child.status = TaskStatesEnum.PAUSE
-          return result
-        })
+        const tempProcess = this.pauseTask(child, pluginLoader)
         activeProcesses.push(tempProcess)
         childProcesses.push(tempProcess)
       }
@@ -700,28 +699,30 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     pluginLoader: PluginLoader<TaskHandler>
   ): Promise<WorksResourceSaveResponse> {
     assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
+    const taskId = task.id
     assertNotNullish(
       task.localWorksId,
       'TaskService',
-      `恢复任务时，任务的localWorksId意外为空，taskId: ${task.id}`
+      `恢复任务时，任务的localWorksId意外为空，taskId: ${taskId}`
     )
+    const worksId = task.localWorksId
     assertNotNullish(
       task.pendingDownloadPath,
       'TaskService',
-      `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${task.id}`
+      `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`
     )
     // 加载插件
     assertNotNullish(
       task.pluginId,
       'TaskService',
-      `恢复任务时，任务的pluginId意外为空，taskId: ${task.id}`
+      `恢复任务时，任务的pluginId意外为空，taskId: ${taskId}`
     )
     const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
     // 插件用于恢复下载的任务信息
     const taskPluginDTO = new TaskPluginDTO(task)
     // 获取任务追踪器
-    let taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(task.id)
+    let taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskId)
     if (isNullish(taskTracker)) {
       // 创建一个追踪器
       taskTracker = {
@@ -747,24 +748,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 恢复下载
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const worksService = new WorksService()
     const resumePromise = taskQueue.push(
       async () => {
+        // 先校验是不是暂停状态
+        const tracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskId)
+        if (TaskStatesEnum.PAUSE === tracker.status) {
+          return TaskStatesEnum.PAUSE
+        }
+
         // 标记为进行中
+        task.status = TaskStatesEnum.PROCESSING
         taskTracker.status = TaskStatesEnum.PROCESSING
-        this.taskProcessing(task.id)
+        this.taskProcessing(taskId)
         // 调用插件的resume函数，获取资源
         const resumeResponse = await taskHandler.resume(taskPluginDTO)
         assertNotNullish(
           resumeResponse.resourceStream,
           'TaskService',
-          `恢复任务时，插件返回的资源为空，taskId: ${task.id}`
+          `恢复任务时，插件返回的资源为空，taskId: ${taskId}`
         )
         assertNotNullish(
           task.pendingDownloadPath,
           'TaskService',
-          `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${task.id}`
+          `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`
         )
-        const worksService = new WorksService()
         // 判断是否需要更新作品数据
         if (resumeResponse.doUpdate) {
           const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse)
@@ -787,15 +795,20 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         return worksService.resumeSaveWorksResource(taskTracker)
       },
-      task.id,
+      taskId,
       taskTracker
     )
     // 更新任务追踪器的状态
-    taskQueue.updateTracker(task.id, { status: TaskStatesEnum.PROCESSING })
-    return resumePromise.then(() => {
-      return {
-        status: TaskStatesEnum.FINISHED,
-        worksId: task.localWorksId as number
+    taskQueue.updateTracker(taskId, { status: TaskStatesEnum.PROCESSING })
+    return resumePromise.then(async (saveResult) => {
+      // 只处理完成的状态
+      if (TaskStatesEnum.FINISHED === saveResult) {
+        worksService.resourceFinished(worksId)
+        return this.taskFinished(task.id, worksId).then(() => {
+          return { status: saveResult, worksId: worksId }
+        })
+      } else {
+        return { status: saveResult, worksId: worksId }
       }
     })
   }

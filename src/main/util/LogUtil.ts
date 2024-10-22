@@ -12,11 +12,11 @@ function debug(module: string, ...args: unknown[]) {
 }
 
 function warn(module: string, ...args: unknown[]) {
-  log.warn(module, ':', args)
+  log.warn(module, ':', ...args)
 }
 
 function error(module: string, ...args: unknown[]) {
-  log.error(module, ':', args)
+  log.error(module, ':', ...args)
 }
 
 /**
