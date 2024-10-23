@@ -47,12 +47,10 @@ export default class PluginLoader<T extends BasePlugin> {
     let plugin: Promise<T>
 
     if (isNullish(this.pluginCache[pluginId])) {
-      LogUtil.info('PluginLoader', `新增插件缓存, pluginId: ${pluginId}`)
       plugin = this.factory.create(pluginId, this.pluginTool)
       this.pluginCache[pluginId] = plugin
       return plugin
     } else {
-      LogUtil.info('PluginLoader', `读取插件缓存, pluginId: ${pluginId}`)
       plugin = this.pluginCache[pluginId]
       return plugin
     }

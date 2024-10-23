@@ -1,39 +1,25 @@
 import { Readable } from 'node:stream'
 import fs from 'fs'
-import { EventEmitter } from 'node:events'
 
 export interface TaskTracker {
-  status: number
-  readStream: Readable | undefined
-  writeStream: fs.WriteStream | undefined
-  bytesSum: number
-  taskProcessController: TaskProcessController
-}
-
-export class TaskProcessController {
   /**
-   * 事件派发器
-   * @private
+   * 任务状态
    */
-  private readonly eventEmitter: EventEmitter
-
-  constructor() {
-    this.eventEmitter = new EventEmitter()
-  }
-
-  public pause() {
-    this.eventEmitter.emit('pause')
-  }
-
-  public resume() {
-    this.eventEmitter.emit('resume')
-  }
-
-  public oncePause(handler: () => unknown) {
-    this.eventEmitter.once('pause', handler)
-  }
-
-  public onceResume(handler: () => unknown) {
-    this.eventEmitter.emit('resume', handler)
-  }
+  status: number
+  /**
+   * 资源流
+   */
+  readStream: Readable | undefined
+  /**
+   * 写入流
+   */
+  writeStream: fs.WriteStream | undefined
+  /**
+   * 资源大小
+   */
+  bytesSum: number
+  /**
+   * 已写入的数据量（只在任务暂停时更新，用于解决恢复任务时首次查询到的进度为0的问题）
+   */
+  bytesWritten?: number
 }
