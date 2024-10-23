@@ -28,6 +28,7 @@ import { ReWorksTagService } from './ReWorksTagService.js'
 import { TaskStatesEnum } from '../constant/TaskStatesEnum.js'
 import { Readable, Writable } from 'node:stream'
 import { assertNotNullish } from '../util/AssertUtil.js'
+import { FileSaveResult } from '../constant/FileSaveResult.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -91,7 +92,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
     )
     // 保存资源的过程
-    const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
+    const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<FileSaveResult> =>
       pipelineReadWrite(readable, writeable)
     // 保存资源
     // 创建保存目录
@@ -113,15 +114,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const writeStream = fs.createWriteStream(fullPath)
       taskTracker.writeStream = writeStream
       // 创建写入Promise
-      const saveResourceFinishPromise: Promise<void> = writeStreamPromise(
+      const saveResourceFinishPromise: Promise<FileSaveResult> = writeStreamPromise(
         worksDTO.resourceStream,
         writeStream
       )
 
-      return new Promise((resolve) => {
-        // 收到任务控制器的pause事件时，返回暂停状态
-        taskTracker.taskProcessController.oncePause(() => resolve(TaskStatesEnum.PAUSE))
-        saveResourceFinishPromise.then(() => resolve(TaskStatesEnum.FINISHED))
+      return saveResourceFinishPromise.then((saveResult) => {
+        if (FileSaveResult.FINISH === saveResult) {
+          return TaskStatesEnum.FINISHED
+        } else {
+          return TaskStatesEnum.PAUSE
+        }
       })
     } catch (error) {
       const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
@@ -135,16 +138,19 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param taskTracker 任务追踪器
    */
   public async resumeSaveWorksResource(taskTracker: TaskTracker): Promise<TaskStatesEnum> {
-    const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<void> =>
+    const writeStreamPromise = (readable: Readable, writeable: Writable): Promise<FileSaveResult> =>
       pipelineReadWrite(readable, writeable)
-    return new Promise((resolve) => {
-      taskTracker.taskProcessController.oncePause(() => resolve(TaskStatesEnum.PAUSE))
-      assertNotNullish(taskTracker.readStream, 'WorksService', `恢复资源下载时资源流意外为空`)
-      assertNotNullish(taskTracker.writeStream, 'WorksService', `恢复资源下载时写入流意外为空`)
-      writeStreamPromise(taskTracker.readStream, taskTracker.writeStream).then(() =>
-        resolve(TaskStatesEnum.FINISHED)
-      )
-    })
+    assertNotNullish(taskTracker.readStream, 'WorksService', `恢复资源下载时资源流意外为空`)
+    assertNotNullish(taskTracker.writeStream, 'WorksService', `恢复资源下载时写入流意外为空`)
+    return writeStreamPromise(taskTracker.readStream, taskTracker.writeStream).then(
+      (saveResult) => {
+        if (FileSaveResult.FINISH === saveResult) {
+          return TaskStatesEnum.FINISHED
+        } else {
+          return TaskStatesEnum.PAUSE
+        }
+      }
+    )
   }
 
   /**
