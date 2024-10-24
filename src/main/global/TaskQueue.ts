@@ -49,9 +49,7 @@ export class TaskQueue {
       return this.push(taskId, taskTracker, func)
     } else {
       assertFalse(
-        TaskStatesEnum.PROCESSING === tracker.status ||
-          TaskStatesEnum.PAUSE === tracker.status ||
-          TaskStatesEnum.WAITING === tracker.status,
+        TaskStatesEnum.PROCESSING === tracker.status || TaskStatesEnum.PAUSE === tracker.status,
         'TaskQueue',
         `任务${taskId}已经存在，不能开始`
       )
@@ -74,6 +72,16 @@ export class TaskQueue {
     if (isNullish(tracker)) {
       return this.push(taskId, taskTracker, func)
     } else {
+      assertFalse(
+        TaskStatesEnum.PROCESSING === tracker.status,
+        'TaskQueue',
+        `任务${taskId}已经存在，不能恢复`
+      )
+      assertFalse(
+        TaskStatesEnum.FINISHED === tracker.status || TaskStatesEnum.FAILED === tracker.status,
+        'TaskQueue',
+        `任务${taskId}已经结束，不能恢复`
+      )
       return this.push(taskId, taskTracker, func)
     }
   }

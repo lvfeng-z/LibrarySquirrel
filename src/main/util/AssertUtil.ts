@@ -1,14 +1,14 @@
 import LogUtil from './LogUtil.js'
 import { isNullish } from './CommonUtil.js'
 
-export function assertTrue(value: boolean, caller?: string, msg?: string): asserts value {
+export function assertTrue(value: boolean, caller?: string, msg?: string) {
   if (!value) {
     LogUtil.error(caller as string, msg)
     throw new Error(msg)
   }
 }
 
-export function assertFalse(value: boolean, caller?: string, msg?: string): asserts value {
+export function assertFalse(value: boolean, caller?: string, msg?: string) {
   if (value) {
     LogUtil.error(caller as string, msg)
     throw new Error(msg)

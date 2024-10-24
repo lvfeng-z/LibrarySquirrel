@@ -882,6 +882,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const processing = root.children.filter(
         (child) => TaskStatesEnum.PROCESSING === child.status
       ).length
+      const waiting = root.children.filter(
+        (child) => TaskStatesEnum.WAITING === child.status
+      ).length
       const paused = root.children.filter((child) => TaskStatesEnum.PAUSE === child.status).length
       const finished = root.children.filter(
         (child) => TaskStatesEnum.FINISHED === child.status
@@ -889,6 +892,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const failed = root.children.filter((child) => TaskStatesEnum.FAILED === child.status).length
       if (processing > 0) {
         newStatus = TaskStatesEnum.PROCESSING
+      } else if (waiting > 0) {
+        newStatus = TaskStatesEnum.WAITING
       } else if (paused > 0) {
         newStatus = TaskStatesEnum.PAUSE
       } else if (finished > 0 && failed > 0) {
