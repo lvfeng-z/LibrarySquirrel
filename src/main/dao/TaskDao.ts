@@ -8,7 +8,7 @@ import StringUtil from '../util/StringUtil.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import { buildTree } from '../util/TreeUtil.ts'
-import { TaskStatesEnum } from '../constant/TaskStatesEnum.ts'
+import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   constructor(db?: DB) {
@@ -22,14 +22,14 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   async refreshTaskStatus(taskId: number): Promise<number> {
     const statement = `
         with total as (select count(1) as num from task where pid = ${taskId}),
-             finished as (select count(1) as num from task where pid = ${taskId} and status = ${TaskStatesEnum.FINISHED}),
-             faild as (select count(1) as num from task where pid = ${taskId} and status = ${TaskStatesEnum.FAILED})
+             finished as (select count(1) as num from task where pid = ${taskId} and status = ${TaskStatusEnum.FINISHED}),
+             faild as (select count(1) as num from task where pid = ${taskId} and status = ${TaskStatusEnum.FAILED})
         update task set status = (
             case
-                when (select num from finished) = (select num from total) then ${TaskStatesEnum.FINISHED}
-                when (select num from faild) = (select num from total) then ${TaskStatesEnum.FAILED}
+                when (select num from finished) = (select num from total) then ${TaskStatusEnum.FINISHED}
+                when (select num from faild) = (select num from total) then ${TaskStatusEnum.FAILED}
                 when (select num from total) > (select num from finished) and (select num from finished) > 0
-                  then ${TaskStatesEnum.PARTLY_FINISHED}
+                  then ${TaskStatusEnum.PARTLY_FINISHED}
             end)
         where id = ${taskId}`
 
@@ -101,8 +101,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    */
   async setTaskTreeStatus(
     taskIds: number[],
-    status: TaskStatesEnum,
-    includeStatus?: TaskStatesEnum[]
+    status: TaskStatusEnum,
+    includeStatus?: TaskStatusEnum[]
   ): Promise<number> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
@@ -139,7 +139,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * @param taskIds 任务id
    * @param includeStatus 指定的任务状态
    */
-  async listTaskTree(taskIds: number[], includeStatus?: TaskStatesEnum[]): Promise<TaskDTO[]> {
+  async listTaskTree(taskIds: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskDTO[]> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
     const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
@@ -180,7 +180,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    */
   async listStatus(ids: number[]): Promise<TaskScheduleDTO[]> {
     const idsStr = ids.join(',')
-    const statement = `SELECT id, status, CASE WHEN status = ${TaskStatesEnum.FINISHED} THEN 100 END as schedule
+    const statement = `SELECT id, status, CASE WHEN status = ${TaskStatusEnum.FINISHED} THEN 100 END as schedule
                        FROM "${this.tableName}"
                        WHERE id in (${idsStr})`
     const db = this.acquire()

@@ -2,7 +2,7 @@ import Task from '../model/Task.ts'
 import LogUtil from '../util/LogUtil.ts'
 import TaskDao from '../dao/TaskDao.ts'
 import PluginLoader from '../plugin/PluginLoader.ts'
-import { TaskStatesEnum } from '../constant/TaskStatesEnum.ts'
+import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import InstalledPluginsService from './InstalledPluginsService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
@@ -20,7 +20,6 @@ import TaskDTO from '../model/dto/TaskDTO.ts'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
-import { TaskTracker } from '../model/utilModels/TaskTracker.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import fs from 'fs'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
@@ -32,6 +31,7 @@ import { createDirIfNotExists } from '../util/FileSysUtil.js'
 import WorksResourceSaveResponse from '../model/utilModels/WorksResourceSaveResponse.js'
 import { getNode } from '../util/TreeUtil.js'
 import { Id } from '../model/BaseModel.js'
+import TaskWriter from '../util/TaskWriter.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -84,7 +84,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         parentTask.pluginId = taskPlugin.id as number
         parentTask.pluginInfo = pluginInfo
         parentTask.url = url
-        parentTask.status = TaskStatesEnum.CREATED
+        parentTask.status = TaskStatusEnum.CREATED
         parentTask.siteDomain = taskPlugin.domain
         parentTask.isCollection = true
         parentTask.saved = false
@@ -181,7 +181,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 给任务赋值的函数
     const assignTask = (task: Task, pid?: number): undefined => {
-      task.status = TaskStatesEnum.CREATED
+      task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
       task.pluginId = taskPlugin.id as number
@@ -264,7 +264,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const task = chunk as Task
         task.pluginId = taskPlugin.id as number
         task.pluginInfo = pluginInfo
-        task.status = TaskStatesEnum.CREATED
+        task.status = TaskStatusEnum.CREATED
         task.siteDomain = taskPlugin.domain
         task.isCollection = false
         task.pid = parentTask.id as number
@@ -361,14 +361,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (isNullish(task.id)) {
       const msg = `任务的任务id意外为空`
       LogUtil.error('TaskService', msg)
-      return { status: TaskStatesEnum.FAILED, worksId: -1 }
+      return { status: TaskStatusEnum.FAILED, worksId: -1 }
     }
     const taskId = task.id
     // 加载插件
     if (isNullish(task.pluginId)) {
       const msg = `任务的插件id意外为空，taskId: ${taskId}`
       LogUtil.error('TaskService', msg)
-      return { status: TaskStatesEnum.FAILED, worksId: -1 }
+      return { status: TaskStatusEnum.FAILED, worksId: -1 }
     }
     const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
@@ -400,25 +400,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const updatePendingDownloadPathService = new TaskService()
     await updatePendingDownloadPathService.updateById(sourceTask)
 
-    // 创建任务追踪器
-    const taskTracker: TaskTracker = {
-      status: TaskStatesEnum.WAITING,
-      readStream: undefined,
-      writeStream: undefined,
-      bytesSum: isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
-    }
+    // 创建writer
+    const taskWriter: TaskWriter = new TaskWriter()
+    taskWriter.status = TaskStatusEnum.WAITING
+    taskWriter.bytesSum = isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
 
     // 保存资源
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
-    const savePromise = taskQueue.start(taskId, taskTracker, async () => {
+    const savePromise = taskQueue.start(taskId, taskWriter, async () => {
       // 先校验是不是暂停状态
-      if (TaskStatesEnum.PAUSE === taskTracker.status) {
-        return TaskStatesEnum.PAUSE
+      if (TaskStatusEnum.PAUSE === taskWriter.status) {
+        return TaskStatusEnum.PAUSE
       }
 
       // 标记为进行中
-      task.status = TaskStatesEnum.PROCESSING
-      taskTracker.status = TaskStatesEnum.PROCESSING
+      task.status = TaskStatusEnum.PROCESSING
+      taskWriter.status = TaskStatusEnum.PROCESSING
       this.taskProcessing(task.id)
       // 调用插件的start方法，获取资源
       const resourceDTO = await taskHandler.start(task)
@@ -434,15 +431,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         'WorksService',
         `保存作品时，插件没有返回资源，taskId: ${worksDTO.includeTaskId}`
       )
-      taskTracker.readStream = resourceDTO.resourceStream
+      taskWriter.readable = resourceDTO.resourceStream
       worksSaveInfo.resourceStream = resourceDTO.resourceStream
-      return worksService.saveWorksResource(worksSaveInfo, taskTracker)
+      return worksService.saveWorksResource(worksSaveInfo, taskWriter)
     })
 
     return savePromise.then(async (saveResult) => {
       // 只处理完成的状态
-      if (TaskStatesEnum.FINISHED === saveResult) {
-        taskTracker.status = TaskStatesEnum.FINISHED
+      if (TaskStatusEnum.FINISHED === saveResult) {
+        taskWriter.status = TaskStatusEnum.FINISHED
         worksService.resourceFinished(worksId)
         return this.taskFinished(task.id, worksId).then(() => {
           return { status: saveResult, worksId: worksId }
@@ -461,14 +458,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   async processTaskTree(
     taskIds: number[],
-    includeStatus: TaskStatesEnum[],
+    includeStatus: TaskStatusEnum[],
     mainWindow: Electron.BrowserWindow
   ): Promise<number> {
     const startTime = Date.now()
     // 所有任务设置为等待中
-    await this.dao.setTaskTreeStatus(taskIds, TaskStatesEnum.WAITING, includeStatus)
+    await this.dao.setTaskTreeStatus(taskIds, TaskStatusEnum.WAITING, includeStatus)
     // 查找id列表对应的所有子任务
-    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, [TaskStatesEnum.WAITING])
+    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, [TaskStatusEnum.WAITING])
 
     // 插件加载器
     const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
@@ -492,12 +489,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         continue
       }
       // 更新父任务的状态
-      parent.status = TaskStatesEnum.PROCESSING
+      parent.status = TaskStatusEnum.PROCESSING
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
       // 更新子任务在队列中的状态
       const childrenIds = children.map((child) => child.id).filter((id) => notNullish(id))
-      taskQueue.updateStatusBatch(childrenIds, TaskStatesEnum.WAITING)
+      taskQueue.updateStatusBatch(childrenIds, TaskStatusEnum.WAITING)
 
       // 尝试开始任务
       for (const task of children) {
@@ -505,10 +502,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const childProcesses: Promise<boolean>[] = []
         const activeProcess = this.processTask(task, pluginLoader)
           .then(async (processResult) => {
-            if (TaskStatesEnum.FINISHED === processResult.status) {
+            if (TaskStatusEnum.FINISHED === processResult.status) {
               succeed++
-              task.status = TaskStatesEnum.FINISHED
-            } else if (TaskStatesEnum.PAUSE === processResult.status) {
+              task.status = TaskStatusEnum.FINISHED
+            } else if (TaskStatusEnum.PAUSE === processResult.status) {
               pause++
             }
             return true
@@ -516,7 +513,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           .catch(async (error) => {
             failed++
             LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
-            task.status = TaskStatesEnum.FAILED
+            task.status = TaskStatusEnum.FAILED
             await this.taskFailed(task.id)
             return false
           })
@@ -548,10 +545,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return this.processTaskTree(
       taskIds,
       [
-        TaskStatesEnum.CREATED,
-        TaskStatesEnum.FAILED,
-        TaskStatesEnum.PARTLY_FINISHED,
-        TaskStatesEnum.PAUSE
+        TaskStatusEnum.CREATED,
+        TaskStatusEnum.FAILED,
+        TaskStatusEnum.PARTLY_FINISHED,
+        TaskStatusEnum.PAUSE
       ],
       mainWindow
     )
@@ -569,11 +566,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return this.processTaskTree(
       taskIds,
       [
-        TaskStatesEnum.CREATED,
-        TaskStatesEnum.FINISHED,
-        TaskStatesEnum.FAILED,
-        TaskStatesEnum.PARTLY_FINISHED,
-        TaskStatesEnum.PAUSE
+        TaskStatusEnum.CREATED,
+        TaskStatusEnum.FINISHED,
+        TaskStatusEnum.FAILED,
+        TaskStatusEnum.PARTLY_FINISHED,
+        TaskStatusEnum.PAUSE
       ],
       mainWindow
     )
@@ -597,34 +594,34 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 创建TaskPluginDTO对象
     const taskPluginDTO = new TaskPluginDTO(task)
-    const taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskId)
+    const writer = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(taskId)
 
-    assertNotNullish(taskTracker, 'TaskService', `暂停任务时，任务追踪器不存在，taskId: ${taskId}`)
-    taskPluginDTO.resourceStream = taskTracker.readStream
+    assertNotNullish(writer, 'TaskService', `暂停任务时，任务writer不存在，taskId: ${taskId}`)
+    taskPluginDTO.resourceStream = writer.readable
 
-    if (TaskStatesEnum.FINISHED !== taskTracker.status) {
-      if (notNullish(taskTracker.readStream) && notNullish(taskTracker.writeStream)) {
+    if (TaskStatusEnum.FINISHED !== writer.status) {
+      if (notNullish(writer.readable) && notNullish(writer.writable)) {
         // 断开连接
-        taskTracker.readStream.unpipe(taskTracker.writeStream)
+        writer.readable.unpipe(writer.writable)
       }
       // 调用插件的pause方法
       try {
         taskHandler.pause(taskPluginDTO)
       } catch (error) {
         LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
-        if (notNullish(taskTracker.readStream)) {
-          taskTracker.readStream.pause()
+        if (notNullish(writer.readable)) {
+          writer.readable.pause()
         }
       }
       // 停止写入
-      if (notNullish(taskTracker.writeStream)) {
-        taskTracker.writeStream.end()
+      if (notNullish(writer.writable)) {
+        writer.writable.end()
       }
-      // 更新任务追踪器的状态
-      taskTracker.bytesWritten = taskTracker.writeStream?.bytesWritten
-      taskTracker.status = TaskStatesEnum.PAUSE
+      // 更新任务writer的状态
+      writer.bytesWritten = isNullish(writer.writable) ? 0 : writer.writable.bytesWritten
+      writer.status = TaskStatusEnum.PAUSE
       // 更新任务树的状态
-      task.status = TaskStatesEnum.PAUSE
+      task.status = TaskStatusEnum.PAUSE
       // 更新数据库中任务的状态
       return this.taskPaused(taskId).then((runResult) => runResult > 0)
     } else {
@@ -639,8 +636,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
     const taskTree = await this.dao.listTaskTree(ids, [
-      TaskStatesEnum.PROCESSING,
-      TaskStatesEnum.WAITING
+      TaskStatusEnum.PROCESSING,
+      TaskStatusEnum.WAITING
     ])
 
     // 插件加载器
@@ -708,19 +705,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 插件用于恢复下载的任务信息
     const taskPluginDTO = new TaskPluginDTO(task)
-    // 获取任务追踪器
-    let taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(taskId)
-    if (isNullish(taskTracker)) {
-      // 创建一个追踪器
-      taskTracker = {
-        status: TaskStatesEnum.WAITING,
-        bytesSum: 0,
-        readStream: undefined,
-        writeStream: undefined
-      }
+    // 获取任务writer
+    let writer = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(taskId)
+    if (isNullish(writer)) {
+      // 创建一个writer
+      writer = new TaskWriter()
+      writer.status = TaskStatusEnum.WAITING
+      writer.bytesSum = 0
     }
-    // 获取任务追踪器中的读取流
-    taskPluginDTO.resourceStream = taskTracker.readStream
+    // 获取任务writer中的读取流
+    taskPluginDTO.resourceStream = writer.readable
     // 读取已下载文件信息，获取已经下载的数据量
     try {
       taskPluginDTO.bytesWritten = await fs.promises
@@ -736,15 +730,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     const worksService = new WorksService()
 
-    if (TaskStatesEnum.WAITING === taskTracker.status) {
-      const resumePromise = taskQueue.resume(taskId, taskTracker, async () => {
-        if (TaskStatesEnum.PAUSE === taskTracker.status) {
-          return TaskStatesEnum.PAUSE
+    if (TaskStatusEnum.WAITING === writer.status) {
+      const resumePromise = taskQueue.resume(taskId, writer, async () => {
+        if (TaskStatusEnum.PAUSE === writer.status) {
+          return TaskStatusEnum.PAUSE
         }
 
         // 标记为进行中
-        task.status = TaskStatesEnum.PROCESSING
-        taskTracker.status = TaskStatesEnum.PROCESSING
+        task.status = TaskStatusEnum.PROCESSING
+        writer.status = TaskStatusEnum.PROCESSING
         this.taskProcessing(taskId)
         // 调用插件的resume函数，获取资源
         const resumeResponse = await taskHandler.resume(taskPluginDTO)
@@ -772,17 +766,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           writeable = fs.createWriteStream(task.pendingDownloadPath)
         }
 
-        // 配置任务追踪器
-        taskTracker.bytesSum = resumeResponse.resourceSize
-        taskTracker.readStream = resumeResponse.resourceStream
-        taskTracker.writeStream = writeable
+        // 配置任务writer
+        writer.bytesSum = resumeResponse.resourceSize
+        writer.readable = resumeResponse.resourceStream
+        writer.writable = writeable
 
-        return worksService.resumeSaveWorksResource(taskTracker)
+        return worksService.resumeSaveWorksResource(writer)
       })
       return resumePromise.then(async (saveResult) => {
         // 只处理完成的状态
-        if (TaskStatesEnum.FINISHED === saveResult) {
-          taskTracker.status = TaskStatesEnum.FINISHED
+        if (TaskStatusEnum.FINISHED === saveResult) {
+          writer.status = TaskStatusEnum.FINISHED
           worksService.resourceFinished(worksId)
           return this.taskFinished(task.id, worksId).then(() => {
             return { status: saveResult, worksId: worksId }
@@ -792,7 +786,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
       })
     } else {
-      return { status: taskTracker.status, worksId: worksId }
+      return { status: writer.status, worksId: worksId }
     }
   }
 
@@ -803,7 +797,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async resumeTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
     // 所有暂停的任务设置为等待中
-    await this.dao.setTaskTreeStatus(ids, TaskStatesEnum.WAITING, [TaskStatesEnum.PAUSE])
+    await this.dao.setTaskTreeStatus(ids, TaskStatusEnum.WAITING, [TaskStatusEnum.PAUSE])
 
     const taskTree = await this.dao.listTaskTree(ids)
 
@@ -830,22 +824,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         continue
       }
       // 更新父任务的状态
-      parent.status = TaskStatesEnum.PROCESSING
+      parent.status = TaskStatusEnum.PROCESSING
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
       // 更新子任务在队列中的状态
       const childrenIds = children.map((child) => child.id).filter((id) => notNullish(id))
-      taskQueue.updateStatusBatch(childrenIds, TaskStatesEnum.WAITING)
+      taskQueue.updateStatusBatch(childrenIds, TaskStatusEnum.WAITING)
 
       for (const child of children) {
         const activeProcess = this.resumeTask(child, pluginLoader)
           .then(async (processResult) => {
             // 修改任务状态和作品资源状态(只有完成状态进行修改，暂停状态在暂停函数中处理)
-            if (TaskStatesEnum.FINISHED === processResult.status) {
+            if (TaskStatusEnum.FINISHED === processResult.status) {
               succeed++
-              child.status = TaskStatesEnum.FINISHED
+              child.status = TaskStatusEnum.FINISHED
               await this.taskFinished(child.id, processResult.worksId)
-            } else if (TaskStatesEnum.PAUSE === processResult.status) {
+            } else if (TaskStatusEnum.PAUSE === processResult.status) {
               pause++
             }
             return true
@@ -873,38 +867,38 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 根据父任务的children刷新其状态
    * @param root 父任务
    */
-  public async refreshParentTaskStatus(root: TaskDTO): Promise<TaskStatesEnum> {
+  public async refreshParentTaskStatus(root: TaskDTO): Promise<TaskStatusEnum> {
     assertNotNullish(root.isCollection, 'TaskService', '刷新状态的任务不能为子任务')
     assertTrue(root.isCollection, 'TaskService', '刷新状态的任务不能为子任务')
     const originalStatus = root.status
-    let newStatus: TaskStatesEnum
+    let newStatus: TaskStatusEnum
     if (notNullish(root.children) && root.children.length > 0) {
       const processing = root.children.filter(
-        (child) => TaskStatesEnum.PROCESSING === child.status
+        (child) => TaskStatusEnum.PROCESSING === child.status
       ).length
       const waiting = root.children.filter(
-        (child) => TaskStatesEnum.WAITING === child.status
+        (child) => TaskStatusEnum.WAITING === child.status
       ).length
-      const paused = root.children.filter((child) => TaskStatesEnum.PAUSE === child.status).length
+      const paused = root.children.filter((child) => TaskStatusEnum.PAUSE === child.status).length
       const finished = root.children.filter(
-        (child) => TaskStatesEnum.FINISHED === child.status
+        (child) => TaskStatusEnum.FINISHED === child.status
       ).length
-      const failed = root.children.filter((child) => TaskStatesEnum.FAILED === child.status).length
+      const failed = root.children.filter((child) => TaskStatusEnum.FAILED === child.status).length
       if (processing > 0) {
-        newStatus = TaskStatesEnum.PROCESSING
+        newStatus = TaskStatusEnum.PROCESSING
       } else if (waiting > 0) {
-        newStatus = TaskStatesEnum.WAITING
+        newStatus = TaskStatusEnum.WAITING
       } else if (paused > 0) {
-        newStatus = TaskStatesEnum.PAUSE
+        newStatus = TaskStatusEnum.PAUSE
       } else if (finished > 0 && failed > 0) {
-        newStatus = TaskStatesEnum.PARTLY_FINISHED
+        newStatus = TaskStatusEnum.PARTLY_FINISHED
       } else if (finished > 0) {
-        newStatus = TaskStatesEnum.FINISHED
+        newStatus = TaskStatusEnum.FINISHED
       } else {
-        newStatus = TaskStatesEnum.FAILED
+        newStatus = TaskStatusEnum.FAILED
       }
     } else {
-      newStatus = TaskStatesEnum.FINISHED
+      newStatus = TaskStatusEnum.FINISHED
     }
 
     if (isNullish(originalStatus) || originalStatus !== newStatus) {
@@ -964,7 +958,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(taskId, 'TaskService', '任务标记为进行中时，任务id不能为空')
     const task = new Task()
     task.id = taskId
-    task.status = TaskStatesEnum.PROCESSING
+    task.status = TaskStatusEnum.PROCESSING
     return this.updateById(task)
   }
 
@@ -977,7 +971,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(taskId, 'TaskService', '任务标记为完成时，任务id不能为空')
     const task = new Task()
     task.id = taskId
-    task.status = TaskStatesEnum.FINISHED
+    task.status = TaskStatusEnum.FINISHED
     task.localWorksId = worksId
     return this.updateById(task)
   }
@@ -990,7 +984,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(taskId, 'TaskService', '任务标记为暂停时，任务id不能为空')
     const task = new Task()
     task.id = taskId
-    task.status = TaskStatesEnum.PAUSE
+    task.status = TaskStatusEnum.PAUSE
     return this.updateById(task)
   }
 
@@ -1002,7 +996,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(taskId, 'TaskService', '任务标记为失败时，任务id不能为空')
     const task = new Task()
     task.id = taskId
-    task.status = TaskStatesEnum.FAILED
+    task.status = TaskStatusEnum.FAILED
     return this.updateById(task)
   }
 
@@ -1132,21 +1126,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 没有监听器的任务
     const noListenerIds: number[] = []
     ids.forEach((id: number) => {
-      // 如果有追踪器且写入流不为空，则从追踪器获取任务进度，否则从数据库查询任务状态
-      const taskTracker = GlobalVar.get(GlobalVars.TASK_QUEUE).getTracker(id)
-      if (notNullish(taskTracker) && notNullish(taskTracker.writeStream)) {
+      // 如果有writer且写入流不为空，则从writer获取任务进度，否则从数据库查询任务状态
+      const writer = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(id)
+      if (notNullish(writer) && notNullish(writer.writable)) {
         const temp: TaskScheduleDTO = new TaskScheduleDTO()
         temp.id = id
-        temp.status = taskTracker.status
-        if (
-          taskTracker.status === TaskStatesEnum.PROCESSING ||
-          taskTracker.status === TaskStatesEnum.PAUSE
-        ) {
-          if (taskTracker.bytesSum === 0) {
+        temp.status = writer.status
+        if (writer.status === TaskStatusEnum.PROCESSING || writer.status === TaskStatusEnum.PAUSE) {
+          if (writer.bytesSum === 0) {
             LogUtil.warn('TaskService', `计算任务进度时，资源总量为0`)
             temp.schedule = 0
           } else {
-            temp.schedule = (taskTracker.writeStream.bytesWritten / taskTracker.bytesSum) * 100
+            temp.schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
           }
         }
         result.push(temp)

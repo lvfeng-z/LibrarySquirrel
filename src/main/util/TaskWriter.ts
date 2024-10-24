@@ -1,24 +1,51 @@
-import { Readable, Writable } from 'node:stream'
+import { Readable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import LogUtil from './LogUtil.js'
 import { assertNotNullish } from './AssertUtil.js'
 import { notNullish } from './CommonUtil.js'
+import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
+import fs from 'fs'
 
-export default class FileWriter {
+export default class TaskWriter {
+  /**
+   * 读取流
+   */
   public readable: Readable | undefined
-  public writable: Writable | undefined
+  /**
+   * 写入流
+   */
+  public writable: fs.WriteStream | undefined
+  /**
+   * 任务状态
+   */
+  public status: TaskStatusEnum
+  /**
+   * 资源大小
+   */
+  public bytesSum: number
+  /**
+   * 已写入的数据量（只在任务暂停时更新，用于解决恢复任务时首次查询到的进度为0的问题）
+   */
+  public bytesWritten: number
+  /**
+   * 是否暂停
+   * @private
+   */
   private paused: boolean
 
-  constructor(readable?: Readable, writeable?: Writable) {
+  constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
     this.writable = writeable
     this.paused = false
+    this.status = TaskStatusEnum.WAITING
+    this.bytesSum = 0
+    this.bytesWritten = 0
   }
 
   /**
    * 写入文件
    */
-  public doWrite(newWritable?: Writable): Promise<FileSaveResult> {
+  public doWrite(newWritable?: fs.WriteStream): Promise<FileSaveResult> {
     return new Promise((resolve, reject) => {
       if (notNullish(newWritable)) {
         this.writable = newWritable
@@ -48,12 +75,8 @@ export default class FileWriter {
       })
       readable.once('end', readableEndHandler)
       readable.once('pause', () => {
-        this.paused = true
         readable.removeListener('error', readableErrorHandler)
         readable.removeListener('end', readableEndHandler)
-      })
-      readable.once('resume', () => {
-        this.paused = false
       })
       writable.once('finish', () => {
         if (!errorOccurred) {

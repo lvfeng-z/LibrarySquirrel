@@ -1,4 +1,4 @@
-import { TaskStatesEnum } from '../../constant/TaskStatesEnum.ts'
+import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class TaskScheduleDTO {
@@ -10,7 +10,7 @@ export default class TaskScheduleDTO {
   /**
    * 状态
    */
-  status: TaskStatesEnum | undefined | null
+  status: TaskStatusEnum | undefined | null
 
   /**
    * 进度

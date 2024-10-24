@@ -1,9 +1,9 @@
-import { TaskStatesEnum } from '../../constant/TaskStatesEnum.js'
+import { TaskStatusEnum } from '../../constant/TaskStatusEnum.js'
 
 /**
  * 保存作品资源的响应
  */
 export default interface WorksResourceSaveResponse {
-  status: TaskStatesEnum
+  status: TaskStatusEnum
   worksId: number
 }

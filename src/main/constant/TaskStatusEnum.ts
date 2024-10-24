@@ -1,4 +1,4 @@
-export enum TaskStatesEnum {
+export enum TaskStatusEnum {
   CREATED = 0,
   PROCESSING = 1,
   WAITING = 2,
