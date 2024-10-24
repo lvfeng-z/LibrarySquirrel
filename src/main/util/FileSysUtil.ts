@@ -95,27 +95,31 @@ export function pipelineReadWrite(readable: Readable, writable: Writable): Promi
   return new Promise((resolve, reject) => {
     let errorOccurred = false
     let paused = false
-    readable.on('error', (err) => {
+    const readableErrorHandler = (err: Error) => {
       errorOccurred = true
       LogUtil.error('WorksService', `readable出错${err}`)
       reject(err)
-    })
-    writable.on('error', (err) => {
-      errorOccurred = true
-      LogUtil.error('WorksService', `writable出错${err}`)
-      reject(err)
-    })
-    readable.once('end', () => {
+    }
+    const readableEndHandler = () => {
       if (!errorOccurred) {
         writable.end()
       } else {
         reject()
       }
+    }
+    readable.once('error', readableErrorHandler)
+    writable.once('error', (err) => {
+      errorOccurred = true
+      LogUtil.error('WorksService', `writable出错${err}`)
+      reject(err)
     })
-    readable.on('pause', () => {
+    readable.once('end', readableEndHandler)
+    readable.once('pause', () => {
       paused = true
+      readable.removeListener('error', readableErrorHandler)
+      readable.removeListener('end', readableEndHandler)
     })
-    readable.on('resume', () => {
+    readable.once('resume', () => {
       paused = false
     })
     writable.once('finish', () => {
