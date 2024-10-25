@@ -31,6 +31,7 @@ import WorksResourceSaveResponse from '../model/utilModels/WorksResourceSaveResp
 import { getNode } from '../util/TreeUtil.js'
 import { Id } from '../model/BaseModel.js'
 import TaskWriter from '../util/TaskWriter.js'
+import taskWorker from '../thread/taskWorker.js?nodeWorker'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -58,7 +59,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
 
     // 按照排序尝试每个插件
     for (const taskPlugin of taskPlugins) {
@@ -464,6 +465,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const pluginLoader = new PluginLoader(new TaskHandlerFactory())
 
     // 计数器
+    let queue = 0
     let succeed = 0
     let failed = 0
     let pause = 0
@@ -490,6 +492,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       for (const task of children) {
         assertNotNullish(task.id)
         taskQueue.push(task.id, new TaskWriter())
+        queue++
 
         // 单个父任务的子任务等待列表
         const childProcesses: Promise<boolean>[] = []
@@ -507,8 +510,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             failed++
             LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
             task.status = TaskStatusEnum.FAILED
-            await this.taskFailed(task.id)
-            return false
+            return this.taskFailed(task.id).then(() => false)
           })
         activeProcesses.push(activeProcess)
         childProcesses.push(activeProcess)
@@ -517,13 +519,71 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
     }
 
-    await Promise.allSettled(activeProcesses)
-    LogUtil.info(
-      'TaskService',
-      `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
-    )
+    Promise.allSettled(activeProcesses).then(() => {
+      LogUtil.info(
+        'TaskService',
+        `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
+      )
+    })
 
-    return succeed
+    return queue
+  }
+
+  /**
+   * 处理任务
+   * @param taskIds 任务id列表
+   * @param includeStatus 要处理的任务状态
+   */
+  async processTaskTree1(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<number> {
+    const startTime = Date.now()
+    // 所有任务设置为等待中
+    await this.dao.setTaskTreeStatus(taskIds, TaskStatusEnum.WAITING, includeStatus)
+    // 查找id列表对应的所有子任务
+    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, [TaskStatusEnum.WAITING])
+
+    // 插件加载器
+    // const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
+
+    // 计数器
+    const queue = 0
+    const succeed = 0
+    const failed = 0
+    const pause = 0
+
+    // 任务等待列表
+    const activeProcesses: Promise<boolean>[] = []
+    // const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    for (const parent of taskTree) {
+      // 获取要处理的任务
+      let children: TaskDTO[]
+      if (parent.isCollection && arrayNotEmpty(parent.children)) {
+        children = parent.children
+      } else if (!parent.isCollection) {
+        children = [parent]
+      } else {
+        continue
+      }
+      // 更新父任务的状态
+      parent.status = TaskStatusEnum.PROCESSING
+      const tempParent = new Task(parent)
+      await this.dao.updateById(parent.id as number, tempParent)
+
+      // 创建一个新的 worker 实例
+      taskWorker({ workerData: children })
+        .on('message', (message) => {
+          console.log(`Message from worker: ${message}`)
+        })
+        .postMessage('')
+    }
+
+    Promise.allSettled(activeProcesses).then(() => {
+      LogUtil.info(
+        'TaskService',
+        `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
+      )
+    })
+
+    return queue
   }
 
   /**
