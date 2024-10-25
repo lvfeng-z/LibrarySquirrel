@@ -9,7 +9,6 @@ import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
 import InstalledPlugins from '../model/InstalledPlugins.ts'
 import { Readable } from 'node:stream'
-import Electron from 'electron'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
@@ -41,9 +40,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 根据传入的url创建任务
    * @param url 作品/作品集所在url
-   * @param mainWindow
    */
-  async createTask(url: string, mainWindow: Electron.BrowserWindow): Promise<TaskCreateResponse> {
+  async createTask(url: string): Promise<TaskCreateResponse> {
     // 查询监听此url的插件
     const taskPluginListenerService = new TaskPluginListenerService()
     const taskPlugins = await taskPluginListenerService.listListener(url)
@@ -454,13 +452,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 处理任务
    * @param taskIds 任务id列表
    * @param includeStatus 要处理的任务状态
-   * @param mainWindow 主窗口实例
    */
-  async processTaskTree(
-    taskIds: number[],
-    includeStatus: TaskStatusEnum[],
-    mainWindow: Electron.BrowserWindow
-  ): Promise<number> {
+  async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<number> {
     const startTime = Date.now()
     // 所有任务设置为等待中
     await this.dao.setTaskTreeStatus(taskIds, TaskStatusEnum.WAITING, includeStatus)
@@ -468,7 +461,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, [TaskStatusEnum.WAITING])
 
     // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
 
     // 计数器
     let succeed = 0
@@ -536,44 +529,28 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 开始任务
    * @param taskIds 任务id列表
-   * @param mainWindow 主窗口实例
    */
-  public async startTaskTree(
-    taskIds: number[],
-    mainWindow: Electron.BrowserWindow
-  ): Promise<number> {
-    return this.processTaskTree(
-      taskIds,
-      [
-        TaskStatusEnum.CREATED,
-        TaskStatusEnum.FAILED,
-        TaskStatusEnum.PARTLY_FINISHED,
-        TaskStatusEnum.PAUSE
-      ],
-      mainWindow
-    )
+  public async startTaskTree(taskIds: number[]): Promise<number> {
+    return this.processTaskTree1(taskIds, [
+      TaskStatusEnum.CREATED,
+      TaskStatusEnum.FAILED,
+      TaskStatusEnum.PARTLY_FINISHED,
+      TaskStatusEnum.PAUSE
+    ])
   }
 
   /**
    * 重试任务
    * @param taskIds 任务id列表
-   * @param mainWindow 主窗口实例
    */
-  public async retryTaskTree(
-    taskIds: number[],
-    mainWindow: Electron.BrowserWindow
-  ): Promise<number> {
-    return this.processTaskTree(
-      taskIds,
-      [
-        TaskStatusEnum.CREATED,
-        TaskStatusEnum.FINISHED,
-        TaskStatusEnum.FAILED,
-        TaskStatusEnum.PARTLY_FINISHED,
-        TaskStatusEnum.PAUSE
-      ],
-      mainWindow
-    )
+  public async retryTaskTree(taskIds: number[]): Promise<number> {
+    return this.processTaskTree(taskIds, [
+      TaskStatusEnum.CREATED,
+      TaskStatusEnum.FINISHED,
+      TaskStatusEnum.FAILED,
+      TaskStatusEnum.PARTLY_FINISHED,
+      TaskStatusEnum.PAUSE
+    ])
   }
 
   /**
@@ -622,16 +599,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 暂停任务树
    * @param ids id列表
-   * @param mainWindow
    */
-  public async pauseTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<void> {
+  public async pauseTaskTree(ids: number[]): Promise<void> {
     const taskTree = await this.dao.listTaskTree(ids, [
       TaskStatusEnum.PROCESSING,
       TaskStatusEnum.WAITING
     ])
 
     // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
 
     // 任务等待列表
     const activeProcesses: Promise<boolean>[] = []
@@ -778,9 +754,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 恢复任务树
    * @param ids id列表
-   * @param mainWindow
    */
-  public async resumeTaskTree(ids: number[], mainWindow: Electron.BrowserWindow): Promise<number> {
+  public async resumeTaskTree(ids: number[]): Promise<number> {
     // 所有暂停的任务设置为等待中
     await this.dao.setTaskTreeStatus(ids, TaskStatusEnum.WAITING, [TaskStatusEnum.PAUSE])
 
@@ -794,7 +769,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     let pause = 0
 
     // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), mainWindow)
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
 
     const activeProcesses: Promise<boolean>[] = []
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
