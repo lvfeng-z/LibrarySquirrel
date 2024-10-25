@@ -2,7 +2,7 @@ import { Readable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import LogUtil from './LogUtil.js'
 import { assertNotNullish } from './AssertUtil.js'
-import { notNullish } from './CommonUtil.js'
+import { isNullish, notNullish } from './CommonUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import fs from 'fs'
 
@@ -46,6 +46,7 @@ export default class TaskWriter {
    * 写入文件
    */
   public doWrite(newWritable?: fs.WriteStream): Promise<FileSaveResult> {
+    this.paused = false
     return new Promise((resolve, reject) => {
       if (notNullish(newWritable)) {
         this.writable = newWritable
@@ -93,7 +94,14 @@ export default class TaskWriter {
    * 暂停下载
    */
   public pause() {
+    this.status = TaskStatusEnum.PAUSE
     this.paused = true
-    this.writable = undefined
+    if (notNullish(this.readable)) {
+      this.readable.unpipe(this.writable)
+    }
+    if (notNullish(this.writable)) {
+      this.writable.end()
+      this.bytesWritten = isNullish(this.writable) ? 0 : this.writable.bytesWritten
+    }
   }
 }
