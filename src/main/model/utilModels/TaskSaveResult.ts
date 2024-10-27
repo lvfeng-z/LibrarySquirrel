@@ -1,9 +1,9 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.js'
 
 /**
- * 保存作品资源的响应
+ * 保存任务的响应
  */
-export default interface WorksResourceSaveResponse {
+export default interface taskSaveResult {
   status: TaskStatusEnum
   worksId: number
 }

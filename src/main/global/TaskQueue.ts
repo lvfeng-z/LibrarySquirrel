@@ -1,8 +1,9 @@
 import SettingsService from '../service/SettingsService.js'
 import pLimit from 'p-limit'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { assertFalse, assertTrue } from '../util/AssertUtil.js'
+import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
 import TaskWriter from '../util/TaskWriter.js'
+import { notNullish } from '../util/CommonUtil.js'
 
 export class TaskQueue {
   /**
@@ -34,8 +35,8 @@ export class TaskQueue {
    * @param taskId 任务id
    */
   public start(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
-    assertTrue(this.exists(taskId), 'TaskQueue', `无法开始任务${taskId}，队列中找不到这个任务`)
     const status = this.getStatus(taskId)
+    assertNotNullish(status, 'TaskQueue', `无法开始任务${taskId}，队列中找不到这个任务`)
     assertFalse(
       TaskStatusEnum.PROCESSING === status || TaskStatusEnum.PAUSE === status,
       'TaskQueue',
@@ -50,8 +51,8 @@ export class TaskQueue {
    * @param taskId 任务id
    */
   public resume(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
-    assertTrue(this.exists(taskId), 'TaskQueue', `无法恢复任务${taskId}，队列中找不到这个任务`)
     const status = this.getStatus(taskId)
+    assertNotNullish(status, 'TaskQueue', `无法恢复任务${taskId}，队列中找不到这个任务`)
     assertFalse(
       TaskStatusEnum.PROCESSING === status,
       'TaskQueue',
@@ -71,7 +72,14 @@ export class TaskQueue {
    * @param taskWriter 任务writer
    */
   public push(taskId: number, taskWriter: TaskWriter): void {
-    assertFalse(this.taskPool.has(taskId), 'TaskQueue', `任务队列中已经存在任务${taskId}`)
+    const status = this.getStatus(taskId)
+    assertFalse(
+      TaskStatusEnum.PROCESSING === status ||
+        TaskStatusEnum.PAUSE === status ||
+        TaskStatusEnum.WAITING === status,
+      'TaskQueue',
+      `任务队列中已经存在任务${taskId}，${this.taskPool.get(taskId)?.status}`
+    )
     this.taskPool.set(taskId, taskWriter)
   }
 
@@ -119,12 +127,20 @@ export class TaskQueue {
     // 确认任务结束或失败后，延迟2秒清除其writer
     taskPromise
       .then((taskStatus) => {
-        if (taskStatus === TaskStatusEnum.FINISHED) {
-          setTimeout(() => this.taskPool.delete(taskId), 2000)
+        const taskWriter = this.taskPool.get(taskId)
+        if (notNullish(taskWriter)) {
+          taskWriter.status = taskStatus
+        }
+        if (taskStatus === TaskStatusEnum.FINISHED || taskStatus === TaskStatusEnum.FAILED) {
+          setTimeout(() => this.taskPool.delete(taskId), 10000)
         }
       })
       .catch(() => {
-        setTimeout(() => this.taskPool.delete(taskId), 2000)
+        const writer = this.getWriter(taskId)
+        if (notNullish(writer)) {
+          writer.status = TaskStatusEnum.FAILED
+        }
+        setTimeout(() => this.taskPool.delete(taskId), 10000)
       })
     return taskPromise
   }

@@ -7,7 +7,11 @@ import { TaskQueue } from '../global/TaskQueue.js'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 import TaskWriter from './TaskWriter.js'
 import { assertNotNullish } from './AssertUtil.js'
+import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 
+/**
+ * 任务处理流
+ */
 export default class TaskProcessStream extends Transform {
   public tasks: TaskDTO[]
   private taskService: TaskService
@@ -26,14 +30,18 @@ export default class TaskProcessStream extends Transform {
     // 处理任务
     assertNotNullish(task.id)
     this.taskQueue.push(task.id, new TaskWriter())
-    this.taskService
-      .processTask(task, this.pluginLoader)
-      .then((saveResult) => {
-        this.push(saveResult)
-        callback() // 可以传递处理后的任务对象回流中
-      })
+    this.taskQueue
+      .start(task.id, () =>
+        this.taskService.processTask(task, this.pluginLoader).then((saveResult) => {
+          this.push(saveResult)
+          callback()
+          return saveResult.status
+        })
+      )
       .catch((err) => {
-        callback(err)
+        task.status = TaskStatusEnum.FAILED
+        this.emit('error', err, task)
+        callback()
       })
   }
 

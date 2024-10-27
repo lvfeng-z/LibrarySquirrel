@@ -32,14 +32,20 @@ export default class TaskWriter {
    * @private
    */
   private paused: boolean
+  /**
+   * 读取流是否已完成
+   * @private
+   */
+  private readableFinished: boolean
 
   constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
     this.writable = writeable
-    this.paused = false
     this.status = TaskStatusEnum.WAITING
     this.bytesSum = 0
     this.bytesWritten = 0
+    this.paused = false
+    this.readableFinished = false
   }
 
   /**
@@ -62,6 +68,7 @@ export default class TaskWriter {
         reject(err)
       }
       const readableEndHandler = () => {
+        this.readableFinished = true
         if (!errorOccurred) {
           writable.end()
         } else {
@@ -94,14 +101,16 @@ export default class TaskWriter {
    * 暂停下载
    */
   public pause() {
-    this.status = TaskStatusEnum.PAUSE
-    this.paused = true
-    if (notNullish(this.readable)) {
-      this.readable.unpipe(this.writable)
-    }
-    if (notNullish(this.writable)) {
-      this.writable.end()
-      this.bytesWritten = isNullish(this.writable) ? 0 : this.writable.bytesWritten
+    if (!this.readableFinished) {
+      this.status = TaskStatusEnum.PAUSE
+      this.paused = true
+      if (notNullish(this.readable)) {
+        this.readable.unpipe(this.writable)
+      }
+      if (notNullish(this.writable)) {
+        this.writable.end()
+        this.bytesWritten = isNullish(this.writable) ? 0 : this.writable.bytesWritten
+      }
     }
   }
 }
