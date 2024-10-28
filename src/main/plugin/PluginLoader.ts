@@ -10,6 +10,7 @@ import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginFactory from './PluginFactory.js'
 import { BasePlugin } from './BasePlugin.js'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 
 export default class PluginLoader<T extends BasePlugin> {
   /**
@@ -32,9 +33,9 @@ export default class PluginLoader<T extends BasePlugin> {
    */
   private readonly pluginCache: Record<number, Promise<T>>
 
-  constructor(factory: PluginFactory<T>, mainWindow: Electron.BrowserWindow) {
+  constructor(factory: PluginFactory<T>) {
     this.factory = factory
-    this.mainWindow = mainWindow
+    this.mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
     const event = new EventEmitter()
 
     this.attachExplainPathEvents(event)
@@ -47,12 +48,10 @@ export default class PluginLoader<T extends BasePlugin> {
     let plugin: Promise<T>
 
     if (isNullish(this.pluginCache[pluginId])) {
-      LogUtil.info('PluginLoader', `新增插件缓存, pluginId: ${pluginId}`)
       plugin = this.factory.create(pluginId, this.pluginTool)
       this.pluginCache[pluginId] = plugin
       return plugin
     } else {
-      LogUtil.info('PluginLoader', `读取插件缓存, pluginId: ${pluginId}`)
       plugin = this.pluginCache[pluginId]
       return plugin
     }

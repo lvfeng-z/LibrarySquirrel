@@ -191,7 +191,7 @@ tables:
         create_time           integer,
         update_time           integer,
         status                smallint,
-        pending_download_path integer,
+        pending_download_path text,
         continuable           integer(1),
         plugin_id             integer,
         plugin_info           text,

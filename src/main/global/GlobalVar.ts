@@ -7,22 +7,27 @@ import { PoolConfig } from './PoolConfig.js'
 
 export enum GlobalVars {
   CONNECTION_POOL = 'CONNECTION_POOL',
+  MAIN_WINDOW = 'MAIN_WINDOW',
   SETTINGS = 'SETTINGS',
   TASK_QUEUE = 'TASK_QUEUE'
 }
 // 映射类型
 type GlobalVarMapping = {
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
+  [GlobalVars.MAIN_WINDOW]: Electron.BrowserWindow
   [GlobalVars.TASK_QUEUE]: TaskQueue
   [GlobalVars.SETTINGS]: Store<Record<string, unknown>>
 }
 
 // todo 设置更改时，一些全局变量也需要更改
 export class GlobalVar {
-  public static create(globalVar: GlobalVars) {
+  public static create(globalVar: GlobalVars, arg?: unknown) {
     switch (globalVar) {
       case GlobalVars.CONNECTION_POOL:
         this.createConnectionPool()
+        break
+      case GlobalVars.MAIN_WINDOW:
+        this.createMainWindow(arg as Electron.BrowserWindow)
         break
       case GlobalVars.TASK_QUEUE:
         this.createTaskQueue()
@@ -66,6 +71,15 @@ export class GlobalVar {
   private static destroyConnectionPool() {
     delete global[GlobalVars.CONNECTION_POOL]
     LogUtil.info('GlobalVar', '已销毁连接池')
+  }
+
+  // MAIN_WINDOW
+  /**
+   * 创建主窗口全局变量
+   * @private
+   */
+  private static createMainWindow(mainWindow: Electron.BrowserWindow) {
+    global[GlobalVars.MAIN_WINDOW] = mainWindow
   }
 
   // SETTINGS

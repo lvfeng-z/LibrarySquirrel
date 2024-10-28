@@ -17,7 +17,7 @@ import AutoExplainPathService from './AutoExplainPathService.ts'
 import { dirSelect } from '../util/FileSysUtil.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 
-function exposeService(mainWindow: Electron.BrowserWindow) {
+function exposeService() {
   // test
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
     return test.insertLocalTag10W()
@@ -344,7 +344,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   Electron.ipcMain.handle('task-createTask', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.createTask(args, mainWindow))
+      return ApiUtil.response(await taskService.createTask(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -353,7 +353,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   Electron.ipcMain.handle('task-startTaskTree', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.startTaskTree(args, mainWindow))
+      return ApiUtil.response(await taskService.startTaskTree(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -362,7 +362,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   Electron.ipcMain.handle('task-retryTaskTree', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.retryTaskTree(args, mainWindow))
+      return ApiUtil.response(await taskService.retryTaskTree(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -434,7 +434,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   Electron.ipcMain.handle('task-pauseTaskTree', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.pauseTaskTree(args, mainWindow))
+      return ApiUtil.response(await taskService.pauseTaskTree(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -443,7 +443,7 @@ function exposeService(mainWindow: Electron.BrowserWindow) {
   Electron.ipcMain.handle('task-resumeTaskTree', async (_event, args) => {
     try {
       const taskService = new TaskService()
-      return ApiUtil.response(await taskService.resumeTaskTree(args, mainWindow))
+      return ApiUtil.response(await taskService.resumeTaskTree(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

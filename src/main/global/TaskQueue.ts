@@ -1,117 +1,167 @@
 import SettingsService from '../service/SettingsService.js'
 import pLimit from 'p-limit'
-import { TaskStatesEnum } from '../constant/TaskStatesEnum.js'
-import { TaskTracker } from '../model/utilModels/TaskTracker.js'
-import { Readable } from 'node:stream'
-import fs from 'fs'
-import { isNullish } from '../util/CommonUtil.js'
-import LogUtil from '../util/LogUtil.js'
+import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
+import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
+import TaskWriter from '../util/TaskWriter.js'
+import { isNullish, notNullish } from '../util/CommonUtil.js'
 
 export class TaskQueue {
   /**
-   * 任务队列
+   * 异步限制器
    * @private
    */
-  private queue: pLimit.Limit
+  private limit: pLimit.Limit
 
   /**
-   * 任务追踪器
+   * 任务writer
    * @private
    */
-  private readonly taskTrackers: Record<number, TaskTracker>
+  private readonly taskPool: Map<number, TaskWriter>
 
   constructor() {
     // 读取设置中的最大并行数
     const settings = SettingsService.getSettings()
     const maxSaveWorksPromise =
       settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    this.queue = pLimit(maxSaveWorksPromise)
-    this.taskTrackers = {}
+    this.limit = pLimit(maxSaveWorksPromise)
+    this.taskPool = new Map<number, TaskWriter>()
   }
 
-  // public execute(): void {}
   // public refreshLimit(): void {}
+
+  /**
+   * 开始任务
+   * @param taskId 任务id
+   * @param func 任务处理函数
+   */
+  public start(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
+    const status = this.getStatus(taskId)
+    assertNotNullish(status, 'TaskQueue', `无法开始任务${taskId}，队列中找不到这个任务`)
+    assertFalse(
+      TaskStatusEnum.PROCESSING === status,
+      'TaskQueue',
+      `任务${taskId}已经存在，不能开始`
+    )
+    return this.execute(taskId, func)
+  }
+
+  /**
+   * 恢复任务
+   * @param taskId 任务id
+   * @param func 任务处理函数
+   */
+  public resume(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
+    const status = this.getStatus(taskId)
+    assertNotNullish(status, 'TaskQueue', `无法恢复任务${taskId}，队列中找不到这个任务`)
+    assertFalse(
+      TaskStatusEnum.PROCESSING === status,
+      'TaskQueue',
+      `任务${taskId}已经正在进行中，无法恢复`
+    )
+    assertFalse(
+      TaskStatusEnum.FINISHED === status || TaskStatusEnum.FAILED === status,
+      'TaskQueue',
+      `任务${taskId}已经结束，不能恢复`
+    )
+    return this.execute(taskId, func)
+  }
+
+  /**
+   * 暂停任务
+   * @param taskId 任务id
+   */
+  public pause(taskId: number): TaskWriter {
+    let writer = this.getWriter(taskId)
+    if (notNullish(writer)) {
+      writer.pause()
+    } else {
+      writer = new TaskWriter()
+      writer.pause()
+      this.push(taskId, writer)
+    }
+    return writer
+  }
+
   /**
    * 插入任务
-   * @param task 任务
    * @param taskId 任务id
-   * @param taskTracker 任务追踪器
+   * @param taskWriter 任务writer
    */
-  public push(
-    task: () => Promise<TaskStatesEnum>,
-    taskId: number,
-    taskTracker: TaskTracker
-  ): Promise<TaskStatesEnum> {
-    const taskPromise = this.queue(task)
-    this.addTracker(taskId, taskTracker, taskPromise)
-    return taskPromise
+  public push(taskId: number, taskWriter: TaskWriter): void {
+    const writer = this.getWriter(taskId)
+    if (isNullish(writer)) {
+      this.taskPool.set(taskId, taskWriter)
+    } else {
+      assertFalse(
+        TaskStatusEnum.PROCESSING === writer.status || TaskStatusEnum.WAITING === writer.status,
+        'TaskQueue',
+        `任务队列中已经存在任务${taskId}`
+      )
+      if (TaskStatusEnum.PAUSE === writer.status) {
+        writer.updateBeyondStatus(taskWriter)
+      }
+    }
   }
 
   /**
-   * 获取任务追踪器
-   * @param taskId 任务id
+   * 判断任务是否存在于队列中
+   * @param taskId
    */
-  public getTracker(taskId: number): TaskTracker {
-    return this.taskTrackers[taskId]
+  public exists(taskId: number): boolean {
+    return this.taskPool.has(taskId)
   }
 
   /**
-   * 新增任务追踪器
+   * 获取任务的状态
+   * @param taskId
+   */
+  public getStatus(taskId: number): TaskStatusEnum | undefined {
+    return this.taskPool.get(taskId)?.status
+  }
+
+  /**
+   * 从任务池移除
+   * @param taskId
+   */
+  public remove(taskId: number) {
+    this.taskPool.delete(taskId)
+  }
+
+  /**
+   * 获取任务writer
    * @param taskId 任务id
-   * @param taskTracker 任务追踪器
-   * @param taskEndHandler 任务结束的promise
+   */
+  public getWriter(taskId: number): TaskWriter | undefined {
+    return this.taskPool.get(taskId)
+  }
+
+  /**
+   *
+   * @param taskId
+   * @param func
    * @private
    */
-  private addTracker(
-    taskId: number,
-    taskTracker: TaskTracker,
-    taskEndHandler: Promise<TaskStatesEnum>
-  ): void {
-    this.taskTrackers[taskId] = taskTracker
-    // 确认任务结束或失败后，延迟2秒清除其追踪器
-    taskEndHandler
+  private execute(taskId: number, func: () => Promise<TaskStatusEnum>) {
+    const taskPromise = this.limit(() => func())
+
+    // 确认任务结束或失败后，延迟2秒清除其writer
+    taskPromise
       .then((taskStatus) => {
-        taskTracker.status = taskStatus
-        if (taskStatus === TaskStatesEnum.FINISHED) {
-          setTimeout(() => delete this.taskTrackers[taskId], 2000)
+        const taskWriter = this.taskPool.get(taskId)
+        if (notNullish(taskWriter)) {
+          taskWriter.status = taskStatus
+        }
+        if (taskStatus === TaskStatusEnum.FINISHED || taskStatus === TaskStatusEnum.FAILED) {
+          setTimeout(() => this.taskPool.delete(taskId), 10000)
         }
       })
       .catch(() => {
-        taskTracker.status = TaskStatesEnum.FAILED
-        setTimeout(() => delete this.taskTrackers[taskId], 2000)
+        const writer = this.getWriter(taskId)
+        if (notNullish(writer)) {
+          writer.status = TaskStatusEnum.FAILED
+        }
+        setTimeout(() => this.taskPool.delete(taskId), 10000)
       })
-  }
-
-  /**
-   * 更新任务跟踪器
-   * @param taskId 任务id
-   * @param newTaskTracker 新的任务跟踪器属性
-   */
-  public updateTracker(
-    taskId: number,
-    newTaskTracker: {
-      status?: number
-      readStream?: Readable
-      writeStream?: fs.WriteStream
-      bytesSum?: number
-    }
-  ): void {
-    const old = this.getTracker(taskId)
-    if (isNullish(old)) {
-      LogUtil.warn('TaskService', `没有找到需要更新的任务跟踪器，taskId: ${taskId}`)
-      return
-    }
-    if (newTaskTracker.status !== undefined) {
-      old.status = newTaskTracker.status
-    }
-    if (newTaskTracker.bytesSum !== undefined) {
-      old.bytesSum = newTaskTracker.bytesSum
-    }
-    if (newTaskTracker.readStream !== undefined) {
-      old.readStream = newTaskTracker.readStream
-    }
-    if (newTaskTracker.writeStream !== undefined) {
-      old.writeStream = newTaskTracker.writeStream
-    }
+    return taskPromise
   }
 }

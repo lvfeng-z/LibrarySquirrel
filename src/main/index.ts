@@ -74,6 +74,7 @@ Electron.app.whenReady().then(() => {
   Electron.ipcMain.on('ping', () => console.log('pong'))
 
   const mainWindow = createWindow()
+  GlobalVar.create(GlobalVars.MAIN_WINDOW, mainWindow)
 
   // 配置日志
   LogUtil.initializeLogSetting()
@@ -111,7 +112,7 @@ Electron.app.whenReady().then(() => {
 
   // 初始化数据库
   InitializeDB().then(() => {
-    ServiceExposer.exposeService(mainWindow)
+    ServiceExposer.exposeService()
   })
 
   // 初始化任务队列

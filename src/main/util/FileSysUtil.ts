@@ -6,6 +6,7 @@ import SettingsService from '../service/SettingsService.ts'
 import sharp from 'sharp'
 import { isNullish } from './CommonUtil.js'
 import { Readable, Writable } from 'node:stream'
+import { FileSaveResult } from '../constant/FileSaveResult.js'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -90,29 +91,40 @@ export async function getWorksResource(
   }
 }
 
-export function pipelineReadWrite(readable: Readable, writable: Writable): Promise<void> {
+export function pipelineReadWrite(readable: Readable, writable: Writable): Promise<FileSaveResult> {
   return new Promise((resolve, reject) => {
     let errorOccurred = false
-    readable.on('error', (err) => {
+    let paused = false
+    const readableErrorHandler = (err: Error) => {
       errorOccurred = true
       LogUtil.error('WorksService', `readable出错${err}`)
       reject(err)
-    })
-    writable.on('error', (err) => {
-      errorOccurred = true
-      LogUtil.error('WorksService', `writable出错${err}`)
-      reject(err)
-    })
-    readable.once('end', () => {
+    }
+    const readableEndHandler = () => {
       if (!errorOccurred) {
         writable.end()
       } else {
         reject()
       }
+    }
+    readable.once('error', readableErrorHandler)
+    writable.once('error', (err) => {
+      errorOccurred = true
+      LogUtil.error('WorksService', `writable出错${err}`)
+      reject(err)
+    })
+    readable.once('end', readableEndHandler)
+    readable.once('pause', () => {
+      paused = true
+      readable.removeListener('error', readableErrorHandler)
+      readable.removeListener('end', readableEndHandler)
+    })
+    readable.once('resume', () => {
+      paused = false
     })
     writable.once('finish', () => {
       if (!errorOccurred) {
-        resolve()
+        return paused ? resolve(FileSaveResult.PAUSE) : resolve(FileSaveResult.FINISH)
       } else {
         reject()
       }
