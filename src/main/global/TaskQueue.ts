@@ -98,7 +98,7 @@ export class TaskQueue {
         `任务队列中已经存在任务${taskId}`
       )
       if (TaskStatusEnum.PAUSE === writer.status) {
-        writer.updateBeyondPause(taskWriter)
+        writer.updateBeyondStatus(taskWriter)
       }
     }
   }

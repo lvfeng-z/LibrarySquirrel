@@ -114,7 +114,11 @@ export default class TaskWriter {
     }
   }
 
-  public updateBeyondPause(taskWriter: TaskWriter): void {
+  /**
+   * 更新所有属性，忽略状态
+   * @param taskWriter 更新数据
+   */
+  public updateBeyondStatus(taskWriter: TaskWriter): void {
     this.readable = taskWriter.readable
     this.writable = taskWriter.writable
     this.bytesSum = taskWriter.bytesSum

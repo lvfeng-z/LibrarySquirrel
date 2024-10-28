@@ -27,7 +27,7 @@ import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
 import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
 import { createDirIfNotExists } from '../util/FileSysUtil.js'
-import taskSaveResult from '../model/utilModels/TaskSaveResult.js'
+import TaskSaveResult from '../model/utilModels/TaskSaveResult.js'
 import { getNode } from '../util/TreeUtil.js'
 import { Id } from '../model/BaseModel.js'
 import TaskWriter from '../util/TaskWriter.js'
@@ -356,7 +356,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async processTask(
     task: Task,
     pluginLoader: PluginLoader<TaskHandler>
-  ): Promise<taskSaveResult> {
+  ): Promise<TaskSaveResult> {
     try {
       if (isNullish(task.id)) {
         const msg = `任务的任务id意外为空`
@@ -514,7 +514,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       if (children.length > 50) {
         const taskStreamPromise = new Promise<boolean>((resolve) => {
           const taskProcessStream = new TaskProcessStream(children, pluginLoader)
-          taskProcessStream.on('data', (saveResult: taskSaveResult) => {
+          taskProcessStream.on('data', (saveResult: TaskSaveResult) => {
             queue++
             if (TaskStatusEnum.FINISHED === saveResult.status) {
               succeed++
@@ -697,7 +697,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async resumeTask(
     task: Task,
     pluginLoader: PluginLoader<TaskHandler>
-  ): Promise<taskSaveResult> {
+  ): Promise<TaskSaveResult> {
     try {
       assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
       const taskId = task.id
@@ -861,7 +861,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       if (children.length > 50) {
         const taskStreamPromise = new Promise<boolean>((resolve) => {
           const taskProcessStream = new TaskProcessStream(children, pluginLoader)
-          taskProcessStream.on('data', (saveResult: taskSaveResult) => {
+          taskProcessStream.on('data', (saveResult: TaskSaveResult) => {
             queue++
             if (TaskStatusEnum.FINISHED === saveResult.status) {
               succeed++
@@ -877,7 +877,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             this.taskFailed(task.id)
           })
           taskProcessStream.on('finish', () => resolve(true))
-          taskProcessStream.startProcessing()
+          taskProcessStream.resumeProcessing()
         })
         taskStreamPromise.then(() => this.refreshParentTaskStatus(parent))
         activeProcesses.push(taskStreamPromise)
