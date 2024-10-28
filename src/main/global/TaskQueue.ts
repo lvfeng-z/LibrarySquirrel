@@ -3,7 +3,7 @@ import pLimit from 'p-limit'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
 import TaskWriter from '../util/TaskWriter.js'
-import { notNullish } from '../util/CommonUtil.js'
+import { isNullish, notNullish } from '../util/CommonUtil.js'
 
 export class TaskQueue {
   /**
@@ -31,14 +31,14 @@ export class TaskQueue {
 
   /**
    * 开始任务
-   * @param func
    * @param taskId 任务id
+   * @param func 任务处理函数
    */
   public start(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
     const status = this.getStatus(taskId)
     assertNotNullish(status, 'TaskQueue', `无法开始任务${taskId}，队列中找不到这个任务`)
     assertFalse(
-      TaskStatusEnum.PROCESSING === status || TaskStatusEnum.PAUSE === status,
+      TaskStatusEnum.PROCESSING === status,
       'TaskQueue',
       `任务${taskId}已经存在，不能开始`
     )
@@ -47,8 +47,8 @@ export class TaskQueue {
 
   /**
    * 恢复任务
-   * @param func
    * @param taskId 任务id
+   * @param func 任务处理函数
    */
   public resume(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
     const status = this.getStatus(taskId)
@@ -67,20 +67,40 @@ export class TaskQueue {
   }
 
   /**
+   * 暂停任务
+   * @param taskId 任务id
+   */
+  public pause(taskId: number): TaskWriter {
+    let writer = this.getWriter(taskId)
+    if (notNullish(writer)) {
+      writer.pause()
+    } else {
+      writer = new TaskWriter()
+      writer.pause()
+      this.push(taskId, writer)
+    }
+    return writer
+  }
+
+  /**
    * 插入任务
    * @param taskId 任务id
    * @param taskWriter 任务writer
    */
   public push(taskId: number, taskWriter: TaskWriter): void {
-    const status = this.getStatus(taskId)
-    assertFalse(
-      TaskStatusEnum.PROCESSING === status ||
-        TaskStatusEnum.PAUSE === status ||
-        TaskStatusEnum.WAITING === status,
-      'TaskQueue',
-      `任务队列中已经存在任务${taskId}，${this.taskPool.get(taskId)?.status}`
-    )
-    this.taskPool.set(taskId, taskWriter)
+    const writer = this.getWriter(taskId)
+    if (isNullish(writer)) {
+      this.taskPool.set(taskId, taskWriter)
+    } else {
+      assertFalse(
+        TaskStatusEnum.PROCESSING === writer.status || TaskStatusEnum.WAITING === writer.status,
+        'TaskQueue',
+        `任务队列中已经存在任务${taskId}`
+      )
+      if (TaskStatusEnum.PAUSE === writer.status) {
+        writer.updateBeyondPause(taskWriter)
+      }
+    }
   }
 
   /**

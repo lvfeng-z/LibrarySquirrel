@@ -623,34 +623,33 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     )
     const taskHandler = await pluginLoader.load(task.pluginId)
 
-    // 创建TaskPluginDTO对象
-    const taskPluginDTO = new TaskPluginDTO(task)
-    const writer = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(taskId)
+    const writer = GlobalVar.get(GlobalVars.TASK_QUEUE).pause(taskId)
 
-    assertNotNullish(writer, 'TaskService', `任务${taskId}暂停时，在任务队列中找不到这个任务`)
-    taskPluginDTO.resourceStream = writer.readable
+    if (notNullish(writer)) {
+      // 创建TaskPluginDTO对象
+      const taskPluginDTO = new TaskPluginDTO(task)
+      taskPluginDTO.resourceStream = writer.readable
 
-    if (TaskStatusEnum.FINISHED !== writer.status) {
-      writer.pause()
-      // 调用插件的pause方法
-      try {
-        taskHandler.pause(taskPluginDTO)
-      } catch (error) {
-        LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
-        if (notNullish(writer.readable)) {
-          writer.readable.pause()
+      if (TaskStatusEnum.FINISHED !== writer.status && TaskStatusEnum.FAILED !== writer.status) {
+        // 调用插件的pause方法
+        try {
+          taskHandler.pause(taskPluginDTO)
+        } catch (error) {
+          LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
+          if (notNullish(writer.readable)) {
+            writer.readable.pause()
+          }
         }
+        task.status = TaskStatusEnum.PAUSE
+        return true
+      } else {
+        return false
       }
-      // 更新任务树的状态
-      task.status = TaskStatusEnum.PAUSE
-      // 更新数据库中任务的状态
-      return true
     } else {
-      return false
+      return true
     }
   }
 
-  // todo 这个方法暂停以流的方式进行的任务，只能暂停正在进行的任务，等待中的任务还会执行，因为流不会一次性把所有任务放进任务池，导致这个方法无法对还没有进入任务池的任务通过任务池实现暂停操作
   /**
    * 暂停任务树
    * @param ids id列表

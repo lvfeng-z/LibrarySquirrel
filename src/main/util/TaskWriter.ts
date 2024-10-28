@@ -113,4 +113,12 @@ export default class TaskWriter {
       }
     }
   }
+
+  public updateBeyondPause(taskWriter: TaskWriter): void {
+    this.readable = taskWriter.readable
+    this.writable = taskWriter.writable
+    this.bytesSum = taskWriter.bytesSum
+    this.bytesWritten = taskWriter.bytesWritten
+    this.readableFinished = taskWriter.readableFinished
+  }
 }
