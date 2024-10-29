@@ -31,7 +31,8 @@ import TaskSaveResult from '../model/utilModels/TaskSaveResult.js'
 import { getNode } from '../util/TreeUtil.js'
 import { Id } from '../model/BaseModel.js'
 import TaskWriter from '../util/TaskWriter.js'
-import TaskProcessStream from '../util/TaskProcessStream.js'
+import { FileSaveResult } from '../constant/FileSaveResult.js'
+import { TaskOperation } from '../global/TaskQueue.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -352,10 +353,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 处理任务
    * @param task
    * @param pluginLoader
+   * @param taskWriter
    */
   public async processTask(
     task: Task,
-    pluginLoader: PluginLoader<TaskHandler>
+    pluginLoader: PluginLoader<TaskHandler>,
+    taskWriter: TaskWriter
   ): Promise<TaskSaveResult> {
     try {
       if (isNullish(task.id)) {
@@ -401,20 +404,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       await updatePendingDownloadPathService.updateById(sourceTask)
 
       // 获取writer
-      const taskWriter = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(taskId)
-      assertNotNullish(taskWriter, 'TaskService', `任务${taskId}开始时，在任务队列找不到这个任务`)
       taskWriter.bytesSum = isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
 
       // 保存资源
-      const savePromise = async (): Promise<TaskStatusEnum> => {
-        // 先校验是不是暂停状态
-        if (TaskStatusEnum.PAUSE === taskWriter.status) {
-          return TaskStatusEnum.PAUSE
-        }
-
+      const savePromise = async (): Promise<FileSaveResult> => {
         // 标记为进行中
         task.status = TaskStatusEnum.PROCESSING
-        taskWriter.status = TaskStatusEnum.PROCESSING
         this.taskProcessing(taskId)
         // 调用插件的start方法，获取资源
         const resourceDTO = await taskHandler.start(task)
@@ -438,21 +433,19 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       return savePromise()
         .then(async (saveResult) => {
-          task.status = saveResult
-          if (TaskStatusEnum.FINISHED === saveResult) {
-            taskWriter.status = TaskStatusEnum.FINISHED
+          if (FileSaveResult.FINISH === saveResult) {
             worksService.resourceFinished(worksId)
             return this.taskFinished(task.id, worksId).then(() => {
               LogUtil.info('TaskService', `任务${taskId}完成`)
-              return { status: saveResult, worksId: worksId }
+              return { status: TaskStatusEnum.FINISHED, worksId: worksId }
             })
-          } else if (TaskStatusEnum.PAUSE === taskWriter.status) {
+          } else if (FileSaveResult.PAUSE === saveResult) {
             return this.taskPaused(taskId).then(() => {
               LogUtil.info('TaskService', `任务${taskId}暂停`)
-              return { status: saveResult, worksId: worksId }
+              return { status: TaskStatusEnum.PAUSE, worksId: worksId }
             })
           } else {
-            return { status: saveResult, worksId: worksId }
+            return { status: TaskStatusEnum.FAILED, worksId: worksId }
           }
         })
         .catch(async (error) => {
@@ -476,25 +469,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskIds 任务id列表
    * @param includeStatus 要处理的任务状态
    */
-  async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<number> {
-    const startTime = Date.now()
-    // 所有任务设置为等待中
-    await this.dao.setTaskTreeStatus(taskIds, TaskStatusEnum.WAITING, includeStatus)
+  async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, [TaskStatusEnum.WAITING])
+    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, includeStatus)
 
-    // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
-
-    // 计数器
-    let queue = 0
-    let succeed = 0
-    let failed = 0
-    let pause = 0
-
-    // 任务等待列表
-    const activeProcesses: Promise<boolean>[] = []
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     for (const parent of taskTree) {
       // 获取要处理的任务
       let children: TaskDTO[]
@@ -510,81 +488,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
 
-      // 尝试开始任务
-      if (children.length > 50) {
-        const taskStreamPromise = new Promise<boolean>((resolve) => {
-          const taskProcessStream = new TaskProcessStream(children, pluginLoader)
-          taskProcessStream.on('data', (saveResult: TaskSaveResult) => {
-            queue++
-            if (TaskStatusEnum.FINISHED === saveResult.status) {
-              succeed++
-            } else if (TaskStatusEnum.PAUSE === saveResult.status) {
-              pause++
-            } else if (TaskStatusEnum.FAILED === saveResult.status) {
-              failed++
-            }
-          })
-          taskProcessStream.on('error', async (error: Error, task: TaskDTO) => {
-            failed++
-            LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
-            this.taskFailed(task.id)
-          })
-          taskProcessStream.on('finish', () => resolve(true))
-          taskProcessStream.startProcessing()
-        })
-        taskStreamPromise.then(() => this.refreshParentTaskStatus(parent))
-        activeProcesses.push(taskStreamPromise)
-      } else {
-        // 单个父任务的子任务等待列表
-        const childProcesses: Promise<boolean>[] = []
-        for (const task of children) {
-          assertNotNullish(task.id)
-          queue++
-
-          taskQueue.push(task.id, new TaskWriter())
-          const taskSaveResult = taskQueue.start(task.id, () =>
-            this.processTask(task, pluginLoader).then((saveResult) => saveResult.status)
-          )
-
-          const activeProcess = taskSaveResult
-            .then(async (processResult) => {
-              if (TaskStatusEnum.FINISHED === processResult) {
-                succeed++
-              } else if (TaskStatusEnum.PAUSE === processResult) {
-                pause++
-              } else if (TaskStatusEnum.FAILED === processResult) {
-                failed++
-              }
-              return true
-            })
-            .catch(async (error) => {
-              failed++
-              LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
-              task.status = TaskStatusEnum.FAILED
-              return this.taskFailed(task.id).then(() => false)
-            })
-          activeProcesses.push(activeProcess)
-          childProcesses.push(activeProcess)
-        }
-        Promise.allSettled(childProcesses).then(() => this.refreshParentTaskStatus(parent))
-      }
+      const childrenIds = children.map((child) => child.id as number)
+      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(childrenIds, TaskOperation.START)
     }
-
-    Promise.allSettled(activeProcesses).then(() => {
-      LogUtil.info(
-        'TaskService',
-        `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
-      )
-    })
-
-    return queue
   }
 
   /**
    * 开始任务
    * @param taskIds 任务id列表
    */
-  public async startTaskTree(taskIds: number[]): Promise<number> {
+  public async startTaskTree(taskIds: number[]): Promise<void> {
     return this.processTaskTree(taskIds, [
       TaskStatusEnum.CREATED,
       TaskStatusEnum.FAILED,
@@ -597,7 +510,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 重试任务
    * @param taskIds 任务id列表
    */
-  public async retryTaskTree(taskIds: number[]): Promise<number> {
+  public async retryTaskTree(taskIds: number[]): Promise<void> {
     return this.processTaskTree(taskIds, [
       TaskStatusEnum.CREATED,
       TaskStatusEnum.FINISHED,
@@ -693,10 +606,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 恢复任务
    * @param task 任务
    * @param pluginLoader 插件加载器
+   * @param taskWriter
    */
   public async resumeTask(
     task: Task,
-    pluginLoader: PluginLoader<TaskHandler>
+    pluginLoader: PluginLoader<TaskHandler>,
+    taskWriter: TaskWriter
   ): Promise<TaskSaveResult> {
     try {
       assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
@@ -722,9 +637,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 插件用于恢复下载的任务信息
       const taskPluginDTO = new TaskPluginDTO(task)
-      // 获取writer
-      const taskWriter = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(taskId)
-      assertNotNullish(taskWriter, 'TaskService', `任务${taskId}恢复时，在任务队列找不到这个任务`)
       // 获取任务writer中的读取流
       taskPluginDTO.resourceStream = taskWriter.readable
       // 读取已下载文件信息，获取已经下载的数据量
@@ -742,13 +654,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const worksService = new WorksService()
 
       const resumePromise = async () => {
-        if (TaskStatusEnum.PAUSE === taskWriter.status) {
-          return TaskStatusEnum.PAUSE
-        }
-
         // 标记为进行中
         task.status = TaskStatusEnum.PROCESSING
-        taskWriter.status = TaskStatusEnum.PROCESSING
         this.taskProcessing(taskId)
         // 调用插件的resume函数，获取资源
         const resumeResponse = await taskHandler.resume(taskPluginDTO)
@@ -785,21 +692,19 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
       return resumePromise()
         .then(async (saveResult) => {
-          task.status = saveResult
-          if (TaskStatusEnum.FINISHED === saveResult) {
-            taskWriter.status = TaskStatusEnum.FINISHED
+          if (FileSaveResult.FINISH === saveResult) {
             worksService.resourceFinished(worksId)
             return this.taskFinished(task.id, worksId).then(() => {
-              LogUtil.info('TaskService', `任务${taskId}恢复后完成`)
-              return { status: saveResult, worksId: worksId }
+              LogUtil.info('TaskService', `任务${taskId}完成`)
+              return { status: TaskStatusEnum.FINISHED, worksId: worksId }
             })
-          } else if (TaskStatusEnum.PAUSE === taskWriter.status) {
+          } else if (FileSaveResult.PAUSE === saveResult) {
             return this.taskPaused(taskId).then(() => {
-              LogUtil.info('TaskService', `任务${taskId}恢复后暂停`)
-              return { status: saveResult, worksId: worksId }
+              LogUtil.info('TaskService', `任务${taskId}暂停`)
+              return { status: TaskStatusEnum.PAUSE, worksId: worksId }
             })
           } else {
-            return { status: saveResult, worksId: worksId }
+            return { status: TaskStatusEnum.FAILED, worksId: worksId }
           }
         })
         .catch(async (error) => {
@@ -822,26 +727,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 恢复任务树
    * @param ids id列表
    */
-  public async resumeTaskTree(ids: number[]): Promise<number> {
-    // 所有暂停的任务设置为等待中
-    await this.dao.setTaskTreeStatus(ids, TaskStatusEnum.WAITING, [TaskStatusEnum.PAUSE])
+  public async resumeTaskTree(ids: number[]): Promise<void> {
+    // 查找id列表对应的所有子任务
+    const taskTree: TaskDTO[] = await this.dao.listTaskTree(ids, [TaskStatusEnum.PAUSE])
 
-    const taskTree = await this.dao.listTaskTree(ids, [TaskStatusEnum.WAITING])
-
-    const startTime = Date.now()
-
-    // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
-
-    // 计数器
-    let queue = 0
-    let succeed = 0
-    let failed = 0
-    let pause = 0
-
-    // 任务等待列表
-    const activeProcesses: Promise<boolean>[] = []
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     for (const parent of taskTree) {
       // 获取要处理的任务
       let children: TaskDTO[]
@@ -857,78 +746,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
 
-      // 尝试开始任务
-      if (children.length > 50) {
-        const taskStreamPromise = new Promise<boolean>((resolve) => {
-          const taskProcessStream = new TaskProcessStream(children, pluginLoader)
-          taskProcessStream.on('data', (saveResult: TaskSaveResult) => {
-            queue++
-            if (TaskStatusEnum.FINISHED === saveResult.status) {
-              succeed++
-            } else if (TaskStatusEnum.PAUSE === saveResult.status) {
-              pause++
-            } else if (TaskStatusEnum.FAILED === saveResult.status) {
-              failed++
-            }
-          })
-          taskProcessStream.on('error', async (error: Error, task: TaskDTO) => {
-            failed++
-            LogUtil.error('TaskService', `保存任务时出错，taskId: ${task.id}，error: `, error)
-            this.taskFailed(task.id)
-          })
-          taskProcessStream.on('finish', () => resolve(true))
-          taskProcessStream.resumeProcessing()
-        })
-        taskStreamPromise.then(() => this.refreshParentTaskStatus(parent))
-        activeProcesses.push(taskStreamPromise)
-      } else {
-        const childProcesses: Promise<boolean>[] = []
-        for (const child of children) {
-          assertNotNullish(child.id)
-          const taskWriter = taskQueue.getWriter(child.id)
-          if (isNullish(taskWriter)) {
-            taskQueue.push(child.id, new TaskWriter())
-          } else {
-            taskWriter.status = TaskStatusEnum.WAITING
-          }
-          queue++
-
-          const taskSaveResult = taskQueue.resume(child.id, () =>
-            this.resumeTask(child, pluginLoader).then((saveResult) => saveResult.status)
-          )
-
-          const activeProcess = taskSaveResult
-            .then(async (processResult) => {
-              if (TaskStatusEnum.FINISHED === processResult) {
-                succeed++
-              } else if (TaskStatusEnum.PAUSE === processResult) {
-                pause++
-              } else if (TaskStatusEnum.FAILED === processResult) {
-                failed++
-              }
-              return true
-            })
-            .catch(async (error) => {
-              failed++
-              LogUtil.error('TaskService', `恢复任务时出错，taskId: ${child.id}，error: `, error)
-              child.status = TaskStatusEnum.FAILED
-              return this.taskFailed(child.id).then(() => false)
-            })
-          activeProcesses.push(activeProcess)
-          childProcesses.push(activeProcess)
-        }
-        Promise.allSettled(childProcesses).then(() => this.refreshParentTaskStatus(parent))
-      }
-
-      Promise.allSettled(activeProcesses).then(() => {
-        LogUtil.info(
-          'TaskService',
-          `任务完成，成功${succeed}，失败${failed}，中止${pause}，耗时${(Date.now() - startTime) / 1000}秒`
-        )
-      })
+      const childrenIds = children.map((child) => child.id as number)
+      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(childrenIds, TaskOperation.RESUME)
     }
-
-    return queue
   }
 
   /**
@@ -1193,22 +1013,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     let result: TaskScheduleDTO[] = []
     // 没有监听器的任务
     const noListenerIds: number[] = []
+    const taskQueueR = GlobalVar.get(GlobalVars.TASK_QUEUE)
     ids.forEach((id: number) => {
-      // 如果有writer且写入流不为空，则从writer获取任务进度，否则从数据库查询任务状态
-      const writer = GlobalVar.get(GlobalVars.TASK_QUEUE).getWriter(id)
-      if (notNullish(writer) && notNullish(writer.writable)) {
-        const temp: TaskScheduleDTO = new TaskScheduleDTO()
-        temp.id = id
-        temp.status = writer.status
-        if (writer.status === TaskStatusEnum.PROCESSING || writer.status === TaskStatusEnum.PAUSE) {
-          if (writer.bytesSum === 0) {
-            LogUtil.warn('TaskService', `计算任务进度时，资源总量为0`)
-            temp.schedule = 0
-          } else {
-            temp.schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
-          }
-        }
-        result.push(temp)
+      const schedule = taskQueueR.getSchedule(id)
+      if (notNullish(schedule)) {
+        result.push(schedule)
       } else {
         noListenerIds.push(id)
       }

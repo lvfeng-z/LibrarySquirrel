@@ -24,7 +24,6 @@ import StringUtil from '../util/StringUtil.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
-import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { assertNotNullish } from '../util/AssertUtil.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
@@ -84,7 +83,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public async saveWorksResource(
     worksDTO: WorksSaveDTO,
     fileWriter: TaskWriter
-  ): Promise<TaskStatusEnum> {
+  ): Promise<FileSaveResult> {
     assertNotNullish(
       worksDTO.resourceStream,
       'WorksService',
@@ -112,15 +111,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       // 创建写入Promise
       fileWriter.readable = worksDTO.resourceStream
       fileWriter.writable = writeStream
-      const saveResourceFinishPromise: Promise<FileSaveResult> = fileWriter.doWrite()
-
-      return saveResourceFinishPromise.then((saveResult) => {
-        if (FileSaveResult.FINISH === saveResult) {
-          return TaskStatusEnum.FINISHED
-        } else {
-          return TaskStatusEnum.PAUSE
-        }
-      })
+      return fileWriter.doWrite()
     } catch (error) {
       const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
       LogUtil.error('WorksService', msg)
@@ -132,17 +123,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 恢复保存作品资源
    * @param fileWriter 任务writer
    */
-  public async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<TaskStatusEnum> {
+  public async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<FileSaveResult> {
     assertNotNullish(fileWriter.readable, 'WorksService', `恢复资源下载时资源流意外为空`)
     assertNotNullish(fileWriter.writable, 'WorksService', `恢复资源下载时写入流意外为空`)
 
-    return fileWriter.doWrite().then((saveResult) => {
-      if (FileSaveResult.FINISH === saveResult) {
-        return TaskStatusEnum.FINISHED
-      } else {
-        return TaskStatusEnum.PAUSE
-      }
-    })
+    return fileWriter.doWrite()
   }
 
   /**

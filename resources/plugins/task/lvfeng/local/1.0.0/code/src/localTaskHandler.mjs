@@ -31,7 +31,7 @@ export default class LocalTaskHandler {
    */
   async generateWorksInfo(task) {
     // 保存在pluginData的数据
-    const pluginData = JSON.parse(task.pluginData)
+    const pluginData = task.pluginData
     // 含义列表
     const meaningOfPaths = pluginData.meaningOfPaths
     // 文件名

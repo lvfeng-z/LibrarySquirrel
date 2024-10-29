@@ -1,167 +1,314 @@
-import SettingsService from '../service/SettingsService.js'
-import pLimit from 'p-limit'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
-import TaskWriter from '../util/TaskWriter.js'
+import { assertNotNullish } from '../util/AssertUtil.js'
+import LogUtil from '../util/LogUtil.js'
+import TaskService from '../service/TaskService.js'
 import { isNullish, notNullish } from '../util/CommonUtil.js'
+import SettingsService from '../service/SettingsService.js'
+import { Transform, TransformCallback } from 'node:stream'
+import PluginLoader from '../plugin/PluginLoader.js'
+import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
+import TaskDTO from '../model/dto/TaskDTO.js'
+import TaskSaveResult from '../model/utilModels/TaskSaveResult.js'
+import TaskWriter from '../util/TaskWriter.js'
+import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 
 export class TaskQueue {
-  /**
-   * 异步限制器
-   * @private
-   */
-  private limit: pLimit.Limit
-
-  /**
-   * 任务writer
-   * @private
-   */
-  private readonly taskPool: Map<number, TaskWriter>
+  private readonly queue: TaskQueueItem[]
+  private readonly taskMap: Map<number, TaskInfo>
+  private taskService: TaskService
+  private taskProcessStream: TaskProcessStream
 
   constructor() {
-    // 读取设置中的最大并行数
-    const settings = SettingsService.getSettings()
-    const maxSaveWorksPromise =
-      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
-    this.limit = pLimit(maxSaveWorksPromise)
-    this.taskPool = new Map<number, TaskWriter>()
-  }
-
-  // public refreshLimit(): void {}
-
-  /**
-   * 开始任务
-   * @param taskId 任务id
-   * @param func 任务处理函数
-   */
-  public start(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
-    const status = this.getStatus(taskId)
-    assertNotNullish(status, 'TaskQueue', `无法开始任务${taskId}，队列中找不到这个任务`)
-    assertFalse(
-      TaskStatusEnum.PROCESSING === status,
-      'TaskQueue',
-      `任务${taskId}已经存在，不能开始`
+    this.queue = []
+    this.taskMap = new Map()
+    this.taskService = new TaskService()
+    this.taskProcessStream = new TaskProcessStream(
+      this.taskMap,
+      new PluginLoader(new TaskHandlerFactory())
     )
-    return this.execute(taskId, func)
+    this.initializeHandlers()
   }
 
-  /**
-   * 恢复任务
-   * @param taskId 任务id
-   * @param func 任务处理函数
-   */
-  public resume(taskId: number, func: () => Promise<TaskStatusEnum>): Promise<TaskStatusEnum> {
-    const status = this.getStatus(taskId)
-    assertNotNullish(status, 'TaskQueue', `无法恢复任务${taskId}，队列中找不到这个任务`)
-    assertFalse(
-      TaskStatusEnum.PROCESSING === status,
-      'TaskQueue',
-      `任务${taskId}已经正在进行中，无法恢复`
-    )
-    assertFalse(
-      TaskStatusEnum.FINISHED === status || TaskStatusEnum.FAILED === status,
-      'TaskQueue',
-      `任务${taskId}已经结束，不能恢复`
-    )
-    return this.execute(taskId, func)
-  }
-
-  /**
-   * 暂停任务
-   * @param taskId 任务id
-   */
-  public pause(taskId: number): TaskWriter {
-    let writer = this.getWriter(taskId)
-    if (notNullish(writer)) {
-      writer.pause()
-    } else {
-      writer = new TaskWriter()
-      writer.pause()
-      this.push(taskId, writer)
-    }
-    return writer
-  }
-
-  /**
-   * 插入任务
-   * @param taskId 任务id
-   * @param taskWriter 任务writer
-   */
-  public push(taskId: number, taskWriter: TaskWriter): void {
-    const writer = this.getWriter(taskId)
-    if (isNullish(writer)) {
-      this.taskPool.set(taskId, taskWriter)
-    } else {
-      assertFalse(
-        TaskStatusEnum.PROCESSING === writer.status || TaskStatusEnum.WAITING === writer.status,
-        'TaskQueue',
-        `任务队列中已经存在任务${taskId}`
-      )
-      if (TaskStatusEnum.PAUSE === writer.status) {
-        writer.updateBeyondStatus(taskWriter)
+  public push(item: TaskQueueItem) {
+    // 处理暂停和停止操作
+    const enqueue = this.preprocess(item)
+    // 处理开始和恢复操作
+    if (enqueue) {
+      if (this.taskMap.has(item.taskId)) {
+        const operationStr = item.operation === TaskOperation.START ? '开始' : '恢复'
+        LogUtil.warn('TaskQueueR', `无法${operationStr}任务${item.taskId}，队列中已经存在其他操作`)
+      } else {
+        // 操作添加到任务池和操作队列中
+        const taskInfo = new TaskInfo(item.taskId, item, TaskStatusEnum.WAITING, new TaskWriter())
+        this.taskMap.set(item.taskId, taskInfo)
+        this.queue.push(item)
+        // 处理新任务
+        this.taskProcessStream.addIterators([item][Symbol.iterator]())
       }
     }
   }
 
-  /**
-   * 判断任务是否存在于队列中
-   * @param taskId
-   */
-  public exists(taskId: number): boolean {
-    return this.taskPool.has(taskId)
+  public pushBatch(taskIds: number[], taskOperation: TaskOperation) {
+    const queueItems = taskIds
+      .filter((taskId) => {
+        const exists = this.taskMap.has(taskId)
+        if (exists) {
+          LogUtil.warn('TaskQueueR', `无法开始任务${taskId}，队列中已经存在其他操作`)
+        }
+        return !exists
+      })
+      .map((taskId) => {
+        const item = new TaskQueueItem(taskId, taskOperation)
+        const taskInfo = new TaskInfo(item.taskId, item, TaskStatusEnum.WAITING, new TaskWriter())
+        this.queue.push(item)
+        this.taskMap.set(item.taskId, taskInfo)
+        LogUtil.info('TaskQueueR', `任务${taskId}进入队列`)
+        return item
+      })
+
+    this.taskProcessStream.addIterators(queueItems[Symbol.iterator]())
+  }
+
+  private initializeHandlers() {
+    this.taskProcessStream.on('data', (data: { task: TaskDTO; saveResult: TaskSaveResult }) => {
+      const task = data.task
+      const saveResult = data.saveResult
+      assertNotNullish(task.id)
+      const taskInfo = this.taskMap.get(task.id)
+      assertNotNullish(taskInfo, 'TaskQueueR', `任务${task.id}结束时在任务池中找不到这个任务`)
+      taskInfo.status = saveResult.status
+      assertNotNullish(
+        taskInfo.queueItem,
+        'TaskQueueR',
+        `任务${task.id}结束时在任务池中找不到这个任务的操作对象`
+      )
+      this.queue.slice(this.queue.indexOf(taskInfo.queueItem), 1)
+      this.taskMap.delete(taskInfo.taskId)
+    })
+    this.taskProcessStream.on('error', async (error: Error, task: TaskDTO) => {
+      assertNotNullish(task.id)
+      const taskInfo = this.taskMap.get(task.id)
+      assertNotNullish(
+        taskInfo,
+        'TaskQueueR',
+        `处理任务时出错，taskId: ${task.id}，error: ${error.message}`
+      )
+      taskInfo.status = TaskStatusEnum.FAILED
+      assertNotNullish(
+        taskInfo.queueItem,
+        'TaskQueueR',
+        `任务${task.id}结束时在任务池中找不到这个任务的操作对象`
+      )
+      this.queue.slice(this.queue.indexOf(taskInfo.queueItem), 1)
+      this.taskMap.delete(taskInfo.taskId)
+    })
+    this.taskProcessStream.on('finish', () => LogUtil.info('TaskQueueR', '任务队列完成'))
   }
 
   /**
-   * 获取任务的状态
-   * @param taskId
-   */
-  public getStatus(taskId: number): TaskStatusEnum | undefined {
-    return this.taskPool.get(taskId)?.status
-  }
-
-  /**
-   * 从任务池移除
-   * @param taskId
-   */
-  public remove(taskId: number) {
-    this.taskPool.delete(taskId)
-  }
-
-  /**
-   * 获取任务writer
+   * 获取任务进度
    * @param taskId 任务id
    */
-  public getWriter(taskId: number): TaskWriter | undefined {
-    return this.taskPool.get(taskId)
+  public getSchedule(taskId: number): TaskScheduleDTO | undefined {
+    const taskInfo = this.taskMap.get(taskId)
+    if (isNullish(taskInfo)) {
+      return undefined
+    }
+    if (TaskStatusEnum.FINISHED === taskInfo.status) {
+      return new TaskScheduleDTO({ id: taskId, status: TaskStatusEnum.FINISHED, schedule: 100 })
+    }
+    const writer = taskInfo.taskWriter
+    if (TaskStatusEnum.PROCESSING === taskInfo.status || TaskStatusEnum.PAUSE === taskInfo.status) {
+      if (writer.bytesSum === 0) {
+        LogUtil.warn('TaskService', `计算任务进度时，资源总量为0`)
+        return new TaskScheduleDTO({ id: taskId, status: taskInfo.status, schedule: 0 })
+      } else if (notNullish(writer.writable)) {
+        const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
+        return new TaskScheduleDTO({ id: taskId, status: taskInfo.status, schedule: schedule })
+      }
+    }
+    return undefined
   }
 
   /**
-   *
-   * @param taskId
-   * @param func
+   * 预处理指令，如果这个指令不需要添加到队列中，返回false
+   * @param item
    * @private
    */
-  private execute(taskId: number, func: () => Promise<TaskStatusEnum>) {
-    const taskPromise = this.limit(() => func())
+  private preprocess(item: TaskQueueItem): boolean {
+    if (TaskOperation.PAUSE === item.operation) {
+      const taskInfo = this.taskMap.get(item.taskId)
+      assertNotNullish(taskInfo, 'TaskQueueR', `无法暂停任务${item.taskId}，队列中没有这个任务`)
+      const queueItem = taskInfo.queueItem
+      assertNotNullish(queueItem, 'TaskQueueR', `暂停任务${item.taskId}时，任务的原操作意外为空`)
+      const operation = queueItem.operation
+      assertNotNullish(operation, 'TaskQueueR', `暂停任务${item.taskId}时，任务的原操作意外为空`)
+      if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
+        queueItem.canceled = true
+        if (queueItem.processing) {
+          // todo 暂停正在进行的任务
+          taskInfo.taskWriter.pause()
+        }
+        this.taskService.taskPaused(item.taskId)
+      } else {
+        const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
+        LogUtil.error('TaskQueueR', msg)
+        throw new Error(msg)
+      }
+      return false
+    } else if (TaskOperation.STOP === item.operation) {
+      // todo 停止任务
+      return false
+    } else {
+      return true
+    }
+  }
+}
 
-    // 确认任务结束或失败后，延迟2秒清除其writer
-    taskPromise
-      .then((taskStatus) => {
-        const taskWriter = this.taskPool.get(taskId)
-        if (notNullish(taskWriter)) {
-          taskWriter.status = taskStatus
+export class TaskQueueItem {
+  public taskId: number
+  public operation: TaskOperation
+  public processing: boolean
+  public canceled: boolean
+
+  constructor(taskId: number, operation: TaskOperation) {
+    this.taskId = taskId
+    this.operation = operation
+    this.processing = false
+    this.canceled = false
+  }
+}
+
+export class TaskInfo {
+  public taskId: number
+  public queueItem: TaskQueueItem | undefined
+  public status: TaskStatusEnum
+  public taskWriter: TaskWriter
+
+  constructor(
+    taskId: number,
+    queueItem: TaskQueueItem,
+    status: TaskStatusEnum,
+    taskWriter: TaskWriter
+  ) {
+    this.taskId = taskId
+    this.queueItem = queueItem
+    this.status = status
+    this.taskWriter = taskWriter
+  }
+}
+
+export enum TaskOperation {
+  START = 1,
+  PAUSE = 2,
+  RESUME = 3,
+  STOP = 4
+}
+
+/**
+ * 任务处理流
+ */
+class TaskProcessStream extends Transform {
+  private taskService: TaskService
+  private taskMap: Map<number, TaskInfo>
+  private readonly pluginLoader: PluginLoader<TaskHandler>
+  private readonly iterators: IterableIterator<TaskQueueItem>[]
+  private consuming: boolean
+  private maxParallel: number
+  private processing: number
+
+  constructor(taskMap: Map<number, TaskInfo>, pluginLoader: PluginLoader<TaskHandler>) {
+    super({ objectMode: true }) // 设置为对象模式
+    this.taskService = new TaskService()
+    this.taskMap = taskMap
+    this.pluginLoader = pluginLoader
+    this.iterators = []
+    this.consuming = false
+    // 读取设置中的最大并行数
+    const settings = SettingsService.getSettings()
+    this.maxParallel =
+      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
+    this.processing = 0
+  }
+
+  _transform(
+    chunk: { task: TaskDTO; resumeMode: boolean },
+    _encoding: string,
+    callback: TransformCallback
+  ): void {
+    const task = chunk.task
+    assertNotNullish(task.id)
+
+    const taskInfo = this.taskMap.get(task.id)
+    assertNotNullish(taskInfo, 'TaskQueueR', `处理任务${task.id}时，taskWriter意外为空`)
+    const taskWriter = taskInfo.taskWriter
+    const saveResultPromise: Promise<TaskSaveResult> = chunk.resumeMode
+      ? this.taskService.resumeTask(task, this.pluginLoader, taskWriter)
+      : this.taskService.processTask(task, this.pluginLoader, taskWriter)
+
+    this.processing++
+    const limited = this.processing >= this.maxParallel
+
+    saveResultPromise
+      .then((saveResult: TaskSaveResult) => {
+        this.processing--
+        if (limited) {
+          callback()
         }
-        if (taskStatus === TaskStatusEnum.FINISHED || taskStatus === TaskStatusEnum.FAILED) {
-          setTimeout(() => this.taskPool.delete(taskId), 10000)
-        }
+        this.push({ task: task, saveResult: saveResult })
       })
-      .catch(() => {
-        const writer = this.getWriter(taskId)
-        if (notNullish(writer)) {
-          writer.status = TaskStatusEnum.FAILED
+      .catch((err) => {
+        this.processing--
+        if (limited) {
+          callback()
         }
-        setTimeout(() => this.taskPool.delete(taskId), 10000)
+        this.emit('error', err, task)
       })
-    return taskPromise
+    if (!limited) {
+      callback()
+    }
+  }
+
+  public addIterators(tasks: IterableIterator<TaskQueueItem>) {
+    this.iterators.push(tasks)
+    this.consumeIterators()
+  }
+
+  /**
+   * 处理任务
+   * @param tasks
+   * @private
+   */
+  private process(tasks: IterableIterator<TaskQueueItem>) {
+    // 将任务列表写入流中，启动处理过程
+    let done: boolean | undefined = false
+    while (!done) {
+      const next: IteratorResult<TaskQueueItem> = tasks.next()
+      const taskQueueItem: TaskQueueItem = next.value
+      done = next.done
+      if (!done && !taskQueueItem.canceled) {
+        this.taskService.getById(taskQueueItem.taskId).then((task) => {
+          assertNotNullish(task, 'TaskQueueR', `处理任务${taskQueueItem.taskId}失败，任务id无效`)
+          const taskDTO = new TaskDTO(task)
+          this.write({
+            task: taskDTO,
+            resumeMode: taskQueueItem.operation === TaskOperation.RESUME
+          })
+        })
+      }
+    }
+  }
+
+  private consumeIterators() {
+    if (!this.consuming) {
+      this.consuming = true
+      while (this.iterators.length > 0) {
+        const next = this.iterators.shift()
+        if (notNullish(next)) {
+          this.process(next)
+        }
+      }
+      this.consuming = false
+    }
   }
 }
