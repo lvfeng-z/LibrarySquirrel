@@ -27,6 +27,17 @@ export default class AryionTaskHandler {
   }
 
   /**
+   * 生成作品信息
+   * @param task 任务信息
+   * @return 作品信息
+   */
+  async generateWorksInfo(task) {
+    const worksDTO = new WorksDTO()
+    await this.tryUrl(task, worksDTO)
+    return worksDTO
+  }
+
+  /**
    * 开始任务
    * @param task 需开始的任务数组
    * @return 作品信息
@@ -75,10 +86,10 @@ export default class AryionTaskHandler {
     const contentDisposition = response.headers.get('content-disposition')
     if (contentDisposition) {
       // 使用正则表达式匹配 'filename' 或 'filename*' 参数
-      const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/;
-      const match = contentDisposition.match(regex);
+      const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
+      const match = contentDisposition.match(regex)
 
-      if (match && match[1] || match[2]) {
+      if ((match && match[1]) || match[2]) {
         // 提取文件名
         worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
       }
@@ -113,9 +124,7 @@ export default class AryionTaskHandler {
    * @param tasks 需要重试的任务
    * @return 作品信息
    */
-  retry(tasks) {
-
-  }
+  retry(tasks) {}
 
   /**
    * 暂停下载任务
@@ -187,7 +196,7 @@ export default class AryionTaskHandler {
         const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
         const match = contentDisposition.match(regex)
 
-        if (match && match[1] || match[2]) {
+        if ((match && match[1]) || match[2]) {
           // 提取文件名
           worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
         }
@@ -225,7 +234,7 @@ export default class AryionTaskHandler {
         const regex = /filename=["']?([^"'\s]+)["']?|filename\*=UTF-8''([^\s]+)/
         const match = contentDisposition.match(regex)
 
-        if (match && match[1] || match[2]) {
+        if ((match && match[1]) || match[2]) {
           // 提取文件名
           worksDTO.suggestedName = match[1] || decodeURIComponent(match[2])
         }
@@ -242,7 +251,7 @@ export default class AryionTaskHandler {
    * @return {*}
    */
   getDataFromMeaningOfPath(meaningOfPaths, type) {
-    return meaningOfPaths.filter(meaningOfPath => meaningOfPath.type === type)
+    return meaningOfPaths.filter((meaningOfPath) => meaningOfPath.type === type)
   }
 }
 
@@ -319,6 +328,10 @@ class WorksDTO {
    * 资源是否支持续传
    */
   continuable
+  /**
+   * 是否更新作品数据
+   */
+  doUpdate
 
   constructor() {
     this.siteId = undefined
@@ -338,7 +351,8 @@ class WorksDTO {
     this.siteTags = undefined
     this.resourceStream = undefined
     this.resourceSize = undefined
-    this.continuable = undefined
+    this.continuable = false
+    this.doUpdate = false
   }
 }
 
@@ -404,6 +418,14 @@ class Task {
   pluginId
   pluginInfo
   pluginData
+  /**
+   * 远程资源流
+   */
+  resourceStream
+  /**
+   * 已写入数据量
+   */
+  bytesWritten
 
   constructor() {
     this.isCollection = undefined
@@ -418,6 +440,8 @@ class Task {
     this.pluginId = undefined
     this.pluginInfo = undefined
     this.pluginData = undefined
+    this.resourceStream = undefined
+    this.bytesWritten = undefined
   }
 }
 
