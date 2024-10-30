@@ -235,11 +235,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         return toObjAcceptedBySqlite3(entity)
       })
       plainObjects = ObjectUtil.alignProperties(plainObjects, null)
-      // 按照第一个对象的属性设置update子句的value部分
+      // 按照第一个对象的属性设置update子句的set columns = value部分
       const keys = Object.keys(plainObjects[0])
-        // .filter((key) => 'id' !== key)
-        .map((key) => StringUtil.camelToSnakeCase(key))
-      const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
+      const setClauses = keys.map((key) => `${StringUtil.camelToSnakeCase(key)} = @${key}`)
       const statement = `UPDATE "${this.tableName}" SET ${setClauses}`
 
       for (const plainObject of plainObjects) {
