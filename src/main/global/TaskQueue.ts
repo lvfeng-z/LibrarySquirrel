@@ -32,12 +32,18 @@ export class TaskQueue {
   public push(item: TaskQueueItem) {
     // 处理开始和恢复操作
     if (item.operation === TaskOperation.START || item.operation === TaskOperation.RESUME) {
-      if (this.taskMap.has(item.taskId)) {
-        const operationStr = item.operation === TaskOperation.START ? '开始' : '恢复'
-        LogUtil.warn('TaskQueue', `无法${operationStr}任务${item.taskId}，队列中已经存在其他操作`)
+      let taskRunningObj = this.taskMap.get(item.taskId)
+      if (notNullish(taskRunningObj)) {
+        if (!taskRunningObj.queueItem.done) {
+          const operationStr = item.operation === TaskOperation.START ? '开始' : '恢复'
+          LogUtil.warn('TaskQueue', `无法${operationStr}任务${item.taskId}，队列中已经存在其他操作`)
+          return
+        }
+        taskRunningObj.queueItem = item
+        taskRunningObj.status = TaskStatusEnum.WAITING
       } else {
         // 操作添加到任务池和操作队列中
-        const taskRunningObj = new TaskRunningObj(
+        taskRunningObj = new TaskRunningObj(
           item.taskId,
           item,
           TaskStatusEnum.WAITING,
@@ -67,22 +73,30 @@ export class TaskQueue {
       const operableIds: number[] = []
       const taskRunningObjs = taskIds
         .filter((taskId) => {
-          const exists = this.taskMap.has(taskId)
-          if (exists) {
-            LogUtil.warn('TaskQueue', `无法开始任务${taskId}，队列中已经存在其他操作`)
+          const taskRunningObj = this.taskMap.get(taskId)
+          if (notNullish(taskRunningObj) && !taskRunningObj.queueItem.done) {
+            const operationStr = taskOperation === TaskOperation.START ? '开始' : '恢复'
+            LogUtil.warn('TaskQueue', `无法${operationStr}任务${taskId}，队列中已经存在其他操作`)
+            return false
           }
-          return !exists
+          return true
         })
         .map((taskId) => {
-          const item = new TaskQueueItem(taskId, taskOperation)
-          const taskRunningObj = new TaskRunningObj(
-            item.taskId,
-            item,
-            TaskStatusEnum.WAITING,
-            new TaskWriter()
-          )
-          this.queue.push(item)
-          this.taskMap.set(item.taskId, taskRunningObj)
+          const queueItem = new TaskQueueItem(taskId, taskOperation)
+          let taskRunningObj = this.taskMap.get(taskId)
+          if (isNullish(taskRunningObj)) {
+            taskRunningObj = new TaskRunningObj(
+              queueItem.taskId,
+              queueItem,
+              TaskStatusEnum.WAITING,
+              new TaskWriter()
+            )
+            this.taskMap.set(queueItem.taskId, taskRunningObj)
+          } else {
+            taskRunningObj.queueItem = queueItem
+            taskRunningObj.status = TaskStatusEnum.WAITING
+          }
+          this.queue.push(queueItem)
           LogUtil.info('TaskQueue', `任务${taskId}进入队列`)
           operableIds.push(taskId)
           return taskRunningObj
@@ -92,7 +106,6 @@ export class TaskQueue {
 
       this.taskProcessStream.addIterators(taskRunningObjs[Symbol.iterator]())
     } else if (taskOperation === TaskOperation.PAUSE) {
-      LogUtil.info('test-----------', `TaskQueue.pushBatch: 进入暂停分支`)
       this.taskService
         .listByIds(taskIds)
         .then((tasks) => tasks.forEach((task) => this.pauseTask(task.id as number, task)))
@@ -104,7 +117,6 @@ export class TaskQueue {
   }
 
   private pauseTask(taskId: number, task: Task) {
-    LogUtil.info('test-----------', `TaskQueue.pauseTask: ${taskId}`)
     const taskRunningObj = this.taskMap.get(taskId)
     assertNotNullish(taskRunningObj, 'TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
     const queueItem = taskRunningObj.queueItem
@@ -114,6 +126,8 @@ export class TaskQueue {
       this.removeFromQueue(queueItem)
       if (queueItem.processing) {
         this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+      } else {
+        queueItem.done = true
       }
       taskRunningObj.status = TaskStatusEnum.PAUSE
       this.taskService.taskPaused(taskId)
@@ -188,8 +202,15 @@ export class TaskQueue {
           `任务${taskRunningObj.taskId}结束时在任务池中找不到这个任务`
         )
         taskRunningObj.status = saveResult.status
+        taskRunningObj.queueItem.done = true
+
         this.removeFromQueue(taskRunningObj.queueItem)
-        this.removeFromMap(taskRunningObj.taskId)
+        if (
+          TaskStatusEnum.FINISHED === taskRunningObj.status ||
+          TaskStatusEnum.FAILED === taskRunningObj.status
+        ) {
+          this.removeFromMap(taskRunningObj.taskId)
+        }
       }
     )
     this.taskProcessStream.on(
@@ -222,12 +243,14 @@ export class TaskQueueItem {
   public operation: TaskOperation
   public processing: boolean
   public canceled: boolean
+  public done: boolean
 
   constructor(taskId: number, operation: TaskOperation) {
     this.taskId = taskId
     this.operation = operation
     this.processing = false
     this.canceled = false
+    this.done = false
   }
 }
 
