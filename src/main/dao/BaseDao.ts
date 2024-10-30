@@ -238,7 +238,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       // 按照第一个对象的属性设置update子句的set columns = value部分
       const keys = Object.keys(plainObjects[0])
       const setClauses = keys.map((key) => `${StringUtil.camelToSnakeCase(key)} = @${key}`)
-      const statement = `UPDATE "${this.tableName}" SET ${setClauses}`
+      const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = @id`
 
       for (const plainObject of plainObjects) {
         await db.run(statement, plainObject)
