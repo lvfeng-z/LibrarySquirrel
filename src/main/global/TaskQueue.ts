@@ -216,6 +216,7 @@ class TaskProcessStream extends Transform {
   private consuming: boolean
   private maxParallel: number
   private processing: number
+  private limited: boolean
 
   constructor(taskMap: Map<number, TaskInfo>, pluginLoader: PluginLoader<TaskHandler>) {
     super({ objectMode: true }) // 设置为对象模式
@@ -229,6 +230,7 @@ class TaskProcessStream extends Transform {
     this.maxParallel =
       settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
     this.processing = 0
+    this.limited = false
   }
 
   _transform(
@@ -247,24 +249,27 @@ class TaskProcessStream extends Transform {
       : this.taskService.processTask(task, this.pluginLoader, taskWriter)
 
     this.processing++
-    const limited = this.processing >= this.maxParallel
+    this.limited = this.processing >= this.maxParallel
 
     saveResultPromise
       .then((saveResult: TaskSaveResult) => {
+        this.push({ task: task, taskRunningObj: taskRunningObj, saveResult: saveResult })
         this.processing--
-        if (limited) {
+        if (this.limited) {
+          this.limited = false
           callback()
         }
         this.push({ task: task, saveResult: saveResult })
       })
       .catch((err) => {
+        this.emit('error', err, task, taskRunningObj)
         this.processing--
-        if (limited) {
+        if (this.limited) {
+          this.limited = false
           callback()
         }
-        this.emit('error', err, task)
       })
-    if (!limited) {
+    if (!this.limited) {
       callback()
     }
   }
