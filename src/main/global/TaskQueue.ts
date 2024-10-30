@@ -11,98 +11,137 @@ import TaskDTO from '../model/dto/TaskDTO.js'
 import TaskSaveResult from '../model/utilModels/TaskSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
+import Task from '../model/Task.js'
 
 export class TaskQueue {
   private readonly queue: TaskQueueItem[]
-  private readonly taskMap: Map<number, TaskInfo>
+  private readonly taskMap: Map<number, TaskRunningObj>
   private taskService: TaskService
+  private readonly pluginLoader: PluginLoader<TaskHandler>
   private taskProcessStream: TaskProcessStream
 
   constructor() {
     this.queue = []
     this.taskMap = new Map()
     this.taskService = new TaskService()
-    this.taskProcessStream = new TaskProcessStream(
-      this.taskMap,
-      new PluginLoader(new TaskHandlerFactory())
-    )
-    this.initializeHandlers()
+    this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
+    this.taskProcessStream = new TaskProcessStream(this.pluginLoader)
+    this.initializeStream()
   }
 
   public push(item: TaskQueueItem) {
-    // 处理暂停和停止操作
-    const enqueue = this.preprocess(item)
     // 处理开始和恢复操作
-    if (enqueue) {
+    if (item.operation === TaskOperation.START || item.operation === TaskOperation.RESUME) {
       if (this.taskMap.has(item.taskId)) {
         const operationStr = item.operation === TaskOperation.START ? '开始' : '恢复'
-        LogUtil.warn('TaskQueueR', `无法${operationStr}任务${item.taskId}，队列中已经存在其他操作`)
+        LogUtil.warn('TaskQueue', `无法${operationStr}任务${item.taskId}，队列中已经存在其他操作`)
       } else {
         // 操作添加到任务池和操作队列中
-        const taskInfo = new TaskInfo(item.taskId, item, TaskStatusEnum.WAITING, new TaskWriter())
-        this.taskMap.set(item.taskId, taskInfo)
+        const taskRunningObj = new TaskRunningObj(
+          item.taskId,
+          item,
+          TaskStatusEnum.WAITING,
+          new TaskWriter()
+        )
+        this.taskMap.set(item.taskId, taskRunningObj)
         this.queue.push(item)
+        this.taskService.taskWaiting(item.taskId)
         // 处理新任务
-        this.taskProcessStream.addIterators([item][Symbol.iterator]())
+        this.taskProcessStream.addIterators([taskRunningObj][Symbol.iterator]())
       }
+    } else if (item.operation === TaskOperation.PAUSE) {
+      this.taskService.getById(item.taskId).then((task) => {
+        assertNotNullish(task, 'TaskQueue', `任务id${item.taskId}不可用，无法暂停此任务`)
+        this.pauseTask(item.taskId, task)
+      })
+    } else if (item.operation === TaskOperation.STOP) {
+      this.taskService.getById(item.taskId).then((task) => {
+        assertNotNullish(task, 'TaskQueue', `任务id${item.taskId}不可用，无法停止此任务`)
+        this.stopTask(item.taskId, task)
+      })
     }
   }
 
   public pushBatch(taskIds: number[], taskOperation: TaskOperation) {
-    const queueItems = taskIds
-      .filter((taskId) => {
-        const exists = this.taskMap.has(taskId)
-        if (exists) {
-          LogUtil.warn('TaskQueueR', `无法开始任务${taskId}，队列中已经存在其他操作`)
-        }
-        return !exists
-      })
-      .map((taskId) => {
-        const item = new TaskQueueItem(taskId, taskOperation)
-        const taskInfo = new TaskInfo(item.taskId, item, TaskStatusEnum.WAITING, new TaskWriter())
-        this.queue.push(item)
-        this.taskMap.set(item.taskId, taskInfo)
-        LogUtil.info('TaskQueueR', `任务${taskId}进入队列`)
-        return item
-      })
+    if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
+      const operableIds: number[] = []
+      const taskRunningObjs = taskIds
+        .filter((taskId) => {
+          const exists = this.taskMap.has(taskId)
+          if (exists) {
+            LogUtil.warn('TaskQueue', `无法开始任务${taskId}，队列中已经存在其他操作`)
+          }
+          return !exists
+        })
+        .map((taskId) => {
+          const item = new TaskQueueItem(taskId, taskOperation)
+          const taskRunningObj = new TaskRunningObj(
+            item.taskId,
+            item,
+            TaskStatusEnum.WAITING,
+            new TaskWriter()
+          )
+          this.queue.push(item)
+          this.taskMap.set(item.taskId, taskRunningObj)
+          LogUtil.info('TaskQueue', `任务${taskId}进入队列`)
+          operableIds.push(taskId)
+          return taskRunningObj
+        })
+      // 所有任务设置为等待中
+      this.taskService.updateStatusBatchById(operableIds, TaskStatusEnum.WAITING)
 
-    this.taskProcessStream.addIterators(queueItems[Symbol.iterator]())
+      this.taskProcessStream.addIterators(taskRunningObjs[Symbol.iterator]())
+    } else if (taskOperation === TaskOperation.PAUSE) {
+      LogUtil.info('test-----------', `TaskQueue.pushBatch: 进入暂停分支`)
+      this.taskService
+        .listByIds(taskIds)
+        .then((tasks) => tasks.forEach((task) => this.pauseTask(task.id as number, task)))
+    } else if (taskOperation === TaskOperation.STOP) {
+      this.taskService
+        .listByIds(taskIds)
+        .then((tasks) => tasks.forEach((task) => this.stopTask(task.id as number, task)))
+    }
   }
 
-  private initializeHandlers() {
-    this.taskProcessStream.on('data', (data: { task: TaskDTO; saveResult: TaskSaveResult }) => {
-      const task = data.task
-      const saveResult = data.saveResult
-      assertNotNullish(task.id)
-      const taskInfo = this.taskMap.get(task.id)
-      assertNotNullish(taskInfo, 'TaskQueueR', `任务${task.id}结束时在任务池中找不到这个任务`)
-      taskInfo.status = saveResult.status
-      assertNotNullish(
-        taskInfo.queueItem,
-        'TaskQueueR',
-        `任务${task.id}结束时在任务池中找不到这个任务的操作对象`
-      )
-      this.queue.slice(this.queue.indexOf(taskInfo.queueItem), 1)
-      this.taskMap.delete(taskInfo.taskId)
-    })
-    this.taskProcessStream.on('error', async (error: Error, task: TaskDTO) => {
-      assertNotNullish(task.id)
-      const taskInfo = this.taskMap.get(task.id)
-      assertNotNullish(
-        taskInfo,
-        'TaskQueueR',
-        `处理任务时出错，taskId: ${task.id}，error: ${error.message}`
-      )
-      taskInfo.status = TaskStatusEnum.FAILED
-      assertNotNullish(
-        taskInfo.queueItem,
-        'TaskQueueR',
-        `任务${task.id}结束时在任务池中找不到这个任务的操作对象`
-      )
-      this.queue.slice(this.queue.indexOf(taskInfo.queueItem), 1)
-      this.taskMap.delete(taskInfo.taskId)
-    })
-    this.taskProcessStream.on('finish', () => LogUtil.info('TaskQueueR', '任务队列完成'))
+  private pauseTask(taskId: number, task: Task) {
+    LogUtil.info('test-----------', `TaskQueue.pauseTask: ${taskId}`)
+    const taskRunningObj = this.taskMap.get(taskId)
+    assertNotNullish(taskRunningObj, 'TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
+    const queueItem = taskRunningObj.queueItem
+    const operation = queueItem.operation
+    if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
+      queueItem.canceled = true
+      this.removeFromQueue(queueItem)
+      if (queueItem.processing) {
+        this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+      }
+      taskRunningObj.status = TaskStatusEnum.PAUSE
+      this.taskService.taskPaused(taskId)
+    } else {
+      const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
+      LogUtil.error('TaskQueue', msg)
+      throw new Error(msg)
+    }
+  }
+
+  private stopTask(taskId: number, task: Task) {
+    const taskRunningObj = this.taskMap.get(taskId)
+    assertNotNullish(taskRunningObj, 'TaskQueue', `无法停止任务${taskId}，队列中没有这个任务`)
+    const queueItem = taskRunningObj.queueItem
+    const operation = queueItem.operation
+    if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
+      queueItem.canceled = true
+      this.removeFromQueue(queueItem)
+      if (queueItem.processing) {
+        this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+      }
+      taskRunningObj.status = TaskStatusEnum.PAUSE
+      this.taskService.taskPaused(taskId)
+    } else {
+      const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
+      LogUtil.error('TaskQueue', msg)
+      throw new Error(msg)
+    }
   }
 
   /**
@@ -110,58 +149,71 @@ export class TaskQueue {
    * @param taskId 任务id
    */
   public getSchedule(taskId: number): TaskScheduleDTO | undefined {
-    const taskInfo = this.taskMap.get(taskId)
-    if (isNullish(taskInfo)) {
+    const taskRunningObj = this.taskMap.get(taskId)
+    if (isNullish(taskRunningObj)) {
       return undefined
     }
-    if (TaskStatusEnum.FINISHED === taskInfo.status) {
+    if (TaskStatusEnum.FINISHED === taskRunningObj.status) {
       return new TaskScheduleDTO({ id: taskId, status: TaskStatusEnum.FINISHED, schedule: 100 })
     }
-    const writer = taskInfo.taskWriter
-    if (TaskStatusEnum.PROCESSING === taskInfo.status || TaskStatusEnum.PAUSE === taskInfo.status) {
+    const writer = taskRunningObj.taskWriter
+    if (
+      TaskStatusEnum.PROCESSING === taskRunningObj.status ||
+      TaskStatusEnum.PAUSE === taskRunningObj.status
+    ) {
       if (writer.bytesSum === 0) {
-        LogUtil.warn('TaskService', `计算任务进度时，资源总量为0`)
-        return new TaskScheduleDTO({ id: taskId, status: taskInfo.status, schedule: 0 })
+        // LogUtil.warn('TaskService', `计算任务进度时，资源总量为0`)
+        return new TaskScheduleDTO({ id: taskId, status: taskRunningObj.status, schedule: 0 })
       } else if (notNullish(writer.writable)) {
         const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
-        return new TaskScheduleDTO({ id: taskId, status: taskInfo.status, schedule: schedule })
+        return new TaskScheduleDTO({
+          id: taskId,
+          status: taskRunningObj.status,
+          schedule: schedule
+        })
       }
     }
     return undefined
   }
 
-  /**
-   * 预处理指令，如果这个指令不需要添加到队列中，返回false
-   * @param item
-   * @private
-   */
-  private preprocess(item: TaskQueueItem): boolean {
-    if (TaskOperation.PAUSE === item.operation) {
-      const taskInfo = this.taskMap.get(item.taskId)
-      assertNotNullish(taskInfo, 'TaskQueueR', `无法暂停任务${item.taskId}，队列中没有这个任务`)
-      const queueItem = taskInfo.queueItem
-      assertNotNullish(queueItem, 'TaskQueueR', `暂停任务${item.taskId}时，任务的原操作意外为空`)
-      const operation = queueItem.operation
-      assertNotNullish(operation, 'TaskQueueR', `暂停任务${item.taskId}时，任务的原操作意外为空`)
-      if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
-        queueItem.canceled = true
-        if (queueItem.processing) {
-          // todo 暂停正在进行的任务
-          taskInfo.taskWriter.pause()
-        }
-        this.taskService.taskPaused(item.taskId)
-      } else {
-        const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
-        LogUtil.error('TaskQueueR', msg)
-        throw new Error(msg)
+  private initializeStream() {
+    this.taskProcessStream.on(
+      'data',
+      (data: { task: TaskDTO; taskRunningObj: TaskRunningObj; saveResult: TaskSaveResult }) => {
+        const saveResult = data.saveResult
+        const taskRunningObj = data.taskRunningObj
+        assertNotNullish(
+          taskRunningObj,
+          'TaskQueue',
+          `任务${taskRunningObj.taskId}结束时在任务池中找不到这个任务`
+        )
+        taskRunningObj.status = saveResult.status
+        this.removeFromQueue(taskRunningObj.queueItem)
+        this.removeFromMap(taskRunningObj.taskId)
       }
-      return false
-    } else if (TaskOperation.STOP === item.operation) {
-      // todo 停止任务
-      return false
-    } else {
-      return true
-    }
+    )
+    this.taskProcessStream.on(
+      'error',
+      async (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+        assertNotNullish(
+          taskRunningObj,
+          'TaskQueue',
+          `处理任务时出错，taskId: ${task.id}，error: ${error.message}`
+        )
+        taskRunningObj.status = TaskStatusEnum.FAILED
+        this.removeFromQueue(taskRunningObj.queueItem)
+        this.removeFromMap(taskRunningObj.taskId)
+      }
+    )
+    this.taskProcessStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
+  }
+
+  private removeFromQueue(queueItem: TaskQueueItem) {
+    this.queue.slice(this.queue.indexOf(queueItem), 1)
+  }
+
+  private removeFromMap(taskId: number) {
+    this.taskMap.delete(taskId)
   }
 }
 
@@ -179,9 +231,9 @@ export class TaskQueueItem {
   }
 }
 
-export class TaskInfo {
+export class TaskRunningObj {
   public taskId: number
-  public queueItem: TaskQueueItem | undefined
+  public queueItem: TaskQueueItem
   public status: TaskStatusEnum
   public taskWriter: TaskWriter
 
@@ -210,18 +262,16 @@ export enum TaskOperation {
  */
 class TaskProcessStream extends Transform {
   private taskService: TaskService
-  private taskMap: Map<number, TaskInfo>
   private readonly pluginLoader: PluginLoader<TaskHandler>
-  private readonly iterators: IterableIterator<TaskQueueItem>[]
+  private readonly iterators: IterableIterator<TaskRunningObj>[]
   private consuming: boolean
   private maxParallel: number
   private processing: number
   private limited: boolean
 
-  constructor(taskMap: Map<number, TaskInfo>, pluginLoader: PluginLoader<TaskHandler>) {
+  constructor(pluginLoader: PluginLoader<TaskHandler>) {
     super({ objectMode: true }) // 设置为对象模式
     this.taskService = new TaskService()
-    this.taskMap = taskMap
     this.pluginLoader = pluginLoader
     this.iterators = []
     this.consuming = false
@@ -234,16 +284,23 @@ class TaskProcessStream extends Transform {
   }
 
   _transform(
-    chunk: { task: TaskDTO; resumeMode: boolean },
+    chunk: { task: TaskDTO; taskRunningObj: TaskRunningObj; resumeMode: boolean },
     _encoding: string,
     callback: TransformCallback
   ): void {
     const task = chunk.task
-    assertNotNullish(task.id)
+    const taskRunningObj = chunk.taskRunningObj
+    const taskWriter = taskRunningObj.taskWriter
 
-    const taskInfo = this.taskMap.get(task.id)
-    assertNotNullish(taskInfo, 'TaskQueueR', `处理任务${task.id}时，taskWriter意外为空`)
-    const taskWriter = taskInfo.taskWriter
+    // 开始之前检查操作是否被取消
+    if (taskRunningObj.queueItem.canceled) {
+      callback()
+      return
+    }
+
+    // 开始任务，同时在队列中标记为进行中
+    taskRunningObj.queueItem.processing = true
+    taskRunningObj.status = TaskStatusEnum.PROCESSING
     const saveResultPromise: Promise<TaskSaveResult> = chunk.resumeMode
       ? this.taskService.resumeTask(task, this.pluginLoader, taskWriter)
       : this.taskService.processTask(task, this.pluginLoader, taskWriter)
@@ -259,7 +316,6 @@ class TaskProcessStream extends Transform {
           this.limited = false
           callback()
         }
-        this.push({ task: task, saveResult: saveResult })
       })
       .catch((err) => {
         this.emit('error', err, task, taskRunningObj)
@@ -274,7 +330,7 @@ class TaskProcessStream extends Transform {
     }
   }
 
-  public addIterators(tasks: IterableIterator<TaskQueueItem>) {
+  public addIterators(tasks: IterableIterator<TaskRunningObj>) {
     this.iterators.push(tasks)
     this.consumeIterators()
   }
@@ -284,20 +340,21 @@ class TaskProcessStream extends Transform {
    * @param tasks
    * @private
    */
-  private process(tasks: IterableIterator<TaskQueueItem>) {
+  private process(tasks: IterableIterator<TaskRunningObj>) {
     // 将任务列表写入流中，启动处理过程
     let done: boolean | undefined = false
     while (!done) {
-      const next: IteratorResult<TaskQueueItem> = tasks.next()
-      const taskQueueItem: TaskQueueItem = next.value
+      const next: IteratorResult<TaskRunningObj> = tasks.next()
+      const taskRunningObj: TaskRunningObj = next.value
       done = next.done
-      if (!done && !taskQueueItem.canceled) {
-        this.taskService.getById(taskQueueItem.taskId).then((task) => {
-          assertNotNullish(task, 'TaskQueueR', `处理任务${taskQueueItem.taskId}失败，任务id无效`)
+      if (!done) {
+        this.taskService.getById(taskRunningObj.taskId).then((task) => {
+          assertNotNullish(task, 'TaskQueue', `处理任务${taskRunningObj.taskId}失败，任务id无效`)
           const taskDTO = new TaskDTO(task)
           this.write({
             task: taskDTO,
-            resumeMode: taskQueueItem.operation === TaskOperation.RESUME
+            taskRunningObj: taskRunningObj,
+            resumeMode: taskRunningObj.queueItem.operation === TaskOperation.RESUME
           })
         })
       }

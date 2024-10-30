@@ -376,7 +376,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
       // 调用插件的generateWorksInfo方法，获取作品信息
-      const worksDTO: WorksPluginDTO = await taskHandler.generateWorksInfo(task)
+      let worksDTO: WorksPluginDTO
+      try {
+        worksDTO = await taskHandler.generateWorksInfo(task)
+      } catch (error) {
+        LogUtil.error('TaskService', `任务${taskId}调用插件获取作品信息时失败`, error)
+        return { status: TaskStatusEnum.FAILED, worksId: -1 }
+      }
       worksDTO.includeTaskId = taskId
 
       // 保存远程资源是否可接续
@@ -412,7 +418,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         task.status = TaskStatusEnum.PROCESSING
         this.taskProcessing(taskId)
         // 调用插件的start方法，获取资源
-        const resourceDTO = await taskHandler.start(task)
+        let resourceDTO: WorksPluginDTO
+        try {
+          resourceDTO = await taskHandler.start(task)
+        } catch (error) {
+          LogUtil.error('TaskService', `任务${taskId}调用插件开始时失败`, error)
+          throw error
+        }
         // 判断是否需要更新作品数据
         if (resourceDTO.doUpdate) {
           worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO)
@@ -452,7 +464,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           task.status = TaskStatusEnum.FAILED
           LogUtil.error('TaskService', `保存作品失败，taskId: ${task.id}`, error)
           return this.taskFailed(task.id).then(() => {
-            return { status: TaskStatusEnum.FAILED, worksId: -1 }
+            return { status: TaskStatusEnum.FAILED, worksId: worksId }
           })
         })
     } catch (error) {
@@ -524,8 +536,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 暂停任务
    * @param task 任务
    * @param pluginLoader 插件加载器
+   * @param taskWriter
    */
-  public async pauseTask(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<boolean> {
+  public async pauseTask(
+    task: Task,
+    pluginLoader: PluginLoader<TaskHandler>,
+    taskWriter: TaskWriter
+  ): Promise<boolean> {
+    LogUtil.info('test-----------', `TaskService.pauseTask: ${task.id}`)
     assertNotNullish(task.id, 'TaskService', `暂停任务时，任务的id意外为空，taskId: ${task.id}`)
     const taskId = task.id
     // 加载插件
@@ -536,31 +554,24 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     )
     const taskHandler = await pluginLoader.load(task.pluginId)
 
-    const writer = GlobalVar.get(GlobalVars.TASK_QUEUE).pause(taskId)
+    // 创建TaskPluginDTO对象
+    const taskPluginDTO = new TaskPluginDTO(task)
+    taskPluginDTO.resourceStream = taskWriter.readable
 
-    if (notNullish(writer)) {
-      // 创建TaskPluginDTO对象
-      const taskPluginDTO = new TaskPluginDTO(task)
-      taskPluginDTO.resourceStream = writer.readable
+    // 暂停写入
+    taskWriter.pause()
 
-      if (TaskStatusEnum.FINISHED !== writer.status && TaskStatusEnum.FAILED !== writer.status) {
-        // 调用插件的pause方法
-        try {
-          taskHandler.pause(taskPluginDTO)
-        } catch (error) {
-          LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
-          if (notNullish(writer.readable)) {
-            writer.readable.pause()
-          }
-        }
-        task.status = TaskStatusEnum.PAUSE
-        return true
-      } else {
-        return false
+    // 调用插件的pause方法
+    try {
+      taskHandler.pause(taskPluginDTO)
+    } catch (error) {
+      LogUtil.error('TaskService', '调用插件的pause方法出错: ', error)
+      if (notNullish(taskWriter.readable)) {
+        taskWriter.readable.pause()
       }
-    } else {
-      return true
     }
+    task.status = TaskStatusEnum.PAUSE
+    return true
   }
 
   /**
@@ -573,33 +584,24 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       TaskStatusEnum.WAITING
     ])
 
-    // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
-
-    // 任务等待列表
-    const activeProcesses: Promise<boolean>[] = []
-
     for (const parent of taskTree) {
-      // 处理parent为单个任务的情况
-      if (!parent.isCollection) {
-        const tempProcess = this.pauseTask(parent, pluginLoader)
-        activeProcesses.push(tempProcess)
+      // 获取要处理的任务
+      let children: TaskDTO[]
+      if (parent.isCollection && arrayNotEmpty(parent.children)) {
+        children = parent.children
+      } else if (!parent.isCollection) {
+        children = [parent]
+      } else {
         continue
       }
+      // 更新父任务的状态
+      parent.status = TaskStatusEnum.PROCESSING
+      const tempParent = new Task(parent)
+      await this.dao.updateById(parent.id as number, tempParent)
 
-      // 处理下级任务
-      const children = parent.children
-      if (isNullish(children) || children.length < 1) {
-        continue
-      }
-
-      for (const child of children) {
-        const tempProcess = this.pauseTask(child, pluginLoader)
-        activeProcesses.push(tempProcess)
-      }
+      const childrenIds = children.map((child) => child.id as number)
+      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(childrenIds, TaskOperation.PAUSE)
     }
-
-    await Promise.allSettled(activeProcesses)
   }
 
   /**
@@ -839,6 +841,21 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 批量更新任务状态
+   * @param taskIds
+   * @param status
+   */
+  updateStatusBatchById(taskIds: number[], status: TaskStatusEnum) {
+    const tasks = taskIds.map((taskId) => {
+      const task = new Task()
+      task.id = taskId
+      task.status = status
+      return task
+    })
+    return this.updateBatchById(tasks)
+  }
+
+  /**
    * 任务进行中
    * @param taskId 任务id
    */
@@ -847,6 +864,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.PROCESSING
+    return this.updateById(task)
+  }
+
+  /**
+   * 任务等待中
+   * @param taskId 任务id
+   */
+  public async taskWaiting(taskId: Id): Promise<number> {
+    assertNotNullish(taskId, 'TaskService', '任务标记为进行中时，任务id不能为空')
+    const task = new Task()
+    task.id = taskId
+    task.status = TaskStatusEnum.WAITING
     return this.updateById(task)
   }
 
@@ -1013,9 +1042,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     let result: TaskScheduleDTO[] = []
     // 没有监听器的任务
     const noListenerIds: number[] = []
-    const taskQueueR = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     ids.forEach((id: number) => {
-      const schedule = taskQueueR.getSchedule(id)
+      const schedule = taskQueue.getSchedule(id)
       if (notNullish(schedule)) {
         result.push(schedule)
       } else {
