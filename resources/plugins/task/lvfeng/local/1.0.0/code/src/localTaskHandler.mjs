@@ -90,6 +90,8 @@ export default class LocalTaskHandler {
   async start(task) {
     const worksDTO = new WorksDTO()
     worksDTO.resourceStream = fs.createReadStream(task.url)
+    const stats = await fs.promises.stat(task.url)
+    worksDTO.resourceSize = stats.size
     return worksDTO
   }
 
