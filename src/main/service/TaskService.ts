@@ -500,8 +500,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
 
-      const childrenIds = children.map((child) => child.id as number)
-      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(childrenIds, TaskOperation.START)
+      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
     }
   }
 
@@ -543,7 +542,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     pluginLoader: PluginLoader<TaskHandler>,
     taskWriter: TaskWriter
   ): Promise<boolean> {
-    LogUtil.info('test-----------', `TaskService.pauseTask: ${task.id}`)
     assertNotNullish(task.id, 'TaskService', `暂停任务时，任务的id意外为空，taskId: ${task.id}`)
     const taskId = task.id
     // 加载插件
@@ -599,8 +597,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
 
-      const childrenIds = children.map((child) => child.id as number)
-      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(childrenIds, TaskOperation.PAUSE)
+      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.PAUSE)
     }
   }
 
@@ -748,8 +745,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const tempParent = new Task(parent)
       await this.dao.updateById(parent.id as number, tempParent)
 
-      const childrenIds = children.map((child) => child.id as number)
-      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(childrenIds, TaskOperation.RESUME)
+      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.RESUME)
     }
   }
 
