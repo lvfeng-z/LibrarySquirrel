@@ -573,7 +573,7 @@ class TaskProcessStream extends Transform {
     taskRunningObj.status = TaskStatusEnum.PROCESSING
     const saveResultPromise: Promise<TaskSaveResult> = chunk.resumeMode
       ? this.taskService.resumeTask(task, this.pluginLoader, taskWriter)
-      : this.taskService.processTask(task, this.pluginLoader, taskWriter)
+      : this.taskService.startTask(task, this.pluginLoader, taskWriter)
 
     this.processing++
     // 如果并行量达到限制，limited设为true
@@ -646,12 +646,22 @@ class TaskProcessStream extends Transform {
       if (!done) {
         this.taskService.getById(taskRunningObj.taskId).then((task) => {
           assertNotNullish(task, 'TaskQueue', `处理任务${taskRunningObj.taskId}失败，任务id无效`)
-          const taskDTO = new TaskDTO(task)
-          this.write({
-            task: taskDTO,
-            taskRunningObj: taskRunningObj,
-            resumeMode: taskRunningObj.taskOperationObj.operation === TaskOperation.RESUME
-          })
+          const write = () => {
+            const taskDTO = new TaskDTO(task)
+            this.write({
+              task: taskDTO,
+              taskRunningObj: taskRunningObj,
+              resumeMode: taskRunningObj.taskOperationObj.operation === TaskOperation.RESUME
+            })
+          }
+          // 如果是开始，保存作品信息
+          if (TaskOperation.START === taskRunningObj.taskOperationObj.operation) {
+            this.taskService.saveWorksInfo(task, this.pluginLoader).then(() => {
+              write()
+            })
+          } else {
+            write()
+          }
         })
       }
     }

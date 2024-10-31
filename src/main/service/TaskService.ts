@@ -33,6 +33,8 @@ import { Id } from '../model/BaseModel.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { TaskOperation } from '../global/TaskQueue.js'
+import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
+import StringUtil from '../util/StringUtil.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -350,100 +352,114 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 保存作品信息
+   * @param task
+   * @param pluginLoader
+   */
+  public async saveWorksInfo(
+    task: Task,
+    pluginLoader: PluginLoader<TaskHandler>
+  ): Promise<boolean> {
+    assertNotNullish(task.id, 'TaskService', `保存作品信息时，任务id意外为空`)
+    const taskId = task.id
+    // 加载插件
+    assertNotNullish(task.pluginId, 'TaskService', `任务的插件id意外为空，taskId: ${taskId}`)
+    const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+
+    // 调用插件的generateWorksInfo方法，获取作品信息
+    let worksDTO: WorksPluginDTO
+    try {
+      worksDTO = await taskHandler.generateWorksInfo(task)
+    } catch (error) {
+      LogUtil.error('TaskService', `任务${taskId}调用插件获取作品信息时失败`, error)
+      return false
+    }
+    worksDTO.includeTaskId = taskId
+
+    // 保存远程资源是否可接续
+    task.continuable = worksDTO.continuable
+    const updateContinuableTask = new Task()
+    updateContinuableTask.id = taskId
+    updateContinuableTask.continuable = worksDTO.continuable
+    await this.updateById(updateContinuableTask)
+
+    // 生成作品保存用的信息
+    const worksService = new WorksService()
+    const worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
+
+    // 保存作品信息
+    return worksService.saveWorksInfo(worksSaveInfo).then((worksId: number) => {
+      // 文件的写入路径和作品id保存到任务中
+      const sourceTask = new Task()
+      sourceTask.id = worksSaveInfo.includeTaskId
+      sourceTask.localWorksId = worksId
+      sourceTask.pendingDownloadPath = worksSaveInfo.fullSavePath
+      // 作为数据源的task也要赋值，供后续下载时取值，而不需要从数据库查询
+      task.pendingDownloadPath = worksSaveInfo.fullSavePath
+      return this.updateById(sourceTask).then((runResult) => runResult > 0)
+    })
+  }
+
+  /**
    * 处理任务
    * @param task
    * @param pluginLoader
    * @param taskWriter
    */
-  public async processTask(
+  public async startTask(
     task: Task,
     pluginLoader: PluginLoader<TaskHandler>,
     taskWriter: TaskWriter
   ): Promise<TaskSaveResult> {
     try {
-      if (isNullish(task.id)) {
-        const msg = `任务的任务id意外为空`
-        LogUtil.error('TaskService', msg)
-        return { status: TaskStatusEnum.FAILED, worksId: -1 }
-      }
+      assertNotNullish(task.id, 'TaskService', `任务的任务id意外为空`)
       const taskId = task.id
-      // 加载插件
-      if (isNullish(task.pluginId)) {
-        const msg = `任务的插件id意外为空，taskId: ${taskId}`
-        LogUtil.error('TaskService', msg)
-        return { status: TaskStatusEnum.FAILED, worksId: -1 }
-      }
-      const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+      assertNotNullish(task.localWorksId, 'TaskService', `任务的任务id意外为空`)
+      const worksId = task.localWorksId
 
-      // 调用插件的generateWorksInfo方法，获取作品信息
-      let worksDTO: WorksPluginDTO
-      try {
-        worksDTO = await taskHandler.generateWorksInfo(task)
-      } catch (error) {
-        LogUtil.error('TaskService', `任务${taskId}调用插件获取作品信息时失败`, error)
-        return { status: TaskStatusEnum.FAILED, worksId: -1 }
-      }
-      worksDTO.includeTaskId = taskId
-
-      // 保存远程资源是否可接续
-      task.continuable = worksDTO.continuable
-      const updateContinuableTask = new Task()
-      updateContinuableTask.id = taskId
-      updateContinuableTask.continuable = worksDTO.continuable
-      await this.updateById(updateContinuableTask)
-
-      // 生成作品保存用的信息
       const worksService = new WorksService()
-      let worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
 
-      // 保存作品信息
-      const worksId = await worksService.saveWorksInfo(worksSaveInfo)
-      // 文件的写入路径和作品id保存到任务中
-      const sourceTask = new Task()
-      sourceTask.id = worksSaveInfo.includeTaskId
-      sourceTask.localWorksId = worksId
-      sourceTask.pendingDownloadPath = path.join(
-        worksSaveInfo.fullSaveDir as string,
-        worksSaveInfo.fileName as string
-      )
-      const updatePendingDownloadPathService = new TaskService()
-      await updatePendingDownloadPathService.updateById(sourceTask)
-
-      // 获取writer
-      taskWriter.bytesSum = isNullish(worksDTO.resourceSize) ? 0 : worksDTO.resourceSize
-
-      // 保存资源
-      const savePromise = async (): Promise<FileSaveResult> => {
-        // 标记为进行中
-        task.status = TaskStatusEnum.PROCESSING
-        this.taskProcessing(taskId)
-        // 调用插件的start方法，获取资源
-        let resourceDTO: WorksPluginDTO
-        try {
-          resourceDTO = await taskHandler.start(task)
-        } catch (error) {
-          LogUtil.error('TaskService', `任务${taskId}调用插件开始时失败`, error)
-          throw error
-        }
-        // 判断是否需要更新作品数据
-        if (resourceDTO.doUpdate) {
-          worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO)
-          worksSaveInfo.id = worksId
-          worksService.updateById(worksSaveInfo)
-        }
-        // 校验插件有没有返回任务资源
-        assertNotNullish(
-          resourceDTO.resourceStream,
-          'WorksService',
-          `保存作品时，插件没有返回资源，taskId: ${worksDTO.includeTaskId}`
-        )
-        taskWriter.readable = resourceDTO.resourceStream
-        worksSaveInfo.resourceStream = resourceDTO.resourceStream
-        LogUtil.info('TaskService', `任务${taskId}开始下载`)
-        return worksService.saveWorksResource(worksSaveInfo, taskWriter)
+      // 标记为进行中
+      task.status = TaskStatusEnum.PROCESSING
+      this.taskProcessing(taskId)
+      // 调用插件的start方法，获取资源
+      let resourceDTO: WorksPluginDTO
+      try {
+        assertNotNullish(task.pluginId, 'TaskService', `任务的插件id意外为空，taskId: ${taskId}`)
+        const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+        resourceDTO = await taskHandler.start(task)
+      } catch (error) {
+        LogUtil.error('TaskService', `任务${taskId}调用插件开始时失败`, error)
+        return { status: TaskStatusEnum.FAILED, worksId: worksId }
       }
 
-      return savePromise()
+      let worksSaveInfo = new WorksSaveDTO()
+      // 从任务中获取保存路径
+      if (StringUtil.isBlank(task.pendingDownloadPath)) {
+        const fullSavePathTask = await this.getById(task.id)
+        worksSaveInfo.fullSavePath = fullSavePathTask.pendingDownloadPath
+      } else {
+        worksSaveInfo.fullSavePath = task.pendingDownloadPath
+      }
+      worksSaveInfo.includeTaskId = taskId
+      // 判断是否需要更新作品数据
+      if (resourceDTO.doUpdate) {
+        worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO, true)
+        worksSaveInfo.id = worksId
+        worksService.updateById(worksSaveInfo)
+      }
+      // 校验插件有没有返回任务资源
+      assertNotNullish(
+        resourceDTO.resourceStream,
+        'WorksService',
+        `保存作品时，插件没有返回资源，taskId: ${taskId}`
+      )
+      taskWriter.readable = resourceDTO.resourceStream
+      taskWriter.bytesSum = resourceDTO.resourceSize
+      worksSaveInfo.resourceStream = resourceDTO.resourceStream
+      LogUtil.info('TaskService', `任务${taskId}开始下载`)
+      return worksService
+        .saveWorksResource(worksSaveInfo, taskWriter)
         .then(async (saveResult) => {
           if (FileSaveResult.FINISH === saveResult) {
             worksService.resourceFinished(worksId)
@@ -481,7 +497,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskIds 任务id列表
    * @param includeStatus 要处理的任务状态
    */
-  async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<void> {
+  public async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<void> {
     // 查找id列表对应的所有子任务
     const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, includeStatus)
 
@@ -670,7 +686,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         )
         // 判断是否需要更新作品数据
         if (resumeResponse.doUpdate) {
-          const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse)
+          const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse, true)
           worksSaveInfo.id = task.localWorksId
           worksService.updateById(worksSaveInfo)
         }
@@ -911,6 +927,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task.id = taskId
     task.status = TaskStatusEnum.FAILED
     return this.updateById(task)
+  }
+
+  /**
+   * 主键查询
+   * @param id
+   */
+  public async getById(id: number | string): Promise<Task> {
+    return this.dao.getById(id).then((task) => new Task(task))
   }
 
   /**

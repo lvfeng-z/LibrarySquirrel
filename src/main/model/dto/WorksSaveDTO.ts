@@ -8,18 +8,18 @@ export default class WorksSaveDTO extends WorksPluginDTO {
   /**
    * 保存路径
    */
-  fullSaveDir: string | undefined | null
+  fullSavePath: string | undefined | null
 
-  constructor(worksSaveDTO: WorksSaveDTO | WorksPluginDTO) {
+  constructor(worksSaveDTO?: WorksSaveDTO | WorksPluginDTO) {
     if (isNullish(worksSaveDTO)) {
       super()
-      this.fullSaveDir = undefined
+      this.fullSavePath = undefined
     } else if (worksSaveDTO instanceof WorksSaveDTO) {
       super(worksSaveDTO)
-      this.fullSaveDir = worksSaveDTO.fullSaveDir
+      this.fullSavePath = worksSaveDTO.fullSavePath
     } else {
       super(worksSaveDTO)
-      this.fullSaveDir = undefined
+      this.fullSavePath = undefined
     }
   }
 }
