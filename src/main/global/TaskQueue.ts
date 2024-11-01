@@ -347,10 +347,21 @@ export class TaskQueue {
    * @param parentIds 父任务Id列表
    * @private
    */
-  private refreshParentStatus(parentIds: number[]) {
-    parentIds.forEach((id) => {
+  private async refreshParentStatus(parentIds: number[]) {
+    for (const id of parentIds) {
       const parentRunningObj = this.parentMap.get(id)
       if (notNullish(parentRunningObj)) {
+        const allChildren = await this.taskService.listChildrenTask(id)
+        allChildren.forEach((children) => {
+          if (!parentRunningObj.children.has(children.id as number)) {
+            const taskStatus = new TaskStatus(
+              children.id as number,
+              children.status as TaskStatusEnum
+            )
+            parentRunningObj.children.set(children.id as number, taskStatus)
+          }
+        })
+
         const children = Array.from(parentRunningObj.children.values())
         const processing = children.filter(
           (child) => TaskStatusEnum.PROCESSING === child.status
@@ -387,7 +398,7 @@ export class TaskQueue {
           this.taskService.updateById(parent)
         }
       }
-    })
+    }
   }
 }
 
@@ -425,22 +436,30 @@ export class TaskOperationObj {
   }
 }
 
-/**
- * 任务运行对象
- */
-export class TaskRunningObj {
+class TaskStatus {
   /**
    * 任务id
    */
-  public taskId: number
+  taskId: number
+  /**
+   * 任务状态
+   */
+  status: TaskStatusEnum
+
+  constructor(taskId: number, status: TaskStatusEnum) {
+    this.taskId = taskId
+    this.status = status
+  }
+}
+
+/**
+ * 任务运行对象
+ */
+export class TaskRunningObj extends TaskStatus {
   /**
    * 任务操作对象
    */
   public taskOperationObj: TaskOperationObj
-  /**
-   * 任务状态
-   */
-  public status: TaskStatusEnum
   /**
    * 写入器
    */
@@ -457,9 +476,8 @@ export class TaskRunningObj {
     taskWriter: TaskWriter,
     parentId?: number | null | undefined
   ) {
-    this.taskId = taskId
+    super(taskId, status)
     this.taskOperationObj = taskOperationObj
-    this.status = status
     this.taskWriter = taskWriter
     this.parentId = isNullish(parentId) ? -1 : parentId
   }
@@ -468,23 +486,14 @@ export class TaskRunningObj {
 /**
  * 父任务运行对象
  */
-export class ParentRunningObj {
-  /**
-   * 任务id
-   */
-  public taskId: number
-  /**
-   * 任务状态
-   */
-  public status: TaskStatusEnum
+export class ParentRunningObj extends TaskStatus {
   /**
    * 子任务
    */
-  public children: Map<number, TaskRunningObj>
+  public children: Map<number, TaskRunningObj | TaskStatus>
 
   constructor(taskId: number, status: TaskStatusEnum) {
-    this.taskId = taskId
-    this.status = status
+    super(taskId, status)
     this.children = new Map<number, TaskRunningObj>()
   }
 }
