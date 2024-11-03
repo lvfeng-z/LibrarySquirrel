@@ -138,6 +138,14 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
         label: '已创建'
       },
       {
+        value: TaskStatesEnum.PROCESSING,
+        label: '进行中'
+      },
+      {
+        value: TaskStatesEnum.WAITING,
+        label: '等待中'
+      },
+      {
         value: TaskStatesEnum.PAUSE,
         label: '暂停'
       },
