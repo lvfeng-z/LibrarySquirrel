@@ -412,9 +412,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskWriter: TaskWriter
   ): Promise<TaskSaveResult> {
     try {
-      assertNotNullish(task.id, 'TaskService', `任务的任务id意外为空`)
+      assertNotNullish(task.id, 'TaskService', `开始任务时，任务id意外为空`)
       const taskId = task.id
-      assertNotNullish(task.localWorksId, 'TaskService', `任务的任务id意外为空`)
+      assertNotNullish(task.localWorksId, 'TaskService', `开始任务时，任务的作品id意外为空`)
       const worksId = task.localWorksId
 
       const worksService = new WorksService()
@@ -437,6 +437,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       // 从任务中获取保存路径
       if (StringUtil.isBlank(task.pendingDownloadPath)) {
         const fullSavePathTask = await this.getById(task.id)
+        assertNotNullish(fullSavePathTask, 'TaskService', `开始任务${task.id}失败，任务id无效`)
         worksSaveInfo.fullSavePath = fullSavePathTask.pendingDownloadPath
       } else {
         worksSaveInfo.fullSavePath = task.pendingDownloadPath
@@ -933,8 +934,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 主键查询
    * @param id
    */
-  public async getById(id: number | string): Promise<Task> {
-    return this.dao.getById(id).then((task) => new Task(task))
+  public async getById(id: number | string): Promise<Task | undefined> {
+    return this.dao.getById(id).then((task) => (isNullish(task) ? undefined : new Task(task)))
   }
 
   /**
