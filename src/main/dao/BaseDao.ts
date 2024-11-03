@@ -1,7 +1,7 @@
 import PageModel from '../model/utilModels/PageModel.ts'
 import StringUtil from '../util/StringUtil.ts'
 import DB from '../database/DB.ts'
-import BaseModel from '../model/BaseModel.ts'
+import BaseModel, { Id } from '../model/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
@@ -221,34 +221,53 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async updateBatchById(entities: Model[]): Promise<number> {
-    const db = this.acquire()
-    try {
-      if (isNullish(entities) || entities.length === 0) {
-        throw new Error('保存的对象不能为空')
-      }
-
-      // 对齐所有属性
-      // 设置createTime和updateTime
-      let plainObjects = entities.map((entity) => {
-        entity.updateTime = Date.now()
-        // 转换为sqlite3接受的数据类型
-        return toObjAcceptedBySqlite3(entity)
-      })
-      plainObjects = ObjectUtil.alignProperties(plainObjects, null)
-      // 按照第一个对象的属性设置update子句的set columns = value部分
-      const keys = Object.keys(plainObjects[0])
-      const setClauses = keys.map((key) => `${StringUtil.camelToSnakeCase(key)} = @${key}`)
-      const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = @id`
-
-      for (const plainObject of plainObjects) {
-        await db.run(statement, plainObject)
-      }
-      return entities.length
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    if (!arrayNotEmpty(entities)) {
+      LogUtil.warn(this.childClassName, '批量保存的对象不能为空')
+      return 0
     }
+
+    const ids: Id[] = []
+    const pk = this.getPrimaryKeyColumnName()
+    // 对齐所有属性
+    // 设置createTime和updateTime
+    let plainObject = entities.map((entity) => {
+      entity.updateTime = Date.now()
+      //
+      if (notNullish(entity.id)) {
+        ids.push(entity.id)
+      }
+      // 转换为sqlite3接受的数据类型
+      return toObjAcceptedBySqlite3(entity)
+    })
+    plainObject = ObjectUtil.alignProperties(plainObject, null)
+    // 按照第一个对象的属性设置语句的value部分
+    const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
+    const updateClause = `UPDATE "${this.tableName}"`
+    const whereClause = `WHERE ${pk} IN (${ids.join()})`
+    const setClauses: string[] = []
+
+    keys.forEach((key) => {
+      if (BaseModel.PK !== key) {
+        const whenThenClauses: string[] = []
+        const column = StringUtil.camelToSnakeCase(key)
+        plainObject.forEach((obj) => {
+          let value = obj[key]
+          if (null === value) {
+            value = 'NULL'
+          } else if (undefined === value) {
+            value = column
+          }
+          whenThenClauses.push(`WHEN ${pk} = ${obj.id} THEN ${value}`)
+        })
+        if (arrayNotEmpty(whenThenClauses)) {
+          setClauses.push(column + ' = CASE ' + whenThenClauses.join(' ') + ' END')
+        }
+      }
+    })
+
+    const statement = updateClause + 'SET ' + setClauses.join() + ' ' + whereClause
+    const db = this.acquire()
+    return db.run(statement).then((runResult) => runResult.changes)
   }
 
   /**
