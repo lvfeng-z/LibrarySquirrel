@@ -258,6 +258,31 @@ export class TaskQueue {
    * @param taskId 任务id
    */
   public getSchedule(taskId: number): TaskScheduleDTO | undefined {
+    // 父任务的进度
+    const parentRunningObj = this.parentMap.get(taskId)
+    if (notNullish(parentRunningObj)) {
+      const childrenNum = parentRunningObj.children.size
+      let over = 0
+      parentRunningObj.children.forEach((child) => {
+        if (
+          child.status === TaskStatusEnum.FINISHED ||
+          child.status === TaskStatusEnum.PAUSE ||
+          child.status === TaskStatusEnum.FAILED
+        ) {
+          over++
+        }
+      })
+
+      const schedule = (over / childrenNum) * 100
+
+      return new TaskScheduleDTO({
+        id: taskId,
+        status: parentRunningObj.status,
+        schedule: schedule
+      })
+    }
+
+    // 子任务的进度
     const taskRunningObj = this.taskMap.get(taskId)
     if (isNullish(taskRunningObj)) {
       return undefined
@@ -271,7 +296,6 @@ export class TaskQueue {
       TaskStatusEnum.PAUSE === taskRunningObj.status
     ) {
       if (writer.bytesSum === 0) {
-        // LogUtil.warn('TaskService', `计算任务进度时，资源总量为0`)
         return new TaskScheduleDTO({ id: taskId, status: taskRunningObj.status, schedule: 0 })
       } else if (notNullish(writer.writable)) {
         const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
@@ -306,6 +330,12 @@ export class TaskQueue {
     // 信息保存流
     this.taskInfoStream.on('error', handleError)
     // 资源保存流
+    this.taskResourceStream.on('childSaveStart', (pid: number) => {
+      const parentRunningObj = this.parentMap.get(pid)
+      if (notNullish(parentRunningObj) && parentRunningObj.status !== TaskStatusEnum.PROCESSING) {
+        parentRunningObj.status = TaskStatusEnum.PROCESSING
+      }
+    })
     this.taskResourceStream.on(
       'data',
       (data: { task: TaskDTO; taskRunningObj: TaskRunningObj; saveResult: TaskStatusEnum }) => {
@@ -428,6 +458,7 @@ export class TaskQueue {
         }
 
         if (parentRunningObj.status !== newStatus) {
+          parentRunningObj.status = newStatus
           const parent = new Task()
           parent.id = parentRunningObj.taskId
           parent.status = newStatus
@@ -739,6 +770,9 @@ class TaskResourceStream extends Transform {
         callback()
         return
       }
+
+      // 发出子任务开始保存的事件
+      this.emit('childSaveStart', task.pid)
 
       // 开始任务，同时在队列中标记为进行中
       taskRunningObj.taskOperationObj.processing = true
