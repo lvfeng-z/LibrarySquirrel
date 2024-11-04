@@ -27,7 +27,6 @@ import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
 import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
 import { createDirIfNotExists } from '../util/FileSysUtil.js'
-import TaskSaveResult from '../model/utilModels/TaskSaveResult.js'
 import { getNode } from '../util/TreeUtil.js'
 import { Id } from '../model/BaseModel.js'
 import TaskWriter from '../util/TaskWriter.js'
@@ -410,87 +409,68 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task: Task,
     pluginLoader: PluginLoader<TaskHandler>,
     taskWriter: TaskWriter
-  ): Promise<TaskSaveResult> {
+  ): Promise<TaskStatusEnum> {
+    assertNotNullish(task.id, 'TaskService', `开始任务时，任务id意外为空`)
+    const taskId = task.id
+    assertNotNullish(task.localWorksId, 'TaskService', `开始任务时，任务的作品id意外为空`)
+    const worksId = task.localWorksId
+
+    const worksService = new WorksService()
+
+    // 标记为进行中
+    task.status = TaskStatusEnum.PROCESSING
+    this.taskProcessing(taskId)
+
+    // 调用插件的start方法，获取资源
+    let resourceDTO: WorksPluginDTO
     try {
-      assertNotNullish(task.id, 'TaskService', `开始任务时，任务id意外为空`)
-      const taskId = task.id
-      assertNotNullish(task.localWorksId, 'TaskService', `开始任务时，任务的作品id意外为空`)
-      const worksId = task.localWorksId
-
-      const worksService = new WorksService()
-
-      // 标记为进行中
-      task.status = TaskStatusEnum.PROCESSING
-      this.taskProcessing(taskId)
-      // 调用插件的start方法，获取资源
-      let resourceDTO: WorksPluginDTO
-      try {
-        assertNotNullish(task.pluginId, 'TaskService', `任务的插件id意外为空，taskId: ${taskId}`)
-        const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
-        resourceDTO = await taskHandler.start(task)
-      } catch (error) {
-        LogUtil.error('TaskService', `任务${taskId}调用插件开始时失败`, error)
-        return { status: TaskStatusEnum.FAILED, worksId: worksId }
-      }
-
-      let worksSaveInfo = new WorksSaveDTO()
-      // 从任务中获取保存路径
-      if (StringUtil.isBlank(task.pendingDownloadPath)) {
-        const fullSavePathTask = await this.getById(task.id)
-        assertNotNullish(fullSavePathTask, 'TaskService', `开始任务${task.id}失败，任务id无效`)
-        worksSaveInfo.fullSavePath = fullSavePathTask.pendingDownloadPath
-      } else {
-        worksSaveInfo.fullSavePath = task.pendingDownloadPath
-      }
-      worksSaveInfo.includeTaskId = taskId
-      // 判断是否需要更新作品数据
-      if (resourceDTO.doUpdate) {
-        worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO, true)
-        worksSaveInfo.id = worksId
-        worksService.updateById(worksSaveInfo)
-      }
-      // 校验插件有没有返回任务资源
-      assertNotNullish(
-        resourceDTO.resourceStream,
-        'WorksService',
-        `保存作品时，插件没有返回资源，taskId: ${taskId}`
-      )
-      taskWriter.readable = resourceDTO.resourceStream
-      taskWriter.bytesSum = resourceDTO.resourceSize
-      worksSaveInfo.resourceStream = resourceDTO.resourceStream
-      LogUtil.info('TaskService', `任务${taskId}开始下载`)
-      return worksService
-        .saveWorksResource(worksSaveInfo, taskWriter)
-        .then(async (saveResult) => {
-          if (FileSaveResult.FINISH === saveResult) {
-            worksService.resourceFinished(worksId)
-            return this.taskFinished(task.id, worksId).then(() => {
-              LogUtil.info('TaskService', `任务${taskId}完成`)
-              return { status: TaskStatusEnum.FINISHED, worksId: worksId }
-            })
-          } else if (FileSaveResult.PAUSE === saveResult) {
-            return this.taskPaused(taskId).then(() => {
-              LogUtil.info('TaskService', `任务${taskId}暂停`)
-              return { status: TaskStatusEnum.PAUSE, worksId: worksId }
-            })
-          } else {
-            return { status: TaskStatusEnum.FAILED, worksId: worksId }
-          }
-        })
-        .catch(async (error) => {
-          task.status = TaskStatusEnum.FAILED
-          LogUtil.error('TaskService', `保存作品失败，taskId: ${task.id}`, error)
-          return this.taskFailed(task.id).then(() => {
-            return { status: TaskStatusEnum.FAILED, worksId: worksId }
-          })
-        })
+      assertNotNullish(task.pluginId, 'TaskService', `任务的插件id意外为空，taskId: ${taskId}`)
+      const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+      resourceDTO = await taskHandler.start(task)
     } catch (error) {
-      task.status = TaskStatusEnum.FAILED
-      LogUtil.error('TaskService', `保存作品失败，taskId: ${task.id}`, error)
-      return this.taskFailed(task.id).then(() => {
-        return { status: TaskStatusEnum.FAILED, worksId: -1 }
-      })
+      LogUtil.error('TaskService', `任务${taskId}调用插件开始时失败`, error)
+      return TaskStatusEnum.FAILED
     }
+
+    let worksSaveInfo = new WorksSaveDTO()
+    // 判断是否需要更新作品数据
+    if (resourceDTO.doUpdate) {
+      worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO, true)
+      worksSaveInfo.id = worksId
+      worksService.updateById(worksSaveInfo)
+    }
+    // 校验插件返回的任务资源等
+    assertNotNullish(resourceDTO.resourceStream, 'WorksService', `插件没有返回任务${taskId}的资源`)
+    taskWriter.readable = resourceDTO.resourceStream
+    worksSaveInfo.resourceStream = resourceDTO.resourceStream
+    if (notNullish(resourceDTO.resourceSize) || resourceDTO.resourceSize === 0) {
+      taskWriter.bytesSum = resourceDTO.resourceSize
+    } else {
+      LogUtil.warn('TaskService', `插件没有返回任务${taskId}的资源的大小`)
+      taskWriter.bytesSum = 0
+    }
+    // 从任务中获取保存路径
+    if (StringUtil.isBlank(task.pendingDownloadPath)) {
+      const fullSavePathTask = await this.getById(taskId)
+      assertNotNullish(fullSavePathTask, 'TaskService', `开始任务${taskId}失败，任务id无效`)
+      worksSaveInfo.fullSavePath = fullSavePathTask.pendingDownloadPath
+    } else {
+      worksSaveInfo.fullSavePath = task.pendingDownloadPath
+    }
+    worksSaveInfo.includeTaskId = taskId
+    LogUtil.info('TaskService', `任务${taskId}开始下载`)
+    return worksService.saveWorksResource(worksSaveInfo, taskWriter).then(async (saveResult) => {
+      if (FileSaveResult.FINISH === saveResult) {
+        worksService.resourceFinished(worksId)
+        LogUtil.info('TaskService', `任务${taskId}完成`)
+        return TaskStatusEnum.FINISHED
+      } else if (FileSaveResult.PAUSE === saveResult) {
+        LogUtil.info('TaskService', `任务${taskId}暂停`)
+        return TaskStatusEnum.PAUSE
+      } else {
+        return TaskStatusEnum.FAILED
+      }
+    })
   }
 
   /**
@@ -628,115 +608,90 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task: Task,
     pluginLoader: PluginLoader<TaskHandler>,
     taskWriter: TaskWriter
-  ): Promise<TaskSaveResult> {
+  ): Promise<TaskStatusEnum> {
+    assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
+    const taskId = task.id
+    assertNotNullish(
+      task.localWorksId,
+      'TaskService',
+      `恢复任务时，任务的localWorksId意外为空，taskId: ${taskId}`
+    )
+    const worksId = task.localWorksId
+    assertNotNullish(
+      task.pendingDownloadPath,
+      'TaskService',
+      `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`
+    )
+    // 加载插件
+    assertNotNullish(
+      task.pluginId,
+      'TaskService',
+      `恢复任务时，任务的pluginId意外为空，taskId: ${taskId}`
+    )
+    const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+
+    // 插件用于恢复下载的任务信息
+    const taskPluginDTO = new TaskPluginDTO(task)
+    // 获取任务writer中的读取流
+    taskPluginDTO.resourceStream = taskWriter.readable
+    // 读取已下载文件信息，获取已经下载的数据量
     try {
-      assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
-      const taskId = task.id
-      assertNotNullish(
-        task.localWorksId,
-        'TaskService',
-        `恢复任务时，任务的localWorksId意外为空，taskId: ${taskId}`
-      )
-      const worksId = task.localWorksId
-      assertNotNullish(
-        task.pendingDownloadPath,
-        'TaskService',
-        `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`
-      )
-      // 加载插件
-      assertNotNullish(
-        task.pluginId,
-        'TaskService',
-        `恢复任务时，任务的pluginId意外为空，taskId: ${taskId}`
-      )
-      const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
-
-      // 插件用于恢复下载的任务信息
-      const taskPluginDTO = new TaskPluginDTO(task)
-      // 获取任务writer中的读取流
-      taskPluginDTO.resourceStream = taskWriter.readable
-      // 读取已下载文件信息，获取已经下载的数据量
-      try {
-        taskPluginDTO.bytesWritten = await fs.promises
-          .stat(task.pendingDownloadPath)
-          .then((stats) => stats.size)
-      } catch (error) {
-        LogUtil.info('TasService', '恢复任务时，先前下载的文件已经不存在 ', error)
-        await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
-        taskPluginDTO.bytesWritten = 0
-      }
-
-      // 恢复下载
-      const worksService = new WorksService()
-
-      const resumePromise = async () => {
-        // 标记为进行中
-        task.status = TaskStatusEnum.PROCESSING
-        this.taskProcessing(taskId)
-        // 调用插件的resume函数，获取资源
-        const resumeResponse = await taskHandler.resume(taskPluginDTO)
-        assertNotNullish(
-          resumeResponse.resourceStream,
-          'TaskService',
-          `恢复任务时，插件返回的资源为空，taskId: ${taskId}`
-        )
-        assertNotNullish(
-          task.pendingDownloadPath,
-          'TaskService',
-          `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`
-        )
-        // 判断是否需要更新作品数据
-        if (resumeResponse.doUpdate) {
-          const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse, true)
-          worksSaveInfo.id = task.localWorksId
-          worksService.updateById(worksSaveInfo)
-        }
-        let writeable: fs.WriteStream
-        if (resumeResponse.continuable) {
-          writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
-          writeable.bytesWritten = taskPluginDTO.bytesWritten
-        } else {
-          writeable = fs.createWriteStream(task.pendingDownloadPath)
-        }
-
-        // 配置任务writer
-        taskWriter.bytesSum = resumeResponse.resourceSize
-        taskWriter.readable = resumeResponse.resourceStream
-        taskWriter.writable = writeable
-
-        return worksService.resumeSaveWorksResource(taskWriter)
-      }
-      return resumePromise()
-        .then(async (saveResult) => {
-          if (FileSaveResult.FINISH === saveResult) {
-            worksService.resourceFinished(worksId)
-            return this.taskFinished(task.id, worksId).then(() => {
-              LogUtil.info('TaskService', `任务${taskId}完成`)
-              return { status: TaskStatusEnum.FINISHED, worksId: worksId }
-            })
-          } else if (FileSaveResult.PAUSE === saveResult) {
-            return this.taskPaused(taskId).then(() => {
-              LogUtil.info('TaskService', `任务${taskId}暂停`)
-              return { status: TaskStatusEnum.PAUSE, worksId: worksId }
-            })
-          } else {
-            return { status: TaskStatusEnum.FAILED, worksId: worksId }
-          }
-        })
-        .catch(async (error) => {
-          task.status = TaskStatusEnum.FAILED
-          LogUtil.error('TaskService', `保存作品失败，taskId: ${task.id}`, error)
-          return this.taskFailed(task.id).then(() => {
-            return { status: TaskStatusEnum.FAILED, worksId: -1 }
-          })
-        })
+      taskPluginDTO.bytesWritten = await fs.promises
+        .stat(task.pendingDownloadPath)
+        .then((stats) => stats.size)
     } catch (error) {
-      task.status = TaskStatusEnum.FAILED
-      LogUtil.error('TaskService', `保存作品失败，taskId: ${task.id}`, error)
-      return this.taskFailed(task.id).then(() => {
-        return { status: TaskStatusEnum.FAILED, worksId: -1 }
-      })
+      LogUtil.info('TasService', '恢复任务时，先前下载的文件已经不存在 ', error)
+      await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
+      taskPluginDTO.bytesWritten = 0
     }
+
+    // 恢复下载
+    const worksService = new WorksService()
+
+    // 标记为进行中
+    task.status = TaskStatusEnum.PROCESSING
+    this.taskProcessing(taskId)
+    // 调用插件的resume函数，获取资源
+    const resumeResponse = await taskHandler.resume(taskPluginDTO)
+    assertNotNullish(
+      resumeResponse.resourceStream,
+      'TaskService',
+      `恢复任务时，插件返回的资源为空，taskId: ${taskId}`
+    )
+    assertNotNullish(
+      task.pendingDownloadPath,
+      'TaskService',
+      `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`
+    )
+    // 判断是否需要更新作品数据
+    if (resumeResponse.doUpdate) {
+      const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse, true)
+      worksSaveInfo.id = task.localWorksId
+      worksService.updateById(worksSaveInfo)
+    }
+    let writeable: fs.WriteStream
+    if (resumeResponse.continuable) {
+      writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
+      writeable.bytesWritten = taskPluginDTO.bytesWritten
+    } else {
+      writeable = fs.createWriteStream(task.pendingDownloadPath)
+    }
+
+    // 配置任务writer
+    taskWriter.bytesSum = resumeResponse.resourceSize
+    taskWriter.readable = resumeResponse.resourceStream
+    taskWriter.writable = writeable
+
+    return worksService.resumeSaveWorksResource(taskWriter).then(async (saveResult) => {
+      if (FileSaveResult.FINISH === saveResult) {
+        worksService.resourceFinished(worksId)
+        return TaskStatusEnum.FINISHED
+      } else if (FileSaveResult.PAUSE === saveResult) {
+        return TaskStatusEnum.PAUSE
+      } else {
+        return TaskStatusEnum.FAILED
+      }
+    })
   }
 
   /**
@@ -895,14 +850,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 任务完成
    * @param taskId 任务id
-   * @param worksId 本地作品id
    */
-  public taskFinished(taskId: Id, worksId: number): Promise<number> {
+  public taskFinished(taskId: Id): Promise<number> {
     assertNotNullish(taskId, 'TaskService', '任务标记为完成时，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.FINISHED
-    task.localWorksId = worksId
     return this.updateById(task)
   }
 
