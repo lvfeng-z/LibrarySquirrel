@@ -528,8 +528,14 @@ async function deleteTask(ids: number[]) {
         @scroll="handleScroll"
       >
         <template #customOperations="{ row }">
-          <div style="display: flex; flex-direction: column; align-items: center">
-            <el-button-group>
+          <div style="height: 24px; display: flex; flex-direction: column; align-items: center">
+            <el-button-group
+              v-show="
+                row.status !== TaskStatesEnum.PROCESSING &&
+                row.status !== TaskStatesEnum.WAITING &&
+                row.status !== TaskStatesEnum.PAUSE
+              "
+            >
               <el-tooltip v-if="(row as TaskDTO).isCollection" content="详情">
                 <el-button
                   size="small"
@@ -566,15 +572,18 @@ async function deleteTask(ids: number[]) {
             </el-button-group>
             <el-progress
               v-show="
-                row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.PAUSE
+                row.status === TaskStatesEnum.PROCESSING ||
+                row.status === TaskStatesEnum.WAITING ||
+                row.status === TaskStatesEnum.PAUSE
               "
               style="width: 100%"
               :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
               text-inside
-              :stroke-width="15"
+              :stroke-width="24"
               striped
               striped-flow
               :duration="5"
+              @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
             >
               <template #default="{ percentage }">
                 <span style="font-size: 15px">{{ percentage }}%</span>
