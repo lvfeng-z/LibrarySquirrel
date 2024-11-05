@@ -17,6 +17,8 @@ import PageModel from '../../model/util/PageModel'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
+import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
+import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 
 // onMounted
 onMounted(() => {
@@ -200,68 +202,6 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
 ])
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
-// 操作栏代码
-const enum OperationCode {
-  VIEW,
-  START,
-  PAUSE,
-  RESUME,
-  RETRY,
-  CANCEL,
-  DELETE
-}
-// 任务状态与操作按钮状态的对应关系
-const taskStatusMapping: {
-  [K in TaskStatesEnum]: {
-    tooltip: string
-    icon: string
-    operation: OperationCode
-    processing: boolean
-  }
-} = {
-  [TaskStatesEnum.CREATED]: {
-    tooltip: '开始',
-    icon: 'VideoPlay',
-    operation: OperationCode.START,
-    processing: false
-  },
-  [TaskStatesEnum.PROCESSING]: {
-    tooltip: '暂停',
-    icon: 'VideoPause',
-    operation: OperationCode.PAUSE,
-    processing: true
-  },
-  [TaskStatesEnum.WAITING]: {
-    tooltip: '等待中',
-    icon: 'Loading',
-    operation: OperationCode.START,
-    processing: true
-  },
-  [TaskStatesEnum.PAUSE]: {
-    tooltip: '继续',
-    icon: 'RefreshRight',
-    operation: OperationCode.RESUME,
-    processing: false
-  },
-  [TaskStatesEnum.FINISHED]: {
-    tooltip: '再次下载',
-    icon: 'RefreshRight',
-    operation: OperationCode.RETRY,
-    processing: false
-  },
-  [TaskStatesEnum.PARTLY_FINISHED]: {
-    tooltip: '开始',
-    icon: 'VideoPlay',
-    operation: OperationCode.START,
-    processing: false
-  },
-  [TaskStatesEnum.FAILED]: {
-    tooltip: '重试',
-    icon: 'RefreshRight',
-    operation: OperationCode.RETRY,
-    processing: false
-  }
-}
 // 是否正在刷新数据
 let refreshing: boolean = false
 // 防抖动refreshTask
@@ -348,31 +288,31 @@ function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   }
 }
 // 处理操作栏按钮点击事件
-function handleOperationButtonClicked(row: TaskDTO, code: OperationCode) {
+function handleOperationButtonClicked(row: TaskDTO, code: TaskOperationCodeEnum) {
   switch (code) {
-    case OperationCode.VIEW:
+    case TaskOperationCodeEnum.VIEW:
       dialogData.value = row
       taskDialogRef.value.handleDialog(true)
       break
-    case OperationCode.START:
+    case TaskOperationCodeEnum.START:
       startTask(row, false)
       refreshTask()
       break
-    case OperationCode.PAUSE:
+    case TaskOperationCodeEnum.PAUSE:
       apis.taskPauseTaskTree([row.id])
       refreshTask()
       break
-    case OperationCode.RESUME:
+    case TaskOperationCodeEnum.RESUME:
       apis.taskResumeTaskTree([row.id])
       refreshTask()
       break
-    case OperationCode.RETRY:
+    case TaskOperationCodeEnum.RETRY:
       startTask(row, true)
       refreshTask()
       break
-    case OperationCode.CANCEL:
+    case TaskOperationCodeEnum.CANCEL:
       break
-    case OperationCode.DELETE:
+    case TaskOperationCodeEnum.DELETE:
       deleteTask([row.id as number])
       break
     default:
@@ -442,19 +382,6 @@ async function refreshTask() {
 // 滚动事件处理函数
 function handleScroll() {
   throttleRefreshTask()
-}
-// 任务状态映射为按钮状态
-function mapToButtonStatus(row: TaskDTO): {
-  tooltip: string
-  icon: string
-  operation: OperationCode
-  processing: boolean
-} {
-  if (notNullish(row.status)) {
-    return taskStatusMapping[row.status]
-  } else {
-    return taskStatusMapping['0']
-  }
 }
 // 开始任务
 function startTask(row: TaskDTO, retry: boolean) {
@@ -528,68 +455,7 @@ async function deleteTask(ids: number[]) {
         @scroll="handleScroll"
       >
         <template #customOperations="{ row }">
-          <div style="height: 24px; display: flex; flex-direction: column; align-items: center">
-            <el-button-group
-              v-show="
-                row.status !== TaskStatesEnum.PROCESSING &&
-                row.status !== TaskStatesEnum.WAITING &&
-                row.status !== TaskStatesEnum.PAUSE
-              "
-            >
-              <el-tooltip v-if="(row as TaskDTO).isCollection" content="详情">
-                <el-button
-                  size="small"
-                  icon="View"
-                  @click="handleOperationButtonClicked(row, OperationCode.VIEW)"
-                />
-              </el-tooltip>
-              <el-tooltip :content="mapToButtonStatus(row).tooltip">
-                <el-button
-                  size="small"
-                  :icon="mapToButtonStatus(row).icon"
-                  :loading="
-                    mapToButtonStatus(row).processing &&
-                    !(row as TaskDTO).continuable &&
-                    !(row as TaskDTO).isCollection
-                  "
-                  @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
-                ></el-button>
-              </el-tooltip>
-              <el-tooltip content="取消">
-                <el-button
-                  size="small"
-                  icon="CircleClose"
-                  @click="handleOperationButtonClicked(row, OperationCode.CANCEL)"
-                />
-              </el-tooltip>
-              <el-tooltip content="删除">
-                <el-button
-                  size="small"
-                  icon="Delete"
-                  @click="handleOperationButtonClicked(row, OperationCode.DELETE)"
-                />
-              </el-tooltip>
-            </el-button-group>
-            <el-progress
-              v-show="
-                row.status === TaskStatesEnum.PROCESSING ||
-                row.status === TaskStatesEnum.WAITING ||
-                row.status === TaskStatesEnum.PAUSE
-              "
-              style="width: 100%"
-              :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
-              text-inside
-              :stroke-width="24"
-              striped
-              striped-flow
-              :duration="5"
-              @click="handleOperationButtonClicked(row, mapToButtonStatus(row).operation)"
-            >
-              <template #default="{ percentage }">
-                <span style="font-size: 15px">{{ percentage }}%</span>
-              </template>
-            </el-progress>
-          </div>
+          <task-operation-bar :row="row" :button-clicked="handleOperationButtonClicked" />
         </template>
       </search-table>
     </div>
