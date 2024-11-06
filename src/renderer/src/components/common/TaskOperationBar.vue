@@ -81,13 +81,15 @@ function mapToButtonStatus(row: TaskDTO): {
 </script>
 
 <template>
-  <div style="height: 24px; display: flex; flex-direction: column; align-items: center">
+  <div style="display: flex; flex-direction: row; justify-content: center; align-items: center">
     <el-button-group
       v-show="
-        row.status !== TaskStatesEnum.PROCESSING &&
-        row.status !== TaskStatesEnum.WAITING &&
-        row.status !== TaskStatesEnum.PAUSE
+        (row.status !== TaskStatesEnum.PROCESSING &&
+          row.status !== TaskStatesEnum.WAITING &&
+          row.status !== TaskStatesEnum.PAUSE) ||
+        row.hasChildren
       "
+      style="margin-right: 10px"
     >
       <el-tooltip v-if="props.row.isCollection" content="详情">
         <el-button
@@ -119,11 +121,37 @@ function mapToButtonStatus(row: TaskDTO): {
         />
       </el-tooltip>
     </el-button-group>
+    <div
+      v-show="
+        (row.status === TaskStatesEnum.PROCESSING ||
+          row.status === TaskStatesEnum.WAITING ||
+          row.status === TaskStatesEnum.PAUSE) &&
+        row.hasChildren
+      "
+      style="display: flex; flex-direction: row; justify-content: center; align-content: center"
+    >
+      <el-progress
+        type="circle"
+        style="width: 100%"
+        :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
+        :stroke-width="2"
+        :width="47"
+        @click="buttonClicked(row, mapToButtonStatus(row).operation)"
+      >
+        <template #default="{ percentage }">
+          <div style="display: flex; flex-direction: column">
+            <span style="font-size: 10px">{{ percentage }}%</span>
+            <span style="font-size: 10px">{{ percentage }}%</span>
+          </div>
+        </template>
+      </el-progress>
+    </div>
     <el-progress
       v-show="
-        row.status === TaskStatesEnum.PROCESSING ||
-        row.status === TaskStatesEnum.WAITING ||
-        row.status === TaskStatesEnum.PAUSE
+        (row.status === TaskStatesEnum.PROCESSING ||
+          row.status === TaskStatesEnum.WAITING ||
+          row.status === TaskStatesEnum.PAUSE) &&
+        !row.hasChildren
       "
       style="width: 100%"
       :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
