@@ -354,7 +354,6 @@ async function refreshTask() {
       // 利用树形工具找到所有id对应的数据，判断是否需要刷新
       const tempRoot = new TaskDTO()
       tempRoot.children = dataList.value
-      console.log(tempRoot)
       return visibleRowsId.filter((id: number) => {
         const task = getNode<TaskDTO>(tempRoot, id)
         return (

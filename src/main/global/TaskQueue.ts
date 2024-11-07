@@ -262,19 +262,21 @@ export class TaskQueue {
     const parentRunningObj = this.parentMap.get(taskId)
     if (notNullish(parentRunningObj)) {
       const childrenNum = parentRunningObj.children.size
-      let over = 0
+      let finished = 0
       parentRunningObj.children.forEach((child) => {
         if (child.status === TaskStatusEnum.FINISHED) {
-          over++
+          finished++
         }
       })
 
-      const schedule = (over / childrenNum) * 100
+      const schedule = (finished / childrenNum) * 100
 
       return new TaskScheduleDTO({
         id: taskId,
         status: parentRunningObj.status,
-        schedule: schedule
+        schedule: schedule,
+        total: parentRunningObj.children.size,
+        finished: finished
       })
     }
 
@@ -284,7 +286,13 @@ export class TaskQueue {
       return undefined
     }
     if (TaskStatusEnum.FINISHED === taskRunningObj.status) {
-      return new TaskScheduleDTO({ id: taskId, status: TaskStatusEnum.FINISHED, schedule: 100 })
+      return new TaskScheduleDTO({
+        id: taskId,
+        status: TaskStatusEnum.FINISHED,
+        schedule: 100,
+        total: undefined,
+        finished: undefined
+      })
     }
     const writer = taskRunningObj.taskWriter
     if (
@@ -292,13 +300,21 @@ export class TaskQueue {
       TaskStatusEnum.PAUSE === taskRunningObj.status
     ) {
       if (writer.bytesSum === 0) {
-        return new TaskScheduleDTO({ id: taskId, status: taskRunningObj.status, schedule: 0 })
+        return new TaskScheduleDTO({
+          id: taskId,
+          status: taskRunningObj.status,
+          schedule: 0,
+          total: undefined,
+          finished: undefined
+        })
       } else if (notNullish(writer.writable)) {
         const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
         return new TaskScheduleDTO({
           id: taskId,
           status: taskRunningObj.status,
-          schedule: schedule
+          schedule: schedule,
+          total: undefined,
+          finished: undefined
         })
       }
     }
@@ -383,6 +399,15 @@ export class TaskQueue {
   }
 
   /**
+   * 从子任务池中移除任务运行实例
+   * @param taskId 子任务id
+   * @private
+   */
+  private removeFromParentMap(taskId: number) {
+    this.parentMap.delete(taskId)
+  }
+
+  /**
    * 在父任务池中设置父任务的子任务
    * @param runningObjs 子任务运行实例列表
    * @private
@@ -459,6 +484,11 @@ export class TaskQueue {
           parent.id = parentRunningObj.taskId
           parent.status = newStatus
           this.taskService.updateById(parent)
+        }
+
+        // 清除不再活跃的父任务
+        if (processing === 0 && paused === 0 && waiting === 0) {
+          this.removeFromParentMap(id)
         }
       }
     }
