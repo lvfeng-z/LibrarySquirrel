@@ -264,11 +264,7 @@ export class TaskQueue {
       const childrenNum = parentRunningObj.children.size
       let over = 0
       parentRunningObj.children.forEach((child) => {
-        if (
-          child.status === TaskStatusEnum.FINISHED ||
-          child.status === TaskStatusEnum.PAUSE ||
-          child.status === TaskStatusEnum.FAILED
-        ) {
+        if (child.status === TaskStatusEnum.FINISHED) {
           over++
         }
       })
