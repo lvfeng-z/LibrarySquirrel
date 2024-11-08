@@ -70,7 +70,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   },
   {
-    type: 'selectTree',
+    type: 'treeSelect',
     defaultDisabled: true,
     dblclickEnable: true,
     name: 'baseLocalTagId',
@@ -107,7 +107,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   },
   {
     name: 'baseLocalTagId',
-    type: 'selectTree',
+    type: 'treeSelect',
     placeholder: '选择上级标签',
     inputSpan: 8,
     useApi: true,

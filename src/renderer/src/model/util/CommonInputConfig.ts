@@ -1,6 +1,7 @@
 import SelectItem from './SelectItem.ts'
 import ApiResponse from './ApiResponse.ts'
 import { VNode } from 'vue'
+import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 
 interface CommonInputConfig {
   type:
@@ -13,12 +14,12 @@ interface CommonInputConfig {
     | 'checkbox'
     | 'radio'
     | 'select'
-    | 'selectTree'
+    | 'treeSelect'
     | 'switch'
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
   dblclickEnable?: boolean // 是否可以双击启用
-  selectData?: SelectItem[] // 选择框数据
+  selectData?: SelectItem[] | TreeSelectNode[] // 选择框数据
   useApi?: boolean // 是否请求接口获得选择框数据
   api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
   pagingApi?: boolean // 接口是否分页

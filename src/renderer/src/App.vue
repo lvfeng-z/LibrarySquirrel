@@ -17,6 +17,7 @@ import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import LocalAuthorManage from './components/closeablePage/LocalAuthorManage.vue'
 import { isNullish } from './utils/CommonUtil'
+import CommonInputR from '@renderer/components/common/CommentInput/CommonInput.vue'
 
 // onMounted
 onMounted(() => {
@@ -161,6 +162,7 @@ async function handleTest() {
   // showExplainPath.value = true
   // showTestDialog.value = true
 }
+const testValue = ref('testValue')
 </script>
 
 <template>
@@ -212,7 +214,7 @@ async function handleTest() {
         <div class="mainPage-searchbar">
           <el-row>
             <el-col style="display: flex; justify-content: center" :span="2">
-              <el-button @click="handleTest">测试</el-button>
+              <common-input-r :config="{ type: 'text' }" :data="testValue"></common-input-r>
             </el-col>
             <el-col :span="20">
               <el-select

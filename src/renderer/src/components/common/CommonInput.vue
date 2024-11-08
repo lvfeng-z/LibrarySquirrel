@@ -73,7 +73,7 @@ function getSpanValue() {
   } else if (props.config.type === 'select') {
     const target = innerSelectData.value.find((selectData) => selectData.value === data.value)
     return isNullish(target) ? '-' : target.value
-  } else if (props.config.type === 'selectTree') {
+  } else if (props.config.type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = innerTreeSelectData.value
     tempRoot = new TreeSelectNode(tempRoot)
@@ -149,7 +149,7 @@ async function requestSelectDataApi(queryStr?: string) {
             props.config.type === 'date' ||
             props.config.type === 'datetime' ||
             props.config.type === 'select' ||
-            props.config.type === 'selectTree'))
+            props.config.type === 'treeSelect'))
       "
       >{{ getSpanValue() }}</span
     >
@@ -202,7 +202,7 @@ async function requestSelectDataApi(queryStr?: string) {
       />
     </el-select>
     <el-tree-select
-      v-if="!disabled && props.config.type === 'selectTree'"
+      v-if="!disabled && props.config.type === 'treeSelect'"
       v-model="data"
       :check-strictly="true"
       :disabled="disabled"
