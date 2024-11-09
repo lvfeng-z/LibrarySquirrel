@@ -103,7 +103,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param rootId
    */
   public async getTree(rootId: number) {
-    if (rootId === undefined) {
+    if (isNullish(rootId)) {
       rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
     }
 
