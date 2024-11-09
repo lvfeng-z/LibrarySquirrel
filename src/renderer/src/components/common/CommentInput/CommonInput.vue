@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CommonInputConfig } from '../../../model/util/CommonInputConfig.ts'
-import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
+import { computed, onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import TreeSelectNode from '../../../model/util/TreeSelectNode.ts'
 import CommonInputText from '@renderer/components/common/CommentInput/CommonInputText.vue'
 import lodash from 'lodash'
@@ -17,18 +17,14 @@ const props = defineProps<{
 
 // onBeforeMount
 onBeforeMount(() => {
-  if (props.config.type === 'custom') {
-    setComponent()
+  // 处理默认开关状态
+  if (props.config.defaultDisabled === undefined) {
+    enable()
   } else {
-    // 处理默认开关状态
-    if (props.config.defaultDisabled === undefined) {
-      enable()
+    if (props.config.defaultDisabled) {
+      disable()
     } else {
-      if (props.config.defaultDisabled) {
-        disable()
-      } else {
-        enable()
-      }
+      enable()
     }
   }
 })
@@ -42,45 +38,39 @@ const emits = defineEmits(['dataChanged'])
 // 变量
 const config: Ref<UnwrapRef<CommonInputConfig>> = ref(lodash.cloneDeep(props.config))
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
-let dynamicComponent
+const dynamicComponent = computed(() => {
+  if (!disabled.value || props.config.type === 'custom') {
+    switch (props.config.type) {
+      case 'text':
+      case 'textarea':
+        return CommonInputText
+      case 'date':
+      case 'datetime':
+        return CommonInputDate
+      case 'select':
+        props.config.refreshSelectData()
+        return CommonInputSelect
+      case 'treeSelect':
+        props.config.refreshSelectData()
+        return CommonInputTreeSelect
+      case 'custom':
+        if (notNullish(props.config.render)) {
+          return props.config.render(data.value)
+        }
+        break
+    }
+  }
+  return undefined
+})
 
 // 方法
 // 启用
 function enable() {
   disabled.value = false
-  setComponent()
 }
 // 禁用
 function disable() {
   disabled.value = true
-}
-// 设置动态子组件
-function setComponent() {
-  if (!disabled.value || props.config.type === 'custom') {
-    switch (props.config.type) {
-      case 'text':
-      case 'textarea':
-        dynamicComponent = CommonInputText
-        break
-      case 'date':
-      case 'datetime':
-        dynamicComponent = CommonInputDate
-        break
-      case 'select':
-        dynamicComponent = CommonInputSelect
-        props.config.refreshSelectData()
-        break
-      case 'treeSelect':
-        dynamicComponent = CommonInputTreeSelect
-        props.config.refreshSelectData()
-        break
-      case 'custom':
-        if (notNullish(props.config.render)) {
-          dynamicComponent = props.config.render(data.value)
-        }
-        break
-    }
-  }
 }
 // 处理组件被双击事件
 function handleDblclick() {
