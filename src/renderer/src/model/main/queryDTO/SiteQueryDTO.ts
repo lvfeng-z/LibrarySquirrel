@@ -8,27 +8,27 @@ export default class SiteQueryDTO extends BaseQueryDTO {
   /**
    * 主键
    */
-  id: number | undefined | null
+  id?: number | undefined | null
 
   /**
    * 站点名称
    */
-  siteName: string | undefined | null
+  siteName?: string | undefined | null
 
   /**
    * 站点域名
    */
-  siteDomain: string | undefined | null
+  siteDomain?: string | undefined | null
 
   /**
    * 站点主页
    */
-  siteHomepage: string | undefined | null
+  siteHomepage?: string | undefined | null
 
   /**
    * 排序号
    */
-  sortNum: number | undefined | null
+  sortNum?: number | undefined | null
 
   constructor(siteQueryDTO?: SiteQueryDTO) {
     if (siteQueryDTO === undefined) {
