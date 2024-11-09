@@ -3,7 +3,6 @@ import { FileSaveResult } from '../constant/FileSaveResult.js'
 import LogUtil from './LogUtil.js'
 import { assertNotNullish } from './AssertUtil.js'
 import { isNullish, notNullish } from './CommonUtil.js'
-import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import fs from 'fs'
 
 export default class TaskWriter {
@@ -15,10 +14,6 @@ export default class TaskWriter {
    * 写入流
    */
   public writable: fs.WriteStream | undefined
-  /**
-   * 任务状态
-   */
-  public status: TaskStatusEnum
   /**
    * 资源大小
    */
@@ -41,7 +36,6 @@ export default class TaskWriter {
   constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
     this.writable = writeable
-    this.status = TaskStatusEnum.WAITING
     this.bytesSum = 0
     this.bytesWritten = 0
     this.paused = false
@@ -102,7 +96,6 @@ export default class TaskWriter {
    */
   public pause() {
     if (!this.readableFinished) {
-      this.status = TaskStatusEnum.PAUSE
       this.paused = true
       if (notNullish(this.readable)) {
         this.readable.unpipe(this.writable)
@@ -112,17 +105,5 @@ export default class TaskWriter {
         this.bytesWritten = isNullish(this.writable) ? 0 : this.writable.bytesWritten
       }
     }
-  }
-
-  /**
-   * 更新所有属性，忽略状态
-   * @param taskWriter 更新数据
-   */
-  public updateBeyondStatus(taskWriter: TaskWriter): void {
-    this.readable = taskWriter.readable
-    this.writable = taskWriter.writable
-    this.bytesSum = taskWriter.bytesSum
-    this.bytesWritten = taskWriter.bytesWritten
-    this.readableFinished = taskWriter.readableFinished
   }
 }

@@ -33,12 +33,12 @@ function undefinedToNull(obj: object | undefined): object {
 }
 
 /**
- * 对其对象列表的属性
+ * 对齐对象列表的属性
  * @param objects 对象列表
  * @param fill 如何填充被对齐的值
  */
 function alignProperties(objects: object[], fill: unknown) {
-  // 所有可能的属性名集合（这里需要你根据实际情况定义）
+  // 所有可能的属性名集合
   const allPossibleProperties = [...new Set(objects.flatMap(Object.keys))]
   // 创建一个模板对象，所有属性设为fill
   const templateObject = allPossibleProperties.reduce((acc, key) => ({ ...acc, [key]: fill }), {})

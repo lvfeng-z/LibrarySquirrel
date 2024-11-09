@@ -17,6 +17,11 @@ export default class BaseModel {
    */
   updateTime: number | null | undefined
 
+  /**
+   * 主键名称
+   */
+  public static readonly PK = 'id'
+
   constructor(baseModel?: BaseModel) {
     if (baseModel === undefined) {
       this.id = undefined

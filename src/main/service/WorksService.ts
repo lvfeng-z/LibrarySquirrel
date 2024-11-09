@@ -24,7 +24,6 @@ import StringUtil from '../util/StringUtil.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
-import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { assertNotNullish } from '../util/AssertUtil.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
@@ -37,11 +36,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   /**
    * 生成保存作品用的信息
    * @param worksDTO 插件返回的作品DTO
+   * @param refreshMode 刷新模式（为true时，不会生成新的保存路径相关的属性）
    */
-  public generateWorksSaveInfo(worksDTO: WorksPluginDTO): WorksSaveDTO {
+  public generateWorksSaveInfo(worksDTO: WorksPluginDTO, refreshMode?: boolean): WorksSaveDTO {
     const result = new WorksSaveDTO(worksDTO)
     // 读取设置中的工作目录信息
-    const settings = SettingsService.getSettings() as { workdir: string }
+    const settings = SettingsService.getSettings()
     const workdir = settings.workdir
     if (StringUtil.isBlank(workdir)) {
       const msg = `保存资源时，工作目录意外为空，taskId: ${result.includeTaskId}`
@@ -61,17 +61,19 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       result.resourceComplete = false
 
       // 保存路径
-      const fileName = `${authorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
-      const relativeSavePath = path.join('/includeDir', authorName)
-      result.fileName = fileName
-      result.fullSaveDir = path.join(workdir, relativeSavePath)
-      result.filePath = path.join(relativeSavePath, fileName)
-      result.workdir = workdir
+      if (!refreshMode) {
+        const fileName = `${authorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
+        const relativeSavePath = path.join('/includeDir', authorName)
+        result.fileName = fileName
+        result.fullSavePath = path.join(workdir, relativeSavePath, fileName)
+        result.filePath = path.join(relativeSavePath, fileName)
+        result.workdir = workdir
+      }
 
       return result
     } catch (error) {
-      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
-      LogUtil.error('WorksService', msg)
+      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}`
+      LogUtil.error('WorksService', msg, error)
       throw error
     }
   }
@@ -84,46 +86,31 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public async saveWorksResource(
     worksDTO: WorksSaveDTO,
     fileWriter: TaskWriter
-  ): Promise<TaskStatusEnum> {
+  ): Promise<FileSaveResult> {
     assertNotNullish(
       worksDTO.resourceStream,
       'WorksService',
       `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
     )
-    // 保存资源
-    // 创建保存目录
     assertNotNullish(
-      worksDTO.fullSaveDir,
+      worksDTO.fullSavePath,
       'WorksService',
       `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
     )
-    assertNotNullish(
-      worksDTO.fileName,
-      'WorksService',
-      `保存作品资源时，作品的fileName意外为空，worksId: ${worksDTO.id}`
-    )
 
     try {
-      await createDirIfNotExists(worksDTO.fullSaveDir)
+      // 创建保存目录
+      await createDirIfNotExists(path.dirname(worksDTO.fullSavePath))
       // 创建写入流
-      const fullPath = path.join(worksDTO.fullSaveDir, worksDTO.fileName)
-      const writeStream = fs.createWriteStream(fullPath)
+      const writeStream = fs.createWriteStream(worksDTO.fullSavePath)
 
       // 创建写入Promise
       fileWriter.readable = worksDTO.resourceStream
       fileWriter.writable = writeStream
-      const saveResourceFinishPromise: Promise<FileSaveResult> = fileWriter.doWrite()
-
-      return saveResourceFinishPromise.then((saveResult) => {
-        if (FileSaveResult.FINISH === saveResult) {
-          return TaskStatusEnum.FINISHED
-        } else {
-          return TaskStatusEnum.PAUSE
-        }
-      })
+      return fileWriter.doWrite()
     } catch (error) {
-      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}，error: ${String(error)}`
-      LogUtil.error('WorksService', msg)
+      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}`
+      LogUtil.error('WorksService', msg, error)
       throw error
     }
   }
@@ -132,17 +119,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 恢复保存作品资源
    * @param fileWriter 任务writer
    */
-  public async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<TaskStatusEnum> {
+  public async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<FileSaveResult> {
     assertNotNullish(fileWriter.readable, 'WorksService', `恢复资源下载时资源流意外为空`)
     assertNotNullish(fileWriter.writable, 'WorksService', `恢复资源下载时写入流意外为空`)
 
-    return fileWriter.doWrite().then((saveResult) => {
-      if (FileSaveResult.FINISH === saveResult) {
-        return TaskStatusEnum.FINISHED
-      } else {
-        return TaskStatusEnum.PAUSE
-      }
-    })
+    return fileWriter.doWrite()
   }
 
   /**

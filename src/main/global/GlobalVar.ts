@@ -2,8 +2,8 @@ import LogUtil from '../util/LogUtil.ts'
 import { ConnectionPool } from '../database/ConnectionPool.ts'
 import Store from 'electron-store'
 import { defaultSettings } from '../util/SettingsUtil.ts'
-import { TaskQueue } from './TaskQueue.js'
 import { PoolConfig } from './PoolConfig.js'
+import { TaskQueue } from './TaskQueue.js'
 
 export enum GlobalVars {
   CONNECTION_POOL = 'CONNECTION_POOL',
@@ -15,8 +15,8 @@ export enum GlobalVars {
 type GlobalVarMapping = {
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
   [GlobalVars.MAIN_WINDOW]: Electron.BrowserWindow
-  [GlobalVars.TASK_QUEUE]: TaskQueue
   [GlobalVars.SETTINGS]: Store<Record<string, unknown>>
+  [GlobalVars.TASK_QUEUE]: TaskQueue
 }
 
 // todo 设置更改时，一些全局变量也需要更改
@@ -29,11 +29,11 @@ export class GlobalVar {
       case GlobalVars.MAIN_WINDOW:
         this.createMainWindow(arg as Electron.BrowserWindow)
         break
-      case GlobalVars.TASK_QUEUE:
-        this.createTaskQueue()
-        break
       case GlobalVars.SETTINGS:
         this.createSettings()
+        break
+      case GlobalVars.TASK_QUEUE:
+        this.createTaskQueue()
         break
     }
   }
@@ -47,11 +47,11 @@ export class GlobalVar {
       case GlobalVars.CONNECTION_POOL:
         this.destroyConnectionPool()
         break
-      case GlobalVars.TASK_QUEUE:
-        this.destroyTaskQueue()
-        break
       case GlobalVars.SETTINGS:
         this.destroySettings()
+        break
+      case GlobalVars.TASK_QUEUE:
+        this.destroyTaskQueue()
         break
     }
   }
