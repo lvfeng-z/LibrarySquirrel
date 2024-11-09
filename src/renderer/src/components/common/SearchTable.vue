@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import DataTable from './DataTable.vue'
 import { onMounted, Ref, ref, UnwrapRef } from 'vue'
-import InputBox from '../../model/util/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
-import Thead from '../../model/util/Thead'
+import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import PageModel from '../../model/util/PageModel'
@@ -16,6 +15,7 @@ import TreeNode from '../../model/util/TreeNode'
 import { TreeNode as ElTreeNode } from 'element-plus'
 import { getNode } from '../../utils/TreeUtil'
 import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
+import DataTable from '@renderer/components/common/DataTable.vue'
 
 // props
 const props = withDefaults(
@@ -78,7 +78,7 @@ onMounted(() => {
 
 // 变量
 // 数据栏
-const dataTable = ref() // DataTable的的组件实例
+const dataTableRef = ref() // DataTable的的组件实例
 const searchToolbarParams = ref({}) // 搜索栏参数
 const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
 // 分页栏
@@ -249,7 +249,7 @@ function handleRowChange(changedRow: object) {
 }
 // 获取可视范围内的行
 function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
-  return dataTable.value.getVisibleRows(offsetTop, offsetBottom)
+  return dataTableRef.value.getVisibleRows(offsetTop, offsetBottom)
 }
 
 // 暴露
@@ -274,8 +274,8 @@ defineExpose({
     >
     </SearchToolbar>
     <div class="search-table-data">
-      <DataTable
-        ref="dataTable"
+      <data-table
+        ref="dataTableRef"
         v-model:table-data="dataList"
         class="search-table-data-table"
         :thead="thead"
@@ -296,7 +296,7 @@ defineExpose({
         <template #customOperations="{ row }">
           <slot name="customOperations" :row="row" />
         </template>
-      </DataTable>
+      </data-table>
       <div class="search-table-data-pagination-scroll-wrapper">
         <el-scrollbar class="search-table-data-pagination-scroll">
           <div class="search-table-data-pagination-wrapper">

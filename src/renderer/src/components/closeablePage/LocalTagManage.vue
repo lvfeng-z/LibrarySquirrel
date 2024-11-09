@@ -8,12 +8,19 @@ import lodash from 'lodash'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
-import Thead from '../../model/util/Thead'
-import InputBox from '../../model/util/InputBox'
+import { Thead } from '../../model/util/Thead'
+import { InputBox } from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import LocalTag from '../../model/main/LocalTag'
+import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import PageModel from '@renderer/model/util/PageModel.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
+import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
+import Site from '@renderer/model/main/Site.ts'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
@@ -57,7 +64,7 @@ const operationButton: OperationItem[] = [
 ]
 // 本地标签SearchTable的表头
 const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
-  {
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -68,8 +75,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'treeSelect',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -81,12 +88,13 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     overHide: true,
-    useApi: true,
-    api: apis.localTagGetTree
-  },
-  {
+    useLoad: true,
+    load: requestLocalTagTree
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
+    dblclickEnable: true,
     name: 'updateTime',
     label: '修改时间',
     hide: false,
@@ -95,66 +103,90 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     overHide: true
-  }
+  })
 ])
 // 本地标签SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'localTagName',
     type: 'text',
     placeholder: '输入本地标签的名称',
     inputSpan: 10
-  },
-  {
+  }),
+  new InputBox({
     name: 'baseLocalTagId',
     type: 'treeSelect',
     placeholder: '选择上级标签',
     inputSpan: 8,
-    useApi: true,
-    api: apis.localTagGetTree
-  }
+    useLoad: true,
+    load: requestLocalTagTree
+  })
 ])
 // 本地标签SearchTable的dropDownInputBoxes
 const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  {
+  new InputBox({
     name: 'id',
     label: 'id',
     type: 'text',
     placeholder: '内部id'
-  }
+  })
 ])
 // 本地标签弹窗的mode
 const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'keyword',
     type: 'text',
     placeholder: '输入站点标签名称',
     inputSpan: 12
-  },
-  {
+  }),
+  new InputBox({
     name: 'siteId',
     type: 'select',
     placeholder: '选择站点',
-    useApi: true,
-    api: apis.siteQuerySelectItemPage,
-    pagingApi: true,
+    useLoad: true,
+    load: requestSiteQuerySelectItemPage,
     inputSpan: 9
-  }
+  })
 ])
 // 站点标签ExchangeBox的DropDownInputBoxes
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'keyword',
     type: 'text',
     placeholder: '输入id',
     label: 'id',
     inputSpan: 22
-  }
+  })
 ])
 
 // 方法
+// 请求本地标签树的函数
+async function requestLocalTagTree(query: number) {
+  const param = isNullish(query) ? undefined : Number(query)
+  const response = await apis.localTagGetTree(param)
+  if (ApiUtil.apiResponseCheck(response)) {
+    return ApiUtil.apiResponseGetData(response) as TreeSelectNode[]
+  } else {
+    return []
+  }
+}
+// 请求站点分页列表的函数
+async function requestSiteQuerySelectItemPage(query: string) {
+  let page: PageModel<SiteQueryDTO, Site>
+  if (StringUtil.isBlank(query)) {
+    page = new PageModel()
+    page.query = { keyword: query }
+  }
+  const response = await apis.siteQuerySelectItemPage(query)
+  if (ApiUtil.apiResponseCheck(response)) {
+    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+    return page.data as TreeSelectNode[]
+  } else {
+    return []
+  }
+}
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
@@ -261,6 +293,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             :search-api="apis.localTagQueryPage"
             :multi-select="false"
             :selectable="true"
+            :page-sizes="[10, 20, 50, 100, 1000]"
             @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
             @selection-change="handleLocalTagSelectionChange"

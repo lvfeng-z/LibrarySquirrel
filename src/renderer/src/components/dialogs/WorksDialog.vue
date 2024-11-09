@@ -6,7 +6,7 @@ import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ExchangeBox from '@renderer/components/common/ExchangeBox.vue'
-import InputBox from '@renderer/model/util/InputBox.ts'
+import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import LocalTag from '@renderer/model/main/LocalTag.ts'
 
@@ -70,12 +70,12 @@ const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
 const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'localTagName',
     type: 'text',
     placeholder: '搜索标签名称',
     inputSpan: 21
-  }
+  })
 ])
 
 // 方法

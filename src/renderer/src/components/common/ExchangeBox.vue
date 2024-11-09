@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SearchToolbar from './SearchToolbar.vue'
-import InputBox from '../../model/util/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'

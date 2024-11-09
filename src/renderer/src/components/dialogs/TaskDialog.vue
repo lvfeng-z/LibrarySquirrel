@@ -4,10 +4,10 @@ import DialogMode from '../../model/util/DialogMode'
 import { h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import SearchTable from '../common/SearchTable.vue'
-import Thead from '../../model/util/Thead'
+import { Thead } from '../../model/util/Thead'
+import { InputBox } from '../../model/util/InputBox'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
-import InputBox from '../../model/util/InputBox'
 import ApiUtil from '../../utils/ApiUtil'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import { getNode } from '@renderer/utils/TreeUtil.ts'
@@ -51,7 +51,7 @@ const heightForSearchTable: Ref<UnwrapRef<number>> = ref(0)
 const state = ref(false)
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
-  {
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -62,8 +62,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'left',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -73,8 +73,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -85,8 +85,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -96,8 +96,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'custom',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -109,25 +109,25 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: true,
     render: getTaskStatusElTag
-  }
+  })
 ])
 // 数据主键
 const keyOfData: string = 'id'
 // 主搜索栏的inputBox
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  {
+  new InputBox({
     name: 'taskName',
     type: 'text',
     placeholder: '输入任务的名称查询',
     inputSpan: 13
-  },
-  {
+  }),
+  new InputBox({
     name: 'siteDomain',
     type: 'text',
     placeholder: '输入站点的名称查询',
     inputSpan: 4
-  },
-  {
+  }),
+  new InputBox({
     name: 'status',
     type: 'select',
     placeholder: '选择状态',
@@ -154,7 +154,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
         label: '部分完成'
       }
     ]
-  }
+  })
 ])
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])

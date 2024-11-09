@@ -3,8 +3,8 @@ import BaseCloseablePage from './BaseCloseablePage.vue'
 import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
-import Thead from '../../model/util/Thead'
-import InputBox from '../../model/util/InputBox'
+import { Thead } from '../../model/util/Thead'
+import { InputBox } from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { ElMessage, ElTag } from 'element-plus'
@@ -46,7 +46,7 @@ const taskManageSearchTable = ref()
 const taskDialogRef = ref()
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
-  {
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -57,8 +57,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'left',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -68,8 +68,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -80,8 +80,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -91,8 +91,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'custom',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -143,25 +143,25 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
         elTag
       )
     }
-  }
+  })
 ])
 // 数据主键
 const keyOfData: string = 'id'
 // 主搜索栏的inputBox
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  {
+  new InputBox({
     name: 'taskName',
     type: 'text',
     placeholder: '输入任务的名称',
     inputSpan: 13
-  },
-  {
+  }),
+  new InputBox({
     name: 'siteDomain',
     type: 'text',
     placeholder: '输入站点的名称查询',
     inputSpan: 4
-  },
-  {
+  }),
+  new InputBox({
     name: 'status',
     type: 'select',
     placeholder: '选择状态',
@@ -188,7 +188,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
         label: '部分完成'
       }
     ]
-  }
+  })
 ])
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])

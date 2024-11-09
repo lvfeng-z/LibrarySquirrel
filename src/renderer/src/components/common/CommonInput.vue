@@ -1,11 +1,6 @@
 <script setup lang="ts">
-import CommonInputConfig from '../../model/util/CommonInputConfig'
+import { CommonInputConfig } from '../../model/util/CommonInputConfig'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
-import ApiUtil from '../../utils/ApiUtil'
-import SelectItem from '../../model/util/SelectItem'
-import lodash from 'lodash'
-import PageModel from '../../model/util/PageModel.ts'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
 import { getNode } from '../../utils/TreeUtil'
@@ -25,11 +20,8 @@ onBeforeMount(async () => {
   }
 
   // 请求接口给selectData赋值
-  if (props.config.useApi && props.config.api !== undefined) {
+  if (props.config.useLoad) {
     requestSelectDataApi()
-  } else if (props.config.selectData !== undefined) {
-    innerSelectData.value = lodash.cloneDeep(props.config.selectData) as SelectItem[]
-    innerTreeSelectData.value = lodash.cloneDeep(props.config.selectData) as TreeSelectNode[]
   }
 })
 
@@ -41,8 +33,6 @@ const emits = defineEmits(['dataChanged'])
 
 // 变量
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
-const innerSelectData: Ref<UnwrapRef<SelectItem[]>> = ref([])
-const innerTreeSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 
 // 方法
 // 获取要显示的内容
@@ -71,11 +61,14 @@ function getSpanValue() {
       return date + hour + minute + second
     }
   } else if (props.config.type === 'select') {
-    const target = innerSelectData.value.find((selectData) => selectData.value === data.value)
+    let target
+    if (notNullish(props.config.selectData)) {
+      target = props.config.selectData.find((selectData) => selectData.value === data.value)
+    }
     return isNullish(target) ? '-' : target.value
   } else if (props.config.type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
-    tempRoot.children = innerTreeSelectData.value
+    tempRoot.children = props.config.selectData as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
     const node = getNode(tempRoot, data.value as number)
     return isNullish(node) ? '-' : node.label
@@ -101,37 +94,8 @@ function handleDataChange() {
 }
 // 请求select数据接口
 async function requestSelectDataApi(queryStr?: string) {
-  if (props.config.useApi && props.config.api !== undefined) {
-    if (props.config.pagingApi) {
-      let page
-      if (queryStr !== undefined && queryStr !== '') {
-        page = new PageModel()
-        page.query = { keyword: queryStr }
-      }
-      const response = await props.config.api(page)
-      if (ApiUtil.apiResponseCheck(response)) {
-        const datalist = (ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>)
-          .data
-        if (props.config.type === 'select') {
-          innerSelectData.value = datalist === undefined ? [] : (datalist as SelectItem[])
-        } else {
-          innerTreeSelectData.value = datalist === undefined ? [] : (datalist as TreeSelectNode[])
-        }
-      }
-    } else {
-      let query
-      if (queryStr !== undefined && queryStr !== '') {
-        query = { keyword: queryStr }
-      }
-      const response = await props.config.api(query)
-      if (ApiUtil.apiResponseCheck(response)) {
-        if (props.config.type === 'select') {
-          innerSelectData.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
-        } else {
-          innerTreeSelectData.value = ApiUtil.apiResponseGetData(response) as TreeSelectNode[]
-        }
-      }
-    }
+  if (props.config.useLoad && props.config.load !== undefined) {
+    props.config.refreshSelectData(queryStr)
   } else {
     console.debug('CommonInput在未启用接口或者未配置接口的情况下请求了接口')
   }
@@ -189,13 +153,13 @@ async function requestSelectDataApi(queryStr?: string) {
       v-model="data"
       :disabled="disabled"
       :placeholder="props.config.placeholder"
-      :remote="props.config.useApi"
+      :remote="props.config.useLoad"
       :remote-method="(query: string) => requestSelectDataApi(query)"
-      :filterable="props.config.useApi"
+      :filterable="props.config.useLoad"
       clearable
     >
       <el-option
-        v-for="item in innerSelectData"
+        v-for="item in props.config.selectData"
         :key="item.value"
         :value="item.value"
         :label="item.label"
@@ -206,11 +170,11 @@ async function requestSelectDataApi(queryStr?: string) {
       v-model="data"
       :check-strictly="true"
       :disabled="disabled"
-      :data="innerTreeSelectData"
+      :data="props.config.selectData"
       :placeholder="props.config.placeholder"
-      :remote="props.config.useApi"
+      :remote="props.config.useLoad"
       :remote-method="(query: string) => requestSelectDataApi(query)"
-      :filterable="props.config.useApi"
+      :filterable="props.config.useLoad"
       clearable
       @change="handleDataChange"
     ></el-tree-select>

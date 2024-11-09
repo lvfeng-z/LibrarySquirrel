@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { onBeforeMount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
-import Thead from '../../model/util/Thead'
+import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import CommonInput from './CommentInput/CommonInput.vue'
-import ApiUtil from '../../utils/ApiUtil'
-import lodash from 'lodash'
-import { isNullish } from '../../utils/CommonUtil'
+import { notNullish } from '../../utils/CommonUtil'
 import { TreeNode } from 'element-plus'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
@@ -46,29 +44,15 @@ const data = defineModel<unknown[]>('tableData', { default: [] })
 const dataTable = ref() // el-table的组件实例
 const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
 const currentFactor: Ref<UnwrapRef<object>> = ref({})
-const innerThead: Ref<UnwrapRef<Thead[]>> = ref([])
 
 // 方法
 // 初始化表头
 async function initializeThead() {
   for (const item of props.thead) {
-    const tempThead = lodash.cloneDeep(item) as Thead
-    // 阻止CommonInput组件请求接口
-    tempThead.useApi = false
-    // 请求接口并将响应值赋值给selectData，同时忽略接口报错
-    if (item.useApi && item.api !== undefined) {
-      const response = await item.api()
-      if (ApiUtil.apiResponseCheck(response)) {
-        tempThead.selectData = ApiUtil.apiResponseGetData(response) as []
-      }
+    // 给selectData赋值
+    if (notNullish(item.load)) {
+      item.refreshSelectData()
     }
-
-    // 未设置表头tag样式，默认为info
-    if (isNullish(tempThead.headerTagType)) {
-      tempThead.headerTagType = 'info'
-    }
-
-    innerThead.value.push(tempThead)
   }
 }
 // 处理选中事件
@@ -172,7 +156,7 @@ defineExpose({
       </template>
     </el-table-column>
     <el-table-column v-if="props.treeData" width="25" />
-    <template v-for="(item, index) in innerThead">
+    <template v-for="(item, index) in props.thead">
       <template v-if="!item.hide">
         <el-table-column
           :key="index"

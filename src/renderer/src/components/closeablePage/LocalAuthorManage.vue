@@ -8,12 +8,18 @@ import lodash from 'lodash'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
-import Thead from '../../model/util/Thead'
-import InputBox from '../../model/util/InputBox'
+import { Thead } from '../../model/util/Thead'
+import { InputBox } from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import LocalAuthor from '../../model/main/LocalAuthor'
+import PageModel from '@renderer/model/util/PageModel.ts'
+import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
+import Site from '@renderer/model/main/Site.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 
 onMounted(() => {
   localAuthorSearchTable.value.handleSearchButtonClicked()
@@ -55,7 +61,7 @@ const operationButton: OperationItem[] = [
 ]
 // 本地作者SearchTable的表头
 const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
-  {
+  new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
@@ -66,8 +72,8 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     name: 'updateTime',
@@ -78,8 +84,8 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     overHide: true
-  },
-  {
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     name: 'createTime',
@@ -90,58 +96,72 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     overHide: true
-  }
+  })
 ])
 // 本地作者SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'localAuthorName',
     type: 'text',
     placeholder: '输入本地作者的名称',
     inputSpan: 18
-  }
+  })
 ])
 // 本地作者SearchTable的dropDownInputBoxes
 const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  {
+  new InputBox({
     name: 'id',
     label: 'id',
     type: 'text',
     placeholder: '内部id'
-  }
+  })
 ])
 // 本地作者弹窗的mode
 const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点作者ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'keyword',
     type: 'text',
     placeholder: '输入站点作者名称',
     inputSpan: 12
-  },
-  {
+  }),
+  new InputBox({
     name: 'siteId',
     type: 'select',
     placeholder: '选择站点',
-    useApi: true,
-    api: apis.siteQuerySelectItemPage,
-    pagingApi: true,
+    useLoad: true,
+    load: requestSiteQuerySelectItemPage,
     inputSpan: 9
-  }
+  })
 ])
 // 站点作者ExchangeBox的DropDownInputBoxes
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  {
+  new InputBox({
     name: 'keyword',
     type: 'text',
     placeholder: '输入id',
     label: 'id',
     inputSpan: 22
-  }
+  })
 ])
 
 // 方法
+// 请求站点分页列表的函数
+async function requestSiteQuerySelectItemPage(query: string) {
+  let page: PageModel<SiteQueryDTO, Site>
+  if (StringUtil.isBlank(query)) {
+    page = new PageModel()
+    page.query = { keyword: query }
+  }
+  const response = await apis.siteQuerySelectItemPage(query)
+  if (ApiUtil.apiResponseCheck(response)) {
+    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+    return page.data as TreeSelectNode[]
+  } else {
+    return []
+  }
+}
 // 处理本地作者新增按钮点击事件
 async function handleCreateButtonClicked() {
   localAuthorDialogMode.value = DialogMode.NEW

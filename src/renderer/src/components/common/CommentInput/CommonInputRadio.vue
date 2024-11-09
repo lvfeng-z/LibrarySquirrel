@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CommonInputConfig from '@renderer/model/util/CommonInputConfig.ts'
+import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 
 // props
 const props = defineProps<{
@@ -8,7 +8,7 @@ const props = defineProps<{
 }>()
 
 // model
-const data = defineModel('data', { default: undefined, required: false })
+// const data = defineModel('data', { default: undefined, required: false })
 </script>
 <template>
   <el-radio-group v-if="props.config.type === 'radio'"></el-radio-group>

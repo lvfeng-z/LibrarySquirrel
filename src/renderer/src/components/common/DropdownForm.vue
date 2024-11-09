@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import InputBox from '../../model/util/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import { onBeforeMount, ref, Ref, UnwrapRef, warn } from 'vue'
 import ScrollTextBox from './ScrollTextBox.vue'
-import CommonInput from './CommonInput.vue'
+import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
 
 // props

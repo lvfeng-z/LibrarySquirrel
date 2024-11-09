@@ -1,9 +1,9 @@
 import SelectItem from './SelectItem.ts'
-import ApiResponse from './ApiResponse.ts'
 import { VNode } from 'vue'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import { notNullish } from '@renderer/utils/CommonUtil.ts'
 
-interface CommonInputConfig {
+export class CommonInputConfig implements ICommonInputConfig {
   type:
     | 'default'
     | 'text'
@@ -19,12 +19,49 @@ interface CommonInputConfig {
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
   dblclickEnable?: boolean // 是否可以双击启用
-  selectData?: SelectItem[] | TreeSelectNode[] // 选择框数据
-  useApi?: boolean // 是否请求接口获得选择框数据
-  api?: (params?: unknown) => Promise<ApiResponse> // 选择框接口
-  pagingApi?: boolean // 接口是否分页
+  selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
+  useLoad?: boolean // 是否load函数获得选择列表数据
+  load?: (query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]> // 给selectData赋值的函数
   placeholder?: string // 占位符
-  render?: (data?) => VNode | undefined
+  render?: (data?) => VNode
+
+  constructor(config: ICommonInputConfig) {
+    this.type = config.type
+    this.defaultDisabled = config.defaultDisabled
+    this.dblclickEnable = config.dblclickEnable
+    this.selectData = config.selectData
+    this.useLoad = config.useLoad
+    this.load = config.load
+    this.placeholder = config.placeholder
+    this.render = config.render
+  }
+
+  public refreshSelectData(query?: unknown) {
+    if (notNullish(this.load)) {
+      this.load(query).then((data) => (this.selectData = data))
+    }
+  }
 }
 
-export default CommonInputConfig
+export interface ICommonInputConfig {
+  type:
+    | 'default'
+    | 'text'
+    | 'date'
+    | 'datetime'
+    | 'number'
+    | 'textarea'
+    | 'checkbox'
+    | 'radio'
+    | 'select'
+    | 'treeSelect'
+    | 'switch'
+    | 'custom' // 类型
+  defaultDisabled?: boolean // 默认是否开启
+  dblclickEnable?: boolean // 是否可以双击启用
+  selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
+  useLoad?: boolean // 是否load函数获得选择列表数据
+  load?: (c) => Promise<SelectItem[] | TreeSelectNode[]> // 给selectData赋值的函数
+  placeholder?: string // 占位符
+  render?: (data?) => VNode
+}

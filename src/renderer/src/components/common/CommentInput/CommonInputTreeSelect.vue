@@ -1,23 +1,11 @@
 <script setup lang="ts">
-import CommonInputConfig from '@renderer/model/util/CommonInputConfig.ts'
-import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
-import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
-import lodash from 'lodash'
+import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 
 // props
 const props = defineProps<{
   config: CommonInputConfig
   handleDataChange: () => void
 }>()
-
-// onBeforeMount
-onBeforeMount(() => {
-  // 给selectData赋值
-  innerTreeSelectData.value = lodash.cloneDeep(props.config.selectData) as TreeSelectNode[]
-})
-
-// 变量
-const innerTreeSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 
 // model
 const data = defineModel('data', { default: undefined, required: false })
@@ -26,10 +14,11 @@ const data = defineModel('data', { default: undefined, required: false })
   <el-tree-select
     v-model="data"
     :check-strictly="true"
-    :data="innerTreeSelectData"
+    :data="props.config.selectData"
     :placeholder="props.config.placeholder"
-    :remote="props.config.useApi"
-    :filterable="props.config.useApi"
+    :remote="props.config.useLoad"
+    :remote-method="(query: unknown) => props.config.refreshSelectData(query)"
+    :filterable="props.config.useLoad"
     clearable
     @change="handleDataChange"
   ></el-tree-select>

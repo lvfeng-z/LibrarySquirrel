@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CommonInputConfig from '@renderer/model/util/CommonInputConfig.ts'
+import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 
 // props
 const props = defineProps<{

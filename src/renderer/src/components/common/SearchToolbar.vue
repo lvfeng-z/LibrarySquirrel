@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
-import InputBox from '../../model/util/InputBox'
+import { InputBox } from '../../model/util/InputBox'
 import DropdownForm from './DropdownForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
-import CommonInput from './CommonInput.vue'
+import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
 import { notNullish } from '@renderer/utils/CommonUtil.ts'
 
@@ -51,8 +51,6 @@ function calculateSpan() {
       let boxSpan = 0
       // 不更改props属性
       const tempInputBox: InputBox = lodash.cloneDeep(inputBox)
-      // 补充由于JSON转换丢失的函数类型的属性api
-      tempInputBox.api = inputBox.api
 
       // 未设置是否展示标题，默认为false，labelSpan设为0
       if (tempInputBox.showLabel == undefined) {
