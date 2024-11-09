@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import BaseFormDialog from '../common/BaseFormDialog.vue'
 import DialogMode from '../../model/util/DialogMode'
 import { h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
 import TaskDTO from '../../model/main/dto/TaskDTO'
@@ -14,6 +13,7 @@ import { getNode } from '@renderer/utils/TreeUtil.ts'
 import { throttle } from 'lodash'
 import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
+import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 
 // props
 const props = defineProps<{
@@ -320,7 +320,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <base-form-dialog
+  <form-dialog
     ref="baseDialog"
     v-model:form-data="formData"
     v-model:state="state"
@@ -393,7 +393,7 @@ async function deleteTask(ids: number[]) {
         </template>
       </search-table>
     </template>
-  </base-form-dialog>
+  </form-dialog>
 </template>
 
 <style scoped></style>

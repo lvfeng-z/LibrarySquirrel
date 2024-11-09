@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import BaseFormDialog from '../common/BaseFormDialog.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import LocalAuthor from '../../model/main/LocalAuthor'
+import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 
 // props
 const props = withDefaults(
@@ -90,9 +90,9 @@ function clearFormData() {
   }
 }
 </script>
-<!--2024-05-07 el-date-picker组件会触发警告：[Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive.-->
+
 <template>
-  <BaseFormDialog
+  <form-dialog
     v-model:form-data="formData"
     v-model:state="state"
     :mode="props.mode"
@@ -131,7 +131,7 @@ function clearFormData() {
         </el-col>
       </el-row>
     </template>
-  </BaseFormDialog>
+  </form-dialog>
 </template>
 
 <style scoped></style>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { InputBox } from '../../model/util/InputBox'
-import ScrollTextBox from './ScrollTextBox.vue'
+import { InputBox } from '../../model/util/InputBox.ts'
+import ScrollTextBox from '../common/ScrollTextBox.vue'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
-import BaseFormDialog from './BaseFormDialog.vue'
-import DialogMode from '../../model/util/DialogMode'
+import DialogMode from '../../model/util/DialogMode.ts'
 import lodash from 'lodash'
+import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 // props
 const props = defineProps<{
   mode: DialogMode
@@ -73,7 +73,7 @@ function calculateSpan() {
 </script>
 
 <template>
-  <BaseFormDialog :initial-form-data="formData" :mode="props.mode">
+  <form-dialog :initial-form-data="formData" :mode="props.mode">
     <template #default>
       <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
         <el-row class="dialog-form-row">
@@ -96,7 +96,7 @@ function calculateSpan() {
         </el-row>
       </template>
     </template>
-  </BaseFormDialog>
+  </form-dialog>
 </template>
 
 <style scoped>

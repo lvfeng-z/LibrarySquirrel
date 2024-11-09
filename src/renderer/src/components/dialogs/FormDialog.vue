@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
-import DialogMode from '../../model/util/DialogMode'
+import { computed, nextTick, Ref, ref, UnwrapRef } from 'vue'
+import DialogMode from '@renderer/model/util/DialogMode.ts'
 
 // props
 const props = defineProps<{
@@ -18,25 +18,6 @@ const state = defineModel<boolean>('state', {
   default: () => false
 })
 
-// onMounted
-onMounted(() => {
-  switch (props.mode) {
-    case DialogMode.VIEW:
-      saveButtonState.value = false
-      formDisabled.value = true
-      break
-    case DialogMode.EDIT:
-      saveButtonState.value = true
-      formDisabled.value = false
-      break
-    case DialogMode.NEW:
-      saveButtonState.value = true
-      formDisabled.value = false
-      break
-    default:
-  }
-})
-
 // 事件
 const emits = defineEmits(['saveButtonClicked', 'cancelButtonClicked'])
 
@@ -46,9 +27,13 @@ const scrollbarRef = ref()
 // el-scrollbar的高度
 const scrollContentHeight: Ref<UnwrapRef<number>> = ref(0)
 // 表单总开关
-const formDisabled = ref(true)
+const formDisabled = computed(() => {
+  return props.mode === DialogMode.VIEW
+})
 // 保存按钮开关
-const saveButtonState = ref(false)
+const saveButtonState = computed(() => {
+  return props.mode !== DialogMode.VIEW
+})
 
 // 方法
 // 处理保存按钮点击事件
