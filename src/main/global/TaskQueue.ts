@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
 import { isNullish, notNullish } from '../util/CommonUtil.js'
 import SettingsService from '../service/SettingsService.js'
-import { Transform, TransformCallback } from 'node:stream'
+import { Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import TaskDTO from '../model/dto/TaskDTO.js'
@@ -60,6 +60,12 @@ export class TaskQueue {
    */
   private taskResourceStream: TaskResourceStream
 
+  /**
+   * 任务保存结果处理流
+   * @private
+   */
+  private taskSaveResultHandleStream: TaskSaveResultHandleStream
+
   constructor() {
     this.operationQueue = []
     this.taskMap = new Map()
@@ -68,7 +74,7 @@ export class TaskQueue {
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
     this.taskInfoStream = new TaskInfoStream(this.pluginLoader)
     this.taskResourceStream = new TaskResourceStream(this.pluginLoader)
-    this.taskInfoStream.pipe(this.taskResourceStream)
+    this.taskSaveResultHandleStream = new TaskSaveResultHandleStream()
     this.initializeStream()
   }
 
@@ -108,17 +114,17 @@ export class TaskQueue {
         this.operationQueue.push(operation)
         this.taskService.taskWaiting(operation.taskId)
         // 处理新任务
-        this.taskInfoStream.addIterators([taskRunningObj])
+        this.taskInfoStream.addTask([taskRunningObj])
       }
     } else if (operation.operation === TaskOperation.PAUSE) {
       this.taskService.getById(operation.taskId).then((task) => {
         assertNotNullish(task, 'TaskQueue', `任务id${operation.taskId}不可用，无法暂停此任务`)
-        this.pauseTask(task)
+        this.pauseTask([task])
       })
     } else if (operation.operation === TaskOperation.STOP) {
       this.taskService.getById(operation.taskId).then((task) => {
         assertNotNullish(task, 'TaskQueue', `任务id${operation.taskId}不可用，无法停止此任务`)
-        this.stopTask(task)
+        this.stopTask([task])
       })
     }
   }
@@ -171,86 +177,103 @@ export class TaskQueue {
       this.setChildrenOfParent(taskRunningObjs)
 
       if (TaskOperation.START === taskOperation) {
-        this.taskInfoStream.addIterators(taskRunningObjs)
+        this.taskInfoStream.addTask(taskRunningObjs)
       } else {
-        this.taskResourceStream.addIterators(taskRunningObjs)
+        this.taskResourceStream.addTask(taskRunningObjs)
       }
     } else if (taskOperation === TaskOperation.PAUSE) {
-      const parentIdWaitingRefresh: number[] = []
-      tasks.forEach((task) => {
-        this.pauseTask(task)
-        if (notNullish(task.pid)) {
-          parentIdWaitingRefresh.push()
-        }
-      })
+      this.pauseTask(tasks)
+      const parentIdWaitingRefresh: number[] = tasks.map((task) => task.pid).filter(notNullish)
       this.refreshParentStatus(parentIdWaitingRefresh)
     } else if (taskOperation === TaskOperation.STOP) {
-      const parentIdWaitingRefresh: number[] = []
-      tasks.forEach((task) => {
-        this.stopTask(task)
-        if (notNullish(task.pid)) {
-          parentIdWaitingRefresh.push()
-        }
-      })
+      this.stopTask(tasks)
+      const parentIdWaitingRefresh: number[] = tasks.map((task) => task.pid).filter(notNullish)
       this.refreshParentStatus(parentIdWaitingRefresh)
     }
   }
 
-  // todo 暂停大量任务时也会卡住
   /**
    * 暂停任务
-   * @param task 要停暂停的任务
+   * @param tasks 要停暂停的任务
    * @private
    */
-  private pauseTask(task: Task) {
-    assertNotNullish(task.id, 'TaskQueue', `暂停任务时，任务id意外为空`)
-    const taskId = task.id
-    const taskRunningObj = this.taskMap.get(taskId)
-    assertNotNullish(taskRunningObj, 'TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
-    const operationObj = taskRunningObj.taskOperationObj
-    const operation = operationObj.operation
-    if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
-      operationObj.canceled = true
-      this.removeFromQueue(operationObj)
-      if (operationObj.processing) {
-        this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
-      } else {
-        operationObj.done = true
+  private pauseTask(tasks: Task[]) {
+    const taskSaveResultList: TaskResourceSaveResult[] = []
+    for (const task of tasks) {
+      if (isNullish(task.id)) {
+        LogUtil.error('TaskQueue', `暂停任务时，任务id意外为空`)
+        continue
       }
-      taskRunningObj.status = TaskStatusEnum.PAUSE
-      this.taskService.taskPaused(taskId)
-    } else {
-      const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
-      LogUtil.error('TaskQueue', msg)
-      throw new Error(msg)
+      const taskId = task.id
+      const taskRunningObj = this.taskMap.get(taskId)
+      if (isNullish(taskRunningObj)) {
+        LogUtil.error('TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
+        continue
+      }
+      const operationObj = taskRunningObj.taskOperationObj
+      const operation = operationObj.operation
+      if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
+        // canceled设为true，尚未开始的任务会暂停
+        operationObj.canceled = true
+        this.removeFromQueue(operationObj)
+        // 对于已开始的任务，调用taskService的pauseTask进行暂停
+        if (operationObj.processing) {
+          this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+        } else {
+          operationObj.done = true
+          taskSaveResultList.push({
+            task: task,
+            taskRunningObj: taskRunningObj,
+            saveResult: TaskStatusEnum.PAUSE
+          })
+        }
+        taskRunningObj.status = TaskStatusEnum.PAUSE
+      } else {
+        const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
+        LogUtil.error('TaskQueue', msg)
+        throw new Error(msg)
+      }
     }
+    this.taskSaveResultHandleStream.addTask(taskSaveResultList)
   }
 
   /**
    * 停止任务
-   * @param task 要停止的任务
+   * @param tasks 要停止的任务
    * @private
    */
-  private stopTask(task: Task) {
-    assertNotNullish(task.id, 'TaskQueue', `暂停任务时，任务id意外为空`)
-    const taskId = task.id
-    const taskRunningObj = this.taskMap.get(taskId)
-    assertNotNullish(taskRunningObj, 'TaskQueue', `无法停止任务${taskId}，队列中没有这个任务`)
-    const operationObj = taskRunningObj.taskOperationObj
-    const operation = operationObj.operation
-    if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
-      operationObj.canceled = true
-      this.removeFromQueue(operationObj)
-      if (operationObj.processing) {
-        this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+  private stopTask(tasks: Task[]) {
+    const taskSaveResultList: TaskResourceSaveResult[] = []
+    for (const task of tasks) {
+      assertNotNullish(task.id, 'TaskQueue', `暂停任务时，任务id意外为空`)
+      const taskId = task.id
+      const taskRunningObj = this.taskMap.get(taskId)
+      assertNotNullish(taskRunningObj, 'TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
+      const operationObj = taskRunningObj.taskOperationObj
+      const operation = operationObj.operation
+      if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
+        // canceled设为true，尚未开始的任务会暂停
+        operationObj.canceled = true
+        this.removeFromQueue(operationObj)
+        // 对于已开始的任务，调用taskService的pauseTask进行暂停
+        if (operationObj.processing) {
+          this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+        } else {
+          operationObj.done = true
+        }
+        taskRunningObj.status = TaskStatusEnum.PAUSE
+        taskSaveResultList.push({
+          task: task,
+          taskRunningObj: taskRunningObj,
+          saveResult: TaskStatusEnum.PAUSE
+        })
+      } else {
+        const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
+        LogUtil.error('TaskQueue', msg)
+        throw new Error(msg)
       }
-      taskRunningObj.status = TaskStatusEnum.PAUSE
-      this.taskService.taskPaused(taskId)
-    } else {
-      const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
-      LogUtil.error('TaskQueue', msg)
-      throw new Error(msg)
     }
+    this.taskSaveResultHandleStream.addTask(taskSaveResultList)
   }
 
   /**
@@ -327,11 +350,7 @@ export class TaskQueue {
    */
   private initializeStream() {
     const handleError = (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
-      assertNotNullish(
-        taskRunningObj,
-        'TaskQueue',
-        `处理任务时出错，taskId: ${task.id}，error: ${error.message}`
-      )
+      LogUtil.error('TaskQueue', `处理任务时出错，taskId: ${task.id}，error: ${error.message}`)
       taskRunningObj.status = TaskStatusEnum.FAILED
       this.taskService.taskFailed(taskRunningObj.taskId).then(() => {
         this.removeFromQueue(taskRunningObj.taskOperationObj)
@@ -348,36 +367,25 @@ export class TaskQueue {
         parentRunningObj.status = TaskStatusEnum.PROCESSING
       }
     })
-    this.taskResourceStream.on(
-      'data',
-      (data: { task: TaskDTO; taskRunningObj: TaskRunningObj; saveResult: TaskStatusEnum }) => {
-        const saveResult = data.saveResult
-        const taskRunningObj = data.taskRunningObj
-        const taskId = taskRunningObj.taskId
-        taskRunningObj.status = saveResult
-        taskRunningObj.taskOperationObj.done = true
-
-        this.removeFromQueue(taskRunningObj.taskOperationObj)
-        if (TaskStatusEnum.FINISHED === saveResult) {
-          this.taskService
-            .taskFinished(taskId)
-            .then(() => this.removeFromMap(taskRunningObj.taskId))
-        } else if (TaskStatusEnum.PAUSE === saveResult) {
-          this.taskService.taskPaused(taskId)
-        } else if (TaskStatusEnum.FAILED === saveResult) {
-          this.taskService.taskFailed(taskId).then(() => this.removeFromMap(taskRunningObj.taskId))
-        } else {
-          LogUtil.error(
-            'TaskQueue',
-            `任务${taskId}下载流程结束时返回了异常的状态，status: ${saveResult}`
-          )
-          this.taskService.taskFailed(taskId).then(() => this.removeFromMap(taskRunningObj.taskId))
-        }
-        this.refreshParentStatus([taskRunningObj.parentId])
+    this.taskResourceStream.on('data', (data: TaskResourceSaveResult) => {
+      const saveResult = data.saveResult
+      const taskRunningObj = data.taskRunningObj
+      taskRunningObj.status = saveResult
+      taskRunningObj.taskOperationObj.done = true
+      this.removeFromQueue(taskRunningObj.taskOperationObj)
+      if (saveResult === TaskStatusEnum.FINISHED) {
+        this.removeFromMap(taskRunningObj.taskId)
       }
-    )
+      this.refreshParentStatus([taskRunningObj.parentId])
+    })
     this.taskResourceStream.on('error', handleError)
     this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
+    // 保存结果处理流
+    this.taskSaveResultHandleStream.on('error', handleError)
+
+    // 连接
+    this.taskInfoStream.pipe(this.taskResourceStream)
+    this.taskResourceStream.pipe(this.taskSaveResultHandleStream)
   }
 
   /**
@@ -496,9 +504,19 @@ export class TaskQueue {
 }
 
 /**
+ * 任务操作
+ */
+export enum TaskOperation {
+  START = 1,
+  PAUSE = 2,
+  RESUME = 3,
+  STOP = 4
+}
+
+/**
  * 任务操作对象
  */
-export class TaskOperationObj {
+class TaskOperationObj {
   /**
    * 任务id
    */
@@ -529,6 +547,9 @@ export class TaskOperationObj {
   }
 }
 
+/**
+ * 任务状态
+ */
 class TaskStatus {
   /**
    * 任务id
@@ -548,7 +569,7 @@ class TaskStatus {
 /**
  * 任务运行对象
  */
-export class TaskRunningObj extends TaskStatus {
+class TaskRunningObj extends TaskStatus {
   /**
    * 任务操作对象
    */
@@ -579,7 +600,7 @@ export class TaskRunningObj extends TaskStatus {
 /**
  * 父任务运行对象
  */
-export class ParentRunningObj extends TaskStatus {
+class ParentRunningObj extends TaskStatus {
   /**
    * 子任务
    */
@@ -589,16 +610,6 @@ export class ParentRunningObj extends TaskStatus {
     super(taskId, status)
     this.children = new Map<number, TaskRunningObj>()
   }
-}
-
-/**
- * 任务操作
- */
-export enum TaskOperation {
-  START = 1,
-  PAUSE = 2,
-  RESUME = 3,
-  STOP = 4
 }
 
 /**
@@ -620,7 +631,15 @@ class TaskInfoStream extends Transform {
    * @private
    */
   private readonly iterators: TaskRunningObj[]
-  private drain: boolean
+  /**
+   * 是否正在循环写入
+   * @private
+   */
+  private writeable: boolean
+  /**
+   * 缓冲区是否可写入
+   * @private
+   */
   private looping: boolean
 
   constructor(pluginLoader: PluginLoader<TaskHandler>) {
@@ -628,10 +647,10 @@ class TaskInfoStream extends Transform {
     this.taskService = new TaskService()
     this.pluginLoader = pluginLoader
     this.iterators = []
-    this.drain = true
+    this.writeable = true
     this.looping = false
     this.on('drain', () => {
-      this.drain = true
+      this.writeable = true
       this.loopSaveInfo()
     })
   }
@@ -653,34 +672,41 @@ class TaskInfoStream extends Transform {
       callback()
     }
 
-    this.taskService.getById(chunk.taskRunningObj.taskId).then(async (task) => {
-      // 开始保存任务信息
-      assertNotNullish(task, 'TaskQueue', `下载任务${chunk.taskRunningObj.taskId}失败，任务id无效`)
-      try {
-        this.taskService
-          .saveWorksInfo(task, this.pluginLoader)
-          .then((result) => {
-            if (result) {
-              this.push(chunk)
-              callback()
-            } else {
-              handleError(undefined, task)
-            }
-          })
-          .catch((error) => {
-            handleError(error, task)
-          })
-      } catch (error) {
-        handleError(error as Error)
-      }
-    })
+    this.taskService
+      .getById(chunk.taskRunningObj.taskId)
+      .then(async (task) => {
+        // 开始保存任务信息
+        assertNotNullish(
+          task,
+          'TaskQueue',
+          `下载任务${chunk.taskRunningObj.taskId}失败，任务id无效`
+        )
+        try {
+          this.taskService
+            .saveWorksInfo(task, this.pluginLoader)
+            .then((result) => {
+              if (result) {
+                this.push(chunk)
+                callback()
+              } else {
+                handleError(undefined, task)
+              }
+            })
+            .catch((error) => {
+              handleError(error, task)
+            })
+        } catch (error) {
+          handleError(error as Error)
+        }
+      })
+      .catch((error) => handleError(error))
   }
 
   /**
-   * 添加任务操作迭代器
+   * 添加任务信息保存操作
    * @param tasks
    */
-  public addIterators(tasks: TaskRunningObj[]) {
+  public addTask(tasks: TaskRunningObj[]) {
     this.iterators.push(...tasks)
     this.loopSaveInfo()
   }
@@ -692,11 +718,11 @@ class TaskInfoStream extends Transform {
   private loopSaveInfo() {
     if (!this.looping) {
       this.looping = true
-      while (this.drain) {
-        this.drain = this.processNext()
+      while (this.writeable) {
+        this.writeable = this.processNext()
       }
       this.looping = false
-      this.drain = true
+      this.writeable = true
     }
   }
 
@@ -747,20 +773,20 @@ class TaskResourceStream extends Transform {
    */
   private limited: boolean
   /**
-   * 任务操作迭代器列表
+   * 任务运行对象列表
    * @private
    */
-  private readonly iterators: TaskRunningObj[]
+  private readonly runningObjs: TaskRunningObj[]
   /**
-   * 是否正在循环
+   * 是否正在循环写入
+   * @private
+   */
+  private writeable: boolean
+  /**
+   * 缓冲区是否可写入
    * @private
    */
   private looping: boolean
-  /**
-   * 是否空闲
-   * @private
-   */
-  private drain: boolean
 
   constructor(pluginLoader: PluginLoader<TaskHandler>) {
     super({ objectMode: true, highWaterMark: 64 }) // 设置为对象模式
@@ -772,11 +798,11 @@ class TaskResourceStream extends Transform {
       settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
     this.processing = 0
     this.limited = false
-    this.iterators = []
+    this.runningObjs = []
     this.looping = false
-    this.drain = true
+    this.writeable = true
     this.on('drain', () => {
-      this.drain = true
+      this.writeable = true
       this.loopSaveResource()
     })
   }
@@ -839,11 +865,11 @@ class TaskResourceStream extends Transform {
   }
 
   /**
-   * 添加任务操作迭代器
+   * 添加资源保存操作
    * @param tasks
    */
-  public addIterators(tasks: TaskRunningObj[]) {
-    this.iterators.push(...tasks)
+  public addTask(tasks: TaskRunningObj[]) {
+    this.runningObjs.push(...tasks)
     this.loopSaveResource()
   }
 
@@ -854,11 +880,11 @@ class TaskResourceStream extends Transform {
   private loopSaveResource() {
     if (!this.looping) {
       this.looping = true
-      while (this.drain) {
-        this.drain = this.processNext()
+      while (this.writeable) {
+        this.writeable = this.processNext()
       }
       this.looping = false
-      this.drain = true
+      this.writeable = true
     }
   }
 
@@ -867,12 +893,128 @@ class TaskResourceStream extends Transform {
    * @private
    */
   private processNext(): boolean {
-    const next = this.iterators.shift()
+    const next = this.runningObjs.shift()
     if (notNullish(next)) {
       return this.write({
         taskRunningObj: next,
         resumeMode: next.taskOperationObj.operation === TaskOperation.RESUME
       })
+    } else {
+      return false
+    }
+  }
+}
+
+/**
+ * 任务资源保存结果对象
+ */
+interface TaskResourceSaveResult {
+  task?: Task
+  taskRunningObj: TaskRunningObj
+  saveResult: TaskStatusEnum
+}
+
+/**
+ * 任务保存结果处理流
+ */
+class TaskSaveResultHandleStream extends Writable {
+  /**
+   * 任务服务
+   * @private
+   */
+  private taskService: TaskService
+  /**
+   * 资源保存结果列表
+   * @private
+   */
+  private saveResultList: TaskResourceSaveResult[]
+  /**
+   * 是否正在循环写入
+   * @private
+   */
+  private looping: boolean
+  /**
+   * 缓冲区是否可写入
+   * @private
+   */
+  private writeable: boolean
+  /**
+   * 批量更新的缓冲区
+   * @private
+   */
+  private readonly batchUpdateBuffer: Task[]
+
+  constructor() {
+    super({ objectMode: true, highWaterMark: 10 })
+    this.taskService = new TaskService()
+    this.saveResultList = []
+    this.looping = false
+    this.writeable = true
+    this.batchUpdateBuffer = []
+    this.on('drain', () => {
+      this.writeable = true
+      this.loopSaveResult()
+    })
+  }
+
+  async _write(
+    chunk: TaskResourceSaveResult[],
+    _encoding: string,
+    callback: TransformCallback
+  ): Promise<void> {
+    try {
+      const tempTasks = chunk.map((saveResult) => {
+        const tempTask = new Task()
+        tempTask.id = saveResult.taskRunningObj.taskId
+        tempTask.status = saveResult.saveResult
+        return tempTask
+      })
+      this.batchUpdateBuffer.push(...tempTasks)
+      if (this.batchUpdateBuffer.length >= 100 || !this.writeable) {
+        this.taskService.updateBatchById(
+          this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
+        )
+      }
+    } catch (error) {
+      LogUtil.error('TaskQueue', error)
+    } finally {
+      callback()
+    }
+  }
+
+  /**
+   * 添加处理结果
+   * @param tasks
+   */
+  public addTask(tasks: TaskResourceSaveResult[]) {
+    this.saveResultList.push(...tasks)
+    this.loopSaveResult()
+  }
+
+  /**
+   * 开始处理任务保存结果
+   * @private
+   */
+  private loopSaveResult() {
+    if (!this.looping) {
+      this.looping = true
+      while (this.writeable) {
+        this.writeable = this.processNext()
+      }
+      this.looping = false
+      this.writeable = true
+    }
+  }
+
+  /**
+   * 处理下一批
+   * @private
+   */
+  private processNext(): boolean {
+    const deleteCount = Math.min(100, this.batchUpdateBuffer.length)
+    const next = this.saveResultList.splice(0, deleteCount)
+    if (notNullish(next)) {
+      return this.write(next)
     } else {
       return false
     }

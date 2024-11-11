@@ -2,9 +2,9 @@ import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import BaseModel from '../model/BaseModel.ts'
 import PageModel from '../model/utilModels/PageModel.ts'
 import BaseDao from '../dao/BaseDao.ts'
-import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { isNullish } from '../util/CommonUtil.ts'
+import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
 
 /**
  * 基础Service类
@@ -86,11 +86,7 @@ export default abstract class BaseService<
    * @param updateData
    */
   public async updateById(updateData: Model): Promise<number> {
-    if (isNullish(updateData.id)) {
-      const msg = '更新数据时，id不能为空'
-      LogUtil.error(this.childClassName, msg)
-      throw new Error(msg)
-    }
+    assertNotNullish(updateData.id, this.childClassName, '更新数据时，id不能为空')
     return this.dao.updateById(updateData.id as number | string, updateData)
   }
 
@@ -99,12 +95,8 @@ export default abstract class BaseService<
    * @param entities
    */
   public async updateBatchById(entities: Model[]) {
-    const check = entities.filter((entity) => entity.id === undefined || entity.id === null)
-    if (notNullish(check) && check.length > 0) {
-      const msg = '批量更新数据时，id不能为空'
-      LogUtil.error(this.childClassName, msg)
-      throw new Error(msg)
-    }
+    const check = entities.some((entity) => isNullish(entity.id))
+    assertFalse(check, this.childClassName, '批量更新数据时，id不能为空')
     return this.dao.updateBatchById(entities)
   }
 
