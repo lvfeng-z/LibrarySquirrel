@@ -246,28 +246,34 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const whereClause = `WHERE ${pk} IN (${ids.join()})`
     const setClauses: string[] = []
 
+    // 存储编号后的所有属性
+    const numberedProperties = {}
+
+    let index = 0
     keys.forEach((key) => {
       if (BaseModel.PK !== key) {
         const whenThenClauses: string[] = []
         const column = StringUtil.camelToSnakeCase(key)
+        const numberedProperty = key + index
         plainObject.forEach((obj) => {
-          let value = obj[key]
-          if (null === value) {
-            value = 'NULL'
-          } else if (undefined === value) {
-            value = column
+          const value = obj[key]
+          if (undefined === value) {
+            whenThenClauses.push(`WHEN ${pk} = ${obj.id} THEN ${column}`)
+          } else {
+            whenThenClauses.push(`WHEN ${pk} = ${obj.id} THEN @${numberedProperty}`)
+            numberedProperties[numberedProperty] = value
           }
-          whenThenClauses.push(`WHEN ${pk} = ${obj.id} THEN ${value}`)
         })
         if (arrayNotEmpty(whenThenClauses)) {
           setClauses.push(column + ' = CASE ' + whenThenClauses.join(' ') + ' END')
         }
+        index++
       }
     })
 
     const statement = updateClause + 'SET ' + setClauses.join() + ' ' + whereClause
     const db = this.acquire()
-    return db.run(statement).then((runResult) => runResult.changes)
+    return db.run(statement, numberedProperties).then((runResult) => runResult.changes)
   }
 
   /**
