@@ -4,14 +4,13 @@ import DB from '../database/DB.ts'
 import BaseModel, { Id } from '../model/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
-import LogUtil from '../util/LogUtil.ts'
 import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/utilModels/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
-import { assertNotNullish } from '../util/AssertUtil.js'
+import { assertArrayNotEmpty, assertNotNullish } from '../util/AssertUtil.js'
 
 type PrimaryKey = string | number
 
@@ -28,7 +27,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 继承者类名
    * @private
    */
-  private readonly childClassName: string
+  private readonly className: string
   /**
    * 封装数据库链接实例
    * @private
@@ -40,9 +39,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(tableName: string, childClassName: string, db?: DB) {
+  protected constructor(tableName: string, className: string, db?: DB) {
     this.tableName = tableName
-    this.childClassName = childClassName
+    this.className = className
     if (notNullish(db)) {
       this.db = db
       this.injectedDB = true
@@ -83,10 +82,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    if (!arrayNotEmpty(entities)) {
-      LogUtil.warn(this.childClassName, '批量保存的对象不能为空')
-      return 0
-    }
+    assertArrayNotEmpty(entities, this.className, '批量保存的对象不能为空')
 
     // 对齐所有属性
     // 设置createTime和updateTime
@@ -98,9 +94,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
-    const keys = Object.keys(plainObject[0])
-      // .filter((key) => 'id' !== key)
-      .map((key) => StringUtil.camelToSnakeCase(key))
+    const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     let insertClause: string
     if (isNullish(ignore) || !ignore) {
       insertClause = `INSERT INTO "${this.tableName}" (${keys})`
@@ -156,7 +150,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async deleteById(id: PrimaryKey): Promise<number> {
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseModel.PK}" = ${id}`
     const db = this.acquire()
     return db
       .run(sql)
@@ -173,12 +167,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    if (!arrayNotEmpty(ids)) {
-      LogUtil.warn(this.childClassName, '批量删除时id列表不能为空')
-      return 0
-    }
+    assertArrayNotEmpty(ids, this.className, '批量删除时id列表不能为空')
+
     const idsStr = ids.join(',')
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${this.getPrimaryKeyColumnName()}" in (${idsStr})`
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseModel.PK}" in (${idsStr})`
     const db = this.acquire()
     return db
       .run(sql)
@@ -196,7 +188,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param updateData
    */
   public async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
-    assertNotNullish(id, this.childClassName, '更新时主键不能为空')
+    assertNotNullish(id, this.className, '更新时主键不能为空')
     // 设置createTime和updateTime
     updateData.updateTime = Date.now()
 
@@ -204,7 +196,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const existingValue = toObjAcceptedBySqlite3(updateData)
     const keys = Object.keys(existingValue)
     const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
-    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${this.getPrimaryKeyColumnName()}" = ${id}`
+    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseModel.PK}" = ${id}`
     const db = this.acquire()
     return db
       .run(statement, existingValue)
@@ -221,13 +213,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async updateBatchById(entities: Model[]): Promise<number> {
-    if (!arrayNotEmpty(entities)) {
-      LogUtil.warn(this.childClassName, '批量保存的对象不能为空')
-      return 0
-    }
+    assertArrayNotEmpty(entities, this.className, '批量更新的对象不能为空')
 
     const ids: Id[] = []
-    const pk = this.getPrimaryKeyColumnName()
     // 对齐所有属性
     // 设置createTime和updateTime
     let plainObject = entities.map((entity) => {
@@ -243,7 +231,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 按照第一个对象的属性设置语句的value部分
     const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     const updateClause = `UPDATE "${this.tableName}"`
-    const whereClause = `WHERE ${pk} IN (${ids.join()})`
+    const whereClause = `WHERE ${BaseModel.PK} IN (${ids.join()})`
     const setClauses: string[] = []
 
     // 存储编号后的所有属性
@@ -258,9 +246,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         plainObject.forEach((obj) => {
           const value = obj[key]
           if (undefined === value) {
-            whenThenClauses.push(`WHEN ${pk} = ${obj.id} THEN ${column}`)
+            whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN ${column}`)
           } else {
-            whenThenClauses.push(`WHEN ${pk} = ${obj.id} THEN @${numberedProperty}`)
+            whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN @${numberedProperty}`)
             numberedProperties[numberedProperty] = value
           }
         })
@@ -273,7 +261,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const statement = updateClause + ' SET ' + setClauses.join() + ' ' + whereClause
     const db = this.acquire()
-    return db.run(statement, numberedProperties).then((runResult) => runResult.changes)
+    return db
+      .run(statement, numberedProperties)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -281,9 +276,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
-    if (isNullish(entities) || entities.length === 0) {
-      throw new Error('保存的对象不能为空')
-    }
+    assertArrayNotEmpty(entities, this.className, '批量保存的对象不能为空')
 
     // 对齐所有属性
     // 设置createTime和updateTime
@@ -295,9 +288,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
-    const keys = Object.keys(plainObject[0])
-      // .filter((key) => 'id' !== key)
-      .map((key) => StringUtil.camelToSnakeCase(key))
+    const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     const insertClause = `INSERT OR REPLACE INTO "${this.tableName}" (${keys})`
     const valuesClauses: string[] = []
 
@@ -348,11 +339,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async getById(id: PrimaryKey): Promise<Model | undefined> {
-    const statement = `select * from ${this.tableName} where ${this.getPrimaryKeyColumnName()} = @${this.getPrimaryKeyColumnName()}`
+    const statement = `select * from ${this.tableName} where ${BaseModel.PK} = @${BaseModel.PK}`
     const db = this.acquire()
     return db
       .get<unknown[], Record<string, unknown>>(statement, {
-        [this.getPrimaryKeyColumnName()]: id
+        [BaseModel.PK]: id
       })
       .then((result) => {
         if (notNullish(result)) {
@@ -374,7 +365,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async queryPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
     // 生成where字句
-    let whereClause
+    let whereClause: string | undefined
     const modifiedPage = new PageModel(page)
     if (page.query) {
       const whereClauseAndQuery = this.getWhereClause(page.query)
@@ -452,7 +443,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async listByIds(ids: number[] | string[]): Promise<Model[]> {
     const idStr = ids.join(',')
-    const statement = `SELECT * FROM "${this.tableName}" WHERE ${this.getPrimaryKeyColumnName()} IN (${idStr})`
+    const statement = `SELECT * FROM "${this.tableName}" WHERE ${BaseModel.PK} IN (${idStr})`
     // 生成where字句
 
     // 查询
@@ -713,7 +704,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
             const snakeCaseKey = StringUtil.camelToSnakeCase(key)
             const comparator = this.getComparator(key, queryConditions.assignComparator)
             // 根据运算符的不同给出不同的where子句和匹配值
-            let modifiedValue
+            let modifiedValue: unknown
             switch (comparator) {
               case COMPARATOR.EQUAL:
                 if (value !== null) {
@@ -937,11 +928,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     ) as Result
   }
 
-  protected abstract getPrimaryKeyColumnName(): string
-
   protected acquire() {
     if (this.db === undefined) {
-      this.db = new DB(this.childClassName)
+      this.db = new DB(this.className)
     }
     return this.db
   }

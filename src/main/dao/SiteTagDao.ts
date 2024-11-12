@@ -154,8 +154,4 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       }
     })
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

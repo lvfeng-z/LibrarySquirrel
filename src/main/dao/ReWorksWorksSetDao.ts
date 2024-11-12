@@ -7,8 +7,4 @@ export default class ReWorksWorksSetDao extends BaseDao<ReWorksWorksSetQueryDTO,
   constructor(db?: DB) {
     super('re_works_works_set', 'ReWorksWorksSetDao', db)
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

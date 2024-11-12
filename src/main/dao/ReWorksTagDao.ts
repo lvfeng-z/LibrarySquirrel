@@ -11,10 +11,6 @@ export class ReWorksTagDao extends BaseDao<ReWorksTagQueryDTO, ReWorksTag> {
     super('re_works_tag', 'ReWorksTagDao', db)
   }
 
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
-
   /**
    * 根据作品id和本地标签id删除
    * @param localTagIds

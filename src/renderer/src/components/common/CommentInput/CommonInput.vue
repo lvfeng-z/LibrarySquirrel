@@ -86,7 +86,6 @@ function handleBlur() {
 }
 // 处理数据改变事件
 function handleDataChange() {
-  console.log('CommonInputR.handleDataChange')
   emits('dataChanged')
 }
 // 获取span要显示的值

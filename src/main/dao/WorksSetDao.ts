@@ -54,8 +54,4 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
         }
       })
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

@@ -15,10 +15,6 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     super('auto_explain_path', 'AutoExplainPathDao', db)
   }
 
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
-
   /**
    * 分页查询监听此path的自动解释
    * @param page

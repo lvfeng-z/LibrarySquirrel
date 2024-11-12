@@ -10,8 +10,4 @@ export default class ReWorksAuthorDao extends BaseDao<ReWorksAuthorQueryDTO, ReW
   constructor(db?: DB) {
     super('re_works_author', 'ReWorksAuthorDao', db)
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

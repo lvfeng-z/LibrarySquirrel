@@ -10,7 +10,4 @@ export default class InstalledPluginsDao extends BaseDao<
   constructor(db?: DB) {
     super('installed_plugins', 'InstalledPluginsDao', db)
   }
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

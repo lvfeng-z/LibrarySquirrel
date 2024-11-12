@@ -12,9 +12,6 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
     super('local_tag', 'LocalTagDao', db)
   }
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 
   public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
     const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`

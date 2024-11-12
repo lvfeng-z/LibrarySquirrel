@@ -135,8 +135,4 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
         }
       })
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

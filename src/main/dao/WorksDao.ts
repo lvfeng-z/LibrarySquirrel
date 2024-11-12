@@ -12,10 +12,6 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     super('works', 'WorksDao', db)
   }
 
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
-
   /**
    * 综合查询作品
    * @param page 查询参数（本地标签、站点标签、作者...）

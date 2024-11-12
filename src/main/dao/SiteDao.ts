@@ -30,8 +30,4 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
         }
       })
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }

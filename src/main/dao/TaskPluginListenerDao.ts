@@ -12,10 +12,6 @@ export default class TaskPluginListenerDao extends BaseDao<
     super('task_plugin_listener', 'TaskPluginListenerDao', db)
   }
 
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
-
   /**
    * 获取监听此url的插件
    * @param url

@@ -12,10 +12,6 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
     super('local_author', 'LocalAuthorDao', db)
   }
 
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
-
   /**
    * 批量获取作品与作者的关联
    * @param worksIds

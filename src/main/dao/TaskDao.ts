@@ -193,8 +193,4 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
         }
       })
   }
-
-  protected getPrimaryKeyColumnName(): string {
-    return 'id'
-  }
 }
