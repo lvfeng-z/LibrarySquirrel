@@ -2,7 +2,7 @@ import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { assertNotNullish } from '../util/AssertUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
-import { isNullish, notNullish } from '../util/CommonUtil.js'
+import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
 import SettingsService from '../service/SettingsService.js'
 import { Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
@@ -61,10 +61,10 @@ export class TaskQueue {
   private taskResourceStream: TaskResourceStream
 
   /**
-   * 任务保存结果处理流
+   * 任务状态改变流
    * @private
    */
-  private taskSaveResultHandleStream: TaskSaveResultHandleStream
+  private taskStatusChangeStream: TaskStatusChangeStream
 
   constructor() {
     this.operationQueue = []
@@ -74,7 +74,7 @@ export class TaskQueue {
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
     this.taskInfoStream = new TaskInfoStream(this.pluginLoader)
     this.taskResourceStream = new TaskResourceStream(this.pluginLoader)
-    this.taskSaveResultHandleStream = new TaskSaveResultHandleStream()
+    this.taskStatusChangeStream = new TaskStatusChangeStream()
     this.initializeStream()
   }
 
@@ -136,7 +136,8 @@ export class TaskQueue {
    */
   public async pushBatch(tasks: Task[], taskOperation: TaskOperation) {
     if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
-      const operableIds: number[] = []
+      const taskRunningStatusList: TaskResourceSaveResult[] = [] // 用于更新数据库中任务的数据
+      // 创建运行对象
       const taskRunningObjs = tasks
         .filter((task) => {
           assertNotNullish(task.id)
@@ -168,11 +169,14 @@ export class TaskQueue {
           }
           this.operationQueue.push(operationObj)
           LogUtil.info('TaskQueue', `任务${task.id}进入队列`)
-          operableIds.push(task.id)
+          taskRunningStatusList.push({
+            taskRunningObj: taskRunningObj,
+            saveResult: TaskStatusEnum.WAITING
+          })
           return taskRunningObj
         })
       // 所有任务设置为等待中
-      await this.taskService.updateStatusBatchById(operableIds, TaskStatusEnum.WAITING)
+      this.taskStatusChangeStream.addTask(taskRunningStatusList)
       // 刷新父任务状态
       this.setChildrenOfParent(taskRunningObjs)
 
@@ -183,12 +187,16 @@ export class TaskQueue {
       }
     } else if (taskOperation === TaskOperation.PAUSE) {
       this.pauseTask(tasks)
-      const parentIdWaitingRefresh: number[] = tasks.map((task) => task.pid).filter(notNullish)
-      this.refreshParentStatus(parentIdWaitingRefresh)
+      const parentIdWaitingRefresh: Set<number> = new Set(
+        tasks.map((task) => task.pid).filter(notNullish)
+      )
+      this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     } else if (taskOperation === TaskOperation.STOP) {
-      this.stopTask(tasks)
-      const parentIdWaitingRefresh: number[] = tasks.map((task) => task.pid).filter(notNullish)
-      this.refreshParentStatus(parentIdWaitingRefresh)
+      this.pauseTask(tasks)
+      const parentIdWaitingRefresh: Set<number> = new Set(
+        tasks.map((task) => task.pid).filter(notNullish)
+      )
+      this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     }
   }
 
@@ -234,7 +242,7 @@ export class TaskQueue {
         throw new Error(msg)
       }
     }
-    this.taskSaveResultHandleStream.addTask(taskSaveResultList)
+    this.taskStatusChangeStream.addTask(taskSaveResultList)
   }
 
   /**
@@ -273,7 +281,7 @@ export class TaskQueue {
         throw new Error(msg)
       }
     }
-    this.taskSaveResultHandleStream.addTask(taskSaveResultList)
+    this.taskStatusChangeStream.addTask(taskSaveResultList)
   }
 
   /**
@@ -381,11 +389,11 @@ export class TaskQueue {
     this.taskResourceStream.on('error', handleError)
     this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
     // 保存结果处理流
-    this.taskSaveResultHandleStream.on('error', handleError)
+    this.taskStatusChangeStream.on('error', handleError)
 
     // 连接
     this.taskInfoStream.pipe(this.taskResourceStream)
-    this.taskResourceStream.pipe(this.taskSaveResultHandleStream)
+    this.taskResourceStream.pipe(this.taskStatusChangeStream)
   }
 
   /**
@@ -915,9 +923,9 @@ interface TaskResourceSaveResult {
 }
 
 /**
- * 任务保存结果处理流
+ * 任务状态改变流
  */
-class TaskSaveResultHandleStream extends Writable {
+class TaskStatusChangeStream extends Writable {
   /**
    * 任务服务
    * @private
@@ -958,22 +966,29 @@ class TaskSaveResultHandleStream extends Writable {
   }
 
   async _write(
-    chunk: TaskResourceSaveResult[],
+    chunk: TaskResourceSaveResult[] | TaskResourceSaveResult,
     _encoding: string,
     callback: TransformCallback
   ): Promise<void> {
     try {
-      const tempTasks = chunk.map((saveResult) => {
+      let tempTasks: Task[]
+      if (chunk instanceof Array) {
+        tempTasks = chunk.map((saveResult) => {
+          const tempTask = new Task()
+          tempTask.id = saveResult.taskRunningObj.taskId
+          tempTask.status = saveResult.saveResult
+          return tempTask
+        })
+      } else {
         const tempTask = new Task()
-        tempTask.id = saveResult.taskRunningObj.taskId
-        tempTask.status = saveResult.saveResult
-        return tempTask
-      })
+        tempTask.id = chunk.taskRunningObj.taskId
+        tempTask.status = chunk.saveResult
+        tempTasks = [tempTask]
+      }
       this.batchUpdateBuffer.push(...tempTasks)
-      if (this.batchUpdateBuffer.length >= 100 || !this.writeable) {
-        this.taskService.updateBatchById(
-          this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
-        )
+      if (this.batchUpdateBuffer.length >= 100 || !arrayNotEmpty(this.saveResultList)) {
+        const temp = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
+        this.taskService.updateBatchById(temp)
       }
     } catch (error) {
       LogUtil.error('TaskQueue', error)
@@ -1011,9 +1026,9 @@ class TaskSaveResultHandleStream extends Writable {
    * @private
    */
   private processNext(): boolean {
-    const deleteCount = Math.min(100, this.batchUpdateBuffer.length)
+    const deleteCount = Math.min(100, this.saveResultList.length)
     const next = this.saveResultList.splice(0, deleteCount)
-    if (notNullish(next)) {
+    if (arrayNotEmpty(next)) {
       return this.write(next)
     } else {
       return false

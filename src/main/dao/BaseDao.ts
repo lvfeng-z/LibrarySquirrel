@@ -271,7 +271,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       }
     })
 
-    const statement = updateClause + 'SET ' + setClauses.join() + ' ' + whereClause
+    const statement = updateClause + ' SET ' + setClauses.join() + ' ' + whereClause
     const db = this.acquire()
     return db.run(statement, numberedProperties).then((runResult) => runResult.changes)
   }

@@ -640,7 +640,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         .stat(task.pendingDownloadPath)
         .then((stats) => stats.size)
     } catch (error) {
-      LogUtil.info('TasService', '恢复任务时，先前下载的文件已经不存在 ', error)
+      LogUtil.info('TasService', `恢复任务${taskId}时，先前下载的文件已经不存在 `, error)
       await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
       taskPluginDTO.bytesWritten = 0
     }
