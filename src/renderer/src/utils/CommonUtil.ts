@@ -9,3 +9,7 @@ export function isNullish(value: unknown): value is undefined | null {
 export function arrayNotEmpty(value: unknown): value is unknown[] {
   return notNullish(value) && Array.isArray(value) && value.length > 0
 }
+
+export function arrayIsEmpty(value: unknown) {
+  return !arrayNotEmpty(value)
+}
