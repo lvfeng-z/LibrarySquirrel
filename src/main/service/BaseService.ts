@@ -17,7 +17,7 @@ export default abstract class BaseService<
   /**
    * 子类名称
    */
-  protected childClassName: string
+  protected className: string
 
   /**
    * 子类名称
@@ -37,7 +37,7 @@ export default abstract class BaseService<
   protected readonly injectedDB: boolean
 
   protected constructor(childClassName: string, dao: Dao, db?: DB) {
-    this.childClassName = childClassName
+    this.className = childClassName
     this.dao = dao
     if (isNullish(db)) {
       this.db = undefined
@@ -86,7 +86,7 @@ export default abstract class BaseService<
    * @param updateData
    */
   public async updateById(updateData: Model): Promise<number> {
-    assertNotNullish(updateData.id, this.childClassName, '更新数据时，id不能为空')
+    assertNotNullish(updateData.id, this.className, '更新数据时，id不能为空')
     return this.dao.updateById(updateData.id as number | string, updateData)
   }
 
@@ -96,7 +96,7 @@ export default abstract class BaseService<
    */
   public async updateBatchById(entities: Model[]) {
     const check = entities.some((entity) => isNullish(entity.id))
-    assertFalse(check, this.childClassName, '批量更新数据时，id不能为空')
+    assertFalse(check, this.className, '批量更新数据时，id不能为空')
     return this.dao.updateBatchById(entities)
   }
 

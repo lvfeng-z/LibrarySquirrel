@@ -94,12 +94,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
-    const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
+    const columns = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     let insertClause: string
     if (isNullish(ignore) || !ignore) {
-      insertClause = `INSERT INTO "${this.tableName}" (${keys})`
+      insertClause = `INSERT INTO "${this.tableName}" (${columns})`
     } else {
-      insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${keys})`
+      insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${columns})`
     }
     const valuesClauses: string[] = []
 
@@ -229,7 +229,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置语句的value部分
-    const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
+    const keys = Object.keys(plainObject[0])
     const updateClause = `UPDATE "${this.tableName}"`
     const whereClause = `WHERE ${BaseModel.PK} IN (${ids.join()})`
     const setClauses: string[] = []
@@ -247,6 +247,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
           const value = obj[key]
           if (undefined === value) {
             whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN ${column}`)
+          } else if (null === value) {
+            whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN NULL`)
           } else {
             whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN @${numberedProperty}`)
             numberedProperties[numberedProperty] = value
@@ -288,8 +290,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
-    const keys = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
-    const insertClause = `INSERT OR REPLACE INTO "${this.tableName}" (${keys})`
+    const columns = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
+    const insertClause = `INSERT OR REPLACE INTO "${this.tableName}" (${columns})`
     const valuesClauses: string[] = []
 
     // 存储编号后的所有属性
