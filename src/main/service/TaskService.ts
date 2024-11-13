@@ -419,7 +419,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 标记为进行中
     task.status = TaskStatusEnum.PROCESSING
-    this.taskProcessing(taskId)
 
     // 调用插件的start方法，获取资源
     let resourceDTO: WorksPluginDTO
@@ -462,10 +461,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return worksService.saveWorksResource(worksSaveInfo, taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         worksService.resourceFinished(worksId)
-        LogUtil.info('TaskService', `任务${taskId}完成`)
         return TaskStatusEnum.FINISHED
       } else if (FileSaveResult.PAUSE === saveResult) {
-        LogUtil.info('TaskService', `任务${taskId}暂停`)
         return TaskStatusEnum.PAUSE
       } else {
         return TaskStatusEnum.FAILED
@@ -483,21 +480,35 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, includeStatus)
 
     for (const parent of taskTree) {
-      // 获取要处理的任务
-      let children: TaskDTO[]
-      if (parent.isCollection && arrayNotEmpty(parent.children)) {
-        children = parent.children
-      } else if (!parent.isCollection) {
-        children = [parent]
-      } else {
-        continue
-      }
-      // 更新父任务的状态
-      parent.status = TaskStatusEnum.PROCESSING
-      const tempParent = new Task(parent)
-      await this.dao.updateById(parent.id as number, tempParent)
+      try {
+        // 获取要处理的任务
+        let children: TaskDTO[]
+        if (parent.isCollection && arrayNotEmpty(parent.children)) {
+          children = parent.children
+        } else if (!parent.isCollection) {
+          children = [parent]
+        } else {
+          continue
+        }
+        // 更新父任务的状态
+        parent.status = TaskStatusEnum.PROCESSING
+        const tempParent = new Task(parent)
+        await this.dao.updateById(parent.id as number, tempParent)
 
-      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
+        // 清除pendingDownloadPath
+        const temp = children.map((child) => {
+          const t = new Task()
+          t.id = child.id
+          t.pendingDownloadPath = null
+          return t
+        })
+        await this.updateBatchById(temp)
+
+        GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
+      } catch (error) {
+        LogUtil.error(this.className, error)
+        this.taskFailed(parent.id)
+      }
     }
   }
 
@@ -650,7 +661,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 标记为进行中
     task.status = TaskStatusEnum.PROCESSING
-    this.taskProcessing(taskId)
     // 调用插件的resume函数，获取资源
     const resumeResponse = await taskHandler.resume(taskPluginDTO)
     assertNotNullish(
