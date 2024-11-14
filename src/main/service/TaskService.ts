@@ -495,15 +495,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const tempParent = new Task(parent)
         await this.dao.updateById(parent.id as number, tempParent)
 
-        // 清除pendingDownloadPath
-        const temp = children.map((child) => {
-          const t = new Task()
-          t.id = child.id
-          t.pendingDownloadPath = null
-          return t
-        })
-        await this.updateBatchById(temp)
-
         GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
       } catch (error) {
         LogUtil.error(this.className, error)

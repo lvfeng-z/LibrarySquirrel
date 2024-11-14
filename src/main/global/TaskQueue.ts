@@ -988,17 +988,9 @@ class TaskStatusChangeStream extends Writable {
     try {
       let tempTasks: Task[]
       if (chunk instanceof Array) {
-        tempTasks = chunk.map((saveResult) => {
-          const tempTask = new Task()
-          tempTask.id = saveResult.taskRunningObj.taskId
-          tempTask.status = saveResult.status
-          return tempTask
-        })
+        tempTasks = chunk.map(this.generateTaskFromSaveResult)
       } else {
-        const tempTask = new Task()
-        tempTask.id = chunk.taskRunningObj.taskId
-        tempTask.status = chunk.status
-        tempTasks = [tempTask]
+        tempTasks = [this.generateTaskFromSaveResult(chunk)]
       }
       this.batchUpdateBuffer.push(...tempTasks)
       if (this.batchUpdateBuffer.length >= 100 || !arrayNotEmpty(this.saveResultList)) {
@@ -1048,5 +1040,20 @@ class TaskStatusChangeStream extends Writable {
     } else {
       return false
     }
+  }
+
+  /**
+   * 根据保存结果生成更新用的任务信息
+   * @param saveResult 保存结果
+   * @private
+   */
+  private generateTaskFromSaveResult(saveResult: TaskResourceSaveResult) {
+    const tempTask = new Task()
+    tempTask.id = saveResult.taskRunningObj.taskId
+    tempTask.status = saveResult.status
+    if (TaskStatusEnum.FINISHED === tempTask.status || TaskStatusEnum.FAILED === tempTask.status) {
+      tempTask.pendingDownloadPath = null
+    }
+    return tempTask
   }
 }
