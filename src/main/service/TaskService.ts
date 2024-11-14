@@ -393,7 +393,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       sourceTask.id = worksSaveInfo.includeTaskId
       sourceTask.localWorksId = worksId
       sourceTask.pendingDownloadPath = worksSaveInfo.fullSavePath
-      // 作为数据源的task也要赋值，供后续下载时取值，而不需要从数据库查询
+      // 作为数据源的task也要赋值，供后续下载时取值，免去从数据库查询
       task.pendingDownloadPath = worksSaveInfo.fullSavePath
       return this.updateById(sourceTask).then((runResult) => runResult > 0)
     })
@@ -458,7 +458,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
     worksSaveInfo.includeTaskId = taskId
     LogUtil.info('TaskService', `任务${taskId}开始下载`)
-    return worksService.saveWorksResource(worksSaveInfo, taskWriter).then(async (saveResult) => {
+    return WorksService.saveWorksResource(worksSaveInfo, taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         worksService.resourceFinished(worksId)
         return TaskStatusEnum.FINISHED
@@ -683,7 +683,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskWriter.readable = resumeResponse.resourceStream
     taskWriter.writable = writeable
 
-    return worksService.resumeSaveWorksResource(taskWriter).then(async (saveResult) => {
+    return WorksService.resumeSaveWorksResource(taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         worksService.resourceFinished(worksId)
         return TaskStatusEnum.FINISHED

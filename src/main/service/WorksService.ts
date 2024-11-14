@@ -83,7 +83,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @param fileWriter
    */
-  public async saveWorksResource(
+  public static async saveWorksResource(
     worksDTO: WorksSaveDTO,
     fileWriter: TaskWriter
   ): Promise<FileSaveResult> {
@@ -119,7 +119,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 恢复保存作品资源
    * @param fileWriter 任务writer
    */
-  public async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<FileSaveResult> {
+  public static async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<FileSaveResult> {
     assertNotNullish(fileWriter.readable, 'WorksService', `恢复资源下载时资源流意外为空`)
     assertNotNullish(fileWriter.writable, 'WorksService', `恢复资源下载时写入流意外为空`)
 
