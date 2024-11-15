@@ -4,10 +4,10 @@ import TaskDao from '../dao/TaskDao.ts'
 import PluginLoader from '../plugin/PluginLoader.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
-import InstalledPluginsService from './InstalledPluginsService.ts'
+import PluginService from './PluginService.ts'
 import TaskPluginListenerService from './TaskPluginListenerService.ts'
 import WorksService from './WorksService.ts'
-import InstalledPlugins from '../model/InstalledPlugins.ts'
+import Plugin from '../model/Plugin.ts'
 import { Readable } from 'node:stream'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
@@ -25,7 +25,7 @@ import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/utilModels/TaskCreateResponse.ts'
-import { assertNotNullish, assertTrue } from '../util/AssertUtil.js'
+import { assertArrayNotEmpty, assertNotNullish, assertTrue } from '../util/AssertUtil.js'
 import { createDirIfNotExists } from '../util/FileSysUtil.js'
 import { getNode } from '../util/TreeUtil.js'
 import { Id } from '../model/BaseModel.js'
@@ -66,10 +66,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 按照排序尝试每个插件
     for (const taskPlugin of taskPlugins) {
       // 查询插件信息，用于输出日志
-      const installedPluginsService = new InstalledPluginsService()
-      const pluginInfo = JSON.stringify(
-        await installedPluginsService.getById(taskPlugin.id as number)
-      )
+      const pluginService = new PluginService()
+      const pluginInfo = JSON.stringify(await pluginService.getById(taskPlugin.id as number))
 
       try {
         // 加载插件
@@ -102,7 +100,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         // 分别处理数组类型和流类型的响应值
         if (pluginResponse instanceof Readable) {
-          const addedQuantity = await this.handlePluginTaskStream(
+          const addedQuantity = await this.handleCreateTaskStream(
             pluginResponse,
             url,
             taskPlugin,
@@ -117,7 +115,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             plugin: taskPlugin
           })
         } else if (Array.isArray(pluginResponse)) {
-          const addedQuantity = await this.handlePluginTaskArray(
+          const addedQuantity = await this.handleCreateTaskArray(
             pluginResponse,
             url,
             taskPlugin,
@@ -157,7 +155,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   async handlePluginTaskArray(
     pluginResponseTasks: Task[],
     url: string,
-    taskPlugin: InstalledPlugins,
+    taskPlugin: Plugin,
     parentTask: TaskCreateDTO
   ): Promise<number> {
     // 查询插件信息，用于输出日志

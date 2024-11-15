@@ -205,8 +205,8 @@ tables:
         constraint task_plugin_listener_pk
         primary key,
         plugin_id   integer
-        constraint task_plugin_listener_installed_plugins_id_fk
-        references installed_plugins
+        constraint task_plugin_listener_plugin_id_fk
+        references plugin
         on delete cascade,
         listener    text,
         create_time integer,
@@ -262,12 +262,12 @@ tables:
         update_time          integer
       );
 
-  - name: installed_plugins
+  - name: plugin
     sql: |
-      create table installed_plugins
+      create table plugin
       (
         id          integer not null
-        constraint installed_plugins_pk
+        constraint plugin_pk
         primary key autoincrement,
         type        integer,
         author      text,

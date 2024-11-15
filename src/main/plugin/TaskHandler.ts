@@ -3,7 +3,7 @@ import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
-import InstalledPluginsService from '../service/InstalledPluginsService.js'
+import PluginService from '../service/PluginService.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { BasePlugin } from './BasePlugin.js'
@@ -61,8 +61,8 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
       throw new Error(msg)
     }
 
-    const installedPluginsService = new InstalledPluginsService()
-    const pluginDTO = await installedPluginsService.getDTOById(pluginId)
+    const pluginService = new PluginService()
+    const pluginDTO = await pluginService.getDTOById(pluginId)
     const pluginInfo = JSON.stringify(pluginDTO)
     const loadPath = pluginDTO.loadPath
     if (StringUtil.isBlank(loadPath)) {

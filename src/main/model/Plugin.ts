@@ -1,6 +1,6 @@
 import BaseModel from './BaseModel.ts'
 
-export default class InstalledPlugins extends BaseModel {
+export default class Plugin extends BaseModel {
   /**
    * 主键
    */
@@ -35,8 +35,8 @@ export default class InstalledPlugins extends BaseModel {
    */
   sortNum: number | undefined | null
 
-  constructor(installedPlugins?: InstalledPlugins) {
-    if (installedPlugins === undefined) {
+  constructor(plugin?: Plugin) {
+    if (plugin === undefined) {
       super()
       this.id = undefined
       this.type = undefined
@@ -46,14 +46,14 @@ export default class InstalledPlugins extends BaseModel {
       this.fileName = undefined
       this.sortNum = undefined
     } else {
-      super(installedPlugins)
-      this.id = installedPlugins.id
-      this.type = installedPlugins.type
-      this.author = installedPlugins.author
-      this.domain = installedPlugins.domain
-      this.version = installedPlugins.version
-      this.fileName = installedPlugins.fileName
-      this.sortNum = installedPlugins.sortNum
+      super(plugin)
+      this.id = plugin.id
+      this.type = plugin.type
+      this.author = plugin.author
+      this.domain = plugin.domain
+      this.version = plugin.version
+      this.fileName = plugin.fileName
+      this.sortNum = plugin.sortNum
     }
   }
 }

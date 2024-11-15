@@ -1,6 +1,6 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
 
-export default class InstalledPluginsQueryDTO extends BaseQueryDTO {
+export default class PluginQueryDTO extends BaseQueryDTO {
   /**
    * 插件类型
    */
@@ -31,8 +31,8 @@ export default class InstalledPluginsQueryDTO extends BaseQueryDTO {
    */
   sortNum: number | undefined | null
 
-  constructor(installedPlugins?: InstalledPluginsQueryDTO) {
-    if (installedPlugins === undefined) {
+  constructor(plugin?: PluginQueryDTO) {
+    if (plugin === undefined) {
       super()
       this.type = undefined
       this.author = undefined
@@ -41,13 +41,13 @@ export default class InstalledPluginsQueryDTO extends BaseQueryDTO {
       this.fileName = undefined
       this.sortNum = undefined
     } else {
-      super(installedPlugins)
-      this.type = installedPlugins.type
-      this.author = installedPlugins.author
-      this.domain = installedPlugins.domain
-      this.version = installedPlugins.version
-      this.fileName = installedPlugins.fileName
-      this.sortNum = installedPlugins.sortNum
+      super(plugin)
+      this.type = plugin.type
+      this.author = plugin.author
+      this.domain = plugin.domain
+      this.version = plugin.version
+      this.fileName = plugin.fileName
+      this.sortNum = plugin.sortNum
     }
   }
 }
