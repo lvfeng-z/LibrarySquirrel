@@ -117,7 +117,7 @@ export default class Task extends BaseModel {
   /**
    * 清除所有插件不应处理的属性值
    */
-  security() {
+  legalize() {
     this.id = undefined
     this.createTime = undefined
     this.updateTime = undefined

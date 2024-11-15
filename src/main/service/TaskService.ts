@@ -147,13 +147,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 处理插件返回的任务数组
-   * @param pluginResponseTasks 插件返回的任务数组
+   * @param tasks 插件返回的任务数组
    * @param url 传给插件的url
    * @param taskPlugin 插件信息
    * @param parentTask 任务集
    */
-  async handlePluginTaskArray(
-    pluginResponseTasks: Task[],
+  async handleCreateTaskArray(
+    tasks: Task[],
     url: string,
     taskPlugin: Plugin,
     parentTask: TaskCreateDTO
@@ -162,19 +162,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const pluginInfo = JSON.stringify(taskPlugin)
 
     // 校验是否返回了空数据或非数组
-    if (
-      pluginResponseTasks === undefined ||
-      pluginResponseTasks === null ||
-      pluginResponseTasks.length === 0
-    ) {
-      LogUtil.warn('TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
-      return 0
-    }
+    assertArrayNotEmpty(tasks, 'TaskService', `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
 
     // 清除所有插件不应处理的属性值
-    const tasks = pluginResponseTasks.map((task) => {
+    const legalTasks = tasks.map((task) => {
       const temp = new Task(task)
-      temp.security()
+      temp.legalize()
       return temp
     })
 
@@ -199,9 +192,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 根据插件返回的任务数组长度判断如何处理
-    if (tasks.length === 1) {
+    if (legalTasks.length === 1) {
       // 如果插件返回的的任务列表长度为1，则不需要创建子任务
-      const task = tasks[0]
+      const task = legalTasks[0]
       assignTask(task)
       return super.save(task).then(() => 1)
     } else {
@@ -211,7 +204,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       parentTask.id = pid
       parentTask.saved = true
 
-      const childTasks = tasks
+      const childTasks = legalTasks
         .map((task) => {
           assignTask(task, pid)
           return task
@@ -223,31 +216,31 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 处理插件返回的任务流
-   * @param pluginResponseTaskStream 插件返回的任务流
+   * 处理任务创建流
+   * @param createTaskStream 创建任务流
    * @param url 传给插件的url
    * @param taskPlugin 插件信息
    * @param parentTask 任务集
    * @param batchSize 每次保存任务的数量
-   * @param maxQueueLength 任务队列最大长度
+   * @param queueMax 任务队列最大长度
    */
-  async handlePluginTaskStream(
-    pluginResponseTaskStream: Readable,
+  async handleCreateTaskStream(
+    createTaskStream: Readable,
     url: string,
-    taskPlugin: InstalledPlugins,
+    taskPlugin: Plugin,
     parentTask: TaskCreateDTO,
     batchSize: number,
-    maxQueueLength: number
+    queueMax: number
   ): Promise<number> {
     // 最终用于返回的Promise
     return new Promise<number>((resolve) => {
       // error事件处理函数
-      pluginResponseTaskStream.on('error', (error) => {
+      createTaskStream.on('error', (error) => {
         LogUtil.error('TaskService', '插件报错: ', error)
       })
 
       // data事件处理函数
-      pluginResponseTaskStream.on('data', async (chunk) => {
+      createTaskStream.on('data', async (chunk) => {
         itemCount++
         // 如果父任务尚未保存且任务数大于1，则先保存父任务
         if (parentTaskProcess === undefined && itemCount > 1) {
@@ -272,12 +265,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         taskQueue.push(task)
 
         // 如果队列中的任务数量超过上限，则暂停流
-        if (taskQueue.length >= maxQueueLength && !isPaused) {
+        if (taskQueue.length >= queueMax && !isPaused) {
           LogUtil.info(
             'TaskService',
-            `任务队列超过${maxQueueLength}个，暂停任务流，已经收到${itemCount}个任务`
+            `任务队列超过${queueMax}个，暂停任务流，已经收到${itemCount}个任务`
           )
-          pluginResponseTaskStream.pause()
+          createTaskStream.pause()
           isPaused = true
         }
 
@@ -288,7 +281,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       })
 
       // end事件处理函数
-      pluginResponseTaskStream.on('end', async () => {
+      createTaskStream.on('end', async () => {
         try {
           // 所有数据读取完毕
           if (itemCount === 0) {
@@ -334,9 +327,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
 
         // 检查队列是否小于上限，如果是，则恢复流
-        if (taskQueue.length < maxQueueLength && isPaused) {
+        if (taskQueue.length < queueMax && isPaused) {
           LogUtil.info('TaskService', `任务队列减至${taskQueue.length}个，恢复任务流`)
-          pluginResponseTaskStream.resume()
+          createTaskStream.resume()
           isPaused = false
         }
 
@@ -488,10 +481,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         } else {
           continue
         }
-        // 更新父任务的状态
-        parent.status = TaskStatusEnum.PROCESSING
-        const tempParent = new Task(parent)
-        await this.dao.updateById(parent.id as number, tempParent)
 
         GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
       } catch (error) {
@@ -589,10 +578,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       } else {
         continue
       }
-      // 更新父任务的状态
-      parent.status = TaskStatusEnum.PROCESSING
-      const tempParent = new Task(parent)
-      await this.dao.updateById(parent.id as number, tempParent)
 
       GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.PAUSE)
     }
@@ -711,10 +696,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       } else {
         continue
       }
-      // 更新父任务的状态
-      parent.status = TaskStatusEnum.PROCESSING
-      const tempParent = new Task(parent)
-      await this.dao.updateById(parent.id as number, tempParent)
 
       GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.RESUME)
     }

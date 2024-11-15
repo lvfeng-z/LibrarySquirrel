@@ -432,19 +432,25 @@ export class TaskQueue {
    * @param runningObjs 子任务运行实例列表
    * @private
    */
-  private setChildrenOfParent(runningObjs: TaskRunningObj[]) {
+  private async setChildrenOfParent(runningObjs: TaskRunningObj[]) {
     const parentWaitingRefreshSet: Set<number> = new Set()
-    runningObjs.forEach((runningObj) => {
+    for (const runningObj of runningObjs) {
       if (notNullish(runningObj.parentId) && runningObj.parentId !== -1) {
         let parent = this.parentMap.get(runningObj.parentId)
         if (isNullish(parent)) {
-          parent = new ParentRunningObj(runningObj.parentId, TaskStatusEnum.WAITING)
+          const parentInfo = await this.taskService.getById(runningObj.parentId)
+          assertNotNullish(
+            parentInfo?.status,
+            'TaskQueue',
+            `刷新父任务${runningObj.parentId}时，任务状态意外为空`
+          )
+          parent = new ParentRunningObj(runningObj.parentId, parentInfo?.status)
           this.parentMap.set(runningObj.parentId, parent)
         }
         parent.children.set(runningObj.taskId, runningObj)
         parentWaitingRefreshSet.add(runningObj.parentId)
       }
-    })
+    }
     const parentWaitingRefresh = Array.from(parentWaitingRefreshSet)
     this.refreshParentStatus(parentWaitingRefresh)
   }
