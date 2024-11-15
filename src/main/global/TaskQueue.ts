@@ -103,10 +103,14 @@ export class TaskQueue {
             // 如果是暂停状态，则把这次操作和任务的状态改成等待，然后判断原操作的任务信息是否已保存
             operationObj.status = OperationStatus.WAITING
             taskRunningObj.status = TaskStatusEnum.WAITING
-            // 强制把操作改成恢复
-            taskRunningObj.taskOperationObj.operation = TaskOperation.RESUME
-            if (taskRunningObj.worksInfoSaved) {
-              // 如果原操作的任务信息已经保存，则此操作推入资源保存流中，如果没有保存，则看
+            // 如果资源曾经开始保存过，则强制把操作改成恢复，否则改成开始
+            if (taskRunningObj.resourceHadStarted) {
+              taskRunningObj.taskOperationObj.operation = TaskOperation.RESUME
+            } else {
+              taskRunningObj.taskOperationObj.operation = TaskOperation.START
+            }
+            if (taskRunningObj.infoSaved) {
+              // 如果原操作的任务信息已经保存，则此操作推入资源保存流中，如果没有保存，则忽略此操作（此时任务开始的操作正在任务信息保存流中，如果把新的操作推入资源保存流中，就会出现恢复操作先于开始操作的情况）
               if (TaskOperation.START === taskOperation) {
                 LogUtil.warn(
                   'TaskQueue',
@@ -619,7 +623,11 @@ class TaskRunningObj extends TaskStatus {
   /**
    * 作品信息是否已经保存
    */
-  public worksInfoSaved: boolean
+  public infoSaved: boolean
+  /**
+   * 作品资源是否开始保存过
+   */
+  public resourceHadStarted: boolean
 
   constructor(
     taskId: number,
@@ -627,13 +635,15 @@ class TaskRunningObj extends TaskStatus {
     status: TaskStatusEnum,
     taskWriter: TaskWriter,
     parentId?: number | null | undefined,
-    worksInfoSaved?: boolean
+    worksInfoSaved?: boolean,
+    resourceHadStarted?: boolean
   ) {
     super(taskId, status)
     this.taskOperationObj = taskOperationObj
     this.taskWriter = taskWriter
     this.parentId = isNullish(parentId) ? -1 : parentId
-    this.worksInfoSaved = isNullish(worksInfoSaved) ? false : worksInfoSaved
+    this.infoSaved = isNullish(worksInfoSaved) ? false : worksInfoSaved
+    this.resourceHadStarted = isNullish(resourceHadStarted) ? false : resourceHadStarted
   }
 }
 
@@ -706,7 +716,7 @@ class TaskInfoStream extends Transform {
       assertNotNullish(task, 'TaskQueue', `下载任务${chunk.taskId}失败，任务id无效`)
       const result = await this.taskService.saveWorksInfo(task, this.pluginLoader)
       if (result) {
-        chunk.worksInfoSaved = true
+        chunk.infoSaved = true
         this.push(chunk)
         callback()
       } else {
@@ -858,6 +868,7 @@ class TaskResourceStream extends Transform {
 
       // 开始任务
       assertNotNullish(task, 'TaskQueue', `保存任务${chunk.taskId}的资源失败，任务id无效`)
+      chunk.resourceHadStarted = true
       const taskWriter = chunk.taskWriter
       const saveResultPromise: Promise<TaskStatusEnum> =
         chunk.taskOperationObj.operation === TaskOperation.RESUME
@@ -873,12 +884,15 @@ class TaskResourceStream extends Transform {
           chunk.status = saveResult
           if (TaskStatusEnum.PAUSE !== saveResult) {
             chunk.taskOperationObj.status = OperationStatus.OVER
-            chunk.worksInfoSaved = false
             this.push({
               task: task,
               taskRunningObj: chunk,
               status: saveResult
             })
+          }
+          if (TaskStatusEnum.FINISHED === saveResult) {
+            chunk.infoSaved = false
+            chunk.resourceHadStarted = false
           }
           this.processing--
           // 如果处于限制状态，则在此次下载完成之后解开限制
