@@ -10,6 +10,6 @@ export function arrayNotEmpty(value: unknown): value is unknown[] {
   return notNullish(value) && Array.isArray(value) && value.length > 0
 }
 
-export function arrayIsEmpty(value: unknown) {
+export function arrayIsEmpty(value: unknown): value is null | undefined | [] {
   return !arrayNotEmpty(value)
 }
