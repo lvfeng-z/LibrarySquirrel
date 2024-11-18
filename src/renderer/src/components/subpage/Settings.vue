@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseCloseablePage from './BaseCloseablePage.vue'
+import BaseSubpage from './BaseSubpage.vue'
 import { onBeforeMount, reactive, Ref, ref, UnwrapRef } from 'vue'
 import lodash from 'lodash'
 import { Settings } from '../../model/util/Settings'
@@ -65,7 +65,7 @@ function resetSettings() {
 </script>
 
 <template>
-  <base-closeable-page>
+  <base-subpage>
     <el-scrollbar>
       <el-descriptions direction="vertical" :column="1">
         <el-descriptions-item label="工作目录">
@@ -82,7 +82,7 @@ function resetSettings() {
         </el-col>
       </el-row>
     </el-scrollbar>
-  </base-closeable-page>
+  </base-subpage>
 </template>
 
 <style scoped></style>

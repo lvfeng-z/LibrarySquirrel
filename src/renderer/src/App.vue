@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
-import LocalTagManage from './components/closeablePage/LocalTagManage.vue'
+import LocalAuthorManage from '@renderer/components/subpage/LocalAuthorManage.vue'
+import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
+import Settings from '@renderer/components/subpage/Settings.vue'
+import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
-import Settings from './components/closeablePage/Settings.vue'
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import PageModel from './model/util/PageModel'
@@ -11,11 +13,9 @@ import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
 import SelectItem from './model/util/SelectItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
-import TaskManage from './components/closeablePage/TaskManage.vue'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
-import LocalAuthorManage from './components/closeablePage/LocalAuthorManage.vue'
 import { isNullish } from './utils/CommonUtil'
 
 // onMounted
@@ -36,7 +36,7 @@ const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选
 const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
-  closeablePage: false,
+  subpage: false,
   showTagManagePage: false,
   showLocalAuthorManagePage: false,
   showTaskManagePage: false,
@@ -65,9 +65,9 @@ async function getTagSelectList(keyword) {
   }
 }
 // 开启副页面
-function showFloatPage(pageName: subpages) {
-  closeFloatPage()
-  pageState.closeablePage = true
+function showSubpage(pageName: subpages) {
+  closeSubpage()
+  pageState.subpage = true
   pageState.mainPage = false
   switch (pageName) {
     case 'TagManage':
@@ -85,7 +85,7 @@ function showFloatPage(pageName: subpages) {
   }
 }
 // 关闭副页面
-function closeFloatPage() {
+function closeSubpage() {
   Object.keys(pageState).forEach((key) => (pageState[key] = false))
   pageState.mainPage = true
 }
@@ -172,7 +172,7 @@ async function handleTest() {
             <el-icon><CollectionTag /></el-icon>
             <span>标签</span>
           </template>
-          <el-menu-item index="1-1" @click="showFloatPage('TagManage')">本地标签</el-menu-item>
+          <el-menu-item index="1-1" @click="showSubpage('TagManage')">本地标签</el-menu-item>
           <el-menu-item index="1-2">站点标签</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="2">
@@ -180,7 +180,7 @@ async function handleTest() {
             <el-icon><User /></el-icon>
             <span>作者</span>
           </template>
-          <el-menu-item index="2-1" @click="showFloatPage('LocalAuthorManage')">
+          <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')">
             本地作者
           </el-menu-item>
           <el-menu-item index="2-2">站点作者</el-menu-item>
@@ -189,7 +189,7 @@ async function handleTest() {
           <template #title>收藏</template>
           <el-icon><Star /></el-icon>
         </el-menu-item>
-        <el-menu-item index="4" @click="showFloatPage('Settings')">
+        <el-menu-item index="4" @click="showSubpage('Settings')">
           <template #title>站点</template>
           <el-icon><Link /></el-icon>
         </el-menu-item>
@@ -198,9 +198,9 @@ async function handleTest() {
             <el-icon><List /></el-icon>
             <span>任务</span>
           </template>
-          <el-menu-item index="5-1" @click="showFloatPage('TaskManage')">任务管理</el-menu-item>
+          <el-menu-item index="5-1" @click="showSubpage('TaskManage')">任务管理</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="6" @click="showFloatPage('Settings')">
+        <el-menu-item index="6" @click="showSubpage('Settings')">
           <template #title>设置</template>
           <el-icon><Setting /></el-icon>
         </el-menu-item>
@@ -254,14 +254,14 @@ async function handleTest() {
           :works-list="imageList"
         ></works-display-area>
       </div>
-      <div v-if="pageState.closeablePage" class="subPage">
-        <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeFloatPage" />
+      <div v-if="pageState.subpage" class="subPage">
+        <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
         <local-author-manage
           v-if="pageState.showLocalAuthorManagePage"
-          @close-self="closeFloatPage"
+          @close-self="closeSubpage"
         />
-        <task-manage v-if="pageState.showTaskManagePage" @close-self="closeFloatPage" />
-        <settings v-if="pageState.showSettingsPage" @close-self="closeFloatPage" />
+        <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
+        <settings v-if="pageState.showSettingsPage" @close-self="closeSubpage" />
       </div>
     </div>
     <explain-path

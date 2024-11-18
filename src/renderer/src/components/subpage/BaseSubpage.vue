@@ -9,25 +9,25 @@ function closeSelf() {
 </script>
 
 <template>
-  <div class="base-closeable-page">
+  <div class="base-subpage">
     <el-button
-      class="base-closeable-page-close-button"
+      class="base-subpage-close-button"
       circle
       icon="close"
       color="#b54747"
       @click="closeSelf"
     ></el-button>
-    <div class="base-closeable-page-content">
+    <div class="base-subpage-content">
       <slot />
     </div>
-    <div class="base-closeable-page-dialog">
+    <div class="base-subpage-dialog">
       <slot name="dialog" />
     </div>
   </div>
 </template>
 
 <style>
-.base-closeable-page {
+.base-subpage {
   display: flex;
   width: 100%;
   height: 100%;
@@ -35,15 +35,15 @@ function closeSelf() {
   justify-content: center;
   align-items: center;
 }
-.base-closeable-page-dialog {
+.base-subpage-dialog {
   position: absolute;
 }
-.base-closeable-page-content {
+.base-subpage-content {
   height: calc(100% - 65px);
   width: calc(100% - 65px);
   margin-right: 25px;
 }
-.base-closeable-page-close-button {
+.base-subpage-close-button {
   position: absolute;
   top: 10px;
   right: 10px;

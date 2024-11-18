@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseCloseablePage from './BaseCloseablePage.vue'
+import BaseSubpage from './BaseSubpage.vue'
 import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
@@ -14,7 +14,6 @@ import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
 import PageModel from '../../model/util/PageModel'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
@@ -273,15 +272,15 @@ async function taskQueryParentPage(
 // 懒加载处理函数
 async function load(row: unknown): Promise<TaskDTO[]> {
   // 配置分页参数
-  const pageCondition: PageModel<BaseQueryDTO, object> = new PageModel()
+  const pageCondition: PageModel<TaskQueryDTO, object> = new PageModel()
   pageCondition.pageSize = 100
   pageCondition.pageNumber = 1
   // 配置查询参数
-  pageCondition.query = { ...new BaseQueryDTO(), ...{ pid: (row as TaskDTO).id } }
+  pageCondition.query = { ...new TaskQueryDTO(), ...{ pid: (row as TaskDTO).id } }
 
   return apis.taskQueryChildrenTaskPage(pageCondition).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const page = ApiUtil.data(response) as PageModel<BaseQueryDTO, object>
+      const page = ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
       const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
       // 子任务列表赋值给对应的父任务的children
       const parent = dataList.value.find((task) => (row as TaskDTO).id === task.id)
@@ -432,7 +431,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <base-closeable-page>
+  <base-subpage>
     <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>
@@ -508,7 +507,7 @@ async function deleteTask(ids: number[]) {
         </template>
       </el-dialog>
     </template>
-  </base-closeable-page>
+  </base-subpage>
 </template>
 
 <style scoped>

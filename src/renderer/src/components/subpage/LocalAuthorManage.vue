@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
-import BaseCloseablePage from './BaseCloseablePage.vue'
+import BaseSubpage from './BaseSubpage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
-import LocalTagDialog from '../dialogs/LocalTagDialog.vue'
+import LocalAuthorDialog from '../dialogs/LocalAuthorDialog.vue'
 import lodash from 'lodash'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
@@ -13,20 +13,19 @@ import { InputBox } from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
-import LocalTag from '../../model/main/LocalTag'
-import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import LocalAuthor from '../../model/main/LocalAuthor'
 import PageModel from '@renderer/model/util/PageModel.ts'
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/Site.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
+import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
-import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 
 onMounted(() => {
-  localTagSearchTable.value.handleSearchButtonClicked()
+  localAuthorSearchTable.value.handleSearchButtonClicked()
   if (isNullish(page.value.query)) {
-    page.value.query = new LocalTagQueryDTO()
+    page.value.query = new LocalAuthorQueryDTO()
   }
   page.value.query.sort = [
     { column: 'updateTime', order: 'desc' },
@@ -37,27 +36,29 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
-  localTagDeleteById: window.api.localTagDeleteById,
-  localTagUpdateById: window.api.localTagUpdateById,
-  localTagQueryPage: window.api.localTagQueryPage,
-  localTagListSelectItems: window.api.localTagListSelectItems,
-  localTagGetTree: window.api.localTagGetTree,
-  siteTagGetSelectList: window.api.siteTagGetSelectList,
-  siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
+  localAuthorDeleteById: window.api.localAuthorDeleteById,
+  localAuthorUpdateById: window.api.localAuthorUpdateById,
+  localAuthorQueryPage: window.api.localAuthorQueryPage,
+  siteAuthorUpdateBindLocalAuthor: window.api.siteAuthorUpdateBindLocalAuthor,
   siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
-  siteTagQueryBoundOrUnboundToLocalTagPage: window.api.siteTagQueryBoundOrUnboundToLocalTagPage
+  siteAuthorQueryBoundOrUnboundInLocalAuthorPage:
+    window.api.siteAuthorQueryBoundOrUnboundInLocalAuthorPage
 }
-// localTagSearchTable的组件实例
-const localTagSearchTable = ref()
-// siteTagExchangeBox的组件实例
-const siteTagExchangeBox = ref()
-// localTagDialog的组件实例
-const localTagDialog = ref()
+// localAuthorSearchTable的组件实例
+const localAuthorSearchTable = ref()
+// siteAuthorExchangeBox的组件实例
+const siteAuthorExchangeBox = ref()
+// localAuthorDialog的组件实例
+const localAuthorDialog = ref()
+// 本地作者SearchTable的分页
+const page: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, LocalAuthor>>> = ref(
+  new PageModel<LocalAuthorQueryDTO, LocalAuthor>()
+)
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
-// 被选中的本地标签
-const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
-// 本地标签SearchTable的operationButton
+// 被选中的本地作者
+const localAuthorSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
+// 本地作者SearchTable的operationButton
 const operationButton: OperationItem[] = [
   {
     label: '保存',
@@ -70,13 +71,13 @@ const operationButton: OperationItem[] = [
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
-// 本地标签SearchTable的表头
-const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
+// 本地作者SearchTable的表头
+const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
     dblclickEnable: true,
-    name: 'localTagName',
+    name: 'localAuthorName',
     label: '名称',
     hide: false,
     width: 150,
@@ -85,24 +86,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   }),
   new Thead({
-    type: 'treeSelect',
-    defaultDisabled: true,
-    dblclickEnable: true,
-    name: 'baseLocalTagId',
-    label: '上级标签',
-    hide: false,
-    width: 150,
-    headerAlign: 'center',
-    headerTagType: 'success',
-    dataAlign: 'center',
-    overHide: true,
-    useLoad: true,
-    load: requestLocalTagTree
-  }),
-  new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    dblclickEnable: true,
     name: 'updateTime',
     label: '修改时间',
     hide: false,
@@ -111,26 +96,30 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     overHide: true
+  }),
+  new Thead({
+    type: 'datetime',
+    defaultDisabled: true,
+    name: 'createTime',
+    label: '创建时间',
+    hide: false,
+    width: 200,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center',
+    overHide: true
   })
 ])
-// 本地标签SearchTable的mainInputBoxes
+// 本地作者SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
-    name: 'localTagName',
+    name: 'localAuthorName',
     type: 'text',
-    placeholder: '输入本地标签的名称',
-    inputSpan: 10
-  }),
-  new InputBox({
-    name: 'baseLocalTagId',
-    type: 'treeSelect',
-    placeholder: '选择上级标签',
-    inputSpan: 8,
-    useLoad: true,
-    load: requestLocalTagTree
+    placeholder: '输入本地作者的名称',
+    inputSpan: 18
   })
 ])
-// 本地标签SearchTable的dropDownInputBoxes
+// 本地作者SearchTable的dropDownInputBoxes
 const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   new InputBox({
     name: 'id',
@@ -139,18 +128,14 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     placeholder: '内部id'
   })
 ])
-// 本地标签SearchTable的分页
-const page: Ref<UnwrapRef<PageModel<LocalTagQueryDTO, LocalTag>>> = ref(
-  new PageModel<LocalTagQueryDTO, LocalTag>()
-)
-// 本地标签弹窗的mode
-const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
-// 站点标签ExchangeBox的mainInputBoxes
+// 本地作者弹窗的mode
+const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+// 站点作者ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
     name: 'keyword',
     type: 'text',
-    placeholder: '输入站点标签名称',
+    placeholder: '输入站点作者名称',
     inputSpan: 12
   }),
   new InputBox({
@@ -162,7 +147,7 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 9
   })
 ])
-// 站点标签ExchangeBox的DropDownInputBoxes
+// 站点作者ExchangeBox的DropDownInputBoxes
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
     name: 'keyword',
@@ -174,185 +159,177 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 ])
 
 // 方法
-// 分页查询本地标签的函数
-async function localTagQueryPage(
-  page: PageModel<LocalTagQueryDTO, object>
-): Promise<PageModel<LocalTagQueryDTO, object> | undefined> {
-  const response = await apis.localTagQueryPage(page)
+// 分页查询本地作者的函数
+async function localAuthorQueryPage(
+  page: PageModel<LocalAuthorQueryDTO, object>
+): Promise<PageModel<LocalAuthorQueryDTO, object> | undefined> {
+  const response = await apis.localAuthorQueryPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as PageModel<LocalTagQueryDTO, object>
+    return ApiUtil.data(response) as PageModel<LocalAuthorQueryDTO, object>
   } else {
     ApiUtil.msg(response)
     return undefined
   }
 }
-// 请求本地标签树的函数
-async function requestLocalTagTree(query: number) {
-  const param = isNullish(query) ? undefined : Number(query)
-  const response = await apis.localTagGetTree(param)
-  if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as TreeSelectNode[]
-  } else {
-    return []
-  }
-}
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
-  let sitePage: PageModel<SiteQueryDTO, Site>
+  let page: PageModel<SiteQueryDTO, Site>
   if (StringUtil.isBlank(query)) {
-    sitePage = new PageModel()
-    sitePage.query = { keyword: query }
+    page = new PageModel()
+    page.query = { keyword: query }
   }
   const response = await apis.siteQuerySelectItemPage(query)
   if (ApiUtil.check(response)) {
-    const newSitePage = ApiUtil.data(response) as PageModel<BaseQueryDTO, object>
-    return newSitePage.data as TreeSelectNode[]
+    const page = ApiUtil.data(response) as PageModel<LocalAuthorQueryDTO, object>
+    return page.data as TreeSelectNode[]
   } else {
     return []
   }
 }
-// 处理本地标签新增按钮点击事件
+// 处理本地作者新增按钮点击事件
 async function handleCreateButtonClicked() {
-  localTagDialogMode.value = DialogMode.NEW
-  await localTagDialog.value.handleDialog(true)
+  localAuthorDialogMode.value = DialogMode.NEW
+  await localAuthorDialog.value.handleDialog(true)
 }
-// 处理本地标签数据行按钮点击事件
+// 处理本地作者数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse) {
   switch (op.code) {
     case 'save':
-      saveRowEdit(op.data as LocalTag)
+      saveRowEdit(op.data as LocalAuthor)
       break
     case DialogMode.VIEW:
-      localTagDialogMode.value = DialogMode.VIEW
-      localTagDialog.value.handleDialog(true, op.data)
+      localAuthorDialogMode.value = DialogMode.VIEW
+      localAuthorDialog.value.handleDialog(true, op.data)
       break
     case DialogMode.EDIT:
-      localTagDialogMode.value = DialogMode.EDIT
-      localTagDialog.value.handleDialog(true, op.data)
+      localAuthorDialogMode.value = DialogMode.EDIT
+      localAuthorDialog.value.handleDialog(true, op.data)
       break
     case 'delete':
-      deleteLocalTag(op.id)
+      deleteLocalAuthor(op.id)
       break
     default:
       break
   }
 }
-// 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: object[]) {
+// 处理被选中的本地作者改变的事件
+async function handleLocalAuthorSelectionChange(selections: object[]) {
   if (selections.length > 0) {
-    localTagSelected.value = selections[0]
+    localAuthorSelected.value = selections[0]
     // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
     await nextTick()
-    siteTagExchangeBox.value.refreshData()
+    siteAuthorExchangeBox.value.refreshData()
   } else {
-    localTagSelected.value = {}
+    localAuthorSelected.value = {}
   }
 }
-// 处理本地标签弹窗请求成功事件
+// 处理本地作者弹窗请求成功事件
 function handleDialogRequestSuccess() {
-  localTagSearchTable.value.handleSearchButtonClicked()
+  localAuthorSearchTable.value.handleSearchButtonClicked()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData: LocalTag) {
+async function saveRowEdit(newData: LocalAuthor) {
   const tempData = lodash.cloneDeep(newData)
 
-  const response = await apis.localTagUpdateById(tempData)
+  const response = await apis.localAuthorUpdateById(tempData)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
   }
 }
-// 删除本地标签
-async function deleteLocalTag(id: string) {
-  const response = await apis.localTagDeleteById(id)
+// 删除本地作者
+async function deleteLocalAuthor(id: string) {
+  const response = await apis.localAuthorDeleteById(id)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await localTagSearchTable.value.handleSearchButtonClicked()
+    await localAuthorSearchTable.value.handleSearchButtonClicked()
   }
 }
-// 处理站点标签ExchangeBox确认交换的事件
+// 处理站点作者ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
     const boundIds = bound.map((item) => item.value)
-    upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
+    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(
+      localAuthorSelected.value['id'],
+      boundIds
+    )
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }
   let lowerResponse: ApiResponse
   if (unBound && unBound.length > 0) {
     const unBoundIds = unBound.map((item) => item.value)
-    lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
+    lowerResponse = await apis.siteAuthorUpdateBindLocalAuthor(null, unBoundIds)
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
   }
-  ApiUtil.msg(upperResponse)
-  ApiUtil.msg(lowerResponse)
+  ApiUtil.failedMsg(upperResponse)
+  ApiUtil.failedMsg(lowerResponse)
   if (ApiUtil.check(lowerResponse) && ApiUtil.check(upperResponse)) {
-    siteTagExchangeBox.value.refreshData()
+    siteAuthorExchangeBox.value.refreshData()
   }
 }
 </script>
 
 <template>
-  <BaseCloseablePage>
+  <base-subpage>
     <template #default>
-      <div class="tag-manage-container rounded-margin-box">
-        <div class="tag-manage-left">
+      <div class="local-author-manage-container rounded-margin-box">
+        <div class="local-author-manage-left">
           <search-table
-            ref="localTagSearchTable"
+            ref="localAuthorSearchTable"
             v-model:page="page"
             v-model:changed-rows="changedRows"
-            class="tag-manage-left-search-table"
+            class="local-author-manage-left-search-table"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"
-            :thead="localTagThead"
+            :thead="localAuthorThead"
             :main-input-boxes="mainInputBoxes"
             :drop-down-input-boxes="dropDownInputBoxes"
-            :search="localTagQueryPage"
+            :search="localAuthorQueryPage"
             :multi-select="false"
             :selectable="true"
-            :page-sizes="[10, 20, 50, 100, 1000]"
             @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
-            @selection-change="handleLocalTagSelectionChange"
+            @selection-change="handleLocalAuthorSelectionChange"
           ></search-table>
         </div>
-        <div class="tag-manage-right">
+        <div class="local-author-manage-right">
           <ExchangeBox
-            ref="siteTagExchangeBox"
-            upper-title="已绑定站点标签"
+            ref="siteAuthorExchangeBox"
+            upper-title="已绑定站点作者"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteTagQueryBoundOrUnboundToLocalTagPage"
-            :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
-            lower-title="可绑定站点标签"
+            :upper-search-api="apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage"
+            :upper-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: true }"
+            lower-title="可绑定站点作者"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteTagQueryBoundOrUnboundToLocalTagPage"
-            :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
-            required-static-params="localTagId"
+            :lower-search-api="apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage"
+            :lower-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: false }"
+            required-static-params="localAuthorId"
             @exchange-confirm="handleExchangeBoxConfirm"
           ></ExchangeBox>
         </div>
       </div>
     </template>
     <template #dialog>
-      <LocalTagDialog
-        ref="localTagDialog"
+      <LocalAuthorDialog
+        ref="localAuthorDialog"
         align-center
         destroy-on-close
-        :mode="localTagDialogMode"
+        :mode="localAuthorDialogMode"
         @request-success="handleDialogRequestSuccess"
-      ></LocalTagDialog>
+      ></LocalAuthorDialog>
     </template>
-  </BaseCloseablePage>
+  </base-subpage>
 </template>
 
 <style>
-.tag-manage-container {
+.local-author-manage-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -361,16 +338,16 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   height: 100%;
 }
 
-.tag-manage-left {
+.local-author-manage-left {
   width: calc(50% - 5px);
   height: 100%;
   margin-right: 5px;
 }
-.tag-manage-left-search-table {
+.local-author-manage-left-search-table {
   height: 100%;
   width: 100%;
 }
-.tag-manage-right {
+.local-author-manage-right {
   width: calc(50% - 5px);
   height: 100%;
   margin-left: 5px;
