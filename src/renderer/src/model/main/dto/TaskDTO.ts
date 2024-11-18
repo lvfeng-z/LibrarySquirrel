@@ -15,27 +15,19 @@ export default class TaskDTO extends Task implements TreeNode {
    */
   hasChildren: boolean | undefined | null
 
-  /**
-   * 进度
-   */
-  schedule: number | undefined | null
-
   constructor(taskDTO?: TaskDTO | Task) {
     if (taskDTO === undefined) {
       super()
       this.children = undefined
       this.hasChildren = undefined
-      this.schedule = undefined
     } else {
       super(taskDTO)
       if (taskDTO instanceof TaskDTO) {
         this.children = taskDTO.children
         this.hasChildren = taskDTO.hasChildren
-        this.schedule = taskDTO.schedule
       } else {
         this.children = undefined
         this.hasChildren = undefined
-        this.schedule = undefined
       }
     }
   }

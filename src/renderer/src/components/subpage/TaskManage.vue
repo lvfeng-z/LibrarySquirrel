@@ -34,7 +34,6 @@ const apis = {
   taskStartTask: window.api.taskStartTaskTree,
   taskRetryTask: window.api.taskRetryTaskTree,
   taskDeleteTask: window.api.taskDeleteTask,
-  taskQueryTreeDataPage: window.api.taskQueryTreeDataPage,
   taskQueryParentPage: window.api.taskQueryParentPage,
   taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage,
   taskListSchedule: window.api.taskListSchedule,
@@ -467,7 +466,7 @@ async function deleteTask(ids: number[]) {
         :thead="thead"
         :search="taskQueryParentPage"
         :update-load="updateLoad"
-        :update-properties="['schedule', 'status']"
+        :update-properties="['schedule', 'status', 'total', 'finished']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
         :key-of-data="keyOfData"

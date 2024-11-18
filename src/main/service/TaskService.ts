@@ -34,6 +34,7 @@ import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { TaskOperation } from '../global/TaskQueue.js'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
 import StringUtil from '../util/StringUtil.js'
+import TaskProcessingDTO from '../model/dto/TaskProcessingDTO.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -877,7 +878,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async queryParentPage(
     page: PageModel<TaskQueryDTO, Task>
-  ): Promise<PageModel<TaskQueryDTO, Task>> {
+  ): Promise<PageModel<TaskQueryDTO, TaskProcessingDTO>> {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
@@ -885,11 +886,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
     }
     const sourcePage = await this.dao.queryParentPage(page)
-    const resultPage = sourcePage.transform<TaskDTO>()
+    const resultPage = sourcePage.transform<TaskProcessingDTO>()
     const tasks = sourcePage.data
     if (notNullish(tasks) && tasks.length > 0) {
       resultPage.data = tasks.map((task) => {
-        const dto = new TaskDTO(task)
+        const dto = new TaskProcessingDTO(task)
         dto.hasChildren = dto.isCollection
         dto.children = []
         return dto
@@ -969,7 +970,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async queryChildrenTaskPage(
     page: PageModel<TaskQueryDTO, Task>
-  ): Promise<PageModel<TaskQueryDTO, Task>> {
+  ): Promise<PageModel<TaskQueryDTO, TaskProcessingDTO>> {
     if (notNullish(page.query)) {
       page.query.assignComparator = {
         ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
@@ -977,7 +978,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
       page.query.isCollection = false
     }
-    return await super.queryPage(page)
+    const sourcePage = await super.queryPage(page)
+    const resultPage = sourcePage.transform<TaskProcessingDTO>()
+    const tasks = sourcePage.data
+    if (notNullish(tasks) && tasks.length > 0) {
+      resultPage.data = tasks.map((task) => {
+        const dto = new TaskProcessingDTO(task)
+        dto.hasChildren = dto.isCollection
+        dto.children = []
+        return dto
+      })
+    }
+    return resultPage
   }
 
   /**

@@ -3,10 +3,11 @@ import { TaskStatesEnum } from '@renderer/constants/TaskStatesEnum.ts'
 import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
 import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
+import TaskProcessingDTO from '@renderer/model/main/dto/TaskProcessingDTO.ts'
 
 // props
 const props = defineProps<{
-  row: TaskDTO
+  row: TaskProcessingDTO
   buttonClicked: (row: TaskDTO, code: TaskOperationCodeEnum) => void
 }>()
 
@@ -81,7 +82,7 @@ function mapToButtonStatus(row: TaskDTO): {
 </script>
 
 <template>
-  <div style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+  <div>
     <el-button-group
       v-show="
         (row.status !== TaskStatesEnum.PROCESSING &&
@@ -89,7 +90,7 @@ function mapToButtonStatus(row: TaskDTO): {
           row.status !== TaskStatesEnum.PAUSE) ||
         row.hasChildren
       "
-      style="margin-right: 10px"
+      style="margin-left: auto; margin-right: auto; flex-shrink: 0"
     >
       <el-tooltip v-if="props.row.isCollection" content="详情">
         <el-button
@@ -121,31 +122,32 @@ function mapToButtonStatus(row: TaskDTO): {
         />
       </el-tooltip>
     </el-button-group>
-    <div
-      v-show="
-        (row.status === TaskStatesEnum.PROCESSING ||
-          row.status === TaskStatesEnum.WAITING ||
-          row.status === TaskStatesEnum.PAUSE) &&
-        row.hasChildren
-      "
-      style="display: flex; flex-direction: row; justify-content: center; align-content: center"
-    >
-      <el-progress
-        type="circle"
-        style="width: 100%"
-        :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
-        :stroke-width="2"
-        :width="47"
-        @click="buttonClicked(row, mapToButtonStatus(row).operation)"
+    <transition name="task-operation-bar-el-progress-fade">
+      <div
+        v-if="
+          (row.status === TaskStatesEnum.PROCESSING ||
+            row.status === TaskStatesEnum.WAITING ||
+            row.status === TaskStatesEnum.PAUSE) &&
+          row.hasChildren
+        "
       >
-        <template #default="{ percentage }">
-          <div style="display: flex; flex-direction: column">
-            <span style="font-size: 10px">{{ percentage }}%</span>
-            <span style="font-size: 10px">{{ percentage }}%</span>
-          </div>
-        </template>
-      </el-progress>
-    </div>
+        <el-progress
+          style="width: 100%"
+          :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
+          text-inside
+          :stroke-width="15"
+          striped
+          striped-flow
+          :duration="5"
+        >
+          <template #default="{ percentage }">
+            <span style="font-size: 14px">
+              {{ percentage + '% ' + row.finished + ' / ' + row.total }}
+            </span>
+          </template>
+        </el-progress>
+      </div>
+    </transition>
     <el-progress
       v-show="
         (row.status === TaskStatesEnum.PROCESSING ||
@@ -169,4 +171,13 @@ function mapToButtonStatus(row: TaskDTO): {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.task-operation-bar-el-progress-fade-enter-active,
+.task-operation-bar-el-progress-fade-leave-active {
+  transition: opacity 1.5s;
+}
+.task-operation-bar-el-progress-fade-enter,
+.task-operation-bar-el-progress-fade-leave-to {
+  opacity: 0;
+}
+</style>
