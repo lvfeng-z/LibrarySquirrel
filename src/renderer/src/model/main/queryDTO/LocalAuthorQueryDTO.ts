@@ -1,5 +1,5 @@
-import BaseQueryDTO from './BaseQueryDTO.ts'
-import { isNullish } from '../../../utils/CommonUtil'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 本地作者

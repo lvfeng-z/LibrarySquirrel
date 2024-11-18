@@ -32,8 +32,8 @@ async function handleScroll(newQuery: boolean, query?: string) {
   const response = (await props.api(tempPage)) as ApiResponse
 
   // 解析响应值
-  if (ApiUtil.apiResponseCheck(response)) {
-    const newPage = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, SelectItem>
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data(response) as PageModel<BaseQueryDTO, SelectItem>
     // 没有新数据时，不再增加页码
     if (newPage.data !== undefined && newPage.data.length > 0) {
       page.value.pageNumber++

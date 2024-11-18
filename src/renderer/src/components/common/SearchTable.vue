@@ -1,21 +1,19 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Query extends BaseQueryDTO">
 import SearchToolbar from './SearchToolbar.vue'
-import { onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { ref } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
-import ApiUtil from '../../utils/ApiUtil'
 import PageModel from '../../model/util/PageModel'
-import QuerySortOption from '../../model/util/QuerySortOption'
 import lodash from 'lodash'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
-import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
 import TreeNode from '../../model/util/TreeNode'
 import { TreeNode as ElTreeNode } from 'element-plus'
 import { getNode } from '../../utils/TreeUtil'
 import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
 import DataTable from '@renderer/components/common/DataTable.vue'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = withDefaults(
@@ -30,30 +28,30 @@ const props = withDefaults(
     operationButton?: OperationItem[] // 数据行的操作按钮
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
-    lazy?: boolean // 树形数据是否懒加载
-    load?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
-    sort?: QuerySortOption[] // 排序
-    searchApi: (args: object) => Promise<never> // 查询接口
+    treeLazy?: boolean // 树形数据是否懒加载
+    treeLoad?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
+    search: (page: PageModel<Query, object>) => Promise<PageModel<Query, object> | undefined> // 查询函数
     fixedParam?: Record<string, unknown> // 固定参数
-    updateApi?: (ids: (number | string)[]) => Promise<never> // 更新数据接口
-    updateParamName?: string[] // 要更新的属性名
-    pageCondition?: PageModel<BaseQueryDTO, object> // 查询配置
+    updateLoad?: (ids: (number | string)[]) => Promise<object[] | undefined> // 更新数据的函数
+    updateProperties?: string[] // 要更新的属性名
     createButton?: boolean // 是否展示新增按钮
-    pageSizes?: number[]
-    defaultPageSize?: number
+    pageSizes?: number[] // 可选分页大小
   }>(),
   {
     createButton: false,
-    pageCondition: () => new PageModel<BaseQueryDTO, object>(),
     pageSizes: () => [10, 20, 30, 50, 100],
-    defaultPageSize: 10,
-    lazy: false
+    treeLazy: false
   }
 )
 
 // model
 // DataTable的数据
 const dataList = defineModel<object[]>('dataList', { default: [], required: false })
+// 分页查询配置
+const page = defineModel<PageModel<Query, object>>('page', {
+  default: new PageModel<Query, object>(),
+  required: true
+})
 // 已编辑的行
 const changedRows = defineModel<object[]>('changedRows', { default: [], required: true })
 
@@ -68,39 +66,27 @@ const emits = defineEmits([
   'scroll'
 ])
 
-// onMounted
-onMounted(() => {
-  if (props.sort !== undefined) {
-    const tempSort = lodash.cloneDeep(props.sort)
-    innerSort.value = [...innerSort.value, ...tempSort]
-  }
-})
-
 // 变量
 // 数据栏
 const dataTableRef = ref() // DataTable的的组件实例
 const searchToolbarParams = ref({}) // 搜索栏参数
-const innerSort: Ref<UnwrapRef<QuerySortOption[]>> = ref([]) // 排序参数
 // 分页栏
-const pageNumber = ref(1) // 当前页码
-const pageSize = ref(props.defaultPageSize) // 页面大小
 // 2024-05-07 jumper会导致警告：ElementPlusError: [el-input] [API] label is about to be deprecated in version 2.8.0, please use aria-label instead.
 const layout = ref('sizes, prev, pager, next') // 分页栏组件
-const dataCount = ref(3) // 数据总量
 const pagerCount = ref(5) // 显示的分页按钮个数
 // 保存树形数据的子数据resolve方法的map，用于在除首次加载之外的时机刷新子数据
 const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }> =
   new Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }>()
 // 把向treeRefreshMap写入数据和props.load封装在一起的函数
-const wrappedLoad = isNullish(props.load)
+const wrappedLoad = isNullish(props.treeLoad)
   ? undefined
   : async (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => {
       const rowId = (row as TaskDTO).id as number
       if (!treeRefreshMap.has(rowId)) {
         treeRefreshMap.set(rowId, { treeNode: treeNode, resolve: resolve })
       }
-      if (notNullish(props.load)) {
-        const children = await props.load(row)
+      if (notNullish(props.treeLoad)) {
+        const children = await props.treeLoad(row)
         resolve(children)
       }
     }
@@ -113,34 +99,28 @@ function handleCreateButtonClicked() {
 }
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked() {
-  // 配置分页参数
-  const pageCondition: PageModel<BaseQueryDTO, object> = lodash.cloneDeep(props.pageCondition)
-  pageCondition.pageSize = pageSize.value
-  pageCondition.pageNumber = pageNumber.value
+  const tempPage = lodash.cloneDeep(page.value)
   // 配置查询参数
-  pageCondition.query = { ...new BaseQueryDTO(), ...searchToolbarParams.value, ...props.fixedParam }
-  // 配置排序参数
-  pageCondition.query.sort = lodash.cloneDeep(innerSort.value)
-
-  const response = await props.searchApi(pageCondition)
-  if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
-    dataList.value = page.data === undefined ? [] : page.data
-    dataCount.value = page.dataCount
-
-    // 刷新子数据
+  tempPage.query = {
+    ...tempPage.query,
+    ...searchToolbarParams.value,
+    ...props.fixedParam
+  } as Query
+  const newPage = await props.search(tempPage)
+  if (notNullish(newPage)) {
+    dataList.value = newPage.data === undefined ? [] : newPage.data
+    page.value.dataCount = newPage.dataCount
+  }
+  // 刷新子数据
+  if (notNullish(props.treeLoad) && notNullish(wrappedLoad)) {
     if (notNullish(dataList.value)) {
       dataList.value.forEach((row) => {
-        if (notNullish(props.load) && notNullish(wrappedLoad)) {
-          const treeInitItem = treeRefreshMap.get(row[props.keyOfData])
-          if (notNullish(treeInitItem)) {
-            wrappedLoad(row, treeInitItem.treeNode, treeInitItem.resolve)
-          }
+        const treeInitItem = treeRefreshMap.get(row[props.keyOfData])
+        if (notNullish(treeInitItem)) {
+          wrappedLoad(row, treeInitItem.treeNode, treeInitItem.resolve)
         }
       })
     }
-  } else {
-    ApiUtil.apiResponseMsg(response)
   }
 }
 // 处理DataTable按钮点击
@@ -157,6 +137,11 @@ function handleScroll() {
 }
 // 更新现有数据
 async function refreshData(waitingUpdateIds: number[] | string[], updateChildren: boolean) {
+  // 校验
+  if (isNullish(props.updateLoad) || arrayIsEmpty(props.updateProperties)) {
+    return
+  }
+
   const idsStr: (number | string)[] = waitingUpdateIds.map((id: number | string) =>
     typeof id === 'number' ? String(id) : id
   )
@@ -210,26 +195,17 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
   const originalIds = waitingUpdateList.map((data) => data[props.keyOfData])
 
   // 请求更新接口
-  if (notNullish(props.updateApi)) {
-    const response = await props.updateApi(originalIds)
-    if (ApiUtil.apiResponseCheck(response)) {
-      const newDataList = ApiUtil.apiResponseGetData(response) as object[]
-      if (
-        notNullish(props.updateParamName) &&
-        props.updateParamName.length > 0 &&
-        newDataList.length > 0
-      ) {
-        // 更新updateParamName指定的属性
-        for (const newData of newDataList) {
-          const waitingUpdate = waitingUpdateList.find(
-            (waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData]
-          )
-          if (notNullish(waitingUpdate)) {
-            props.updateParamName.forEach((paramName) => {
-              waitingUpdate[paramName] = newData[paramName]
-            })
-          }
-        }
+  const newDataList = await props.updateLoad(originalIds)
+  if (arrayNotEmpty(newDataList)) {
+    // 更新updateParamName指定的属性
+    for (const newData of newDataList) {
+      const waitingUpdate = waitingUpdateList.find(
+        (waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData]
+      )
+      if (notNullish(waitingUpdate)) {
+        props.updateProperties.forEach((paramName) => {
+          waitingUpdate[paramName] = newData[paramName]
+        })
       }
     }
   }
@@ -286,7 +262,7 @@ defineExpose({
         :operation-button="operationButton"
         :custom-operation-button="customOperationButton"
         :tree-data="treeData"
-        :lazy="props.lazy"
+        :lazy="props.treeLazy"
         :load="wrappedLoad"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
@@ -301,14 +277,14 @@ defineExpose({
         <el-scrollbar class="search-table-data-pagination-scroll">
           <div class="search-table-data-pagination-wrapper">
             <el-pagination
-              v-model:current-page="pageNumber"
-              v-model:page-size="pageSize"
+              v-model:current-page="page.pageNumber"
+              v-model:page-size="page.pageSize"
               class="search-table-data-pagination"
               :layout="layout"
               :page-sizes="pageSizes"
-              :default-page-size="defaultPageSize"
+              :default-page-size="page.pageSize"
               :pager-count="pagerCount"
-              :total="dataCount"
+              :total="page.dataCount"
               @current-change="handlePageNumberChange"
               @size-change="handlePageSizeChange"
             />

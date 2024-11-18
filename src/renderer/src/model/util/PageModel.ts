@@ -1,4 +1,5 @@
 import BaseQueryDTO from '../main/queryDTO/BaseQueryDTO.ts'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 export default class PageModel<Query extends BaseQueryDTO, Result> {
   /**
@@ -37,32 +38,16 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
       this.pageSize = 10
       this.pageCount = 0
       this.dataCount = 0
-      this.query = {} as Query
+      this.query = new BaseQueryDTO() as Query
       this.data = []
     } else {
-      this.paging = page.paging === undefined ? true : page.paging
-      this.pageNumber = page.pageNumber === undefined ? 1 : page.pageNumber
-      this.pageSize = page.pageSize === undefined ? 10 : page.pageSize
-      this.pageCount = page.pageCount === undefined ? 0 : page.pageCount
-      this.dataCount = page.dataCount === undefined ? 0 : page.dataCount
-      this.query = page.query === undefined ? undefined : page.query
-      this.data = page.data === undefined ? [] : page.data
+      this.paging = isNullish(page.paging) ? true : page.paging
+      this.pageNumber = isNullish(page.pageNumber) ? 1 : page.pageNumber
+      this.pageSize = isNullish(page.pageSize) ? 10 : page.pageSize
+      this.pageCount = isNullish(page.pageCount) ? 0 : page.pageCount
+      this.dataCount = isNullish(page.dataCount) ? 0 : page.dataCount
+      this.query = isNullish(page.query) ? (new BaseQueryDTO() as Query) : page.query
+      this.data = isNullish(page.data) ? [] : page.data
     }
-  }
-
-  /**
-   * 返回一个指定类型的PageModel
-   */
-  public transform<T>(): PageModel<Query, T> {
-    const result = new PageModel<Query, T>()
-    result.paging = this.paging
-    result.pageNumber = this.pageNumber
-    result.pageSize = this.pageSize
-    result.pageCount = this.pageCount
-    result.dataCount = this.dataCount
-    result.query = this.query
-    result.data = []
-
-    return result
   }
 }

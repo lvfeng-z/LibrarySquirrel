@@ -55,8 +55,8 @@ async function getTagSelectList(keyword) {
   try {
     const params = { keyword: keyword }
     const response = await apis.localTagListSelectItems(params)
-    if (ApiUtil.apiResponseCheck(response)) {
-      tagSelectList.value = ApiUtil.apiResponseGetData(response) as SelectItem[]
+    if (ApiUtil.check(response)) {
+      tagSelectList.value = ApiUtil.data(response) as SelectItem[]
     }
   } catch (e) {
     console.log(e)
@@ -138,9 +138,8 @@ async function requestWorks() {
   })
 
   apis.worksQueryPage(page).then((response: ApiResponse) => {
-    if (ApiUtil.apiResponseCheck(response)) {
-      const works = (ApiUtil.apiResponseGetData(response) as PageModel<WorksQueryDTO, WorksDTO>)
-        .data
+    if (ApiUtil.check(response)) {
+      const works = (ApiUtil.data(response) as PageModel<WorksQueryDTO, WorksDTO>).data
       imageList.value = works === undefined ? [] : works
     }
   })

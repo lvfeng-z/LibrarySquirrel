@@ -56,20 +56,20 @@ async function handleSaveButtonClicked() {
     if (props.mode === DialogMode.NEW) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localTagSave(tempFormData)
-      if (ApiUtil.apiResponseCheck(response)) {
+      if (ApiUtil.check(response)) {
         emits('requestSuccess')
         await handleDialog(false)
       }
-      ApiUtil.apiResponseMsg(response)
+      ApiUtil.msg(response)
     }
     if (props.mode === DialogMode.EDIT) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localTagUpdateById(tempFormData)
-      if (ApiUtil.apiResponseCheck(response)) {
+      if (ApiUtil.check(response)) {
         emits('requestSuccess')
         await handleDialog(false)
       }
-      ApiUtil.apiResponseMsg(response)
+      ApiUtil.msg(response)
     }
   }
 }
@@ -88,10 +88,10 @@ async function handleDialog(newState: boolean, newFormData?: LocalTag) {
     }
     // 请求本地标签树接口
     const baseTagTreeResponse = await apis.localTagGetTree(0)
-    if (ApiUtil.apiResponseCheck(baseTagTreeResponse)) {
+    if (ApiUtil.check(baseTagTreeResponse)) {
       // 创建临时的根节点，便于遍历整个树
       let tempNode = new TreeSelectNode()
-      tempNode.children = ApiUtil.apiResponseGetData(baseTagTreeResponse) as TreeSelectNode[]
+      tempNode.children = ApiUtil.data(baseTagTreeResponse) as TreeSelectNode[]
       // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
       tempNode = new TreeSelectNode(tempNode)
       // 绑定到临时根节点的子结点列表上

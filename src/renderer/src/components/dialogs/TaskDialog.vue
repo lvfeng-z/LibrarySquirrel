@@ -8,12 +8,16 @@ import { InputBox } from '../../model/util/InputBox'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
 import ApiUtil from '../../utils/ApiUtil'
-import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
 import { getNode } from '@renderer/utils/TreeUtil.ts'
 import { throttle } from 'lodash'
 import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
+import PageModel from '@renderer/model/util/PageModel.ts'
+import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
+import Task from '@renderer/model/main/Task.ts'
+import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 
 // props
 const props = defineProps<{
@@ -166,6 +170,8 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     ]
   })
 ])
+// 任务SearchTable的分页
+const page: Ref<UnwrapRef<PageModel<TaskQueryDTO, Task>>> = ref(new PageModel<TaskQueryDTO, Task>())
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 是否正在刷新数据
@@ -174,6 +180,29 @@ let refreshing: boolean = false
 const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 
 // 方法
+// 分页查询子任务的函数
+async function taskQueryChildrenTaskPage(
+  page: PageModel<TaskQueryDTO, object>
+): Promise<PageModel<TaskQueryDTO, object> | undefined> {
+  const response = await apis.taskQueryChildrenTaskPage(page)
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
+  } else {
+    ApiUtil.msg(response)
+    return undefined
+  }
+}
+// 更新进度的数据加载函数
+async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] | undefined> {
+  const response = await apis.taskListSchedule(ids)
+  if (ApiUtil.check(response)) {
+    const scheduleList = ApiUtil.data(response) as TaskScheduleDTO[]
+    return arrayNotEmpty(scheduleList) ? scheduleList : undefined
+  } else {
+    return undefined
+  }
+}
+// 开关dialog
 function handleDialog(newState: boolean) {
   state.value = newState
   nextTick(() => {
@@ -312,8 +341,8 @@ function startTask(row: TaskDTO, retry: boolean) {
 // 删除任务
 async function deleteTask(ids: number[]) {
   const response = await apis.taskDeleteTask(ids)
-  ApiUtil.apiResponseMsg(response)
-  if (ApiUtil.apiResponseCheck(response)) {
+  ApiUtil.msg(response)
+  if (ApiUtil.check(response)) {
     await childTaskSearchTable.value.handleSearchButtonClicked()
   }
 }
@@ -371,14 +400,15 @@ async function deleteTask(ids: number[]) {
     <template #afterForm>
       <search-table
         ref="childTaskSearchTable"
+        v-model:page="page"
         v-model:data-list="children"
         :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
         style="flex-grow: 1"
         :selectable="true"
         :thead="thead"
-        :search-api="apis.taskQueryChildrenTaskPage"
-        :update-api="apis.taskListSchedule"
-        :update-param-name="['schedule', 'status']"
+        :search="taskQueryChildrenTaskPage"
+        :update-load="updateLoad"
+        :update-properties="['schedule', 'status']"
         :fixed-param="{ pid: formData.id }"
         :drop-down-input-boxes="[]"
         :key-of-data="keyOfData"

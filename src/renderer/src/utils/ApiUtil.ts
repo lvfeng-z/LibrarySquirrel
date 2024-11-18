@@ -1,7 +1,7 @@
 import { ElMessage } from 'element-plus'
 import ApiResponse from '../model/util/ApiResponse.ts'
 
-function apiResponseCheck(response: ApiResponse | undefined): boolean {
+function check(response: ApiResponse | undefined): boolean {
   if (response) {
     return !!response?.success
   } else {
@@ -9,7 +9,7 @@ function apiResponseCheck(response: ApiResponse | undefined): boolean {
   }
 }
 
-function apiResponseGetData(response: ApiResponse | undefined): unknown | undefined {
+function data(response: ApiResponse | undefined): unknown | undefined {
   if (response) {
     if (response?.data) {
       return response.data
@@ -21,7 +21,7 @@ function apiResponseGetData(response: ApiResponse | undefined): unknown | undefi
   }
 }
 
-function apiResponseMsg(response: ApiResponse | undefined): void {
+function msg(response: ApiResponse | undefined): void {
   if (response === undefined) {
     ElMessage({
       message: '无响应',
@@ -48,7 +48,7 @@ function apiResponseMsg(response: ApiResponse | undefined): void {
   }
 }
 
-function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void {
+function failedMsg(response: ApiResponse | undefined): void {
   if (response === undefined) {
     ElMessage({
       message: '无响应',
@@ -75,8 +75,8 @@ function apiResponseMsgNoSuccess(response: ApiResponse | undefined): void {
 }
 
 export default {
-  apiResponseCheck,
-  apiResponseGetData,
-  apiResponseMsg,
-  apiResponseMsgNoSuccess
+  check,
+  data,
+  msg,
+  failedMsg
 }

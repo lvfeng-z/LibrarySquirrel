@@ -21,9 +21,17 @@ import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/Site.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 
 onMounted(() => {
   localTagSearchTable.value.handleSearchButtonClicked()
+  if (isNullish(page.value.query)) {
+    page.value.query = new LocalTagQueryDTO()
+  }
+  page.value.query.sort = [
+    { column: 'updateTime', order: 'desc' },
+    { column: 'createTime', order: 'desc' }
+  ]
 })
 
 // 变量
@@ -131,6 +139,10 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     placeholder: '内部id'
   })
 ])
+// 本地标签SearchTable的分页
+const page: Ref<UnwrapRef<PageModel<LocalTagQueryDTO, LocalTag>>> = ref(
+  new PageModel<LocalTagQueryDTO, LocalTag>()
+)
 // 本地标签弹窗的mode
 const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点标签ExchangeBox的mainInputBoxes
@@ -162,27 +174,39 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 ])
 
 // 方法
+// 分页查询本地标签的函数
+async function localTagQueryPage(
+  page: PageModel<LocalTagQueryDTO, object>
+): Promise<PageModel<LocalTagQueryDTO, object> | undefined> {
+  const response = await apis.localTagQueryPage(page)
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data(response) as PageModel<LocalTagQueryDTO, object>
+  } else {
+    ApiUtil.msg(response)
+    return undefined
+  }
+}
 // 请求本地标签树的函数
 async function requestLocalTagTree(query: number) {
   const param = isNullish(query) ? undefined : Number(query)
   const response = await apis.localTagGetTree(param)
-  if (ApiUtil.apiResponseCheck(response)) {
-    return ApiUtil.apiResponseGetData(response) as TreeSelectNode[]
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data(response) as TreeSelectNode[]
   } else {
     return []
   }
 }
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
-  let page: PageModel<SiteQueryDTO, Site>
+  let sitePage: PageModel<SiteQueryDTO, Site>
   if (StringUtil.isBlank(query)) {
-    page = new PageModel()
-    page.query = { keyword: query }
+    sitePage = new PageModel()
+    sitePage.query = { keyword: query }
   }
   const response = await apis.siteQuerySelectItemPage(query)
-  if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
-    return page.data as TreeSelectNode[]
+  if (ApiUtil.check(response)) {
+    const newSitePage = ApiUtil.data(response) as PageModel<BaseQueryDTO, object>
+    return newSitePage.data as TreeSelectNode[]
   } else {
     return []
   }
@@ -233,8 +257,8 @@ async function saveRowEdit(newData: LocalTag) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localTagUpdateById(tempData)
-  ApiUtil.apiResponseMsg(response)
-  if (ApiUtil.apiResponseCheck(response)) {
+  ApiUtil.msg(response)
+  if (ApiUtil.check(response)) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
   }
@@ -242,8 +266,8 @@ async function saveRowEdit(newData: LocalTag) {
 // 删除本地标签
 async function deleteLocalTag(id: string) {
   const response = await apis.localTagDeleteById(id)
-  ApiUtil.apiResponseMsg(response)
-  if (ApiUtil.apiResponseCheck(response)) {
+  ApiUtil.msg(response)
+  if (ApiUtil.check(response)) {
     await localTagSearchTable.value.handleSearchButtonClicked()
   }
 }
@@ -263,9 +287,9 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
   }
-  ApiUtil.apiResponseMsg(upperResponse)
-  ApiUtil.apiResponseMsg(lowerResponse)
-  if (ApiUtil.apiResponseCheck(lowerResponse) && ApiUtil.apiResponseCheck(upperResponse)) {
+  ApiUtil.msg(upperResponse)
+  ApiUtil.msg(lowerResponse)
+  if (ApiUtil.check(lowerResponse) && ApiUtil.check(upperResponse)) {
     siteTagExchangeBox.value.refreshData()
   }
 }
@@ -276,28 +300,25 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     <template #default>
       <div class="tag-manage-container rounded-margin-box">
         <div class="tag-manage-left">
-          <SearchTable
+          <search-table
             ref="localTagSearchTable"
+            v-model:page="page"
             v-model:changed-rows="changedRows"
             class="tag-manage-left-search-table"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"
             :thead="localTagThead"
-            :sort="[
-              { column: 'updateTime', order: 'desc' },
-              { column: 'createTime', order: 'desc' }
-            ]"
             :main-input-boxes="mainInputBoxes"
             :drop-down-input-boxes="dropDownInputBoxes"
-            :search-api="apis.localTagQueryPage"
+            :search="localTagQueryPage"
             :multi-select="false"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100, 1000]"
             @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
             @selection-change="handleLocalTagSelectionChange"
-          ></SearchTable>
+          ></search-table>
         </div>
         <div class="tag-manage-right">
           <ExchangeBox

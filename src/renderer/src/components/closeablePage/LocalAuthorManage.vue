@@ -20,9 +20,18 @@ import Site from '@renderer/model/main/Site.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 onMounted(() => {
   localAuthorSearchTable.value.handleSearchButtonClicked()
+  if (isNullish(page.value.query)) {
+    page.value.query = new LocalAuthorQueryDTO()
+  }
+  page.value.query.sort = [
+    { column: 'updateTime', order: 'desc' },
+    { column: 'createTime', order: 'desc' }
+  ]
 })
 
 // 变量
@@ -42,6 +51,10 @@ const localAuthorSearchTable = ref()
 const siteAuthorExchangeBox = ref()
 // localAuthorDialog的组件实例
 const localAuthorDialog = ref()
+// 本地作者SearchTable的分页
+const page: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, LocalAuthor>>> = ref(
+  new PageModel<LocalAuthorQueryDTO, LocalAuthor>()
+)
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地作者
@@ -147,6 +160,18 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 ])
 
 // 方法
+// 分页查询本地作者的函数
+async function localAuthorQueryPage(
+  page: PageModel<LocalAuthorQueryDTO, object>
+): Promise<PageModel<LocalAuthorQueryDTO, object> | undefined> {
+  const response = await apis.localAuthorQueryPage(page)
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data(response) as PageModel<LocalAuthorQueryDTO, object>
+  } else {
+    ApiUtil.msg(response)
+    return undefined
+  }
+}
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
   let page: PageModel<SiteQueryDTO, Site>
@@ -155,8 +180,8 @@ async function requestSiteQuerySelectItemPage(query: string) {
     page.query = { keyword: query }
   }
   const response = await apis.siteQuerySelectItemPage(query)
-  if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+  if (ApiUtil.check(response)) {
+    const page = ApiUtil.data(response) as PageModel<BaseQueryDTO, object>
     return page.data as TreeSelectNode[]
   } else {
     return []
@@ -208,8 +233,8 @@ async function saveRowEdit(newData: LocalAuthor) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localAuthorUpdateById(tempData)
-  ApiUtil.apiResponseMsg(response)
-  if (ApiUtil.apiResponseCheck(response)) {
+  ApiUtil.msg(response)
+  if (ApiUtil.check(response)) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
   }
@@ -217,8 +242,8 @@ async function saveRowEdit(newData: LocalAuthor) {
 // 删除本地作者
 async function deleteLocalAuthor(id: string) {
   const response = await apis.localAuthorDeleteById(id)
-  ApiUtil.apiResponseMsg(response)
-  if (ApiUtil.apiResponseCheck(response)) {
+  ApiUtil.msg(response)
+  if (ApiUtil.check(response)) {
     await localAuthorSearchTable.value.handleSearchButtonClicked()
   }
 }
@@ -241,9 +266,9 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
   }
-  ApiUtil.apiResponseMsgNoSuccess(upperResponse)
-  ApiUtil.apiResponseMsgNoSuccess(lowerResponse)
-  if (ApiUtil.apiResponseCheck(lowerResponse) && ApiUtil.apiResponseCheck(upperResponse)) {
+  ApiUtil.failedMsg(upperResponse)
+  ApiUtil.failedMsg(lowerResponse)
+  if (ApiUtil.check(lowerResponse) && ApiUtil.check(upperResponse)) {
     siteAuthorExchangeBox.value.refreshData()
   }
 }
@@ -254,27 +279,24 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     <template #default>
       <div class="local-author-manage-container rounded-margin-box">
         <div class="local-author-manage-left">
-          <SearchTable
+          <search-table
             ref="localAuthorSearchTable"
+            v-model:page="page"
             v-model:changed-rows="changedRows"
             class="local-author-manage-left-search-table"
             key-of-data="id"
             :create-button="true"
             :operation-button="operationButton"
             :thead="localAuthorThead"
-            :sort="[
-              { column: 'updateTime', order: 'desc' },
-              { column: 'createTime', order: 'desc' }
-            ]"
             :main-input-boxes="mainInputBoxes"
             :drop-down-input-boxes="dropDownInputBoxes"
-            :search-api="apis.localAuthorQueryPage"
+            :search="localAuthorQueryPage"
             :multi-select="false"
             :selectable="true"
             @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
             @selection-change="handleLocalAuthorSelectionChange"
-          ></SearchTable>
+          ></search-table>
         </div>
         <div class="local-author-manage-right">
           <ExchangeBox

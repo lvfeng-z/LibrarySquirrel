@@ -8,7 +8,7 @@ import { InputBox } from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { ElMessage, ElTag } from 'element-plus'
-import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
@@ -19,6 +19,9 @@ import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
+import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
+import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
+import Task from '@renderer/model/main/Task.ts'
 
 // onMounted
 onMounted(() => {
@@ -40,12 +43,12 @@ const apis = {
   taskResumeTaskTree: window.api.taskResumeTaskTree,
   dirSelect: window.api.dirSelect
 }
-// DataTable的数据
-const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
 // taskDialog的组件实例
 const taskDialogRef = ref()
+// 任务SearchTable的数据
+const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
@@ -147,6 +150,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     }
   })
 ])
+// 任务SearchTable的分页
+const page: Ref<UnwrapRef<PageModel<TaskQueryDTO, Task>>> = ref(new PageModel<TaskQueryDTO, Task>())
 // 数据主键
 const keyOfData: string = 'id'
 // 主搜索栏的inputBox
@@ -217,8 +222,8 @@ const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
 // 从本地路径导入
 async function importFromDir(dir: string) {
   const response = await apis.taskCreateTask('file://'.concat(dir))
-  if (ApiUtil.apiResponseCheck(response)) {
-    const data = ApiUtil.apiResponseGetData(response) as TaskCreateResponse
+  if (ApiUtil.check(response)) {
+    const data = ApiUtil.data(response) as TaskCreateResponse
     if (data.succeed) {
       ElMessage({
         type: 'success',
@@ -235,9 +240,9 @@ async function importFromDir(dir: string) {
 // 从站点url导入
 async function importFromSite() {
   const response = await apis.taskCreateTask(siteSourceUrl.value)
-  if (ApiUtil.apiResponseCheck(response)) {
+  if (ApiUtil.check(response)) {
     siteDownloadState.value = false
-    const data = ApiUtil.apiResponseGetData(response) as TaskCreateResponse
+    const data = ApiUtil.data(response) as TaskCreateResponse
     if (data.succeed) {
       ElMessage({
         type: 'success',
@@ -253,6 +258,18 @@ async function importFromSite() {
   // 刷新一次列表
   taskManageSearchTable.value.handleSearchButtonClicked()
 }
+// 分页查询子任务的函数
+async function taskQueryParentPage(
+  page: PageModel<TaskQueryDTO, object>
+): Promise<PageModel<TaskQueryDTO, object> | undefined> {
+  const response = await apis.taskQueryParentPage(page)
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
+  } else {
+    ApiUtil.msg(response)
+    return undefined
+  }
+}
 // 懒加载处理函数
 async function load(row: unknown): Promise<TaskDTO[]> {
   // 配置分页参数
@@ -263,8 +280,8 @@ async function load(row: unknown): Promise<TaskDTO[]> {
   pageCondition.query = { ...new BaseQueryDTO(), ...{ pid: (row as TaskDTO).id } }
 
   return apis.taskQueryChildrenTaskPage(pageCondition).then((response: ApiResponse) => {
-    if (ApiUtil.apiResponseCheck(response)) {
-      const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, object>
+    if (ApiUtil.check(response)) {
+      const page = ApiUtil.data(response) as PageModel<BaseQueryDTO, object>
       const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
       // 子任务列表赋值给对应的父任务的children
       const parent = dataList.value.find((task) => (row as TaskDTO).id === task.id)
@@ -273,10 +290,20 @@ async function load(row: unknown): Promise<TaskDTO[]> {
       }
       return data
     } else {
-      ApiUtil.apiResponseMsg(response)
+      ApiUtil.msg(response)
       return []
     }
   })
+}
+// 更新进度的数据加载函数
+async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] | undefined> {
+  const response = await apis.taskListSchedule(ids)
+  if (ApiUtil.check(response)) {
+    const scheduleList = ApiUtil.data(response) as TaskScheduleDTO[]
+    return arrayNotEmpty(scheduleList) ? scheduleList : undefined
+  } else {
+    return undefined
+  }
 }
 // 给行添加选择器，用于区分父任务和子任务
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
@@ -322,8 +349,8 @@ function handleOperationButtonClicked(row: TaskDTO, code: TaskOperationCodeEnum)
 // 选择目录
 async function selectDir(openFile: boolean) {
   const response = await apis.dirSelect(openFile)
-  if (ApiUtil.apiResponseCheck(response)) {
-    const dirSelectResult = ApiUtil.apiResponseGetData(response) as Electron.OpenDialogReturnValue
+  if (ApiUtil.check(response)) {
+    const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
     if (!dirSelectResult.canceled) {
       for (const dir of dirSelectResult.filePaths) {
         await importFromDir(dir)
@@ -397,8 +424,8 @@ function startTask(row: TaskDTO, retry: boolean) {
 // 删除任务
 async function deleteTask(ids: number[]) {
   const response = await apis.taskDeleteTask(ids)
-  ApiUtil.apiResponseMsg(response)
-  if (ApiUtil.apiResponseCheck(response)) {
+  ApiUtil.msg(response)
+  if (ApiUtil.check(response)) {
     await taskManageSearchTable.value.handleSearchButtonClicked()
   }
 }
@@ -434,19 +461,20 @@ async function deleteTask(ids: number[]) {
       <search-table
         ref="taskManageSearchTable"
         v-model:data-list="dataList"
+        v-model:page="page"
         v-model:changed-rows="changedRows"
         class="task-manage-search-table"
         :selectable="true"
         :thead="thead"
-        :search-api="apis.taskQueryParentPage"
-        :update-api="apis.taskListSchedule"
-        :update-param-name="['schedule', 'status']"
+        :search="taskQueryParentPage"
+        :update-load="updateLoad"
+        :update-properties="['schedule', 'status']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
         :key-of-data="keyOfData"
         :table-row-class-name="tableRowClassName"
-        :lazy="true"
-        :load="load"
+        :tree-lazy="true"
+        :tree-load="load"
         :multi-select="true"
         :default-page-size="50"
         :custom-operation-button="true"

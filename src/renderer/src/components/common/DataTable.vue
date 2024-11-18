@@ -19,10 +19,10 @@ const props = withDefaults(
     operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
     customOperationButton?: boolean // 是否使用自定义操作栏
     treeData?: boolean // 是否为树形数据
-    lazy?: boolean // 树形数据是否懒加载
-    load?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
+    treeLazy?: boolean // 树形数据是否懒加载
+    treeLoad?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
   }>(),
-  { customOperationButton: false, treeData: false, lazy: false }
+  { customOperationButton: false, treeData: false, treeLazy: false }
 )
 
 // onBeforeMount
@@ -131,8 +131,8 @@ defineExpose({
   <el-table
     ref="dataTable"
     class="data-table"
-    :lazy="props.lazy"
-    :load="props.load"
+    :lazy="props.treeLazy"
+    :load="props.treeLoad"
     :data="data"
     :row-key="keyOfData"
     :row-class-name="tableRowClassName"

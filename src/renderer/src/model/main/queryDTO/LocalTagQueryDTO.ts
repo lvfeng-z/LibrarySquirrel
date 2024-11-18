@@ -1,9 +1,9 @@
+import BaseQueryDTO from './BaseQueryDTO.ts'
+
 /**
  * QueryDTO
  * 站点标签
  */
-import BaseQueryDTO from './BaseQueryDTO.ts'
-
 export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
    * 本地标签名称

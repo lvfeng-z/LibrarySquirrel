@@ -103,8 +103,8 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
   }
 
   // 解析并返回数据，同时把分页参数赋值给响应式变量
-  if (ApiUtil.apiResponseCheck(response)) {
-    const page = ApiUtil.apiResponseGetData(response) as PageModel<BaseQueryDTO, SelectItem>
+  if (ApiUtil.check(response)) {
+    const page = ApiUtil.data(response) as PageModel<BaseQueryDTO, SelectItem>
     if (upperOrLower) {
       upperPageConfig.value = new PageModel(page)
     } else {
@@ -112,7 +112,7 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
     }
     return page.data === undefined ? [] : page.data
   } else {
-    ApiUtil.apiResponseMsg(response)
+    ApiUtil.msg(response)
     return undefined
   }
 }

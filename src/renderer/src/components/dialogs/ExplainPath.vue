@@ -66,11 +66,8 @@ async function loadAutoExplain() {
   autoExplainPage.value.query.path = stringToExplain
   const tempPage = lodash.cloneDeep(autoExplainPage.value)
   const response = await apis.autoExplainPathGetListenerPage(tempPage)
-  if (ApiUtil.apiResponseCheck(response)) {
-    const newPage = ApiUtil.apiResponseGetData(response) as PageModel<
-      AutoExplainPathQueryDTO,
-      AutoExplainPath
-    >
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data(response) as PageModel<AutoExplainPathQueryDTO, AutoExplainPath>
     autoExplains.value = isNullish(newPage.data) ? [] : newPage.data
   }
 }

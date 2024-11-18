@@ -82,8 +82,8 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 // 查询作品信息
 async function getWorksInfo() {
   const response = await apis.worksGetFullWorksInfoById(props.works[0].id)
-  if (ApiUtil.apiResponseCheck(response)) {
-    worksFullInfo.value = ApiUtil.apiResponseGetData(response) as WorksDTO
+  if (ApiUtil.check(response)) {
+    worksFullInfo.value = ApiUtil.data(response) as WorksDTO
   }
 }
 // 处理本地标签exchangeBox确认交换事件
@@ -93,19 +93,19 @@ async function handleLocalTagExchangeConfirm(unbound: SelectItem[], bound: Selec
   const unboundIds = unbound.map((item) => item.value)
   const boundResponse: ApiResponse = await apis.reWorksTagLink(boundIds, worksId)
   const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(unboundIds, worksId)
-  const upperSuccess = ApiUtil.apiResponseCheck(boundResponse)
-  const lowerSuccess = ApiUtil.apiResponseCheck(unboundResponse)
+  const upperSuccess = ApiUtil.check(boundResponse)
+  const lowerSuccess = ApiUtil.check(unboundResponse)
   if (upperSuccess && lowerSuccess) {
     localTagExchangeBox.value.refreshData()
-    ApiUtil.apiResponseMsg(boundResponse)
+    ApiUtil.msg(boundResponse)
     updateWorksLocalTags()
   }
 }
 // 更新本地标签
 async function updateWorksLocalTags() {
   const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
-  if (ApiUtil.apiResponseCheck(response)) {
-    worksFullInfo.value.localTags = ApiUtil.apiResponseGetData(response) as LocalTag[]
+  if (ApiUtil.check(response)) {
+    worksFullInfo.value.localTags = ApiUtil.data(response) as LocalTag[]
   }
 }
 </script>

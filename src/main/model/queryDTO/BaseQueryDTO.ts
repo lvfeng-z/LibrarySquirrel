@@ -36,10 +36,16 @@ export default class BaseQueryDTO {
 
   constructor(baseQueryDTO?: BaseQueryDTO) {
     if (baseQueryDTO === undefined) {
+      this.id = undefined
+      this.createTime = undefined
+      this.updateTime = undefined
       this.keyword = undefined
       this.assignComparator = undefined
       this.sort = undefined
     } else {
+      this.id = baseQueryDTO.id
+      this.createTime = baseQueryDTO.createTime
+      this.updateTime = baseQueryDTO.updateTime
       this.keyword = baseQueryDTO.keyword
       this.assignComparator = baseQueryDTO.assignComparator
       this.sort = baseQueryDTO.sort
@@ -50,10 +56,7 @@ export default class BaseQueryDTO {
    * 获取可用于查询的实例
    */
   public getQueryObject() {
-    const query = toObjAcceptedBySqlite3(this)
-    delete query.assignComparator
-    delete query.sort
-    return query
+    return toObjAcceptedBySqlite3(this, ['assignComparator', 'sort'])
   }
 
   /**

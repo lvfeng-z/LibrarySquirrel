@@ -50,20 +50,20 @@ async function handleSaveButtonClicked() {
     if (props.mode === DialogMode.NEW) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localAuthorSave(tempFormData)
-      if (ApiUtil.apiResponseCheck(response)) {
+      if (ApiUtil.check(response)) {
         emits('requestSuccess')
         await handleDialog(false)
       }
-      ApiUtil.apiResponseMsg(response)
+      ApiUtil.msg(response)
     }
     if (props.mode === DialogMode.EDIT) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.localAuthorUpdateById(tempFormData)
-      if (ApiUtil.apiResponseCheck(response)) {
+      if (ApiUtil.check(response)) {
         emits('requestSuccess')
         await handleDialog(false)
       }
-      ApiUtil.apiResponseMsg(response)
+      ApiUtil.msg(response)
     }
   }
 }
