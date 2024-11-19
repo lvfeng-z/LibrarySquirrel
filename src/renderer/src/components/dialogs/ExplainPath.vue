@@ -156,7 +156,10 @@ function getOptions(str: string, reg: string) {
                   :api="getInputRowDataApi(meaningOfPath.type)"
                 >
                 </auto-load-select>
-                <el-date-picker v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'" v-model="meaningOfPath.name"></el-date-picker>
+                <el-date-picker
+                  v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
+                  v-model="meaningOfPath.name"
+                ></el-date-picker>
               </el-col>
               <el-col :span="2">
                 <el-button type="warning" icon="Remove" @click="removeInputRow(index)"></el-button>

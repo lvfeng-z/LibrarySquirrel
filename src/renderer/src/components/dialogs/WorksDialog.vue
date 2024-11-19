@@ -114,7 +114,11 @@ async function updateWorksLocalTags() {
     <div class="limiter">
       <el-scrollbar style="max-width: 60%">
         <picture>
-          <el-image style="margin-right: 10px" fit="contain" :src="`resource://workdir/${props.works[0].filePath}?height=108&width=192`">
+          <el-image
+            style="margin-right: 10px"
+            fit="contain"
+            :src="`resource://workdir/${props.works[0].filePath}?height=108&width=192`"
+          >
           </el-image>
         </picture>
       </el-scrollbar>

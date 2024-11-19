@@ -465,7 +465,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskIds 任务id列表
    */
   public async startTaskTree(taskIds: number[]): Promise<void> {
-    return this.processTaskTree(taskIds, [TaskStatusEnum.CREATED, TaskStatusEnum.FAILED, TaskStatusEnum.PARTLY_FINISHED, TaskStatusEnum.PAUSE])
+    return this.processTaskTree(taskIds, [
+      TaskStatusEnum.CREATED,
+      TaskStatusEnum.FAILED,
+      TaskStatusEnum.PARTLY_FINISHED,
+      TaskStatusEnum.PAUSE
+    ])
   }
 
   /**

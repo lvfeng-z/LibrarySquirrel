@@ -163,7 +163,9 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */
-  public async querySelectItemPageByWorksId(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
+  public async querySelectItemPageByWorksId(
+    page: PageModel<LocalTagQueryDTO, LocalTag>
+  ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     page = new PageModel(page)
     if (notNullish(page.query)) {
       page.query.assignComparator = {

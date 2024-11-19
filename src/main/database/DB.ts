@@ -77,7 +77,10 @@ export default class DB {
   ): Promise<Result | undefined> {
     return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.get(...params))
   }
-  public async all<BindParameters extends unknown[], Result = unknown>(statement: string, ...params: BindParameters): Promise<Result[]> {
+  public async all<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    ...params: BindParameters
+  ): Promise<Result[]> {
     return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.all(...params))
   }
   public async iterate<BindParameters extends unknown[], Result = unknown>(

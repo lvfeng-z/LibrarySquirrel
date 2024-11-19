@@ -139,7 +139,10 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const whereClauseAndQuery = super.getWhereClauses(query, 't1')
     const whereClauses = whereClauseAndQuery.whereClauses
 
-    if (Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') && Object.prototype.hasOwnProperty.call(page.query, 'worksId')) {
+    if (
+      Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') &&
+      Object.prototype.hasOwnProperty.call(page.query, 'worksId')
+    ) {
       const existClause = `exists(select 1 from re_works_tag where works_id = ${page.query.worksId} and t1.id = re_works_tag.local_tag_id)`
       if (page.query.boundOnWorksId) {
         whereClauses['worksId'] = existClause

@@ -159,7 +159,10 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     tiledWaitingUpdate = tiledWaitingUpdate.concat(waitingUpdateList as TreeNode[])
     // 把所有根级节点的子节点列入tiledWaitingUpdate
     for (let index = 0; index < tiledWaitingUpdate.length; index++) {
-      if (Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') && notNullish(tiledWaitingUpdate[index].children)) {
+      if (
+        Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') &&
+        notNullish(tiledWaitingUpdate[index].children)
+      ) {
         const children = tiledWaitingUpdate[index].children
         if (Array.isArray(children)) {
           tiledWaitingUpdate.push(...(children as TreeNode[]))

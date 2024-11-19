@@ -979,7 +979,11 @@ class TaskStatusChangeStream extends Writable {
     })
   }
 
-  async _write(chunk: TaskResourceSaveResult[] | TaskResourceSaveResult, _encoding: string, callback: TransformCallback): Promise<void> {
+  async _write(
+    chunk: TaskResourceSaveResult[] | TaskResourceSaveResult,
+    _encoding: string,
+    callback: TransformCallback
+  ): Promise<void> {
     try {
       let tempTasks: Task[]
       if (chunk instanceof Array) {

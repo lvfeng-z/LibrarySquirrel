@@ -38,24 +38,40 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       modifiedPage.query = whereClausesAndQuery.query
 
       // 补充虚拟列的where子句
-      if (page.query.includeLocalTagIds !== undefined && page.query.includeLocalTagIds !== null && page.query.includeLocalTagIds.length > 0) {
+      if (
+        page.query.includeLocalTagIds !== undefined &&
+        page.query.includeLocalTagIds !== null &&
+        page.query.includeLocalTagIds.length > 0
+      ) {
         const tagNum = page.query.includeLocalTagIds.length
         whereClauses.push(
           `${tagNum} = (select count(1) from re_works_tag ct1 where ct1.works_id = t1.id and ct1.local_tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
-      if (page.query.excludeLocalTagIds !== undefined && page.query.excludeLocalTagIds !== null && page.query.excludeLocalTagIds.length > 0) {
+      if (
+        page.query.excludeLocalTagIds !== undefined &&
+        page.query.excludeLocalTagIds !== null &&
+        page.query.excludeLocalTagIds.length > 0
+      ) {
         whereClauses.push(
           `0 = (select count(1) from re_works_tag ct2 where ct2.works_id = t1.id and ct1.local_tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
-      if (page.query.includeSiteTagIds !== undefined && page.query.includeSiteTagIds !== null && page.query.includeSiteTagIds.length > 0) {
+      if (
+        page.query.includeSiteTagIds !== undefined &&
+        page.query.includeSiteTagIds !== null &&
+        page.query.includeSiteTagIds.length > 0
+      ) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
           `${tagNum} = (select count(1) from re_works_tag ct3 where ct3.works_id = t1.id and ct1.site_tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
-      if (page.query.excludeSiteTagIds !== undefined && page.query.excludeSiteTagIds !== null && page.query.excludeSiteTagIds.length > 0) {
+      if (
+        page.query.excludeSiteTagIds !== undefined &&
+        page.query.excludeSiteTagIds !== null &&
+        page.query.excludeSiteTagIds.length > 0
+      ) {
         whereClauses.push(
           `0 = (select count(1) from re_works_tag ct4 where ct4.works_id = t1.id and ct1.site_tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )

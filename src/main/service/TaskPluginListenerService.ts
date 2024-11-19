@@ -8,7 +8,11 @@ import Plugin from '../model/Plugin.js'
 /**
  * 任务插件监听器Service
  */
-export default class TaskPluginListenerService extends BaseService<TaskPluginListenerQueryDTO, TaskPluginListener, TaskPluginListenerDao> {
+export default class TaskPluginListenerService extends BaseService<
+  TaskPluginListenerQueryDTO,
+  TaskPluginListener,
+  TaskPluginListenerDao
+> {
   constructor(db?: DB) {
     super('TaskPluginListenerService', new TaskPluginListenerDao(db), db)
   }

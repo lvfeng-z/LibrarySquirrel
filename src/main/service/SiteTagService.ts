@@ -32,7 +32,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     // TODO 根据dto里存的域名查询站点id
     // 校验
     const target = siteTags.find(
-      (siteTag) => siteTag.siteId === undefined || siteTag.siteId === null || siteTag.siteTagId === undefined || siteTag.siteTagId === null
+      (siteTag) =>
+        siteTag.siteId === undefined || siteTag.siteId === null || siteTag.siteTagId === undefined || siteTag.siteTagId === null
     )
     if (target !== undefined) {
       let msg: string
