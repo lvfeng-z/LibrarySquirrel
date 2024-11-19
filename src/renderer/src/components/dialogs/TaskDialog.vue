@@ -181,9 +181,7 @@ const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, 
 
 // 方法
 // 分页查询子任务的函数
-async function taskQueryChildrenTaskPage(
-  page: PageModel<TaskQueryDTO, object>
-): Promise<PageModel<TaskQueryDTO, object> | undefined> {
+async function taskQueryChildrenTaskPage(page: PageModel<TaskQueryDTO, object>): Promise<PageModel<TaskQueryDTO, object> | undefined> {
   const response = await apis.taskQueryChildrenTaskPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
@@ -206,12 +204,9 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
 function handleDialog(newState: boolean) {
   state.value = newState
   nextTick(() => {
-    const baseDialogHeader =
-      baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
-    const baseDialogFooter =
-      baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
-    heightForSearchTable.value =
-      parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
+    const baseDialogHeader = baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
+    const baseDialogFooter = baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
+    heightForSearchTable.value = parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
 
     childTaskSearchTable.value.handleSearchButtonClicked()
   })
@@ -223,9 +218,7 @@ async function refreshTask() {
     // 获取需要刷新的任务
     const getRefreshTasks = (): number[] => {
       // 获取可视区域及附近的行id
-      const visibleRowsId = childTaskSearchTable.value
-        .getVisibleRows(200, 200)
-        .map((id: string) => Number(id))
+      const visibleRowsId = childTaskSearchTable.value.getVisibleRows(200, 200).map((id: string) => Number(id))
       // 利用树形工具找到所有id对应的数据，判断是否需要刷新
       const tempRoot = new TaskDTO()
       tempRoot.children = children.value
@@ -233,9 +226,7 @@ async function refreshTask() {
         const task = getNode<TaskDTO>(tempRoot, id)
         return (
           notNullish(task) &&
-          (task.status === TaskStatesEnum.WAITING ||
-            task.status === TaskStatesEnum.PROCESSING ||
-            task.status === TaskStatesEnum.PAUSE)
+          (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
         )
       })
     }
@@ -320,11 +311,7 @@ function getTaskStatusElTag(data: TaskStatesEnum): VNode {
       break
   }
   const elTag = h(ElTag, { type: tagType }, () => tagText)
-  return h(
-    'div',
-    { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
-    elTag
-  )
+  return h('div', { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } }, elTag)
 }
 // 开始任务
 function startTask(row: TaskDTO, retry: boolean) {
@@ -349,12 +336,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <form-dialog
-    ref="baseDialog"
-    v-model:form-data="formData"
-    v-model:state="state"
-    :mode="props.mode"
-  >
+  <form-dialog ref="baseDialog" v-model:form-data="formData" v-model:state="state" :mode="props.mode">
     <template #form>
       <div style="height: 100%; display: flex; flex-direction: column">
         <div ref="parentTaskInfo">

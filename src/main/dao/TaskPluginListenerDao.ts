@@ -4,10 +4,7 @@ import TaskPluginListenerQueryDTO from '../model/queryDTO/TaskPluginListenerQuer
 import Plugin from '../model/Plugin.ts'
 import DB from '../database/DB.ts'
 
-export default class TaskPluginListenerDao extends BaseDao<
-  TaskPluginListenerQueryDTO,
-  TaskPluginListener
-> {
+export default class TaskPluginListenerDao extends BaseDao<TaskPluginListenerQueryDTO, TaskPluginListener> {
   constructor(db?: DB) {
     super('task_plugin_listener', 'TaskPluginListenerDao', db)
   }

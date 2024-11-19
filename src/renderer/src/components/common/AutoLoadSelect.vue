@@ -13,9 +13,7 @@ const props = defineProps<{
 }>()
 
 // 变量
-const page: Ref<UnwrapRef<PageModel<BaseQueryDTO, SelectItem>>> = ref(
-  new PageModel<BaseQueryDTO, SelectItem>()
-)
+const page: Ref<UnwrapRef<PageModel<BaseQueryDTO, SelectItem>>> = ref(new PageModel<BaseQueryDTO, SelectItem>())
 
 // 处理DataScroll滚动事件
 async function handleScroll(newQuery: boolean, query?: string) {
@@ -47,12 +45,8 @@ async function handleScroll(newQuery: boolean, query?: string) {
 </script>
 
 <template>
-  <el-select
-    v-scroll-to-bottom="() => handleScroll(false)"
-    :remote-method="(query: string) => handleScroll(true, query)"
-  >
-    <el-option v-for="item in page.data" :key="item.value" :value="item.value" :label="item.label">
-    </el-option>
+  <el-select v-scroll-to-bottom="() => handleScroll(false)" :remote-method="(query: string) => handleScroll(true, query)">
+    <el-option v-for="item in page.data" :key="item.value" :value="item.value" :label="item.label"> </el-option>
   </el-select>
 </template>
 

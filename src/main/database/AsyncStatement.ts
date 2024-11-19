@@ -30,11 +30,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
    */
   private readonly caller: string
 
-  constructor(
-    statement: Database.Statement<BindParameters, Result>,
-    holdingWriteLock: boolean,
-    caller: string
-  ) {
+  constructor(statement: Database.Statement<BindParameters, Result>, holdingWriteLock: boolean, caller: string) {
     this.statement = statement
     this.holdingWriteLock = holdingWriteLock
     this.injectedLock = holdingWriteLock
@@ -42,24 +38,18 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
   }
 
   /**
-   * run方法的封装
+   * BetterSqlite3 Statement的run方法的封装
    * @param params
    */
   async run(...params: BindParameters): Promise<Database.RunResult> {
     try {
       // 获取排他锁
       if (!this.holdingWriteLock) {
-        await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(
-          this.caller,
-          this.statement.source
-        )
+        await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, this.statement.source)
         this.holdingWriteLock = true
       }
       const runResult = this.statement.run(...params)
-      LogUtil.debug(
-        'AsyncStatement',
-        `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
-      )
+      LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\t[PARAMS] ${JSON.stringify(params)}`)
       return runResult
     } finally {
       // 释放排他锁
@@ -69,17 +59,11 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     }
   }
   get(...params: BindParameters): undefined | Result {
-    LogUtil.debug(
-      'AsyncStatement',
-      `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
-    )
+    LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\t[PARAMS] ${JSON.stringify(params)}`)
     return this.statement.get(...params)
   }
   all(...params: BindParameters): Result[] {
-    LogUtil.debug(
-      'AsyncStatement',
-      `[SQL] ${this.statement.source}\n[PARAMS] ${JSON.stringify(params)}`
-    )
+    LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\t[PARAMS] ${JSON.stringify(params)}`)
     return this.statement.all(...params)
   }
   iterate(...params: BindParameters): IterableIterator<Result> {

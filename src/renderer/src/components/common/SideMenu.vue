@@ -84,11 +84,7 @@ function handleClickOutSide() {
       </el-menu-item>
       <slot v-if="!disappear" name="default"></slot>
       <li style="display: flex; flex-grow: 1">
-        <el-menu-item
-          index="/shrink"
-          style="align-self: flex-end; width: 100%"
-          @click="handleBottomClicked"
-        >
+        <el-menu-item index="/shrink" style="align-self: flex-end; width: 100%" @click="handleBottomClicked">
           <el-icon v-if="!disappear"><ArrowLeftBold /></el-icon>
           <el-icon v-if="disappear"><ArrowRightBold /></el-icon>
         </el-menu-item>

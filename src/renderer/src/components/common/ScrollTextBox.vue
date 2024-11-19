@@ -16,10 +16,7 @@ onMounted(() => {
     resizeObserver.observe(scrollTextBoxRef.value)
   }
   if (scrollTextBoxLabelRef.value) {
-    scrollTextBoxLabelRef.value.style.setProperty(
-      '--animationDuration',
-      String(props.duration).concat('s')
-    )
+    scrollTextBoxLabelRef.value.style.setProperty('--animationDuration', String(props.duration).concat('s'))
     switch (props.textAlign) {
       case 'left':
         scrollTextBoxLabelRef.value.style.setProperty('--animationName', 'scroll-text-left')

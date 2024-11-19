@@ -4,11 +4,7 @@ import ReWorksWorksSet from '../model/ReWorksWorksSet.ts'
 import ReWorksWorksSetDao from '../dao/ReWorksWorksSetDao.ts'
 import DB from '../database/DB.ts'
 
-export default class ReWorksWorksSetService extends BaseService<
-  ReWorksWorksSetQueryDTO,
-  ReWorksWorksSet,
-  ReWorksWorksSetDao
-> {
+export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQueryDTO, ReWorksWorksSet, ReWorksWorksSetDao> {
   constructor(db?: DB) {
     super('ReWorksWorksSetService', new ReWorksWorksSetDao(db), db)
   }

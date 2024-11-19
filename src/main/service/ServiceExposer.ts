@@ -217,30 +217,24 @@ function exposeService() {
   })
 
   // ReWorksTagService
-  Electron.ipcMain.handle(
-    'reWorksTag-link',
-    async (_event, localTagIds: number[], worksId: number) => {
-      const reWorksTagService = new ReWorksTagService()
-      try {
-        return ApiUtil.response(await reWorksTagService.link(localTagIds, worksId))
-      } catch (error) {
-        LogUtil.error('ServiceExposer', error)
-        return ApiUtil.error(String(error))
-      }
+  Electron.ipcMain.handle('reWorksTag-link', async (_event, localTagIds: number[], worksId: number) => {
+    const reWorksTagService = new ReWorksTagService()
+    try {
+      return ApiUtil.response(await reWorksTagService.link(localTagIds, worksId))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
     }
-  )
-  Electron.ipcMain.handle(
-    'reWorksTag-unlink',
-    async (_event, localTagIds: number[], worksId: number) => {
-      const reWorksTagService = new ReWorksTagService()
-      try {
-        return ApiUtil.response(await reWorksTagService.unlink(localTagIds, worksId))
-      } catch (error) {
-        LogUtil.error('ServiceExposer', error)
-        return ApiUtil.error(String(error))
-      }
+  })
+  Electron.ipcMain.handle('reWorksTag-unlink', async (_event, localTagIds: number[], worksId: number) => {
+    const reWorksTagService = new ReWorksTagService()
+    try {
+      return ApiUtil.response(await reWorksTagService.unlink(localTagIds, worksId))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
     }
-  )
+  })
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', () => {
@@ -274,18 +268,15 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle(
-    'siteAuthor-queryBoundOrUnboundInLocalAuthorPage',
-    async (_event, args) => {
-      const siteAuthorService = new SiteAuthorService()
-      try {
-        return ApiUtil.response(await siteAuthorService.queryBoundOrUnboundInLocalAuthorPage(args))
-      } catch (error) {
-        LogUtil.error('ServiceExposer', error)
-        return ApiUtil.error(String(error))
-      }
+  Electron.ipcMain.handle('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', async (_event, args) => {
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.queryBoundOrUnboundInLocalAuthorPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
     }
-  )
+  })
 
   // SiteTagService
   Electron.ipcMain.handle('siteTag-save', async (_event, args) => {
@@ -306,30 +297,24 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle(
-    'siteTag-updateBindLocalTag',
-    async (_event, localTagId: string | null, siteTagIds: string[]) => {
-      try {
-        const siteTagService = new SiteTagService()
-        return ApiUtil.response(await siteTagService.updateBindLocalTag(localTagId, siteTagIds))
-      } catch (error) {
-        LogUtil.error('ServiceExposer', error)
-        return ApiUtil.error(String(error))
-      }
+  Electron.ipcMain.handle('siteTag-updateBindLocalTag', async (_event, localTagId: string | null, siteTagIds: string[]) => {
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.updateBindLocalTag(localTagId, siteTagIds))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
     }
-  )
-  Electron.ipcMain.handle(
-    'siteTag-queryBoundOrUnboundToLocalTagPage',
-    async (_event, page: PageModel<SiteTagQueryDTO, SiteTag>) => {
-      try {
-        const siteTagService = new SiteTagService()
-        return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))
-      } catch (error) {
-        LogUtil.error('ServiceExposer', error)
-        return ApiUtil.error(String(error))
-      }
+  })
+  Electron.ipcMain.handle('siteTag-queryBoundOrUnboundToLocalTagPage', async (_event, page: PageModel<SiteTagQueryDTO, SiteTag>) => {
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
     }
-  )
+  })
   Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args) => {
     try {
       const siteTagService = new SiteTagService()

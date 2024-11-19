@@ -6,10 +6,7 @@ import { notNullish } from './CommonUtil'
  * @param data 树节点
  * @param pid 父母节点id
  */
-export function buildTree<T extends TreeNode>(
-  data: T[],
-  pid: string | number | null | undefined
-): T[] {
+export function buildTree<T extends TreeNode>(data: T[], pid: string | number | null | undefined): T[] {
   // 遍历列表，收集所有子节点
   const tree: T[] = [...data.filter((node) => node.pid === pid)]
 

@@ -30,13 +30,8 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
         return false
       }
       if (isNullish(!Object.hasOwn(works, 'id') || works.id)) {
-        const siteWorksName = Object.hasOwn(works, 'siteWorksName')
-          ? works.siteWorksName
-          : 'unknown'
-        LogUtil.warn(
-          'WorksSetService',
-          `关联作品集和作品时，作品id意外为空，siteWorksName: ${siteWorksName}`
-        )
+        const siteWorksName = Object.hasOwn(works, 'siteWorksName') ? works.siteWorksName : 'unknown'
+        LogUtil.warn('WorksSetService', `关联作品集和作品时，作品id意外为空，siteWorksName: ${siteWorksName}`)
         return false
       }
       return true
@@ -70,10 +65,7 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
    * @param siteWorksSetId 作品集在站点的id
    * @param taskId 入库任务的id
    */
-  public async getBySiteWorksSetIdAndTaskId(
-    siteWorksSetId: string,
-    taskId: number
-  ): Promise<WorksSet | undefined> {
+  public async getBySiteWorksSetIdAndTaskId(siteWorksSetId: string, taskId: number): Promise<WorksSet | undefined> {
     return this.dao.getBySiteWorksSetIdAndTaskId(siteWorksSetId, taskId)
   }
 }

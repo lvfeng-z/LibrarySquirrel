@@ -83,9 +83,7 @@ function calculateSpan() {
 
     // 长度不相等，说明有元素被放进dropDownInputBoxes
     if (innerMainInputBoxes.value.length != props.mainInputBoxes.length) {
-      console.debug(
-        '主搜索栏长度不足以容纳所有mainInputBoxes元素，不能容纳的元素以被移动至dropDownInputBoxes'
-      )
+      console.debug('主搜索栏长度不足以容纳所有mainInputBoxes元素，不能容纳的元素以被移动至dropDownInputBoxes')
     }
   }
 
@@ -128,29 +126,19 @@ function handleCreateButtonClicked() {
       </el-col>
       <template v-for="(item, index) in innerMainInputBoxes" :key="index">
         <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
-          <div
-            :key="index"
-            class="search-toolbar-label-scroll-text-wrapper el-tag-mimic"
-            style="width: 100%"
-          >
+          <div :key="index" class="search-toolbar-label-scroll-text-wrapper el-tag-mimic" style="width: 100%">
             <scroll-text-box>{{ item.label }}</scroll-text-box>
           </div>
         </el-col>
         <el-col class="search-toolbar-input" :span="item.inputSpan">
           <el-form-item class="search-toolbar-input-form-item">
-            <common-input
-              v-model:data="params[item.name]"
-              class="search-toolbar-input-form-item-input"
-              :config="item"
-            />
+            <common-input v-model:data="params[item.name]" class="search-toolbar-input-form-item-input" :config="item" />
           </el-form-item>
         </el-col>
       </template>
       <el-col class="search-toolbar-search-button" :span="barButtonSpan">
         <el-dropdown>
-          <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked">
-            搜索
-          </el-button>
+          <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked"> 搜索 </el-button>
           <template v-if="innerDropdownInputBoxes.length > 0" #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="handleDropdownForm">更多选项</el-dropdown-item>

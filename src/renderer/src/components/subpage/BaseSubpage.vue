@@ -10,13 +10,7 @@ function closeSelf() {
 
 <template>
   <div class="base-subpage">
-    <el-button
-      class="base-subpage-close-button"
-      circle
-      icon="close"
-      color="#b54747"
-      @click="closeSelf"
-    ></el-button>
+    <el-button class="base-subpage-close-button" circle icon="close" color="#b54747" @click="closeSelf"></el-button>
     <div class="base-subpage-content">
       <slot />
     </div>

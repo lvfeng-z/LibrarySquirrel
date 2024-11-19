@@ -97,11 +97,7 @@ async function requestWorks() {
 
   // 处理搜索框的标签
   selectedTagList.value.forEach((tag) => {
-    if (
-      tag.extraData !== undefined &&
-      tag.extraData !== null &&
-      Object.prototype.hasOwnProperty.call(tag.extraData, 'tagType')
-    ) {
+    if (tag.extraData !== undefined && tag.extraData !== null && Object.prototype.hasOwnProperty.call(tag.extraData, 'tagType')) {
       // "page.query !== undefined"是为了保证编译能通过，没有实际意义
       if (page.query === undefined) {
         return
@@ -180,9 +176,7 @@ async function handleTest() {
             <el-icon><User /></el-icon>
             <span>作者</span>
           </template>
-          <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')">
-            本地作者
-          </el-menu-item>
+          <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')"> 本地作者 </el-menu-item>
           <el-menu-item index="2-2">站点作者</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="3">
@@ -214,33 +208,15 @@ async function handleTest() {
               <el-button @click="handleTest">测试</el-button>
             </el-col>
             <el-col :span="20">
-              <el-select
-                v-model="selectedTagList"
-                multiple
-                filterable
-                remote
-                :remote-method="getTagSelectList"
-                :loading="loading"
-              >
-                <el-option
-                  v-for="item in tagSelectList"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item"
-                >
+              <el-select v-model="selectedTagList" multiple filterable remote :remote-method="getTagSelectList" :loading="loading">
+                <el-option v-for="item in tagSelectList" :key="item.value" :label="item.label" :value="item">
                   <span style="float: left">{{ item.label }}</span>
-                  <span
-                    style="float: right; color: var(--el-text-color-secondary); font-size: 13px"
-                  >
+                  <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">
                     {{ item.secondaryLabel }}
                   </span>
                 </el-option>
                 <template #tag>
-                  <double-check-tag
-                    v-for="item in selectedTagList"
-                    :key="item.value"
-                    :item="item"
-                  ></double-check-tag>
+                  <double-check-tag v-for="item in selectedTagList" :key="item.value" :item="item"></double-check-tag>
                 </template>
               </el-select>
             </el-col>
@@ -249,17 +225,11 @@ async function handleTest() {
             </el-col>
           </el-row>
         </div>
-        <works-display-area
-          class="mainPage-works-space"
-          :works-list="imageList"
-        ></works-display-area>
+        <works-display-area class="mainPage-works-space" :works-list="imageList"></works-display-area>
       </div>
       <div v-if="pageState.subpage" class="subPage">
         <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
-        <local-author-manage
-          v-if="pageState.showLocalAuthorManagePage"
-          @close-self="closeSubpage"
-        />
+        <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
         <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
         <settings v-if="pageState.showSettingsPage" @close-self="closeSubpage" />
       </div>

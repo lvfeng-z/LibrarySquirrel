@@ -17,11 +17,7 @@ import { notNullish } from '../util/CommonUtil.ts'
 /**
  * 本地作者Service
  */
-export default class LocalAuthorService extends BaseService<
-  LocalAuthorQueryDTO,
-  LocalAuthor,
-  LocalAuthorDao
-> {
+export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor, LocalAuthorDao> {
   constructor(db?: DB) {
     super('LocalAuthorService', new LocalAuthorDao(db), db)
   }
@@ -56,9 +52,7 @@ export default class LocalAuthorService extends BaseService<
    * 分页查询
    * @param page
    */
-  public async queryPage(
-    page: PageModel<LocalAuthorQueryDTO, LocalAuthor>
-  ): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
+  public async queryPage(page: PageModel<LocalAuthorQueryDTO, LocalAuthor>): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
       if (notNullish(page.query)) {
         page.query.assignComparator = {
@@ -90,9 +84,7 @@ export default class LocalAuthorService extends BaseService<
   /**
    * 分页查询SelectItem
    */
-  public querySelectItemPage(
-    page: PageModel<LocalAuthorQueryDTO, LocalAuthor>
-  ): Promise<PageModel<LocalAuthorQueryDTO, SelectItem>> {
+  public querySelectItemPage(page: PageModel<LocalAuthorQueryDTO, LocalAuthor>): Promise<PageModel<LocalAuthorQueryDTO, SelectItem>> {
     try {
       page = new PageModel(page)
       page.query = new LocalAuthorQueryDTO(page.query)

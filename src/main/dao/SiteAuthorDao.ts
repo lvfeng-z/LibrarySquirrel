@@ -38,10 +38,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param localAuthorId 本地作者id
    * @param siteAuthorIds 站点作者id列表
    */
-  public async updateBindLocalAuthor(
-    localAuthorId: string | null,
-    siteAuthorIds: string[]
-  ): Promise<number> {
+  public async updateBindLocalAuthor(localAuthorId: string | null, siteAuthorIds: string[]): Promise<number> {
     if (siteAuthorIds.length > 0) {
       const setClause: string[] = []
       siteAuthorIds.forEach((siteAuthorId) => {
@@ -66,9 +63,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 查询站点作者（附带绑定的本地作者）
    * @param page
    */
-  public async listSiteAuthorWithLocalAuthor(
-    page: PageModel<SiteAuthorQueryDTO, SiteAuthor>
-  ): Promise<SiteAuthorDTO[]> {
+  public async listSiteAuthorWithLocalAuthor(page: PageModel<SiteAuthorQueryDTO, SiteAuthor>): Promise<SiteAuthorDTO[]> {
     // 没有查询参数，构建一个空的
     if (page.query === undefined) {
       page.query = new SiteAuthorQueryDTO()
@@ -102,10 +97,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     delete whereClauses.bound
 
     // 处理keyword
-    if (
-      Object.prototype.hasOwnProperty.call(page.query, 'keyword') &&
-      StringUtil.isNotBlank(page.query.keyword)
-    ) {
+    if (Object.prototype.hasOwnProperty.call(page.query, 'keyword') && StringUtil.isNotBlank(page.query.keyword)) {
       whereClauses.keyword = 't1.site_author_name like @keyword'
       modifiedQuery.keyword = page.query.keywordForFullMatch()
     }

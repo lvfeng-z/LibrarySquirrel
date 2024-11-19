@@ -2,50 +2,23 @@
   <div class="search-list">
     <el-row class="search-list-toolbar">
       <el-col :span="selectList ? 18 : 24">
-        <el-input
-          v-model="inputText"
-          placeholder="请输入关键词进行搜索"
-          prefix-icon="el-icon-search"
-          @input="handleSearch"
-        />
+        <el-input v-model="inputText" placeholder="请输入关键词进行搜索" prefix-icon="el-icon-search" @input="handleSearch" />
       </el-col>
       <el-col v-if="selectList" :span="6">
-        <el-select
-          v-model="selectListSelected"
-          multiple
-          filterable
-          remote
-          :remote-method="getSelectList"
-        >
-          <el-option
-            v-for="item in selectListItems"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          >
-          </el-option>
+        <el-select v-model="selectListSelected" multiple filterable remote :remote-method="getSelectList">
+          <el-option v-for="item in selectListItems" :key="item.value" :value="item.value" :label="item.label"> </el-option>
         </el-select>
       </el-col>
     </el-row>
     <div class="result-list rounded-borders">
       <el-checkbox-group v-if="multiSelect" v-model="checkboxSelected">
-        <el-checkbox
-          v-for="(item, index) in filteredItems"
-          :key="index"
-          :value="item.value"
-          @change="selectionChange"
-        >
+        <el-checkbox v-for="(item, index) in filteredItems" :key="index" :value="item.value" @change="selectionChange">
           {{ item.label }}
         </el-checkbox>
       </el-checkbox-group>
 
       <el-radio-group v-else v-model="radioSelected">
-        <el-radio
-          v-for="(item, index) in filteredItems"
-          :key="index"
-          :value="item.value"
-          @change="selectionChange"
-        >
+        <el-radio v-for="(item, index) in filteredItems" :key="index" :value="item.value" @change="selectionChange">
           {{ item.label }}
         </el-radio>
       </el-radio-group>

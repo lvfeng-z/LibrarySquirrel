@@ -78,11 +78,7 @@ export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogR
  * @param height 返回图片的高度
  * @param width 返回图片的宽度
  */
-export async function getWorksResource(
-  fullPath: string,
-  height?: number,
-  width?: number
-): Promise<Buffer> {
+export async function getWorksResource(fullPath: string, height?: number, width?: number): Promise<Buffer> {
   const resource = await fs.readFile(fullPath)
   if (isNullish(height) || isNullish(width)) {
     return resource

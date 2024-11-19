@@ -75,17 +75,10 @@ export default class DB {
     statement: string,
     ...params: BindParameters
   ): Promise<Result | undefined> {
-    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) =>
-      asyncStatement.get(...params)
-    )
+    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.get(...params))
   }
-  public async all<BindParameters extends unknown[], Result = unknown>(
-    statement: string,
-    ...params: BindParameters
-  ): Promise<Result[]> {
-    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) =>
-      asyncStatement.all(...params)
-    )
+  public async all<BindParameters extends unknown[], Result = unknown>(statement: string, ...params: BindParameters): Promise<Result[]> {
+    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.all(...params))
   }
   public async iterate<BindParameters extends unknown[], Result = unknown>(
     statement: string,
@@ -106,9 +99,7 @@ export default class DB {
     statement: string,
     ...params: BindParameters
   ): Promise<Database.Statement<BindParameters, Result>> {
-    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) =>
-      asyncStatement.bind(...params)
-    )
+    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.bind(...params))
   }
   public async columns(statement: string): Promise<Database.ColumnDefinition[]> {
     return (await this.prepare(statement, true)).columns()
@@ -156,14 +147,11 @@ export default class DB {
   }
 
   /**
-   * 可嵌套的事务
+   * 事务
    * @param fn 事务代码
    * @param operation 操作说明
    */
-  public async transaction<F extends (db: DB) => Promise<R>, R>(
-    fn: F,
-    operation: string
-  ): Promise<R> {
+  public async transaction<F extends (db: DB) => Promise<R>, R>(fn: F, operation: string): Promise<R> {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0
@@ -184,11 +172,7 @@ export default class DB {
         GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
         this.holdingWriteLock = false
       }
-      LogUtil.error(
-        this.caller,
-        `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`,
-        error
-      )
+      LogUtil.error(this.caller, `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`, error)
       throw error
     }
 
@@ -241,10 +225,7 @@ export default class DB {
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(
-            true,
-            RequestWeight.LOW
-          )
+          this.readingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(true, RequestWeight.LOW)
           this.readingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.readingConnection.connection.function('REGEXP', (pattern, string) => {
@@ -261,10 +242,7 @@ export default class DB {
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(
-            false,
-            RequestWeight.LOW
-          )
+          this.writingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(false, RequestWeight.LOW)
           this.writingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.writingConnection.connection.function('REGEXP', (pattern, string) => {

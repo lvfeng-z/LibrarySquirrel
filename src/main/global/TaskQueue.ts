@@ -112,10 +112,7 @@ export class TaskQueue {
             if (taskRunningObj.infoSaved) {
               // 如果原操作的任务信息已经保存，则此操作推入资源保存流中，如果没有保存，则忽略此操作（此时任务开始的操作正在任务信息保存流中，如果把新的操作推入资源保存流中，就会出现恢复操作先于开始操作的情况）
               if (TaskOperation.START === taskOperation) {
-                LogUtil.warn(
-                  'TaskQueue',
-                  `任务${taskRunningObj.taskId}已经开始，无法再次开始，此次开始操作已经转换为恢复`
-                )
+                LogUtil.warn('TaskQueue', `任务${taskRunningObj.taskId}已经开始，无法再次开始，此次开始操作已经转换为恢复`)
               }
               infoSavedRunningObjs.push(taskRunningObj)
             }
@@ -170,15 +167,11 @@ export class TaskQueue {
       this.taskInfoStream.addTask(infoNotSavedRunningObjs)
     } else if (taskOperation === TaskOperation.PAUSE) {
       this.pauseTask(tasks)
-      const parentIdWaitingRefresh: Set<number> = new Set(
-        tasks.map((task) => task.pid).filter(notNullish)
-      )
+      const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     } else if (taskOperation === TaskOperation.STOP) {
       this.stopTask(tasks)
-      const parentIdWaitingRefresh: Set<number> = new Set(
-        tasks.map((task) => task.pid).filter(notNullish)
-      )
+      const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     }
   }
@@ -225,10 +218,7 @@ export class TaskQueue {
       })
     }
     const writer = taskRunningObj.taskWriter
-    if (
-      TaskStatusEnum.PROCESSING === taskRunningObj.status ||
-      TaskStatusEnum.PAUSE === taskRunningObj.status
-    ) {
+    if (TaskStatusEnum.PROCESSING === taskRunningObj.status || TaskStatusEnum.PAUSE === taskRunningObj.status) {
       if (writer.bytesSum === 0) {
         return new TaskScheduleDTO({
           id: taskId,
@@ -443,11 +433,7 @@ export class TaskQueue {
         let parent = this.parentMap.get(runningObj.parentId)
         if (isNullish(parent)) {
           const parentInfo = await this.taskService.getById(runningObj.parentId)
-          assertNotNullish(
-            parentInfo?.status,
-            'TaskQueue',
-            `刷新父任务${runningObj.parentId}时，任务状态意外为空`
-          )
+          assertNotNullish(parentInfo?.status, 'TaskQueue', `刷新父任务${runningObj.parentId}时，任务状态意外为空`)
           parent = new ParentRunningObj(runningObj.parentId, parentInfo?.status)
           this.parentMap.set(runningObj.parentId, parent)
         }
@@ -471,18 +457,13 @@ export class TaskQueue {
         const allChildren = await this.taskService.listChildrenTask(id)
         allChildren.forEach((children) => {
           if (!parentRunningObj.children.has(children.id as number)) {
-            const taskStatus = new TaskStatus(
-              children.id as number,
-              children.status as TaskStatusEnum
-            )
+            const taskStatus = new TaskStatus(children.id as number, children.status as TaskStatusEnum)
             parentRunningObj.children.set(children.id as number, taskStatus)
           }
         })
 
         const children = Array.from(parentRunningObj.children.values())
-        const processing = children.filter(
-          (child) => TaskStatusEnum.PROCESSING === child.status
-        ).length
+        const processing = children.filter((child) => TaskStatusEnum.PROCESSING === child.status).length
         const waiting = children.filter((child) => TaskStatusEnum.WAITING === child.status).length
         const paused = children.filter((child) => TaskStatusEnum.PAUSE === child.status).length
         const finished = children.filter((child) => TaskStatusEnum.FINISHED === child.status).length
@@ -705,11 +686,7 @@ class TaskInfoStream extends Transform {
     })
   }
 
-  async _transform(
-    chunk: TaskRunningObj,
-    _encoding: string,
-    callback: TransformCallback
-  ): Promise<void> {
+  async _transform(chunk: TaskRunningObj, _encoding: string, callback: TransformCallback): Promise<void> {
     try {
       const task = await this.taskService.getById(chunk.taskId)
       // 开始保存任务信息
@@ -772,12 +749,7 @@ class TaskInfoStream extends Transform {
    * @param task
    * @private
    */
-  private handleError(
-    taskRunningObj: TaskRunningObj,
-    callback: () => void,
-    error?: Error,
-    task?: Task
-  ) {
+  private handleError(taskRunningObj: TaskRunningObj, callback: () => void, error?: Error, task?: Task) {
     const msg = `下载任务${taskRunningObj.taskId}失败`
     if (isNullish(error)) {
       error = new Error(msg)
@@ -841,8 +813,7 @@ class TaskResourceStream extends Transform {
     this.pluginLoader = pluginLoader
     // 读取设置中的最大并行数
     const settings = SettingsService.getSettings()
-    this.maxParallel =
-      settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
+    this.maxParallel = settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
     this.processing = 0
     this.limited = false
     this.runningObjs = []
@@ -1008,11 +979,7 @@ class TaskStatusChangeStream extends Writable {
     })
   }
 
-  async _write(
-    chunk: TaskResourceSaveResult[] | TaskResourceSaveResult,
-    _encoding: string,
-    callback: TransformCallback
-  ): Promise<void> {
+  async _write(chunk: TaskResourceSaveResult[] | TaskResourceSaveResult, _encoding: string, callback: TransformCallback): Promise<void> {
     try {
       let tempTasks: Task[]
       if (chunk instanceof Array) {

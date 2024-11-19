@@ -14,6 +14,7 @@ import { ReWorksTagService } from './ReWorksTagService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import { isNullish } from '../util/CommonUtil.ts'
+import { assertNotNullish } from '../util/AssertUtil.js'
 
 /**
  * 站点标签Service
@@ -31,11 +32,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     // TODO 根据dto里存的域名查询站点id
     // 校验
     const target = siteTags.find(
-      (siteTag) =>
-        siteTag.siteId === undefined ||
-        siteTag.siteId === null ||
-        siteTag.siteTagId === undefined ||
-        siteTag.siteTagId === null
+      (siteTag) => siteTag.siteId === undefined || siteTag.siteId === null || siteTag.siteTagId === undefined || siteTag.siteTagId === null
     )
     if (target !== undefined) {
       let msg: string
@@ -74,6 +71,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page
    */
   async queryBoundOrUnboundToLocalTagPage(page: PageModel<SiteTagQueryDTO, SiteTag>) {
+    assertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签时，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new PageModel(page)
     page.query = new SiteTagQueryDTO(page.query)

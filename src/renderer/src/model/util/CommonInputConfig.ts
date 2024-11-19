@@ -4,19 +4,7 @@ import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import { notNullish } from '@renderer/utils/CommonUtil.ts'
 
 export class CommonInputConfig implements ICommonInputConfig {
-  type:
-    | 'default'
-    | 'text'
-    | 'date'
-    | 'datetime'
-    | 'number'
-    | 'textarea'
-    | 'checkbox'
-    | 'radio'
-    | 'select'
-    | 'treeSelect'
-    | 'switch'
-    | 'custom' // 类型
+  type: 'default' | 'text' | 'date' | 'datetime' | 'number' | 'textarea' | 'checkbox' | 'radio' | 'select' | 'treeSelect' | 'switch' | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
   dblclickEnable?: boolean // 是否可以双击启用
   selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
@@ -44,19 +32,7 @@ export class CommonInputConfig implements ICommonInputConfig {
 }
 
 export interface ICommonInputConfig {
-  type:
-    | 'default'
-    | 'text'
-    | 'date'
-    | 'datetime'
-    | 'number'
-    | 'textarea'
-    | 'checkbox'
-    | 'radio'
-    | 'select'
-    | 'treeSelect'
-    | 'switch'
-    | 'custom' // 类型
+  type: 'default' | 'text' | 'date' | 'datetime' | 'number' | 'textarea' | 'checkbox' | 'radio' | 'select' | 'treeSelect' | 'switch' | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
   dblclickEnable?: boolean // 是否可以双击启用
   selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据

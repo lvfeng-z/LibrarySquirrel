@@ -31,12 +31,7 @@ function handleClicked(right: boolean) {
 
 <template>
   <div class="double-check-tag">
-    <el-check-tag
-      class="double-check-tag-tag"
-      :type="props.leftTagType"
-      checked
-      @change="handleClicked(false)"
-    >
+    <el-check-tag class="double-check-tag-tag" :type="props.leftTagType" checked @change="handleClicked(false)">
       {{ props.item.label }}
     </el-check-tag>
     <el-check-tag

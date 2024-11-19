@@ -43,21 +43,15 @@ function getSpanValue() {
   if (props.config.type === 'date' || props.config.type === 'datetime') {
     const datetime = new Date(data.value as number)
     const year = datetime.getFullYear() + '-'
-    const month =
-      (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) +
-      '-'
-    const day =
-      (datetime.getDay() + 1 < 10 ? '0' + (datetime.getDay() + 1) : datetime.getDay() + 1) + ' '
+    const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
+    const day = (datetime.getDay() + 1 < 10 ? '0' + (datetime.getDay() + 1) : datetime.getDay() + 1) + ' '
     const date = year + month + day
     if (props.config.type === 'date') {
       return date
     } else {
-      const hour =
-        (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
-      const minute =
-        (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
-      const second =
-        datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
+      const hour = (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
+      const minute = (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
+      const second = datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
       return date + hour + minute + second
     }
   } else if (props.config.type === 'select') {
@@ -125,16 +119,9 @@ async function requestSelectDataApi(queryStr?: string) {
       clearable
       @change="handleDataChange"
     ></el-input>
-    <el-input-number
-      v-if="props.config.type === 'number'"
-      v-model="data"
-      :placeholder="props.config.placeholder"
-    ></el-input-number>
+    <el-input-number v-if="props.config.type === 'number'" v-model="data" :placeholder="props.config.placeholder"></el-input-number>
     <!-- 这一层div用来防止date-picker宽度超出父组件 -->
-    <div
-      v-if="!disabled && (props.config.type === 'date' || props.config.type === 'datetime')"
-      class="common-input-el-date-picker"
-    >
+    <div v-if="!disabled && (props.config.type === 'date' || props.config.type === 'datetime')" class="common-input-el-date-picker">
       <el-date-picker
         v-model="data"
         style="width: 100%"
@@ -143,10 +130,7 @@ async function requestSelectDataApi(queryStr?: string) {
         :placeholder="props.config.placeholder"
       ></el-date-picker>
     </div>
-    <el-checkbox-group
-      v-if="props.config.type === 'checkbox'"
-      :disabled="disabled"
-    ></el-checkbox-group>
+    <el-checkbox-group v-if="props.config.type === 'checkbox'" :disabled="disabled"></el-checkbox-group>
     <el-radio-group v-if="props.config.type === 'radio'" :disabled="disabled"></el-radio-group>
     <el-select
       v-if="!disabled && props.config.type === 'select'"
@@ -158,12 +142,7 @@ async function requestSelectDataApi(queryStr?: string) {
       :filterable="props.config.useLoad"
       clearable
     >
-      <el-option
-        v-for="item in props.config.selectData"
-        :key="item.value"
-        :value="item.value"
-        :label="item.label"
-      />
+      <el-option v-for="item in props.config.selectData" :key="item.value" :value="item.value" :label="item.label" />
     </el-select>
     <el-tree-select
       v-if="!disabled && props.config.type === 'treeSelect'"
@@ -179,10 +158,7 @@ async function requestSelectDataApi(queryStr?: string) {
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
-    <component
-      :is="notNullish(props.config.render) ? props.config.render(data) : undefined"
-      v-if="props.config.type === 'custom'"
-    />
+    <component :is="notNullish(props.config.render) ? props.config.render(data) : undefined" v-if="props.config.type === 'custom'" />
   </div>
 </template>
 

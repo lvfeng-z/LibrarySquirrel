@@ -9,11 +9,7 @@ import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
 /**
  * 基础Service类
  */
-export default abstract class BaseService<
-  Query extends BaseQueryDTO,
-  Model extends BaseModel,
-  Dao extends BaseDao<Query, Model>
-> {
+export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseModel, Dao extends BaseDao<Query, Model>> {
   /**
    * 子类名称
    */

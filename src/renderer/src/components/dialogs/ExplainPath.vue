@@ -59,9 +59,7 @@ function confirmExplain() {
 }
 // 确认解释
 async function loadAutoExplain() {
-  const stringToExplain = StringUtil.isBlank(props.stringToExplain)
-    ? 'Artist[test]'
-    : props.stringToExplain
+  const stringToExplain = StringUtil.isBlank(props.stringToExplain) ? 'Artist[test]' : props.stringToExplain
   autoExplainPage.value.query = new AutoExplainPathQueryDTO()
   autoExplainPage.value.query.path = stringToExplain
   const tempPage = lodash.cloneDeep(autoExplainPage.value)
@@ -145,20 +143,11 @@ function getOptions(str: string, reg: string) {
             <el-row>
               <el-col :span="5">
                 <el-select v-model="meaningOfPath.type" @change="resetInputData(meaningOfPath)">
-                  <el-option
-                    v-for="item in meaningTypes"
-                    :key="item.value"
-                    :value="item.value"
-                    :label="item.label"
-                  >
-                  </el-option>
+                  <el-option v-for="item in meaningTypes" :key="item.value" :value="item.value" :label="item.label"> </el-option>
                 </el-select>
               </el-col>
               <el-col :span="17">
-                <el-input
-                  v-if="getInputRowType(meaningOfPath.type) === 'input'"
-                  v-model="meaningOfPath.name"
-                ></el-input>
+                <el-input v-if="getInputRowType(meaningOfPath.type) === 'input'" v-model="meaningOfPath.name"></el-input>
                 <auto-load-select
                   v-if="getInputRowType(meaningOfPath.type) === 'select'"
                   v-model="meaningOfPath.id"
@@ -167,10 +156,7 @@ function getOptions(str: string, reg: string) {
                   :api="getInputRowDataApi(meaningOfPath.type)"
                 >
                 </auto-load-select>
-                <el-date-picker
-                  v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
-                  v-model="meaningOfPath.name"
-                ></el-date-picker>
+                <el-date-picker v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'" v-model="meaningOfPath.name"></el-date-picker>
               </el-col>
               <el-col :span="2">
                 <el-button type="warning" icon="Remove" @click="removeInputRow(index)"></el-button>
@@ -192,13 +178,7 @@ function getOptions(str: string, reg: string) {
             <el-row>
               <el-col :span="5">
                 <el-select v-model="autoExplain.type" disabled>
-                  <el-option
-                    v-for="item in meaningTypes"
-                    :key="item.value"
-                    :value="item.value"
-                    :label="item.label"
-                  >
-                  </el-option>
+                  <el-option v-for="item in meaningTypes" :key="item.value" :value="item.value" :label="item.label"> </el-option>
                 </el-select>
               </el-col>
               <el-col :span="5">
@@ -210,10 +190,7 @@ function getOptions(str: string, reg: string) {
               <el-col :span="5">
                 <el-select v-model="autoExplainSelected[index1]">
                   <el-option
-                    v-for="(item, index) in getOptions(
-                      props.stringToExplain,
-                      autoExplain.regularExpression as string
-                    )"
+                    v-for="(item, index) in getOptions(props.stringToExplain, autoExplain.regularExpression as string)"
                     :key="index"
                     :value="index"
                     :label="item"

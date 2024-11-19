@@ -16,10 +16,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
    * @param siteWorksSetId 作品集在站点的id
    * @param taskId 入库任务的id
    */
-  public async getBySiteWorksSetIdAndTaskId(
-    siteWorksSetId: string,
-    taskId: number
-  ): Promise<WorksSet | undefined> {
+  public async getBySiteWorksSetIdAndTaskId(siteWorksSetId: string, taskId: number): Promise<WorksSet | undefined> {
     const queryDTO = new WorksSetQueryDTO()
     queryDTO.siteWorksSetId = siteWorksSetId
     queryDTO.includeTaskId = taskId
@@ -37,10 +34,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
       .then((rows) => {
         const result = super.getResultTypeDataList(rows) as WorksSet[]
         if (result.length > 1) {
-          LogUtil.warn(
-            'WorksSetDao',
-            `同一站点作品集id和导入任务id下，存在多个作品集，siteWorksSetId: ${siteWorksSetId}，taskId: ${taskId}`
-          )
+          LogUtil.warn('WorksSetDao', `同一站点作品集id和导入任务id下，存在多个作品集，siteWorksSetId: ${siteWorksSetId}，taskId: ${taskId}`)
         }
         if (result.length > 0) {
           return result[0]

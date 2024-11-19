@@ -5,9 +5,6 @@ function isBlank(input: string | null | undefined): input is undefined | null | 
   if (isNullish(input)) {
     return true
   }
-  if (typeof input === 'number') {
-    return /^\s*$/.test(String(input))
-  }
   return /^\s*$/.test(input)
 }
 
@@ -59,11 +56,7 @@ function concatPrefixIfNotPresent(str: string, target: string): string {
  * 4. 为每个匹配创建一个对象，其中键是从属性数组中取的，值则是对应的捕获组内容。
  * 5. 将所有这些对象收集到一个数组中，并返回这个数组作为最终结果。
  */
-function createObjectsFromRegexMatches(
-  regexPattern: string,
-  targetString: string,
-  propertiesArray: string[]
-): object[] {
+function createObjectsFromRegexMatches(regexPattern: string, targetString: string, propertiesArray: string[]): object[] {
   const regex = new RegExp(regexPattern, 'g')
   let match
   const resultObjects: object[] = []

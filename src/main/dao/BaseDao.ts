@@ -110,10 +110,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     plainObject.forEach((entity) => {
       // 给对象的属性编号，放进新的对象中
       const tempNumberedProperties = Object.fromEntries(
-        Object.entries(entity).map(([key, value]) => [
-          StringUtil.camelToSnakeCase(key).concat(String(index)),
-          value
-        ])
+        Object.entries(entity).map(([key, value]) => [StringUtil.camelToSnakeCase(key).concat(String(index)), value])
       )
 
       // 获取values子句
@@ -129,8 +126,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       index++
     })
 
-    const valuesClause =
-      'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
+    const valuesClause = 'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
 
     const statement = insertClause.concat(' ', valuesClause)
 
@@ -301,10 +297,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     plainObject.forEach((entity) => {
       // 给对象的属性编号，放进新的对象中
       const tempNumberedProperties = Object.fromEntries(
-        Object.entries(entity).map(([key, value]) => [
-          StringUtil.camelToSnakeCase(key).concat(String(index)),
-          value
-        ])
+        Object.entries(entity).map(([key, value]) => [StringUtil.camelToSnakeCase(key).concat(String(index)), value])
       )
 
       // 获取values子句
@@ -320,8 +313,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       index++
     })
 
-    const valuesClause =
-      'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
+    const valuesClause = 'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
 
     const statement = insertClause.concat(' ', valuesClause)
 
@@ -463,12 +455,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 查询SelectItem列表
    */
-  public async baseListSelectItems(
-    query: Query,
-    valueName: string,
-    labelName: string,
-    secondaryLabelName?: string
-  ): Promise<SelectItem[]> {
+  public async baseListSelectItems(query: Query, valueName: string, labelName: string, secondaryLabelName?: string): Promise<SelectItem[]> {
     const db = this.acquire()
     // 拼接select子句
     let selectClause: string
@@ -581,10 +568,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param queryConditions
    * @param alias
    */
-  protected getWhereClause(
-    queryConditions: Query | undefined,
-    alias?: string
-  ): { whereClause: string | undefined; query: Query | undefined } {
+  protected getWhereClause(queryConditions: Query | undefined, alias?: string): { whereClause: string | undefined; query: Query | undefined } {
     if (queryConditions === undefined) {
       return { whereClause: undefined, query: undefined }
     }
@@ -611,16 +595,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         switch (comparator) {
           case COMPARATOR.EQUAL:
             if (value !== null) {
-              whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${comparator} @${key}`
-                  : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              whereClause = alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
               modifiedValue = value
             } else {
-              whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
-                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+              whereClause = alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
             }
             break
           case COMPARATOR.NOT_EQUAL:
@@ -632,37 +610,25 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
               modifiedValue = value
             } else {
               whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
-                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
             }
             break
           case COMPARATOR.LEFT_LIKE:
             whereClause =
-              alias == undefined
-                ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+              alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
             modifiedValue = value
             break
           case COMPARATOR.RIGHT_LIKE:
             whereClause =
-              alias == undefined
-                ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+              alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
             modifiedValue = '%'.concat(value)
             break
           case COMPARATOR.LIKE:
-            whereClause =
-              alias == undefined
-                ? `"${snakeCaseKey}" ${comparator} @${key}`
-                : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+            whereClause = alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
             modifiedValue = '%'.concat(value, '%')
             break
           default:
-            whereClause =
-              alias == undefined
-                ? `"${snakeCaseKey}" ${comparator} @${key}`
-                : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+            whereClause = alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
             modifiedValue = value
         }
         whereClauses.push(whereClause)
@@ -711,15 +677,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
               case COMPARATOR.EQUAL:
                 if (value !== null) {
                   whereClauses[key] =
-                    alias == undefined
-                      ? `"${snakeCaseKey}" ${comparator} @${key}`
-                      : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                    alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
                   modifiedValue = value
                 } else {
                   whereClauses[key] =
-                    alias == undefined
-                      ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
-                      : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+                    alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
                 }
                 break
               case COMPARATOR.NOT_EQUAL:
@@ -731,37 +693,27 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
                   modifiedValue = value
                 } else {
                   whereClauses[key] =
-                    alias == undefined
-                      ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
-                      : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                    alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
                 }
                 break
               case COMPARATOR.LEFT_LIKE:
                 whereClauses[key] =
-                  alias == undefined
-                    ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                  alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
                 modifiedValue = String(value).concat('%')
                 break
               case COMPARATOR.RIGHT_LIKE:
                 whereClauses[key] =
-                  alias == undefined
-                    ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
+                  alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
                 modifiedValue = '%'.concat(value)
                 break
               case COMPARATOR.LIKE:
                 whereClauses[key] =
-                  alias == undefined
-                    ? `"${snakeCaseKey}" ${comparator} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                  alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
                 modifiedValue = '%'.concat(value, '%')
                 break
               default:
                 whereClauses[key] =
-                  alias == undefined
-                    ? `"${snakeCaseKey}" ${comparator} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                  alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
                 modifiedValue = value
             }
             modifiedQuery[key] = modifiedValue
@@ -778,13 +730,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param assignComparator
    * @private
    */
-  private getComparator(
-    property: string,
-    assignComparator: { [key: string]: COMPARATOR } | undefined
-  ): COMPARATOR {
+  private getComparator(property: string, assignComparator: { [key: string]: COMPARATOR } | undefined): COMPARATOR {
     // 指定运算符的对象转换为数组
-    const assignComparatorList =
-      assignComparator === undefined ? undefined : Object.entries(assignComparator)
+    const assignComparatorList = assignComparator === undefined ? undefined : Object.entries(assignComparator)
     let comparator = COMPARATOR.EQUAL
     if (assignComparatorList !== undefined && assignComparatorList.length > 0) {
       const comparatorTarget = assignComparatorList.filter((item) => item[0] === property)
@@ -822,11 +770,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param fromClause 分页语句的from子句
    * @protected
    */
-  protected async getPagingClause(
-    whereClause: string | undefined,
-    page: PageModel<Query, Model>,
-    fromClause?: string
-  ): Promise<string> {
+  protected async getPagingClause(whereClause: string | undefined, page: PageModel<Query, Model>, fromClause?: string): Promise<string> {
     const db = this.acquire()
     try {
       if (StringUtil.isNotBlank(fromClause)) {
@@ -837,7 +781,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       // 查询数据总量，计算页码数量
       const notNullishValue = toObjAcceptedBySqlite3(page.query)
       let countSql = `SELECT COUNT(*) AS total FROM ${fromClause}`
-      if (whereClause !== undefined) {
+      if (StringUtil.isNotBlank(whereClause)) {
         const tempWhereClause = StringUtil.concatPrefixIfNotPresent(whereClause, 'where ')
         countSql = countSql.concat(' ', tempWhereClause)
       }
@@ -925,9 +869,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param data
    */
   protected getResultTypeData<Result>(data: Record<string, unknown>): Result {
-    return Object.fromEntries(
-      Object.entries(data).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])
-    ) as Result
+    return Object.fromEntries(Object.entries(data).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])) as Result
   }
 
   protected acquire() {

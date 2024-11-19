@@ -21,12 +21,7 @@ const data = defineModel('data', { default: undefined, required: false })
     :filterable="props.config.useLoad"
     clearable
   >
-    <el-option
-      v-for="item in props.config.selectData"
-      :key="item.value"
-      :value="item.value"
-      :label="item.label"
-    />
+    <el-option v-for="item in props.config.selectData" :key="item.value" :value="item.value" :label="item.label" />
   </el-select>
 </template>
 

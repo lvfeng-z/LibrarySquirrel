@@ -8,11 +8,7 @@ import PageModel from '../model/utilModels/PageModel.ts'
 /**
  * 自动解释路径含义Service
  */
-export default class AutoExplainPathService extends BaseService<
-  AutoExplainPathQueryDTO,
-  AutoExplainPath,
-  AutoExplainPathDao
-> {
+export default class AutoExplainPathService extends BaseService<AutoExplainPathQueryDTO, AutoExplainPath, AutoExplainPathDao> {
   constructor(db?: DB) {
     super('AutoExplainPathService', new AutoExplainPathDao(db), db)
   }

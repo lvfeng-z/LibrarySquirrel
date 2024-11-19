@@ -107,8 +107,7 @@ function handleClickOutSide() {
         'dropdown-table-main': true,
         'dropdown-table-main-open': state,
         'dropdown-table-main-close': !state,
-        'margin-box':
-          state /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
+        'margin-box': state /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
       }"
     >
       <el-scrollbar class="dropdown-table-rows">
@@ -117,14 +116,8 @@ function handleClickOutSide() {
             <el-row class="dropdown-table-row">
               <template v-for="(item, index) in boxRow" :key="index">
                 <el-col class="dropdown-table-label" :span="item.labelSpan">
-                  <div
-                    :key="boxRowindex + '-' + index"
-                    class="dropdown-table-label-scroll-text-wrapper el-tag-mimic"
-                    style="width: 100%"
-                  >
-                    <scroll-text-box class="dropdown-table-label-scroll-text">{{
-                      item.label
-                    }}</scroll-text-box>
+                  <div :key="boxRowindex + '-' + index" class="dropdown-table-label-scroll-text-wrapper el-tag-mimic" style="width: 100%">
+                    <scroll-text-box class="dropdown-table-label-scroll-text">{{ item.label }}</scroll-text-box>
                   </div>
                 </el-col>
                 <el-col class="dropdown-table-input" :span="item.inputSpan">

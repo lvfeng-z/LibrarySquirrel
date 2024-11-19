@@ -75,9 +75,7 @@ export default class PixivTaskHandler {
    * @param tasks 需要重试的任务
    * @return 作品信息
    */
-  retry(tasks) {
-
-  }
+  retry(tasks) {}
 
   /**
    * 暂停下载任务
@@ -93,7 +91,7 @@ export default class PixivTaskHandler {
    * @return {*}
    */
   getDataFromMeaningOfPath(meaningOfPaths, type) {
-    return meaningOfPaths.filter(meaningOfPath => meaningOfPath.type === type)
+    return meaningOfPaths.filter((meaningOfPath) => meaningOfPath.type === type)
   }
 }
 

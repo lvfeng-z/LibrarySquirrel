@@ -28,19 +28,13 @@ export function getDataBasePath() {
 /**
  * 基于对象生成一个sqlite3接受的纯对象
  */
-export function toObjAcceptedBySqlite3(
-  obj: object | undefined,
-  ignore?: string[]
-): Record<string, unknown> {
+export function toObjAcceptedBySqlite3(obj: object | undefined, ignore?: string[]): Record<string, unknown> {
   if (obj === undefined) {
     return {}
   }
   return Object.fromEntries(
     Object.entries(obj)
-      .filter(
-        ([key, value]) =>
-          value !== undefined && typeof value !== 'function' && !ignore?.includes(key)
-      )
+      .filter(([key, value]) => value !== undefined && typeof value !== 'function' && !ignore?.includes(key))
       .map(([key, value]) => {
         if (typeof value === 'boolean') {
           return [key, value ? 1 : 0]

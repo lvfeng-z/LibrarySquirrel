@@ -20,9 +20,7 @@ function getAuthorNames() {
 </script>
 
 <template>
-  <scroll-text-box text-align="left" class="author-info-scroll-text-box">{{
-    getAuthorNames()
-  }}</scroll-text-box>
+  <scroll-text-box text-align="left" class="author-info-scroll-text-box">{{ getAuthorNames() }}</scroll-text-box>
 </template>
 
 <style scoped>

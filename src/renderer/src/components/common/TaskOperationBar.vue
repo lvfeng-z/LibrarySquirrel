@@ -85,19 +85,13 @@ function mapToButtonStatus(row: TaskDTO): {
   <div>
     <el-button-group
       v-show="
-        (row.status !== TaskStatesEnum.PROCESSING &&
-          row.status !== TaskStatesEnum.WAITING &&
-          row.status !== TaskStatesEnum.PAUSE) ||
+        (row.status !== TaskStatesEnum.PROCESSING && row.status !== TaskStatesEnum.WAITING && row.status !== TaskStatesEnum.PAUSE) ||
         row.hasChildren
       "
       style="margin-left: auto; margin-right: auto; flex-shrink: 0"
     >
       <el-tooltip v-if="props.row.isCollection" content="详情">
-        <el-button
-          size="small"
-          icon="View"
-          @click="buttonClicked(row, TaskOperationCodeEnum.VIEW)"
-        />
+        <el-button size="small" icon="View" @click="buttonClicked(row, TaskOperationCodeEnum.VIEW)" />
       </el-tooltip>
       <el-tooltip :content="mapToButtonStatus(row).tooltip">
         <el-button
@@ -108,26 +102,16 @@ function mapToButtonStatus(row: TaskDTO): {
         ></el-button>
       </el-tooltip>
       <el-tooltip content="取消">
-        <el-button
-          size="small"
-          icon="CircleClose"
-          @click="buttonClicked(row, TaskOperationCodeEnum.CANCEL)"
-        />
+        <el-button size="small" icon="CircleClose" @click="buttonClicked(row, TaskOperationCodeEnum.CANCEL)" />
       </el-tooltip>
       <el-tooltip content="删除">
-        <el-button
-          size="small"
-          icon="Delete"
-          @click="buttonClicked(row, TaskOperationCodeEnum.DELETE)"
-        />
+        <el-button size="small" icon="Delete" @click="buttonClicked(row, TaskOperationCodeEnum.DELETE)" />
       </el-tooltip>
     </el-button-group>
     <transition name="task-operation-bar-el-progress-fade">
       <div
         v-if="
-          (row.status === TaskStatesEnum.PROCESSING ||
-            row.status === TaskStatesEnum.WAITING ||
-            row.status === TaskStatesEnum.PAUSE) &&
+          (row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING || row.status === TaskStatesEnum.PAUSE) &&
           row.hasChildren
         "
       >
@@ -150,9 +134,7 @@ function mapToButtonStatus(row: TaskDTO): {
     </transition>
     <el-progress
       v-show="
-        (row.status === TaskStatesEnum.PROCESSING ||
-          row.status === TaskStatesEnum.WAITING ||
-          row.status === TaskStatesEnum.PAUSE) &&
+        (row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING || row.status === TaskStatesEnum.PAUSE) &&
         !row.hasChildren
       "
       style="width: 100%"

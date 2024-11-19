@@ -54,8 +54,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const authorName = tempName === undefined ? 'unknownAuthor' : tempName
 
       // 作品信息
-      const siteWorksName =
-        result.siteWorksName === undefined ? 'unknownWorksName' : result.siteWorksName
+      const siteWorksName = result.siteWorksName === undefined ? 'unknownWorksName' : result.siteWorksName
 
       // 资源状态
       result.resourceComplete = false
@@ -83,20 +82,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @param fileWriter
    */
-  public static async saveWorksResource(
-    worksDTO: WorksSaveDTO,
-    fileWriter: TaskWriter
-  ): Promise<FileSaveResult> {
-    assertNotNullish(
-      worksDTO.resourceStream,
-      'WorksService',
-      `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`
-    )
-    assertNotNullish(
-      worksDTO.fullSavePath,
-      'WorksService',
-      `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`
-    )
+  public static async saveWorksResource(worksDTO: WorksSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
+    assertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
+    assertNotNullish(worksDTO.fullSavePath, 'WorksService', `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`)
 
     try {
       // 创建保存目录
@@ -164,10 +152,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
                 if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
                   const worksSetService = new WorksSetService(transactionDB)
-                  const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(
-                    siteWorksSetId,
-                    rootTaskId
-                  )
+                  const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(siteWorksSetId, rootTaskId)
                   if (isNullish(oldWorksSet)) {
                     const tempWorksSet = new WorksSet(worksSet)
                     tempWorksSet.includeTaskId = rootTaskId
@@ -177,10 +162,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                     worksSetService.link([worksDTO], oldWorksSet)
                   }
                 } else {
-                  LogUtil.warn(
-                    'WorksService',
-                    `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`
-                  )
+                  LogUtil.warn('WorksService', `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
                 }
               }
             }
@@ -214,9 +196,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           }
           // 关联作品和本地标签
           if (localTags !== undefined && localTags != null && localTags.length > 0) {
-            const localTagIds = localTags
-              .map((localTag) => localTag.id)
-              .filter((localTagId) => notNullish(localTagId))
+            const localTagIds = localTags.map((localTag) => localTag.id).filter((localTagId) => notNullish(localTagId))
             const reWorksTagService = new ReWorksTagService(transactionDB)
             await reWorksTagService.link(localTagIds, worksDTO.id)
           }
@@ -265,9 +245,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 根据标签等信息分页查询作品
    * @param page 查询参数
    */
-  public async queryPage(
-    page: PageModel<WorksQueryDTO, WorksDTO>
-  ): Promise<PageModel<WorksQueryDTO, Works>> {
+  public async queryPage(page: PageModel<WorksQueryDTO, WorksDTO>): Promise<PageModel<WorksQueryDTO, Works>> {
     page = new PageModel(page)
     try {
       // 查询作品信息
@@ -324,66 +302,38 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   private getAuthorNameFromAuthorDTO(worksDTO: WorksDTO): string | undefined {
     let authorName: string | undefined
     // 优先使用站点作者名称
-    if (
-      worksDTO.siteAuthors !== undefined &&
-      worksDTO.siteAuthors !== null &&
-      worksDTO.siteAuthors.length > 0
-    ) {
-      const mainAuthor = worksDTO.siteAuthors.filter(
-        (siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN
-      )
+    if (worksDTO.siteAuthors !== undefined && worksDTO.siteAuthors !== null && worksDTO.siteAuthors.length > 0) {
+      const mainAuthor = worksDTO.siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN)
       // 先查找主作者，没有主作者就查找平级作者
       if (mainAuthor.length > 0) {
         if (mainAuthor.length > 1) {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`
-          )
+          LogUtil.warn('WorksService', `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`)
         } else {
           authorName = mainAuthor[0].siteAuthorName as string
         }
       } else {
-        const equalAuthor = worksDTO.siteAuthors.filter(
-          (siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL
-        )
+        const equalAuthor = worksDTO.siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL)
         if (equalAuthor.length > 0) {
           authorName = equalAuthor[0].siteAuthorName as string
         } else {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
-          )
+          LogUtil.warn('WorksService', `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`)
         }
       }
-    } else if (
-      worksDTO.localAuthors !== undefined &&
-      worksDTO.localAuthors !== null &&
-      worksDTO.localAuthors.length > 0
-    ) {
-      const mainAuthor = worksDTO.localAuthors.filter(
-        (localAuthor) => localAuthor.authorRole === AuthorRole.MAIN
-      )
+    } else if (worksDTO.localAuthors !== undefined && worksDTO.localAuthors !== null && worksDTO.localAuthors.length > 0) {
+      const mainAuthor = worksDTO.localAuthors.filter((localAuthor) => localAuthor.authorRole === AuthorRole.MAIN)
       // 先查找主作者，没有主作者就查找平级作者
       if (mainAuthor.length > 0) {
         if (mainAuthor.length > 1) {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`
-          )
+          LogUtil.warn('WorksService', `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`)
         } else {
           authorName = mainAuthor[0].localAuthorName as string
         }
       } else {
-        const equalAuthor = worksDTO.localAuthors.filter(
-          (siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL
-        )
+        const equalAuthor = worksDTO.localAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL)
         if (equalAuthor.length > 0) {
           authorName = equalAuthor[0].localAuthorName as string
         } else {
-          LogUtil.warn(
-            'WorksService',
-            `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`
-          )
+          LogUtil.warn('WorksService', `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`)
         }
       }
     }

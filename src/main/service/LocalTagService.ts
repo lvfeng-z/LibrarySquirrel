@@ -81,9 +81,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询
    * @param page
    */
-  public async queryPage(
-    page: PageModel<LocalTagQueryDTO, LocalTag>
-  ): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
+  public async queryPage(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     try {
       if (notNullish(page.query)) {
         page.query.assignComparator = {
@@ -145,9 +143,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询SelectItem
    * @param page
    */
-  public async querySelectItemPage(
-    page: PageModel<LocalTagQueryDTO, LocalTag>
-  ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
+  public async querySelectItemPage(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new LocalTagQueryDTO(page.query)
       page.query.assignComparator = { localTagName: COMPARATOR.LIKE }
@@ -167,9 +163,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */
-  public async querySelectItemPageByWorksId(
-    page: PageModel<LocalTagQueryDTO, LocalTag>
-  ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
+  public async querySelectItemPageByWorksId(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     page = new PageModel(page)
     if (notNullish(page.query)) {
       page.query.assignComparator = {

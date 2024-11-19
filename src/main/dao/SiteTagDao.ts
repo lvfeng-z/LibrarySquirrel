@@ -20,10 +20,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * @param localTagId 本地标签id
    * @param siteTagIds 站点标签id列表
    */
-  public async updateBindLocalTag(
-    localTagId: string | null,
-    siteTagIds: string[]
-  ): Promise<number> {
+  public async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]): Promise<number> {
     if (siteTagIds.length > 0) {
       const setClause: string[] = []
       siteTagIds.forEach((siteTagId) => {
@@ -49,9 +46,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询站点标签（附带绑定的本地标签）
    * @param page
    */
-  public async queryBoundOrUnboundToLocalTagPage(
-    page: PageModel<SiteTagQueryDTO, SiteTag>
-  ): Promise<SiteTagDTO[]> {
+  public async queryBoundOrUnboundToLocalTagPage(page: PageModel<SiteTagQueryDTO, SiteTag>): Promise<SiteTagDTO[]> {
     // 没有查询参数，构建一个空的
     if (page.query === undefined) {
       page.query = new SiteTagQueryDTO()
@@ -85,10 +80,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     delete whereClauses.bound
 
     // 处理keyword
-    if (
-      Object.prototype.hasOwnProperty.call(page.query, 'keyword') &&
-      StringUtil.isNotBlank(page.query.keyword)
-    ) {
+    if (Object.prototype.hasOwnProperty.call(page.query, 'keyword') && StringUtil.isNotBlank(page.query.keyword)) {
       whereClauses.keyword = 't1.site_tag_name like @keyword'
       modifiedQuery.keyword = page.query.keywordForFullMatch()
     }
@@ -98,7 +90,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     // 拼接sql语句
     let statement = selectClause + ' ' + fromClause
     const whereClause = super.splicingWhereClauses(whereClauseArray)
-    statement += ' ' + whereClause
+    if (StringUtil.isNotBlank(whereClause)) {
+      statement += ' ' + whereClause
+    }
     statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
     // 查询

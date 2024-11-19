@@ -32,17 +32,14 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
         const relationShips = this.getResultTypeDataList<relationShipType>(rows)
 
         // 返回一个worksId为键，相同worksId的元素为数组为值的Map
-        return relationShips.reduce(
-          (map: Map<number, LocalAuthorDTO[]>, relationShip: relationShipType) => {
-            const worksId = relationShip.worksId
-            if (!map.has(worksId)) {
-              map.set(worksId, [])
-            }
-            map.get(worksId)?.push(relationShip)
-            return map
-          },
-          new Map<number, LocalAuthorDTO[]>()
-        )
+        return relationShips.reduce((map: Map<number, LocalAuthorDTO[]>, relationShip: relationShipType) => {
+          const worksId = relationShip.worksId
+          if (!map.has(worksId)) {
+            map.set(worksId, [])
+          }
+          map.get(worksId)?.push(relationShip)
+          return map
+        }, new Map<number, LocalAuthorDTO[]>())
       })
       .finally(() => {
         if (!this.injectedDB) {

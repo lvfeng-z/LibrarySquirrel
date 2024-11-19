@@ -114,11 +114,7 @@ async function updateWorksLocalTags() {
     <div class="limiter">
       <el-scrollbar style="max-width: 60%">
         <picture>
-          <el-image
-            style="margin-right: 10px"
-            fit="contain"
-            :src="`resource://workdir/${props.works[0].filePath}?height=108&width=192`"
-          >
+          <el-image style="margin-right: 10px" fit="contain" :src="`resource://workdir/${props.works[0].filePath}?height=108&width=192`">
           </el-image>
         </picture>
       </el-scrollbar>
@@ -133,12 +129,7 @@ async function updateWorksLocalTags() {
           <el-descriptions-item label="本地标签">
             <el-button @click="localTagEdit = true"> 编辑 </el-button>
             <tag-box v-model:data-list="localTags" />
-            <el-drawer
-              v-model="localTagEdit"
-              size="45%"
-              :with-header="false"
-              @open="localTagExchangeBox.refreshData()"
-            >
+            <el-drawer v-model="localTagEdit" size="45%" :with-header="false" @open="localTagExchangeBox.refreshData()">
               <exchange-box
                 ref="localTagExchangeBox"
                 style="height: 100%"

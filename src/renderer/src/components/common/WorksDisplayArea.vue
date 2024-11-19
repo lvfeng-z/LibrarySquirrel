@@ -35,12 +35,7 @@ function handleImageClicked(works: WorksDTO) {
         ></works-display-case>
       </template>
     </el-row>
-    <works-dialog
-      v-if="worksDialogState"
-      v-model="worksDialogState"
-      width="90%"
-      :works="worksDialogResources"
-    />
+    <works-dialog v-if="worksDialogState" v-model="worksDialogState" width="90%" :works="worksDialogResources" />
   </el-scrollbar>
 </template>
 

@@ -89,12 +89,7 @@ defineExpose({ scrollbar })
 
 <template>
   <div class="tag-box-wrapper">
-    <el-scrollbar
-      ref="scrollbar"
-      v-loading="loading"
-      style="display: flex"
-      @scroll="handleDataScroll"
-    >
+    <el-scrollbar ref="scrollbar" v-loading="loading" style="display: flex" @scroll="handleDataScroll">
       <el-row ref="dataRow">
         <template v-for="item in dataList" :key="item.id">
           <div class="tag-box-select-item">

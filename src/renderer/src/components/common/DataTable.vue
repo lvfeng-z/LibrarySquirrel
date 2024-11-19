@@ -71,9 +71,7 @@ function handleRowChange(row: object) {
 // 获取操作栏按钮
 function getOperateButton(row): OperationItem {
   if (props.operationButton !== undefined && props.operationButton.length > 0) {
-    return props.operationButton.filter((item) =>
-      item.rule === undefined ? true : item.rule(row)
-    )[0]
+    return props.operationButton.filter((item) => (item.rule === undefined ? true : item.rule(row)))[0]
   } else {
     return { code: '', label: '', icon: '' }
   }
@@ -81,9 +79,7 @@ function getOperateButton(row): OperationItem {
 // 获取操作栏下拉按钮
 function getOperateDropDownButton(row): OperationItem[] {
   if (props.operationButton !== undefined && props.operationButton.length > 0) {
-    return props.operationButton
-      .filter((item) => (item.rule === undefined ? true : item.rule(row)))
-      .slice(1)
+    return props.operationButton.filter((item) => (item.rule === undefined ? true : item.rule(row))).slice(1)
   } else {
     return [{ code: '', label: '', icon: '' }]
   }
@@ -139,18 +135,10 @@ defineExpose({
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
   >
-    <el-table-column
-      v-if="props.selectable && props.multiSelect"
-      type="selection"
-      width="30"
-      :reserve-selection="props.multiSelect"
-    />
+    <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />
     <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
       <template #default="{ row }">
-        <el-radio
-          v-model="currentFactor[props.keyOfData]"
-          :value="row[props.keyOfData]"
-          @change="handleSelectionChange([row])"
+        <el-radio v-model="currentFactor[props.keyOfData]" :value="row[props.keyOfData]" @change="handleSelectionChange([row])"
           >{{ '' }}
         </el-radio>
       </template>
@@ -174,20 +162,13 @@ defineExpose({
             </div>
           </template>
           <template #default="scope">
-            <common-input
-              v-model:data="scope.row[item.name]"
-              :config="item"
-              @data-changed="handleRowChange(scope.row)"
-            ></common-input>
+            <common-input v-model:data="scope.row[item.name]" :config="item" @data-changed="handleRowChange(scope.row)"></common-input>
           </template>
         </el-table-column>
       </template>
     </template>
     <el-table-column
-      v-if="
-        (props.operationButton !== undefined && props.operationButton.length > 0) ||
-        props.customOperationButton
-      "
+      v-if="(props.operationButton !== undefined && props.operationButton.length > 0) || props.customOperationButton"
       fixed="right"
       align="center"
       min-width="104"
@@ -234,11 +215,7 @@ defineExpose({
     </el-table-column>
     <el-table-column :hidden="true" :width="1">
       <template #default="scope">
-        <div
-          :row-key="scope.row[keyOfData]"
-          class="row-key-col"
-          style="width: 0; height: 0; position: absolute"
-        ></div>
+        <div :row-key="scope.row[keyOfData]" class="row-key-col" style="width: 0; height: 0; position: absolute"></div>
       </template>
     </el-table-column>
   </el-table>

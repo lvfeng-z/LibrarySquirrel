@@ -15,14 +15,9 @@ const props = defineProps<{
 const emit = defineEmits(['imageClicked'])
 
 // 变量
-const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> =
-  ref('contain')
-const caseWidth: Ref<UnwrapRef<string>> = ref(
-  props.width === undefined ? 'auto' : String(props.width) + 'px'
-) // 展示框宽度
-const caseHeight: Ref<UnwrapRef<string>> = ref(
-  props.width === undefined ? 'auto' : String(props.height) + 'px'
-) // 展示框高度
+const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> = ref('contain')
+const caseWidth: Ref<UnwrapRef<string>> = ref(props.width === undefined ? 'auto' : String(props.width) + 'px') // 展示框宽度
+const caseHeight: Ref<UnwrapRef<string>> = ref(props.width === undefined ? 'auto' : String(props.height) + 'px') // 展示框高度
 
 // 方法
 // 判断el-image使用什么模式
@@ -46,10 +41,7 @@ function handleImageClicked() {
       @click="handleImageClicked"
     ></el-image>
     <works-info class="works-display-case-works-info" :works="works"></works-info>
-    <author-info
-      class="works-display-case-author-info"
-      :authors="props.works.localAuthors"
-    ></author-info>
+    <author-info class="works-display-case-author-info" :authors="props.works.localAuthors"></author-info>
   </div>
 </template>
 

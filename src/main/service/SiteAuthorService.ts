@@ -19,11 +19,7 @@ import SelectItem from '../model/utilModels/SelectItem.ts'
 /**
  * 站点作者Service
  */
-export default class SiteAuthorService extends BaseService<
-  SiteAuthorQueryDTO,
-  SiteAuthor,
-  SiteAuthorDao
-> {
+export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor, SiteAuthorDao> {
   constructor(db?: DB) {
     super('SiteAuthorService', new SiteAuthorDao(db), db)
   }
@@ -85,9 +81,7 @@ export default class SiteAuthorService extends BaseService<
         LogUtil.error('SiteAuthorService', msg)
         throw new Error(msg)
       } else {
-        const oldSiteAuthor = oldSiteAuthors.find(
-          (oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId
-        )
+        const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
         const newSiteAuthor = lodash.cloneDeep(siteAuthor)
 
         if (oldSiteAuthor !== undefined) {
@@ -119,9 +113,7 @@ export default class SiteAuthorService extends BaseService<
   async updateBindLocalAuthor(localAuthorId: string | null, siteAuthorIds: string[]) {
     if (localAuthorId !== undefined) {
       if (siteAuthorIds != undefined && siteAuthorIds.length > 0) {
-        return ApiUtil.check(
-          (await this.dao.updateBindLocalAuthor(localAuthorId, siteAuthorIds)) > 0
-        )
+        return ApiUtil.check((await this.dao.updateBindLocalAuthor(localAuthorId, siteAuthorIds)) > 0)
       } else {
         return ApiUtil.check(true)
       }
@@ -162,10 +154,7 @@ export default class SiteAuthorService extends BaseService<
    * @param siteAuthorId
    * @param siteId
    */
-  public async getBySiteAuthorId(
-    siteAuthorId: string,
-    siteId: number
-  ): Promise<SiteAuthor | undefined> {
+  public async getBySiteAuthorId(siteAuthorId: string, siteId: number): Promise<SiteAuthor | undefined> {
     if (StringUtil.isNotBlank(siteAuthorId)) {
       const queryDTO = new SiteAuthorQueryDTO()
       queryDTO.siteAuthorId = siteAuthorId

@@ -37,12 +37,8 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
-  new PageModel<BaseQueryDTO, object>()
-) // upper搜索栏分页参数
-const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(
-  new PageModel<BaseQueryDTO, object>()
-) // lower搜索栏分页参数
+const upperPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // upper搜索栏分页参数
+const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperTagBox = ref() // upperTagBox组件的实例
@@ -72,10 +68,8 @@ const searchButtonDisabled = computed(() =>
   isNullish(props.requiredStaticParams)
     ? false
     : !(
-        Object.prototype.hasOwnProperty.call(
-          props.upperApiStaticParams,
-          props.requiredStaticParams
-        ) && props.upperApiStaticParams[props.requiredStaticParams] != undefined
+        Object.prototype.hasOwnProperty.call(props.upperApiStaticParams, props.requiredStaticParams) &&
+        props.upperApiStaticParams[props.requiredStaticParams] != undefined
       )
 )
 
@@ -138,10 +132,7 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   }
 }
 // 处理check-tag点击事件
-function handleCheckTagClick(
-  tag: SelectItem,
-  type: 'upperData' | 'upperBuffer' | 'lowerData' | 'lowerBuffer'
-) {
+function handleCheckTagClick(tag: SelectItem, type: 'upperData' | 'upperBuffer' | 'lowerData' | 'lowerBuffer') {
   switch (type) {
     case 'upperData':
       exchange(upperData.value, upperBufferData.value, tag)
@@ -297,22 +288,12 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
     <div class="exchange-box-middle">
       <div class="exchange-box-middle-operation">
         <div class="exchange-box-middle-confirm">
-          <el-check-tag
-            :checked="true"
-            class="exchange-box-middle-confirm-button"
-            type="primary"
-            @click="handleExchangeConfirm"
-          >
+          <el-check-tag :checked="true" class="exchange-box-middle-confirm-button" type="primary" @click="handleExchangeConfirm">
             确认
           </el-check-tag>
         </div>
         <div class="exchange-box-middle-clear">
-          <el-check-tag
-            :checked="false"
-            class="exchange-box-middle-clear-button"
-            type="info"
-            @click="handleClearButtonClicked"
-          >
+          <el-check-tag :checked="false" class="exchange-box-middle-clear-button" type="info" @click="handleClearButtonClicked">
             清空
           </el-check-tag>
         </div>

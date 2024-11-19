@@ -99,11 +99,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * @param status 状态
    * @param includeStatus 包含的状态
    */
-  async setTaskTreeStatus(
-    taskIds: number[],
-    status: TaskStatusEnum,
-    includeStatus?: TaskStatusEnum[]
-  ): Promise<number> {
+  async setTaskTreeStatus(taskIds: number[], status: TaskStatusEnum, includeStatus?: TaskStatusEnum[]): Promise<number> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
     const statement = `with children as (select id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,

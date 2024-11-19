@@ -15,11 +15,7 @@ export function assertFalse(value: boolean, caller?: string, msg?: string) {
   }
 }
 
-export function assertNotNullish<T>(
-  value: T | null | undefined,
-  caller?: string,
-  msg?: string
-): asserts value {
+export function assertNotNullish<T>(value: T | null | undefined, caller?: string, msg?: string): asserts value {
   if (isNullish(value)) {
     LogUtil.error(caller as string, msg)
     throw new Error(msg)

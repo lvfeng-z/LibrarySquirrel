@@ -111,22 +111,12 @@ function clearFormData() {
       <el-row>
         <el-col :span="12">
           <el-form-item label="创建时间">
-            <el-date-picker
-              v-model="formData.createTime"
-              type="datetime"
-              value-format="x"
-              disabled
-            ></el-date-picker>
+            <el-date-picker v-model="formData.createTime" type="datetime" value-format="x" disabled></el-date-picker>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="修改时间">
-            <el-date-picker
-              v-model="formData.updateTime"
-              type="datetime"
-              value-format="x"
-              disabled
-            ></el-date-picker>
+            <el-date-picker v-model="formData.updateTime" type="datetime" value-format="x" disabled></el-date-picker>
           </el-form-item>
         </el-col>
       </el-row>

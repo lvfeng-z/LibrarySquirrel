@@ -79,11 +79,7 @@ function calculateSpan() {
         <el-row class="dialog-form-row">
           <template v-for="(item, index) in boxRow" :key="index">
             <el-col class="dialog-form-label" :span="item.labelSpan">
-              <div
-                :key="boxRowindex + '-' + index"
-                class="dialog-form-label-scroll-text-wrapper el-tag-mimic"
-                style="width: 100%"
-              >
+              <div :key="boxRowindex + '-' + index" class="dialog-form-label-scroll-text-wrapper el-tag-mimic" style="width: 100%">
                 <ScrollTextBox>{{ item.label }}</ScrollTextBox>
               </div>
             </el-col>

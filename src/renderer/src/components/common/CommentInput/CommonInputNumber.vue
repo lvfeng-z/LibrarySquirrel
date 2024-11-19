@@ -11,12 +11,7 @@ const props = defineProps<{
 const data = defineModel('data', { default: undefined, required: false })
 </script>
 <template>
-  <el-input-number
-    v-model="data"
-    :placeholder="props.config.placeholder"
-    clearable
-    @change="handleDataChange"
-  ></el-input-number>
+  <el-input-number v-model="data" :placeholder="props.config.placeholder" clearable @change="handleDataChange"></el-input-number>
 </template>
 
 <style scoped></style>

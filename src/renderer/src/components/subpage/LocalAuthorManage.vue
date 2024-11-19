@@ -41,8 +41,7 @@ const apis = {
   localAuthorQueryPage: window.api.localAuthorQueryPage,
   siteAuthorUpdateBindLocalAuthor: window.api.siteAuthorUpdateBindLocalAuthor,
   siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
-  siteAuthorQueryBoundOrUnboundInLocalAuthorPage:
-    window.api.siteAuthorQueryBoundOrUnboundInLocalAuthorPage
+  siteAuthorQueryBoundOrUnboundInLocalAuthorPage: window.api.siteAuthorQueryBoundOrUnboundInLocalAuthorPage
 }
 // localAuthorSearchTable的组件实例
 const localAuthorSearchTable = ref()
@@ -51,9 +50,7 @@ const siteAuthorExchangeBox = ref()
 // localAuthorDialog的组件实例
 const localAuthorDialog = ref()
 // 本地作者SearchTable的分页
-const page: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, LocalAuthor>>> = ref(
-  new PageModel<LocalAuthorQueryDTO, LocalAuthor>()
-)
+const page: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, LocalAuthor>>> = ref(new PageModel<LocalAuthorQueryDTO, LocalAuthor>())
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地作者
@@ -251,10 +248,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
     const boundIds = bound.map((item) => item.value)
-    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(
-      localAuthorSelected.value['id'],
-      boundIds
-    )
+    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value['id'], boundIds)
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }

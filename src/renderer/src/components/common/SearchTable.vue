@@ -75,8 +75,10 @@ const searchToolbarParams = ref({}) // 搜索栏参数
 const layout = ref('sizes, prev, pager, next') // 分页栏组件
 const pagerCount = ref(5) // 显示的分页按钮个数
 // 保存树形数据的子数据resolve方法的map，用于在除首次加载之外的时机刷新子数据
-const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }> =
-  new Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }>()
+const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }> = new Map<
+  number,
+  { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }
+>()
 // 把向treeRefreshMap写入数据和props.load封装在一起的函数
 const wrappedLoad = isNullish(props.treeLoad)
   ? undefined
@@ -142,15 +144,11 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     return
   }
 
-  const idsStr: (number | string)[] = waitingUpdateIds.map((id: number | string) =>
-    typeof id === 'number' ? String(id) : id
-  )
+  const idsStr: (number | string)[] = waitingUpdateIds.map((id: number | string) => (typeof id === 'number' ? String(id) : id))
 
   // 根级节点列入待刷新数组
   let waitingUpdateList: object[]
-  waitingUpdateList = dataList.value.filter((data) =>
-    idsStr.includes(String(data[props.keyOfData]))
-  )
+  waitingUpdateList = dataList.value.filter((data) => idsStr.includes(String(data[props.keyOfData])))
 
   // 根据treeData确认是否包含哪些下级数据
   if (props.treeData && updateChildren) {
@@ -161,10 +159,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     tiledWaitingUpdate = tiledWaitingUpdate.concat(waitingUpdateList as TreeNode[])
     // 把所有根级节点的子节点列入tiledWaitingUpdate
     for (let index = 0; index < tiledWaitingUpdate.length; index++) {
-      if (
-        Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') &&
-        notNullish(tiledWaitingUpdate[index].children)
-      ) {
+      if (Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') && notNullish(tiledWaitingUpdate[index].children)) {
         const children = tiledWaitingUpdate[index].children
         if (Array.isArray(children)) {
           tiledWaitingUpdate.push(...(children as TreeNode[]))
@@ -175,13 +170,9 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
   } else if (props.treeData) {
     // 只更waitingUpdateIds包含的下级数据
     // 根级节点id列表
-    const waitingUpdateRootIds = waitingUpdateList.map(
-      (waitingUpdate) => waitingUpdate[props.keyOfData]
-    )
+    const waitingUpdateRootIds = waitingUpdateList.map((waitingUpdate) => waitingUpdate[props.keyOfData])
     // 叶子节点id列表
-    const waitingUpdateChildIds = waitingUpdateIds.filter(
-      (id) => !waitingUpdateRootIds.includes(id)
-    )
+    const waitingUpdateChildIds = waitingUpdateIds.filter((id) => !waitingUpdateRootIds.includes(id))
 
     // 利用树形工具找到叶子节点，列入waitingUpdateList
     const tempRoot = { id: undefined, pid: undefined, children: dataList.value as TreeNode[] }
@@ -199,9 +190,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
   if (arrayNotEmpty(newDataList)) {
     // 更新updateParamName指定的属性
     for (const newData of newDataList) {
-      const waitingUpdate = waitingUpdateList.find(
-        (waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData]
-      )
+      const waitingUpdate = waitingUpdateList.find((waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData])
       if (notNullish(waitingUpdate)) {
         props.updateProperties.forEach((paramName) => {
           waitingUpdate[paramName] = newData[paramName]

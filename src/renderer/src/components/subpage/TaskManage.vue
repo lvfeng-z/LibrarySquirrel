@@ -140,11 +140,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
           break
       }
       const elTag = h(ElTag, { type: tagType }, () => tagText)
-      return h(
-        'div',
-        { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
-        elTag
-      )
+      return h('div', { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } }, elTag)
     }
   })
 ])
@@ -257,9 +253,7 @@ async function importFromSite() {
   taskManageSearchTable.value.handleSearchButtonClicked()
 }
 // 分页查询子任务的函数
-async function taskQueryParentPage(
-  page: PageModel<TaskQueryDTO, object>
-): Promise<PageModel<TaskQueryDTO, object> | undefined> {
+async function taskQueryParentPage(page: PageModel<TaskQueryDTO, object>): Promise<PageModel<TaskQueryDTO, object> | undefined> {
   const response = await apis.taskQueryParentPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
@@ -373,9 +367,7 @@ async function refreshTask() {
     // 获取需要刷新的任务
     const getRefreshTasks = (): number[] => {
       // 获取可视区域及附近的行id
-      const visibleRowsId = taskManageSearchTable.value
-        .getVisibleRows(200, 200)
-        .map((id: string) => Number(id))
+      const visibleRowsId = taskManageSearchTable.value.getVisibleRows(200, 200).map((id: string) => Number(id))
       // 利用树形工具找到所有id对应的数据，判断是否需要刷新
       const tempRoot = new TaskDTO()
       tempRoot.children = dataList.value
@@ -383,9 +375,7 @@ async function refreshTask() {
         const task = getNode<TaskDTO>(tempRoot, id)
         return (
           notNullish(task) &&
-          (task.status === TaskStatesEnum.WAITING ||
-            task.status === TaskStatesEnum.PROCESSING ||
-            task.status === TaskStatesEnum.PAUSE)
+          (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
         )
       })
     }
@@ -434,9 +424,7 @@ async function deleteTask(ids: number[]) {
     <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>
-          <el-button size="large" type="danger" icon="Monitor" @click="selectDir(false)">
-            从本地导入
-          </el-button>
+          <el-button size="large" type="danger" icon="Monitor" @click="selectDir(false)"> 从本地导入 </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="selectDir(true)">选择文件导入</el-dropdown-item>
@@ -445,12 +433,7 @@ async function deleteTask(ids: number[]) {
         </el-dropdown>
       </el-col>
       <el-col class="task-manage-site-import-button-col" :span="12">
-        <el-button
-          v-model="siteDownloadState"
-          size="large"
-          type="primary"
-          icon="Link"
-          @click="handleSiteDownloadDialog"
+        <el-button v-model="siteDownloadState" size="large" type="primary" icon="Link" @click="handleSiteDownloadDialog"
           >从站点下载
         </el-button>
       </el-col>
@@ -485,21 +468,9 @@ async function deleteTask(ids: number[]) {
       </search-table>
     </div>
     <template #dialog>
-      <task-dialog
-        ref="taskDialogRef"
-        :mode="DialogMode.VIEW"
-        :form-data="dialogData"
-        align-center
-        destroy-on-close
-        width="90%"
-      />
+      <task-dialog ref="taskDialogRef" :mode="DialogMode.VIEW" :form-data="dialogData" align-center destroy-on-close width="90%" />
       <el-dialog v-model="siteDownloadState" center width="80%" align-center destroy-on-close>
-        <el-input
-          v-model="siteSourceUrl"
-          type="textarea"
-          :rows="6"
-          placeholder="输入url"
-        ></el-input>
+        <el-input v-model="siteSourceUrl" type="textarea" :rows="6" placeholder="输入url"></el-input>
         <template #footer>
           <el-button type="primary" @click="importFromSite">确定</el-button>
           <el-button @click="siteDownloadState = false">取消</el-button>

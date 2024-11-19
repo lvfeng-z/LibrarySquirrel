@@ -66,53 +66,50 @@ export default class PluginLoader<T extends BasePlugin> {
     // 处理插件工具的explain-path-request事件
     event.on('explain-path-request', (dir) => {
       // 监听渲染进程的explain-path-response事件
-      Electron.ipcMain.once(
-        'explain-path-response',
-        async (_event, meaningOfPaths: MeaningOfPath[]) => {
-          for (const meaningOfPath of meaningOfPaths) {
-            if (meaningOfPath.type === PathTypeEnum.AUTHOR) {
-              const localAuthorService = new LocalAuthorService()
-              if (notNullish(meaningOfPath.id)) {
-                const localAuthor = await localAuthorService.getById(meaningOfPath.id)
-                if (isNullish(localAuthor)) {
-                  const msg = '附加目录含义中的作者信息时，未查询到作者'
-                  LogUtil.error('PluginLoader', msg)
-                  throw new Error(msg)
-                }
-                meaningOfPath.name = localAuthor.localAuthorName
-                meaningOfPath.details = localAuthor
+      Electron.ipcMain.once('explain-path-response', async (_event, meaningOfPaths: MeaningOfPath[]) => {
+        for (const meaningOfPath of meaningOfPaths) {
+          if (meaningOfPath.type === PathTypeEnum.AUTHOR) {
+            const localAuthorService = new LocalAuthorService()
+            if (notNullish(meaningOfPath.id)) {
+              const localAuthor = await localAuthorService.getById(meaningOfPath.id)
+              if (isNullish(localAuthor)) {
+                const msg = '附加目录含义中的作者信息时，未查询到作者'
+                LogUtil.error('PluginLoader', msg)
+                throw new Error(msg)
               }
-            }
-            if (meaningOfPath.type === PathTypeEnum.TAG) {
-              const localTagService = new LocalTagService()
-              if (notNullish(meaningOfPath.id)) {
-                const localTag = await localTagService.getById(meaningOfPath.id)
-                if (isNullish(localTag)) {
-                  const msg = '附加目录含义中的标签信息时，未查询到作者'
-                  LogUtil.error('PluginLoader', msg)
-                  throw new Error(msg)
-                }
-                meaningOfPath.name = localTag.localTagName
-                meaningOfPath.details = localTag
-              }
-            }
-            if (meaningOfPath.type === PathTypeEnum.SITE) {
-              const siteService = new SiteService()
-              if (notNullish(meaningOfPath.id)) {
-                const site = await siteService.getById(meaningOfPath.id)
-                if (isNullish(site)) {
-                  const msg = '附加目录含义中的站点信息时，未查询到作者'
-                  LogUtil.error('PluginLoader', msg)
-                  throw new Error(msg)
-                }
-                meaningOfPath.name = site.siteName
-                meaningOfPath.details = site
-              }
+              meaningOfPath.name = localAuthor.localAuthorName
+              meaningOfPath.details = localAuthor
             }
           }
-          event.emit('explain-path-response', meaningOfPaths)
+          if (meaningOfPath.type === PathTypeEnum.TAG) {
+            const localTagService = new LocalTagService()
+            if (notNullish(meaningOfPath.id)) {
+              const localTag = await localTagService.getById(meaningOfPath.id)
+              if (isNullish(localTag)) {
+                const msg = '附加目录含义中的标签信息时，未查询到作者'
+                LogUtil.error('PluginLoader', msg)
+                throw new Error(msg)
+              }
+              meaningOfPath.name = localTag.localTagName
+              meaningOfPath.details = localTag
+            }
+          }
+          if (meaningOfPath.type === PathTypeEnum.SITE) {
+            const siteService = new SiteService()
+            if (notNullish(meaningOfPath.id)) {
+              const site = await siteService.getById(meaningOfPath.id)
+              if (isNullish(site)) {
+                const msg = '附加目录含义中的站点信息时，未查询到作者'
+                LogUtil.error('PluginLoader', msg)
+                throw new Error(msg)
+              }
+              meaningOfPath.name = site.siteName
+              meaningOfPath.details = site
+            }
+          }
         }
-      )
+        event.emit('explain-path-response', meaningOfPaths)
+      })
       // 向渲染进程发送explain-path-request事件
       this.mainWindow.webContents.send('explain-path-request', dir)
     })
