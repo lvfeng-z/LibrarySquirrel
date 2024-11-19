@@ -23,14 +23,14 @@ import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryD
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 onMounted(() => {
-  localAuthorSearchTable.value.handleSearchButtonClicked()
   if (isNullish(page.value.query)) {
     page.value.query = new LocalAuthorQueryDTO()
   }
   page.value.query.sort = [
-    { column: 'updateTime', order: 'desc' },
-    { column: 'createTime', order: 'desc' }
+    { column: 'updateTime', type: 'desc' },
+    { column: 'createTime', type: 'desc' }
   ]
+  localAuthorSearchTable.value.handleSearchButtonClicked()
 })
 
 // 变量

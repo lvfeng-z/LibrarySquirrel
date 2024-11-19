@@ -1,5 +1,5 @@
-import QuerySortOption from '../../util/QuerySortOption.ts'
 import { Id } from '@renderer/model/main/BaseModel.ts'
+import QuerySortOption from '@renderer/model/util/QuerySortOption.ts'
 
 export default class BaseQueryDTO {
   /**

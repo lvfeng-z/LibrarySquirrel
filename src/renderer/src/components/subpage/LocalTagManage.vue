@@ -22,15 +22,16 @@ import Site from '@renderer/model/main/Site.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 
+// onMounted
 onMounted(() => {
-  localTagSearchTable.value.handleSearchButtonClicked()
   if (isNullish(page.value.query)) {
     page.value.query = new LocalTagQueryDTO()
   }
   page.value.query.sort = [
-    { column: 'updateTime', order: 'desc' },
-    { column: 'createTime', order: 'desc' }
+    { column: 'updateTime', type: 'desc' },
+    { column: 'createTime', type: 'desc' }
   ]
+  localTagSearchTable.value.handleSearchButtonClicked()
 })
 
 // 变量
