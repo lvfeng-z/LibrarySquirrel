@@ -231,7 +231,7 @@ defineExpose({
 <template>
   <div class="search-table">
     <!-- 为了不被el-table内置的2层z轴以及固定列的2+1增z轴遮挡，此处为3层z轴 -->
-    <SearchToolbar
+    <search-toolbar
       v-model:params="searchToolbarParams"
       class="search-table-toolbar z-layer-3"
       :create-button="createButton"
@@ -239,8 +239,7 @@ defineExpose({
       :main-input-boxes="mainInputBoxes"
       @create-button-clicked="handleCreateButtonClicked"
       @search-button-clicked="handleSearchButtonClicked"
-    >
-    </SearchToolbar>
+    />
     <div class="search-table-data">
       <data-table
         ref="dataTableRef"

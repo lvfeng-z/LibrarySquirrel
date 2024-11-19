@@ -17,6 +17,7 @@ import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import { isNullish } from './utils/CommonUtil'
+import DropdownForm from '@renderer/components/common/DropdownForm.vue'
 
 // onMounted
 onMounted(() => {
@@ -32,6 +33,7 @@ const apis = {
   worksQueryPage: window.api.worksQueryPage
 }
 let loading = false // 主菜单栏加载中开关
+const params: Ref<UnwrapRef<object>> = ref({})
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
@@ -98,8 +100,7 @@ async function requestWorks() {
   // 处理搜索框的标签
   selectedTagList.value.forEach((tag) => {
     if (tag.extraData !== undefined && tag.extraData !== null && Object.prototype.hasOwnProperty.call(tag.extraData, 'tagType')) {
-      // "page.query !== undefined"是为了保证编译能通过，没有实际意义
-      if (page.query === undefined) {
+      if (isNullish(page.query)) {
         return
       }
       // 如果extraData存储的tagType为true，则此标签是本地标签，否则是站点标签，
@@ -219,6 +220,14 @@ async function handleTest() {
                   <double-check-tag v-for="item in selectedTagList" :key="item.value" :item="item"></double-check-tag>
                 </template>
               </el-select>
+              <dropdown-form
+                ref="dropDownForm"
+                v-model:form-data="params"
+                class="dropdown-menu rounded-borders"
+                :reverse="false"
+                :input-boxes="[]"
+              >
+              </dropdown-form>
             </el-col>
             <el-col style="display: flex; justify-content: center" :span="2">
               <el-button @click="requestWorks">搜索</el-button>

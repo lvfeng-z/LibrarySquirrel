@@ -74,13 +74,13 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     const module = await import(loadPath)
     const response = new module.default(pluginTool)
 
-    // 验证taskPlugin是否符合TaskHandler接口要求
+    // 验证taskPlugin是否实现了TaskHandler接口
     let isTaskHandler: boolean
     // 查询插件信息，日志用
     // create方法
     isTaskHandler = 'create' in response && typeof response.create === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现create方法`
+      const msg = `加载任务插件时出错，插件未实现create方法，${pluginInfo}`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }
@@ -88,7 +88,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     // generateWorksInfo方法
     isTaskHandler = 'generateWorksInfo' in response && typeof response.start === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现generateWorksInfo方法`
+      const msg = `加载任务插件时出错，插件未实现generateWorksInfo方法，${pluginInfo}`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }
@@ -96,7 +96,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     // start方法
     isTaskHandler = 'start' in response && typeof response.start === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现start方法`
+      const msg = `加载任务插件时出错，插件未实现start方法，${pluginInfo}`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }
@@ -104,7 +104,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     // retry方法
     isTaskHandler = 'retry' in response && typeof response.retry === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现retry方法`
+      const msg = `加载任务插件时出错，插件未实现retry方法，${pluginInfo}`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }
@@ -112,7 +112,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     // pause方法
     isTaskHandler = 'pause' in response && typeof response.retry === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现pause方法`
+      const msg = `加载任务插件时出错，插件未实现pause方法，${pluginInfo}`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }
@@ -120,7 +120,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     // resume方法
     isTaskHandler = 'resume' in response && typeof response.retry === 'function'
     if (!isTaskHandler) {
-      const msg = `加载任务插件时出错，插件${pluginInfo}未实现resume方法`
+      const msg = `加载任务插件时出错，插件未实现resume方法，${pluginInfo}`
       LogUtil.error('PluginLoader', msg)
       throw new Error(msg)
     }
