@@ -2,6 +2,7 @@
 import { InputBox } from '../../model/util/InputBox'
 import { onBeforeMount, ref, Ref, UnwrapRef, warn } from 'vue'
 import lodash from 'lodash'
+import { ElMessage } from 'element-plus'
 
 // props
 const props = withDefaults(
@@ -102,20 +103,23 @@ function handleClickOutSide() {
         'dropdown-table-main': true,
         'dropdown-table-main-open': state,
         'dropdown-table-main-close': !state,
-        'margin-box': state /*此处在组件内部进行边缘缩进，因为在外部边缘缩进会导致侧边按钮很难与调用者的边框适配*/
+        'rounded-borders': true
       }"
+      @click="ElMessage({ message: 'test' })"
     >
       <el-scrollbar class="dropdown-table-rows"> </el-scrollbar>
     </div>
-    <div
-      :class="{
-        'dropdown-table-button-wrapper': true,
-        'dropdown-table-button-wrapper-normal': !reverse,
-        'dropdown-table-button-wrapper-reverse': reverse,
-        'z-layer-2': true
-      }"
-    >
-      <div class="dropdown-table-button" @click="changeState()"></div>
+    <div style="width: 100%; display: flex; justify-content: center">
+      <div
+        :class="{
+          'dropdown-table-button-wrapper': true,
+          'dropdown-table-button-wrapper-normal': !reverse,
+          'dropdown-table-button-wrapper-reverse': reverse,
+          'z-layer-2': true
+        }"
+      >
+        <div class="dropdown-table-button" @click="changeState()"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -123,9 +127,12 @@ function handleClickOutSide() {
 <style scoped>
 .dropdown-table {
   width: 100%;
-  position: relative;
+  height: 2px;
+  overflow: visible;
 }
 .dropdown-table-main {
+  position: relative;
+  width: 100%;
   transition: height 0.1s ease;
   overflow: hidden;
 }
@@ -136,8 +143,6 @@ function handleClickOutSide() {
   height: 0;
 }
 .dropdown-table-button-wrapper {
-  position: absolute;
-  left: calc(50% - 25px);
   width: 50px;
   height: 13px;
   overflow: hidden;
@@ -145,7 +150,6 @@ function handleClickOutSide() {
 .dropdown-table-button-wrapper-normal {
   display: grid;
   align-content: end;
-  top: 100%;
 }
 .dropdown-table-button-wrapper-reverse {
   top: -13px;

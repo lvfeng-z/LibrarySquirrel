@@ -18,6 +18,7 @@ import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import { isNullish } from './utils/CommonUtil'
 import DropdownForm from '@renderer/components/common/DropdownForm.vue'
+import DropdownBoard from '@renderer/components/common/DropdownBoard.vue'
 
 // onMounted
 onMounted(() => {
@@ -220,14 +221,8 @@ async function handleTest() {
                   <double-check-tag v-for="item in selectedTagList" :key="item.value" :item="item"></double-check-tag>
                 </template>
               </el-select>
-              <dropdown-form
-                ref="dropDownForm"
-                v-model:form-data="params"
-                class="dropdown-menu rounded-borders"
-                :reverse="false"
-                :input-boxes="[]"
-              >
-              </dropdown-form>
+              <dropdown-board ref="dropDownForm" v-model:form-data="params" class="dropdown-form" :reverse="false" :input-boxes="[]">
+              </dropdown-board>
             </el-col>
             <el-col style="display: flex; justify-content: center" :span="2">
               <el-button @click="requestWorks">搜索</el-button>
