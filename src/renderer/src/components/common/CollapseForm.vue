@@ -10,7 +10,7 @@ import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 const props = withDefaults(
   defineProps<{
     inputBoxes: InputBox[] // InputBox数组
-    reverse?: boolean // 是否翻转DropDownTable（true：翻转，false：不翻转）
+    reverse?: boolean // 是否翻转
   }>(),
   {
     reverse: false
@@ -93,7 +93,7 @@ function calculateSpan() {
 </script>
 
 <template>
-  <collapse-panel :reverse="props.reverse" height="150px">
+  <collapse-panel :reverse="props.reverse">
     <el-scrollbar class="dropdown-table-rows">
       <el-form v-model="formData">
         <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">

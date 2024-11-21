@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, Ref, UnwrapRef } from 'vue'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { ref, Ref, UnwrapRef } from 'vue'
 
 // props
 const props = withDefaults(
   defineProps<{
-    height?: string
-    reverse?: boolean // 是否翻转DropDownTable（true：翻转，false：不翻转）
+    reverse?: boolean // 是否翻转
   }>(),
   {
     reverse: false
@@ -19,11 +17,6 @@ defineExpose({
 })
 
 // 变量
-const main = ref()
-const innerHeight: Ref<UnwrapRef<string>> = computed(() => {
-  const mainHeight = main.value.style.height
-  return isNullish(props.height) ? mainHeight + 'px' : props.height
-})
 const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 
 // 方法
@@ -49,13 +42,11 @@ function handleClickOutSide() {
     <div
       :class="{
         'collapse-panel': true,
-        'collapse-panel-close': !state,
         'collapse-panel-normal': !props.reverse,
         'collapse-panel-reverse': props.reverse
       }"
     >
       <div
-        ref="main"
         :class="{
           'collapse-panel-main': true,
           'collapse-panel-main-open': state,
@@ -63,7 +54,9 @@ function handleClickOutSide() {
           'rounded-borders': true
         }"
       >
-        <slot />
+        <div class="collapse-panel-main-wrapper">
+          <slot />
+        </div>
       </div>
       <div
         :class="{
@@ -95,15 +88,18 @@ function handleClickOutSide() {
 }
 .collapse-panel-main {
   width: 100%;
-  height: 1px;
-  transition: height 0.3s ease;
+  display: grid;
   overflow: hidden;
+  transition: 0.3s ease;
 }
 .collapse-panel-main-open {
-  height: v-bind(innerHeight);
+  grid-template-rows: 1fr;
 }
 .collapse-panel-main-close {
-  height: 0;
+  grid-template-rows: 0fr;
+}
+.collapse-panel-main-wrapper {
+  min-height: 0;
 }
 .collapse-panel-button-wrapper {
   position: absolute;
