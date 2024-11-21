@@ -17,8 +17,7 @@ import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import { isNullish } from './utils/CommonUtil'
-import DropdownForm from '@renderer/components/common/DropdownForm.vue'
-import DropdownBoard from '@renderer/components/common/DropdownBoard.vue'
+import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 
 // onMounted
 onMounted(() => {
@@ -34,7 +33,7 @@ const apis = {
   worksQueryPage: window.api.worksQueryPage
 }
 let loading = false // 主菜单栏加载中开关
-const params: Ref<UnwrapRef<object>> = ref({})
+// const params: Ref<UnwrapRef<object>> = ref({})
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
@@ -150,11 +149,8 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
 })
 
 // test
-
 const showTestDialog = ref(false)
 async function handleTest() {
-  const a = await apis.testPLimitTest()
-  console.log(a)
   // showExplainPath.value = true
   // showTestDialog.value = true
 }
@@ -206,10 +202,10 @@ async function handleTest() {
       <div v-show="pageState.mainPage" class="mainPage margin-box">
         <div class="mainPage-searchbar">
           <el-row>
-            <el-col style="display: flex; justify-content: center" :span="2">
-              <el-button @click="handleTest">测试</el-button>
+            <el-col style="display: flex; justify-content: center" :span="1">
+              <el-button @click="handleTest">-</el-button>
             </el-col>
-            <el-col :span="20">
+            <el-col :span="21">
               <el-select v-model="selectedTagList" multiple filterable remote :remote-method="getTagSelectList" :loading="loading">
                 <el-option v-for="item in tagSelectList" :key="item.value" :label="item.label" :value="item">
                   <span style="float: left">{{ item.label }}</span>
@@ -221,8 +217,11 @@ async function handleTest() {
                   <double-check-tag v-for="item in selectedTagList" :key="item.value" :item="item"></double-check-tag>
                 </template>
               </el-select>
-              <dropdown-board ref="dropDownForm" v-model:form-data="params" class="dropdown-form" :reverse="false" :input-boxes="[]">
-              </dropdown-board>
+              <collapse-panel class="z-layer-3">
+                <div style="padding: 5px; background-color: #fafafa">
+                  <el-button> test </el-button>
+                </div>
+              </collapse-panel>
             </el-col>
             <el-col style="display: flex; justify-content: center" :span="2">
               <el-button @click="requestWorks">搜索</el-button>

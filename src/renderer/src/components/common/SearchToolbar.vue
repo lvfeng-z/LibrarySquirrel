@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
-import DropdownForm from './DropdownForm.vue'
+import CollapseForm from './CollapseForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
@@ -147,15 +147,14 @@ function handleCreateButtonClicked() {
         </el-dropdown>
       </el-col>
     </el-row>
-    <dropdown-form
+    <collapse-form
       v-if="showDropdownFlag"
       ref="dropDownForm"
       v-model:form-data="params"
       class="dropdown-menu rounded-borders"
       :reverse="reverse"
       :input-boxes="innerDropdownInputBoxes"
-    >
-    </dropdown-form>
+    />
   </div>
 </template>
 

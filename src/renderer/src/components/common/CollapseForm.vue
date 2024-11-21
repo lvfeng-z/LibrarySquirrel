@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { InputBox } from '../../model/util/InputBox'
-import { onBeforeMount, ref, Ref, UnwrapRef, warn } from 'vue'
+import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
+import ScrollTextBox from './ScrollTextBox.vue'
+import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
-import { ElMessage } from 'element-plus'
+import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 
 // props
 const props = withDefaults(
@@ -14,6 +16,9 @@ const props = withDefaults(
     reverse: false
   }
 )
+
+// model
+const formData = defineModel<object>('formData', { default: {}, required: true }) // 表单数据
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -71,10 +76,7 @@ function calculateSpan() {
     boxSpan += tempInputBox.labelSpan + tempInputBox.inputSpan
     spanRest -= boxSpan
 
-    // 如果boxSpan超过24，能容纳则放进tempRow，否则tempRow指向新空数组，再放进tempRow
-    if (boxSpan > 24) {
-      warn(`DropDownTable中，${tempInputBox.name}这一inputBox已经被隐藏，因为占用span超过24`)
-    } else if (spanRest >= 0) {
+    if (spanRest >= 0) {
       tempRow.push(tempInputBox)
     } else {
       tempRow = []
@@ -88,80 +90,72 @@ function calculateSpan() {
   // 计算完的高度赋值
   dropdownTableHeight.value = height
 }
-// 处理组件外部点击事件
-function handleClickOutSide() {
-  if (state.value) {
-    changeState(false)
-  }
-}
 </script>
 
 <template>
-  <div v-click-out-side="handleClickOutSide" class="dropdown-table">
-    <div
-      :class="{
-        'dropdown-table-main': true,
-        'dropdown-table-main-open': state,
-        'dropdown-table-main-close': !state,
-        'rounded-borders': true
-      }"
-      @click="ElMessage({ message: 'test' })"
-    >
-      <el-scrollbar class="dropdown-table-rows"> </el-scrollbar>
-    </div>
-    <div style="width: 100%; display: flex; justify-content: center">
-      <div
-        :class="{
-          'dropdown-table-button-wrapper': true,
-          'dropdown-table-button-wrapper-normal': !reverse,
-          'dropdown-table-button-wrapper-reverse': reverse,
-          'z-layer-2': true
-        }"
-      >
-        <div class="dropdown-table-button" @click="changeState()"></div>
-      </div>
-    </div>
-  </div>
+  <collapse-panel :reverse="props.reverse" height="150px">
+    <el-scrollbar class="dropdown-table-rows">
+      <el-form v-model="formData">
+        <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
+          <el-row class="dropdown-table-row">
+            <template v-for="(item, index) in boxRow" :key="index">
+              <el-col class="dropdown-table-label" :span="item.labelSpan">
+                <div
+                  :key="boxRowindex + '-' + index"
+                  class="dropdown-table-label-scroll-text-wrapper el-tag-mimic"
+                  style="width: 100%"
+                >
+                  <scroll-text-box class="dropdown-table-label-scroll-text">{{ item.label }}</scroll-text-box>
+                </div>
+              </el-col>
+              <el-col class="dropdown-table-input" :span="item.inputSpan">
+                <el-form-item class="dropdown-table-input-form-item">
+                  <common-input
+                    v-model:data="formData[item.name]"
+                    class="search-toolbar-input-form-item-input"
+                    :config="item"
+                  ></common-input>
+                </el-form-item>
+              </el-col>
+            </template>
+          </el-row>
+        </template>
+      </el-form>
+    </el-scrollbar>
+  </collapse-panel>
 </template>
 
 <style scoped>
-.dropdown-table {
+.dropdown-table-row {
+  height: 32px;
+  margin-top: 3px;
+}
+.dropdown-table-label {
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+.dropdown-table-input {
+  height: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+.dropdown-table-input-form-item {
   width: 100%;
-  height: 2px;
-  overflow: visible;
+  height: 100%;
 }
-.dropdown-table-main {
-  position: relative;
+.search-toolbar-input-form-item-input {
   width: 100%;
-  transition: height 0.1s ease;
-  overflow: hidden;
-}
-.dropdown-table-main-open {
-  height: 105px;
-}
-.dropdown-table-main-close {
-  height: 0;
-}
-.dropdown-table-button-wrapper {
-  width: 50px;
-  height: 13px;
-  overflow: hidden;
-}
-.dropdown-table-button-wrapper-normal {
-  display: grid;
-  align-content: end;
-}
-.dropdown-table-button-wrapper-reverse {
-  top: -13px;
-}
-.dropdown-table-button {
-  width: 50px;
-  height: 30px;
-  border-radius: 100% / 100%;
-  background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
+  height: 100%;
 }
 .dropdown-table-rows {
   flex-direction: column;
+  background-color: white;
+  padding: 7px;
+  height: calc(100% - 14px);
+}
+.dropdown-table-label-scroll-text {
   width: 100%;
+  height: 100%;
 }
 </style>
