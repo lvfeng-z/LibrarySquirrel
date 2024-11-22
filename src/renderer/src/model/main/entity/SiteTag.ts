@@ -1,5 +1,5 @@
 import BaseModel from './BaseModel.ts'
-import { isNullish } from '../../utils/CommonUtil.ts'
+import { isNullish } from '../../../utils/CommonUtil.ts'
 
 /**
  * 站点标签

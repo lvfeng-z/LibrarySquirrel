@@ -1,4 +1,4 @@
-import { isNullish } from '../../utils/CommonUtil.ts'
+import { isNullish } from '../../../utils/CommonUtil.ts'
 import BaseModel from './BaseModel.ts'
 
 /**

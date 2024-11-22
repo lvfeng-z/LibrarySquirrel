@@ -1,4 +1,4 @@
-import Task from '@renderer/model/main/Task.ts'
+import Task from '@renderer/model/main/entity/Task.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
 import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
 

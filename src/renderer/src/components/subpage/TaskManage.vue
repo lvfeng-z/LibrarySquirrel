@@ -20,7 +20,7 @@ import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum
 import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
-import Task from '@renderer/model/main/Task.ts'
+import Task from '@renderer/model/main/entity/Task.ts'
 
 // onMounted
 onMounted(() => {

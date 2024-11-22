@@ -1,5 +1,5 @@
-import SiteAuthor from '../SiteAuthor.ts'
-import LocalAuthor from '../LocalAuthor.ts'
+import SiteAuthor from '../entity/SiteAuthor.ts'
+import LocalAuthor from '../entity/LocalAuthor.ts'
 import { AuthorRole } from '../../../constants/AuthorRole'
 
 /**

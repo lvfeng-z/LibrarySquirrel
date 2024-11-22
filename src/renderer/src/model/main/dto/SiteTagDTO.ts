@@ -1,6 +1,6 @@
-import SiteTag from '../SiteTag.ts'
-import LocalTag from '../LocalTag.ts'
-import Site from '../Site.ts'
+import SiteTag from '../entity/SiteTag.ts'
+import LocalTag from '../entity/LocalTag.ts'
+import Site from '../entity/Site.ts'
 import { isNullish } from '../../../utils/CommonUtil.ts'
 
 export default class SiteTagDTO extends SiteTag {

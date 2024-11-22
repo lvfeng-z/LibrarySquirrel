@@ -3,7 +3,7 @@ import { Ref, ref, UnwrapRef } from 'vue'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
-import LocalAuthor from '../../model/main/LocalAuthor'
+import LocalAuthor from '../../model/main/entity/LocalAuthor.ts'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 
 // props

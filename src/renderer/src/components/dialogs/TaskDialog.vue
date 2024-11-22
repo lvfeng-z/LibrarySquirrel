@@ -16,7 +16,7 @@ import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import PageModel from '@renderer/model/util/PageModel.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
-import Task from '@renderer/model/main/Task.ts'
+import Task from '@renderer/model/main/entity/Task.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 
 // props

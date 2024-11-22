@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import Site from '../model/main/Site'
-import LocalTag from '../model/main/LocalTag'
+import Site from '../model/main/entity/Site.ts'
+import LocalTag from '../model/main/entity/LocalTag.ts'
 import WorksDTO from '../model/main/dto/WorksDTO'
 import lodash from 'lodash'
 import SiteAuthorDTO from '../model/main/dto/SiteAuthorDTO'

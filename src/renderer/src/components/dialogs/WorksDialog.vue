@@ -8,7 +8,7 @@ import ApiUtil from '../../utils/ApiUtil'
 import ExchangeBox from '@renderer/components/common/ExchangeBox.vue'
 import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
-import LocalTag from '@renderer/model/main/LocalTag.ts'
+import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 
 // props
 const props = defineProps<{

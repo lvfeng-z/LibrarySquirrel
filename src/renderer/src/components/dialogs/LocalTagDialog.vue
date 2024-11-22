@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, UnwrapRef } from 'vue'
-import LocalTag from '../../model/main/LocalTag'
+import LocalTag from '../../model/main/entity/LocalTag.ts'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'

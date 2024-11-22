@@ -1,8 +1,8 @@
-import LocalAuthor from '../main/LocalAuthor.ts'
-import LocalTag from '../main/LocalTag.ts'
-import Works from '../main/Works.ts'
-import WorksSet from '../main/WorksSet.ts'
-import Site from '../main/Site.ts'
+import LocalAuthor from '../main/entity/LocalAuthor.ts'
+import LocalTag from '../main/entity/LocalTag.ts'
+import Works from '../main/entity/Works.ts'
+import WorksSet from '../main/entity/WorksSet.ts'
+import Site from '../main/entity/Site.ts'
 import { PathTypeEnum } from '../../constants/PathTypeEnum.ts'
 
 /**
