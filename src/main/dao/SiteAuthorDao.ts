@@ -3,7 +3,7 @@ import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthor from '../model/entity/SiteAuthor.ts'
 import DB from '../database/DB.ts'
 import PageModel from '../model/util/PageModel.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 import { isNullish } from '../util/CommonUtil.ts'
@@ -71,14 +71,14 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     // 如果是bound是false，则查询local_author_id不等于给定localAuthorId的
     if (page.query.bound) {
-      page.query.assignComparator = {
-        ...page.query.assignComparator,
-        ...{ localAuthorId: COMPARATOR.EQUAL }
+      page.query.operators = {
+        ...page.query.operators,
+        ...{ localAuthorId: Operator.EQUAL }
       }
     } else {
-      page.query.assignComparator = {
-        ...page.query.assignComparator,
-        ...{ localAuthorId: COMPARATOR.NOT_EQUAL }
+      page.query.operators = {
+        ...page.query.operators,
+        ...{ localAuthorId: Operator.NOT_EQUAL }
       }
     }
 

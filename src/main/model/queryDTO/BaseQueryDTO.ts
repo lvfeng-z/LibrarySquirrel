@@ -1,5 +1,5 @@
 import { Id } from '../entity/BaseModel.ts'
-import { COMPARATOR } from '../../constant/CrudConstant.ts'
+import { Operator } from '../../constant/CrudConstant.ts'
 import QuerySortOption from '../../constant/QuerySortOption.ts'
 import { toObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'
 
@@ -25,9 +25,9 @@ export default class BaseQueryDTO {
   keyword?: string | undefined | null
 
   /**
-   * 指定运算符
+   * 指定比较符
    */
-  assignComparator?: { [key: string]: COMPARATOR } | undefined
+  operators?: { [key: string]: Operator } | undefined
 
   /**
    * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
@@ -40,14 +40,14 @@ export default class BaseQueryDTO {
       this.createTime = undefined
       this.updateTime = undefined
       this.keyword = undefined
-      this.assignComparator = undefined
+      this.operators = undefined
       this.sort = undefined
     } else {
       this.id = baseQueryDTO.id
       this.createTime = baseQueryDTO.createTime
       this.updateTime = baseQueryDTO.updateTime
       this.keyword = baseQueryDTO.keyword
-      this.assignComparator = baseQueryDTO.assignComparator
+      this.operators = baseQueryDTO.operators
       this.sort = baseQueryDTO.sort
     }
   }
@@ -56,7 +56,7 @@ export default class BaseQueryDTO {
    * 获取可用于查询的实例
    */
   public getQueryObject() {
-    return toObjAcceptedBySqlite3(this, ['assignComparator', 'sort'])
+    return toObjAcceptedBySqlite3(this, ['operators', 'sort'])
   }
 
   /**

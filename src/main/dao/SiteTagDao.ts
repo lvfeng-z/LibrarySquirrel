@@ -5,7 +5,7 @@ import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import PageModel from '../model/util/PageModel.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
@@ -54,14 +54,14 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
     // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
     if (page.query.bound) {
-      page.query.assignComparator = {
-        ...page.query.assignComparator,
-        ...{ localTagId: COMPARATOR.EQUAL }
+      page.query.operators = {
+        ...page.query.operators,
+        ...{ localTagId: Operator.EQUAL }
       }
     } else {
-      page.query.assignComparator = {
-        ...page.query.assignComparator,
-        ...{ localTagId: COMPARATOR.NOT_EQUAL }
+      page.query.operators = {
+        ...page.query.operators,
+        ...{ localTagId: Operator.NOT_EQUAL }
       }
     }
 

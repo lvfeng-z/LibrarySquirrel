@@ -234,9 +234,9 @@ tables:
         nick_name             text,
         suggested_name        text,
         local_author_id       integer,
-        include_mode          integer,
-        include_task_id       integer,
-        last_viewed           integer,
+        import_method         integer,
+        task_id               integer,
+        last_view             integer,
         resource_complete     integer(1),
         create_time           integer,
         update_time           integer
@@ -255,9 +255,7 @@ tables:
         site_upload_time     integer,
         site_update_time     integer,
         nick_name            text,
-        include_mode         integer,
-        include_task_id      integer,
-        last_viewed          integer,
+        last_view            integer,
         create_time          integer,
         update_time          integer
       );

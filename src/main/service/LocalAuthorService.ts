@@ -4,7 +4,7 @@ import LocalAuthor from '../model/entity/LocalAuthor.ts'
 import LocalAuthorDao from '../dao/LocalAuthorDao.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import PageModel from '../model/util/PageModel.ts'
 import DB from '../database/DB.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
@@ -55,9 +55,9 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
   public async queryPage(page: PageModel<LocalAuthorQueryDTO, LocalAuthor>): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
       if (notNullish(page.query)) {
-        page.query.assignComparator = {
-          ...{ localAuthorName: COMPARATOR.LIKE },
-          ...page.query.assignComparator
+        page.query.operators = {
+          ...{ localAuthorName: Operator.LIKE },
+          ...page.query.operators
         }
       }
       return super.queryPage(page)
@@ -73,7 +73,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
   public listSelectItems(query: LocalAuthorQueryDTO): Promise<SelectItem[]> {
     try {
       query = new LocalAuthorQueryDTO(query)
-      query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
+      query.operators = { localAuthorName: Operator.LIKE }
       return this.dao.baseListSelectItems(query, 'id', 'localAuthorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
@@ -88,7 +88,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
     try {
       page = new PageModel(page)
       page.query = new LocalAuthorQueryDTO(page.query)
-      page.query.assignComparator = { localAuthorName: COMPARATOR.LIKE }
+      page.query.operators = { localAuthorName: Operator.LIKE }
       return this.dao.querySelectItemPage(page, 'id', 'localAuthorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)

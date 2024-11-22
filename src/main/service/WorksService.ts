@@ -44,7 +44,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     const settings = SettingsService.getSettings()
     const workdir = settings.workdir
     if (StringUtil.isBlank(workdir)) {
-      const msg = `保存资源时，工作目录意外为空，taskId: ${result.includeTaskId}`
+      const msg = `保存资源时，工作目录意外为空，taskId: ${result.taskId}`
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
@@ -71,7 +71,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       return result
     } catch (error) {
-      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}`
+      const msg = `保存作品时出错，taskId: ${worksDTO.taskId}`
       LogUtil.error('WorksService', msg, error)
       throw error
     }
@@ -83,7 +83,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param fileWriter
    */
   public static async saveWorksResource(worksDTO: WorksSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
-    assertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.includeTaskId}`)
+    assertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.taskId}`)
     assertNotNullish(worksDTO.fullSavePath, 'WorksService', `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`)
 
     try {
@@ -97,7 +97,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       fileWriter.writable = writeStream
       return fileWriter.doWrite()
     } catch (error) {
-      const msg = `保存作品时出错，taskId: ${worksDTO.includeTaskId}`
+      const msg = `保存作品时出错，taskId: ${worksDTO.taskId}`
       LogUtil.error('WorksService', msg, error)
       throw error
     }
@@ -139,9 +139,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
             // 遍历处理作品集数组
             for (const worksSet of worksDTO.worksSets) {
-              if (notNullish(worksSet) && notNullish(worksDTO.includeTaskId)) {
+              if (notNullish(worksSet) && notNullish(worksDTO.taskId)) {
                 const taskService = new TaskService(transactionDB)
-                const includeTask = await taskService.getById(worksDTO.includeTaskId)
+                const includeTask = await taskService.getById(worksDTO.taskId)
                 if (isNullish(includeTask)) {
                   const msg = '修改本地标签时，原标签信息意外为空'
                   LogUtil.error('LocalTagService', msg)
@@ -155,7 +155,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                   const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(siteWorksSetId, rootTaskId)
                   if (isNullish(oldWorksSet)) {
                     const tempWorksSet = new WorksSet(worksSet)
-                    tempWorksSet.includeTaskId = rootTaskId
                     await worksSetService.save(tempWorksSet)
                     worksSetService.link([worksDTO], tempWorksSet)
                   } else {
@@ -212,7 +211,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           }
 
           return worksDTO.id
-        }, `保存作品信息，taskId: ${worksDTO.includeTaskId}`)
+        }, `保存作品信息，taskId: ${worksDTO.taskId}`)
         .catch((error) => {
           LogUtil.warn('WorksService', '保存作品时出错')
           throw error
@@ -307,7 +306,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       // 先查找主作者，没有主作者就查找平级作者
       if (mainAuthor.length > 0) {
         if (mainAuthor.length > 1) {
-          LogUtil.warn('WorksService', `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`)
+          LogUtil.warn('WorksService', `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.taskId}`)
         } else {
           authorName = mainAuthor[0].siteAuthorName as string
         }
@@ -316,7 +315,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         if (equalAuthor.length > 0) {
           authorName = equalAuthor[0].siteAuthorName as string
         } else {
-          LogUtil.warn('WorksService', `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`)
+          LogUtil.warn('WorksService', `保存作品时，作者名称为空，taskId: ${worksDTO.taskId}未返回有效的作者信息`)
         }
       }
     } else if (worksDTO.localAuthors !== undefined && worksDTO.localAuthors !== null && worksDTO.localAuthors.length > 0) {
@@ -324,7 +323,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       // 先查找主作者，没有主作者就查找平级作者
       if (mainAuthor.length > 0) {
         if (mainAuthor.length > 1) {
-          LogUtil.warn('WorksService', `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.includeTaskId}`)
+          LogUtil.warn('WorksService', `保存作品时，作品包含了多个主要作者，taskId: ${worksDTO.taskId}`)
         } else {
           authorName = mainAuthor[0].localAuthorName as string
         }
@@ -333,7 +332,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         if (equalAuthor.length > 0) {
           authorName = equalAuthor[0].localAuthorName as string
         } else {
-          LogUtil.warn('WorksService', `保存作品时，作者名称为空，taskId: ${worksDTO.includeTaskId}未返回有效的作者信息`)
+          LogUtil.warn('WorksService', `保存作品时，作者名称为空，taskId: ${worksDTO.taskId}未返回有效的作者信息`)
         }
       }
     }

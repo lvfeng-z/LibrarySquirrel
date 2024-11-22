@@ -3,7 +3,7 @@ import SiteDao from '../dao/SiteDao.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseService from './BaseService.ts'
 import PageModel from '../model/util/PageModel.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
@@ -36,7 +36,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
   public async querySelectItemPage(page: PageModel<SiteQueryDTO, Site>) {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new SiteQueryDTO(page.query)
-      page.query.assignComparator = { siteName: COMPARATOR.LIKE }
+      page.query.operators = { siteName: Operator.LIKE }
     }
     return this.dao.querySelectItemPage(page, 'id', 'SiteName')
   }

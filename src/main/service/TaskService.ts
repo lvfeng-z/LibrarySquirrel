@@ -14,7 +14,7 @@ import DB from '../database/DB.ts'
 import lodash from 'lodash'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
 import PageModel from '../model/util/PageModel.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
@@ -338,7 +338,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       LogUtil.error('TaskService', `任务${taskId}调用插件获取作品信息时失败`, error)
       return false
     }
-    worksDTO.includeTaskId = taskId
+    worksDTO.taskId = taskId
 
     // 保存远程资源是否可接续
     task.continuable = worksDTO.continuable
@@ -355,7 +355,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return worksService.saveWorksInfo(worksSaveInfo).then((worksId: number) => {
       // 文件的写入路径和作品id保存到任务中
       const sourceTask = new Task()
-      sourceTask.id = worksSaveInfo.includeTaskId
+      sourceTask.id = worksSaveInfo.taskId
       sourceTask.localWorksId = worksId
       sourceTask.pendingDownloadPath = worksSaveInfo.fullSavePath
       // 作为数据源的task也要赋值，供后续下载时取值，免去从数据库查询
@@ -417,7 +417,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     } else {
       worksSaveInfo.fullSavePath = task.pendingDownloadPath
     }
-    worksSaveInfo.includeTaskId = taskId
+    worksSaveInfo.taskId = taskId
     LogUtil.info('TaskService', `任务${taskId}开始下载`)
     return WorksService.saveWorksResource(worksSaveInfo, taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
@@ -802,9 +802,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async queryParentPage(page: PageModel<TaskQueryDTO, Task>): Promise<PageModel<TaskQueryDTO, TaskProcessingDTO>> {
     if (notNullish(page.query)) {
-      page.query.assignComparator = {
-        ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
-        ...page.query.assignComparator
+      page.query.operators = {
+        ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
+        ...page.query.operators
       }
     }
     const sourcePage = await this.dao.queryParentPage(page)
@@ -827,9 +827,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async queryTreeDataPage(page: PageModel<TaskQueryDTO, Task>): Promise<PageModel<TaskQueryDTO, Task>> {
     if (notNullish(page.query)) {
-      page.query.assignComparator = {
-        ...{ taskName: COMPARATOR.LIKE },
-        ...page.query.assignComparator
+      page.query.operators = {
+        ...{ taskName: Operator.LIKE },
+        ...page.query.operators
       }
     }
     const sourcePage = await super.queryPage(page)
@@ -890,9 +890,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async queryChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>): Promise<PageModel<TaskQueryDTO, TaskProcessingDTO>> {
     if (notNullish(page.query)) {
-      page.query.assignComparator = {
-        ...{ taskName: COMPARATOR.LIKE, siteDomain: COMPARATOR.LIKE },
-        ...page.query.assignComparator
+      page.query.operators = {
+        ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
+        ...page.query.operators
       }
       page.query.isCollection = false
     }

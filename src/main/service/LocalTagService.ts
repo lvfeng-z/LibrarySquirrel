@@ -8,7 +8,7 @@ import { buildTree } from '../util/TreeUtil.ts'
 import BaseService from './BaseService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PageModel from '../model/util/PageModel.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 
@@ -84,9 +84,9 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   public async queryPage(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
     try {
       if (notNullish(page.query)) {
-        page.query.assignComparator = {
-          ...{ localTagName: COMPARATOR.LIKE },
-          ...page.query.assignComparator
+        page.query.operators = {
+          ...{ localTagName: Operator.LIKE },
+          ...page.query.operators
         }
       }
       return super.queryPage(page)
@@ -146,7 +146,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   public async querySelectItemPage(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new LocalTagQueryDTO(page.query)
-      page.query.assignComparator = { localTagName: COMPARATOR.LIKE }
+      page.query.operators = { localTagName: Operator.LIKE }
     }
     return await this.dao.querySelectItemPage(page, 'id', 'localTagName')
   }
@@ -168,9 +168,9 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
     page = new PageModel(page)
     if (notNullish(page.query)) {
-      page.query.assignComparator = {
-        ...{ localTagName: COMPARATOR.LIKE },
-        ...page.query.assignComparator
+      page.query.operators = {
+        ...{ localTagName: Operator.LIKE },
+        ...page.query.operators
       }
     }
     const sourcePage = await this.dao.queryPageByWorksId(page)

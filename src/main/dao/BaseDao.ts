@@ -5,7 +5,7 @@ import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/util/SelectItem.ts'
-import { COMPARATOR } from '../constant/CrudConstant.ts'
+import { Operator } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
@@ -584,65 +584,59 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const whereClauses: string[] = []
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery: Query = Object.assign(new BaseQueryDTO(), queryConditions)
-    // 去除值为undefined的属性和assignComparator属性
+    // 去除值为undefined的属性和operators、keyword、sort
     Object.entries(queryConditions)
       .filter(
         ([key, value]) =>
           value !== undefined &&
           (typeof value === 'string' ? StringUtil.isNotBlank(value) : true) &&
-          key !== 'assignComparator' &&
+          key !== 'operators' &&
           key !== 'keyword' &&
           key !== 'sort'
       )
       .forEach(([key, value]) => {
         const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-        const comparator = this.getComparator(key, queryConditions.assignComparator)
+        const comparator = this.getComparator(key, queryConditions.operators)
         // 根据运算符的不同给出不同的where子句和匹配值
         let modifiedValue: unknown
         let whereClause: string
         switch (comparator) {
-          case COMPARATOR.EQUAL:
+          case Operator.EQUAL:
             if (value !== null) {
               whereClause =
                 alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
               modifiedValue = value
             } else {
               whereClause =
-                alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+                alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NULL}`
             }
             break
-          case COMPARATOR.NOT_EQUAL:
+          case Operator.NOT_EQUAL:
             if (value !== null) {
               whereClause =
                 alias == undefined
-                  ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
-                  : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                  ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
+                  : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
               modifiedValue = value
             } else {
               whereClause =
-                alias == undefined
-                  ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
-                  : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NOT_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
             }
             break
-          case COMPARATOR.LEFT_LIKE:
+          case Operator.LEFT_LIKE:
             whereClause =
-              alias == undefined
-                ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-            modifiedValue = value
+              alias == undefined ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+            modifiedValue = value + '%'
             break
-          case COMPARATOR.RIGHT_LIKE:
+          case Operator.RIGHT_LIKE:
             whereClause =
-              alias == undefined
-                ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-            modifiedValue = '%'.concat(value)
+              alias == undefined ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+            modifiedValue = '%' + value
             break
-          case COMPARATOR.LIKE:
+          case Operator.LIKE:
             whereClause =
               alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-            modifiedValue = '%'.concat(value, '%')
+            modifiedValue = '%' + value + '%'
             break
           default:
             whereClause =
@@ -675,65 +669,65 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery = Object.assign(queryConditions, queryConditions)
     if (queryConditions) {
-      // 去除值为undefined的属性和assignComparator、keyword属性
+      // 去除值为undefined的属性和operators、keyword、sort
       Object.entries(queryConditions)
         .filter(
           ([key, value]) =>
             value !== undefined &&
             (typeof value === 'string' ? StringUtil.isNotBlank(value) : true) &&
-            key !== 'assignComparator' &&
+            key !== 'operators' &&
             key !== 'keyword' &&
             key !== 'sort'
         )
         .forEach(([key, value]) => {
           if (value !== undefined && value !== '') {
             const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-            const comparator = this.getComparator(key, queryConditions.assignComparator)
+            const comparator = this.getComparator(key, queryConditions.operators)
             // 根据运算符的不同给出不同的where子句和匹配值
             let modifiedValue: unknown
             switch (comparator) {
-              case COMPARATOR.EQUAL:
+              case Operator.EQUAL:
                 if (value !== null) {
                   whereClauses[key] =
                     alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
                   modifiedValue = value
                 } else {
                   whereClauses[key] =
-                    alias == undefined ? `"${snakeCaseKey}" ${COMPARATOR.IS_NULL}` : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL}`
+                    alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NULL}`
                 }
                 break
-              case COMPARATOR.NOT_EQUAL:
+              case Operator.NOT_EQUAL:
                 if (value !== null) {
                   whereClauses[key] =
                     alias == undefined
-                      ? `"(${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
-                      : `(${alias}."${snakeCaseKey}" ${COMPARATOR.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NULL})`
+                      ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
+                      : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
                   modifiedValue = value
                 } else {
                   whereClauses[key] =
                     alias == undefined
-                      ? `"${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
-                      : `${alias}."${snakeCaseKey}" ${COMPARATOR.IS_NOT_NULL}`
+                      ? `"${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
+                      : `${alias}."${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
                 }
                 break
-              case COMPARATOR.LEFT_LIKE:
+              case Operator.LEFT_LIKE:
                 whereClauses[key] =
                   alias == undefined
-                    ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                modifiedValue = String(value).concat('%')
+                    ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
+                    : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+                modifiedValue = value + '%'
                 break
-              case COMPARATOR.RIGHT_LIKE:
+              case Operator.RIGHT_LIKE:
                 whereClauses[key] =
                   alias == undefined
-                    ? `"${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${COMPARATOR.LIKE} @${key}`
-                modifiedValue = '%'.concat(value)
+                    ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
+                    : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+                modifiedValue = '%' + value
                 break
-              case COMPARATOR.LIKE:
+              case Operator.LIKE:
                 whereClauses[key] =
                   alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-                modifiedValue = '%'.concat(value, '%')
+                modifiedValue = '%' + value + '%'
                 break
               default:
                 whereClauses[key] =
@@ -754,10 +748,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param assignComparator
    * @private
    */
-  private getComparator(property: string, assignComparator: { [key: string]: COMPARATOR } | undefined): COMPARATOR {
+  private getComparator(property: string, assignComparator: { [key: string]: Operator } | undefined): Operator {
     // 指定运算符的对象转换为数组
     const assignComparatorList = assignComparator === undefined ? undefined : Object.entries(assignComparator)
-    let comparator = COMPARATOR.EQUAL
+    let comparator = Operator.EQUAL
     if (assignComparatorList !== undefined && assignComparatorList.length > 0) {
       const comparatorTarget = assignComparatorList.filter((item) => item[0] === property)
       if (comparatorTarget.length > 0) {
