@@ -1,5 +1,5 @@
 import BaseModel from './BaseModel.ts'
-import { AuthorRole } from '../constant/AuthorRole.ts'
+import { AuthorRole } from '../../constant/AuthorRole.ts'
 
 export default class ReWorksAuthor extends BaseModel {
   /**

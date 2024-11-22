@@ -1,10 +1,10 @@
-import LocalTag from '../model/LocalTag.ts'
-import SelectItem from '../model/utilModels/SelectItem.ts'
+import LocalTag from '../model/entity/LocalTag.ts'
+import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'
-import PageModel from '../model/utilModels/PageModel.js'
+import PageModel from '../model/util/PageModel.js'
 import { isNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 

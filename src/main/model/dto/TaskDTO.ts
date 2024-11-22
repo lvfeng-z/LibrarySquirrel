@@ -1,5 +1,5 @@
-import Task from '../Task.ts'
-import TreeNode from '../utilModels/TreeNode.ts'
+import Task from '../entity/Task.ts'
+import TreeNode from '../util/TreeNode.ts'
 
 /**
  * 任务

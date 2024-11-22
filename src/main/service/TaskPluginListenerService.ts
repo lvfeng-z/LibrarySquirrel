@@ -1,9 +1,9 @@
-import TaskPluginListener from '../model/TaskPluginListener.ts'
+import TaskPluginListener from '../model/entity/TaskPluginListener.ts'
 import TaskPluginListenerDao from '../dao/TaskPluginListenerDao.ts'
 import BaseService from './BaseService.ts'
 import TaskPluginListenerQueryDTO from '../model/queryDTO/TaskPluginListenerQueryDTO.ts'
 import DB from '../database/DB.ts'
-import Plugin from '../model/Plugin.js'
+import Plugin from '../model/entity/Plugin.js'
 
 /**
  * 任务插件监听器Service

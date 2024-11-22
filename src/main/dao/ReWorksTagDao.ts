@@ -1,6 +1,6 @@
 import BaseDao from './BaseDao.ts'
 import { ReWorksTagQueryDTO } from '../model/queryDTO/ReWorksTagQueryDTO.ts'
-import ReWorksTag from '../model/ReWorksTag.ts'
+import ReWorksTag from '../model/entity/ReWorksTag.ts'
 import DB from '../database/DB.ts'
 
 /**

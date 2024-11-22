@@ -1,4 +1,4 @@
-import Task from '../Task.ts'
+import Task from '../entity/Task.ts'
 
 /**
  * 创建任务DTO

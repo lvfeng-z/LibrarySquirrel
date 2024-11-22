@@ -1,10 +1,10 @@
 import BaseDao from './BaseDao.ts'
-import SiteTag from '../model/SiteTag.ts'
+import SiteTag from '../model/entity/SiteTag.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
-import SelectItem from '../model/utilModels/SelectItem.ts'
+import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
-import PageModel from '../model/utilModels/PageModel.ts'
+import PageModel from '../model/util/PageModel.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 

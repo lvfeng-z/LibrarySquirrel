@@ -1,6 +1,6 @@
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
-import BaseModel from '../model/BaseModel.ts'
-import PageModel from '../model/utilModels/PageModel.ts'
+import BaseModel from '../model/entity/BaseModel.ts'
+import PageModel from '../model/util/PageModel.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import DB from '../database/DB.ts'
 import { isNullish } from '../util/CommonUtil.ts'

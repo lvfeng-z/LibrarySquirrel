@@ -1,4 +1,4 @@
-import TreeNode from '../model/utilModels/TreeNode.ts'
+import TreeNode from '../model/util/TreeNode.ts'
 import { notNullish } from './CommonUtil.ts'
 
 /**

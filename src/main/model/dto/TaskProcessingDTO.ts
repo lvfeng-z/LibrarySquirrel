@@ -1,4 +1,4 @@
-import Task from '../Task.js'
+import Task from '../entity/Task.js'
 import { isNullish } from '../../util/CommonUtil.js'
 import TaskDTO from './TaskDTO.js'
 

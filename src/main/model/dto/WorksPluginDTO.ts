@@ -1,10 +1,10 @@
-import Works from '../Works.ts'
-import Site from '../Site.ts'
-import LocalTag from '../LocalTag.ts'
+import Works from '../entity/Works.ts'
+import Site from '../entity/Site.ts'
+import LocalTag from '../entity/LocalTag.ts'
 import LocalAuthorDTO from './LocalAuthorDTO.ts'
 import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from './SiteTagDTO.ts'
-import WorksSet from '../WorksSet.ts'
+import WorksSet from '../entity/WorksSet.ts'
 import { Readable } from 'node:stream'
 
 /**

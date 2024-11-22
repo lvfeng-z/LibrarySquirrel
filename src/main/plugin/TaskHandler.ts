@@ -1,4 +1,4 @@
-import Task from '../model/Task.ts'
+import Task from '../model/entity/Task.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'

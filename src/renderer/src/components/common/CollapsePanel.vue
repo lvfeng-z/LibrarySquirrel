@@ -50,11 +50,10 @@ function handleClickOutSide() {
         :class="{
           'collapse-panel-main': true,
           'collapse-panel-main-open': state,
-          'collapse-panel-main-close': !state,
-          'rounded-borders': true
+          'collapse-panel-main-close': !state
         }"
       >
-        <div class="collapse-panel-main-wrapper">
+        <div class="collapse-panel-main-wrapper rounded-borders">
           <slot />
         </div>
       </div>
@@ -109,12 +108,12 @@ function handleClickOutSide() {
   align-self: center;
 }
 .collapse-panel-button-wrapper-normal {
-  bottom: -13px;
+  bottom: -12px;
   display: grid;
   align-content: end;
 }
 .collapse-panel-button-wrapper-reverse {
-  top: -13px;
+  top: -12px;
 }
 .collapse-panel-button {
   width: 50px;

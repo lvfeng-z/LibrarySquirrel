@@ -1,4 +1,4 @@
-import LocalAuthor from '../LocalAuthor.ts'
+import LocalAuthor from '../entity/LocalAuthor.ts'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 

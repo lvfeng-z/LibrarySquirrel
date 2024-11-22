@@ -1,12 +1,12 @@
 import BaseService from './BaseService.ts'
-import WorksSet from '../model/WorksSet.ts'
+import WorksSet from '../model/entity/WorksSet.ts'
 import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import DB from '../database/DB.ts'
 import WorksSetDao from '../dao/WorksSetDao.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import { isNullish } from '../util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
-import ReWorksWorksSet from '../model/ReWorksWorksSet.ts'
+import ReWorksWorksSet from '../model/entity/ReWorksWorksSet.ts'
 import ReWorksWorksSetService from './ReWorksWorksSetService.ts'
 
 /**

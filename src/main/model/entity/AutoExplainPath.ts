@@ -1,6 +1,6 @@
 import BaseModel from './BaseModel.ts'
-import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { PathTypeEnum } from '../../constant/PathTypeEnum.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 自动解释路径含义

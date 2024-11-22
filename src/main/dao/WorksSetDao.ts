@@ -1,6 +1,6 @@
 import BaseDao from './BaseDao.ts'
 import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
-import WorksSet from '../model/WorksSet.ts'
+import WorksSet from '../model/entity/WorksSet.ts'
 import DB from '../database/DB.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'

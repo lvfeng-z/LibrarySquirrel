@@ -1,4 +1,4 @@
-import WorksSet from '../WorksSet.ts'
+import WorksSet from '../entity/WorksSet.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class WorksSetDTO extends WorksSet {

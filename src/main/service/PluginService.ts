@@ -1,7 +1,7 @@
 import Path from 'path'
 import PluginDao from '../dao/PluginDao.ts'
 import { getRootDir } from '../util/FileSysUtil.ts'
-import Plugin from '../model/Plugin.ts'
+import Plugin from '../model/entity/Plugin.ts'
 import BaseService from './BaseService.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'

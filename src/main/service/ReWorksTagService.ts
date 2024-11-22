@@ -1,5 +1,5 @@
 import BaseService from './BaseService.ts'
-import ReWorksTag from '../model/ReWorksTag.ts'
+import ReWorksTag from '../model/entity/ReWorksTag.ts'
 import { ReWorksTagQueryDTO } from '../model/queryDTO/ReWorksTagQueryDTO.ts'
 import { ReWorksTagDao } from '../dao/ReWorksTagDao.ts'
 import DB from '../database/DB.ts'

@@ -1,5 +1,5 @@
 import { defaultSettings } from '../util/SettingsUtil.ts'
-import { Settings } from '../model/utilModels/Settings.ts'
+import { Settings } from '../model/util/Settings.ts'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 
 /**

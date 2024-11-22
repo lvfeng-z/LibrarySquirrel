@@ -1,5 +1,5 @@
 import { isNullish } from '../../util/CommonUtil.ts'
-import Plugin from '../Plugin.ts'
+import Plugin from '../entity/Plugin.ts'
 
 /**
  * 创建任务的响应

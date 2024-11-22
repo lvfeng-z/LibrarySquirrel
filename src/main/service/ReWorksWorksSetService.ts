@@ -1,6 +1,6 @@
 import BaseService from './BaseService.ts'
 import ReWorksWorksSetQueryDTO from '../model/queryDTO/ReWorksWorksSetQueryDTO.ts'
-import ReWorksWorksSet from '../model/ReWorksWorksSet.ts'
+import ReWorksWorksSet from '../model/entity/ReWorksWorksSet.ts'
 import ReWorksWorksSetDao from '../dao/ReWorksWorksSetDao.ts'
 import DB from '../database/DB.ts'
 

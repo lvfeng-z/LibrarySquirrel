@@ -10,7 +10,7 @@ import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import TaskDTO from '../model/dto/TaskDTO.js'
 import TaskWriter from '../util/TaskWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
-import Task from '../model/Task.js'
+import Task from '../model/entity/Task.js'
 import StringUtil from '../util/StringUtil.js'
 
 /**

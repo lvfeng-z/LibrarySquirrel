@@ -1,16 +1,16 @@
-import PageModel from '../model/utilModels/PageModel.ts'
 import StringUtil from '../util/StringUtil.ts'
 import DB from '../database/DB.ts'
-import BaseModel, { Id } from '../model/BaseModel.ts'
+import BaseModel, { Id } from '../model/entity/BaseModel.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
-import SelectItem from '../model/utilModels/SelectItem.ts'
+import SelectItem from '../model/util/SelectItem.ts'
 import { COMPARATOR } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
 import { assertArrayNotEmpty, assertNotNullish } from '../util/AssertUtil.js'
+import PageModel from '../model/util/PageModel.js'
 
 type PrimaryKey = string | number
 

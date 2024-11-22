@@ -1,4 +1,4 @@
-import Plugin from '../Plugin.ts'
+import Plugin from '../entity/Plugin.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class PluginDTO extends Plugin {

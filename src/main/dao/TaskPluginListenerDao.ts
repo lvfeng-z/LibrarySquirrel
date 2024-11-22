@@ -1,7 +1,7 @@
 import BaseDao from './BaseDao.ts'
-import TaskPluginListener from '../model/TaskPluginListener.ts'
+import TaskPluginListener from '../model/entity/TaskPluginListener.ts'
 import TaskPluginListenerQueryDTO from '../model/queryDTO/TaskPluginListenerQueryDTO.ts'
-import Plugin from '../model/Plugin.ts'
+import Plugin from '../model/entity/Plugin.ts'
 import DB from '../database/DB.ts'
 
 export default class TaskPluginListenerDao extends BaseDao<TaskPluginListenerQueryDTO, TaskPluginListener> {

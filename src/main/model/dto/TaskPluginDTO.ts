@@ -1,4 +1,4 @@
-import Task from '../Task.ts'
+import Task from '../entity/Task.ts'
 import { Readable } from 'node:stream'
 import { isNullish } from '../../util/CommonUtil.ts'
 

@@ -1,4 +1,4 @@
-import Site from '../model/Site.ts'
+import Site from '../model/entity/Site.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'

@@ -1,7 +1,7 @@
-import SiteAuthor from '../SiteAuthor.ts'
-import LocalAuthor from '../LocalAuthor.ts'
+import SiteAuthor from '../entity/SiteAuthor.ts'
+import LocalAuthor from '../entity/LocalAuthor.ts'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
-import Site from '../Site.ts'
+import Site from '../entity/Site.ts'
 
 /**
  * 站点作者DTO

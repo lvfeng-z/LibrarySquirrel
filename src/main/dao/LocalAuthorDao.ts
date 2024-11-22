@@ -1,5 +1,5 @@
 import BaseDao from './BaseDao.ts'
-import LocalAuthor from '../model/LocalAuthor.ts'
+import LocalAuthor from '../model/entity/LocalAuthor.ts'
 import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.ts'
 import DB from '../database/DB.ts'
 import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.ts'
