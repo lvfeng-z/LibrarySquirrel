@@ -27,6 +27,7 @@ import { ReWorksTagService } from './ReWorksTagService.js'
 import { assertNotNullish } from '../util/AssertUtil.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
+import { QueryCondition } from '../model/util/QueryCondition.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -249,6 +250,38 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     try {
       // 查询作品信息
       const resultPage = await this.dao.synthesisQueryPage(page)
+
+      // 给每个作品附加作者信息
+      if (notNullish(resultPage.data)) {
+        const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
+        if (worksIds.length > 0) {
+          const localAuthorService = new LocalAuthorService()
+          const relationShipMap = await localAuthorService.listReWorksAuthor(worksIds)
+          resultPage.data.forEach((worksDTO) => {
+            worksDTO.localAuthors = relationShipMap.get(worksDTO.id as number)
+          })
+        }
+      }
+      return resultPage
+    } catch (error) {
+      LogUtil.error('WorksService', error)
+      throw error
+    }
+  }
+
+  /**
+   * 多条件分页查询作品
+   * @param page
+   * @param query
+   */
+  public async multipleConditionQueryPage(
+    page: PageModel<WorksQueryDTO, WorksDTO>,
+    query: QueryCondition[]
+  ): Promise<PageModel<WorksQueryDTO, Works>> {
+    page = new PageModel(page)
+    try {
+      // 查询作品信息
+      const resultPage = await this.dao.multipleConditionQueryPage(page, query)
 
       // 给每个作品附加作者信息
       if (notNullish(resultPage.data)) {

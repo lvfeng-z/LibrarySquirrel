@@ -6,6 +6,9 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
+import { QueryCondition, QueryType } from '../model/util/QueryCondition.js'
+import { arrayIsEmpty } from '../util/CommonUtil.js'
+import StringUtil from '../util/StringUtil.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -110,5 +113,81 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           db.release()
         }
       })
+  }
+
+  /**
+   * 多种条件分页查询作品
+   * @param page
+   * @param query
+   */
+  public async multipleConditionQueryPage(
+    page: PageModel<WorksQueryDTO, WorksDTO>,
+    query: QueryCondition[]
+  ): Promise<PageModel<WorksQueryDTO, WorksDTO>> {
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new PageModel(page)
+    const fromAndWhere = this.generateClause(query)
+    const selectClause = `SELECT works_m.* `
+    const fromClause = `FROM works works_m ` + fromAndWhere.from
+    const whereClause = fromAndWhere.where
+    const statement = selectClause + fromClause + StringUtil.isBlank(whereClause) ? '' : `WHERE ${whereClause}`
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((rows) => {
+        const result = this.getResultTypeDataList<WorksDTO>(rows)
+        // 利用构造函数处理JSON字符串
+        modifiedPage.data = result.map((worksDTO) => new WorksDTO(worksDTO))
+
+        return modifiedPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  private generateClause(queryConditions: QueryCondition[]): { from: string; where: string } {
+    if (arrayIsEmpty(queryConditions)) {
+      return { from: '', where: '' }
+    } else {
+      const fromAndWhere: { from: string[]; where: string[] } = { from: [], where: [] }
+      queryConditions.forEach((query) => {
+        if (query.type === QueryType.LOCAL_TAG) {
+          fromAndWhere.from.push('INNER JOIN re_works_tag re_w_t_1 ON works_m.id = re_w_t_1.works_id')
+          fromAndWhere.where.push(`re_w_t_1.local_tag_id = ${query.value}`)
+        }
+        if (query.type === QueryType.SITE_TAG) {
+          fromAndWhere.from.push('INNER JOIN re_works_tag re_w_t_2 ON works_m.id = re_w_t_2.works_id')
+          fromAndWhere.where.push(`re_w_t_2.site_tag_id = ${query.value}`)
+        }
+        if (query.type === QueryType.LOCAL_AUTHOR) {
+          fromAndWhere.from.push('INNER JOIN re_works_author re_w_a_1 ON works_m.id = re_w_a_1.works_id')
+          fromAndWhere.where.push(`re_w_a_1.local_author_id = ${query.value}`)
+        }
+        if (query.type === QueryType.SITE_AUTHOR) {
+          fromAndWhere.from.push('INNER JOIN re_works_author re_w_a_2 ON works_m.id = re_w_a_2.works_id')
+          fromAndWhere.where.push(`re_w_a_2.site_author_id = ${query.value}`)
+        }
+        if (query.type === QueryType.WORKS_SITE_NAME) {
+          fromAndWhere.where.push(`works_m.site_works_name LIKE %${query.value}%`)
+        }
+        if (query.type === QueryType.WORKS_NICKNAME) {
+          fromAndWhere.where.push(`works_m.nick_name LIKE %${query.value}%`)
+        }
+        if (query.type === QueryType.WORKS_UPLOAD_TIME) {
+          fromAndWhere.where.push(`works_m.site_upload_time = ${query.value}`)
+        }
+        if (query.type === QueryType.WORKS_LAST_VIEW) {
+          fromAndWhere.where.push(`works_m.last_view = ${query.value}`)
+        }
+        if (query.type === QueryType.MEDIA_TYPE) {
+          // TODO value转换为扩展名列表
+          fromAndWhere.where.push(`works_m.filename_extension in ${query.value}`)
+        }
+      })
+      return { from: fromAndWhere.from.join(' '), where: fromAndWhere.where.join(' ') }
+    }
   }
 }
