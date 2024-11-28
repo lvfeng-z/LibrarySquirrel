@@ -1,7 +1,7 @@
 import BaseQueryDTO from '../queryDTO/BaseQueryDTO.ts'
 import { isNullish } from '../../util/CommonUtil.js'
 
-export default class Page<Query extends BaseQueryDTO, Result> {
+export default class Page<Query, Result> {
   /**
    * 是否分页
    */
@@ -63,6 +63,19 @@ export default class Page<Query extends BaseQueryDTO, Result> {
     result.dataCount = this.dataCount
     result.query = this.query
     result.data = []
+
+    return result
+  }
+
+  public copy<NewQuery, NewResult>(): Page<NewQuery, NewResult> {
+    const result = new Page<NewQuery, NewResult>()
+    result.paging = this.paging
+    result.pageNumber = this.pageNumber
+    result.pageSize = this.pageSize
+    result.pageCount = this.pageCount
+    result.dataCount = this.dataCount
+    result.query = undefined
+    result.data = undefined
 
     return result
   }

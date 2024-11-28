@@ -174,6 +174,9 @@ const api = {
   worksQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('works-queryPage', args)
   },
+  worksMultipleConditionQueryPage: (args) => {
+    return Electron.ipcRenderer.invoke('works-multipleConditionQueryPage', args)
+  },
   worksSaveWorks: (args) => {
     return Electron.ipcRenderer.invoke('works-saveWorks', args)
   },

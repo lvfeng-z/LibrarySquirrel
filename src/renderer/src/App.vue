@@ -30,7 +30,8 @@ const apis = {
   test: window.api.localAuthorListSelectItems,
   testPLimitTest: window.api.testPLimitTest,
   localTagListSelectItems: window.api.localTagListSelectItems,
-  worksQueryPage: window.api.worksQueryPage
+  worksQueryPage: window.api.worksQueryPage,
+  worksMultipleConditionQueryPage: window.api.worksMultipleConditionQueryPage
 }
 let loading = false // 主菜单栏加载中开关
 // const params: Ref<UnwrapRef<object>> = ref({})

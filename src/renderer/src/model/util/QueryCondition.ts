@@ -1,5 +1,5 @@
-import { Operator } from '../../constant/CrudConstant.js'
-import { isNullish } from '../../util/CommonUtil.js'
+import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 export class QueryCondition {
   /**
@@ -15,12 +15,12 @@ export class QueryCondition {
   /**
    * 操作符
    */
-  operator?: Operator
+  operator?: CrudOperator
 
   constructor(queryCondition: QueryCondition) {
     this.value = queryCondition.value
     this.type = queryCondition.type
-    this.operator = isNullish(queryCondition.operator) ? Operator.EQUAL : queryCondition.operator
+    this.operator = isNullish(queryCondition.operator) ? CrudOperator.EQUAL : queryCondition.operator
   }
 }
 

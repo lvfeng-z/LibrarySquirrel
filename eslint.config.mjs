@@ -16,13 +16,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: [
-      '**/node_modules',
-      '**/dist',
-      '**/out',
-      '**/.gitignore',
-      '**/resources/plugins/**/code/**_product.mjs'
-    ]
+    ignores: ['**/node_modules', '**/dist', '**/out', '**/.gitignore', '**/resources/plugins/**/code/**_product.mjs']
   },
   ...compat.extends('eslint:recommended', '@electron-toolkit/eslint-config-ts/eslint-recommended'),
   ...pluginVue.configs['flat/essential'],
