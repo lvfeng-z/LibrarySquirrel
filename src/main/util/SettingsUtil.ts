@@ -1,4 +1,4 @@
-import settingsTemplate from '../resources/settings/settingsTemplate.json'
+import { SettingsTemplate } from '../resources/settings/SettingsTemplate.js'
 import LogUtil from './LogUtil.ts'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 
@@ -8,7 +8,7 @@ import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 export function defaultSettings() {
   try {
     GlobalVar.get(GlobalVars.SETTINGS).clear()
-    GlobalVar.get(GlobalVars.SETTINGS).set(settingsTemplate)
+    GlobalVar.get(GlobalVars.SETTINGS).set(SettingsTemplate)
     GlobalVar.get(GlobalVars.SETTINGS).set('initialized', true)
   } catch (error) {
     GlobalVar.get(GlobalVars.SETTINGS).set('initialized', false)
