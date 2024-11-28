@@ -1,6 +1,6 @@
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import BaseModel from '../model/entity/BaseModel.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import DB from '../database/DB.ts'
 import { isNullish } from '../util/CommonUtil.ts'
@@ -116,7 +116,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * 分页查询
    * @param page
    */
-  public async queryPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
+  public async queryPage(page: Page<Query, Model>): Promise<Page<Query, Model>> {
     return this.dao.queryPage(page)
   }
 

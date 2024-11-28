@@ -1,7 +1,7 @@
 import BaseDao from './BaseDao.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/entity/Works.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
@@ -9,6 +9,7 @@ import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { QueryCondition, QueryType } from '../model/util/QueryCondition.js'
 import { arrayIsEmpty } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
+import { MediaExtMapping, MediaType } from '../util/MediaType.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -19,9 +20,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    * 综合查询作品
    * @param page 查询参数（本地标签、站点标签、作者...）
    */
-  public async synthesisQueryPage(page: PageModel<WorksQueryDTO, WorksDTO>): Promise<PageModel<WorksQueryDTO, WorksDTO>> {
+  public async synthesisQueryPage(page: Page<WorksQueryDTO, WorksDTO>): Promise<Page<WorksQueryDTO, WorksDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
-    const modifiedPage = new PageModel(page)
+    const modifiedPage = new Page(page)
     let statement: string
     const selectClause = `select t1.*`
     const fromClause = `from works t1`
@@ -121,11 +122,11 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    * @param query
    */
   public async multipleConditionQueryPage(
-    page: PageModel<WorksQueryDTO, WorksDTO>,
+    page: Page<WorksQueryDTO, WorksDTO>,
     query: QueryCondition[]
-  ): Promise<PageModel<WorksQueryDTO, WorksDTO>> {
+  ): Promise<Page<WorksQueryDTO, WorksDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
-    const modifiedPage = new PageModel(page)
+    const modifiedPage = new Page(page)
     const fromAndWhere = this.generateClause(query)
     const selectClause = `SELECT works_m.* `
     const fromClause = `FROM works works_m ` + fromAndWhere.from
@@ -183,8 +184,8 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           fromAndWhere.where.push(`works_m.last_view = ${query.value}`)
         }
         if (query.type === QueryType.MEDIA_TYPE) {
-          // TODO value转换为扩展名列表
-          fromAndWhere.where.push(`works_m.filename_extension in ${query.value}`)
+          const extList = MediaExtMapping[query.value as MediaType]
+          fromAndWhere.where.push(`works_m.filename_extension in (${extList.join(',')})`)
         }
       })
       return { from: fromAndWhere.from.join(' '), where: fromAndWhere.where.join(' ') }

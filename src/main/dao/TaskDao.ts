@@ -2,7 +2,7 @@ import BaseDao from './BaseDao.ts'
 import Task from '../model/entity/Task.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import DB from '../database/DB.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
@@ -48,8 +48,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * 分页查询父任务
    * @param page
    */
-  async queryParentPage(page: PageModel<TaskQueryDTO, Task>) {
-    const modifiedPage = new PageModel(page)
+  async queryParentPage(page: Page<TaskQueryDTO, Task>) {
+    const modifiedPage = new Page(page)
     if (isNullish(modifiedPage.query)) {
       modifiedPage.query = new TaskQueryDTO()
     }

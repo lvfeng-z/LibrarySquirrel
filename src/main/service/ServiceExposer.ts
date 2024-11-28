@@ -3,7 +3,7 @@ import Electron from 'electron'
 import SiteTagService from './SiteTagService.ts'
 import SiteService from './SiteService.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import SiteTag from '../model/entity/SiteTag.ts'
 import test from '../test/test.ts'
 import SettingsService from './SettingsService.ts'
@@ -94,7 +94,7 @@ function exposeService() {
   })
   Electron.ipcMain.handle('localAuthor-queryPage', async (_event, args) => {
     const service = new LocalAuthorService()
-    args = new PageModel(args)
+    args = new Page(args)
     try {
       const page = await service.queryPage(args)
       return ApiUtil.response(page)
@@ -306,7 +306,7 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('siteTag-queryBoundOrUnboundToLocalTagPage', async (_event, page: PageModel<SiteTagQueryDTO, SiteTag>) => {
+  Electron.ipcMain.handle('siteTag-queryBoundOrUnboundToLocalTagPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))

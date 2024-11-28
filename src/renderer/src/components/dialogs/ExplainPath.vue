@@ -9,7 +9,7 @@ import ApiUtil from '../../utils/ApiUtil'
 import AutoExplainPath from '../../model/main/entity/AutoExplainPath.ts'
 import { PathTypeEnum } from '../../constants/PathTypeEnum'
 import StringUtil from '../../utils/StringUtil'
-import PageModel from '../../model/util/PageModel'
+import Page from '../../model/util/Page.ts'
 import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQueryDTO'
 import { isNullish } from '../../utils/CommonUtil'
 
@@ -45,8 +45,8 @@ const meaningTypes = [
 ]
 const meaningOfPaths: Ref<UnwrapRef<MeaningOfPath[]>> = ref([new MeaningOfPath()]) // 目录含义列表
 const autoExplains: Ref<UnwrapRef<AutoExplainPath[]>> = ref([]) // 自动解释列表
-const autoExplainPage: Ref<UnwrapRef<PageModel<AutoExplainPathQueryDTO, AutoExplainPath>>> = ref(
-  new PageModel<AutoExplainPathQueryDTO, AutoExplainPath>()
+const autoExplainPage: Ref<UnwrapRef<Page<AutoExplainPathQueryDTO, AutoExplainPath>>> = ref(
+  new Page<AutoExplainPathQueryDTO, AutoExplainPath>()
 )
 const autoExplainSelected: Ref<UnwrapRef<object>> = ref({})
 
@@ -65,7 +65,7 @@ async function loadAutoExplain() {
   const tempPage = lodash.cloneDeep(autoExplainPage.value)
   const response = await apis.autoExplainPathGetListenerPage(tempPage)
   if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data(response) as PageModel<AutoExplainPathQueryDTO, AutoExplainPath>
+    const newPage = ApiUtil.data(response) as Page<AutoExplainPathQueryDTO, AutoExplainPath>
     autoExplains.value = isNullish(newPage.data) ? [] : newPage.data
   }
 }

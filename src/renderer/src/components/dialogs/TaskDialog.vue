@@ -14,7 +14,7 @@ import { throttle } from 'lodash'
 import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import PageModel from '@renderer/model/util/PageModel.ts'
+import Page from '@renderer/model/util/Page.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
 import Task from '@renderer/model/main/entity/Task.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
@@ -171,7 +171,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   })
 ])
 // 任务SearchTable的分页
-const page: Ref<UnwrapRef<PageModel<TaskQueryDTO, Task>>> = ref(new PageModel<TaskQueryDTO, Task>())
+const page: Ref<UnwrapRef<Page<TaskQueryDTO, Task>>> = ref(new Page<TaskQueryDTO, Task>())
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 是否正在刷新数据
@@ -181,10 +181,10 @@ const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, 
 
 // 方法
 // 分页查询子任务的函数
-async function taskQueryChildrenTaskPage(page: PageModel<TaskQueryDTO, object>): Promise<PageModel<TaskQueryDTO, object> | undefined> {
+async function taskQueryChildrenTaskPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
   const response = await apis.taskQueryChildrenTaskPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
+    return ApiUtil.data(response) as Page<TaskQueryDTO, object>
   } else {
     ApiUtil.msg(response)
     return undefined

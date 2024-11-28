@@ -13,7 +13,7 @@ import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { getNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
-import PageModel from '../../model/util/PageModel'
+import Page from '../../model/util/Page.ts'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
@@ -145,7 +145,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   })
 ])
 // 任务SearchTable的分页
-const page: Ref<UnwrapRef<PageModel<TaskQueryDTO, Task>>> = ref(new PageModel<TaskQueryDTO, Task>())
+const page: Ref<UnwrapRef<Page<TaskQueryDTO, Task>>> = ref(new Page<TaskQueryDTO, Task>())
 // 数据主键
 const keyOfData: string = 'id'
 // 主搜索栏的inputBox
@@ -253,10 +253,10 @@ async function importFromSite() {
   taskManageSearchTable.value.handleSearchButtonClicked()
 }
 // 分页查询子任务的函数
-async function taskQueryParentPage(page: PageModel<TaskQueryDTO, object>): Promise<PageModel<TaskQueryDTO, object> | undefined> {
+async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
   const response = await apis.taskQueryParentPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
+    return ApiUtil.data(response) as Page<TaskQueryDTO, object>
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -265,7 +265,7 @@ async function taskQueryParentPage(page: PageModel<TaskQueryDTO, object>): Promi
 // 懒加载处理函数
 async function load(row: unknown): Promise<TaskDTO[]> {
   // 配置分页参数
-  const pageCondition: PageModel<TaskQueryDTO, object> = new PageModel()
+  const pageCondition: Page<TaskQueryDTO, object> = new Page()
   pageCondition.pageSize = 100
   pageCondition.pageNumber = 1
   // 配置查询参数
@@ -273,7 +273,7 @@ async function load(row: unknown): Promise<TaskDTO[]> {
 
   return apis.taskQueryChildrenTaskPage(pageCondition).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const page = ApiUtil.data(response) as PageModel<TaskQueryDTO, object>
+      const page = ApiUtil.data(response) as Page<TaskQueryDTO, object>
       const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
       // 子任务列表赋值给对应的父任务的children
       const parent = dataList.value.find((task) => (row as TaskDTO).id === task.id)

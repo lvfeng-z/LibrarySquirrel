@@ -14,7 +14,7 @@ import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import LocalAuthor from '../../model/main/entity/LocalAuthor.ts'
-import PageModel from '@renderer/model/util/PageModel.ts'
+import Page from '@renderer/model/util/Page.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
@@ -50,7 +50,7 @@ const siteAuthorExchangeBox = ref()
 // localAuthorDialog的组件实例
 const localAuthorDialog = ref()
 // 本地作者SearchTable的分页
-const page: Ref<UnwrapRef<PageModel<LocalAuthorQueryDTO, LocalAuthor>>> = ref(new PageModel<LocalAuthorQueryDTO, LocalAuthor>())
+const page: Ref<UnwrapRef<Page<LocalAuthorQueryDTO, LocalAuthor>>> = ref(new Page<LocalAuthorQueryDTO, LocalAuthor>())
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地作者
@@ -157,12 +157,10 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 
 // 方法
 // 分页查询本地作者的函数
-async function localAuthorQueryPage(
-  page: PageModel<LocalAuthorQueryDTO, object>
-): Promise<PageModel<LocalAuthorQueryDTO, object> | undefined> {
+async function localAuthorQueryPage(page: Page<LocalAuthorQueryDTO, object>): Promise<Page<LocalAuthorQueryDTO, object> | undefined> {
   const response = await apis.localAuthorQueryPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as PageModel<LocalAuthorQueryDTO, object>
+    return ApiUtil.data(response) as Page<LocalAuthorQueryDTO, object>
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -170,14 +168,14 @@ async function localAuthorQueryPage(
 }
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
-  let page: PageModel<SiteQueryDTO, Site>
+  let page: Page<SiteQueryDTO, Site>
   if (StringUtil.isBlank(query)) {
-    page = new PageModel()
+    page = new Page()
     page.query = { keyword: query }
   }
   const response = await apis.siteQuerySelectItemPage(query)
   if (ApiUtil.check(response)) {
-    const page = ApiUtil.data(response) as PageModel<LocalAuthorQueryDTO, object>
+    const page = ApiUtil.data(response) as Page<LocalAuthorQueryDTO, object>
     return page.data as TreeSelectNode[]
   } else {
     return []

@@ -8,7 +8,7 @@ import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
-import PageModel from './model/util/PageModel'
+import Page from './model/util/Page.ts'
 import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
 import SelectItem from './model/util/SelectItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
@@ -93,7 +93,7 @@ function closeSubpage() {
 }
 // 请求作品接口
 async function requestWorks() {
-  const page = new PageModel<WorksQueryDTO, WorksDTO>()
+  const page = new Page<WorksQueryDTO, WorksDTO>()
   page.query = new WorksQueryDTO()
   page.pageSize = 100
 
@@ -136,7 +136,7 @@ async function requestWorks() {
 
   apis.worksQueryPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const works = (ApiUtil.data(response) as PageModel<WorksQueryDTO, WorksDTO>).data
+      const works = (ApiUtil.data(response) as Page<WorksQueryDTO, WorksDTO>).data
       imageList.value = works === undefined ? [] : works
     }
   })

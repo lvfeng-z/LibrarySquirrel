@@ -1,7 +1,7 @@
 import BaseQueryDTO from '../main/queryDTO/BaseQueryDTO.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
-export default class PageModel<Query extends BaseQueryDTO, Result> {
+export default class Page<Query extends BaseQueryDTO, Result> {
   /**
    * 是否分页
    */
@@ -31,7 +31,7 @@ export default class PageModel<Query extends BaseQueryDTO, Result> {
    */
   data?: Result[]
 
-  constructor(page?: PageModel<Query, Result>) {
+  constructor(page?: Page<Query, Result>) {
     if (page === undefined) {
       this.paging = true
       this.pageNumber = 1

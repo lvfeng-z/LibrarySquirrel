@@ -10,7 +10,7 @@ import QuerySortOption from '../constant/QuerySortOption.ts'
 import lodash from 'lodash'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
 import { assertArrayNotEmpty, assertNotNullish } from '../util/AssertUtil.js'
-import PageModel from '../model/util/PageModel.js'
+import Page from '../model/util/Page.js'
 
 type PrimaryKey = string | number
 
@@ -357,10 +357,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 分页查询
    * @param page
    */
-  public async queryPage(page: PageModel<Query, Model>): Promise<PageModel<Query, Model>> {
+  public async queryPage(page: Page<Query, Model>): Promise<Page<Query, Model>> {
     // 生成where字句
     let whereClause: string | undefined
-    const modifiedPage = new PageModel(page)
+    const modifiedPage = new Page(page)
     if (page.query) {
       const whereClauseAndQuery = this.getWhereClause(page.query)
       whereClause = whereClauseAndQuery.whereClause
@@ -500,11 +500,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 分页查询SelectItem
    */
   public async querySelectItemPage(
-    page: PageModel<Query, Model>,
+    page: Page<Query, Model>,
     valueName: string,
     labelName: string,
     secondaryLabelName?: string
-  ): Promise<PageModel<Query, SelectItem>> {
+  ): Promise<Page<Query, SelectItem>> {
     // 拼接select子句
     let selectClause: string
     const valueCol = StringUtil.camelToSnakeCase(valueName)
@@ -520,11 +520,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 拼接where子句
-    page = new PageModel<Query, Model>(page)
+    page = new Page<Query, Model>(page)
     const whereClauseAndQuery = this.getWhereClause(page.query)
 
     // 创建一个新的PageModel实例存储修改过的查询条件
-    const modifiedPage = new PageModel(page)
+    const modifiedPage = new Page(page)
     modifiedPage.query = whereClauseAndQuery.query
 
     const whereClause = whereClauseAndQuery.whereClause
@@ -772,7 +772,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   protected async pager(
     statement: string,
     whereClause: string | undefined,
-    page: PageModel<Query, Model>,
+    page: Page<Query, Model>,
     fromClause?: string
   ): Promise<string> {
     if (page.paging === undefined || page.paging) {
@@ -788,11 +788,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param fromClause 分页语句的from子句
    * @protected
    */
-  protected async getPagingClause(
-    whereClause: string | undefined,
-    page: PageModel<Query, Model>,
-    fromClause?: string
-  ): Promise<string> {
+  protected async getPagingClause(whereClause: string | undefined, page: Page<Query, Model>, fromClause?: string): Promise<string> {
     const db = this.acquire()
     try {
       if (StringUtil.isNotBlank(fromClause)) {
@@ -868,7 +864,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   protected async sorterAndPager(
     statement: string,
     whereClause: string | undefined,
-    page: PageModel<Query, Model>,
+    page: Page<Query, Model>,
     fromClause?: string
   ): Promise<string> {
     statement = this.sorter(statement, page.query?.sort)

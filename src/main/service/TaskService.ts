@@ -13,7 +13,7 @@ import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
@@ -800,7 +800,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询父任务
    * @param page
    */
-  public async queryParentPage(page: PageModel<TaskQueryDTO, Task>): Promise<PageModel<TaskQueryDTO, TaskProcessingDTO>> {
+  public async queryParentPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
     if (notNullish(page.query)) {
       page.query.operators = {
         ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
@@ -825,7 +825,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询parent-children结构的任务
    * @param page
    */
-  public async queryTreeDataPage(page: PageModel<TaskQueryDTO, Task>): Promise<PageModel<TaskQueryDTO, Task>> {
+  public async queryTreeDataPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, Task>> {
     if (notNullish(page.query)) {
       page.query.operators = {
         ...{ taskName: Operator.LIKE },
@@ -888,7 +888,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询父任务的子任务
    * @param page
    */
-  public async queryChildrenTaskPage(page: PageModel<TaskQueryDTO, Task>): Promise<PageModel<TaskQueryDTO, TaskProcessingDTO>> {
+  public async queryChildrenTaskPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
     if (notNullish(page.query)) {
       page.query.operators = {
         ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },

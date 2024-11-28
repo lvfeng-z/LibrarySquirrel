@@ -3,7 +3,7 @@ import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.t
 import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
 import AutoExplainPathDao from '../dao/AutoExplainPathDao.ts'
 import DB from '../database/DB.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 
 /**
  * 自动解释路径含义Service
@@ -18,8 +18,8 @@ export default class AutoExplainPathService extends BaseService<AutoExplainPathQ
    * @param page
    */
   public async getListenerPage(
-    page: PageModel<AutoExplainPathQueryDTO, AutoExplainPath>
-  ): Promise<PageModel<AutoExplainPathQueryDTO, AutoExplainPath>> {
+    page: Page<AutoExplainPathQueryDTO, AutoExplainPath>
+  ): Promise<Page<AutoExplainPathQueryDTO, AutoExplainPath>> {
     return await this.dao.getListenerPage(page)
   }
 

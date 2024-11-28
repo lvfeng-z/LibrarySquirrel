@@ -4,7 +4,7 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 
@@ -46,7 +46,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询站点标签（附带绑定的本地标签）
    * @param page
    */
-  public async queryBoundOrUnboundToLocalTagPage(page: PageModel<SiteTagQueryDTO, SiteTag>): Promise<SiteTagDTO[]> {
+  public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<SiteTagDTO[]> {
     // 没有查询参数，构建一个空的
     if (page.query === undefined) {
       page.query = new SiteTagQueryDTO()

@@ -5,7 +5,7 @@ import LocalAuthorDao from '../dao/LocalAuthorDao.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import DB from '../database/DB.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
@@ -52,7 +52,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
    * 分页查询
    * @param page
    */
-  public async queryPage(page: PageModel<LocalAuthorQueryDTO, LocalAuthor>): Promise<PageModel<LocalAuthorQueryDTO, LocalAuthor>> {
+  public async queryPage(page: Page<LocalAuthorQueryDTO, LocalAuthor>): Promise<Page<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
       if (notNullish(page.query)) {
         page.query.operators = {
@@ -84,9 +84,9 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
   /**
    * 分页查询SelectItem
    */
-  public querySelectItemPage(page: PageModel<LocalAuthorQueryDTO, LocalAuthor>): Promise<PageModel<LocalAuthorQueryDTO, SelectItem>> {
+  public querySelectItemPage(page: Page<LocalAuthorQueryDTO, LocalAuthor>): Promise<Page<LocalAuthorQueryDTO, SelectItem>> {
     try {
-      page = new PageModel(page)
+      page = new Page(page)
       page.query = new LocalAuthorQueryDTO(page.query)
       page.query.operators = { localAuthorName: Operator.LIKE }
       return this.dao.querySelectItemPage(page, 'id', 'localAuthorName')

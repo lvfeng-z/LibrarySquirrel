@@ -5,7 +5,7 @@ import { computed, Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
-import PageModel from '../../model/util/PageModel'
+import Page from '../../model/util/Page.ts'
 import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import TagBox from './TagBox.vue'
@@ -37,8 +37,8 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // upper搜索栏分页参数
-const lowerPageConfig: Ref<UnwrapRef<PageModel<BaseQueryDTO, object>>> = ref(new PageModel<BaseQueryDTO, object>()) // lower搜索栏分页参数
+const upperPageConfig: Ref<UnwrapRef<Page<BaseQueryDTO, object>>> = ref(new Page<BaseQueryDTO, object>()) // upper搜索栏分页参数
+const lowerPageConfig: Ref<UnwrapRef<Page<BaseQueryDTO, object>>> = ref(new Page<BaseQueryDTO, object>()) // lower搜索栏分页参数
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperTagBox = ref() // upperTagBox组件的实例
@@ -98,11 +98,11 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
 
   // 解析并返回数据，同时把分页参数赋值给响应式变量
   if (ApiUtil.check(response)) {
-    const page = ApiUtil.data(response) as PageModel<BaseQueryDTO, SelectItem>
+    const page = ApiUtil.data(response) as Page<BaseQueryDTO, SelectItem>
     if (upperOrLower) {
-      upperPageConfig.value = new PageModel(page)
+      upperPageConfig.value = new Page(page)
     } else {
-      lowerPageConfig.value = new PageModel(page)
+      lowerPageConfig.value = new Page(page)
     }
     return page.data === undefined ? [] : page.data
   } else {
@@ -114,9 +114,9 @@ async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[]
 async function handleSearchButtonClicked(upperOrLower: boolean) {
   // 点击搜索按钮后，分页和滚动条位置重置
   if (upperOrLower) {
-    upperPageConfig.value = new PageModel<BaseQueryDTO, object>()
+    upperPageConfig.value = new Page<BaseQueryDTO, object>()
   } else if (!upperOrLower) {
-    lowerPageConfig.value = new PageModel<BaseQueryDTO, object>()
+    lowerPageConfig.value = new Page<BaseQueryDTO, object>()
   }
   resetScrollBarPosition(upperOrLower)
 
@@ -183,10 +183,10 @@ function handleClearButtonClicked() {
 function refreshData() {
   upperBufferData.value = []
   upperBufferId.value.clear()
-  upperPageConfig.value = new PageModel()
+  upperPageConfig.value = new Page()
   lowerBufferData.value = []
   lowerBufferId.value.clear()
-  lowerPageConfig.value = new PageModel()
+  lowerPageConfig.value = new Page()
   resetScrollBarPosition()
 
   requestApiAndGetData(true).then((response) => {

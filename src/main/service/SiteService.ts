@@ -2,7 +2,7 @@ import Site from '../model/entity/Site.ts'
 import SiteDao from '../dao/SiteDao.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseService from './BaseService.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
@@ -33,7 +33,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * 分页查询SelectItem
    * @param page
    */
-  public async querySelectItemPage(page: PageModel<SiteQueryDTO, Site>) {
+  public async querySelectItemPage(page: Page<SiteQueryDTO, Site>) {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new SiteQueryDTO(page.query)
       page.query.operators = { siteName: Operator.LIKE }

@@ -4,7 +4,7 @@ import StringUtil from '../util/StringUtil.ts'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'
-import PageModel from '../model/util/PageModel.js'
+import Page from '../model/util/Page.js'
 import { isNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 
@@ -124,7 +124,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * 分页查询作品的本地标签
    * @param page
    */
-  async queryPageByWorksId(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
+  async queryPageByWorksId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
     if (isNullish(page.query)) {
       page.query = new LocalTagQueryDTO()
     }

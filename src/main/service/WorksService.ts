@@ -1,4 +1,4 @@
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/entity/Works.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
@@ -245,8 +245,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 根据标签等信息分页查询作品
    * @param page 查询参数
    */
-  public async queryPage(page: PageModel<WorksQueryDTO, WorksDTO>): Promise<PageModel<WorksQueryDTO, Works>> {
-    page = new PageModel(page)
+  public async queryPage(page: Page<WorksQueryDTO, WorksDTO>): Promise<Page<WorksQueryDTO, Works>> {
+    page = new Page(page)
     try {
       // 查询作品信息
       const resultPage = await this.dao.synthesisQueryPage(page)
@@ -275,10 +275,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param query
    */
   public async multipleConditionQueryPage(
-    page: PageModel<WorksQueryDTO, WorksDTO>,
+    page: Page<WorksQueryDTO, WorksDTO>,
     query: QueryCondition[]
-  ): Promise<PageModel<WorksQueryDTO, Works>> {
-    page = new PageModel(page)
+  ): Promise<Page<WorksQueryDTO, Works>> {
+    page = new Page(page)
     try {
       // 查询作品信息
       const resultPage = await this.dao.multipleConditionQueryPage(page, query)

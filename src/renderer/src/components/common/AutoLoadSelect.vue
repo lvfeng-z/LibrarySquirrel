@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import PageModel from '../../model/util/PageModel'
+import Page from '../../model/util/Page.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { Ref, ref, UnwrapRef } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
@@ -9,17 +9,17 @@ import SelectItem from '../../model/util/SelectItem'
 
 // props
 const props = defineProps<{
-  api: (params?: PageModel<BaseQueryDTO, SelectItem>) => ApiResponse
+  api: (params?: Page<BaseQueryDTO, SelectItem>) => ApiResponse
 }>()
 
 // 变量
-const page: Ref<UnwrapRef<PageModel<BaseQueryDTO, SelectItem>>> = ref(new PageModel<BaseQueryDTO, SelectItem>())
+const page: Ref<UnwrapRef<Page<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 
 // 处理DataScroll滚动事件
 async function handleScroll(newQuery: boolean, query?: string) {
   // 新查询重置查询条件
   if (newQuery) {
-    page.value = new PageModel<BaseQueryDTO, SelectItem>()
+    page.value = new Page<BaseQueryDTO, SelectItem>()
   }
 
   // 构建查询条件
@@ -31,7 +31,7 @@ async function handleScroll(newQuery: boolean, query?: string) {
 
   // 解析响应值
   if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data(response) as PageModel<BaseQueryDTO, SelectItem>
+    const newPage = ApiUtil.data(response) as Page<BaseQueryDTO, SelectItem>
     // 没有新数据时，不再增加页码
     if (newPage.data !== undefined && newPage.data.length > 0) {
       page.value.pageNumber++

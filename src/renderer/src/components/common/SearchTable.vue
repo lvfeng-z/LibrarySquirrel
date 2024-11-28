@@ -5,7 +5,7 @@ import { InputBox } from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
-import PageModel from '../../model/util/PageModel'
+import Page from '../../model/util/Page.ts'
 import lodash from 'lodash'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
 import TreeNode from '../../model/util/TreeNode'
@@ -30,7 +30,7 @@ const props = withDefaults(
     treeData?: boolean //是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
-    search: (page: PageModel<Query, object>) => Promise<PageModel<Query, object> | undefined> // 查询函数
+    search: (page: Page<Query, object>) => Promise<Page<Query, object> | undefined> // 查询函数
     fixedParam?: Record<string, unknown> // 固定参数
     updateLoad?: (ids: (number | string)[]) => Promise<object[] | undefined> // 更新数据的函数
     updateProperties?: string[] // 要更新的属性名
@@ -48,8 +48,8 @@ const props = withDefaults(
 // DataTable的数据
 const dataList = defineModel<object[]>('dataList', { default: [], required: false })
 // 分页查询配置
-const page = defineModel<PageModel<Query, object>>('page', {
-  default: new PageModel<Query, object>(),
+const page = defineModel<Page<Query, object>>('page', {
+  default: new Page<Query, object>(),
   required: true
 })
 // 已编辑的行

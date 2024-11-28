@@ -2,7 +2,7 @@ import BaseDao from './BaseDao.ts'
 import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.ts'
 import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
 import DB from '../database/DB.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import lodash from 'lodash'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
@@ -20,8 +20,8 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
    * @param page
    */
   async getListenerPage(
-    page: PageModel<AutoExplainPathQueryDTO, AutoExplainPath>
-  ): Promise<PageModel<AutoExplainPathQueryDTO, AutoExplainPath>> {
+    page: Page<AutoExplainPathQueryDTO, AutoExplainPath>
+  ): Promise<Page<AutoExplainPathQueryDTO, AutoExplainPath>> {
     const path = page.query?.path
     // 校验
     if (StringUtil.isBlank(path)) {

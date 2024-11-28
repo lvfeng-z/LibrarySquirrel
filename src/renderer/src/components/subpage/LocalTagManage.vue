@@ -15,7 +15,7 @@ import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import LocalTag from '../../model/main/entity/LocalTag.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
-import PageModel from '@renderer/model/util/PageModel.ts'
+import Page from '@renderer/model/util/Page.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
@@ -140,7 +140,7 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   })
 ])
 // 本地标签SearchTable的分页
-const page: Ref<UnwrapRef<PageModel<LocalTagQueryDTO, LocalTag>>> = ref(new PageModel<LocalTagQueryDTO, LocalTag>())
+const page: Ref<UnwrapRef<Page<LocalTagQueryDTO, LocalTag>>> = ref(new Page<LocalTagQueryDTO, LocalTag>())
 // 本地标签弹窗的mode
 const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点标签ExchangeBox的mainInputBoxes
@@ -173,10 +173,10 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
 
 // 方法
 // 分页查询本地标签的函数
-async function localTagQueryPage(page: PageModel<LocalTagQueryDTO, object>): Promise<PageModel<LocalTagQueryDTO, object> | undefined> {
+async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<Page<LocalTagQueryDTO, object> | undefined> {
   const response = await apis.localTagQueryPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as PageModel<LocalTagQueryDTO, object>
+    return ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -194,14 +194,14 @@ async function requestLocalTagTree(query: number) {
 }
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
-  let sitePage: PageModel<SiteQueryDTO, Site>
+  let sitePage: Page<SiteQueryDTO, Site>
   if (StringUtil.isBlank(query)) {
-    sitePage = new PageModel()
+    sitePage = new Page()
     sitePage.query = { keyword: query }
   }
   const response = await apis.siteQuerySelectItemPage(query)
   if (ApiUtil.check(response)) {
-    const newSitePage = ApiUtil.data(response) as PageModel<LocalTagQueryDTO, object>
+    const newSitePage = ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
     return newSitePage.data as TreeSelectNode[]
   } else {
     return []

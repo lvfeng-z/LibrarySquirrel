@@ -13,7 +13,7 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 import { isNullish } from '../util/CommonUtil.ts'
 import ApiUtil from '../util/ApiUtil.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 
 /**
@@ -127,9 +127,9 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * 查询本地标签绑定或未绑定的站点标签
    * @param page
    */
-  async queryBoundOrUnboundInLocalAuthorPage(page: PageModel<SiteAuthorQueryDTO, SiteAuthor>) {
+  async queryBoundOrUnboundInLocalAuthorPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>) {
     // 使用构造函数创建对象，补充缺失的方法和属性
-    page = new PageModel(page)
+    page = new Page(page)
     page.query = new SiteAuthorQueryDTO(page.query)
 
     const results = await this.dao.listSiteAuthorWithLocalAuthor(page)

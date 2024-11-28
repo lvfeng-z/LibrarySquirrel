@@ -7,7 +7,7 @@ import TreeSelectNode from '../model/util/TreeSelectNode.ts'
 import { buildTree } from '../util/TreeUtil.ts'
 import BaseService from './BaseService.ts'
 import LogUtil from '../util/LogUtil.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
@@ -81,7 +81,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询
    * @param page
    */
-  public async queryPage(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, LocalTag>> {
+  public async queryPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
     try {
       if (notNullish(page.query)) {
         page.query.operators = {
@@ -143,7 +143,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询SelectItem
    * @param page
    */
-  public async querySelectItemPage(page: PageModel<LocalTagQueryDTO, LocalTag>): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
+  public async querySelectItemPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, SelectItem>> {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new LocalTagQueryDTO(page.query)
       page.query.operators = { localTagName: Operator.LIKE }
@@ -163,10 +163,8 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */
-  public async querySelectItemPageByWorksId(
-    page: PageModel<LocalTagQueryDTO, LocalTag>
-  ): Promise<PageModel<LocalTagQueryDTO, SelectItem>> {
-    page = new PageModel(page)
+  public async querySelectItemPageByWorksId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, SelectItem>> {
+    page = new Page(page)
     if (notNullish(page.query)) {
       page.query.operators = {
         ...{ localTagName: Operator.LIKE },

@@ -2,7 +2,7 @@ import BaseDao from './BaseDao.ts'
 import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthor from '../model/entity/SiteAuthor.ts'
 import DB from '../database/DB.ts'
-import PageModel from '../model/util/PageModel.ts'
+import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
@@ -63,7 +63,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 查询站点作者（附带绑定的本地作者）
    * @param page
    */
-  public async listSiteAuthorWithLocalAuthor(page: PageModel<SiteAuthorQueryDTO, SiteAuthor>): Promise<SiteAuthorDTO[]> {
+  public async listSiteAuthorWithLocalAuthor(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<SiteAuthorDTO[]> {
     // 没有查询参数，构建一个空的
     if (page.query === undefined) {
       page.query = new SiteAuthorQueryDTO()
