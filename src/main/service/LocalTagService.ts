@@ -142,13 +142,20 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   /**
    * 分页查询SelectItem
    * @param page
+   * @param secondaryLabelName
    */
-  public async querySelectItemPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, SelectItem>> {
+  public async querySelectItemPage(
+    page: Page<LocalTagQueryDTO, LocalTag>,
+    secondaryLabelName?: string
+  ): Promise<Page<LocalTagQueryDTO, SelectItem>> {
     if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
       page.query = new LocalTagQueryDTO(page.query)
       page.query.operators = { localTagName: Operator.LIKE }
     }
-    return await this.dao.querySelectItemPage(page, 'id', 'localTagName')
+    return this.dao.querySelectItemPage(page, 'id', 'localTagName', secondaryLabelName).then((page) => {
+      page.data?.forEach((selectItem) => (selectItem.secondaryLabel = 'local'))
+      return page
+    })
   }
 
   /**

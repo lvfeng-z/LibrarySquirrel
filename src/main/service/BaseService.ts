@@ -5,6 +5,7 @@ import BaseDao from '../dao/BaseDao.ts'
 import DB from '../database/DB.ts'
 import { isNullish } from '../util/CommonUtil.ts'
 import { assertFalse, assertNotNullish } from '../util/AssertUtil.js'
+import SelectItem from '../model/util/SelectItem.js'
 
 /**
  * 基础Service类
@@ -134,5 +135,21 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   public async listByIds(ids: number[] | string[]): Promise<Model[]> {
     return this.dao.listByIds(ids)
+  }
+
+  /**
+   * 分页查询SelectItem
+   * @param page 分页查询参数
+   * @param valueName 标签value的名称
+   * @param labelName 标签label的名称
+   * @param secondaryLabelName 标签第二label的名称
+   */
+  public async querySelectItemPage(
+    page: Page<Query, Model>,
+    valueName: string,
+    labelName: string,
+    secondaryLabelName?: string
+  ): Promise<Page<Query, SelectItem>> {
+    return this.dao.querySelectItemPage(page, valueName, labelName, secondaryLabelName)
   }
 }

@@ -498,6 +498,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
   /**
    * 分页查询SelectItem
+   * @param page 分页查询参数
+   * @param valueName 标签value的名称
+   * @param labelName 标签label的名称
+   * @param secondaryLabelName 标签第二label的名称
    */
   public async querySelectItemPage(
     page: Page<Query, Model>,

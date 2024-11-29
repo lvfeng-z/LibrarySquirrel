@@ -13,21 +13,22 @@ import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.js'
 import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.js'
 import SiteAuthor from '../model/entity/SiteAuthor.js'
 import LocalAuthor from '../model/entity/LocalAuthor.js'
-import Site from '../model/entity/Site.js'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.js'
 import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
+import SiteAuthorService from './SiteAuthorService.js'
+import SelectItem from '../model/util/SelectItem.js'
 
 /**
  * 查询服务类
  */
 export default class QueryService {
   /**
-   * 分页查询QueryCondition
+   * 分页查询本地标签、站点标签、本地作者、站点作者
    * @param page
    */
-  public async queryQueryConditionPage(page: Page<QueryConditionQueryDTO, BaseModel>): Promise<Page<QueryTypes, ResultTypes>[]> {
-    const result: Page<QueryTypes, ResultTypes>[] = []
+  public async queryQueryConditionPage(page: Page<QueryConditionQueryDTO, BaseModel>): Promise<Page<QueryTypes, SelectItem>[]> {
+    const result: Page<QueryTypes, SelectItem>[] = []
     const queryProcesses: Promise<unknown>[] = []
     const query = page.query
 
@@ -38,7 +39,9 @@ export default class QueryService {
       localTagPage.query.localTagName = query?.keyword
       localTagPage.query.operators = { localTagName: Operator.LIKE }
       const localTagService = new LocalTagService()
-      const localTagQuery = localTagService.queryPage(localTagPage).then((localTagResult) => result.push(localTagResult))
+      const localTagQuery = localTagService.querySelectItemPage(localTagPage).then((localTagResult) => {
+        result.push(localTagResult)
+      })
       queryProcesses.push(localTagQuery)
     }
 
@@ -49,23 +52,37 @@ export default class QueryService {
       siteTagPage.query.siteTagName = query?.keyword
       siteTagPage.query.operators = { siteTagName: Operator.LIKE }
       const siteTagService = new SiteTagService()
-      const siteTagQuery = siteTagService.queryPage(siteTagPage).then((siteTagResult) => result.push(siteTagResult))
+      const siteTagQuery = siteTagService
+        .querySelectItemPage(siteTagPage, 'id', 'siteTagName')
+        .then((siteTagResult) => result.push(siteTagResult))
       queryProcesses.push(siteTagQuery)
     }
 
     // 本地作者
     if (isNullish(query?.types) || query.types.includes(QueryType.LOCAL_AUTHOR)) {
-      const LocalAuthorPage = page.copy<LocalAuthorQueryDTO, LocalAuthor>()
-      LocalAuthorPage.query = new LocalAuthorQueryDTO()
-      LocalAuthorPage.query.localAuthorName = query?.keyword
-      LocalAuthorPage.query.operators = { siteTagName: Operator.LIKE }
+      const localAuthorPage = page.copy<LocalAuthorQueryDTO, LocalAuthor>()
+      localAuthorPage.query = new LocalAuthorQueryDTO()
+      localAuthorPage.query.localAuthorName = query?.keyword
+      localAuthorPage.query.operators = { siteTagName: Operator.LIKE }
       const localAuthorService = new LocalAuthorService()
       const localAuthorQuery = localAuthorService
-        .queryPage(LocalAuthorPage)
+        .querySelectItemPage(localAuthorPage)
         .then((localAuthorResult) => result.push(localAuthorResult))
       queryProcesses.push(localAuthorQuery)
     }
-    // TODO 剩下的几种
+
+    // 站点作者
+    if (isNullish(query?.types) || query.types.includes(QueryType.SITE_AUTHOR)) {
+      const siteAuthorPage = page.copy<SiteAuthorQueryDTO, SiteAuthor>()
+      siteAuthorPage.query = new SiteAuthorQueryDTO()
+      siteAuthorPage.query.siteAuthorName = query?.keyword
+      siteAuthorPage.query.operators = { siteTagName: Operator.LIKE }
+      const siteAuthorService = new SiteAuthorService()
+      const siteAuthorQuery = siteAuthorService
+        .querySelectItemPage(siteAuthorPage, 'id', 'siteTagName')
+        .then((siteAuthorResult) => result.push(siteAuthorResult))
+      queryProcesses.push(siteAuthorQuery)
+    }
 
     await Promise.allSettled(queryProcesses)
     return result
@@ -73,4 +90,3 @@ export default class QueryService {
 }
 
 type QueryTypes = LocalTagQueryDTO | SiteTagQueryDTO | LocalAuthorQueryDTO | SiteAuthorQueryDTO | SiteQueryDTO
-type ResultTypes = LocalTag | SiteTag | LocalAuthor | SiteAuthor | Site
