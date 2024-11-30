@@ -20,9 +20,9 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
   /**
    * 关联作品集和作品
    * @param worksDTOs
-   * @param worksSet
+   * @param worksSetId
    */
-  link(worksDTOs: WorksDTO[], worksSet: WorksSet) {
+  link(worksDTOs: WorksDTO[], worksSetId: number) {
     // 校验
     const legalWorksList = worksDTOs.filter((works) => {
       if (isNullish(works)) {
@@ -45,7 +45,7 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
     const links = legalWorksList.map((worksDTO) => {
       const reWorksWorksSet = new ReWorksWorksSet()
       reWorksWorksSet.worksId = worksDTO.id
-      reWorksWorksSet.worksSetId = worksSet.id
+      reWorksWorksSet.worksSetId = worksSetId
       return reWorksWorksSet
     })
 

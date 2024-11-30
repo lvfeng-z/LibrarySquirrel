@@ -18,14 +18,13 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
   public async getBySiteWorksSetIdAndTaskId(siteWorksSetId: string, taskId: number): Promise<WorksSet | undefined> {
     const queryDTO = new WorksSetQueryDTO()
     queryDTO.siteWorksSetId = siteWorksSetId
-    queryDTO.includeTaskId = taskId
     const whereClauseAndQuery = super.getWhereClause(queryDTO)
     const whereClause = whereClauseAndQuery.whereClause
     let modifiedQuery
     if (notNullish(whereClauseAndQuery.query)) {
       modifiedQuery = whereClauseAndQuery.query.toPlainParams()
     }
-    const statement = `select *
+    const statement = `SELECT *
                        from works_set ${whereClause}`
     const db = super.acquire()
     return db

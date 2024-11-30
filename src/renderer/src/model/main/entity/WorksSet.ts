@@ -38,17 +38,9 @@ export default class WorksSet extends BaseModel {
    */
   nickName: string | undefined | null
   /**
-   * 收录方式（0：本地导入，1：站点下载）
-   */
-  includeMode: number | undefined | null
-  /**
-   * 收录任务id
-   */
-  includeTaskId: number | undefined | null
-  /**
    * 最后一次查看的时间
    */
-  lastViewed: number | undefined | null
+  lastView: number | undefined | null
 
   constructor(worksSet?: WorksSet) {
     if (isNullish(worksSet)) {
@@ -61,9 +53,7 @@ export default class WorksSet extends BaseModel {
       this.siteUploadTime = undefined
       this.siteUpdateTime = undefined
       this.nickName = undefined
-      this.includeMode = undefined
-      this.includeTaskId = undefined
-      this.lastViewed = undefined
+      this.lastView = undefined
     } else {
       super(worksSet)
       this.id = worksSet.id
@@ -74,9 +64,7 @@ export default class WorksSet extends BaseModel {
       this.siteUploadTime = worksSet.siteUploadTime
       this.siteUpdateTime = worksSet.siteUpdateTime
       this.nickName = worksSet.nickName
-      this.includeMode = worksSet.includeMode
-      this.includeTaskId = worksSet.includeTaskId
-      this.lastViewed = worksSet.lastViewed
+      this.lastView = worksSet.lastView
     }
   }
 }
