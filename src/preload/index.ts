@@ -83,6 +83,11 @@ const api = {
     return Electron.ipcRenderer.invoke('localTag-querySelectItemPageByWorksId', args)
   },
 
+  // SearchService
+  searchQuerySearchConditionPage: (args) => {
+    return Electron.ipcRenderer.invoke('search-querySearchConditionPage', args)
+  },
+
   // ReWorksTag
   reWorksTagLink: (arg1, arg2) => {
     return Electron.ipcRenderer.invoke('reWorksTag-link', arg1, arg2)

@@ -6,7 +6,7 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
-import { QueryCondition, QueryType } from '../model/util/QueryCondition.js'
+import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
 import { arrayIsEmpty } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../util/MediaType.js'
@@ -123,7 +123,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    */
   public async multipleConditionQueryPage(
     page: Page<WorksQueryDTO, WorksDTO>,
-    query: QueryCondition[]
+    query: SearchCondition[]
   ): Promise<Page<WorksQueryDTO, WorksDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
@@ -149,41 +149,41 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       })
   }
 
-  private generateClause(queryConditions: QueryCondition[]): { from: string; where: string } {
-    if (arrayIsEmpty(queryConditions)) {
+  private generateClause(searchConditions: SearchCondition[]): { from: string; where: string } {
+    if (arrayIsEmpty(searchConditions)) {
       return { from: '', where: '' }
     } else {
       const fromAndWhere: { from: string[]; where: string[] } = { from: [], where: [] }
-      queryConditions.forEach((query) => {
-        if (query.type === QueryType.LOCAL_TAG) {
+      searchConditions.forEach((query) => {
+        if (query.type === SearchType.LOCAL_TAG) {
           fromAndWhere.from.push('INNER JOIN re_works_tag re_w_t_1 ON works_m.id = re_w_t_1.works_id')
           fromAndWhere.where.push(`re_w_t_1.local_tag_id = ${query.value}`)
         }
-        if (query.type === QueryType.SITE_TAG) {
+        if (query.type === SearchType.SITE_TAG) {
           fromAndWhere.from.push('INNER JOIN re_works_tag re_w_t_2 ON works_m.id = re_w_t_2.works_id')
           fromAndWhere.where.push(`re_w_t_2.site_tag_id = ${query.value}`)
         }
-        if (query.type === QueryType.LOCAL_AUTHOR) {
+        if (query.type === SearchType.LOCAL_AUTHOR) {
           fromAndWhere.from.push('INNER JOIN re_works_author re_w_a_1 ON works_m.id = re_w_a_1.works_id')
           fromAndWhere.where.push(`re_w_a_1.local_author_id = ${query.value}`)
         }
-        if (query.type === QueryType.SITE_AUTHOR) {
+        if (query.type === SearchType.SITE_AUTHOR) {
           fromAndWhere.from.push('INNER JOIN re_works_author re_w_a_2 ON works_m.id = re_w_a_2.works_id')
           fromAndWhere.where.push(`re_w_a_2.site_author_id = ${query.value}`)
         }
-        if (query.type === QueryType.WORKS_SITE_NAME) {
+        if (query.type === SearchType.WORKS_SITE_NAME) {
           fromAndWhere.where.push(`works_m.site_works_name LIKE %${query.value}%`)
         }
-        if (query.type === QueryType.WORKS_NICKNAME) {
+        if (query.type === SearchType.WORKS_NICKNAME) {
           fromAndWhere.where.push(`works_m.nick_name LIKE %${query.value}%`)
         }
-        if (query.type === QueryType.WORKS_UPLOAD_TIME) {
+        if (query.type === SearchType.WORKS_UPLOAD_TIME) {
           fromAndWhere.where.push(`works_m.site_upload_time = ${query.value}`)
         }
-        if (query.type === QueryType.WORKS_LAST_VIEW) {
+        if (query.type === SearchType.WORKS_LAST_VIEW) {
           fromAndWhere.where.push(`works_m.last_view = ${query.value}`)
         }
-        if (query.type === QueryType.MEDIA_TYPE) {
+        if (query.type === SearchType.MEDIA_TYPE) {
           const extList = MediaExtMapping[query.value as MediaType]
           fromAndWhere.where.push(`works_m.filename_extension in (${extList.join(',')})`)
         }

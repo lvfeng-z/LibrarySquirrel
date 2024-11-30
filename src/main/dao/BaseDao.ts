@@ -378,7 +378,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
     // 查询
-    const query = modifiedPage.query?.getQueryObject()
+    const query = modifiedPage.query?.toPlainParams()
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
@@ -419,7 +419,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.getQueryObject())
+    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.toPlainParams())
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, nonUndefinedValue)
@@ -485,7 +485,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const queryObj = modifiedQuery?.getQueryObject()
+    const queryObj = modifiedQuery?.toPlainParams()
     return db
       .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
       .then((rows) => rows.map((row) => new SelectItem(row)))
@@ -501,7 +501,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param page 分页查询参数
    * @param valueName 标签value的名称
    * @param labelName 标签label的名称
-   * @param secondaryLabelName 标签第二label的名称
+   * @param secondaryLabelName 标签第二标签的名称
    */
   public async querySelectItemPage(
     page: Page<Query, Model>,
@@ -541,7 +541,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
 
     // 查询
-    const query = modifiedPage.query?.getQueryObject()
+    const query = modifiedPage.query?.toPlainParams()
     const db = this.acquire()
     return db
       .all<unknown[], SelectItem>(statement, query === undefined ? {} : query)
@@ -565,7 +565,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected splicingWhereClauses(whereClauses: string[]): string | undefined {
     if (whereClauses.length > 0) {
-      return `where ${whereClauses.length > 1 ? whereClauses.join(' and ') : whereClauses[0]}`
+      return `WHERE ${whereClauses.length > 1 ? whereClauses.join(' and ') : whereClauses[0]}`
     } else {
       return undefined
     }
@@ -588,16 +588,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const whereClauses: string[] = []
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery: Query = Object.assign(new BaseQueryDTO(), queryConditions)
-    // 去除值为undefined的属性和operators、keyword、sort
-    Object.entries(queryConditions)
-      .filter(
-        ([key, value]) =>
-          value !== undefined &&
-          (typeof value === 'string' ? StringUtil.isNotBlank(value) : true) &&
-          key !== 'operators' &&
-          key !== 'keyword' &&
-          key !== 'sort'
-      )
+    // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
+    const plainParams = queryConditions.toPlainParams()
+    Object.entries(plainParams)
+      .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
       .forEach(([key, value]) => {
         const snakeCaseKey = StringUtil.camelToSnakeCase(key)
         const comparator = this.getComparator(key, queryConditions.operators)
@@ -673,16 +667,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
     const modifiedQuery = Object.assign(queryConditions, queryConditions)
     if (queryConditions) {
-      // 去除值为undefined的属性和operators、keyword、sort
-      Object.entries(queryConditions)
-        .filter(
-          ([key, value]) =>
-            value !== undefined &&
-            (typeof value === 'string' ? StringUtil.isNotBlank(value) : true) &&
-            key !== 'operators' &&
-            key !== 'keyword' &&
-            key !== 'sort'
-        )
+      // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
+      const plainParams = queryConditions.toPlainParams()
+      Object.entries(plainParams)
+        .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
         .forEach(([key, value]) => {
           if (value !== undefined && value !== '') {
             const snakeCaseKey = StringUtil.camelToSnakeCase(key)
@@ -796,15 +784,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       if (StringUtil.isNotBlank(fromClause)) {
-        fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'from ')
+        fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'FROM ')
       } else {
         fromClause = this.tableName
       }
       // 查询数据总量，计算页码数量
-      const notNullishValue = toObjAcceptedBySqlite3(page.query)
+      const notNullishValue = page.query?.toPlainParams()
       let countSql = `SELECT COUNT(*) AS total FROM ${fromClause}`
       if (StringUtil.isNotBlank(whereClause)) {
-        const tempWhereClause = StringUtil.concatPrefixIfNotPresent(whereClause, 'where ')
+        const tempWhereClause = StringUtil.concatPrefixIfNotPresent(whereClause, 'WHERE ', false)
         countSql = countSql.concat(' ', tempWhereClause)
       }
       const countResult = (await db.get(countSql, notNullishValue)) as { total: number }

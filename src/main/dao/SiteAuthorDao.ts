@@ -6,7 +6,8 @@ import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import SelectItem from '../model/util/SelectItem.js'
 
 /**
  * 站点作者Dao
@@ -112,7 +113,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     }
     statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
 
-    const query = modifiedQuery.getQueryObject()
+    const query = modifiedQuery.toPlainParams()
     // 查询
     const db = super.acquire()
     return db
@@ -120,6 +121,60 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       .then((results) => {
         // 利用构造方法处理localAuthor的JSON字符串
         return results.map((result) => new SiteAuthorDTO(result))
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 分页查询SelectItem
+   * @param page 分页查询参数
+   */
+  public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
+    // 以json字符串的形式返回本地作者和站点信息
+    const selectClause = `select t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
+                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
+    const fromClause = `from site_author t1
+          left join local_author t2 on t1.local_author_id = t2.id
+          left join site t3 on t1.site_id = t3.id`
+    let whereClause: string = ''
+    let query: SiteAuthorQueryDTO | undefined
+    if (notNullish(page.query)) {
+      const whereClausesAndQuery = this.getWhereClause(page.query, 't1')
+      whereClause += 'WHERE ' + whereClausesAndQuery.whereClause
+      query = whereClausesAndQuery.query
+    } else {
+      query = page.query
+    }
+
+    let statement = selectClause + ' ' + fromClause + ' ' + whereClause
+    statement = await this.sorterAndPager(statement, whereClause, page, fromClause)
+
+    const db = this.acquire()
+    return db
+      .all<unknown[], SiteAuthorDTO>(statement, query)
+      .then((rows) => {
+        const selectItems = rows.map((row) => {
+          const siteAuthorDTO = new SiteAuthorDTO(row)
+          const selectItem = new SelectItem()
+          selectItem.value = siteAuthorDTO.id
+          selectItem.label = siteAuthorDTO.siteAuthorName
+          // 第二标签的值为站点名称
+          selectItem.secondaryLabel = siteAuthorDTO.site?.siteName
+          // 本地作者和站点信息保存在额外数据中
+          selectItem.extraData = {
+            localAuthor: siteAuthorDTO.localAuthor,
+            site: siteAuthorDTO.site
+          }
+          return selectItem
+        })
+        const result = page.transform<SelectItem>()
+        result.data = selectItems
+        return result
       })
       .finally(() => {
         if (!this.injectedDB) {

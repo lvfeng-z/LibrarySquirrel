@@ -18,6 +18,8 @@ import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import { isNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
+import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
+import BaseModel from '@renderer/model/main/entity/BaseModel.ts'
 
 // onMounted
 onMounted(() => {
@@ -30,6 +32,7 @@ const apis = {
   test: window.api.localAuthorListSelectItems,
   testPLimitTest: window.api.testPLimitTest,
   localTagListSelectItems: window.api.localTagListSelectItems,
+  searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   worksQueryPage: window.api.worksQueryPage,
   worksMultipleConditionQueryPage: window.api.worksMultipleConditionQueryPage
 }
@@ -56,10 +59,14 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 async function getTagSelectList(keyword) {
   loading = true
   try {
-    const params = { keyword: keyword }
-    const response = await apis.localTagListSelectItems(params)
+    const query = new SearchConditionQueryDTO()
+    query.keyword = keyword
+    const page = new Page<SearchConditionQueryDTO, BaseModel>()
+    page.query = query
+    const response = await apis.searchQuerySearchConditionPage(page)
     if (ApiUtil.check(response)) {
-      tagSelectList.value = ApiUtil.data(response) as SelectItem[]
+      const r = ApiUtil.data(response)
+      console.log(r)
     }
   } catch (e) {
     console.log(e)

@@ -202,4 +202,12 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
 
     return reWorksAuthorService.saveBatch(reWorksAuthors, true)
   }
+
+  /**
+   * 分页查询SelectItem
+   * @param page 分页查询参数
+   */
+  public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
+    return this.dao.querySelectItemPage(page)
+  }
 }

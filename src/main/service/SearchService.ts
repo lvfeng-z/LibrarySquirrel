@@ -1,8 +1,8 @@
-import QueryConditionQueryDTO from '../model/queryDTO/QueryConditionQueryDTO.js'
+import SearchConditionQueryDTO from '../model/queryDTO/SearchConditionQueryDTO.js'
 import Page from '../model/util/Page.js'
 import BaseModel from '../model/entity/BaseModel.js'
 import { isNullish } from '../util/CommonUtil.js'
-import { QueryType } from '../model/util/QueryCondition.js'
+import { SearchType } from '../model/util/SearchCondition.js'
 import LocalTag from '../model/entity/LocalTag.js'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.js'
 import { Operator } from '../constant/CrudConstant.js'
@@ -22,19 +22,20 @@ import SelectItem from '../model/util/SelectItem.js'
 /**
  * 查询服务类
  */
-export default class QueryService {
+export default class SearchService {
   /**
    * 分页查询本地标签、站点标签、本地作者、站点作者
    * @param page
    */
-  public async queryQueryConditionPage(page: Page<QueryConditionQueryDTO, BaseModel>): Promise<Page<QueryTypes, SelectItem>[]> {
-    const result: Page<QueryTypes, SelectItem>[] = []
+  public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseModel>): Promise<Page<SearchTypes, SelectItem>[]> {
+    const result: Page<SearchTypes, SelectItem>[] = []
     const queryProcesses: Promise<unknown>[] = []
+    const innerPage = new Page(page)
     const query = page.query
 
     // 本地标签
-    if (isNullish(query?.types) || query.types.includes(QueryType.LOCAL_TAG)) {
-      const localTagPage = page.copy<LocalTagQueryDTO, LocalTag>()
+    if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_TAG)) {
+      const localTagPage = innerPage.copy<LocalTagQueryDTO, LocalTag>()
       localTagPage.query = new LocalTagQueryDTO()
       localTagPage.query.localTagName = query?.keyword
       localTagPage.query.operators = { localTagName: Operator.LIKE }
@@ -46,21 +47,19 @@ export default class QueryService {
     }
 
     // 站点标签
-    if (isNullish(query?.types) || query.types.includes(QueryType.SITE_TAG)) {
-      const siteTagPage = page.copy<SiteTagQueryDTO, SiteTag>()
+    if (isNullish(query?.types) || query.types.includes(SearchType.SITE_TAG)) {
+      const siteTagPage = innerPage.copy<SiteTagQueryDTO, SiteTag>()
       siteTagPage.query = new LocalTagQueryDTO()
       siteTagPage.query.siteTagName = query?.keyword
       siteTagPage.query.operators = { siteTagName: Operator.LIKE }
       const siteTagService = new SiteTagService()
-      const siteTagQuery = siteTagService
-        .querySelectItemPage(siteTagPage, 'id', 'siteTagName')
-        .then((siteTagResult) => result.push(siteTagResult))
+      const siteTagQuery = siteTagService.querySelectItemPage(siteTagPage).then((siteTagResult) => result.push(siteTagResult))
       queryProcesses.push(siteTagQuery)
     }
 
     // 本地作者
-    if (isNullish(query?.types) || query.types.includes(QueryType.LOCAL_AUTHOR)) {
-      const localAuthorPage = page.copy<LocalAuthorQueryDTO, LocalAuthor>()
+    if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_AUTHOR)) {
+      const localAuthorPage = innerPage.copy<LocalAuthorQueryDTO, LocalAuthor>()
       localAuthorPage.query = new LocalAuthorQueryDTO()
       localAuthorPage.query.localAuthorName = query?.keyword
       localAuthorPage.query.operators = { siteTagName: Operator.LIKE }
@@ -72,14 +71,14 @@ export default class QueryService {
     }
 
     // 站点作者
-    if (isNullish(query?.types) || query.types.includes(QueryType.SITE_AUTHOR)) {
-      const siteAuthorPage = page.copy<SiteAuthorQueryDTO, SiteAuthor>()
+    if (isNullish(query?.types) || query.types.includes(SearchType.SITE_AUTHOR)) {
+      const siteAuthorPage = innerPage.copy<SiteAuthorQueryDTO, SiteAuthor>()
       siteAuthorPage.query = new SiteAuthorQueryDTO()
       siteAuthorPage.query.siteAuthorName = query?.keyword
       siteAuthorPage.query.operators = { siteTagName: Operator.LIKE }
       const siteAuthorService = new SiteAuthorService()
       const siteAuthorQuery = siteAuthorService
-        .querySelectItemPage(siteAuthorPage, 'id', 'siteTagName')
+        .querySelectItemPage(siteAuthorPage)
         .then((siteAuthorResult) => result.push(siteAuthorResult))
       queryProcesses.push(siteAuthorQuery)
     }
@@ -89,4 +88,4 @@ export default class QueryService {
   }
 }
 
-type QueryTypes = LocalTagQueryDTO | SiteTagQueryDTO | LocalAuthorQueryDTO | SiteAuthorQueryDTO | SiteQueryDTO
+type SearchTypes = LocalTagQueryDTO | SiteTagQueryDTO | LocalAuthorQueryDTO | SiteAuthorQueryDTO | SiteQueryDTO

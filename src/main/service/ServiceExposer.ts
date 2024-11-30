@@ -16,6 +16,7 @@ import SiteAuthorService from './SiteAuthorService.ts'
 import AutoExplainPathService from './AutoExplainPathService.ts'
 import { dirSelect } from '../util/FileSysUtil.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
+import SearchService from './SearchService.js'
 
 function exposeService() {
   // test
@@ -230,6 +231,17 @@ function exposeService() {
     const reWorksTagService = new ReWorksTagService()
     try {
       return ApiUtil.response(await reWorksTagService.unlink(localTagIds, worksId))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+
+  // SearchService
+  Electron.ipcMain.handle('search-querySearchConditionPage', async (_event, args) => {
+    const queryService = new SearchService()
+    try {
+      return ApiUtil.response(await queryService.querySearchConditionPage(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

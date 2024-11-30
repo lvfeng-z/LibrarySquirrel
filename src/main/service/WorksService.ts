@@ -27,7 +27,7 @@ import { ReWorksTagService } from './ReWorksTagService.js'
 import { assertNotNullish } from '../util/AssertUtil.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
-import { QueryCondition } from '../model/util/QueryCondition.js'
+import { SearchCondition } from '../model/util/SearchCondition.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -276,7 +276,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    */
   public async multipleConditionQueryPage(
     page: Page<WorksQueryDTO, WorksDTO>,
-    query: QueryCondition[]
+    query: SearchCondition[]
   ): Promise<Page<WorksQueryDTO, Works>> {
     page = new Page(page)
     try {

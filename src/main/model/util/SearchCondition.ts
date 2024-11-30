@@ -1,7 +1,7 @@
 import { Operator } from '../../constant/CrudConstant.js'
 import { isNullish } from '../../util/CommonUtil.js'
 
-export class QueryCondition {
+export class SearchCondition {
   /**
    * 查询参数值
    */
@@ -10,21 +10,21 @@ export class QueryCondition {
   /**
    * 查询参数类型
    */
-  type: QueryType
+  type: SearchType
 
   /**
    * 操作符
    */
   operator?: Operator
 
-  constructor(queryCondition: QueryCondition) {
-    this.value = queryCondition.value
-    this.type = queryCondition.type
-    this.operator = isNullish(queryCondition.operator) ? Operator.EQUAL : queryCondition.operator
+  constructor(searchCondition: SearchCondition) {
+    this.value = searchCondition.value
+    this.type = searchCondition.type
+    this.operator = isNullish(searchCondition.operator) ? Operator.EQUAL : searchCondition.operator
   }
 }
 
-export enum QueryType {
+export enum SearchType {
   LOCAL_TAG = 1,
   SITE_TAG = 2,
   LOCAL_AUTHOR = 3,

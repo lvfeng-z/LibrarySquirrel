@@ -53,9 +53,9 @@ export default class BaseQueryDTO {
   }
 
   /**
-   * 获取可用于查询的实例
+   * 获取仅包含查询参数的对象
    */
-  public getQueryObject() {
+  public toPlainParams() {
     return toObjAcceptedBySqlite3(this, ['operators', 'sort'])
   }
 

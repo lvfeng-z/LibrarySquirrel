@@ -89,7 +89,12 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
       page = new Page(page)
       page.query = new LocalAuthorQueryDTO(page.query)
       page.query.operators = { localAuthorName: Operator.LIKE }
-      return this.dao.querySelectItemPage(page, 'id', 'localAuthorName')
+      return this.dao.querySelectItemPage(page, 'id', 'localAuthorName').then((result) => {
+        if (notNullish(result.data)) {
+          result.data.forEach((selectItem) => (selectItem.secondaryLabel = 'local'))
+        }
+        return result
+      })
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error

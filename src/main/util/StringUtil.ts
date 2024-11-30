@@ -34,12 +34,22 @@ function removePrefixIfPresent(str: string, target: string): string {
   }
 }
 
-function concatPrefixIfNotPresent(str: string, target: string): string {
+function concatPrefixIfNotPresent(str: string, target: string, caseSensitive: boolean = true): string {
   // 使用 trim() 方法去除字符串开头的空白字符
   const trimmedStr = str.trim()
 
+  let startsWithTarget: boolean
+
+  if (caseSensitive) {
+    // 如果区分大小写，直接使用 startsWith 检查
+    startsWithTarget = trimmedStr.startsWith(target)
+  } else {
+    // 如果不区分大小写，将两个字符串都转换为小写后进行检查
+    startsWithTarget = trimmedStr.toLowerCase().startsWith(target.toLowerCase())
+  }
+
   // 检查处理后的字符串是否以target为开头
-  if (trimmedStr.startsWith(target)) {
+  if (startsWithTarget) {
     // 如果是，返回原字符串
     return str
   } else {

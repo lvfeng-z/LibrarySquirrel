@@ -123,4 +123,12 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
 
     return reWorksTagService.saveBatch(links, true)
   }
+
+  /**
+   * 分页查询SelectItem
+   * @param page 分页查询参数
+   */
+  public async querySelectItemPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
+    return this.dao.querySelectItemPage(page)
+  }
 }

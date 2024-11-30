@@ -41,6 +41,9 @@ declare global {
       reWorksTagLink: function
       reWorksTagUnlink: function
 
+      // SearchService
+      searchQuerySearchConditionPage: function
+
       // Settings
       settingsGetSettings: function
       settingsSaveSettings: function
