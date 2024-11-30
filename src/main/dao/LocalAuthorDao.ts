@@ -20,7 +20,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
     if (worksIds.length === 0) {
       throw new Error('查询作品与作者联系时，作品id列表不能为空')
     }
-    const statement = `select t2.works_id, t1.*
+    const statement = `SELECT t2.works_id, t1.*
                        from local_author t1
                               inner join re_works_author t2 on t1.id = t2.local_author_id
                        where t2.works_id in (${worksIds.join(',')})`
@@ -53,7 +53,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
    * @param worksId 作品id
    */
   async listByWorksId(worksId: number): Promise<LocalAuthorDTO[]> {
-    const statement = `select t1.*, t2.author_role
+    const statement = `SELECT t1.*, t2.author_role
                        from local_author t1
                               inner join re_works_author t2 on t1.id = t2.local_author_id
                               inner join works t3 on t2.works_id = t3.id

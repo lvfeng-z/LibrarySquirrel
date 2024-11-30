@@ -45,7 +45,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       siteAuthorIds.forEach((siteAuthorId) => {
         setClause.push(`when ${siteAuthorId} then ${localAuthorId} `)
       })
-      const statement = `update ${this.tableName} set local_author_id = (case ${setClause.join('')} end) where id in (${siteAuthorIds.join()})`
+      const statement = `UPDATE ${this.tableName} set local_author_id = (case ${setClause.join('')} end) WHERE id in (${siteAuthorIds.join()})`
       const db = super.acquire()
       return db
         .run(statement)
@@ -83,7 +83,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       }
     }
 
-    const selectClause = `select t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
+    const selectClause = `SELECT t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
                 json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
     const fromClause = `from site_author t1
@@ -135,7 +135,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
     // 以json字符串的形式返回本地作者和站点信息
-    const selectClause = `select t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
+    const selectClause = `SELECT t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
                 json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
     const fromClause = `from site_author t1

@@ -15,7 +15,7 @@ export default class TaskPluginListenerDao extends BaseDao<TaskPluginListenerQue
    */
   async listListener(url: string): Promise<Plugin[]> {
     const db = this.acquire()
-    const statement = `select distinct t1.* from plugin t1 inner join task_plugin_listener t2 on t1.id = t2.plugin_id where '${url}' REGEXP t2.listener order by t1.sort_num`
+    const statement = `SELECT distinct t1.* FROM plugin t1 inner join task_plugin_listener t2 on t1.id = t2.plugin_id WHERE '${url}' REGEXP t2.listener order by t1.sort_num`
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((result) => this.getResultTypeDataList<Plugin>(result))

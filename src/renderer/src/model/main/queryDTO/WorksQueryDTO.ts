@@ -72,17 +72,17 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    */
   suggestedName: string | undefined | null
   /**
-   * 收录方式（0：本地导入，1：站点下载）
+   * 导入方式（0：本地导入，1：站点下载）
    */
-  includeMode: number | undefined | null
+  importMethod: number | undefined | null
   /**
-   * 收录任务id
+   * 任务id
    */
-  includeTaskId: number | undefined | null
+  taskId: number | undefined | null
   /**
    * 最后一次查看的时间
    */
-  lastViewed: number | undefined | null
+  lastView: number | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
     if (isNullish(worksQueryDTO)) {
@@ -103,9 +103,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUpdateTime = undefined
       this.nickName = undefined
       this.suggestedName = undefined
-      this.includeMode = undefined
-      this.includeTaskId = undefined
-      this.lastViewed = undefined
+      this.importMethod = undefined
+      this.taskId = undefined
+      this.lastView = undefined
     } else {
       super(worksQueryDTO)
       this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
@@ -124,9 +124,9 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.siteUpdateTime = worksQueryDTO.siteUpdateTime
       this.nickName = worksQueryDTO.nickName
       this.suggestedName = worksQueryDTO.suggestedName
-      this.includeMode = worksQueryDTO.includeMode
-      this.includeTaskId = worksQueryDTO.includeTaskId
-      this.lastViewed = worksQueryDTO.lastViewed
+      this.importMethod = worksQueryDTO.importMethod
+      this.taskId = worksQueryDTO.taskId
+      this.lastView = worksQueryDTO.lastView
     }
   }
 }

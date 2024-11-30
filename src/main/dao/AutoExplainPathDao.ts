@@ -31,9 +31,9 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     }
 
     // 组装sql
-    const selectClause = `select * from auto_explain_path`
+    const selectClause = `SELECT * FROM auto_explain_path`
     const whereClause = `'${path}' REGEXP regular_expression`
-    let statement = selectClause.concat(' where ', whereClause)
+    let statement = selectClause.concat(' WHERE ', whereClause)
 
     // 查询和转换
     const resultPage = lodash.cloneDeep(page)
@@ -57,7 +57,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
    * @param path
    */
   async getListenerList(path: string): Promise<AutoExplainPath[]> {
-    const statement = `select * from auto_explain_path where '${path}' REGEXP regular_expression`
+    const statement = `SELECT * FROM auto_explain_path WHERE '${path}' REGEXP regular_expression`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)

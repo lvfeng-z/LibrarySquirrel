@@ -20,12 +20,22 @@ function snakeToCamelCase(str: string): string {
   return str.replace(/(_\w)/g, (m) => m[1].toUpperCase())
 }
 
-function removePrefixIfPresent(str: string, target: string): string {
+function removePrefixIfPresent(str: string, target: string, caseSensitive: boolean = true): string {
   // 使用 trim() 方法去除字符串开头的空白字符
   const trimmedStr = str.trim()
 
+  let startsWithTarget: boolean
+
+  if (caseSensitive) {
+    // 如果区分大小写，直接使用 startsWith 检查
+    startsWithTarget = trimmedStr.startsWith(target)
+  } else {
+    // 如果不区分大小写，将两个字符串都转换为小写后进行检查
+    startsWithTarget = trimmedStr.toLowerCase().startsWith(target.toLowerCase())
+  }
+
   // 检查处理后的字符串是否以target为开头
-  if (trimmedStr.startsWith(target)) {
+  if (startsWithTarget) {
     // 如果是，计算target的长度，并使用slice从target之后的字符开始截取
     return trimmedStr.slice(target.length)
   } else {

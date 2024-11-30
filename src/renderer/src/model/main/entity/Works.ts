@@ -1,5 +1,5 @@
 import BaseModel from './BaseModel.ts'
-import { isNullish } from '../../../utils/CommonUtil.ts'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 作品
@@ -62,17 +62,17 @@ export default class Works extends BaseModel {
    */
   suggestedName: string | undefined | null
   /**
-   * 收录方式（0：本地导入，1：站点下载）
+   * 导入方式（0：本地导入，1：站点下载）
    */
-  includeMode: number | undefined | null
+  importMethod: number | undefined | null
   /**
-   * 收录任务id
+   * 任务id
    */
-  includeTaskId: number | undefined | null
+  taskId: number | undefined | null
   /**
    * 最后一次查看的时间
    */
-  lastViewed: number | undefined | null
+  lastView: number | undefined | null
   /**
    * 资源保存完成
    */
@@ -95,9 +95,9 @@ export default class Works extends BaseModel {
       this.siteUpdateTime = undefined
       this.nickName = undefined
       this.suggestedName = undefined
-      this.includeMode = undefined
-      this.includeTaskId = undefined
-      this.lastViewed = undefined
+      this.importMethod = undefined
+      this.taskId = undefined
+      this.lastView = undefined
       this.resourceComplete = undefined
     } else {
       super(works)
@@ -115,9 +115,9 @@ export default class Works extends BaseModel {
       this.siteUpdateTime = works.siteUpdateTime
       this.nickName = works.nickName
       this.suggestedName = works.suggestedName
-      this.includeMode = works.includeMode
-      this.includeTaskId = works.includeTaskId
-      this.lastViewed = works.lastViewed
+      this.importMethod = works.importMethod
+      this.taskId = works.taskId
+      this.lastView = works.lastView
       this.resourceComplete = works.resourceComplete
     }
   }

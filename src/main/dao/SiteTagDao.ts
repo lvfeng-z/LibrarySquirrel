@@ -27,7 +27,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       siteTagIds.forEach((siteTagId) => {
         setClause.push(`when ${siteTagId} then ${localTagId} `)
       })
-      const statement = `update ${this.tableName} set local_tag_id = (case ${setClause.join('')} end) where id in (${siteTagIds.join()})`
+      const statement = `UPDATE ${this.tableName} set local_tag_id = (case ${setClause.join('')} end) WHERE id in (${siteTagIds.join()})`
 
       const db = super.acquire()
       return db
@@ -66,7 +66,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       }
     }
 
-    const selectClause = `select t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId,
+    const selectClause = `SELECT t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId,
                 json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
     const fromClause = `from site_tag t1
@@ -116,7 +116,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * @param queryDTO
    */
   public async listSelectItems(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
-    const selectFrom = 'select id as value, site_tag_name as label from site_tag'
+    const selectFrom = 'SELECT id as value, site_tag_name as label FROM site_tag'
     let where = ''
     const columns: string[] = []
     const values: string[] = []

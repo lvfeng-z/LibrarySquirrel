@@ -889,6 +889,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param page
    */
   public async queryChildrenTaskPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
+    page = new Page(page)
     if (notNullish(page.query)) {
       page.query.operators = {
         ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },

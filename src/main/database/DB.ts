@@ -122,6 +122,7 @@ export default class DB {
   ): Promise<AsyncStatement<BindParameters, Result>> {
     const connectionPromise = this.acquire(readOnly)
     return connectionPromise.then((connection) => {
+      LogUtil.debug(this.caller, `[PREPARE-SQL] ${statement}`)
       const stmt = connection.prepare<BindParameters, Result>(statement)
       return new AsyncStatement<BindParameters, Result>(stmt, this.holdingWriteLock, this.caller)
     })

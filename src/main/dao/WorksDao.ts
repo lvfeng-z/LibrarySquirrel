@@ -24,7 +24,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     let statement: string
-    const selectClause = `select t1.*`
+    const selectClause = `SELECT t1.*`
     const fromClause = `from works t1`
     let whereClause: string | undefined
     if (modifiedPage.query !== undefined && page.query !== undefined) {
@@ -49,7 +49,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       ) {
         const tagNum = page.query.includeLocalTagIds.length
         whereClauses.push(
-          `${tagNum} = (select count(1) from re_works_tag ct1 where ct1.works_id = t1.id and ct1.local_tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
+          `${tagNum} = (SELECT count(1) FROM re_works_tag ct1 WHERE ct1.works_id = t1.id and ct1.local_tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
       if (
@@ -58,7 +58,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         page.query.excludeLocalTagIds.length > 0
       ) {
         whereClauses.push(
-          `0 = (select count(1) from re_works_tag ct2 where ct2.works_id = t1.id and ct1.local_tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
+          `0 = (SELECT count(1) FROM re_works_tag ct2 WHERE ct2.works_id = t1.id and ct1.local_tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
       if (
@@ -68,7 +68,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       ) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
-          `${tagNum} = (select count(1) from re_works_tag ct3 where ct3.works_id = t1.id and ct1.site_tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
+          `${tagNum} = (SELECT count(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id and ct1.site_tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
       if (
@@ -77,7 +77,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         page.query.excludeSiteTagIds.length > 0
       ) {
         whereClauses.push(
-          `0 = (select count(1) from re_works_tag ct4 where ct4.works_id = t1.id and ct1.site_tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
+          `0 = (SELECT count(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id and ct1.site_tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
 

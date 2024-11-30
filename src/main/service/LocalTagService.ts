@@ -83,6 +83,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    */
   public async queryPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
     try {
+      page = new Page(page)
       if (notNullish(page.query)) {
         page.query.operators = {
           ...{ localTagName: Operator.LIKE },

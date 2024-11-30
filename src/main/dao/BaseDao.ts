@@ -54,7 +54,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 保存
    * @param entity
    */
-  public async save(entity: Model): Promise<number | string> {
+  public async save(entity: Model): Promise<number> {
     // 设置createTime和updateTime
     entity.createTime = Date.now()
     entity.updateTime = Date.now()
@@ -333,7 +333,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async getById(id: PrimaryKey): Promise<Model | undefined> {
-    const statement = `select * from ${this.tableName} where ${BaseModel.PK} = @${BaseModel.PK}`
+    const statement = `SELECT * FROM ${this.tableName} WHERE ${BaseModel.PK} = @${BaseModel.PK}`
     const db = this.acquire()
     return db
       .get<unknown[], Record<string, unknown>>(statement, {
@@ -469,9 +469,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     let secondaryLabelCol: string | undefined
     if (secondaryLabelName !== undefined) {
       secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
-      selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel from ${this.tableName}`
+      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel FROM ${this.tableName}`
     } else {
-      selectClause = `select ${valueCol} as "value", ${labelCol} as label from ${this.tableName}`
+      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label FROM ${this.tableName}`
     }
 
     // 拼接where子句
@@ -516,10 +516,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     let secondaryLabelCol: string | undefined
     if (secondaryLabelName !== undefined) {
       secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
-      selectClause = `select ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel
+      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel
                         from ${this.tableName}`
     } else {
-      selectClause = `select ${valueCol} as "value", ${labelCol} as label
+      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label
                         from ${this.tableName}`
     }
 
@@ -586,16 +586,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     const whereClauses: string[] = []
-    // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
-    const modifiedQuery: Query = Object.assign(new BaseQueryDTO(), queryConditions)
+    // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
+    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams()
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
-    const plainParams = queryConditions.toPlainParams()
-    Object.entries(plainParams)
+    Object.entries(modifiedQuery)
       .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
       .forEach(([key, value]) => {
         const snakeCaseKey = StringUtil.camelToSnakeCase(key)
         const comparator = this.getComparator(key, queryConditions.operators)
-        // 根据运算符的不同给出不同的where子句和匹配值
+        // 根据运算符的不同给出不同的where子句和查询参数
         let modifiedValue: unknown
         let whereClause: string
         switch (comparator) {
@@ -646,7 +645,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       })
 
     const whereClause = this.splicingWhereClauses(whereClauses)
-    return { whereClause: whereClause, query: modifiedQuery as Query }
+    return { whereClause: whereClause, query: Object.assign(BaseQueryDTO.prototype, modifiedQuery) as Query }
   }
 
   /**
@@ -663,75 +662,76 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     whereClauses: Record<string, string>
     query: Query
   } {
+    if (queryConditions === undefined) {
+      return { whereClauses: {}, query: queryConditions }
+    }
+
     const whereClauses: Record<string, string> = {}
-    // 确认运算符后被修改的匹配值（比如like运算符在前后增加%）
-    const modifiedQuery = Object.assign(queryConditions, queryConditions)
-    if (queryConditions) {
-      // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
-      const plainParams = queryConditions.toPlainParams()
-      Object.entries(plainParams)
-        .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
-        .forEach(([key, value]) => {
-          if (value !== undefined && value !== '') {
-            const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-            const comparator = this.getComparator(key, queryConditions.operators)
-            // 根据运算符的不同给出不同的where子句和匹配值
-            let modifiedValue: unknown
-            switch (comparator) {
-              case Operator.EQUAL:
-                if (value !== null) {
-                  whereClauses[key] =
-                    alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-                  modifiedValue = value
-                } else {
-                  whereClauses[key] =
-                    alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NULL}`
-                }
-                break
-              case Operator.NOT_EQUAL:
-                if (value !== null) {
-                  whereClauses[key] =
-                    alias == undefined
-                      ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
-                      : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
-                  modifiedValue = value
-                } else {
-                  whereClauses[key] =
-                    alias == undefined
-                      ? `"${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
-                      : `${alias}."${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
-                }
-                break
-              case Operator.LEFT_LIKE:
-                whereClauses[key] =
-                  alias == undefined
-                    ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
-                modifiedValue = value + '%'
-                break
-              case Operator.RIGHT_LIKE:
-                whereClauses[key] =
-                  alias == undefined
-                    ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
-                    : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
-                modifiedValue = '%' + value
-                break
-              case Operator.LIKE:
-                whereClauses[key] =
-                  alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-                modifiedValue = '%' + value + '%'
-                break
-              default:
+    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams()
+    // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
+    // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
+    Object.entries(modifiedQuery)
+      .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
+      .forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          const snakeCaseKey = StringUtil.camelToSnakeCase(key)
+          const comparator = this.getComparator(key, queryConditions.operators)
+          // 根据运算符的不同给出不同的where子句和查询参数
+          let modifiedValue: unknown
+          switch (comparator) {
+            case Operator.EQUAL:
+              if (value !== null) {
                 whereClauses[key] =
                   alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
                 modifiedValue = value
-            }
-            modifiedQuery[key] = modifiedValue
+              } else {
+                whereClauses[key] =
+                  alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NULL}`
+              }
+              break
+            case Operator.NOT_EQUAL:
+              if (value !== null) {
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
+                    : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
+                modifiedValue = value
+              } else {
+                whereClauses[key] =
+                  alias == undefined
+                    ? `"${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
+                    : `${alias}."${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
+              }
+              break
+            case Operator.LEFT_LIKE:
+              whereClauses[key] =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+              modifiedValue = value + '%'
+              break
+            case Operator.RIGHT_LIKE:
+              whereClauses[key] =
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
+                  : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+              modifiedValue = '%' + value
+              break
+            case Operator.LIKE:
+              whereClauses[key] =
+                alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              modifiedValue = '%' + value + '%'
+              break
+            default:
+              whereClauses[key] =
+                alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              modifiedValue = value
           }
-        })
-    }
+          modifiedQuery[key] = modifiedValue
+        }
+      })
 
-    return { whereClauses: whereClauses, query: modifiedQuery as Query }
+    return { whereClauses: whereClauses, query: Object.assign(BaseQueryDTO.prototype, modifiedQuery) as Query }
   }
 
   /**
@@ -784,7 +784,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     try {
       if (StringUtil.isNotBlank(fromClause)) {
-        fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'FROM ')
+        fromClause = StringUtil.removePrefixIfPresent(fromClause as string, 'FROM ', false)
       } else {
         fromClause = this.tableName
       }

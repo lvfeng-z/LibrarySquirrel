@@ -46,7 +46,9 @@ export default class Page<Query, Result> {
       this.pageSize = isNullish(page.pageSize) ? 10 : page.pageSize
       this.pageCount = isNullish(page.pageCount) ? 0 : page.pageCount
       this.dataCount = isNullish(page.dataCount) ? 0 : page.dataCount
-      this.query = isNullish(page.query) ? (new BaseQueryDTO() as Query) : page.query
+      this.query = isNullish(page.query)
+        ? (new BaseQueryDTO() as Query)
+        : Object.assign(Object.create(BaseQueryDTO.prototype), page.query)
       this.data = isNullish(page.data) ? [] : page.data
     }
   }

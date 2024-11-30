@@ -14,7 +14,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   }
 
   public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
-    const selectFrom = `select id as value, local_tag_name as label, '本地' as secondaryLabel from local_tag`
+    const selectFrom = `SELECT id as value, local_tag_name as label, '本地' as secondaryLabel FROM local_tag`
     let where = ''
     const columns: string[] = []
     const values: string[] = []
@@ -104,7 +104,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param worksId 作品id
    */
   async listByWorksId(worksId: number): Promise<LocalTag[]> {
-    const statement = `select t1.*
+    const statement = `SELECT t1.*
                        from local_tag t1
                               inner join re_works_tag t2 on t1.id = t2.local_tag_id
                               inner join works t3 on t2.works_id = t3.id
@@ -134,16 +134,17 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     query.worksId = undefined
     query.boundOnWorksId = undefined
 
-    const selectClause = 'select *'
-    const fromClause = 'from local_tag t1'
+    const selectClause = 'SELECT *'
+    const fromClause = 'FROM local_tag t1'
     const whereClauseAndQuery = super.getWhereClauses(query, 't1')
     const whereClauses = whereClauseAndQuery.whereClauses
+    const modifiedQuery = whereClauseAndQuery.query
 
     if (
       Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') &&
       Object.prototype.hasOwnProperty.call(page.query, 'worksId')
     ) {
-      const existClause = `exists(select 1 from re_works_tag where works_id = ${page.query.worksId} and t1.id = re_works_tag.local_tag_id)`
+      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${page.query.worksId} and t1.id = re_works_tag.local_tag_id)`
       if (page.query.boundOnWorksId) {
         whereClauses['worksId'] = existClause
       } else {
@@ -157,7 +158,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
     const db = this.acquire()
     return db
-      .all<unknown[], Record<string, unknown>>(statement, query)
+      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
       .then((rows) => {
         page.data = super.getResultTypeDataList<LocalTag>(rows)
         return page

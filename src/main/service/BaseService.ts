@@ -49,7 +49,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * 保存
    * @param entity
    */
-  public async save(entity: Model): Promise<number | string> {
+  public async save(entity: Model): Promise<number> {
     return this.dao.save(entity)
   }
 
