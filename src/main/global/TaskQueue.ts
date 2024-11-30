@@ -687,8 +687,10 @@ class TaskInfoStream extends Transform {
   }
 
   async _transform(chunk: TaskRunningObj, _encoding: string, callback: TransformCallback): Promise<void> {
+    let task: Task | undefined = new Task()
+    task.id = chunk.taskId
     try {
-      const task = await this.taskService.getById(chunk.taskId)
+      task = await this.taskService.getById(chunk.taskId)
       // 开始保存任务信息
       assertNotNullish(task, 'TaskQueue', `下载任务${chunk.taskId}失败，任务id无效`)
       const result = await this.taskService.saveWorksInfo(task, this.pluginLoader)
@@ -700,7 +702,7 @@ class TaskInfoStream extends Transform {
         this.handleError(chunk, callback, undefined, task)
       }
     } catch (error) {
-      this.handleError(chunk, callback, error as Error)
+      this.handleError(chunk, callback, error as Error, task)
     }
   }
 
