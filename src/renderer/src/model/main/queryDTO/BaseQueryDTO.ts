@@ -1,4 +1,4 @@
-import { Id } from '@renderer/model/main/entity/BaseModel.ts'
+import { Id } from '@renderer/model/main/entity/BaseEntity.ts'
 import QuerySortOption from '@renderer/model/util/QuerySortOption.ts'
 
 export default class BaseQueryDTO {

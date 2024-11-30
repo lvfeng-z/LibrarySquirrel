@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 兴趣点-目标关联表
  */
-export default class RePoiTarget extends BaseModel {
+export default class RePoiTarget extends BaseEntity {
   /**
    * 主键
    */

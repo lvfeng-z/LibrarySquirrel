@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 兴趣点
  */
-export default class Poi extends BaseModel {
+export default class Poi extends BaseEntity {
   /**
    * 主键
    */

@@ -1,10 +1,10 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品
  */
-export default class Works extends BaseModel {
+export default class Works extends BaseEntity {
   /**
    * 主键
    */

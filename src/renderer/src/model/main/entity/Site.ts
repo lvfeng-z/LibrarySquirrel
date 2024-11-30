@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 站点
  */
-export default class Site extends BaseModel {
+export default class Site extends BaseEntity {
   /**
    * 主键
    */

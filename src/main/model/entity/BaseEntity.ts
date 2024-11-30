@@ -1,7 +1,7 @@
 /**
  * 基础模型
  */
-export default class BaseModel {
+export default class BaseEntity {
   /**
    * 主键
    */
@@ -17,15 +17,20 @@ export default class BaseModel {
    */
   updateTime: number | null | undefined
 
-  constructor(baseModel?: BaseModel) {
-    if (baseModel === undefined) {
+  /**
+   * 主键名称
+   */
+  public static readonly PK = 'id'
+
+  constructor(baseEntity?: BaseEntity) {
+    if (baseEntity === undefined) {
       this.id = undefined
       this.createTime = undefined
       this.updateTime = undefined
     } else {
-      this.id = baseModel.id
-      this.createTime = baseModel.createTime
-      this.updateTime = baseModel.updateTime
+      this.id = baseEntity.id
+      this.createTime = baseEntity.createTime
+      this.updateTime = baseEntity.updateTime
     }
   }
 }

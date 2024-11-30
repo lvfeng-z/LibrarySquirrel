@@ -19,7 +19,7 @@ import TransactionTest from './test/transaction-test.vue'
 import { isNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
-import BaseModel from '@renderer/model/main/entity/BaseModel.ts'
+import BaseEntity from '@renderer/model/main/entity/BaseEntity.ts'
 
 // onMounted
 onMounted(() => {
@@ -61,7 +61,7 @@ async function getTagSelectList(keyword) {
   try {
     const query = new SearchConditionQueryDTO()
     query.keyword = keyword
-    const page = new Page<SearchConditionQueryDTO, BaseModel>()
+    const page = new Page<SearchConditionQueryDTO, BaseEntity>()
     page.query = query
     const response = await apis.searchQuerySearchConditionPage(page)
     if (ApiUtil.check(response)) {

@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 站点作者
  */
-export default class SiteAuthor extends BaseModel {
+export default class SiteAuthor extends BaseEntity {
   /**
    * 作者来源站点id
    */

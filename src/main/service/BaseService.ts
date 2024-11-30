@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
-import BaseModel from '../model/entity/BaseModel.ts'
+import BaseEntity from '../model/entity/BaseEntity.ts'
 import Page from '../model/util/Page.ts'
 import BaseDao from '../dao/BaseDao.ts'
 import DB from '../database/DB.ts'
@@ -10,7 +10,7 @@ import SelectItem from '../model/util/SelectItem.js'
 /**
  * 基础Service类
  */
-export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseModel, Dao extends BaseDao<Query, Model>> {
+export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseEntity, Dao extends BaseDao<Query, Model>> {
   /**
    * 子类名称
    */

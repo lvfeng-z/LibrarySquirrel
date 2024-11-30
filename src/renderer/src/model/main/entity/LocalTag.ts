@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 本地标签
  */
-export default class LocalTag extends BaseModel {
+export default class LocalTag extends BaseEntity {
   /**
    * 主键
    */

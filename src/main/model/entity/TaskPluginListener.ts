@@ -1,6 +1,6 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
-export default class TaskPluginListener extends BaseModel {
+export default class TaskPluginListener extends BaseEntity {
   /**
    * 插件id
    */

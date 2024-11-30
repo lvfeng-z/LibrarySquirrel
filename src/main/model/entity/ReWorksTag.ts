@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 作品-标签关联表
  */
-export default class ReWorksTag extends BaseModel {
+export default class ReWorksTag extends BaseEntity {
   /**
    * 作品id
    */

@@ -1,11 +1,11 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 import { PathTypeEnum } from '../../constant/PathTypeEnum.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 自动解释路径含义
  */
-export default class AutoExplainPath extends BaseModel {
+export default class AutoExplainPath extends BaseEntity {
   /**
    * 主键
    */

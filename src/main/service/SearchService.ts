@@ -1,6 +1,6 @@
 import SearchConditionQueryDTO from '../model/queryDTO/SearchConditionQueryDTO.js'
 import Page from '../model/util/Page.js'
-import BaseModel from '../model/entity/BaseModel.js'
+import BaseEntity from '../model/entity/BaseEntity.js'
 import { isNullish } from '../util/CommonUtil.js'
 import { SearchType } from '../model/util/SearchCondition.js'
 import LocalTag from '../model/entity/LocalTag.js'
@@ -27,7 +27,7 @@ export default class SearchService {
    * 分页查询本地标签、站点标签、本地作者、站点作者
    * @param page
    */
-  public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseModel>): Promise<Page<SearchTypes, SelectItem>[]> {
+  public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>[]> {
     const result: Page<SearchTypes, SelectItem>[] = []
     const queryProcesses: Promise<unknown>[] = []
     const innerPage = new Page(page)

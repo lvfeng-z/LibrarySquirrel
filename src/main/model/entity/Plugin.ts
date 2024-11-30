@@ -1,6 +1,6 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
-export default class Plugin extends BaseModel {
+export default class Plugin extends BaseEntity {
   /**
    * 主键
    */

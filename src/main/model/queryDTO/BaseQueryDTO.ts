@@ -1,4 +1,4 @@
-import { Id } from '../entity/BaseModel.ts'
+import { Id } from '../entity/BaseEntity.ts'
 import { Operator } from '../../constant/CrudConstant.ts'
 import QuerySortOption from '../../constant/QuerySortOption.ts'
 import { toObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'

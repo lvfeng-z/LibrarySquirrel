@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 任务
  */
-export default class Task extends BaseModel {
+export default class Task extends BaseEntity {
   /**
    * 主键
    */

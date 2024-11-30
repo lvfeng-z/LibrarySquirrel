@@ -1,10 +1,10 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 本地作者
  */
-export default class LocalAuthor extends BaseModel {
+export default class LocalAuthor extends BaseEntity {
   /**
    * 作者名称
    */

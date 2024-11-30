@@ -1,9 +1,9 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 
 /**
  * 作品-作品集关联表
  */
-export default class ReWorksWorksSet extends BaseModel {
+export default class ReWorksWorksSet extends BaseEntity {
   /**
    * 主键
    */

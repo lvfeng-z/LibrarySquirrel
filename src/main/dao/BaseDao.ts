@@ -1,6 +1,6 @@
 import StringUtil from '../util/StringUtil.ts'
 import DB from '../database/DB.ts'
-import BaseModel, { Id } from '../model/entity/BaseModel.ts'
+import BaseEntity, { Id } from '../model/entity/BaseEntity.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
@@ -17,7 +17,7 @@ type PrimaryKey = string | number
 /**
  * 抽象Dao基类，实现基本的CRUD方法
  */
-export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends BaseModel> {
+export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
   /**
    * 数据表名
    * @protected
@@ -146,7 +146,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async deleteById(id: PrimaryKey): Promise<number> {
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseModel.PK}" = ${id}`
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" = ${id}`
     const db = this.acquire()
     return db
       .run(sql)
@@ -166,7 +166,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     assertArrayNotEmpty(ids, this.className, '批量删除时id列表不能为空')
 
     const idsStr = ids.join(',')
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseModel.PK}" in (${idsStr})`
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" in (${idsStr})`
     const db = this.acquire()
     return db
       .run(sql)
@@ -192,7 +192,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const existingValue = toObjAcceptedBySqlite3(updateData)
     const keys = Object.keys(existingValue)
     const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
-    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseModel.PK}" = ${id}`
+    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseEntity.PK}" = ${id}`
     const db = this.acquire()
     return db
       .run(statement, existingValue)
@@ -227,7 +227,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 按照第一个对象的属性设置语句的value部分
     const keys = Object.keys(plainObject[0])
     const updateClause = `UPDATE "${this.tableName}"`
-    const whereClause = `WHERE ${BaseModel.PK} IN (${ids.join()})`
+    const whereClause = `WHERE ${BaseEntity.PK} IN (${ids.join()})`
     const setClauses: string[] = []
 
     // 存储编号后的所有属性
@@ -235,18 +235,18 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     let index = 0
     keys.forEach((key) => {
-      if (BaseModel.PK !== key) {
+      if (BaseEntity.PK !== key) {
         const whenThenClauses: string[] = []
         const column = StringUtil.camelToSnakeCase(key)
         const numberedProperty = key + index
         plainObject.forEach((obj) => {
           const value = obj[key]
           if (undefined === value) {
-            whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN ${column}`)
+            whenThenClauses.push(`WHEN ${BaseEntity.PK} = ${obj.id} THEN ${column}`)
           } else if (null === value) {
-            whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN NULL`)
+            whenThenClauses.push(`WHEN ${BaseEntity.PK} = ${obj.id} THEN NULL`)
           } else {
-            whenThenClauses.push(`WHEN ${BaseModel.PK} = ${obj.id} THEN @${numberedProperty}`)
+            whenThenClauses.push(`WHEN ${BaseEntity.PK} = ${obj.id} THEN @${numberedProperty}`)
             numberedProperties[numberedProperty] = value
           }
         })
@@ -333,11 +333,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async getById(id: PrimaryKey): Promise<Model | undefined> {
-    const statement = `SELECT * FROM ${this.tableName} WHERE ${BaseModel.PK} = @${BaseModel.PK}`
+    const statement = `SELECT * FROM ${this.tableName} WHERE ${BaseEntity.PK} = @${BaseEntity.PK}`
     const db = this.acquire()
     return db
       .get<unknown[], Record<string, unknown>>(statement, {
-        [BaseModel.PK]: id
+        [BaseEntity.PK]: id
       })
       .then((result) => {
         if (notNullish(result)) {
@@ -437,7 +437,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async listByIds(ids: number[] | string[]): Promise<Model[]> {
     const idStr = ids.join(',')
-    const statement = `SELECT * FROM "${this.tableName}" WHERE ${BaseModel.PK} IN (${idStr})`
+    const statement = `SELECT * FROM "${this.tableName}" WHERE ${BaseEntity.PK} IN (${idStr})`
     // 生成where字句
 
     // 查询

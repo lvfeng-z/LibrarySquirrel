@@ -1,7 +1,7 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
 
-export default class ReWorksAuthor extends BaseModel {
+export default class ReWorksAuthor extends BaseEntity {
   /**
    * 类型(true: 本地作者，false: 站点作者)
    */

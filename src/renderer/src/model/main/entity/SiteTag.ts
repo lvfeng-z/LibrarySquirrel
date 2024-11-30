@@ -1,10 +1,10 @@
-import BaseModel from './BaseModel.ts'
+import BaseEntity from './BaseEntity.ts'
 import { isNullish } from '../../../utils/CommonUtil.ts'
 
 /**
  * 站点标签
  */
-export default class SiteTag extends BaseModel {
+export default class SiteTag extends BaseEntity {
   /**
    * 主键
    */
