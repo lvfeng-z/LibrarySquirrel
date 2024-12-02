@@ -429,7 +429,7 @@ export class TaskQueue {
   private async setChildrenOfParent(runningObjs: TaskRunningObj[]) {
     const parentWaitingRefreshSet: Set<number> = new Set()
     for (const runningObj of runningObjs) {
-      if (notNullish(runningObj.parentId) && runningObj.parentId !== -1) {
+      if (notNullish(runningObj.parentId) && runningObj.parentId !== 0) {
         let parent = this.parentMap.get(runningObj.parentId)
         if (isNullish(parent)) {
           const parentInfo = await this.taskService.getById(runningObj.parentId)
@@ -598,7 +598,7 @@ class TaskRunningObj extends TaskStatus {
    */
   public taskWriter: TaskWriter
   /**
-   * 父任务id
+   * 父任务id（为0时表示没有父任务）
    */
   public parentId: number
   /**
@@ -622,7 +622,7 @@ class TaskRunningObj extends TaskStatus {
     super(taskId, status)
     this.taskOperationObj = taskOperationObj
     this.taskWriter = taskWriter
-    this.parentId = isNullish(parentId) ? -1 : parentId
+    this.parentId = isNullish(parentId) ? 0 : parentId
     this.infoSaved = isNullish(worksInfoSaved) ? false : worksInfoSaved
     this.resourceHadStarted = isNullish(resourceHadStarted) ? false : resourceHadStarted
   }
