@@ -18,7 +18,7 @@ export class ReWorksTagDao extends BaseDao<ReWorksTagQueryDTO, ReWorksTag> {
    */
   public async deleteByWorksIdAndLocalTagId(localTagIds: number[], worksId: number): Promise<number> {
     const localTagIdsStr = localTagIds.join(',')
-    const statement = `DELETE FROM ${this.tableName} WHERE works_id = ${worksId} and local_tag_id in (${localTagIdsStr})`
+    const statement = `DELETE FROM ${this.tableName} WHERE works_id = ${worksId} AND local_tag_id IN (${localTagIdsStr})`
     const db = this.acquire()
     return db.run(statement).then((runResult) => runResult.changes)
   }

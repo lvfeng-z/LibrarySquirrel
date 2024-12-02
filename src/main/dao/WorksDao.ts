@@ -7,7 +7,7 @@ import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
-import { arrayIsEmpty } from '../util/CommonUtil.js'
+import { arrayIsEmpty, isNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../util/MediaType.js'
 
@@ -25,7 +25,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     const modifiedPage = new Page(page)
     let statement: string
     const selectClause = `SELECT t1.*`
-    const fromClause = `from works t1`
+    const fromClause = `FROM works t1`
     let whereClause: string | undefined
     if (modifiedPage.query !== undefined && page.query !== undefined) {
       const baseProperties = lodash.cloneDeep(modifiedPage.query)
@@ -49,7 +49,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       ) {
         const tagNum = page.query.includeLocalTagIds.length
         whereClauses.push(
-          `${tagNum} = (SELECT count(1) FROM re_works_tag ct1 WHERE ct1.works_id = t1.id and ct1.local_tag_id in (${page.query.includeLocalTagIds.join()}) and ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct1 WHERE ct1.works_id = t1.id AND ct1.local_tag_id IN (${page.query.includeLocalTagIds.join()}) AND ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
       if (
@@ -58,7 +58,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         page.query.excludeLocalTagIds.length > 0
       ) {
         whereClauses.push(
-          `0 = (SELECT count(1) FROM re_works_tag ct2 WHERE ct2.works_id = t1.id and ct1.local_tag_id in (${page.query.excludeLocalTagIds.join()}) and ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
+          `0 = (SELECT COUNT(1) FROM re_works_tag ct2 WHERE ct2.works_id = t1.id AND ct1.local_tag_id IN (${page.query.excludeLocalTagIds.join()}) AND ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
       if (
@@ -68,7 +68,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       ) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
-          `${tagNum} = (SELECT count(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id and ct1.site_tag_id in (${page.query.includeSiteTagIds.join()}) and ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id AND ct1.site_tag_id IN (${page.query.includeSiteTagIds.join()}) AND ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
       if (
@@ -77,7 +77,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         page.query.excludeSiteTagIds.length > 0
       ) {
         whereClauses.push(
-          `0 = (SELECT count(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id and ct1.site_tag_id in (${page.query.excludeSiteTagIds.join()}) and ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
+          `0 = (SELECT COUNT(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id AND ct1.site_tag_id IN (${page.query.excludeSiteTagIds.join()}) AND ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
 
@@ -95,7 +95,8 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     }
 
     // 排序和分页子句
-    statement = await this.sorterAndPager(statement, whereClause, modifiedPage, fromClause)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await this.sortAndPage(statement, whereClause, modifiedPage, sort, fromClause)
 
     const query = modifiedPage.query
 
@@ -185,7 +186,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         }
         if (query.type === SearchType.MEDIA_TYPE) {
           const extList = MediaExtMapping[query.value as MediaType]
-          fromAndWhere.where.push(`works_m.filename_extension in (${extList.join(',')})`)
+          fromAndWhere.where.push(`works_m.filename_extension IN (${extList.join(',')})`)
         }
       })
       return { from: fromAndWhere.from.join(' '), where: fromAndWhere.where.join(' ') }

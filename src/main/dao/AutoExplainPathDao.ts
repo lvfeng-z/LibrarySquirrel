@@ -6,6 +6,7 @@ import Page from '../model/util/Page.ts'
 import lodash from 'lodash'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
+import { isNullish } from '../util/CommonUtil.js'
 
 /**
  * 自动解释路径含义Dao
@@ -37,7 +38,8 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
 
     // 查询和转换
     const resultPage = lodash.cloneDeep(page)
-    statement = await super.sorterAndPager(statement, whereClause, resultPage)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await super.sortAndPage(statement, whereClause, resultPage, sort)
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)

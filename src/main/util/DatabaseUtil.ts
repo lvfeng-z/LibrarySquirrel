@@ -9,7 +9,7 @@ import { getRootDir } from './FileSysUtil.ts'
 export async function listAllDataTables(): Promise<string[]> {
   const db = new DB('DatabaseUtil')
   try {
-    const statement = "SELECT name from sqlite_master where name != 'sqlite_sequence'"
+    const statement = "SELECT name FROM sqlite_master WHERE name != 'sqlite_sequence'"
 
     const rows = (await db.all(statement)) as { name: string }[]
     return rows.map((row) => row.name)

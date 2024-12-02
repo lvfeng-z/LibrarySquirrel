@@ -21,17 +21,17 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    */
   async refreshTaskStatus(taskId: number): Promise<number> {
     const statement = `
-        with total as (SELECT count(1) as num from task where pid = ${taskId}),
-             finished as (SELECT count(1) as num from task where pid = ${taskId} and status = ${TaskStatusEnum.FINISHED}),
-             faild as (SELECT count(1) as num from task where pid = ${taskId} and status = ${TaskStatusEnum.FAILED})
+        WITH total as (SELECT COUNT(1) AS num FROM task WHERE pid = ${taskId}),
+             finished as (SELECT COUNT(1) AS num FROM task WHERE pid = ${taskId} AND status = ${TaskStatusEnum.FINISHED}),
+             faild as (SELECT COUNT(1) AS num FROM task WHERE pid = ${taskId} AND status = ${TaskStatusEnum.FAILED})
         update task set status = (
-            case
-                when (SELECT num from finished) = (SELECT num from total) then ${TaskStatusEnum.FINISHED}
-                when (SELECT num from faild) = (SELECT num from total) then ${TaskStatusEnum.FAILED}
-                when (SELECT num from total) > (SELECT num from finished) and (SELECT num from finished) > 0
-                  then ${TaskStatusEnum.PARTLY_FINISHED}
+            CASE
+                WHEN (SELECT num FROM finished) = (SELECT num FROM total) THEN ${TaskStatusEnum.FINISHED}
+                WHEN (SELECT num FROM faild) = (SELECT num FROM total) THEN ${TaskStatusEnum.FAILED}
+                WHEN (SELECT num FROM total) > (SELECT num FROM finished) AND (SELECT num FROM finished) > 0
+                  THEN ${TaskStatusEnum.PARTLY_FINISHED}
             end)
-        where id = ${taskId}`
+        WHERE id = ${taskId}`
 
     const db = this.acquire()
     return db
@@ -76,7 +76,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     }
 
     let statement = selectClause.concat(' ', whereClause)
-    statement = await super.sorterAndPager(statement, whereClause, modifiedPage)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await super.sortAndPage(statement, whereClause, modifiedPage, sort)
 
     // 查询
     const db = this.acquire()
@@ -102,22 +103,22 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   async setTaskTreeStatus(taskIds: number[], status: TaskStatusEnum, includeStatus?: TaskStatusEnum[]): Promise<number> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
-    const statement = `with children as (SELECT id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                                status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
+    const statement = `WITH children AS (SELECT id, is_collection, ifnull(pid, 0) AS pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
+                                                status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data FROM task WHERE id in (${idsStr}) AND is_collection = 0),
                             parent as (SELECT id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                              status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
-                       update task set status = ${status} where id in(
-                          SELECT id from children ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
-                          union
-                          SELECT id from parent ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
-                          union
+                                              status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data FROM task WHERE id in (${idsStr}) AND is_collection = 1)
+                       update task set status = ${status} WHERE id in(
+                          SELECT id FROM children ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                          UNION
+                          SELECT id FROM parent ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                          UNION
                           SELECT id
-                          from task
-                          where id in (SELECT pid from children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
-                          union
+                          FROM task
+                          WHERE id in (SELECT pid FROM children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                          UNION
                           SELECT id
-                          from task
-                          where pid in (SELECT id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                          FROM task
+                          WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        )`
     const db = this.acquire()
     return db
@@ -138,23 +139,23 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   async listTaskTree(taskIds: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskDTO[]> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
-    const statement = `with children as (SELECT id, is_collection, ifnull(pid, 0) as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                                status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 0),
+    const statement = `WITH children AS (SELECT id, is_collection, ifnull(pid, 0) AS pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
+                                                status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data FROM task WHERE id in (${idsStr}) AND is_collection = 0),
                             parent as (SELECT id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time, update_time,
-                                              status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data from task where id in (${idsStr}) and is_collection = 1)
+                                              status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data FROM task WHERE id in (${idsStr}) AND is_collection = 1)
 
-                       SELECT * from children ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
-                       union
-                       SELECT * from parent ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
-                       union
+                       SELECT * FROM children ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                       UNION
+                       SELECT * FROM parent ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                       UNION
                        SELECT id, is_collection, 0 as pid, task_name, site_domain, local_works_id, site_works_id, url, create_time,
                               update_time, status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data
-                       from task
-                       where id in (SELECT pid from children)
-                       union
+                       FROM task
+                       WHERE id in (SELECT pid FROM children)
+                       UNION
                        SELECT *
-                       from task
-                       where pid in (SELECT id from parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
+                       FROM task
+                       WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
     let sourceTasks: TaskDTO[]
     const db = this.acquire()
     return db
@@ -176,7 +177,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    */
   async listStatus(ids: number[]): Promise<TaskScheduleDTO[]> {
     const idsStr = ids.join(',')
-    const statement = `SELECT id, status, CASE WHEN status = ${TaskStatusEnum.FINISHED} THEN 100 END as schedule
+    const statement = `SELECT id, status, CASE WHEN status = ${TaskStatusEnum.FINISHED} THEN 100 END AS schedule
                        FROM "${this.tableName}"
                        WHERE id in (${idsStr})`
     const db = this.acquire()

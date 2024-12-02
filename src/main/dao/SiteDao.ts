@@ -14,9 +14,9 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
    */
   public async getIdDomainRecord(domains: string[]): Promise<Record<string, number>> {
     const db = this.acquire()
-    const statement = `SELECT site_domain as siteDomain, id
+    const statement = `SELECT site_domain AS siteDomain, id
          FROM site
-         WHERE site_domain in (${domains.join(',')})`
+         WHERE site_domain IN (${domains.join(',')})`
     return db
       .all<unknown[], Record<string, string | number>>(statement)
       .then((rows) => {

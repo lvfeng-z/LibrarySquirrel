@@ -166,7 +166,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     assertArrayNotEmpty(ids, this.className, '批量删除时id列表不能为空')
 
     const idsStr = ids.join(',')
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" in (${idsStr})`
+    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
     const db = this.acquire()
     return db
       .run(sql)
@@ -365,7 +365,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       const whereClauseAndQuery = this.getWhereClause(page.query)
       whereClause = whereClauseAndQuery.whereClause
 
-      // modifiedPage存储修改过的查询条件
+      // 修改过的查询条件
       modifiedPage.query = whereClauseAndQuery.query
     }
 
@@ -375,7 +375,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = statement.concat(' ', whereClause)
     }
     // 拼接排序和分页字句
-    statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await this.sortAndPage(statement, whereClause, modifiedPage, sort)
 
     // 查询
     const query = modifiedPage.query?.toPlainParams()
@@ -469,9 +470,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     let secondaryLabelCol: string | undefined
     if (secondaryLabelName !== undefined) {
       secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
-      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel FROM ${this.tableName}`
+      selectClause = `SELECT ${valueCol} AS "value", ${labelCol} AS label, ${secondaryLabelCol} AS secondaryLabel FROM ${this.tableName}`
     } else {
-      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label FROM ${this.tableName}`
+      selectClause = `SELECT ${valueCol} AS "value", ${labelCol} AS label FROM ${this.tableName}`
     }
 
     // 拼接where子句
@@ -516,29 +517,30 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     let secondaryLabelCol: string | undefined
     if (secondaryLabelName !== undefined) {
       secondaryLabelCol = StringUtil.camelToSnakeCase(secondaryLabelName)
-      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label, ${secondaryLabelCol} as secondaryLabel
-                        from ${this.tableName}`
+      selectClause = `SELECT ${valueCol} AS "value", ${labelCol} AS label, ${secondaryLabelCol} AS secondaryLabel
+                        FROM ${this.tableName}`
     } else {
-      selectClause = `SELECT ${valueCol} as "value", ${labelCol} as label
-                        from ${this.tableName}`
+      selectClause = `SELECT ${valueCol} AS "value", ${labelCol} AS label
+                        FROM ${this.tableName}`
     }
 
     // 拼接where子句
     page = new Page<Query, Model>(page)
     const whereClauseAndQuery = this.getWhereClause(page.query)
 
-    // 创建一个新的PageModel实例存储修改过的查询条件
+    // 修改过的查询条件
     const modifiedPage = new Page(page)
     modifiedPage.query = whereClauseAndQuery.query
 
     const whereClause = whereClauseAndQuery.whereClause
     let statement = selectClause
     if (whereClause !== undefined) {
-      statement = selectClause.concat(' ', whereClause)
+      statement = selectClause + ' ' + whereClause
     }
 
     // 分页和排序
-    statement = await this.sorterAndPager(statement, whereClause, modifiedPage)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await this.sortAndPage(statement, whereClause, modifiedPage, sort)
 
     // 查询
     const query = modifiedPage.query?.toPlainParams()
@@ -565,7 +567,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected splicingWhereClauses(whereClauses: string[]): string | undefined {
     if (whereClauses.length > 0) {
-      return `WHERE ${whereClauses.length > 1 ? whereClauses.join(' and ') : whereClauses[0]}`
+      return `WHERE ${whereClauses.length > 1 ? whereClauses.join(' AND ') : whereClauses[0]}`
     } else {
       return undefined
     }
@@ -767,7 +769,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     page: Page<Query, Model>,
     fromClause?: string
   ): Promise<string> {
-    if (page.paging === undefined || page.paging) {
+    if (isNullish(page.paging) || page.paging) {
       statement += ' ' + (await this.getPagingClause(whereClause, page, fromClause))
     }
     return statement
@@ -849,17 +851,19 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表）
    * @param statement 需要分页的语句
    * @param whereClause 分页语句的where字句
-   * @param page 排序配置
+   * @param page 分页参数
+   * @param sort 排序参数
    * @param fromClause 分页语句的from子句
    * @protected
    */
-  protected async sorterAndPager(
+  protected async sortAndPage(
     statement: string,
     whereClause: string | undefined,
     page: Page<Query, Model>,
+    sort: QuerySortOption[],
     fromClause?: string
   ): Promise<string> {
-    statement = this.sorter(statement, page.query?.sort)
+    statement = this.sorter(statement, sort)
     statement = await this.pager(statement, whereClause, page, fromClause)
     return statement
   }

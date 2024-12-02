@@ -23,7 +23,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   async listBySiteAuthorIds(siteAuthorIs: string[]) {
     const db = this.acquire()
-    const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id in ${siteAuthorIs.join(',')}`
+    const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id IN ${siteAuthorIs.join(',')}`
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => this.getResultTypeDataList<SiteAuthor>(rows))
@@ -43,9 +43,9 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     if (siteAuthorIds.length > 0) {
       const setClause: string[] = []
       siteAuthorIds.forEach((siteAuthorId) => {
-        setClause.push(`when ${siteAuthorId} then ${localAuthorId} `)
+        setClause.push(`WHEN ${siteAuthorId} THEN ${localAuthorId} `)
       })
-      const statement = `UPDATE ${this.tableName} set local_author_id = (case ${setClause.join('')} end) WHERE id in (${siteAuthorIds.join()})`
+      const statement = `UPDATE ${this.tableName} SET local_author_id = (CASE ${setClause.join('')} END) WHERE id IN (${siteAuthorIds.join()})`
       const db = super.acquire()
       return db
         .run(statement)
@@ -83,12 +83,12 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       }
     }
 
-    const selectClause = `SELECT t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
-                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
-    const fromClause = `from site_author t1
-          left join local_author t2 on t1.local_author_id = t2.id
-          left join site t3 on t1.site_id = t3.id`
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.local_author_id AS localAuthorId,
+                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) AS localAuthor,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+    const fromClause = `FROM site_author t1
+          LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
+          LEFT JOIN site t3 ON t1.site_id = t3.id`
     const whereClausesAndQuery = this.getWhereClauses(page.query, 't1')
 
     const whereClauses = whereClausesAndQuery.whereClauses
@@ -99,7 +99,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     // 处理keyword
     if (Object.prototype.hasOwnProperty.call(page.query, 'keyword') && StringUtil.isNotBlank(page.query.keyword)) {
-      whereClauses.keyword = 't1.site_author_name like @keyword'
+      whereClauses.keyword = 't1.site_author_name LIKE @keyword'
       modifiedQuery.keyword = page.query.keywordForFullMatch()
     }
 
@@ -111,7 +111,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     if (StringUtil.isNotBlank(whereClause)) {
       statement = statement.concat(' ', whereClause)
     }
-    statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await super.sortAndPage(statement, whereClause, page, sort, fromClause)
 
     const query = modifiedQuery.toPlainParams()
     // 查询
@@ -135,12 +136,12 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
     // 以json字符串的形式返回本地作者和站点信息
-    const selectClause = `SELECT t1.id, t1.site_id as siteId, t1.site_author_id as siteAuthorId, t1.site_author_name as siteAuthorName, t1.local_author_id as localAuthorId,
-                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) as localAuthor,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
-    const fromClause = `from site_author t1
-          left join local_author t2 on t1.local_author_id = t2.id
-          left join site t3 on t1.site_id = t3.id`
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.local_author_id AS localAuthorId,
+                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) AS localAuthor,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+    const fromClause = `FROM site_author t1
+          LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
+          LEFT JOIN site t3 ON t1.site_id = t3.id`
     let whereClause: string = ''
     let query: SiteAuthorQueryDTO | undefined
     if (notNullish(page.query)) {
@@ -152,7 +153,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    statement = await this.sorterAndPager(statement, whereClause, page, fromClause)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await this.sortAndPage(statement, whereClause, page, sort, fromClause)
 
     const db = this.acquire()
     return db

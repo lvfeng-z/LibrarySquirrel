@@ -7,7 +7,7 @@ import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
-import { notNullish } from '../util/CommonUtil.js'
+import { isNullish, notNullish } from '../util/CommonUtil.js'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -25,9 +25,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     if (siteTagIds.length > 0) {
       const setClause: string[] = []
       siteTagIds.forEach((siteTagId) => {
-        setClause.push(`when ${siteTagId} then ${localTagId} `)
+        setClause.push(`WHEN ${siteTagId} THEN ${localTagId} `)
       })
-      const statement = `UPDATE ${this.tableName} set local_tag_id = (case ${setClause.join('')} end) WHERE id in (${siteTagIds.join()})`
+      const statement = `UPDATE ${this.tableName} SET local_tag_id = (CASE ${setClause.join('')} END) WHERE id IN (${siteTagIds.join()})`
 
       const db = super.acquire()
       return db
@@ -66,12 +66,12 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       }
     }
 
-    const selectClause = `SELECT t1.id, t1.site_id as siteId, t1.site_tag_id as siteTagId, t1.site_tag_name as siteTagName, t1.base_site_tag_id as baseSiteTagId, t1.description, t1.local_tag_id as localTagId,
-                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) as localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) as site`
-    const fromClause = `from site_tag t1
-          left join local_tag t2 on t1.local_tag_id = t2.id
-          left join site t3 on t1.site_id = t3.id`
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
+                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+    const fromClause = `FROM site_tag t1
+          LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
+          LEFT JOIN site t3 ON t1.site_id = t3.id`
     const whereClausesAndQuery = this.getWhereClauses(page.query, 't1')
 
     const whereClauses = whereClausesAndQuery.whereClauses
@@ -82,7 +82,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
     // 处理keyword
     if (Object.prototype.hasOwnProperty.call(page.query, 'keyword') && StringUtil.isNotBlank(page.query.keyword)) {
-      whereClauses.keyword = 't1.site_tag_name like @keyword'
+      whereClauses.keyword = 't1.site_tag_name LIKE @keyword'
       modifiedQuery.keyword = page.query.keywordForFullMatch()
     }
 
@@ -94,7 +94,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     if (StringUtil.isNotBlank(whereClause)) {
       statement += ' ' + whereClause
     }
-    statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await super.sortAndPage(statement, whereClause, page, sort, fromClause)
 
     // 查询
     const db = super.acquire()
@@ -116,13 +117,13 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * @param queryDTO
    */
   public async listSelectItems(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
-    const selectFrom = 'SELECT id as value, site_tag_name as label FROM site_tag'
+    const selectFrom = 'SELECT id AS value, site_tag_name AS label FROM site_tag'
     let where = ''
     const columns: string[] = []
     const values: string[] = []
 
     if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
-      columns.push('site_tag_name like ?')
+      columns.push('site_tag_name LIKE ?')
       values.push('%' + queryDTO.keyword + '%')
     }
     if (queryDTO.sites != undefined && queryDTO.sites.length > 0) {
@@ -135,9 +136,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
 
     if (columns.length == 1) {
-      where = ' where ' + columns.toString()
+      where = ' WHERE ' + columns.toString()
     } else if (columns.length > 1) {
-      where = ' where ' + columns.join(' and ')
+      where = ' WHERE ' + columns.join(' AND ')
     }
 
     const sql: string = selectFrom + where
@@ -173,7 +174,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    statement = await this.sorterAndPager(statement, whereClause, page, fromClause)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await this.sortAndPage(statement, whereClause, page, sort, fromClause)
 
     const db = this.acquire()
     return db

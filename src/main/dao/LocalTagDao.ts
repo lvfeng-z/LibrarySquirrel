@@ -14,20 +14,20 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   }
 
   public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
-    const selectFrom = `SELECT id as value, local_tag_name as label, '本地' as secondaryLabel FROM local_tag`
+    const selectFrom = `SELECT id AS value, local_tag_name AS label, '本地' AS secondaryLabel FROM local_tag`
     let where = ''
     const columns: string[] = []
     const values: string[] = []
 
     if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
-      columns.push('local_tag_name like ?')
+      columns.push('local_tag_name LIKE ?')
       values.push('%' + queryDTO.keyword + '%')
     }
 
     if (columns.length == 1) {
-      where = ' where ' + columns.toString()
+      where = ' WHERE ' + columns.toString()
     } else if (columns.length > 1) {
-      where = ' where ' + columns.join(' and ')
+      where = ' WHERE ' + columns.join(' AND ')
     }
 
     const sql: string = selectFrom + where
@@ -55,7 +55,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
            FROM local_tag
            WHERE base_local_tag_id = @rootId
            UNION ALL
-           SELECT local_tag.*, treeNode.level + 1 as level
+           SELECT local_tag.*, treeNode.level + 1 AS level
            FROM local_tag
            JOIN treeNode ON local_tag.base_local_tag_id = treeNode.id
            WHERE treeNode.level < @depth
@@ -105,10 +105,10 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    */
   async listByWorksId(worksId: number): Promise<LocalTag[]> {
     const statement = `SELECT t1.*
-                       from local_tag t1
-                              inner join re_works_tag t2 on t1.id = t2.local_tag_id
-                              inner join works t3 on t2.works_id = t3.id
-                       where t3.id = ${worksId}`
+                       FROM local_tag t1
+                              INNER JOIN re_works_tag t2 ON t1.id = t2.local_tag_id
+                              INNER JOIN works t3 ON t2.works_id = t3.id
+                       WHERE t3.id = ${worksId}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
@@ -144,18 +144,19 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') &&
       Object.prototype.hasOwnProperty.call(page.query, 'worksId')
     ) {
-      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${page.query.worksId} and t1.id = re_works_tag.local_tag_id)`
+      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${page.query.worksId} AND t1.id = re_works_tag.local_tag_id)`
       if (page.query.boundOnWorksId) {
         whereClauses['worksId'] = existClause
       } else {
-        whereClauses['worksId'] = 'not ' + existClause
+        whereClauses['worksId'] = 'NOT ' + existClause
       }
     }
 
     const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    statement = await super.sorterAndPager(statement, whereClause, page, fromClause)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await super.sortAndPage(statement, whereClause, page, sort, fromClause)
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)

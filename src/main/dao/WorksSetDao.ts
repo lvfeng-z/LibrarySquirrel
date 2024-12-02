@@ -25,7 +25,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
       modifiedQuery = whereClauseAndQuery.query.toPlainParams()
     }
     const statement = `SELECT *
-                       from works_set ${whereClause}`
+                       FROM works_set ${whereClause}`
     const db = super.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
