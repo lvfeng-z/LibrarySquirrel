@@ -49,7 +49,7 @@ export default class SearchService {
     // 站点标签
     if (isNullish(query?.types) || query.types.includes(SearchType.SITE_TAG)) {
       const siteTagPage = innerPage.copy<SiteTagQueryDTO, SiteTag>()
-      siteTagPage.query = new LocalTagQueryDTO()
+      siteTagPage.query = new SiteTagQueryDTO()
       siteTagPage.query.siteTagName = query?.keyword
       siteTagPage.query.operators = { siteTagName: Operator.LIKE }
       const siteTagService = new SiteTagService()

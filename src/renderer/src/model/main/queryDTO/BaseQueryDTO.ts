@@ -1,4 +1,5 @@
 import { Id } from '@renderer/model/main/entity/BaseEntity.ts'
+import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import QuerySortOption from '@renderer/model/util/QuerySortOption.ts'
 
 export default class BaseQueryDTO {
@@ -23,6 +24,11 @@ export default class BaseQueryDTO {
   keyword?: string | undefined | null
 
   /**
+   * 指定比较符
+   */
+  operators?: { [key: string]: CrudOperator } | undefined
+
+  /**
    * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
    */
   sort?: QuerySortOption[]
@@ -33,12 +39,14 @@ export default class BaseQueryDTO {
       this.createTime = undefined
       this.updateTime = undefined
       this.keyword = undefined
+      this.operators = undefined
       this.sort = undefined
     } else {
       this.id = baseQueryDTO.id
       this.createTime = baseQueryDTO.createTime
       this.updateTime = baseQueryDTO.updateTime
       this.keyword = baseQueryDTO.keyword
+      this.operators = baseQueryDTO.operators
       this.sort = baseQueryDTO.sort
     }
   }

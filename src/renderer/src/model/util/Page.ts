@@ -1,7 +1,6 @@
-import BaseQueryDTO from '../main/queryDTO/BaseQueryDTO.ts'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
-export default class Page<Query extends BaseQueryDTO, Result> {
+export default class Page<Query, Result> {
   /**
    * 是否分页
    */
@@ -38,16 +37,45 @@ export default class Page<Query extends BaseQueryDTO, Result> {
       this.pageSize = 10
       this.pageCount = 0
       this.dataCount = 0
-      this.query = new BaseQueryDTO() as Query
-      this.data = []
+      this.query = undefined
+      this.data = undefined
     } else {
-      this.paging = isNullish(page.paging) ? true : page.paging
-      this.pageNumber = isNullish(page.pageNumber) ? 1 : page.pageNumber
-      this.pageSize = isNullish(page.pageSize) ? 10 : page.pageSize
-      this.pageCount = isNullish(page.pageCount) ? 0 : page.pageCount
-      this.dataCount = isNullish(page.dataCount) ? 0 : page.dataCount
-      this.query = isNullish(page.query) ? (new BaseQueryDTO() as Query) : page.query
-      this.data = isNullish(page.data) ? [] : page.data
+      this.paging = page.paging
+      this.pageNumber = page.pageNumber
+      this.pageSize = page.pageSize
+      this.pageCount = page.pageCount
+      this.dataCount = page.dataCount
+      this.query = Object.assign(new BaseQueryDTO(), page.query)
+      this.data = page.data
     }
+  }
+
+  /**
+   * 返回一个指定类型的PageModel
+   */
+  public transform<T>(): Page<Query, T> {
+    const result = new Page<Query, T>()
+    result.paging = this.paging
+    result.pageNumber = this.pageNumber
+    result.pageSize = this.pageSize
+    result.pageCount = this.pageCount
+    result.dataCount = this.dataCount
+    result.query = this.query
+    result.data = []
+
+    return result
+  }
+
+  public copy<NewQuery, NewResult>(): Page<NewQuery, NewResult> {
+    const result = new Page<NewQuery, NewResult>()
+    result.paging = this.paging
+    result.pageNumber = this.pageNumber
+    result.pageSize = this.pageSize
+    result.pageCount = this.pageCount
+    result.dataCount = this.dataCount
+    result.query = undefined
+    result.data = undefined
+
+    return result
   }
 }

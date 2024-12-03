@@ -1,7 +1,6 @@
 import SiteTag from '../model/entity/SiteTag.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
 import SiteTagDao from '../dao/SiteTagDao.ts'
-import ApiUtil from '../util/ApiUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
@@ -57,13 +56,13 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
     if (localTagId !== undefined) {
       if (siteTagIds != undefined && siteTagIds.length > 0) {
-        return ApiUtil.check((await this.dao.updateBindLocalTag(localTagId, siteTagIds)) > 0)
+        return (await this.dao.updateBindLocalTag(localTagId, siteTagIds)) > 0
       } else {
-        return ApiUtil.check(true)
+        return true
       }
     } else {
-      LogUtil.error('SiteTagService', 'localTagId意外为undefined')
-      return ApiUtil.error('localTagId意外为undefined')
+      LogUtil.error('SiteTagService', '站点标签绑定在本地标签上时，localTagId意外为undefined')
+      return false
     }
   }
 
@@ -75,7 +74,6 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     assertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签时，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
-    page.query = new SiteTagQueryDTO(page.query)
 
     const results = await this.dao.queryBoundOrUnboundToLocalTagPage(page)
     const selectItems = results.map(

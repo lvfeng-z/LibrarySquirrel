@@ -1,9 +1,10 @@
+import BaseQueryDTO from './BaseQueryDTO.ts'
+import LogUtil from '../../util/LogUtil.js'
+
 /**
  * QueryDTO
  * 站点标签
  */
-import BaseQueryDTO from './BaseQueryDTO.ts'
-
 export default class SiteTagQueryDTO extends BaseQueryDTO {
   /**
    * 标签来源站点id
@@ -53,6 +54,7 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
       this.sites = undefined
       this.bound = undefined
     } else {
+      LogUtil.info('test----', JSON.stringify(siteTagQueryDTO))
       super(siteTagQueryDTO)
       this.siteId = siteTagQueryDTO.siteId
       this.siteTagId = siteTagQueryDTO.siteTagId
