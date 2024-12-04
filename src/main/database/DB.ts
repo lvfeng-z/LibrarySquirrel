@@ -69,46 +69,94 @@ export default class DB {
     statement: string,
     ...params: BindParameters
   ): Promise<Database.RunResult> {
-    return await (await this.prepare<BindParameters, Result>(statement, false)).run(...params)
+    return await (await this.prepare<BindParameters, Result>(statement, false)).run(...params).catch((error) => {
+      LogUtil.error(this.caller, error)
+      throw error
+    })
   }
   public async get<BindParameters extends unknown[], Result = unknown>(
     statement: string,
     ...params: BindParameters
   ): Promise<Result | undefined> {
-    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.get(...params))
+    return this.prepare<BindParameters, Result>(statement, true)
+      .then((asyncStatement) => asyncStatement.get(...params))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async all<BindParameters extends unknown[], Result = unknown>(
     statement: string,
     ...params: BindParameters
   ): Promise<Result[]> {
-    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.all(...params))
+    return this.prepare<BindParameters, Result>(statement, true)
+      .then((asyncStatement) => asyncStatement.all(...params))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async iterate<BindParameters extends unknown[], Result = unknown>(
     statement: string,
     ...params: BindParameters
   ): Promise<IterableIterator<Result>> {
-    return (await this.prepare<BindParameters, Result>(statement, true)).iterate(...params)
+    return this.prepare<BindParameters, Result>(statement, true)
+      .then((r) => r.iterate(...params))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async pluck(statement: string, toggleState?: boolean): Promise<Database.Statement> {
-    return (await this.prepare(statement, true)).pluck(toggleState)
+    return this.prepare(statement, true)
+      .then((r) => r.pluck(toggleState))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async expand(statement: string, toggleState?: boolean): Promise<Database.Statement> {
-    return (await this.prepare(statement, true)).expand(toggleState)
+    return this.prepare(statement, true)
+      .then((r) => r.expand(toggleState))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async raw(statement: string, toggleState?: boolean): Promise<Database.Statement> {
-    return (await this.prepare(statement, true)).raw(toggleState)
+    return this.prepare(statement, true)
+      .then((r) => r.raw(toggleState))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async bind<BindParameters extends unknown[], Result = unknown>(
     statement: string,
     ...params: BindParameters
   ): Promise<Database.Statement<BindParameters, Result>> {
-    return this.prepare<BindParameters, Result>(statement, true).then((asyncStatement) => asyncStatement.bind(...params))
+    return this.prepare<BindParameters, Result>(statement, true)
+      .then((asyncStatement) => asyncStatement.bind(...params))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   public async columns(statement: string): Promise<Database.ColumnDefinition[]> {
-    return (await this.prepare(statement, true)).columns()
+    return this.prepare(statement, true)
+      .then((r) => r.columns())
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
   async safeIntegers(statement: string, toggleState?: boolean): Promise<Database.Statement> {
-    return (await this.prepare(statement, true)).safeIntegers(toggleState)
+    return this.prepare(statement, true)
+      .then((r) => r.safeIntegers(toggleState))
+      .catch((error) => {
+        LogUtil.error(this.caller, error)
+        throw error
+      })
   }
 
   /**
@@ -121,11 +169,16 @@ export default class DB {
     readOnly: boolean
   ): Promise<AsyncStatement<BindParameters, Result>> {
     const connectionPromise = this.acquire(readOnly)
-    return connectionPromise.then((connection) => {
-      LogUtil.debug(this.caller, `[PREPARE-SQL] ${statement}`)
-      const stmt = connection.prepare<BindParameters, Result>(statement)
-      return new AsyncStatement<BindParameters, Result>(stmt, this.holdingWriteLock, this.caller)
-    })
+    return connectionPromise
+      .then((connection) => {
+        LogUtil.debug(this.caller, `[PREPARE-SQL] ${statement}`)
+        const stmt = connection.prepare<BindParameters, Result>(statement)
+        return new AsyncStatement<BindParameters, Result>(stmt, this.holdingWriteLock, this.caller)
+      })
+      .catch((error) => {
+        LogUtil.error(this.caller, `[PREPARE-SQL] ${statement}`, error)
+        throw error
+      })
   }
 
   /**
