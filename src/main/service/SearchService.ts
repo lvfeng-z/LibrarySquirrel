@@ -83,7 +83,7 @@ export default class SearchService {
       queryProcesses.push(siteAuthorQuery)
     }
 
-    await Promise.allSettled(queryProcesses)
+    await Promise.all(queryProcesses)
     return result
   }
 }

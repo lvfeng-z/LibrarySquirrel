@@ -146,10 +146,10 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     let query: SiteAuthorQueryDTO | undefined
     if (notNullish(page.query)) {
       const whereClausesAndQuery = this.getWhereClause(page.query, 't1')
-      whereClause += 'WHERE ' + whereClausesAndQuery.whereClause
+      if (notNullish(whereClausesAndQuery.whereClause)) {
+        whereClause += whereClausesAndQuery.whereClause
+      }
       query = whereClausesAndQuery.query
-    } else {
-      query = page.query
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
