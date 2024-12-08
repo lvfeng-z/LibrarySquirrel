@@ -6,38 +6,38 @@ import { notNullish } from '../../utils/CommonUtil'
 const props = withDefaults(
   defineProps<{
     item: SelectItem
-    leftTagType?: 'success' | 'warning' | 'danger' | 'info'
-    rightTagType?: 'success' | 'warning' | 'danger' | 'info'
+    firstType?: 'success' | 'warning' | 'danger' | 'info'
+    secondType?: 'success' | 'warning' | 'danger' | 'info'
   }>(),
   {
-    leftTagType: 'success',
-    rightTagType: 'warning'
+    firstType: 'success',
+    secondType: 'warning'
   }
 )
 
 // 事件
-const emits = defineEmits(['leftClicked', 'rightClicked'])
+const emits = defineEmits(['firstClicked', 'secondClicked'])
 
 // 方法
 // 处理点击事件
-function handleClicked(right: boolean) {
-  if (right) {
-    emits('rightClicked')
+function handleClicked(first: boolean) {
+  if (first) {
+    emits('secondClicked')
   } else {
-    emits('leftClicked')
+    emits('firstClicked')
   }
 }
 </script>
 
 <template>
   <div class="double-check-tag">
-    <el-check-tag class="double-check-tag-tag" :type="props.leftTagType" checked @change="handleClicked(false)">
+    <el-check-tag class="double-check-tag-sub" :type="props.firstType" checked @change="handleClicked(false)">
       {{ props.item.label }}
     </el-check-tag>
     <el-check-tag
       v-if="notNullish(props.item.secondaryLabel)"
-      class="double-check-tag-tag"
-      :type="props.rightTagType"
+      class="double-check-tag-sub"
+      :type="props.secondType"
       checked
       @change="handleClicked(true)"
     >
@@ -54,7 +54,7 @@ function handleClicked(right: boolean) {
 }
 
 /* 使每个el-check-tag在容器允许的情况下自适应宽度 */
-.double-check-tag-tag {
+.double-check-tag-sub {
   flex-grow: 1; /* 自动填充可用空间 */
   text-align: center; /* 文本居中，以应对可能的换行情况 */
 }

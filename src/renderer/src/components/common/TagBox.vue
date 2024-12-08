@@ -1,20 +1,26 @@
 <script setup lang="ts">
-import DoubleCheckTag from './DoubleCheckTag.vue'
 import SelectItem from '../../model/util/SelectItem'
 import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
 import { isNullish, notNullish } from '../../utils/CommonUtil'
+import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 
 // props
-const props = defineProps<{
-  load?: () => Promise<unknown>
-  hasNextPage?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    load?: () => Promise<unknown>
+    hasNextPage?: boolean
+    tagCloseable?: boolean
+  }>(),
+  {
+    tagCloseable: false
+  }
+)
 
 // model
 const dataList = defineModel<SelectItem[]>('dataList', { default: () => [] })
 
 // 事件
-const emit = defineEmits(['tagLeftClicked', 'tagRightClicked'])
+const emit = defineEmits(['tagClicked', 'tagMainLabelClicked', 'tagSubLabelClicked', 'tagClose'])
 
 // watch
 // 监听dataList变化，更新是否充满的状态
@@ -75,12 +81,17 @@ async function handleDataScroll() {
   }
 }
 // 处理tag被点击事件
-function handleCheckTagClicked(tag: SelectItem, left: boolean) {
-  if (left) {
-    emit('tagLeftClicked', tag)
-  } else {
-    emit('tagRightClicked', tag)
-  }
+function handleTagClicked(tag: SelectItem) {
+  emit('tagClicked', tag)
+}
+function handleTagMainLabelClicked(tag: SelectItem) {
+  emit('tagMainLabelClicked', tag)
+}
+function handleTagSubLabelClicked(tag: SelectItem, index: number) {
+  emit('tagSubLabelClicked', tag, index)
+}
+function handleTagClose(tag: SelectItem) {
+  emit('tagClose', tag)
 }
 
 // 暴露
@@ -93,12 +104,15 @@ defineExpose({ scrollbar })
       <el-row ref="dataRow">
         <template v-for="item in dataList" :key="item.id">
           <div class="tag-box-select-item">
-            <double-check-tag
+            <segmented-tag
               :item="item"
-              @left-clicked="handleCheckTagClicked(item, true)"
-              @right-clicked="handleCheckTagClicked(item, false)"
+              :closeable="tagCloseable"
+              @clicked="handleTagClicked(item)"
+              @main-label-clicked="handleTagMainLabelClicked(item)"
+              @sub-label-clicked="(event) => handleTagSubLabelClicked(item, event)"
+              @close="handleTagClose(item)"
             >
-            </double-check-tag>
+            </segmented-tag>
           </div>
         </template>
       </el-row>

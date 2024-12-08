@@ -27,8 +27,10 @@ export default class SearchService {
    * 分页查询本地标签、站点标签、本地作者、站点作者
    * @param page
    */
-  public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>[]> {
-    const result: Page<SearchTypes, SelectItem>[] = []
+  public async querySearchConditionPage(
+    page: Page<SearchConditionQueryDTO, BaseEntity>
+  ): Promise<Map<SearchType, Page<SearchTypes, SelectItem>>> {
+    const result: Map<SearchType, Page<SearchTypes, SelectItem>> = new Map()
     const queryProcesses: Promise<unknown>[] = []
     const innerPage = new Page(page)
     const query = page.query
@@ -41,7 +43,7 @@ export default class SearchService {
       localTagPage.query.operators = { localTagName: Operator.LIKE }
       const localTagService = new LocalTagService()
       const localTagQuery = localTagService.querySelectItemPage(localTagPage).then((localTagResult) => {
-        result.push(localTagResult)
+        result.set(SearchType.LOCAL_TAG, localTagResult)
       })
       queryProcesses.push(localTagQuery)
     }
@@ -53,7 +55,9 @@ export default class SearchService {
       siteTagPage.query.siteTagName = query?.keyword
       siteTagPage.query.operators = { siteTagName: Operator.LIKE }
       const siteTagService = new SiteTagService()
-      const siteTagQuery = siteTagService.querySelectItemPage(siteTagPage).then((siteTagResult) => result.push(siteTagResult))
+      const siteTagQuery = siteTagService
+        .querySelectItemPage(siteTagPage)
+        .then((siteTagResult) => result.set(SearchType.SITE_TAG, siteTagResult))
       queryProcesses.push(siteTagQuery)
     }
 
@@ -66,7 +70,7 @@ export default class SearchService {
       const localAuthorService = new LocalAuthorService()
       const localAuthorQuery = localAuthorService
         .querySelectItemPage(localAuthorPage)
-        .then((localAuthorResult) => result.push(localAuthorResult))
+        .then((localAuthorResult) => result.set(SearchType.LOCAL_AUTHOR, localAuthorResult))
       queryProcesses.push(localAuthorQuery)
     }
 
@@ -79,7 +83,7 @@ export default class SearchService {
       const siteAuthorService = new SiteAuthorService()
       const siteAuthorQuery = siteAuthorService
         .querySelectItemPage(siteAuthorPage)
-        .then((siteAuthorResult) => result.push(siteAuthorResult))
+        .then((siteAuthorResult) => result.set(SearchType.SITE_AUTHOR, siteAuthorResult))
       queryProcesses.push(siteAuthorQuery)
     }
 

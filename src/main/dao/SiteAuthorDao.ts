@@ -165,13 +165,12 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           const selectItem = new SelectItem()
           selectItem.value = siteAuthorDTO.id
           selectItem.label = siteAuthorDTO.siteAuthorName
-          // 第二标签的值为站点名称
-          selectItem.secondaryLabel = siteAuthorDTO.site?.siteName
-          // 本地作者和站点信息保存在额外数据中
-          selectItem.extraData = {
-            localAuthor: siteAuthorDTO.localAuthor,
-            site: siteAuthorDTO.site
+          // 站点名称列入副标题中
+          if (notNullish(siteAuthorDTO.site?.siteName)) {
+            selectItem.subLabels = [siteAuthorDTO.site?.siteName]
           }
+          // 本地作者和站点信息保存在额外数据中
+          selectItem.extraData = { ...siteAuthorDTO }
           return selectItem
         })
         const result = page.transform<SelectItem>()

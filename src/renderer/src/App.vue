@@ -9,17 +9,21 @@ import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/ic
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
-import DoubleCheckTag from './components/common/DoubleCheckTag.vue'
 import SelectItem from './model/util/SelectItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import WorksDTO from './model/main/dto/WorksDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
-import { isNullish } from './utils/CommonUtil'
+import { arrayNotEmpty, isNullish, notNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
 import BaseEntity from '@renderer/model/main/entity/BaseEntity.ts'
+import { SearchType } from '@renderer/model/util/SearchCondition.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
+import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
+import SiteAuthorDTO from '@renderer/model/main/dto/SiteAuthorDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -56,7 +60,7 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 
 // 方法
 // 查询标签选择列表
-async function getTagSelectList(keyword) {
+async function getSearchItemSelectList(keyword) {
   loading = true
   try {
     const query = new SearchConditionQueryDTO()
@@ -65,8 +69,67 @@ async function getTagSelectList(keyword) {
     page.query = query
     const response = await apis.searchQuerySearchConditionPage(page)
     if (ApiUtil.check(response)) {
-      const r = ApiUtil.data(response)
-      console.log(r)
+      const data = ApiUtil.data<Map<SearchType, Page<BaseQueryDTO, SelectItem>>>(response)
+      const result: SelectItem[] = []
+      if (notNullish(data)) {
+        const localTagPage = data.get(SearchType.LOCAL_TAG)
+        const siteTagPage = data.get(SearchType.SITE_TAG)
+        const localAuthorPage = data.get(SearchType.LOCAL_AUTHOR)
+        const siteAuthorPage = data.get(SearchType.SITE_AUTHOR)
+        if (arrayNotEmpty(localTagPage?.data)) {
+          localTagPage.data.forEach((localTag) => {
+            localTag.extraData = { id: localTag.value }
+            localTag.value = String(SearchType.LOCAL_TAG) + localTag.value
+            if (arrayNotEmpty(localTag.subLabels)) {
+              localTag.subLabels.unshift('tag', 'local')
+            } else {
+              localTag.subLabels = ['tag', 'local']
+            }
+          })
+          result.push(...localTagPage.data)
+        }
+        if (arrayNotEmpty(siteTagPage?.data)) {
+          siteTagPage.data.forEach((siteTag) => {
+            siteTag.value = String(SearchType.SITE_TAG) + siteTag.value
+            if (arrayNotEmpty(siteTag.subLabels)) {
+              siteTag.subLabels.unshift('tag')
+              siteTag.subLabels.unshift('tag')
+            } else {
+              const siteName = (siteTag.extraData as SiteTagDTO).site?.siteName
+              if (notNullish(siteName)) {
+                siteTag.subLabels = ['tag', siteName]
+              } else {
+                siteTag.subLabels = ['tag', '?']
+              }
+            }
+          })
+          result.push(...siteTagPage.data)
+        }
+        if (arrayNotEmpty(localAuthorPage?.data)) {
+          localAuthorPage.data.forEach((localAuthor) => {
+            localAuthor.extraData = { id: localAuthor.value }
+            localAuthor.value = String(SearchType.LOCAL_AUTHOR) + localAuthor.value
+            if (arrayNotEmpty(localAuthor.subLabels)) {
+              localAuthor.subLabels.unshift('author', 'local')
+            } else {
+              localAuthor.subLabels = ['author', 'local']
+            }
+          })
+          result.push(...localAuthorPage.data)
+        }
+        if (arrayNotEmpty(siteAuthorPage?.data)) {
+          siteAuthorPage.data.forEach((siteAuthor) => {
+            siteAuthor.value = String(SearchType.SITE_AUTHOR) + siteAuthor.value
+            if (arrayNotEmpty(siteAuthor.subLabels)) {
+              siteAuthor.subLabels.unshift('author')
+            } else {
+              siteAuthor.subLabels = ['author']
+            }
+          })
+          result.push(...siteAuthorPage.data)
+        }
+      }
+      tagSelectList.value = result
     }
   } catch (e) {
     console.log(e)
@@ -214,7 +277,18 @@ async function handleTest() {
               <el-button @click="handleTest">-</el-button>
             </el-col>
             <el-col :span="21">
-              <el-select v-model="selectedTagList" multiple filterable remote :remote-method="getTagSelectList" :loading="loading">
+              <el-select
+                v-model="selectedTagList"
+                multiple
+                filterable
+                remote
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                :remote-method="getSearchItemSelectList"
+                :loading="loading"
+                :max-collapse-tags="3"
+              >
                 <el-option v-for="item in tagSelectList" :key="item.value" :label="item.label" :value="item">
                   <span style="float: left">{{ item.label }}</span>
                   <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">
@@ -222,7 +296,7 @@ async function handleTest() {
                   </span>
                 </el-option>
                 <template #tag>
-                  <double-check-tag v-for="item in selectedTagList" :key="item.value" :item="item"></double-check-tag>
+                  <segmented-tag v-for="item in selectedTagList" :key="item.value" :item="item"></segmented-tag>
                 </template>
               </el-select>
               <collapse-panel class="z-layer-3">

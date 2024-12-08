@@ -264,7 +264,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
       </div>
       <div class="exchange-box-upper-main">
         <div class="exchange-box-upper-toolbar z-layer-1">
-          <SearchToolbar
+          <search-toolbar
             :create-button="false"
             :drop-down-input-boxes="upperDropDownInputBoxes"
             :main-input-boxes="upperMainInputBoxes"
@@ -272,7 +272,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :params="upperSearchToolbarParams"
             @search-button-clicked="handleSearchButtonClicked(true)"
           >
-          </SearchToolbar>
+          </search-toolbar>
         </div>
         <tag-box
           ref="upperTagBox"
@@ -280,8 +280,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
           class="exchange-box-upper-tag-box"
           :load="() => requestNextPage(true)"
           :has-next-page="upperLoadMore"
-          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
-          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
+          @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
         />
       </div>
     </div>
@@ -302,14 +301,12 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
         <tag-box
           v-model:data-list="upperBufferData"
           class="exchange-box-middle-buffer-upper"
-          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
-          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
+          @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
         />
         <tag-box
           v-model:data-list="lowerBufferData"
           class="exchange-box-middle-buffer-lower"
-          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
-          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
+          @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
         />
       </div>
     </div>
@@ -324,11 +321,10 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
           class="exchange-box-lower-tag-box"
           :load="() => requestNextPage(false)"
           :has-next-page="lowerLoadMore"
-          @tag-left-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
-          @tag-right-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
+          @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
         />
         <div class="exchange-box-lower-toolbar z-layer-1">
-          <SearchToolbar
+          <search-toolbar
             :create-button="false"
             :drop-down-input-boxes="lowerDropDownInputBoxes"
             :main-input-boxes="lowerMainInputBoxes"
@@ -337,7 +333,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :params="lowerSearchToolbarParams"
             @search-button-clicked="handleSearchButtonClicked(false)"
           >
-          </SearchToolbar>
+          </search-toolbar>
         </div>
       </div>
     </div>

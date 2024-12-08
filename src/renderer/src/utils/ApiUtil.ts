@@ -9,10 +9,10 @@ function check(response: ApiResponse | undefined): boolean {
   }
 }
 
-function data(response: ApiResponse | undefined): unknown | undefined {
+function data<T>(response: ApiResponse | undefined): T | undefined {
   if (response) {
     if (response?.data) {
-      return response.data
+      return response.data as T
     } else {
       return undefined
     }

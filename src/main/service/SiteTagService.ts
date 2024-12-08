@@ -82,7 +82,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
           extraData: undefined,
           label: result.siteTagName,
           rootId: result.baseSiteTagId,
-          secondaryLabel: StringUtil.isBlank(result.site?.siteName) ? '?' : result.site?.siteName,
+          secondaryLabel: undefined,
+          subLabels: [StringUtil.isNotBlank(result.site?.siteName) ? result.site?.siteName : '?'],
           value: String(result.id)
         })
     )

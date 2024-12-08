@@ -153,10 +153,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       page.query = new LocalTagQueryDTO(page.query)
       page.query.operators = { localTagName: Operator.LIKE }
     }
-    return this.dao.querySelectItemPage(page, 'id', 'localTagName', secondaryLabelName).then((page) => {
-      page.data?.forEach((selectItem) => (selectItem.secondaryLabel = 'local'))
-      return page
-    })
+    return this.dao.querySelectItemPage(page, 'id', 'localTagName', secondaryLabelName)
   }
 
   /**

@@ -186,13 +186,12 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
           const selectItem = new SelectItem()
           selectItem.value = siteTagDTO.id
           selectItem.label = siteTagDTO.siteTagName
-          // 第二标签的值为站点名称
-          selectItem.secondaryLabel = siteTagDTO.site?.siteName
-          // 本地标签和站点信息保存在额外数据中
-          selectItem.extraData = {
-            localTag: siteTagDTO.localTag,
-            site: siteTagDTO.site
+          // 站点名称列入副标题中
+          if (notNullish(siteTagDTO.site?.siteName)) {
+            selectItem.subLabels = [siteTagDTO.site?.siteName]
           }
+          // 本地标签和站点信息保存在额外数据中
+          selectItem.extraData = { ...siteTagDTO }
           return selectItem
         })
         const result = page.transform<SelectItem>()
