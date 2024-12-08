@@ -101,21 +101,18 @@ defineExpose({ scrollbar })
 <template>
   <div class="tag-box-wrapper">
     <el-scrollbar ref="scrollbar" v-loading="loading" style="display: flex" @scroll="handleDataScroll">
-      <el-row ref="dataRow">
-        <template v-for="item in dataList" :key="item.id">
-          <div class="tag-box-select-item">
-            <segmented-tag
-              :item="item"
-              :closeable="tagCloseable"
-              @clicked="handleTagClicked(item)"
-              @main-label-clicked="handleTagMainLabelClicked(item)"
-              @sub-label-clicked="(event) => handleTagSubLabelClicked(item, event)"
-              @close="handleTagClose(item)"
-            >
-            </segmented-tag>
-          </div>
-        </template>
-      </el-row>
+      <div class="data-row" ref="dataRow">
+        <segmented-tag
+          v-for="(item, index) in dataList"
+          :key="index"
+          :item="item"
+          :closeable="tagCloseable"
+          @clicked="handleTagClicked(item)"
+          @main-label-clicked="handleTagMainLabelClicked(item)"
+          @sub-label-clicked="(event) => handleTagSubLabelClicked(item, event)"
+          @close="handleTagClose(item)"
+        />
+      </div>
     </el-scrollbar>
     <el-check-tag
       ref="loadMoreButton"
@@ -155,5 +152,14 @@ defineExpose({ scrollbar })
   height: 0;
   padding-top: 0;
   padding-bottom: 0;
+}
+.data-row {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  position: relative;
 }
 </style>

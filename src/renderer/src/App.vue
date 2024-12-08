@@ -23,7 +23,6 @@ import { SearchType } from '@renderer/model/util/SearchCondition.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
-import SiteAuthorDTO from '@renderer/model/main/dto/SiteAuthorDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -92,7 +91,6 @@ async function getSearchItemSelectList(keyword) {
           siteTagPage.data.forEach((siteTag) => {
             siteTag.value = String(SearchType.SITE_TAG) + siteTag.value
             if (arrayNotEmpty(siteTag.subLabels)) {
-              siteTag.subLabels.unshift('tag')
               siteTag.subLabels.unshift('tag')
             } else {
               const siteName = (siteTag.extraData as SiteTagDTO).site?.siteName

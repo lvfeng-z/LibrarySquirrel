@@ -19,6 +19,9 @@ const props = withDefaults(
 const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
   return isNullish(props.item.subLabels) ? 0 : props.item.subLabels.length
 })
+const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
+  return props.closeable ? 'calc(100% - 21px)' : '100%'
+})
 
 // 事件
 const emits = defineEmits(['clicked', 'mainLabelClicked', 'subLabelClicked', 'close'])
@@ -61,26 +64,29 @@ function handleCloseButtonClicked() {
           <span class="segmented-tag-sub-text segmented-tag-ellipsis">{{ item }}</span>
         </div>
       </template>
-      <div
-        v-if="closeable"
-        :class="{
-          'segmented-tag-sub-close-wrapper': true,
-          'segmented-tag-sub-label-dark': subLabelsLength % 2 === 0,
-          'segmented-tag-sub-label-light': !(subLabelsLength % 2 === 0)
-        }"
-      >
-        <button class="segmented-tag-sub-close" @click="handleCloseButtonClicked">
-          <el-icon color="rgb(166.2, 168.6, 173.4, 75%)"><Close /></el-icon>
-        </button>
-      </div>
+    </div>
+    <div
+      v-if="closeable"
+      :class="{
+        'segmented-tag-sub-close-wrapper': true,
+        'segmented-tag-sub-label-dark': subLabelsLength % 2 === 0,
+        'segmented-tag-sub-label-light': !(subLabelsLength % 2 === 0)
+      }"
+    >
+      <button class="segmented-tag-sub-close" @click="handleCloseButtonClicked">
+        <el-icon color="rgb(166.2, 168.6, 173.4, 75%)"><Close /></el-icon>
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
 .segmented-tag {
+  width: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; /* 在一行时左右对齐，换行时每个标签独占一行 */
   border-radius: 10px;
-  display: inline-block;
   max-width: 100%;
   cursor: pointer; /* 鼠标悬停时显示为手型指针 */
   overflow: hidden;
@@ -89,6 +95,7 @@ function handleCloseButtonClicked() {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  max-width: v-bind(tagLabelWrapperMaxWidth);
 }
 .segmented-tag-main-label {
   max-width: 100%;
@@ -96,7 +103,7 @@ function handleCloseButtonClicked() {
   transition-duration: 0.4s;
 }
 .segmented-tag-main-label:hover {
-  background-color: rgb(133.4, 206.2, 97.4, 50%);
+  background-color: rgb(133.4, 206.2, 97.4, 15%);
 }
 .segmented-tag-main-text {
   max-width: 100%;
