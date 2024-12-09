@@ -76,7 +76,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     }
 
     let statement = selectClause.concat(' ', whereClause)
-    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await super.sortAndPage(statement, whereClause, modifiedPage, sort)
 
     // 查询

@@ -155,7 +155,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await super.sortAndPage(statement, whereClause, page, sort, fromClause)
     const db = this.acquire()
     return db

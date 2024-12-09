@@ -375,7 +375,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = statement.concat(' ', whereClause)
     }
     // 拼接排序和分页字句
-    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, whereClause, modifiedPage, sort)
 
     // 查询
@@ -539,7 +539,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 分页和排序
-    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, whereClause, modifiedPage, sort)
 
     // 查询
@@ -818,7 +818,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param sortOption
    * @protected
    */
-  protected sorter(statement: string, sortOption?: QuerySortOption[]): string {
+  protected sorter(statement: string, sortOption?: QuerySortOption): string {
     if (sortOption === undefined) {
       return statement
     }
@@ -832,16 +832,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @protected
    * @param sortOption
    */
-  protected getSortClause(sortOption: QuerySortOption[]): string {
+  protected getSortClause(sortOption: QuerySortOption): string {
     let sortClauses: string
-    sortClauses = sortOption
-      .filter((item) => item.type === 'asc' || item.type === 'desc')
-      .map((item) => {
-        item.column = StringUtil.camelToSnakeCase(item.column)
-        return item.column.concat(' ', item.type)
+    sortClauses = Object.entries(sortOption)
+      .map(([column, asc]) => {
+        const tempColumn = StringUtil.camelToSnakeCase(column)
+        return tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
       })
       .join(',')
-    if (sortClauses !== '') {
+    if (StringUtil.isNotBlank(sortClauses)) {
       sortClauses = 'ORDER BY ' + sortClauses
     }
     return sortClauses
@@ -860,7 +859,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     statement: string,
     whereClause: string | undefined,
     page: Page<Query, Model>,
-    sort: QuerySortOption[],
+    sort: QuerySortOption,
     fromClause?: string
   ): Promise<string> {
     statement = this.sorter(statement, sort)

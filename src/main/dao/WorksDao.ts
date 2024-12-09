@@ -95,7 +95,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     }
 
     // 排序和分页子句
-    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, whereClause, modifiedPage, sort, fromClause)
 
     const query = modifiedPage.query

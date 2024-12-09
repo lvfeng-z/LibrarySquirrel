@@ -30,9 +30,9 @@ export default class BaseQueryDTO {
   operators?: { [key: string]: Operator } | undefined
 
   /**
-   * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
+   * 排序配置
    */
-  sort?: QuerySortOption[]
+  sort?: QuerySortOption | undefined
 
   constructor(baseQueryDTO?: BaseQueryDTO) {
     if (baseQueryDTO === undefined) {

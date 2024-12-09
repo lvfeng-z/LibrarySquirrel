@@ -26,10 +26,7 @@ onMounted(() => {
   if (isNullish(page.value.query)) {
     page.value.query = new LocalAuthorQueryDTO()
   }
-  page.value.query.sort = [
-    { column: 'updateTime', type: 'desc' },
-    { column: 'createTime', type: 'desc' }
-  ]
+  page.value.query.sort = { updateTime: false, createTime: false }
   localAuthorSearchTable.value.handleSearchButtonClicked()
 })
 

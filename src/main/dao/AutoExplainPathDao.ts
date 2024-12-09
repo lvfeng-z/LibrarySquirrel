@@ -38,7 +38,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
 
     // 查询和转换
     const resultPage = lodash.cloneDeep(page)
-    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await super.sortAndPage(statement, whereClause, resultPage, sort)
     const db = this.acquire()
     return db
