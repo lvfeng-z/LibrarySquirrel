@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import Page from '../../model/util/Page.ts'
+import IPage from '@renderer/model/util/IPage.ts'
+import Page from '@renderer/model/util/Page.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { Ref, ref, UnwrapRef } from 'vue'
-import ApiUtil from '../../utils/ApiUtil'
-import ApiResponse from '../../model/util/ApiResponse'
 import lodash from 'lodash'
 import SelectItem from '../../model/util/SelectItem'
+import { arrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
-  api: (params?: Page<BaseQueryDTO, SelectItem>) => ApiResponse
+  load: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
 }>()
 
 // 变量
-const page: Ref<UnwrapRef<Page<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
+const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 
 // 处理DataScroll滚动事件
 async function handleScroll(newQuery: boolean, query?: string) {
@@ -27,19 +27,16 @@ async function handleScroll(newQuery: boolean, query?: string) {
   //查询
   const tempPage = lodash.cloneDeep(page.value)
   tempPage.data = undefined
-  const response = (await props.api(tempPage)) as ApiResponse
+  const nextPage = await props.load(tempPage)
+  console.log(`加载${page.value.pageNumber}页`)
 
-  // 解析响应值
-  if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data(response) as Page<BaseQueryDTO, SelectItem>
-    // 没有新数据时，不再增加页码
-    if (newPage.data !== undefined && newPage.data.length > 0) {
-      page.value.pageNumber++
-      page.value.pageCount = newPage.pageCount
-      page.value.dataCount = newPage.dataCount
-      const oldData = page.value.data === undefined ? [] : page.value.data
-      page.value.data = [...oldData, ...newPage.data]
-    }
+  // 没有新数据时，不再增加页码
+  if (arrayNotEmpty(nextPage.data)) {
+    page.value.pageNumber++
+    page.value.pageCount = nextPage.pageCount
+    page.value.dataCount = nextPage.dataCount
+    const oldData = page.value.data === undefined ? [] : page.value.data
+    page.value.data = [...oldData, ...nextPage.data]
   }
 }
 </script>

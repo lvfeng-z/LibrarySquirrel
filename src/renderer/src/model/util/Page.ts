@@ -1,6 +1,7 @@
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import IPage from '@renderer/model/util/IPage.ts'
 
-export default class Page<Query, Result> {
+export default class Page<Query, Result> implements IPage<Query, Result> {
   /**
    * 是否分页
    */
@@ -30,7 +31,7 @@ export default class Page<Query, Result> {
    */
   data?: Result[]
 
-  constructor(page?: Page<Query, Result>) {
+  constructor(page?: IPage<Query, Result>) {
     if (page === undefined) {
       this.paging = true
       this.pageNumber = 1

@@ -12,6 +12,9 @@ import StringUtil from '../../utils/StringUtil'
 import Page from '../../model/util/Page.ts'
 import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQueryDTO'
 import { isNullish } from '../../utils/CommonUtil'
+import IPage from '@renderer/model/util/IPage.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -100,7 +103,7 @@ function getInputRowType(pathType: PathTypeEnum) {
   return inputType
 }
 // 获取输入栏数据接口
-function getInputRowDataApi(pathType: PathTypeEnum): () => ApiResponse {
+function getInputRowDataApi(pathType: PathTypeEnum): (page) => Promise<ApiResponse> {
   switch (pathType) {
     case PathTypeEnum.AUTHOR:
       return apis.localAuthorQuerySelectItemPage
@@ -110,6 +113,20 @@ function getInputRowDataApi(pathType: PathTypeEnum): () => ApiResponse {
       return apis.siteQuerySelectItemPage
     default:
       throw new Error('不支持的类型使用了getInputRowDataApi函数')
+  }
+}
+// 请求选择项分页接口
+async function requestApi(pathType: PathTypeEnum, page: IPage<BaseQueryDTO, SelectItem>): Promise<IPage<BaseQueryDTO, SelectItem>> {
+  const api = getInputRowDataApi(pathType)
+  const response = await api(page)
+
+  // 解析响应值
+  if (ApiUtil.check(response)) {
+    const nextPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
+    return isNullish(nextPage) ? page : nextPage
+  } else {
+    ApiUtil.failedMsg(response)
+    return page
   }
 }
 // 重置输入栏
@@ -153,7 +170,7 @@ function getOptions(str: string, reg: string) {
                   v-model="meaningOfPath.id"
                   remote
                   filterable
-                  :api="getInputRowDataApi(meaningOfPath.type)"
+                  :load="(page: IPage<BaseQueryDTO, SelectItem>) => requestApi(meaningOfPath.type, page)"
                 >
                 </auto-load-select>
                 <el-date-picker

@@ -205,8 +205,11 @@ async function requestWorks() {
 
   apis.worksQueryPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const works = (ApiUtil.data(response) as Page<WorksQueryDTO, WorksDTO>).data
-      imageList.value = works === undefined ? [] : works
+      const page = ApiUtil.data<Page<WorksQueryDTO, WorksDTO>>(response)
+      if (notNullish(page)) {
+        const works = page.data
+        imageList.value = isNullish(works) ? [] : works
+      }
     }
   })
 }
@@ -220,7 +223,7 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
 // test
 const showTestDialog = ref(false)
 async function handleTest() {
-  // showExplainPath.value = true
+  showExplainPath.value = true
   // showTestDialog.value = true
 }
 </script>
@@ -275,6 +278,29 @@ async function handleTest() {
               <el-button @click="handleTest">-</el-button>
             </el-col>
             <el-col :span="21">
+              <!--              <auto-load-select-->
+              <!--                :load="getSearchItemSelectList"-->
+              <!--                v-model="selectedTagList"-->
+              <!--                multiple-->
+              <!--                filterable-->
+              <!--                remote-->
+              <!--                collapse-tags-->
+              <!--                collapse-tags-tooltip-->
+              <!--                clearable-->
+              <!--                :remote-method="getSearchItemSelectList"-->
+              <!--                :loading="loading"-->
+              <!--                :max-collapse-tags="3"-->
+              <!--              >-->
+              <!--                <el-option v-for="item in tagSelectList" :key="item.value" :label="item.label" :value="item">-->
+              <!--                  <span style="float: left">{{ item.label }}</span>-->
+              <!--                  <span style="float: right; color: var(&#45;&#45;el-text-color-secondary); font-size: 13px">-->
+              <!--                    {{ item.secondaryLabel }}-->
+              <!--                  </span>-->
+              <!--                </el-option>-->
+              <!--                <template #tag>-->
+              <!--                  <segmented-tag v-for="item in selectedTagList" :key="item.value" :item="item"></segmented-tag>-->
+              <!--                </template>-->
+              <!--              </auto-load-select>-->
               <el-select
                 v-model="selectedTagList"
                 multiple
