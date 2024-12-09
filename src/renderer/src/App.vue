@@ -335,7 +335,7 @@ async function handleTest() {
   height: 100%;
 }
 .mainSpace {
-  width: 100%;
+  max-width: calc(100% - 63px);
   height: 100%;
   flex-grow: 1;
   background: #fafafa;
