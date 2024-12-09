@@ -31,7 +31,7 @@ watch(
       let notFull: boolean
       if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
         const scrollHeight = scrollbar.value.wrapRef.clientHeight
-        const dataRowHeight = dataRow.value.$el.offsetHeight
+        const dataRowHeight = dataRow.value.offsetHeight
         const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
         notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
       } else {
