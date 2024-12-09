@@ -41,6 +41,7 @@ export default class SearchService {
       localTagPage.query = new LocalTagQueryDTO()
       localTagPage.query.localTagName = query?.keyword
       localTagPage.query.operators = { localTagName: Operator.LIKE }
+      localTagPage.query.sort = { lastUse: false }
       const localTagService = new LocalTagService()
       const localTagQuery = localTagService.querySelectItemPage(localTagPage).then((localTagResult) => {
         result.set(SearchType.LOCAL_TAG, localTagResult)
@@ -54,6 +55,7 @@ export default class SearchService {
       siteTagPage.query = new SiteTagQueryDTO()
       siteTagPage.query.siteTagName = query?.keyword
       siteTagPage.query.operators = { siteTagName: Operator.LIKE }
+      siteTagPage.query.sort = { lastUse: false }
       const siteTagService = new SiteTagService()
       const siteTagQuery = siteTagService
         .querySelectItemPage(siteTagPage)
@@ -67,6 +69,7 @@ export default class SearchService {
       localAuthorPage.query = new LocalAuthorQueryDTO()
       localAuthorPage.query.localAuthorName = query?.keyword
       localAuthorPage.query.operators = { siteTagName: Operator.LIKE }
+      localAuthorPage.query.sort = { lastUse: false }
       const localAuthorService = new LocalAuthorService()
       const localAuthorQuery = localAuthorService
         .querySelectItemPage(localAuthorPage)
@@ -80,6 +83,7 @@ export default class SearchService {
       siteAuthorPage.query = new SiteAuthorQueryDTO()
       siteAuthorPage.query.siteAuthorName = query?.keyword
       siteAuthorPage.query.operators = { siteTagName: Operator.LIKE }
+      siteAuthorPage.query.sort = { lastUse: false }
       const siteAuthorService = new SiteAuthorService()
       const siteAuthorQuery = siteAuthorService
         .querySelectItemPage(siteAuthorPage)

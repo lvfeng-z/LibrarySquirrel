@@ -78,6 +78,20 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   }
 
   /**
+   * 更新最后使用的时间
+   * @param ids
+   */
+  public async updateLastUse(ids: number[]) {
+    const entities = ids.map((id) => {
+      const temp = new LocalTag()
+      temp.id = id
+      temp.lastUse = Date.now()
+      return temp
+    })
+    return this.dao.updateBatchById(entities)
+  }
+
+  /**
    * 分页查询
    * @param page
    */

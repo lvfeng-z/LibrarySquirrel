@@ -19,6 +19,7 @@ tables:
         constraint local_author_pk
         primary key autoincrement,
         local_author_name text,
+        last_use          integer,
         create_time       integer,
         update_time       integer
       );
@@ -35,6 +36,7 @@ tables:
         site_author_name_before text,
         introduce               text,
         local_author_id         integer,
+        last_use                integer,
         create_time             integer,
         update_time             integer,
         constraint site_author_unique_site_id_site_author_id
@@ -153,6 +155,7 @@ tables:
         primary key autoincrement,
         local_tag_name    text,
         base_local_tag_id integer,
+        last_use          integer,
         create_time       integer,
         update_time       integer
       );
@@ -169,6 +172,7 @@ tables:
         base_site_tag_id text,
         description      text,
         local_tag_id     integer,
+        last_use         integer,
         create_time      integer,
         update_time      integer,
         constraint site_tag_unique_site_id_site_tag_id

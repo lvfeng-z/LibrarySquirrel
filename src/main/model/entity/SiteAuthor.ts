@@ -28,6 +28,10 @@ export default class SiteAuthor extends BaseEntity {
    * 站点作者在本地对应的作者id
    */
   localAuthorId: number | undefined | null
+  /**
+   * 最后一次使用的时间
+   */
+  lastUse: number | null | undefined
 
   constructor(siteAuthor?: SiteAuthor) {
     if (siteAuthor === undefined) {
@@ -38,6 +42,7 @@ export default class SiteAuthor extends BaseEntity {
       this.siteAuthorNameBefore = undefined
       this.introduce = undefined
       this.localAuthorId = undefined
+      this.lastUse = undefined
     } else {
       super(siteAuthor)
       this.siteId = siteAuthor.siteId
@@ -50,6 +55,7 @@ export default class SiteAuthor extends BaseEntity {
       }
       this.introduce = siteAuthor.introduce
       this.localAuthorId = siteAuthor.localAuthorId
+      this.lastUse = siteAuthor.lastUse
     }
   }
 }

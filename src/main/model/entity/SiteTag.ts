@@ -33,6 +33,10 @@ export default class SiteTag extends BaseEntity {
    * 站点标签对应的本地标签id
    */
   localTagId: number | undefined | null
+  /**
+   * 最后一次使用的时间
+   */
+  lastUse: number | null | undefined
 
   constructor(siteTag?: SiteTag) {
     if (isNullish(siteTag)) {
@@ -44,6 +48,7 @@ export default class SiteTag extends BaseEntity {
       this.baseSiteTagId = undefined
       this.description = undefined
       this.localTagId = undefined
+      this.lastUse = undefined
     } else {
       super(siteTag)
       this.id = siteTag.id
@@ -53,6 +58,7 @@ export default class SiteTag extends BaseEntity {
       this.baseSiteTagId = siteTag.baseSiteTagId
       this.description = siteTag.description
       this.localTagId = siteTag.localTagId
+      this.lastUse = siteTag.lastUse
     }
   }
 }

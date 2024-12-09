@@ -124,6 +124,20 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   /**
+   * 更新最后使用的时间
+   * @param ids
+   */
+  public async updateLastUse(ids: number[]) {
+    const entities = ids.map((id) => {
+      const temp = new SiteTag()
+      temp.id = id
+      temp.lastUse = Date.now()
+      return temp
+    })
+    return this.dao.updateBatchById(entities)
+  }
+
+  /**
    * 分页查询SelectItem
    * @param page 分页查询参数
    */

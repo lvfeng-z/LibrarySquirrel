@@ -149,6 +149,20 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   }
 
   /**
+   * 更新最后使用的时间
+   * @param ids
+   */
+  public async updateLastUse(ids: number[]) {
+    const entities = ids.map((id) => {
+      const temp = new SiteAuthor()
+      temp.id = id
+      temp.lastUse = Date.now()
+      return temp
+    })
+    return this.dao.updateBatchById(entities)
+  }
+
+  /**
    * 根据站点作者id和站点id查询站点作者
    * @param siteAuthorId
    * @param siteId
