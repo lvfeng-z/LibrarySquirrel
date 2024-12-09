@@ -99,6 +99,7 @@ function handleCloseButtonClicked() {
 }
 .segmented-tag-main-label {
   max-width: 100%;
+  flex-grow: 1;
   background-color: rgb(133.4, 206.2, 97.4, 30%);
   transition-duration: 0.4s;
 }
@@ -110,6 +111,7 @@ function handleCloseButtonClicked() {
   margin-left: 6px;
   margin-right: 3px;
   font-weight: bolder;
+  text-align: center;
   color: rgb(78.1, 141.8, 46.6, 75%);
 }
 .segmented-tag-sub-label {
