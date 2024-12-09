@@ -815,14 +815,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 为查询语句附加排序字句（为第一个参数statement末端拼接排序字句并返回）
    * @param statement 需要分页的语句
-   * @param sortOption
+   * @param sortOption 排序配置
+   * @param alias 表别名
    * @protected
    */
-  protected sorter(statement: string, sortOption?: QuerySortOption): string {
+  protected sorter(statement: string, sortOption?: QuerySortOption, alias?: string): string {
     if (sortOption === undefined) {
       return statement
     }
-    const sortClause = this.getSortClause(sortOption)
+    const sortClause = this.getSortClause(sortOption, alias)
     statement = statement.concat(' ', sortClause)
     return statement
   }
@@ -831,13 +832,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 获取排序字句
    * @protected
    * @param sortOption
+   * @param alias
    */
-  protected getSortClause(sortOption: QuerySortOption): string {
+  protected getSortClause(sortOption: QuerySortOption, alias?: string): string {
     let sortClauses: string
     sortClauses = Object.entries(sortOption)
       .map(([column, asc]) => {
         const tempColumn = StringUtil.camelToSnakeCase(column)
-        return tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
+        return isNullish(alias) ? tempColumn + ' ' + (asc ? 'ASC' : 'DESC') : alias + '.' + tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
       })
       .join(',')
     if (StringUtil.isNotBlank(sortClauses)) {
@@ -853,6 +855,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param page 分页参数
    * @param sort 排序参数
    * @param fromClause 分页语句的from子句
+   * @param alias 表别名
    * @protected
    */
   protected async sortAndPage(
@@ -860,9 +863,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     whereClause: string | undefined,
     page: Page<Query, Model>,
     sort: QuerySortOption,
-    fromClause?: string
+    fromClause?: string,
+    alias?: string
   ): Promise<string> {
-    statement = this.sorter(statement, sort)
+    statement = this.sorter(statement, sort, alias)
     statement = await this.pager(statement, whereClause, page, fromClause)
     return statement
   }

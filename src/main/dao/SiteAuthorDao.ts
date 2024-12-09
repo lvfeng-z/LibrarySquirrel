@@ -154,7 +154,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
     const sort = isNullish(page.query?.sort) ? {} : page.query.sort
-    statement = await this.sortAndPage(statement, whereClause, page, sort, fromClause)
+    statement = await this.sortAndPage(statement, whereClause, page, sort, fromClause, 't1')
 
     const db = this.acquire()
     return db
