@@ -165,12 +165,11 @@ async function localAuthorQueryPage(page: Page<LocalAuthorQueryDTO, object>): Pr
 }
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
-  let page: Page<SiteQueryDTO, Site>
-  if (StringUtil.isBlank(query)) {
-    page = new Page()
-    page.query = { keyword: query }
+  const sitePage: Page<SiteQueryDTO, Site> = new Page()
+  if (StringUtil.isNotBlank(query)) {
+    sitePage.query = { siteName: query }
   }
-  const response = await apis.siteQuerySelectItemPage(query)
+  const response = await apis.siteQuerySelectItemPage(sitePage)
   if (ApiUtil.check(response)) {
     const page = ApiUtil.data(response) as Page<LocalAuthorQueryDTO, object>
     return page.data as TreeSelectNode[]

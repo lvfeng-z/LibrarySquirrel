@@ -191,12 +191,11 @@ async function requestLocalTagTree(query: number) {
 }
 // 请求站点分页列表的函数
 async function requestSiteQuerySelectItemPage(query: string) {
-  let sitePage: Page<SiteQueryDTO, Site>
-  if (StringUtil.isBlank(query)) {
-    sitePage = new Page()
-    sitePage.query = { keyword: query }
+  const sitePage: Page<SiteQueryDTO, Site> = new Page()
+  if (StringUtil.isNotBlank(query)) {
+    sitePage.query = { siteName: query }
   }
-  const response = await apis.siteQuerySelectItemPage(query)
+  const response = await apis.siteQuerySelectItemPage(sitePage)
   if (ApiUtil.check(response)) {
     const newSitePage = ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
     return newSitePage.data as TreeSelectNode[]
@@ -314,7 +313,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
           ></search-table>
         </div>
         <div class="tag-manage-right">
-          <ExchangeBox
+          <exchange-box
             ref="siteTagExchangeBox"
             upper-title="已绑定站点标签"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
@@ -328,7 +327,7 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
             required-static-params="localTagId"
             @exchange-confirm="handleExchangeBoxConfirm"
-          ></ExchangeBox>
+          ></exchange-box>
         </div>
       </div>
     </template>

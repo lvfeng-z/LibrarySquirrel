@@ -34,9 +34,15 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param page
    */
   public async querySelectItemPage(page: Page<SiteQueryDTO, Site>) {
-    if (page !== undefined && Object.hasOwnProperty.call(page, 'query')) {
-      page.query = new SiteQueryDTO(page.query)
+    if (isNullish(page)) {
+      page = new Page()
+    }
+    page.query = new SiteQueryDTO(page.query)
+    if (isNullish(page.query.operators)) {
       page.query.operators = { siteName: Operator.LIKE }
+    }
+    if (!Object.hasOwn(page.query.operators, 'siteName')) {
+      page.query.operators['siteName'] = Operator.LIKE
     }
     return this.dao.querySelectItemPage(page, 'id', 'SiteName')
   }
