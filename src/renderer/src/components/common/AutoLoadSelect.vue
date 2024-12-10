@@ -10,6 +10,7 @@ import { arrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 // props
 const props = defineProps<{
   load: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
+  paramName: string
 }>()
 
 // 变量
@@ -23,12 +24,12 @@ async function handleScroll(newQuery: boolean, query?: string) {
   }
 
   // 构建查询条件
-  page.value.query = { ...new BaseQueryDTO(), ...{ localAuthorName: query } }
+  page.value.query = new BaseQueryDTO()
+  page.value.query[props.paramName] = query
   //查询
   const tempPage = lodash.cloneDeep(page.value)
   tempPage.data = undefined
   const nextPage = await props.load(tempPage)
-  console.log(`加载${page.value.pageNumber}页`)
 
   // 没有新数据时，不再增加页码
   if (arrayNotEmpty(nextPage.data)) {

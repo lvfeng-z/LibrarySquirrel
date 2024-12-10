@@ -115,6 +115,19 @@ function getInputRowDataApi(pathType: PathTypeEnum): (page) => Promise<ApiRespon
       throw new Error('不支持的类型使用了getInputRowDataApi函数')
   }
 }
+// 获取输入栏数据接口
+function getInputRowApiParamName(pathType: PathTypeEnum): string {
+  switch (pathType) {
+    case PathTypeEnum.AUTHOR:
+      return 'localAuthorName'
+    case PathTypeEnum.TAG:
+      return 'localTagName'
+    case PathTypeEnum.SITE:
+      return 'siteName'
+    default:
+      throw new Error('不支持的类型使用了getInputRowDataApi函数')
+  }
+}
 // 请求选择项分页接口
 async function requestApi(pathType: PathTypeEnum, page: IPage<BaseQueryDTO, SelectItem>): Promise<IPage<BaseQueryDTO, SelectItem>> {
   const api = getInputRowDataApi(pathType)
@@ -171,6 +184,7 @@ function getOptions(str: string, reg: string) {
                   remote
                   filterable
                   :load="(page: IPage<BaseQueryDTO, SelectItem>) => requestApi(meaningOfPath.type, page)"
+                  :param-name="getInputRowApiParamName(meaningOfPath.type)"
                 >
                 </auto-load-select>
                 <el-date-picker
