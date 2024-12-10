@@ -93,6 +93,7 @@ async function nextPage(newSearch: boolean) {
         const oldData = page.value.data === undefined ? [] : page.value.data
         page.value.data = [...oldData, ...nextPage.data]
       }
+      hasNextPage.value = true
     } else {
       // 如果当前页超过总页数，当前页设为最大页数
       page.value.pageNumber = nextPage.pageCount

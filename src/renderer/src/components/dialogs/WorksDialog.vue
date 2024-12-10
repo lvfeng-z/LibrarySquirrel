@@ -9,6 +9,8 @@ import ExchangeBox from '@renderer/components/common/ExchangeBox.vue'
 import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
+import IPage from '@renderer/model/util/IPage.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -108,6 +110,16 @@ async function updateWorksLocalTags() {
     worksFullInfo.value.localTags = ApiUtil.data(response) as LocalTag[]
   }
 }
+// 请求作品绑定的本地标签接口的函数
+async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
+  const response = await apis.localTagQuerySelectItemPageByWorksId(page)
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    return isNullish(newPage) ? page : newPage
+  } else {
+    throw new Error()
+  }
+}
 </script>
 <template>
   <el-dialog ref="baseDialog" top="50px">
@@ -132,7 +144,7 @@ async function updateWorksLocalTags() {
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
             <el-button @click="localTagEdit = true"> 编辑 </el-button>
-            <tag-box v-model:data-list="localTags" />
+            <tag-box v-model:list="localTags" :paged="false" />
             <el-drawer v-model="localTagEdit" size="45%" :with-header="false" @open="localTagExchangeBox.refreshData()">
               <exchange-box
                 ref="localTagExchangeBox"
@@ -141,10 +153,10 @@ async function updateWorksLocalTags() {
                 lower-title="可选标签"
                 :upper-main-input-boxes="exchangeBoxMainInputBoxes"
                 :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-                :upper-search-api="apis.localTagQuerySelectItemPageByWorksId"
-                :lower-search-api="apis.localTagQuerySelectItemPageByWorksId"
-                :upper-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
-                :lower-api-static-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
+                :upper-load="requestWorksLocalTagPage"
+                :lower-load="requestWorksLocalTagPage"
+                :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
+                :lower-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
                 @exchange-confirm="handleLocalTagExchangeConfirm"
               />
             </el-drawer>
