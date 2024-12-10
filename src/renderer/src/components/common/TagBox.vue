@@ -1,47 +1,34 @@
 <script setup lang="ts">
 import SelectItem from '../../model/util/SelectItem'
 import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
-import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
+import IPage from '@renderer/model/util/IPage.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import Page from '@renderer/model/util/Page.ts'
+import lodash from 'lodash'
 
 // props
 const props = withDefaults(
   defineProps<{
-    load?: () => Promise<unknown>
-    hasNextPage?: boolean
+    paged: boolean
+    load?: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
     tagCloseable?: boolean
   }>(),
   {
+    paged: false,
     tagCloseable: false
   }
 )
 
 // model
-const dataList = defineModel<SelectItem[]>('dataList', { default: () => [] })
+// 分页参数
+const page = defineModel<IPage<BaseQueryDTO, SelectItem>>('page', { default: () => new Page<BaseQueryDTO, SelectItem>() })
+// 数据列表
+const list = defineModel<SelectItem[]>('list', { default: () => [] })
 
 // 事件
 const emit = defineEmits(['tagClicked', 'tagMainLabelClicked', 'tagSubLabelClicked', 'tagClose'])
-
-// watch
-// 监听dataList变化，更新是否充满的状态
-watch(
-  dataList,
-  () => {
-    nextTick(() => {
-      let notFull: boolean
-      if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
-        const scrollHeight = scrollbar.value.wrapRef.clientHeight
-        const dataRowHeight = dataRow.value.offsetHeight
-        const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
-        notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
-      } else {
-        notFull = true
-      }
-      showLoadButton.value = props.hasNextPage && notFull
-    })
-  },
-  { deep: true }
-)
 
 // 变量
 // el-scrollbar组件的实例
@@ -54,6 +41,8 @@ const loadMoreButton = ref()
 const loading: Ref<UnwrapRef<boolean>> = ref(false)
 // 显示加载按钮
 const showLoadButton: Ref<UnwrapRef<boolean>> = ref(false)
+// 是否有下一页
+const hasNextPage: Ref<UnwrapRef<boolean>> = ref(true)
 
 // 方法
 // 处理DataScroll滚动事件
@@ -73,12 +62,46 @@ async function handleDataScroll() {
 
       // 判断是否滚动到底部
       if (scrollTop + height + 1 >= scrollHeight) {
-        await props.load()
+        await nextPage(false)
       }
     }
   } finally {
     loading.value = false
   }
+}
+// 处理DataScroll滚动事件
+async function nextPage(newSearch: boolean) {
+  if (notNullish(props.load)) {
+    // 新查询重置查询条件
+    if (newSearch) {
+      page.value = new Page<BaseQueryDTO, SelectItem>()
+      page.value.data = []
+    } else {
+      page.value.pageNumber++
+    }
+
+    //查询
+    const tempPage = lodash.cloneDeep(page.value)
+    tempPage.data = undefined
+    const nextPage = await props.load(tempPage)
+
+    // 新数据加入到分页数据中
+    page.value.pageCount = nextPage.pageCount
+    page.value.dataCount = nextPage.dataCount
+    if (nextPage.pageNumber <= nextPage.pageCount) {
+      if (arrayNotEmpty(nextPage.data)) {
+        const oldData = page.value.data === undefined ? [] : page.value.data
+        page.value.data = [...oldData, ...nextPage.data]
+      }
+    } else {
+      // 如果当前页超过总页数，当前页设为最大页数
+      page.value.pageNumber = nextPage.pageCount
+      hasNextPage.value = false
+    }
+  }
+}
+async function newSearch() {
+  return nextPage(true)
 }
 // 处理tag被点击事件
 function handleTagClicked(tag: SelectItem) {
@@ -94,8 +117,29 @@ function handleTagClose(tag: SelectItem) {
   emit('tagClose', tag)
 }
 
+// watch
+// 监听page变化，更新是否充满的状态
+watch(
+  page,
+  () => {
+    nextTick(() => {
+      let notFull: boolean
+      if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
+        const scrollHeight = scrollbar.value.wrapRef.clientHeight
+        const dataRowHeight = dataRow.value.offsetHeight
+        const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
+        notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
+      } else {
+        notFull = true
+      }
+      showLoadButton.value = hasNextPage.value && notFull
+    })
+  },
+  { deep: true }
+)
+
 // 暴露
-defineExpose({ scrollbar })
+defineExpose({ scrollbar, newSearch })
 </script>
 
 <template>
@@ -103,7 +147,7 @@ defineExpose({ scrollbar })
     <el-scrollbar ref="scrollbar" v-loading="loading" style="display: flex" @scroll="handleDataScroll">
       <div class="data-row" ref="dataRow">
         <segmented-tag
-          v-for="(item, index) in dataList"
+          v-for="(item, index) in props.paged ? page.data : list"
           :key="index"
           :item="item"
           :closeable="tagCloseable"
@@ -121,7 +165,7 @@ defineExpose({ scrollbar })
         'tag-box-show-load-more': showLoadButton,
         'tag-box-hide-load-more': !showLoadButton
       }"
-      @click="notNullish(props.load) ? props.load() : undefined"
+      @click="nextPage(false)"
     >
       加载更多...
     </el-check-tag>
@@ -132,11 +176,6 @@ defineExpose({ scrollbar })
 .tag-box-wrapper {
   display: flex;
   flex-direction: column;
-}
-.tag-box-select-item {
-  margin: 2px;
-  word-break: break-all;
-  word-wrap: break-word;
 }
 .tag-box-load-more {
   transition:

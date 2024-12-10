@@ -21,6 +21,8 @@ import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
+import IPage from '@renderer/model/util/IPage.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -285,6 +287,16 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     siteTagExchangeBox.value.refreshData()
   }
 }
+// 请求站点标签分页选择列表的函数
+async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem>) {
+  const response = await apis.siteTagQueryBoundOrUnboundToLocalTagPage(page)
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    return isNullish(newPage) ? page : newPage
+  } else {
+    throw new Error()
+  }
+}
 </script>
 
 <template>
@@ -318,16 +330,16 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
             upper-title="已绑定站点标签"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteTagQueryBoundOrUnboundToLocalTagPage"
-            :upper-api-static-params="{ localTagId: localTagSelected.id, bound: true }"
+            :upper-load="requestSiteTagSelectItemPage"
+            :upper-load-fixed-params="{ localTagId: localTagSelected.id, bound: true }"
             lower-title="可绑定站点标签"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteTagQueryBoundOrUnboundToLocalTagPage"
-            :lower-api-static-params="{ localTagId: localTagSelected.id, bound: false }"
-            required-static-params="localTagId"
+            :lower-load="requestSiteTagSelectItemPage"
+            :lower-load-fixed-params="{ localTagId: localTagSelected.id, bound: false }"
+            required-fixed-params="localTagId"
             @exchange-confirm="handleExchangeBoxConfirm"
-          ></exchange-box>
+          />
         </div>
       </div>
     </template>

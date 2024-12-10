@@ -21,6 +21,8 @@ import StringUtil from '@renderer/utils/StringUtil.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import IPage from '@renderer/model/util/IPage.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
 onMounted(() => {
   if (isNullish(page.value.query)) {
@@ -259,6 +261,16 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     siteAuthorExchangeBox.value.refreshData()
   }
 }
+// 请求站点标签分页选择列表的函数
+async function requestSiteAuthorSelectItemPage(page: IPage<BaseQueryDTO, SelectItem>) {
+  const response = await apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage(page)
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    return isNullish(newPage) ? page : newPage
+  } else {
+    throw new Error()
+  }
+}
 </script>
 
 <template>
@@ -286,21 +298,21 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
           ></search-table>
         </div>
         <div class="local-author-manage-right">
-          <ExchangeBox
+          <exchange-box
             ref="siteAuthorExchangeBox"
             upper-title="已绑定站点作者"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-search-api="apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage"
-            :upper-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: true }"
+            :upper-load="requestSiteAuthorSelectItemPage"
+            :upper-load-fixed-params="{ localAuthorId: localAuthorSelected.id, bound: true }"
             lower-title="可绑定站点作者"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-search-api="apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage"
-            :lower-api-static-params="{ localAuthorId: localAuthorSelected.id, bound: false }"
-            required-static-params="localAuthorId"
+            :lower-load="requestSiteAuthorSelectItemPage"
+            :lower-load-fixed-params="{ localAuthorId: localAuthorSelected.id, bound: false }"
+            required-fixed-params="localAuthorId"
             @exchange-confirm="handleExchangeBoxConfirm"
-          ></ExchangeBox>
+          />
         </div>
       </div>
     </template>

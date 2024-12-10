@@ -3,13 +3,11 @@ import SearchToolbar from './SearchToolbar.vue'
 import { InputBox } from '../../model/util/InputBox'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
-import ApiUtil from '../../utils/ApiUtil'
-import ApiResponse from '../../model/util/ApiResponse'
-import Page from '../../model/util/Page.ts'
-import lodash from 'lodash'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import TagBox from './TagBox.vue'
-import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
+import IPage from '@renderer/model/util/IPage.ts'
+import Page from '@renderer/model/util/Page.ts'
 
 // props
 const props = defineProps<{
@@ -19,11 +17,11 @@ const props = defineProps<{
   upperDropDownInputBoxes?: InputBox[] // upper的SearchToolbar的下拉菜单参数
   lowerMainInputBoxes?: InputBox[] // lower的SearchToolbar的主菜单参数
   lowerDropDownInputBoxes?: InputBox[] // lower的SearchToolbar的下拉菜单参数
-  upperSearchApi: (args: object) => Promise<never> // upper的接口
-  lowerSearchApi: (args: object) => Promise<never> // lower的接口
-  upperApiStaticParams: object // upper的接口固定参数
-  lowerApiStaticParams: object // lower的接口固定参数
-  requiredStaticParams?: string // 必备的固定参数，固定参数中，此参数为undefined时禁用搜索按钮
+  upperLoad: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>> // upper的加载函数
+  lowerLoad: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>> // lower的加载函数
+  upperLoadFixedParams: object // upper的固定参数
+  lowerLoadFixedParams: object // lower的固定参数
+  requiredFixedParams?: string // 必备的固定参数，固定参数中此参数为undefined时禁用搜索按钮
 }>()
 
 // 事件
@@ -37,97 +35,38 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPageConfig: Ref<UnwrapRef<Page<BaseQueryDTO, object>>> = ref(new Page<BaseQueryDTO, object>()) // upper搜索栏分页参数
-const lowerPageConfig: Ref<UnwrapRef<Page<BaseQueryDTO, object>>> = ref(new Page<BaseQueryDTO, object>()) // lower搜索栏分页参数
-const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
-const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
+const upperPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // upper的数据
+const lowerPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // lower的数据
 const upperTagBox = ref() // upperTagBox组件的实例
 const lowerTagBox = ref() // lowerTagBox组件的实例
-// upper加载更多开关
-const upperLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
-  if (notNullish(upperTagBox.value)) {
-    return upperPageConfig.value.pageNumber < upperPageConfig.value.pageCount
-  } else {
-    return false
-  }
-})
-// lower加载更多开关
-const lowerLoadMore: Ref<UnwrapRef<boolean>> = computed(() => {
-  if (notNullish(lowerTagBox.value)) {
-    return lowerPageConfig.value.pageNumber < lowerPageConfig.value.pageCount
-  } else {
-    return false
-  }
-})
 const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
 const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
 // 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
 const searchButtonDisabled = computed(() =>
-  isNullish(props.requiredStaticParams)
+  isNullish(props.requiredFixedParams)
     ? false
     : !(
-        Object.prototype.hasOwnProperty.call(props.upperApiStaticParams, props.requiredStaticParams) &&
-        props.upperApiStaticParams[props.requiredStaticParams] != undefined
+        Object.prototype.hasOwnProperty.call(props.upperLoadFixedParams, props.requiredFixedParams) &&
+        props.upperLoadFixedParams[props.requiredFixedParams] != undefined
       )
 )
 
 // 方法
-// 请求查询接口
-async function requestApiAndGetData(upperOrLower: boolean): Promise<SelectItem[] | undefined> {
-  // 请求api
-  let response: ApiResponse
-  if (upperOrLower) {
-    upperPageConfig.value.query = {
-      ...new BaseQueryDTO(),
-      ...upperSearchToolbarParams.value,
-      ...props.upperApiStaticParams
-    }
-    const tempPage = lodash.cloneDeep(upperPageConfig.value)
-    response = await props.upperSearchApi(tempPage)
-  } else {
-    lowerPageConfig.value.query = {
-      ...new BaseQueryDTO(),
-      ...lowerSearchToolbarParams.value,
-      ...props.lowerApiStaticParams
-    }
-    const tempPage = lodash.cloneDeep(lowerPageConfig.value)
-    response = await props.lowerSearchApi(tempPage)
-  }
-
-  // 解析并返回数据，同时把分页参数赋值给响应式变量
-  if (ApiUtil.check(response)) {
-    const page = ApiUtil.data(response) as Page<BaseQueryDTO, SelectItem>
-    if (upperOrLower) {
-      upperPageConfig.value = new Page(page)
-    } else {
-      lowerPageConfig.value = new Page(page)
-    }
-    return page.data === undefined ? [] : page.data
-  } else {
-    ApiUtil.msg(response)
-    return undefined
-  }
-}
 // 处理搜索按钮点击事件
 async function handleSearchButtonClicked(upperOrLower: boolean) {
-  // 点击搜索按钮后，分页和滚动条位置重置
-  if (upperOrLower) {
-    upperPageConfig.value = new Page<BaseQueryDTO, object>()
-  } else if (!upperOrLower) {
-    lowerPageConfig.value = new Page<BaseQueryDTO, object>()
-  }
+  // 点击搜索按钮后，分页和滚动条位置重置，已经存在于buffer中的数据从分页数据中清除
   resetScrollBarPosition(upperOrLower)
-
-  const newData = await requestApiAndGetData(upperOrLower)
-
-  if (newData) {
-    const leached = leachBufferData(newData, upperOrLower)
-    if (upperOrLower) {
-      upperData.value = leached
-    } else {
-      lowerData.value = leached
+  if (upperOrLower) {
+    await upperTagBox.value.newSearch()
+    if (notNullish(upperPage.value.data)) {
+      upperPage.value.data = leachBufferData(upperPage.value.data, upperOrLower)
+    }
+  } else {
+    await lowerTagBox.value.newSearch()
+    if (notNullish(lowerPage.value.data)) {
+      lowerPage.value.data = leachBufferData(lowerPage.value.data, upperOrLower)
     }
   }
 }
@@ -135,21 +74,21 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 function handleCheckTagClick(tag: SelectItem, type: 'upperData' | 'upperBuffer' | 'lowerData' | 'lowerBuffer') {
   switch (type) {
     case 'upperData':
-      exchange(upperData.value, upperBufferData.value, tag)
+      exchange(upperPage.value.data as SelectItem[], upperBufferData.value, tag)
       upperBufferId.value.add(tag.value)
       break
     case 'upperBuffer':
-      exchange(upperBufferData.value, upperData.value, tag)
+      exchange(upperBufferData.value, upperPage.value.data as SelectItem[], tag)
       if (upperBufferId.value.has(tag.value)) {
         upperBufferId.value.delete(tag.value)
       }
       break
     case 'lowerData':
-      exchange(lowerData.value, lowerBufferData.value, tag)
+      exchange(lowerPage.value.data as SelectItem[], lowerBufferData.value, tag)
       lowerBufferId.value.add(tag.value)
       break
     case 'lowerBuffer':
-      exchange(lowerBufferData.value, lowerData.value, tag)
+      exchange(lowerBufferData.value, lowerPage.value.data as SelectItem[], tag)
       if (lowerBufferId.value.has(tag.value)) {
         lowerBufferId.value.delete(tag.value)
       }
@@ -172,10 +111,10 @@ function handleExchangeConfirm() {
 }
 // 处理清空按钮点击
 function handleClearButtonClicked() {
-  upperData.value.push(...upperBufferData.value)
+  ;(upperPage.value.data as SelectItem[]).push(...upperBufferData.value)
   upperBufferData.value = []
   upperBufferId.value.clear()
-  lowerData.value.push(...lowerBufferData.value)
+  ;(lowerPage.value.data as SelectItem[]).push(...lowerBufferData.value)
   lowerBufferData.value = []
   lowerBufferId.value.clear()
 }
@@ -183,50 +122,40 @@ function handleClearButtonClicked() {
 function refreshData() {
   upperBufferData.value = []
   upperBufferId.value.clear()
-  upperPageConfig.value = new Page()
   lowerBufferData.value = []
   lowerBufferId.value.clear()
-  lowerPageConfig.value = new Page()
   resetScrollBarPosition()
-
-  requestApiAndGetData(true).then((response) => {
-    upperData.value = response == undefined ? [] : response
-  })
-  requestApiAndGetData(false).then((response) => {
-    lowerData.value = response == undefined ? [] : response
-  })
+  upperTagBox.value.newSearch()
+  lowerTagBox.value.newSearch()
 }
 // 请求DataScroll下一页数据
-async function requestNextPage(upperOrLower: boolean) {
-  // 加载下一页数据
-  if (upperOrLower) {
-    if (upperPageConfig.value.pageNumber >= upperPageConfig.value.pageCount) {
-      return
-    }
-    upperPageConfig.value.pageNumber++
-  } else {
-    if (lowerPageConfig.value.pageNumber >= lowerPageConfig.value.pageCount) {
-      return
-    }
-    lowerPageConfig.value.pageNumber++
-  }
-
+async function requestNextPage(
+  page: IPage<BaseQueryDTO, SelectItem>,
+  upperOrLower: boolean
+): Promise<IPage<BaseQueryDTO, SelectItem>> {
   // 请求接口
-  let increment = await requestApiAndGetData(upperOrLower)
-  // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
-  if (notNullish(increment) && increment.length > 0) {
-    increment = leachBufferData(increment, upperOrLower)
-    if (upperOrLower) {
-      upperData.value = [...upperData.value, ...increment]
-    } else {
-      lowerData.value = [...lowerData.value, ...increment]
+  let newPage: IPage<BaseQueryDTO, SelectItem>
+  if (upperOrLower) {
+    page.query = {
+      ...new BaseQueryDTO(),
+      ...props.upperLoadFixedParams,
+      ...upperSearchToolbarParams.value
     }
+    newPage = await props.upperLoad(page)
   } else {
-    if (upperOrLower) {
-      upperPageConfig.value.pageNumber--
-    } else {
-      lowerPageConfig.value.pageNumber--
+    page.query = {
+      ...new BaseQueryDTO(),
+      ...props.lowerLoadFixedParams,
+      ...lowerSearchToolbarParams.value
     }
+    newPage = await props.lowerLoad(page)
+  }
+  // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
+  if (arrayNotEmpty(newPage.data)) {
+    newPage.data = leachBufferData(newPage.data, upperOrLower)
+    return newPage
+  } else {
+    return newPage
   }
 }
 // 滚动条位置重置(移动至顶端)
@@ -276,10 +205,10 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
         </div>
         <tag-box
           ref="upperTagBox"
-          v-model:data-list="upperData"
+          v-model:page="upperPage"
           class="exchange-box-upper-tag-box"
-          :load="() => requestNextPage(true)"
-          :has-next-page="upperLoadMore"
+          :paged="true"
+          :load="(page) => requestNextPage(page, true)"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
         />
       </div>
@@ -299,13 +228,15 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
       </div>
       <div class="exchange-box-middle-buffer">
         <tag-box
-          v-model:data-list="upperBufferData"
+          v-model:list="upperBufferData"
           class="exchange-box-middle-buffer-upper"
+          :paged="false"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
         />
         <tag-box
-          v-model:data-list="lowerBufferData"
+          v-model:list="lowerBufferData"
           class="exchange-box-middle-buffer-lower"
+          :paged="false"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
         />
       </div>
@@ -317,10 +248,10 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
       <div class="exchange-box-lower-main">
         <tag-box
           ref="lowerTagBox"
-          v-model:data-list="lowerData"
+          v-model:page="lowerPage"
           class="exchange-box-lower-tag-box"
-          :load="() => requestNextPage(false)"
-          :has-next-page="lowerLoadMore"
+          :paged="true"
+          :load="(page) => requestNextPage(page, false)"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
         />
         <div class="exchange-box-lower-toolbar z-layer-1">
