@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { onMounted, Ref, ref, UnwrapRef } from 'vue'
 import BaseSubpage from './BaseSubpage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
@@ -235,8 +235,6 @@ function handleRowButtonClicked(op: DataTableOperationResponse) {
 async function handleLocalTagSelectionChange(selections: object[]) {
   if (selections.length > 0) {
     localTagSelected.value = selections[0]
-    // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
-    await nextTick()
     siteTagExchangeBox.value.refreshData()
   } else {
     localTagSelected.value = {}
@@ -289,13 +287,14 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
 }
 // 请求站点标签分页选择列表的函数
 async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem>) {
-  const response = await apis.siteTagQueryBoundOrUnboundToLocalTagPage(page)
-  if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
-    return isNullish(newPage) ? page : newPage
-  } else {
-    throw new Error()
-  }
+  return apis.siteTagQueryBoundOrUnboundToLocalTagPage(page).then((response) => {
+    if (ApiUtil.check(response)) {
+      const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+      return isNullish(newPage) ? page : newPage
+    } else {
+      throw new Error()
+    }
+  })
 }
 </script>
 

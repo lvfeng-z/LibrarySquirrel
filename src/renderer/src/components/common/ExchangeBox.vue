@@ -35,8 +35,10 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // upper的数据
-const lowerPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // lower的数据
+const upperPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // upper的分页
+const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
+const lowerPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // lower的分页
+const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperTagBox = ref() // upperTagBox组件的实例
 const lowerTagBox = ref() // lowerTagBox组件的实例
 const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
@@ -60,13 +62,13 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   resetScrollBarPosition(upperOrLower)
   if (upperOrLower) {
     await upperTagBox.value.newSearch()
-    if (notNullish(upperPage.value.data)) {
-      upperPage.value.data = leachBufferData(upperPage.value.data, upperOrLower)
+    if (notNullish(upperData.value)) {
+      upperData.value = leachBufferData(upperData.value, upperOrLower)
     }
   } else {
     await lowerTagBox.value.newSearch()
-    if (notNullish(lowerPage.value.data)) {
-      lowerPage.value.data = leachBufferData(lowerPage.value.data, upperOrLower)
+    if (notNullish(lowerData.value)) {
+      lowerData.value = leachBufferData(lowerData.value, upperOrLower)
     }
   }
 }
@@ -74,21 +76,21 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
 function handleCheckTagClick(tag: SelectItem, type: 'upperData' | 'upperBuffer' | 'lowerData' | 'lowerBuffer') {
   switch (type) {
     case 'upperData':
-      exchange(upperPage.value.data as SelectItem[], upperBufferData.value, tag)
+      exchange(upperData.value, upperBufferData.value, tag)
       upperBufferId.value.add(tag.value)
       break
     case 'upperBuffer':
-      exchange(upperBufferData.value, upperPage.value.data as SelectItem[], tag)
+      exchange(upperBufferData.value, upperData.value, tag)
       if (upperBufferId.value.has(tag.value)) {
         upperBufferId.value.delete(tag.value)
       }
       break
     case 'lowerData':
-      exchange(lowerPage.value.data as SelectItem[], lowerBufferData.value, tag)
+      exchange(lowerData.value, lowerBufferData.value, tag)
       lowerBufferId.value.add(tag.value)
       break
     case 'lowerBuffer':
-      exchange(lowerBufferData.value, lowerPage.value.data as SelectItem[], tag)
+      exchange(lowerBufferData.value, lowerData.value, tag)
       if (lowerBufferId.value.has(tag.value)) {
         lowerBufferId.value.delete(tag.value)
       }
@@ -111,10 +113,10 @@ function handleExchangeConfirm() {
 }
 // 处理清空按钮点击
 function handleClearButtonClicked() {
-  ;(upperPage.value.data as SelectItem[]).push(...upperBufferData.value)
+  upperData.value.push(...upperBufferData.value)
   upperBufferData.value = []
   upperBufferId.value.clear()
-  ;(lowerPage.value.data as SelectItem[]).push(...lowerBufferData.value)
+  lowerData.value.push(...lowerBufferData.value)
   lowerBufferData.value = []
   lowerBufferId.value.clear()
 }
@@ -134,29 +136,31 @@ async function requestNextPage(
   upperOrLower: boolean
 ): Promise<IPage<BaseQueryDTO, SelectItem>> {
   // 请求接口
-  let newPage: IPage<BaseQueryDTO, SelectItem>
+  let newPagePromise: Promise<IPage<BaseQueryDTO, SelectItem>>
   if (upperOrLower) {
     page.query = {
       ...new BaseQueryDTO(),
       ...props.upperLoadFixedParams,
       ...upperSearchToolbarParams.value
     }
-    newPage = await props.upperLoad(page)
+    newPagePromise = props.upperLoad(page)
   } else {
     page.query = {
       ...new BaseQueryDTO(),
       ...props.lowerLoadFixedParams,
       ...lowerSearchToolbarParams.value
     }
-    newPage = await props.lowerLoad(page)
+    newPagePromise = props.lowerLoad(page)
   }
   // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
-  if (arrayNotEmpty(newPage.data)) {
-    newPage.data = leachBufferData(newPage.data, upperOrLower)
-    return newPage
-  } else {
-    return newPage
-  }
+  return newPagePromise.then((newPage) => {
+    if (arrayNotEmpty(newPage.data)) {
+      newPage.data = leachBufferData(newPage.data, upperOrLower)
+      return newPage
+    } else {
+      return newPage
+    }
+  })
 }
 // 滚动条位置重置(移动至顶端)
 function resetScrollBarPosition(upperOrLower?: boolean) {
@@ -206,8 +210,8 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
         <tag-box
           ref="upperTagBox"
           v-model:page="upperPage"
+          v-model:data="upperData"
           class="exchange-box-upper-tag-box"
-          :paged="true"
           :load="(page) => requestNextPage(page, true)"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
         />
@@ -228,15 +232,13 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
       </div>
       <div class="exchange-box-middle-buffer">
         <tag-box
-          v-model:list="upperBufferData"
+          v-model:data="upperBufferData"
           class="exchange-box-middle-buffer-upper"
-          :paged="false"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
         />
         <tag-box
-          v-model:list="lowerBufferData"
+          v-model:data="lowerBufferData"
           class="exchange-box-middle-buffer-lower"
-          :paged="false"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerBuffer')"
         />
       </div>
@@ -249,8 +251,8 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
         <tag-box
           ref="lowerTagBox"
           v-model:page="lowerPage"
+          v-model:data="lowerData"
           class="exchange-box-lower-tag-box"
-          :paged="true"
           :load="(page) => requestNextPage(page, false)"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
         />

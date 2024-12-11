@@ -11,21 +11,19 @@ import lodash from 'lodash'
 // props
 const props = withDefaults(
   defineProps<{
-    paged: boolean
     load?: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
     tagCloseable?: boolean
   }>(),
   {
-    paged: false,
     tagCloseable: false
   }
 )
 
 // model
 // 分页参数
-const page = defineModel<IPage<BaseQueryDTO, SelectItem>>('page', { default: () => new Page<BaseQueryDTO, SelectItem>() })
+const page = defineModel<IPage<BaseQueryDTO, SelectItem>>('page', { default: new Page<BaseQueryDTO, SelectItem>() })
 // 数据列表
-const list = defineModel<SelectItem[]>('list', { default: () => [] })
+const data = defineModel<SelectItem[]>('data', { default: [] })
 
 // 事件
 const emit = defineEmits(['tagClicked', 'tagMainLabelClicked', 'tagSubLabelClicked', 'tagClose'])
@@ -42,7 +40,7 @@ const loading: Ref<UnwrapRef<boolean>> = ref(false)
 // 显示加载按钮
 const showLoadButton: Ref<UnwrapRef<boolean>> = ref(false)
 // 是否有下一页
-const hasNextPage: Ref<UnwrapRef<boolean>> = ref(true)
+const hasNextPage: Ref<UnwrapRef<boolean>> = ref(false)
 
 // 方法
 // 处理DataScroll滚动事件
@@ -75,7 +73,9 @@ async function nextPage(newSearch: boolean) {
     // 新查询重置查询条件
     if (newSearch) {
       page.value = new Page<BaseQueryDTO, SelectItem>()
-      page.value.data = []
+      data.value = []
+      // 这里需要等待nextTick才能获取到page的更新，不知道什么原因
+      await nextTick()
     } else {
       page.value.pageNumber++
     }
@@ -90,13 +90,12 @@ async function nextPage(newSearch: boolean) {
     page.value.dataCount = nextPage.dataCount
     if (nextPage.pageNumber <= nextPage.pageCount) {
       if (arrayNotEmpty(nextPage.data)) {
-        const oldData = page.value.data === undefined ? [] : page.value.data
-        page.value.data = [...oldData, ...nextPage.data]
+        data.value.push(...nextPage.data)
       }
-      hasNextPage.value = true
+      hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
     } else {
       // 如果当前页超过总页数，当前页设为最大页数
-      page.value.pageNumber = nextPage.pageCount
+      page.value.pageNumber = nextPage.pageCount <= 0 ? 1 : nextPage.pageCount
       hasNextPage.value = false
     }
   }
@@ -121,7 +120,7 @@ function handleTagClose(tag: SelectItem) {
 // watch
 // 监听page变化，更新是否充满的状态
 watch(
-  page,
+  data,
   () => {
     nextTick(() => {
       let notFull: boolean
@@ -148,7 +147,7 @@ defineExpose({ scrollbar, newSearch })
     <el-scrollbar ref="scrollbar" v-loading="loading" style="display: flex" @scroll="handleDataScroll">
       <div class="data-row" ref="dataRow">
         <segmented-tag
-          v-for="(item, index) in props.paged ? page.data : list"
+          v-for="(item, index) in data"
           :key="index"
           :item="item"
           :closeable="tagCloseable"
