@@ -133,9 +133,6 @@ const api = {
   siteTagQueryBoundOrUnboundToLocalTagPage: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-queryBoundOrUnboundToLocalTagPage', args)
   },
-  siteTagGetSelectList: (args) => {
-    return Electron.ipcRenderer.invoke('siteTag-getSelectList', args)
-  },
 
   // Task
   taskCreateTask: (args) => {

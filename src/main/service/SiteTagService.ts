@@ -93,10 +93,6 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     return resultPage
   }
 
-  async getSelectList(queryDTO: SiteTagQueryDTO) {
-    return await this.dao.listSelectItems(queryDTO)
-  }
-
   /**
    * 关联作品和标签
    * @param siteTags

@@ -327,15 +327,6 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('siteTag-getSelectList', async (_event, args) => {
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.getSelectList(args))
-    } catch (error) {
-      LogUtil.error('ServiceExposer', error)
-      return ApiUtil.error(String(error))
-    }
-  })
 
   // TaskService
   Electron.ipcMain.handle('task-createTask', async (_event, args) => {

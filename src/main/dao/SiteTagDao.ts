@@ -109,45 +109,6 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   }
 
   /**
-   * 查询SelectItem列表
-   * @param queryDTO
-   */
-  public async listSelectItems(queryDTO: SiteTagQueryDTO): Promise<SelectItem[]> {
-    const selectFrom = 'SELECT id AS value, site_tag_name AS label FROM site_tag'
-    let where = ''
-    const columns: string[] = []
-    const values: string[] = []
-
-    if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
-      columns.push('site_tag_name LIKE ?')
-      values.push('%' + queryDTO.keyword + '%')
-    }
-    if (queryDTO.sites != undefined && queryDTO.sites.length > 0) {
-      columns.push('site_id in (?)') // todo 只用逗号隔开不行
-      values.push(queryDTO.sites.toString())
-    }
-    if (queryDTO.localTagId != undefined) {
-      columns.push('local_tag_id = ?')
-      values.push(String(queryDTO.localTagId))
-    }
-
-    if (columns.length == 1) {
-      where = ' WHERE ' + columns.toString()
-    } else if (columns.length > 1) {
-      where = ' WHERE ' + columns.join(' AND ')
-    }
-
-    const sql: string = selectFrom + where
-
-    const db = super.acquire()
-    return db.all<unknown[], SelectItem>(sql, values).finally(() => {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    })
-  }
-
-  /**
    * 分页查询SelectItem
    * @param page 分页查询参数
    */
