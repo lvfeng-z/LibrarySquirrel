@@ -144,7 +144,7 @@ async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
             <el-button @click="localTagEdit = true"> 编辑 </el-button>
-            <tag-box v-model:list="localTags" :paged="false" />
+            <tag-box v-model:data="localTags" />
             <el-drawer v-model="localTagEdit" size="45%" :with-header="false" @open="localTagExchangeBox.refreshData()">
               <exchange-box
                 ref="localTagExchangeBox"
