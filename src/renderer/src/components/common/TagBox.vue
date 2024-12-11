@@ -89,14 +89,17 @@ async function nextPage(newSearch: boolean) {
     page.value.pageCount = nextPage.pageCount
     page.value.dataCount = nextPage.dataCount
     if (nextPage.pageNumber <= nextPage.pageCount) {
+      hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
       if (arrayNotEmpty(nextPage.data)) {
         data.value.push(...nextPage.data)
+      } else {
+        refreshLoadButton()
       }
-      hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
     } else {
       // 如果当前页超过总页数，当前页设为最大页数
       page.value.pageNumber = nextPage.pageCount <= 0 ? 1 : nextPage.pageCount
       hasNextPage.value = false
+      refreshLoadButton()
     }
   }
 }
@@ -116,27 +119,23 @@ function handleTagSubLabelClicked(tag: SelectItem, index: number) {
 function handleTagClose(tag: SelectItem) {
   emit('tagClose', tag)
 }
+// 刷新加载按钮状态
+function refreshLoadButton() {
+  let notFull: boolean
+  if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
+    const scrollHeight = scrollbar.value.wrapRef.clientHeight
+    const dataRowHeight = dataRow.value.offsetHeight
+    const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
+    notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
+  } else {
+    notFull = true
+  }
+  showLoadButton.value = hasNextPage.value && notFull
+}
 
 // watch
-// 监听page变化，更新是否充满的状态
-watch(
-  data,
-  () => {
-    nextTick(() => {
-      let notFull: boolean
-      if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
-        const scrollHeight = scrollbar.value.wrapRef.clientHeight
-        const dataRowHeight = dataRow.value.offsetHeight
-        const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
-        notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
-      } else {
-        notFull = true
-      }
-      showLoadButton.value = hasNextPage.value && notFull
-    })
-  },
-  { deep: true }
-)
+// 监听data变化，刷新加载按钮状态
+watch(data, () => nextTick(() => refreshLoadButton()), { deep: true })
 
 // 暴露
 defineExpose({ scrollbar, newSearch })
@@ -179,8 +178,8 @@ defineExpose({ scrollbar, newSearch })
 }
 .tag-box-load-more {
   transition:
-    height 0.5s ease,
-    padding 0.5s ease;
+    height 0.3s ease,
+    padding 0.3s ease;
   overflow: hidden;
 }
 .tag-box-show-load-more {
