@@ -130,22 +130,22 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 
-    const results = await this.dao.listSiteAuthorWithLocalAuthor(page)
-    const selectItems = results.map(
-      (result) =>
+    const tempPage = await this.dao.querySiteAuthorWithLocalAuthorPage(page)
+    const selectItems = tempPage.data?.map(
+      (siteAuthorDTO) =>
         new SelectItem({
           extraData: undefined,
-          label: result.siteAuthorName,
+          label: siteAuthorDTO.siteAuthorName,
           rootId: undefined,
           secondaryLabel: undefined,
-          subLabels: [StringUtil.isNotBlank(result.site?.siteName) ? result.site?.siteName : '?'],
-          value: String(result.id)
+          subLabels: [StringUtil.isNotBlank(siteAuthorDTO.site?.siteName) ? siteAuthorDTO.site?.siteName : '?'],
+          value: String(siteAuthorDTO.id)
         })
     )
 
-    const newPage = page.transform<SelectItem>()
-    newPage.data = selectItems
-    return newPage
+    const resultPage = tempPage.transform<SelectItem>()
+    resultPage.data = selectItems
+    return resultPage
   }
 
   /**

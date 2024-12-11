@@ -75,22 +75,22 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 
-    const results = await this.dao.queryBoundOrUnboundToLocalTagPage(page)
-    const selectItems = results.map(
-      (result) =>
+    const tempPage = await this.dao.queryBoundOrUnboundToLocalTagPage(page)
+    const selectItems = tempPage.data?.map(
+      (siteTagDTO) =>
         new SelectItem({
           extraData: undefined,
-          label: result.siteTagName,
-          rootId: result.baseSiteTagId,
+          label: siteTagDTO.siteTagName,
+          rootId: siteTagDTO.baseSiteTagId,
           secondaryLabel: undefined,
-          subLabels: [StringUtil.isNotBlank(result.site?.siteName) ? result.site?.siteName : '?'],
-          value: String(result.id)
+          subLabels: [StringUtil.isNotBlank(siteTagDTO.site?.siteName) ? siteTagDTO.site?.siteName : '?'],
+          value: String(siteTagDTO.id)
         })
     )
 
-    const newPage = page.transform<SelectItem>()
-    newPage.data = selectItems
-    return newPage
+    const resultPage = tempPage.transform<SelectItem>()
+    resultPage.data = selectItems
+    return resultPage
   }
 
   async getSelectList(queryDTO: SiteTagQueryDTO) {

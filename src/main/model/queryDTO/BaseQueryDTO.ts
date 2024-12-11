@@ -2,6 +2,7 @@ import { Id } from '../entity/BaseEntity.ts'
 import { Operator } from '../../constant/CrudConstant.ts'
 import QuerySortOption from '../../constant/QuerySortOption.ts'
 import { toObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'
+import { notNullish } from '../../util/CommonUtil.js'
 
 export default class BaseQueryDTO {
   /**
@@ -55,8 +56,12 @@ export default class BaseQueryDTO {
   /**
    * 获取仅包含查询参数的对象
    */
-  public toPlainParams() {
-    return toObjAcceptedBySqlite3(this, ['operators', 'sort', 'keyword'])
+  public toPlainParams(ignore?: string[]) {
+    const fullIgnore = ['operators', 'sort', 'keyword']
+    if (notNullish(ignore)) {
+      fullIgnore.push(...ignore)
+    }
+    return toObjAcceptedBySqlite3(this, fullIgnore)
   }
 
   /**

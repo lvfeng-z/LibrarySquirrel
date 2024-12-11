@@ -47,22 +47,24 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询站点标签（附带绑定的本地标签）
    * @param page
    */
-  public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<SiteTagDTO[]> {
+  public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new Page(page)
     // 没有查询参数，构建一个空的
-    if (page.query === undefined) {
-      page.query = new SiteTagQueryDTO()
+    if (modifiedPage.query === undefined) {
+      modifiedPage.query = new SiteTagQueryDTO()
     }
 
     // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
-    if (page.query.bound) {
-      page.query.operators = {
-        ...page.query.operators,
-        ...{ localTagId: Operator.EQUAL }
+    if (modifiedPage.query.bound) {
+      modifiedPage.query.operators = {
+        ...modifiedPage.query.operators,
+        ...{ localTagId: Operator.EQUAL, siteTagName: Operator.LIKE }
       }
     } else {
-      page.query.operators = {
-        ...page.query.operators,
-        ...{ localTagId: Operator.NOT_EQUAL }
+      modifiedPage.query.operators = {
+        ...modifiedPage.query.operators,
+        ...{ localTagId: Operator.NOT_EQUAL, siteTagName: Operator.LIKE }
       }
     }
 
@@ -72,19 +74,11 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(page.query, 't1')
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['bound'])
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query
-
-    // 删除用于标识localTagId运算符的属性生成的子句
-    delete whereClauses.bound
-
-    // 处理keyword
-    if (Object.prototype.hasOwnProperty.call(page.query, 'keyword') && StringUtil.isNotBlank(page.query.keyword)) {
-      whereClauses.keyword = 't1.site_tag_name LIKE @keyword'
-      modifiedQuery.keyword = page.query.keywordForFullMatch()
-    }
+    modifiedPage.query = modifiedQuery
 
     const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
@@ -94,16 +88,18 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     if (StringUtil.isNotBlank(whereClause)) {
       statement += ' ' + whereClause
     }
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
-    statement = await super.sortAndPage(statement, whereClause, page, sort, fromClause)
+    const sort = isNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    statement = await super.sortAndPage(statement, whereClause, modifiedPage, sort, fromClause)
 
     // 查询
     const db = super.acquire()
     return db
       .all<unknown[], SiteTagDTO>(statement, modifiedQuery.toPlainParams())
-      .then((results) => {
+      .then((rows) => {
+        const resultPage = modifiedPage.transform<SiteTagDTO>()
         // 利用构造方法反序列化本地标签和站点的json
-        return results.map((result) => new SiteTagDTO(result))
+        resultPage.data = rows.map((result) => new SiteTagDTO(result))
+        return resultPage
       })
       .finally(() => {
         if (!this.injectedDB) {

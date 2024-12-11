@@ -31,7 +31,11 @@ export default class SiteAuthorDTO extends SiteAuthor {
     } else {
       super(siteAuthorDTO)
       this.localAuthor = siteAuthorDTO.localAuthor
-      this.site = siteAuthorDTO.site
+      if (typeof siteAuthorDTO.site == 'string') {
+        this.site = JSON.parse(siteAuthorDTO.site)
+      } else {
+        this.site = siteAuthorDTO.site
+      }
       this.authorRole = siteAuthorDTO.authorRole
     }
   }

@@ -64,22 +64,26 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 查询站点作者（附带绑定的本地作者）
    * @param page
    */
-  public async listSiteAuthorWithLocalAuthor(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<SiteAuthorDTO[]> {
+  public async querySiteAuthorWithLocalAuthorPage(
+    page: Page<SiteAuthorQueryDTO, SiteAuthor>
+  ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorDTO>> {
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new Page(page)
     // 没有查询参数，构建一个空的
-    if (page.query === undefined) {
-      page.query = new SiteAuthorQueryDTO()
+    if (modifiedPage.query === undefined) {
+      modifiedPage.query = new SiteAuthorQueryDTO()
     }
 
     // 如果是bound是false，则查询local_author_id不等于给定localAuthorId的
-    if (page.query.bound) {
-      page.query.operators = {
-        ...page.query.operators,
-        ...{ localAuthorId: Operator.EQUAL }
+    if (modifiedPage.query.bound) {
+      modifiedPage.query.operators = {
+        ...modifiedPage.query.operators,
+        ...{ localAuthorId: Operator.EQUAL, siteAuthorName: Operator.LIKE }
       }
     } else {
-      page.query.operators = {
-        ...page.query.operators,
-        ...{ localAuthorId: Operator.NOT_EQUAL }
+      modifiedPage.query.operators = {
+        ...modifiedPage.query.operators,
+        ...{ localAuthorId: Operator.NOT_EQUAL, siteAuthorName: Operator.LIKE }
       }
     }
 
@@ -89,19 +93,11 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(page.query, 't1')
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['bound'])
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query
-
-    // 删除用于标识localAuthorId运算符的属性生成的子句
-    delete whereClauses.bound
-
-    // 处理keyword
-    if (Object.prototype.hasOwnProperty.call(page.query, 'keyword') && StringUtil.isNotBlank(page.query.keyword)) {
-      whereClauses.keyword = 't1.site_author_name LIKE @keyword'
-      modifiedQuery.keyword = page.query.keywordForFullMatch()
-    }
+    modifiedPage.query = modifiedQuery
 
     const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
 
@@ -111,17 +107,19 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     if (StringUtil.isNotBlank(whereClause)) {
       statement = statement.concat(' ', whereClause)
     }
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
-    statement = await super.sortAndPage(statement, whereClause, page, sort, fromClause)
+    const sort = isNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    statement = await super.sortAndPage(statement, whereClause, modifiedPage, sort, fromClause)
 
     const query = modifiedQuery.toPlainParams()
     // 查询
     const db = super.acquire()
     return db
       .all<unknown[], SiteAuthorDTO>(statement, isNullish(query) ? {} : query)
-      .then((results) => {
-        // 利用构造方法处理localAuthor的JSON字符串
-        return results.map((result) => new SiteAuthorDTO(result))
+      .then((rows) => {
+        const resultPage = modifiedPage.transform<SiteAuthorDTO>()
+        // 利用构造方法反序列化本地作者和站点的json
+        resultPage.data = rows.map((result) => new SiteAuthorDTO(result))
+        return resultPage
       })
       .finally(() => {
         if (!this.injectedDB) {

@@ -576,12 +576,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 获取where字句
    * @protected
-   * @param queryConditions
-   * @param alias
+   * @param queryConditions 查询条件
+   * @param alias 所查询数据表的别名
+   * @param ignore 要忽略的属性名
    */
   protected getWhereClause(
     queryConditions: Query | undefined,
-    alias?: string
+    alias?: string,
+    ignore?: string[]
   ): { whereClause: string | undefined; query: Query | undefined } {
     if (queryConditions === undefined) {
       return { whereClause: undefined, query: undefined }
@@ -589,7 +591,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const whereClauses: string[] = []
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
-    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams()
+    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams(ignore)
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
     Object.entries(modifiedQuery)
       .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
@@ -654,12 +656,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * 获取属性名为键，where字句为值的Record对象
    * @param queryConditions 查询条件
    * @param alias 所查询数据表的别名
+   * @param ignore 要忽略的属性名
    * @protected
    * @return 属性名为键，where字句为值的Record对象
    */
   protected getWhereClauses(
     queryConditions: Query,
-    alias?: string
+    alias?: string,
+    ignore?: string[]
   ): {
     whereClauses: Record<string, string>
     query: Query
@@ -669,7 +673,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     const whereClauses: Record<string, string> = {}
-    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams()
+    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams(ignore)
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
     Object.entries(modifiedQuery)

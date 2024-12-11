@@ -129,7 +129,7 @@ const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点作者ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
-    name: 'keyword',
+    name: 'siteAuthorName',
     type: 'text',
     placeholder: '输入站点作者名称',
     inputSpan: 12
@@ -146,7 +146,7 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 // 站点作者ExchangeBox的DropDownInputBoxes
 const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
-    name: 'keyword',
+    name: 'id',
     type: 'text',
     placeholder: '输入id',
     label: 'id',
