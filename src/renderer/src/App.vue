@@ -18,11 +18,11 @@ import TransactionTest from './test/transaction-test.vue'
 import { arrayNotEmpty, isNullish, notNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
-import BaseEntity from '@renderer/model/main/entity/BaseEntity.ts'
 import { SearchType } from '@renderer/model/util/SearchCondition.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
-import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import IPage from '@renderer/model/util/IPage.ts'
 
 // onMounted
 onMounted(() => {
@@ -59,13 +59,12 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 
 // 方法
 // 查询标签选择列表
-async function getSearchItemSelectList(keyword) {
+async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, input?: string) {
   loading = true
+  const query = new SearchConditionQueryDTO()
+  query.keyword = input
+  page.query = query
   try {
-    const query = new SearchConditionQueryDTO()
-    query.keyword = keyword
-    const page = new Page<SearchConditionQueryDTO, BaseEntity>()
-    page.query = query
     const response = await apis.searchQuerySearchConditionPage(page)
     if (ApiUtil.check(response)) {
       const data = ApiUtil.data<Map<SearchType, Page<BaseQueryDTO, SelectItem>>>(response)
@@ -128,9 +127,12 @@ async function getSearchItemSelectList(keyword) {
         }
       }
       tagSelectList.value = result
+      page.data = result
     }
+    return page
   } catch (e) {
     console.log(e)
+    return page
   } finally {
     loading = false
   }
@@ -278,30 +280,8 @@ async function handleTest() {
               <el-button @click="handleTest">-</el-button>
             </el-col>
             <el-col :span="21">
-              <!--              <auto-load-select-->
-              <!--                :load="getSearchItemSelectList"-->
-              <!--                v-model="selectedTagList"-->
-              <!--                multiple-->
-              <!--                filterable-->
-              <!--                remote-->
-              <!--                collapse-tags-->
-              <!--                collapse-tags-tooltip-->
-              <!--                clearable-->
-              <!--                :remote-method="getSearchItemSelectList"-->
-              <!--                :loading="loading"-->
-              <!--                :max-collapse-tags="3"-->
-              <!--              >-->
-              <!--                <el-option v-for="item in tagSelectList" :key="item.value" :label="item.label" :value="item">-->
-              <!--                  <span style="float: left">{{ item.label }}</span>-->
-              <!--                  <span style="float: right; color: var(&#45;&#45;el-text-color-secondary); font-size: 13px">-->
-              <!--                    {{ item.secondaryLabel }}-->
-              <!--                  </span>-->
-              <!--                </el-option>-->
-              <!--                <template #tag>-->
-              <!--                  <segmented-tag v-for="item in selectedTagList" :key="item.value" :item="item"></segmented-tag>-->
-              <!--                </template>-->
-              <!--              </auto-load-select>-->
-              <el-select
+              <auto-load-select
+                :load="getSearchItemSelectList"
                 v-model="selectedTagList"
                 multiple
                 filterable
@@ -309,20 +289,11 @@ async function handleTest() {
                 collapse-tags
                 collapse-tags-tooltip
                 clearable
-                :remote-method="getSearchItemSelectList"
                 :loading="loading"
                 :max-collapse-tags="3"
+                param-name="keyword"
               >
-                <el-option v-for="item in tagSelectList" :key="item.value" :label="item.label" :value="item">
-                  <span style="float: left">{{ item.label }}</span>
-                  <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px">
-                    {{ item.secondaryLabel }}
-                  </span>
-                </el-option>
-                <template #tag>
-                  <segmented-tag v-for="item in selectedTagList" :key="item.value" :item="item"></segmented-tag>
-                </template>
-              </el-select>
+              </auto-load-select>
               <collapse-panel class="z-layer-3">
                 <div style="padding: 5px; background-color: #fafafa">
                   <el-button> test </el-button>

@@ -9,27 +9,22 @@ import { arrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
-  load: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
-  paramName: string
+  load: (page: IPage<BaseQueryDTO, SelectItem>, input?: string) => Promise<IPage<BaseQueryDTO, SelectItem>>
 }>()
 
 // 变量
 const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 
 // 处理DataScroll滚动事件
-async function handleScroll(newQuery: boolean, query?: string) {
+async function handleScroll(newQuery: boolean, input?: string) {
   // 新查询重置查询条件
   if (newQuery) {
     page.value = new Page<BaseQueryDTO, SelectItem>()
   }
-
-  // 构建查询条件
-  page.value.query = new BaseQueryDTO()
-  page.value.query[props.paramName] = query
   //查询
   const tempPage = lodash.cloneDeep(page.value)
   tempPage.data = undefined
-  const nextPage = await props.load(tempPage)
+  const nextPage = await props.load(tempPage, input)
 
   // 没有新数据时，不再增加页码
   if (arrayNotEmpty(nextPage.data)) {

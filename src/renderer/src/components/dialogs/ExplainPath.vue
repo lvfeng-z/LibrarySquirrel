@@ -129,8 +129,14 @@ function getInputRowApiParamName(pathType: PathTypeEnum): string {
   }
 }
 // 请求选择项分页接口
-async function requestApi(pathType: PathTypeEnum, page: IPage<BaseQueryDTO, SelectItem>): Promise<IPage<BaseQueryDTO, SelectItem>> {
+async function requestApi(
+  pathType: PathTypeEnum,
+  page: IPage<BaseQueryDTO, SelectItem>,
+  input?: string
+): Promise<IPage<BaseQueryDTO, SelectItem>> {
   const api = getInputRowDataApi(pathType)
+  const paramName = getInputRowApiParamName(pathType)
+  page.query = { [paramName]: input }
   const response = await api(page)
 
   // 解析响应值
@@ -183,8 +189,7 @@ function getOptions(str: string, reg: string) {
                   v-model="meaningOfPath.id"
                   remote
                   filterable
-                  :load="(page: IPage<BaseQueryDTO, SelectItem>) => requestApi(meaningOfPath.type, page)"
-                  :param-name="getInputRowApiParamName(meaningOfPath.type)"
+                  :load="(page: IPage<BaseQueryDTO, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
                 >
                 </auto-load-select>
                 <el-date-picker
