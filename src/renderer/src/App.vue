@@ -21,8 +21,8 @@ import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditi
 import { SearchType } from '@renderer/model/util/SearchCondition.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
-import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import IPage from '@renderer/model/util/IPage.ts'
+import AutoLoadTagSelect from '@renderer/components/common/AutoLoadTagSelect.vue'
 
 // onMounted
 onMounted(() => {
@@ -39,7 +39,6 @@ const apis = {
   worksQueryPage: window.api.worksQueryPage,
   worksMultipleConditionQueryPage: window.api.worksMultipleConditionQueryPage
 }
-let loading = false // 主菜单栏加载中开关
 // const params: Ref<UnwrapRef<object>> = ref({})
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选择项列表
@@ -60,7 +59,6 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 // 方法
 // 查询标签选择列表
 async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, input?: string) {
-  loading = true
   const query = new SearchConditionQueryDTO()
   query.keyword = input
   page.query = query
@@ -85,6 +83,9 @@ async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, in
             }
           })
           result.push(...localTagPage.data)
+          if (localTagPage.pageCount > page.pageCount) {
+            page.pageCount = localTagPage.pageCount
+          }
         }
         if (arrayNotEmpty(siteTagPage?.data)) {
           siteTagPage.data.forEach((siteTag) => {
@@ -101,6 +102,9 @@ async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, in
             }
           })
           result.push(...siteTagPage.data)
+          if (siteTagPage.pageCount > page.pageCount) {
+            page.pageCount = siteTagPage.pageCount
+          }
         }
         if (arrayNotEmpty(localAuthorPage?.data)) {
           localAuthorPage.data.forEach((localAuthor) => {
@@ -113,6 +117,9 @@ async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, in
             }
           })
           result.push(...localAuthorPage.data)
+          if (localAuthorPage.pageCount > page.pageCount) {
+            page.pageCount = localAuthorPage.pageCount
+          }
         }
         if (arrayNotEmpty(siteAuthorPage?.data)) {
           siteAuthorPage.data.forEach((siteAuthor) => {
@@ -124,6 +131,9 @@ async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, in
             }
           })
           result.push(...siteAuthorPage.data)
+          if (siteAuthorPage.pageCount > page.pageCount) {
+            page.pageCount = siteAuthorPage.pageCount
+          }
         }
       }
       tagSelectList.value = result
@@ -133,8 +143,6 @@ async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, in
   } catch (e) {
     console.log(e)
     return page
-  } finally {
-    loading = false
   }
 }
 // 开启副页面
@@ -280,20 +288,21 @@ async function handleTest() {
               <el-button @click="handleTest">-</el-button>
             </el-col>
             <el-col :span="21">
-              <auto-load-select
-                :load="getSearchItemSelectList"
-                v-model="selectedTagList"
-                multiple
-                filterable
-                remote
-                collapse-tags
-                collapse-tags-tooltip
-                clearable
-                :loading="loading"
-                :max-collapse-tags="3"
-                param-name="keyword"
-              >
-              </auto-load-select>
+              <!--              <auto-load-select-->
+              <!--                :load="getSearchItemSelectList"-->
+              <!--                v-model="selectedTagList"-->
+              <!--                multiple-->
+              <!--                filterable-->
+              <!--                remote-->
+              <!--                collapse-tags-->
+              <!--                collapse-tags-tooltip-->
+              <!--                clearable-->
+              <!--                :loading="loading"-->
+              <!--                :max-collapse-tags="3"-->
+              <!--                param-name="keyword"-->
+              <!--              >-->
+              <!--              </auto-load-select>-->
+              <auto-load-tag-select style="height: 100%" :load="getSearchItemSelectList"></auto-load-tag-select>
               <collapse-panel class="z-layer-3">
                 <div style="padding: 5px; background-color: #fafafa">
                   <el-button> test </el-button>

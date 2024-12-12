@@ -32,7 +32,7 @@ const emit = defineEmits(['tagClicked', 'tagMainLabelClicked', 'tagSubLabelClick
 // el-scrollbar组件的实例
 const scrollbar = ref()
 // el-row组件的实例
-const dataRow = ref()
+const container = ref()
 // 加载按钮的实例
 const loadMoreButton = ref()
 // loading开关
@@ -122,11 +122,11 @@ function handleTagClose(tag: SelectItem) {
 // 刷新加载按钮状态
 function refreshLoadButton() {
   let notFull: boolean
-  if (notNullish(scrollbar.value) && notNullish(dataRow.value)) {
+  if (notNullish(scrollbar.value) && notNullish(container.value)) {
     const scrollHeight = scrollbar.value.wrapRef.clientHeight
-    const dataRowHeight = dataRow.value.offsetHeight
+    const containerHeight = container.value.offsetHeight
     const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
-    notFull = dataRowHeight <= scrollHeight + loadMoreButtonHeight
+    notFull = containerHeight <= scrollHeight + loadMoreButtonHeight
   } else {
     notFull = true
   }
@@ -144,7 +144,8 @@ defineExpose({ scrollbar, newSearch })
 <template>
   <div class="tag-box-wrapper">
     <el-scrollbar ref="scrollbar" v-loading="loading" style="display: flex" @scroll="handleDataScroll">
-      <div class="data-row" ref="dataRow">
+      <div class="tag-box-item-container" ref="container">
+        <slot name="head" />
         <segmented-tag
           v-for="(item, index) in data"
           :key="index"
@@ -155,6 +156,7 @@ defineExpose({ scrollbar, newSearch })
           @sub-label-clicked="(event) => handleTagSubLabelClicked(item, event)"
           @close="handleTagClose(item)"
         />
+        <slot name="tail" />
       </div>
     </el-scrollbar>
     <el-check-tag
@@ -191,13 +193,14 @@ defineExpose({ scrollbar, newSearch })
   padding-top: 0;
   padding-bottom: 0;
 }
-.data-row {
+.tag-box-item-container {
   align-items: center;
   display: flex;
   flex: 1;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   position: relative;
+  margin: 3px;
 }
 </style>

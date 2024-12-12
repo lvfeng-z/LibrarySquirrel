@@ -29,20 +29,16 @@ const emits = defineEmits(['clicked', 'mainLabelClicked', 'subLabelClicked', 'cl
 // 方法
 // 处理点击事件
 function handleClicked() {
-  console.log(`${props.item.label} Clicked`)
   emits('clicked')
 }
 function handleMainLabelClicked() {
-  console.log(`${props.item.label} main Clicked`)
   emits('mainLabelClicked')
 }
 function handleSubLabelClicked(index: number) {
-  console.log(`${props.item.label} [${index}] Clicked`)
   emits('subLabelClicked', index)
 }
 function handleCloseButtonClicked() {
-  console.log(`${props.item.label} closed`)
-  emits('subLabelClicked')
+  emits('close')
 }
 </script>
 
@@ -100,6 +96,7 @@ function handleCloseButtonClicked() {
 .segmented-tag-main-label {
   max-width: 100%;
   flex-grow: 1;
+  align-content: center;
   background-color: rgb(133.4, 206.2, 97.4, 30%);
   transition-duration: 0.4s;
 }
@@ -160,7 +157,6 @@ function handleCloseButtonClicked() {
   border: none; /* 无边框 */
   cursor: pointer; /* 鼠标悬停时显示为手型指针 */
 
-  /* 添加过渡效果 */
   transition-duration: 0.4s;
 }
 .segmented-tag-sub-close:hover {
@@ -168,11 +164,8 @@ function handleCloseButtonClicked() {
 }
 .segmented-tag-ellipsis {
   white-space: nowrap;
-  /* 溢出内容隐藏 */
   overflow: hidden;
-  /* 文本溢出部分用省略号代替 */
   text-overflow: ellipsis;
-  /* 可选：确保文本是块级元素，这样才能应用上述样式 */
-  display: block; /* 或 inline-block */
+  display: block;
 }
 </style>
