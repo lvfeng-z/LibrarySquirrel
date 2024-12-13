@@ -2,7 +2,7 @@
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
-import { computed, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { computed, onMounted, Ref, ref, UnwrapRef, watch } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash from 'lodash'
@@ -28,6 +28,8 @@ const wrapper = ref()
 const optionalTagBox = ref()
 // input的实例
 const inputElement = ref()
+// hiddenSpan的实例
+const hiddenSpan = ref()
 // 输入
 const input: Ref<UnwrapRef<string | undefined>> = ref()
 // 已选数据
@@ -43,6 +45,8 @@ const width: Ref<UnwrapRef<number>> = computed(() => {
   }
   return 1000
 })
+// 输入框宽度
+const inputWidth: Ref<UnwrapRef<string>> = ref('11px')
 
 // 方法
 // 加载分页的函数
@@ -50,14 +54,13 @@ function innerLoad() {
   const tempPage = lodash.cloneDeep(page.value)
   return props.load(tempPage, input.value)
 }
-// 处理输入框改变
-function handleInputChange() {
+// 重新分页查询
+function newSearch() {
   optionalTagBox.value.newSearch()
 }
 // 处理标签点击事件
 function handelTagClicked(tag: SelectItem) {
   selectedData.value.push(tag)
-  console.log(selectedData.value)
 }
 // 处理标签关闭按钮点击事件
 function handelTagClosed(tag: SelectItem) {
@@ -70,6 +73,11 @@ function handelTagClosed(tag: SelectItem) {
 function clear() {
   selectedData.value = []
 }
+
+// watch
+watch(input, () => {
+  inputWidth.value = hiddenSpan.value.offsetWidth + 11 + 'px'
+})
 </script>
 
 <template>
@@ -84,7 +92,8 @@ function clear() {
           @click="inputElement.focus()"
         >
           <template #tail>
-            <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @change="handleInputChange" />
+            <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @focus="newSearch" @input="newSearch" />
+            <span ref="hiddenSpan" style="visibility: hidden">{{ input }}</span>
           </template>
         </tag-box>
         <div class="segmented-tag-sub-close-wrapper">
@@ -151,7 +160,7 @@ function clear() {
   transition-duration: 0.2s;
 }
 .auto-load-tag-select-input {
-  width: 11px;
+  width: v-bind(inputWidth);
   appearance: none;
   background-color: transparent;
   border: none;
