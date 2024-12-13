@@ -12,8 +12,9 @@ import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { ReWorksTagService } from './ReWorksTagService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import { assertNotNullish } from '../util/AssertUtil.js'
+import { Operator } from '../constant/CrudConstant.js'
 
 /**
  * 站点标签Service
@@ -138,6 +139,13 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page 分页查询参数
    */
   public async querySelectItemPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
+    page = new Page(page)
+    if (notNullish(page.query)) {
+      page.query.operators = {
+        ...{ siteTagName: Operator.LIKE },
+        ...page.query.operators
+      }
+    }
     return this.dao.querySelectItemPage(page)
   }
 }

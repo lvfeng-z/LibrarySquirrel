@@ -11,9 +11,10 @@ import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.ts'
 import ReWorksAuthorService from './ReWorksAuthorService.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
+import { Operator } from '../constant/CrudConstant.js'
 
 /**
  * 站点作者Service
@@ -221,6 +222,13 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param page 分页查询参数
    */
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
+    page = new Page(page)
+    if (notNullish(page.query)) {
+      page.query.operators = {
+        ...{ siteAuthorName: Operator.LIKE },
+        ...page.query.operators
+      }
+    }
     return this.dao.querySelectItemPage(page)
   }
 }
