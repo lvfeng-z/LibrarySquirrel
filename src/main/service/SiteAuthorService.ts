@@ -138,7 +138,6 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
           extraData: undefined,
           label: siteAuthorDTO.siteAuthorName,
           rootId: undefined,
-          secondaryLabel: undefined,
           subLabels: [StringUtil.isNotBlank(siteAuthorDTO.site?.siteName) ? siteAuthorDTO.site?.siteName : '?'],
           value: String(siteAuthorDTO.id)
         })

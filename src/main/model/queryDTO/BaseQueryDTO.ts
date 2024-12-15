@@ -3,6 +3,7 @@ import { Operator } from '../../constant/CrudConstant.ts'
 import QuerySortOption from '../../constant/QuerySortOption.ts'
 import { toObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'
 import { notNullish } from '../../util/CommonUtil.js'
+import StringUtil from '../../util/StringUtil.js'
 
 export default class BaseQueryDTO {
   /**
@@ -67,7 +68,7 @@ export default class BaseQueryDTO {
   /**
    * 获取keyword的全匹配字符串
    */
-  public keywordForFullMatch() {
-    return '%' + this.keyword + '%'
+  public keywordForFullMatch(): string | undefined {
+    return StringUtil.isBlank(this.keyword) ? undefined : '%' + this.keyword + '%'
   }
 }

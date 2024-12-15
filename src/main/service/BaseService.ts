@@ -17,7 +17,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   protected className: string
 
   /**
-   * 子类名称
+   * dao
    */
   protected dao: Dao
 

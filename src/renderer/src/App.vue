@@ -15,12 +15,10 @@ import WorksDTO from './model/main/dto/WorksDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
-import { arrayNotEmpty, isNullish, notNullish } from './utils/CommonUtil'
+import { isNullish, notNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
-import { SearchType } from '@renderer/model/util/SearchCondition.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
-import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import AutoLoadTagSelect from '@renderer/components/common/AutoLoadTagSelect.vue'
 
@@ -41,7 +39,6 @@ const apis = {
 }
 // const params: Ref<UnwrapRef<object>> = ref({})
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
-const tagSelectList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选择项列表
 const pageState = reactive({
   mainPage: true,
   subpage: false,
@@ -58,91 +55,31 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 
 // 方法
 // 查询标签选择列表
-async function getSearchItemSelectList(page: IPage<BaseQueryDTO, SelectItem>, input?: string) {
+async function getSearchItemSelectList(
+  page: IPage<BaseQueryDTO, SelectItem>,
+  input?: string
+): Promise<IPage<BaseQueryDTO, SelectItem>> {
   const query = new SearchConditionQueryDTO()
   query.keyword = input
   page.query = query
+  page.pageSize = 30
+  let response: ApiResponse
   try {
-    const response = await apis.searchQuerySearchConditionPage(page)
-    if (ApiUtil.check(response)) {
-      const data = ApiUtil.data<Map<SearchType, Page<BaseQueryDTO, SelectItem>>>(response)
-      const result: SelectItem[] = []
-      if (notNullish(data)) {
-        const localTagPage = data.get(SearchType.LOCAL_TAG)
-        const siteTagPage = data.get(SearchType.SITE_TAG)
-        const localAuthorPage = data.get(SearchType.LOCAL_AUTHOR)
-        const siteAuthorPage = data.get(SearchType.SITE_AUTHOR)
-        if (arrayNotEmpty(localTagPage?.data)) {
-          localTagPage.data.forEach((localTag) => {
-            localTag.extraData = { id: localTag.value }
-            localTag.value = String(SearchType.LOCAL_TAG) + localTag.value
-            if (arrayNotEmpty(localTag.subLabels)) {
-              localTag.subLabels.unshift('tag', 'local')
-            } else {
-              localTag.subLabels = ['tag', 'local']
-            }
-          })
-          result.push(...localTagPage.data)
-          if (localTagPage.pageCount > page.pageCount) {
-            page.pageCount = localTagPage.pageCount
-          }
-        }
-        if (arrayNotEmpty(siteTagPage?.data)) {
-          siteTagPage.data.forEach((siteTag) => {
-            siteTag.value = String(SearchType.SITE_TAG) + siteTag.value
-            if (arrayNotEmpty(siteTag.subLabels)) {
-              siteTag.subLabels.unshift('tag')
-            } else {
-              const siteName = (siteTag.extraData as SiteTagDTO).site?.siteName
-              if (notNullish(siteName)) {
-                siteTag.subLabels = ['tag', siteName]
-              } else {
-                siteTag.subLabels = ['tag', '?']
-              }
-            }
-          })
-          result.push(...siteTagPage.data)
-          if (siteTagPage.pageCount > page.pageCount) {
-            page.pageCount = siteTagPage.pageCount
-          }
-        }
-        if (arrayNotEmpty(localAuthorPage?.data)) {
-          localAuthorPage.data.forEach((localAuthor) => {
-            localAuthor.extraData = { id: localAuthor.value }
-            localAuthor.value = String(SearchType.LOCAL_AUTHOR) + localAuthor.value
-            if (arrayNotEmpty(localAuthor.subLabels)) {
-              localAuthor.subLabels.unshift('author', 'local')
-            } else {
-              localAuthor.subLabels = ['author', 'local']
-            }
-          })
-          result.push(...localAuthorPage.data)
-          if (localAuthorPage.pageCount > page.pageCount) {
-            page.pageCount = localAuthorPage.pageCount
-          }
-        }
-        if (arrayNotEmpty(siteAuthorPage?.data)) {
-          siteAuthorPage.data.forEach((siteAuthor) => {
-            siteAuthor.value = String(SearchType.SITE_AUTHOR) + siteAuthor.value
-            if (arrayNotEmpty(siteAuthor.subLabels)) {
-              siteAuthor.subLabels.unshift('author')
-            } else {
-              siteAuthor.subLabels = ['author']
-            }
-          })
-          result.push(...siteAuthorPage.data)
-          if (siteAuthorPage.pageCount > page.pageCount) {
-            page.pageCount = siteAuthorPage.pageCount
-          }
-        }
-      }
-      tagSelectList.value = result
-      page.data = result
-    }
-    return page
+    response = await apis.searchQuerySearchConditionPage(page)
   } catch (e) {
     console.log(e)
     return page
+  }
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
+    if (isNullish(newPage)) {
+      ApiUtil.msg(response)
+      throw new Error(response.msg)
+    }
+    return newPage
+  } else {
+    ApiUtil.msg(response)
+    throw new Error(response.msg)
   }
 }
 // 开启副页面
