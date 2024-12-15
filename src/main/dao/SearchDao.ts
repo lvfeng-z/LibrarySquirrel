@@ -102,13 +102,13 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                 break
               }
               case 'localAuthor':
-                subLabels.push(...['tag', 'local'])
+                subLabels.push(...['author', 'local'])
                 break
               case 'siteAuthor': {
                 const localAuthor = (extra as { type: string; localAuthor: string }).localAuthor
                 const site = new Site((extra as { type: string; site: Site }).site)
                 selectItem.extraData = { localAuthor: localAuthor, site: site }
-                subLabels.push(...['tag', isNullish(site.siteName) ? '?' : site.siteName])
+                subLabels.push(...['author', isNullish(site.siteName) ? '?' : site.siteName])
                 break
               }
               default:
