@@ -12,13 +12,13 @@
     </el-row>
     <div class="result-list rounded-borders">
       <el-checkbox-group v-if="multiSelect" v-model="checkboxSelected">
-        <el-checkbox v-for="(item, index) in filteredItems" :key="index" :value="item.value" @change="selectionChange">
+        <el-checkbox v-for="item in filteredItems" :key="item.value" :value="item.value" @change="selectionChange">
           {{ item.label }}
         </el-checkbox>
       </el-checkbox-group>
 
       <el-radio-group v-else v-model="radioSelected">
-        <el-radio v-for="(item, index) in filteredItems" :key="index" :value="item.value" @change="selectionChange">
+        <el-radio v-for="item in filteredItems" :key="item.value" :value="item.value" @change="selectionChange">
           {{ item.label }}
         </el-radio>
       </el-radio-group>

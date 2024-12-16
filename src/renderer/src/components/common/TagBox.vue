@@ -149,8 +149,8 @@ defineExpose({ scrollbar, newSearch })
       <div class="tag-box-item-container" ref="container">
         <slot name="head" />
         <segmented-tag
-          v-for="(item, index) in data"
-          :key="index"
+          v-for="item in data"
+          :key="item.value"
           :item="item"
           :closeable="tagCloseable"
           @clicked="handleTagClicked(item)"

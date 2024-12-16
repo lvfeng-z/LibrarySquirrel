@@ -124,9 +124,9 @@ function handleCreateButtonClicked() {
       <el-col v-if="createButton" class="search-toolbar-create-button" :span="barButtonSpan">
         <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
       </el-col>
-      <template v-for="(item, index) in innerMainInputBoxes" :key="index">
+      <template v-for="item in innerMainInputBoxes" :key="item.name">
         <el-col v-if="item.showLabel" class="search-toolbar-label" :span="item.labelSpan">
-          <div :key="index" class="search-toolbar-label-scroll-text-wrapper el-tag-mimic" style="width: 100%">
+          <div class="search-toolbar-label-scroll-text-wrapper el-tag-mimic" style="width: 100%">
             <scroll-text-box>{{ item.label }}</scroll-text-box>
           </div>
         </el-col>
