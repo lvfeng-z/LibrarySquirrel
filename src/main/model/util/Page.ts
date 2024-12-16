@@ -66,6 +66,9 @@ export default class Page<Query, Result> {
     return result
   }
 
+  /**
+   * 创建一个指定类型的副本
+   */
   public copy<NewQuery, NewResult>(): Page<NewQuery, NewResult> {
     const result = new Page<NewQuery, NewResult>()
     result.paging = this.paging

@@ -72,35 +72,37 @@ async function nextPage(newSearch: boolean) {
   if (notNullish(props.load)) {
     // 新查询重置查询条件
     if (newSearch) {
-      page.value = new Page<BaseQueryDTO, SelectItem>()
-      data.value = []
-      // 这里需要等待nextTick才能获取到page的更新，不知道什么原因
-      await nextTick()
+      page.value.pageNumber = 1
+      data.value.length = 0
     } else {
       page.value.pageNumber++
     }
 
-    //查询
-    const tempPage = lodash.cloneDeep(page.value)
-    tempPage.data = undefined
-    const nextPage = await props.load(tempPage)
+    nextTick().then(async () => {
+      if (notNullish(props.load)) {
+        //查询
+        const tempPage = lodash.cloneDeep(page.value)
+        tempPage.data = undefined
+        const nextPage = await props.load(tempPage)
 
-    // 新数据加入到分页数据中
-    page.value.pageCount = nextPage.pageCount
-    page.value.dataCount = nextPage.dataCount
-    if (nextPage.pageNumber <= nextPage.pageCount) {
-      hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
-      if (arrayNotEmpty(nextPage.data)) {
-        data.value.push(...nextPage.data)
-      } else {
-        refreshLoadButton()
+        // 新数据加入到分页数据中
+        page.value.pageCount = nextPage.pageCount
+        page.value.dataCount = nextPage.dataCount
+        if (nextPage.pageNumber <= nextPage.pageCount) {
+          hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
+          if (arrayNotEmpty(nextPage.data)) {
+            data.value.push(...nextPage.data)
+          } else {
+            refreshLoadButton()
+          }
+        } else {
+          // 如果当前页超过总页数，当前页设为最大页数
+          page.value.pageNumber = nextPage.pageCount <= 0 ? 1 : nextPage.pageCount
+          hasNextPage.value = false
+          refreshLoadButton()
+        }
       }
-    } else {
-      // 如果当前页超过总页数，当前页设为最大页数
-      page.value.pageNumber = nextPage.pageCount <= 0 ? 1 : nextPage.pageCount
-      hasNextPage.value = false
-      refreshLoadButton()
-    }
+    })
   }
 }
 async function newSearch() {
