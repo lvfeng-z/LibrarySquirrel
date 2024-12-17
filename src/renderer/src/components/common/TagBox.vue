@@ -13,9 +13,13 @@ const props = withDefaults(
   defineProps<{
     load?: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
     tagCloseable?: boolean
+    tagsGap?: string
+    maxHeight?: string
   }>(),
   {
-    tagCloseable: false
+    tagCloseable: false,
+    tagsGap: '5px',
+    maxHeight: 'none'
   }
 )
 
@@ -145,7 +149,7 @@ defineExpose({ scrollbar, newSearch })
 
 <template>
   <div class="tag-box-wrapper">
-    <el-scrollbar ref="scrollbar" v-loading="loading" style="display: flex" @scroll="handleDataScroll">
+    <el-scrollbar ref="scrollbar" v-loading="loading" @scroll="handleDataScroll">
       <div class="tag-box-item-container" ref="container">
         <slot name="head" />
         <segmented-tag
@@ -200,9 +204,12 @@ defineExpose({ scrollbar, newSearch })
   display: flex;
   flex: 1;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: v-bind(tagsGap);
   min-width: 0;
   position: relative;
   margin: 3px;
+}
+:deep(.el-scrollbar__wrap) {
+  max-height: v-bind(maxHeight);
 }
 </style>

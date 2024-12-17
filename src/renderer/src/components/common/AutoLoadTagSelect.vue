@@ -2,23 +2,47 @@
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
-import { computed, onMounted, Ref, ref, UnwrapRef, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, Ref, ref, UnwrapRef, watch } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash from 'lodash'
 import { Close } from '@element-plus/icons-vue'
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
-const props = defineProps<{
-  load: (page: IPage<BaseQueryDTO, SelectItem>, input?: string) => Promise<IPage<BaseQueryDTO, SelectItem>>
-}>()
-
-//
-onMounted(() => {
-  if (notNullish(wrapper.value)) {
-    console.log(wrapper.value)
+const props = withDefaults(
+  defineProps<{
+    load: (page: IPage<BaseQueryDTO, SelectItem>, input?: string) => Promise<IPage<BaseQueryDTO, SelectItem>>
+    pageSize?: number
+    tagsGap?: string
+    maxHeight?: string
+  }>(),
+  {
+    pageSize: 30
   }
+)
+
+// onMounted
+onMounted(() => {
+  // 监听compositionstart事件
+  inputElement.value.addEventListener('compositionstart', (e) => {
+    console.log('compositionstart', e)
+  })
+  // 监听compositionupdate事件
+  inputElement.value.addEventListener('compositionupdate', (e: { data: string }) => {
+    console.log('compositionupdate', e)
+    input.value = e.data
+  })
+  // 监听compositionend事件
+  inputElement.value.addEventListener('compositionend', (e) => {
+    console.log('compositionend', e)
+  })
+  // 监听宽度变化
+  resizeObserver.observe(wrapper.value)
+})
+
+// onUnmounted
+onUnmounted(() => {
+  resizeObserver.unobserve(wrapper.value)
 })
 
 // 变量
@@ -39,18 +63,18 @@ const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQ
 // 可选数据
 const optionalData: Ref<UnwrapRef<SelectItem[]>> = ref([])
 // 总体宽度
-const width: Ref<UnwrapRef<number>> = computed(() => {
-  if (notNullish(wrapper.value)) {
-    console.log(wrapper.value)
-  }
-  return 1000
-})
+const width: Ref<UnwrapRef<number>> = ref(0)
 // 输入框宽度
 const inputWidth: Ref<UnwrapRef<string>> = ref('11px')
+// 监听wrapper div的宽度变化
+const resizeObserver = new ResizeObserver((entries) => {
+  width.value = entries[0].contentRect.width
+})
 
 // 方法
 // 加载分页的函数
 function innerLoad() {
+  page.value.pageSize = props.pageSize
   const tempPage = lodash.cloneDeep(page.value)
   return props.load(tempPage, input.value)
 }
@@ -72,16 +96,17 @@ function handelTagClosed(tag: SelectItem) {
 // 清除所有选择
 function clear() {
   selectedData.value = []
+  input.value = undefined
 }
 
 // watch
 watch(input, () => {
-  inputWidth.value = hiddenSpan.value.offsetWidth + 11 + 'px'
+  nextTick(() => (inputWidth.value = hiddenSpan.value.offsetWidth + 11 + 'px'))
 })
 </script>
 
 <template>
-  <el-popover :width="width">
+  <el-popover :width="width" trigger="click">
     <template #reference>
       <div ref="wrapper" class="auto-load-tag-select-selected-wrapper rounded-borders">
         <tag-box
@@ -110,6 +135,8 @@ watch(input, () => {
         v-model:page="page"
         v-model:data="optionalData"
         :load="innerLoad"
+        :tags-gap="tagsGap"
+        :maxHeight="maxHeight"
         @tag-clicked="handelTagClicked"
       />
     </template>
@@ -171,8 +198,5 @@ watch(input, () => {
   max-width: 100%;
   outline: none;
   padding: 0;
-}
-.auto-load-tag-select-optional {
-  height: 300px;
 }
 </style>

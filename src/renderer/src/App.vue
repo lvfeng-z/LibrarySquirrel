@@ -62,7 +62,6 @@ async function getSearchItemSelectList(
   const query = new SearchConditionQueryDTO()
   query.keyword = input
   page.query = query
-  page.pageSize = 30
   let response: ApiResponse
   try {
     response = await apis.searchQuerySearchConditionPage(page)
@@ -225,21 +224,13 @@ async function handleTest() {
               <el-button @click="handleTest">-</el-button>
             </el-col>
             <el-col :span="21">
-              <!--              <auto-load-select-->
-              <!--                :load="getSearchItemSelectList"-->
-              <!--                v-model="selectedTagList"-->
-              <!--                multiple-->
-              <!--                filterable-->
-              <!--                remote-->
-              <!--                collapse-tags-->
-              <!--                collapse-tags-tooltip-->
-              <!--                clearable-->
-              <!--                :loading="loading"-->
-              <!--                :max-collapse-tags="3"-->
-              <!--                param-name="keyword"-->
-              <!--              >-->
-              <!--              </auto-load-select>-->
-              <auto-load-tag-select style="height: 100%" :load="getSearchItemSelectList"></auto-load-tag-select>
+              <auto-load-tag-select
+                style="height: 100%"
+                :load="getSearchItemSelectList"
+                :page-size="50"
+                tags-gap="10px"
+                max-height="300px"
+              ></auto-load-tag-select>
               <collapse-panel class="z-layer-3">
                 <div style="padding: 5px; background-color: #fafafa">
                   <el-button> test </el-button>
