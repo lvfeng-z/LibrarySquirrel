@@ -22,12 +22,15 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     const statements: string[] = []
     const keyword = query?.keywordForFullMatch()
     const hasKeyword = StringUtil.isNotBlank(keyword)
+    if (hasKeyword && notNullish(query)) {
+      query.keyword = keyword
+    }
 
     // 本地标签
     if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_TAG)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, '{ "type": "localTag" }' AS extraData FROM local_tag WHERE local_tag_name LIKE '${keyword}'`
+          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, '{ "type": "localTag" }' AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
           : `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, '{ "type": "localTag" }' AS extraData FROM local_tag`
       )
     }
@@ -46,7 +49,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                   ) AS extraData
         FROM site_tag t1
                LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
-               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE site_tag_name LIKE '${keyword}'` : '')
+               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE site_tag_name LIKE @keyword` : '')
       statements.push(statement)
     }
 
@@ -54,7 +57,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, '{ "type": "localAuthor" }' AS extraData FROM local_author WHERE local_author_name LIKE '${keyword}'`
+          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, '{ "type": "localAuthor" }' AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
           : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, '{ "type": "localAuthor" }' AS extraData FROM local_author`
       )
     }
@@ -73,7 +76,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                   ) AS extraData
         FROM site_author t1
                LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
-               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE site_author_name LIKE '${keyword}'` : '')
+               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE site_author_name LIKE @keyword` : '')
       statements.push(statement)
     }
 
@@ -83,7 +86,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
 
     const db = this.acquire()
     return db
-      .all<unknown[], SelectItem>(statement)
+      .all<unknown[], SelectItem>(statement, query?.toPlainParams(['types']))
       .then((rows) => {
         rows.forEach((selectItem) => {
           if (notNullish(selectItem.extraData)) {

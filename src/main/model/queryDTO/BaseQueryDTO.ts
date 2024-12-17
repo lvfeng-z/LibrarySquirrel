@@ -58,7 +58,7 @@ export default class BaseQueryDTO {
    * 获取仅包含查询参数的对象
    */
   public toPlainParams(ignore?: string[]) {
-    const fullIgnore = ['operators', 'sort', 'keyword']
+    const fullIgnore = ['operators', 'sort']
     if (notNullish(ignore)) {
       fullIgnore.push(...ignore)
     }
