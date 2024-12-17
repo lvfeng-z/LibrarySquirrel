@@ -30,8 +30,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_TAG)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, '{ "type": "localTag" }' AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
-          : `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, '{ "type": "localTag" }' AS extraData FROM local_tag`
+          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
+          : `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_tag`
       )
     }
 
@@ -41,6 +41,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
         `SELECT t1.id || 'siteTag' AS value, t1.site_tag_name AS label, t1.last_use,
                   JSON_OBJECT(
                     'type', 'siteTag',
+                    'id', t1.id,
                     'localTag',
                     JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id),
                     'site',
@@ -57,8 +58,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, '{ "type": "localAuthor" }' AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
-          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, '{ "type": "localAuthor" }' AS extraData FROM local_author`
+          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
+          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_author`
       )
     }
 
@@ -68,6 +69,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
         `SELECT t1.id || 'siteAuthor' AS value, t1.site_author_name AS label, t1.last_use,
                   JSON_OBJECT(
                     'type', 'siteTag',
+                    'id', t1.id,
                     'siteAuthor',
                     JSON_OBJECT('id', t2.id, 'siteAuthorName', t2.local_author_name),
                     'site',
@@ -90,7 +92,6 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
       .then((rows) => {
         rows.forEach((selectItem) => {
           if (notNullish(selectItem.extraData)) {
-            const id = selectItem.value
             try {
               selectItem.extraData = JSON.parse(selectItem.extraData as string)
             } catch (error) {
@@ -123,7 +124,6 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                 default:
                   LogUtil.error(this.className, `解析查询配置项${selectItem.label}的额外数据时，出现了意外的类型，type: ${extra.type}`)
               }
-              selectItem.extraData['id'] = id
               selectItem.subLabels = subLabels
             } else {
               LogUtil.error(this.className, `解析查询配置项${selectItem.label}的额外数据失败，额外数据意外为空`)
