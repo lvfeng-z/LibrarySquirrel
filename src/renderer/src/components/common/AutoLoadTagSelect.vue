@@ -120,10 +120,10 @@ watch(input, () => {
 <template>
   <el-popover
     :width="width"
-    :show-after="50"
-    :hide-after="50"
+    :show-after="100"
+    :hide-after="300"
     transition="el-zoom-in-top"
-    trigger="click"
+    trigger="hover"
     @before-enter="handleInputFocus(true)"
     @hide="handleInputFocus(false)"
   >
@@ -134,6 +134,7 @@ watch(input, () => {
           v-model:data="selectedData"
           tag-closeable
           @tag-close="handelTagClosed"
+          @tag-clicked="handelTagClicked"
           @click="inputElement.focus()"
         >
           <template #tail>
@@ -201,9 +202,9 @@ watch(input, () => {
   transition-duration: 0.4s;
 }
 .segmented-tag-sub-close:hover {
-  width: 25px;
-  height: 25px;
-  background-color: #ffffff;
+  width: 24px;
+  height: 24px;
+  background-color: rgb(166.2, 168.6, 173.4, 45%);
   transition-duration: 0.2s;
 }
 .auto-load-tag-select-input {

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import { Close } from '@element-plus/icons-vue'
-import { computed, Ref, UnwrapRef } from 'vue'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { computed, ref, Ref, UnwrapRef } from 'vue'
+import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
     item: SelectItem
     closeable?: boolean
+    onChecked?: (check?: boolean, value?: SelectItem) => void
   }>(),
   {
     closeable: true
@@ -22,6 +23,7 @@ const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
 const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
   return props.closeable ? 'calc(100% - 21px)' : '100%'
 })
+const checked: Ref<UnwrapRef<boolean>> = ref(true)
 
 // 事件
 const emits = defineEmits(['clicked', 'mainLabelClicked', 'subLabelClicked', 'close'])
@@ -40,13 +42,38 @@ function handleSubLabelClicked(index: number) {
 function handleCloseButtonClicked() {
   emits('close')
 }
+// 改变勾选状态
+function check(newState: boolean) {
+  checked.value = newState
+  if (notNullish(props.onChecked)) {
+    props.onChecked(newState, props.item)
+  }
+}
+
+// 暴露
+defineExpose({ check })
 </script>
 
 <template>
   <div class="segmented-tag" @click="handleClicked">
     <div class="segmented-tag-label-wrapper">
-      <div class="segmented-tag-main-label" @click="handleMainLabelClicked">
-        <span class="segmented-tag-main-text segmented-tag-ellipsis">{{ props.item.label }}</span>
+      <div
+        :class="{
+          'segmented-tag-main-label': true,
+          'segmented-tag-main-label-checked': checked,
+          'segmented-tag-main-label-unchecked': !checked
+        }"
+        @click="handleMainLabelClicked"
+      >
+        <span
+          :class="{
+            'segmented-tag-main-text': true,
+            'segmented-tag-ellipsis': true,
+            'segmented-tag-main-text-checked': checked,
+            'segmented-tag-main-text-unchecked': !checked
+          }"
+          >{{ props.item.label }}</span
+        >
       </div>
       <template v-for="(item, index) of props.item.subLabels" :key="index">
         <div
@@ -97,11 +124,19 @@ function handleCloseButtonClicked() {
   max-width: 100%;
   flex-grow: 1;
   align-content: center;
-  background-color: rgb(133.4, 206.2, 97.4, 30%);
   transition-duration: 0.4s;
 }
-.segmented-tag-main-label:hover {
+.segmented-tag-main-label-checked {
+  background-color: rgb(133.4, 206.2, 97.4, 30%);
+}
+.segmented-tag-main-label-checked:hover {
   background-color: rgb(133.4, 206.2, 97.4, 15%);
+}
+.segmented-tag-main-label-unchecked {
+  background-color: rgb(166.2, 168.6, 173.4, 30%);
+}
+.segmented-tag-main-label-unchecked:hover {
+  background-color: rgb(166.2, 168.6, 173.4, 10%);
 }
 .segmented-tag-main-text {
   max-width: 100%;
@@ -109,7 +144,12 @@ function handleCloseButtonClicked() {
   margin-right: 3px;
   font-weight: bolder;
   text-align: center;
+}
+.segmented-tag-main-text-checked {
   color: rgb(78.1, 141.8, 46.6, 75%);
+}
+.segmented-tag-main-text-unchecked {
+  color: rgb(166.2, 168.6, 173.4, 100%);
 }
 .segmented-tag-sub-label {
   display: flex;
@@ -117,13 +157,13 @@ function handleCloseButtonClicked() {
   transition-duration: 0.4s;
 }
 .segmented-tag-sub-label-dark {
-  background-color: rgb(166.2, 168.6, 173.4, 20%);
+  background-color: rgb(166.2, 168.6, 173.4, 30%);
 }
 .segmented-tag-sub-label-dark:hover {
   background-color: rgb(166.2, 168.6, 173.4, 10%);
 }
 .segmented-tag-sub-label-light {
-  background-color: rgb(166.2, 168.6, 173.4, 30%);
+  background-color: rgb(166.2, 168.6, 173.4, 20%);
 }
 .segmented-tag-sub-label-light:hover {
   background-color: rgb(166.2, 168.6, 173.4, 10%);
