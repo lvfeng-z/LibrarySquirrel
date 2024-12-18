@@ -5,8 +5,9 @@ import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { nextTick, onMounted, onUnmounted, Ref, ref, UnwrapRef, watch } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
-import lodash from 'lodash'
+import lodash, { throttle } from 'lodash'
 import { Close } from '@element-plus/icons-vue'
+import { notNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -42,12 +43,16 @@ onMounted(() => {
 
 // onUnmounted
 onUnmounted(() => {
-  resizeObserver.unobserve(wrapper.value)
+  if (notNullish(wrapper.value)) {
+    resizeObserver.unobserve(wrapper.value)
+  }
 })
 
 // 变量
 // 最外部div的实例
 const wrapper = ref()
+// 是否持有焦点
+const focused = ref(false)
 // 可选择数据TagBox组件的实例
 const optionalTagBox = ref()
 // input的实例
@@ -80,7 +85,14 @@ function innerLoad() {
 }
 // 重新分页查询
 function newSearch() {
-  optionalTagBox.value.newSearch()
+  throttle(() => optionalTagBox.value.newSearch(), 500, { leading: true, trailing: true })()
+}
+// 处理input焦点事件
+function handleInputFocus(focus: boolean) {
+  if (focus && !focused.value) {
+    newSearch()
+  }
+  focused.value = focus
 }
 // 处理标签点击事件
 function handelTagClicked(tag: SelectItem) {
@@ -106,7 +118,15 @@ watch(input, () => {
 </script>
 
 <template>
-  <el-popover :width="width" trigger="click">
+  <el-popover
+    :width="width"
+    :show-after="50"
+    :hide-after="50"
+    transition="el-zoom-in-top"
+    trigger="click"
+    @before-enter="handleInputFocus(true)"
+    @hide="handleInputFocus(false)"
+  >
     <template #reference>
       <div ref="wrapper" class="auto-load-tag-select-selected-wrapper rounded-borders">
         <tag-box
@@ -117,7 +137,7 @@ watch(input, () => {
           @click="inputElement.focus()"
         >
           <template #tail>
-            <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @focus="newSearch" @input="newSearch" />
+            <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @input="newSearch" />
             <span ref="hiddenSpan" style="visibility: hidden">{{ input }}</span>
           </template>
         </tag-box>
