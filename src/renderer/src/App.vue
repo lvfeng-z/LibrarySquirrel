@@ -27,6 +27,7 @@ onMounted(() => {
   // const request = apis.worksQueryPage()
   // console.log(request)
 })
+
 // 变量
 // 接口
 const apis = {
@@ -37,7 +38,8 @@ const apis = {
   worksQueryPage: window.api.worksQueryPage,
   worksMultipleConditionQueryPage: window.api.worksMultipleConditionQueryPage
 }
-// const params: Ref<UnwrapRef<object>> = ref({})
+// sideMenu组件的实例
+const sideMenuRef = ref()
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const pageState = reactive({
   mainPage: true,
@@ -174,7 +176,7 @@ async function handleTest() {
 <template>
   <div class="ui">
     <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-    <side-menu class="sideMenu z-layer-4" :default-active="['1-1']">
+    <side-menu ref="sideMenuRef" class="sideMenu z-layer-4" :default-active="['1-1']">
       <template #default>
         <el-sub-menu index="1">
           <template #title>
@@ -267,7 +269,7 @@ async function handleTest() {
   height: 100%;
 }
 .mainSpace {
-  max-width: calc(100% - 63px);
+  max-width: 100%;
   height: 100%;
   flex-grow: 1;
   background: #fafafa;
