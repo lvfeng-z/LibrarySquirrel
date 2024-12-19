@@ -7,7 +7,7 @@ import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash, { throttle } from 'lodash'
 import { Close } from '@element-plus/icons-vue'
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
+import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -67,6 +67,8 @@ const selectedData: Ref<UnwrapRef<SelectItem[]>> = ref([])
 const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 // 可选数据
 const optionalData: Ref<UnwrapRef<SelectItem[]>> = ref([])
+// 可选数据被勾选的id数组
+const optionalCheckedIdBuffer: Set<string> = new Set()
 // 总体宽度
 const width: Ref<UnwrapRef<number>> = ref(0)
 // 输入框宽度
@@ -78,10 +80,18 @@ const resizeObserver = new ResizeObserver((entries) => {
 
 // 方法
 // 加载分页的函数
-function innerLoad() {
+async function innerLoad() {
   page.value.pageSize = props.pageSize
   const tempPage = lodash.cloneDeep(page.value)
-  return props.load(tempPage, input.value)
+  return props.load(tempPage, input.value).then((resultPage) => {
+    resultPage.data?.forEach((selectItem) => {
+      const checked = optionalCheckedIdBuffer.has(String(selectItem.value))
+      if (checked) {
+        selectItem.disabled = true
+      }
+    })
+    return resultPage
+  })
 }
 // 重新分页查询
 function newSearch() {
@@ -95,20 +105,50 @@ function handleInputFocus(focus: boolean) {
   focused.value = focus
 }
 // 处理标签点击事件
-function handelTagClicked(tag: SelectItem) {
-  selectedData.value.push(tag)
+function handelTagClicked(tag: SelectItem, optional: boolean) {
+  if (optional) {
+    if (isNullish(tag.disabled) || !tag.disabled) {
+      const tempTag = lodash.cloneDeep(tag)
+      selectedData.value.push(tempTag)
+      optionalCheck(tag, true)
+    } else {
+      const index = selectedData.value.findIndex((selected) => selected.value === tag.value)
+      if (index !== -1) {
+        selectedData.value.splice(index, 1)
+      }
+      optionalCheck(tag, false)
+    }
+  } else {
+    tag.disabled = !tag.disabled
+  }
 }
 // 处理标签关闭按钮点击事件
 function handelTagClosed(tag: SelectItem) {
-  const index = selectedData.value.indexOf(tag)
+  let index = selectedData.value.indexOf(tag)
   if (index > -1) {
     selectedData.value.splice(index, 1)
+  }
+  index = optionalData.value.findIndex((selected) => selected.value === tag.value)
+  if (index > -1) {
+    optionalCheck(optionalData.value[index], false)
+  }
+}
+// 改变待选栏中标签的选中状态
+function optionalCheck(tag: SelectItem, check: boolean) {
+  tag.disabled = check
+  // 更新选中状态缓存
+  if (check) {
+    optionalCheckedIdBuffer.add(String(tag.value))
+  } else {
+    optionalCheckedIdBuffer.delete(String(tag.value))
   }
 }
 // 清除所有选择
 function clear() {
   selectedData.value = []
   input.value = undefined
+  optionalData.value.forEach((selectItem) => (selectItem.disabled = false))
+  optionalCheckedIdBuffer.clear()
 }
 
 // watch
@@ -134,7 +174,7 @@ watch(input, () => {
           v-model:data="selectedData"
           tag-closeable
           @tag-close="handelTagClosed"
-          @tag-clicked="handelTagClicked"
+          @tag-clicked="(tag) => handelTagClicked(tag, false)"
           @click="inputElement.focus()"
         >
           <template #tail>
@@ -158,7 +198,7 @@ watch(input, () => {
         :load="innerLoad"
         :tags-gap="tagsGap"
         :maxHeight="maxHeight"
-        @tag-clicked="handelTagClicked"
+        @tag-clicked="(tag) => handelTagClicked(tag, true)"
       />
     </template>
   </el-popover>

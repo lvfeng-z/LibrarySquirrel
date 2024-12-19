@@ -121,7 +121,7 @@ async function requestWorks() {
       // 如果extraData存储的tagType为true，则此标签是本地标签，否则是站点标签，
       if (tag.extraData['tagType']) {
         // 根据标签状态判断是包含此标签还是排除此标签
-        if (tag.state === undefined || tag.state) {
+        if (tag.disabled === undefined || tag.disabled) {
           if (isNullish(page.query.includeLocalTagIds)) {
             page.query.includeLocalTagIds = []
           }
@@ -134,7 +134,7 @@ async function requestWorks() {
         }
       } else {
         // 根据标签状态判断是包含此标签还是排除此标签
-        if (tag.state === undefined || tag.state) {
+        if (tag.disabled === undefined || tag.disabled) {
           if (isNullish(page.query.includeSiteTagIds)) {
             page.query.includeSiteTagIds = []
           }

@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import { Close } from '@element-plus/icons-vue'
-import { computed, ref, Ref, UnwrapRef } from 'vue'
-import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
+import { computed, Ref, UnwrapRef } from 'vue'
+import { isNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
     item: SelectItem
     closeable?: boolean
-    onChecked?: (check?: boolean, value?: SelectItem) => void
   }>(),
   {
     closeable: true
@@ -23,7 +22,6 @@ const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
 const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
   return props.closeable ? 'calc(100% - 21px)' : '100%'
 })
-const checked: Ref<UnwrapRef<boolean>> = ref(true)
 
 // 事件
 const emits = defineEmits(['clicked', 'mainLabelClicked', 'subLabelClicked', 'close'])
@@ -42,16 +40,6 @@ function handleSubLabelClicked(index: number) {
 function handleCloseButtonClicked() {
   emits('close')
 }
-// 改变勾选状态
-function check(newState: boolean) {
-  checked.value = newState
-  if (notNullish(props.onChecked)) {
-    props.onChecked(newState, props.item)
-  }
-}
-
-// 暴露
-defineExpose({ check })
 </script>
 
 <template>
@@ -60,8 +48,8 @@ defineExpose({ check })
       <div
         :class="{
           'segmented-tag-main-label': true,
-          'segmented-tag-main-label-checked': checked,
-          'segmented-tag-main-label-unchecked': !checked
+          'segmented-tag-main-label-checked': !item.disabled,
+          'segmented-tag-main-label-unchecked': item.disabled
         }"
         @click="handleMainLabelClicked"
       >
@@ -69,8 +57,8 @@ defineExpose({ check })
           :class="{
             'segmented-tag-main-text': true,
             'segmented-tag-ellipsis': true,
-            'segmented-tag-main-text-checked': checked,
-            'segmented-tag-main-text-unchecked': !checked
+            'segmented-tag-main-text-checked': !item.disabled,
+            'segmented-tag-main-text-unchecked': item.disabled
           }"
           >{{ props.item.label }}</span
         >
@@ -124,7 +112,7 @@ defineExpose({ check })
   max-width: 100%;
   flex-grow: 1;
   align-content: center;
-  transition-duration: 0.4s;
+  transition-duration: 0.8s;
 }
 .segmented-tag-main-label-checked {
   background-color: rgb(133.4, 206.2, 97.4, 30%);
