@@ -55,10 +55,7 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 
 // 方法
 // 查询标签选择列表
-async function getSearchItemSelectList(
-  page: IPage<BaseQueryDTO, SelectItem>,
-  input?: string
-): Promise<IPage<BaseQueryDTO, SelectItem>> {
+async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
   const query = new SearchConditionQueryDTO()
   query.keyword = input
   page.query = query
@@ -226,7 +223,7 @@ async function handleTest() {
             <el-col :span="21">
               <auto-load-tag-select
                 style="height: 100%"
-                :load="getSearchItemSelectList"
+                :load="querySearchItemPage"
                 :page-size="50"
                 tags-gap="10px"
                 max-height="300px"

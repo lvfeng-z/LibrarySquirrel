@@ -58,8 +58,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
-          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_author`
+          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localAuthor', 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
+          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localAuthor', 'id', id) AS extraData FROM local_author`
       )
     }
 
@@ -68,7 +68,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
       const statement =
         `SELECT t1.id || 'siteAuthor' AS value, t1.site_author_name AS label, t1.last_use,
                   JSON_OBJECT(
-                    'type', 'siteTag',
+                    'type', 'siteAuthor',
                     'id', t1.id,
                     'siteAuthor',
                     JSON_OBJECT('id', t2.id, 'siteAuthorName', t2.local_author_name),
