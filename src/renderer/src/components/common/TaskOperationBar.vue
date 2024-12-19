@@ -90,10 +90,10 @@ function mapToButtonStatus(row: TaskDTO): {
       "
       style="margin-left: auto; margin-right: auto; flex-shrink: 0"
     >
-      <el-tooltip v-if="props.row.isCollection" content="详情">
+      <el-tooltip v-if="props.row.isCollection" :enterable="false" :show-after="650" :hide-after="0" content="详情">
         <el-button size="small" icon="View" @click="buttonClicked(row, TaskOperationCodeEnum.VIEW)" />
       </el-tooltip>
-      <el-tooltip :content="mapToButtonStatus(row).tooltip">
+      <el-tooltip :content="mapToButtonStatus(row).tooltip" :enterable="false" :show-after="650" :hide-after="0">
         <el-button
           size="small"
           :icon="mapToButtonStatus(row).icon"
@@ -101,10 +101,10 @@ function mapToButtonStatus(row: TaskDTO): {
           @click="buttonClicked(row, mapToButtonStatus(row).operation)"
         ></el-button>
       </el-tooltip>
-      <el-tooltip content="取消">
+      <el-tooltip content="取消" :enterable="false" :show-after="650" :hide-after="0">
         <el-button size="small" icon="CircleClose" @click="buttonClicked(row, TaskOperationCodeEnum.CANCEL)" />
       </el-tooltip>
-      <el-tooltip content="删除">
+      <el-tooltip content="删除" :enterable="false" :show-after="650" :hide-after="0">
         <el-button size="small" icon="Delete" @click="buttonClicked(row, TaskOperationCodeEnum.DELETE)" />
       </el-tooltip>
     </el-button-group>
