@@ -16,6 +16,7 @@ const props = withDefaults(
     pageSize?: number
     tagsGap?: string
     maxHeight?: string
+    minHeight?: string
   }>(),
   {
     pageSize: 30
@@ -71,12 +72,17 @@ const optionalData: Ref<UnwrapRef<SelectItem[]>> = ref([])
 const optionalCheckedIdBuffer: Set<string> = new Set()
 // 总体宽度
 const width: Ref<UnwrapRef<number>> = ref(0)
+// 总体宽度
+const popoverOffset: Ref<UnwrapRef<number>> = ref(0)
 // 输入框宽度
 const inputWidth: Ref<UnwrapRef<string>> = ref('11px')
 // 监听wrapper div的宽度变化
 const resizeObserver = new ResizeObserver((entries) => {
-  width.value = entries[0].contentRect.width
+  throttle(() => (width.value = entries[0].contentRect.width), 300, { leading: true, trailing: true })()
+  throttle(() => (popoverOffset.value = (entries[0].contentRect.height + 1000) / 100), 300, { leading: true, trailing: true })()
 })
+// 控制已选中栏的展开和折叠
+const expand: Ref<UnwrapRef<boolean>> = ref(false)
 
 // 方法
 // 加载分页的函数
@@ -160,32 +166,55 @@ watch(input, () => {
 <template>
   <el-popover
     :width="width"
-    :show-after="100"
+    :show-after="300"
     :hide-after="300"
     transition="el-zoom-in-top"
     trigger="hover"
-    @before-enter="handleInputFocus(true)"
+    placement="top"
+    :offset="popoverOffset"
+    @before-enter="
+      () => {
+        handleInputFocus(true)
+        expand = true
+      }
+    "
     @hide="handleInputFocus(false)"
+    @before-leave="expand = false"
   >
     <template #reference>
-      <div ref="wrapper" class="auto-load-tag-select-selected-wrapper rounded-borders">
-        <tag-box
-          class="auto-load-tag-select-selected"
-          v-model:data="selectedData"
-          tag-closeable
-          @tag-close="handelTagClosed"
-          @tag-clicked="(tag) => handelTagClicked(tag, false)"
-          @click="inputElement.focus()"
+      <div
+        ref="wrapper"
+        :class="{
+          'auto-load-tag-select-main': true,
+          'auto-load-tag-select-main-fold': expand,
+          'auto-load-tag-select-main-unfold': !expand
+        }"
+      >
+        <div
+          :class="{
+            'auto-load-tag-select-selected-wrapper': true,
+            'rounded-borders': true,
+            'auto-load-tag-select-selected-wrapper-expand': expand
+          }"
         >
-          <template #tail>
-            <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @input="newSearch" />
-            <span ref="hiddenSpan" style="visibility: hidden">{{ input }}</span>
-          </template>
-        </tag-box>
-        <div class="segmented-tag-sub-close-wrapper">
-          <button class="segmented-tag-sub-close" @click="clear">
-            <el-icon color="rgb(166.2, 168.6, 173.4, 75%)"><Close /></el-icon>
-          </button>
+          <tag-box
+            class="auto-load-tag-select-selected"
+            v-model:data="selectedData"
+            tag-closeable
+            @tag-close="handelTagClosed"
+            @tag-clicked="(tag) => handelTagClicked(tag, false)"
+            @click="inputElement.focus()"
+          >
+            <template #tail>
+              <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @input="newSearch" />
+              <span ref="hiddenSpan" style="visibility: hidden">{{ input }}</span>
+            </template>
+          </tag-box>
+          <div class="auto-load-tag-close-wrapper">
+            <button class="auto-load-tag-close" @click="clear">
+              <el-icon color="rgb(166.2, 168.6, 173.4, 75%)"><Close /></el-icon>
+            </button>
+          </div>
         </div>
       </div>
     </template>
@@ -205,24 +234,35 @@ watch(input, () => {
 </template>
 
 <style scoped>
+.auto-load-tag-select-main {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  transition: 0.3s ease;
+}
+.auto-load-tag-select-main-fold {
+  grid-template-rows: 1fr;
+}
+.auto-load-tag-select-main-unfold {
+  grid-template-rows: 0fr;
+}
 .auto-load-tag-select-selected-wrapper {
   display: flex;
+  min-height: v-bind(minHeight);
 }
 .auto-load-tag-select-selected {
   height: 100%;
   width: calc(100% - 30px);
   background-color: #ffffff;
   cursor: text;
-  transition: height ease 1s;
 }
-.segmented-tag-sub-close-wrapper {
+.auto-load-tag-close-wrapper {
   width: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: rgb(166.2, 168.6, 173.4, 5%);
 }
-.segmented-tag-sub-close {
+.auto-load-tag-close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -241,7 +281,7 @@ watch(input, () => {
 
   transition-duration: 0.4s;
 }
-.segmented-tag-sub-close:hover {
+.auto-load-tag-close:hover {
   width: 24px;
   height: 24px;
   background-color: rgb(166.2, 168.6, 173.4, 45%);

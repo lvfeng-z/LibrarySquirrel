@@ -230,7 +230,8 @@ async function handleTest() {
                 :page-size="50"
                 tags-gap="10px"
                 max-height="300px"
-              ></auto-load-tag-select>
+                min-height="33px"
+              />
               <collapse-panel class="z-layer-3">
                 <div style="padding: 5px; background-color: #fafafa">
                   <el-button> test </el-button>
