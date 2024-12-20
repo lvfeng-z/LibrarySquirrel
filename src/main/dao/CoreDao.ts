@@ -254,6 +254,9 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected async getPagingClause(statement: string, page: Page<Query, Model>): Promise<string> {
+    if (StringUtil.isBlank(statement)) {
+      return statement
+    }
     const db = this.acquire()
     try {
       // 查询数据总量，计算页码数量

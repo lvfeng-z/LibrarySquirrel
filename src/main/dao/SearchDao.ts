@@ -7,7 +7,7 @@ import SearchConditionQueryDTO from '../model/queryDTO/SearchConditionQueryDTO.j
 import SelectItem from '../model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
 import { SearchType } from '../model/util/SearchCondition.js'
-import { isNullish, notNullish } from '../util/CommonUtil.js'
+import { arrayIsEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import Site from '../model/entity/Site.js'
@@ -27,7 +27,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 本地标签
-    if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_TAG)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_TAG)) {
       statements.push(
         hasKeyword
           ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
@@ -36,7 +36,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 站点标签
-    if (isNullish(query?.types) || query.types.includes(SearchType.SITE_TAG)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_TAG)) {
       const statement =
         `SELECT t1.id || 'siteTag' AS value, t1.site_tag_name AS label, t1.last_use,
                   JSON_OBJECT(
@@ -55,7 +55,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 本地作者
-    if (isNullish(query?.types) || query.types.includes(SearchType.LOCAL_AUTHOR)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
           ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localAuthor', 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
@@ -64,7 +64,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 站点作者
-    if (isNullish(query?.types) || query.types.includes(SearchType.SITE_AUTHOR)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_AUTHOR)) {
       const statement =
         `SELECT t1.id || 'siteAuthor' AS value, t1.site_author_name AS label, t1.last_use,
                   JSON_OBJECT(
