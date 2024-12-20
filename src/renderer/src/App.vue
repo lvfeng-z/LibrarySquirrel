@@ -231,7 +231,24 @@ async function handleTest() {
         <div v-show="pageState.mainPage" class="main-page margin-box">
           <div class="main-page-searchbar">
             <el-row>
-              <el-col :span="22">
+              <el-col style="display: flex; justify-content: center; transition: width 1s ease" :span="3">
+                <el-select
+                  v-model="searchConditionType"
+                  multiple
+                  collapse-tags
+                  collapse-tags-tooltip
+                  clearable
+                  placeholder="查询参数类型"
+                >
+                  <el-option-group>
+                    <el-option :value="SearchType.LOCAL_TAG" label="本地标签"></el-option>
+                    <el-option :value="SearchType.SITE_TAG" label="站点标签"></el-option>
+                    <el-option :value="SearchType.LOCAL_AUTHOR" label="本地作者"></el-option>
+                    <el-option :value="SearchType.SITE_AUTHOR" label="站点作者"></el-option>
+                  </el-option-group>
+                </el-select>
+              </el-col>
+              <el-col :span="19">
                 <div class="main-page-auto-load-tag-select z-layer-3">
                   <auto-load-tag-select
                     :load="querySearchItemPage"
