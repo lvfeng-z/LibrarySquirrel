@@ -3,6 +3,7 @@ import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
 import { ArrowLeftBold, ArrowRightBold, Expand, Fold } from '@element-plus/icons-vue'
 // props
 const props = defineProps<{
+  width: string
   defaultActive: string[]
   states?: number
 }>()
@@ -108,7 +109,7 @@ function handleClickOutSide() {
   width: 0;
 }
 .side-menu-show {
-  width: 63px;
+  width: v-bind(width);
 }
 .side-menu-main:not(.el-menu--collapse) {
   width: 200px;

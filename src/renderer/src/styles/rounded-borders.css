@@ -1,5 +1,6 @@
 .rounded-borders {
-  border: 1.5px solid #eaeaea;
+  border: 1px solid var(--el-border-color);
   border-radius: 4px;
   box-sizing: border-box;
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }

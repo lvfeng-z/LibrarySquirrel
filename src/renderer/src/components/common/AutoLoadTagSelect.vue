@@ -190,13 +190,7 @@ watch(input, () => {
           'auto-load-tag-select-main-unfold': !expand
         }"
       >
-        <div
-          :class="{
-            'auto-load-tag-select-selected-wrapper': true,
-            'rounded-borders': true,
-            'auto-load-tag-select-selected-wrapper-expand': expand
-          }"
-        >
+        <div class="auto-load-tag-select-selected-wrapper rounded-borders">
           <tag-box
             class="auto-load-tag-select-selected"
             v-model:data="selectedData"
@@ -248,11 +242,11 @@ watch(input, () => {
 .auto-load-tag-select-selected-wrapper {
   display: flex;
   min-height: v-bind(minHeight);
+  background-color: var(--el-fill-color-blank);
 }
 .auto-load-tag-select-selected {
   height: 100%;
   width: calc(100% - 30px);
-  background-color: #ffffff;
   cursor: text;
 }
 .auto-load-tag-close-wrapper {

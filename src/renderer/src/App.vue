@@ -5,7 +5,7 @@ import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
 import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { CollectionTag, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
+import { CollectionTag, Coordinate, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -21,6 +21,8 @@ import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditi
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import AutoLoadTagSelect from '@renderer/components/common/AutoLoadTagSelect.vue'
+import { SearchType } from '@renderer/model/util/SearchCondition.ts'
+import lodash from 'lodash'
 
 // onMounted
 onMounted(() => {
@@ -54,12 +56,15 @@ const showExplainPath = ref(false) // 解释路径dialog的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
 type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | ''
+// 查询参数类型
+const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 
 // 方法
 // 查询标签选择列表
 async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
   const query = new SearchConditionQueryDTO()
   query.keyword = input
+  query.types = lodash.cloneDeep(searchConditionType.value)
   page.query = query
   let response: ApiResponse
   try {
@@ -175,82 +180,88 @@ async function handleTest() {
 
 <template>
   <div class="ui">
-    <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-    <side-menu ref="sideMenuRef" class="sideMenu z-layer-4" :default-active="['1-1']">
-      <template #default>
-        <el-sub-menu index="1">
-          <template #title>
-            <el-icon><CollectionTag /></el-icon>
-            <span>标签</span>
+    <el-container>
+      <el-aside class="z-layer-4" width="auto" style="overflow: visible">
+        <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
+        <side-menu ref="sideMenuRef" class="sideMenu" width="63px" :default-active="['1-1']">
+          <template #default>
+            <el-sub-menu index="1">
+              <template #title>
+                <el-icon><CollectionTag /></el-icon>
+                <span>标签</span>
+              </template>
+              <el-menu-item index="1-1" @click="showSubpage('TagManage')">本地标签</el-menu-item>
+              <el-menu-item index="1-2">站点标签</el-menu-item>
+            </el-sub-menu>
+            <el-sub-menu index="2">
+              <template #title>
+                <el-icon><User /></el-icon>
+                <span>作者</span>
+              </template>
+              <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')"> 本地作者 </el-menu-item>
+              <el-menu-item index="2-2">站点作者</el-menu-item>
+            </el-sub-menu>
+            <el-menu-item index="3">
+              <template #title>收藏</template>
+              <el-icon><Star /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="4" @click="showSubpage('Settings')">
+              <template #title>站点</template>
+              <el-icon><Link /></el-icon>
+            </el-menu-item>
+            <el-sub-menu index="5">
+              <template #title>
+                <el-icon><List /></el-icon>
+                <span>任务</span>
+              </template>
+              <el-menu-item index="5-1" @click="showSubpage('TaskManage')">任务管理</el-menu-item>
+            </el-sub-menu>
+            <el-menu-item index="6" @click="showSubpage('Settings')">
+              <template #title>设置</template>
+              <el-icon><Setting /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="7" @click="handleTest">
+              <template #title>TEST</template>
+              <el-icon><Coordinate /></el-icon>
+            </el-menu-item>
           </template>
-          <el-menu-item index="1-1" @click="showSubpage('TagManage')">本地标签</el-menu-item>
-          <el-menu-item index="1-2">站点标签</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="2">
-          <template #title>
-            <el-icon><User /></el-icon>
-            <span>作者</span>
-          </template>
-          <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')"> 本地作者 </el-menu-item>
-          <el-menu-item index="2-2">站点作者</el-menu-item>
-        </el-sub-menu>
-        <el-menu-item index="3">
-          <template #title>收藏</template>
-          <el-icon><Star /></el-icon>
-        </el-menu-item>
-        <el-menu-item index="4" @click="showSubpage('Settings')">
-          <template #title>站点</template>
-          <el-icon><Link /></el-icon>
-        </el-menu-item>
-        <el-sub-menu index="5">
-          <template #title>
-            <el-icon><List /></el-icon>
-            <span>任务</span>
-          </template>
-          <el-menu-item index="5-1" @click="showSubpage('TaskManage')">任务管理</el-menu-item>
-        </el-sub-menu>
-        <el-menu-item index="6" @click="showSubpage('Settings')">
-          <template #title>设置</template>
-          <el-icon><Setting /></el-icon>
-        </el-menu-item>
-      </template>
-    </side-menu>
-    <div class="mainSpace">
-      <div v-show="pageState.mainPage" class="mainPage margin-box">
-        <div class="mainPage-searchbar">
-          <el-row>
-            <el-col style="display: flex; justify-content: center" :span="1">
-              <el-button @click="handleTest">-</el-button>
-            </el-col>
-            <el-col :span="21">
-              <auto-load-tag-select
-                style="height: 100%"
-                :load="querySearchItemPage"
-                :page-size="50"
-                tags-gap="10px"
-                max-height="300px"
-                min-height="33px"
-              />
-              <collapse-panel class="z-layer-3">
-                <div style="padding: 5px; background-color: #fafafa">
-                  <el-button> test </el-button>
+        </side-menu>
+      </el-aside>
+      <el-main style="padding: 1px 5px 5px 5px">
+        <div v-show="pageState.mainPage" class="main-page margin-box">
+          <div class="main-page-searchbar">
+            <el-row>
+              <el-col :span="22">
+                <div class="main-page-auto-load-tag-select z-layer-3">
+                  <auto-load-tag-select
+                    :load="querySearchItemPage"
+                    :page-size="50"
+                    tags-gap="10px"
+                    max-height="300px"
+                    min-height="33px"
+                  />
+                  <collapse-panel>
+                    <div style="padding: 5px">
+                      <el-button> test </el-button>
+                    </div>
+                  </collapse-panel>
                 </div>
-              </collapse-panel>
-            </el-col>
-            <el-col style="display: flex; justify-content: center" :span="2">
-              <el-button @click="requestWorks">搜索</el-button>
-            </el-col>
-          </el-row>
+              </el-col>
+              <el-col style="display: flex; justify-content: center" :span="2">
+                <el-button @click="requestWorks">搜索</el-button>
+              </el-col>
+            </el-row>
+          </div>
+          <works-display-area class="main-page-works-space" :works-list="imageList"></works-display-area>
         </div>
-        <works-display-area class="mainPage-works-space" :works-list="imageList"></works-display-area>
-      </div>
-      <div v-if="pageState.subpage" class="subPage">
-        <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
-        <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
-        <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
-        <settings v-if="pageState.showSettingsPage" @close-self="closeSubpage" />
-      </div>
-    </div>
+        <div v-if="pageState.subpage" class="subPage">
+          <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
+          <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
+          <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
+          <settings v-if="pageState.showSettingsPage" @close-self="closeSubpage" />
+        </div>
+      </el-main>
+    </el-container>
     <explain-path
       v-model:state="showExplainPath"
       width="80%"
@@ -267,26 +278,22 @@ async function handleTest() {
   flex-direction: row;
   width: 100%;
   height: 100%;
+  background-color: #fafafa;
 }
-.mainSpace {
-  max-width: 100%;
-  height: 100%;
-  flex-grow: 1;
-  background: #fafafa;
-}
-.sideMenu {
-  height: 100%;
-}
-.mainPage {
+.main-page {
   display: flex;
   flex-direction: column;
 }
-.mainPage-searchbar {
+.main-page-searchbar {
   width: 100%;
 }
-.mainPage-works-space {
+.main-page-works-space {
   width: 100%;
   height: 100%;
+}
+.main-page-auto-load-tag-select {
+  height: 33px;
+  position: relative;
 }
 .subPage {
   width: 100%;
