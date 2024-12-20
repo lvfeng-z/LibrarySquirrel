@@ -4,6 +4,12 @@ import BaseEntity from '../model/entity/BaseEntity.js'
 import SelectItem from '../model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
 import SearchDao from '../dao/SearchDao.js'
+import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
+import WorksDTO from '../model/dto/WorksDTO.js'
+import WorksService from './WorksService.js'
+import Works from '../model/entity/Works.js'
+import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.js'
+import { arrayNotEmpty } from '../util/CommonUtil.js'
 
 /**
  * 查询服务类
@@ -22,5 +28,28 @@ export default class SearchService {
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
     page = new Page(page)
     return this.dao.querySearchConditionPage(page)
+  }
+
+  /**
+   * 分页查询作品
+   * @param page
+   */
+  public async queryWorksPage(page: Page<SearchCondition[], WorksDTO>): Promise<Page<WorksQueryDTO, Works>> {
+    page = new Page(page)
+    const worksService = new WorksService()
+    const tempPage = page.copy<WorksQueryDTO, WorksDTO>()
+
+    // TODO 配置查询参数
+    const modifiedQuery = new WorksQueryDTO()
+    const searchConditions = page.query
+    if (arrayNotEmpty(searchConditions)) {
+      for (const searchCondition of searchConditions) {
+        switch (searchCondition.type) {
+          case SearchType.LOCAL_TAG:
+            modifiedQuery.includeLocalTagIds.push(searchCondition.value as number)
+        }
+      }
+    }
+    return worksService.queryPage(tempPage)
   }
 }

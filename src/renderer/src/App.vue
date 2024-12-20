@@ -111,44 +111,18 @@ function closeSubpage() {
   pageState.mainPage = true
 }
 // 请求作品接口
-async function requestWorks() {
+async function searchWorks() {
   const page = new Page<WorksQueryDTO, WorksDTO>()
   page.query = new WorksQueryDTO()
   page.pageSize = 100
 
   // 处理搜索框的标签
-  selectedTagList.value.forEach((tag) => {
-    if (tag.extraData !== undefined && tag.extraData !== null && Object.prototype.hasOwnProperty.call(tag.extraData, 'tagType')) {
-      if (isNullish(page.query)) {
-        return
-      }
-      // 如果extraData存储的tagType为true，则此标签是本地标签，否则是站点标签，
-      if (tag.extraData['tagType']) {
-        // 根据标签状态判断是包含此标签还是排除此标签
-        if (tag.disabled === undefined || tag.disabled) {
-          if (isNullish(page.query.includeLocalTagIds)) {
-            page.query.includeLocalTagIds = []
-          }
-          ;(page.query.includeLocalTagIds as (string | number)[]).push(tag.value)
-        } else {
-          if (isNullish(page.query.excludeLocalTagIds)) {
-            page.query.excludeLocalTagIds = []
-          }
-          ;(page.query.excludeLocalTagIds as (string | number)[]).push(tag.value)
-        }
+  selectedTagList.value.forEach((searchCondition) => {
+    if (notNullish(searchCondition.disabled) && searchCondition.disabled) {
+      if (isNullish(searchCondition.extraData)) {
+        searchCondition.extraData = { exclude: true }
       } else {
-        // 根据标签状态判断是包含此标签还是排除此标签
-        if (tag.disabled === undefined || tag.disabled) {
-          if (isNullish(page.query.includeSiteTagIds)) {
-            page.query.includeSiteTagIds = []
-          }
-          ;(page.query.includeSiteTagIds as (string | number)[]).push(tag.value)
-        } else {
-          if (isNullish(page.query.excludeSiteTagIds)) {
-            page.query.excludeSiteTagIds = []
-          }
-          ;(page.query.excludeSiteTagIds as (string | number)[]).push(tag.value)
-        }
+        searchCondition.extraData['exclude'] = true
       }
     }
   })
@@ -265,7 +239,7 @@ async function handleTest() {
                 </div>
               </el-col>
               <el-col style="display: flex; justify-content: center" :span="2">
-                <el-button @click="requestWorks">搜索</el-button>
+                <el-button @click="searchWorks">搜索</el-button>
               </el-col>
             </el-row>
           </div>

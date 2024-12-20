@@ -9,19 +9,19 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   /**
    * 包含本地标签
    */
-  includeLocalTagIds: string[] | number[] | null | undefined
+  includeLocalTagIds: (string | number)[]
   /**
    * 排除本地标签
    */
-  excludeLocalTagIds: string[] | number[] | null | undefined
+  excludeLocalTagIds: (string | number)[]
   /**
    * 包含站点标签
    */
-  includeSiteTagIds: string[] | number[] | null | undefined
+  includeSiteTagIds: (string | number)[]
   /**
    * 排除站点标签
    */
-  excludeSiteTagIds: string[] | number[] | null | undefined
+  excludeSiteTagIds: (string | number)[]
 
   /**
    * 文件存储路径（文件相对于工作目录的相对路径）
@@ -91,10 +91,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   constructor(worksQueryDTO?: WorksQueryDTO) {
     if (isNullish(worksQueryDTO)) {
       super()
-      this.includeLocalTagIds = undefined
-      this.excludeLocalTagIds = undefined
-      this.includeSiteTagIds = undefined
-      this.includeSiteTagIds = undefined
+      this.includeLocalTagIds = []
+      this.excludeLocalTagIds = []
+      this.includeSiteTagIds = []
+      this.excludeSiteTagIds = []
       this.filePath = undefined
       this.fileName = undefined
       this.filenameExtension = undefined
