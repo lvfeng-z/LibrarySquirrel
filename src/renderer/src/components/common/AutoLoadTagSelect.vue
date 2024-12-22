@@ -49,6 +49,10 @@ onUnmounted(() => {
   }
 })
 
+// model
+// 已选数据
+const selectedData: Ref<UnwrapRef<SelectItem[]>> = defineModel<SelectItem[]>('data', { required: true })
+
 // 变量
 // 最外部div的实例
 const wrapper = ref()
@@ -62,8 +66,6 @@ const inputElement = ref()
 const hiddenSpan = ref()
 // 输入
 const input: Ref<UnwrapRef<string | undefined>> = ref()
-// 已选数据
-const selectedData: Ref<UnwrapRef<SelectItem[]>> = ref([])
 // 分页参数
 const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 // 可选数据

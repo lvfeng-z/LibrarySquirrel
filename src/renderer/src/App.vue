@@ -21,8 +21,9 @@ import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditi
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import AutoLoadTagSelect from '@renderer/components/common/AutoLoadTagSelect.vue'
-import { SearchType } from '@renderer/model/util/SearchCondition.ts'
+import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import lodash from 'lodash'
+import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 
 // onMounted
 onMounted(() => {
@@ -38,6 +39,7 @@ const apis = {
   localTagListSelectItems: window.api.localTagListSelectItems,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   worksQueryPage: window.api.worksQueryPage,
+  searchQueryWorksPage: window.api.searchQueryWorksPage,
   worksMultipleConditionQueryPage: window.api.worksMultipleConditionQueryPage
 }
 // sideMenu组件的实例
@@ -112,22 +114,26 @@ function closeSubpage() {
 }
 // 请求作品接口
 async function searchWorks() {
-  const page = new Page<WorksQueryDTO, WorksDTO>()
-  page.query = new WorksQueryDTO()
+  const page = new Page<SearchCondition[], WorksDTO>()
   page.pageSize = 100
 
   // 处理搜索框的标签
-  selectedTagList.value.forEach((searchCondition) => {
-    if (notNullish(searchCondition.disabled) && searchCondition.disabled) {
-      if (isNullish(searchCondition.extraData)) {
-        searchCondition.extraData = { exclude: true }
-      } else {
-        searchCondition.extraData['exclude'] = true
+  page.query = selectedTagList.value
+    .map((searchCondition) => {
+      let operator: CrudOperator | undefined = undefined
+      if (notNullish(searchCondition.disabled) && searchCondition.disabled) {
+        operator = CrudOperator.NOT_EQUAL
       }
-    }
-  })
+      if (notNullish(searchCondition.extraData)) {
+        const extraData = searchCondition.extraData as { type: SearchType; id: number }
+        return new SearchCondition({ type: extraData.type, value: extraData.id, operator: operator })
+      } else {
+        return undefined
+      }
+    })
+    .filter(notNullish)
 
-  apis.worksQueryPage(page).then((response: ApiResponse) => {
+  apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
       const page = ApiUtil.data<Page<WorksQueryDTO, WorksDTO>>(response)
       if (notNullish(page)) {
@@ -225,6 +231,7 @@ async function handleTest() {
               <el-col :span="19">
                 <div class="main-page-auto-load-tag-select z-layer-3">
                   <auto-load-tag-select
+                    v-model:data="selectedTagList"
                     :load="querySearchItemPage"
                     :page-size="50"
                     tags-gap="10px"

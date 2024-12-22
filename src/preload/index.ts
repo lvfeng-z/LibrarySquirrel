@@ -87,6 +87,9 @@ const api = {
   searchQuerySearchConditionPage: (args) => {
     return Electron.ipcRenderer.invoke('search-querySearchConditionPage', args)
   },
+  searchQueryWorksPage: (args) => {
+    return Electron.ipcRenderer.invoke('search-queryWorksPage', args)
+  },
 
   // ReWorksTag
   reWorksTagLink: (arg1, arg2) => {

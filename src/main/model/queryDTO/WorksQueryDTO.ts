@@ -22,6 +22,22 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    * 排除站点标签
    */
   excludeSiteTagIds: (string | number)[]
+  /**
+   * 包含本地作者
+   */
+  includeLocalAuthorIds: (string | number)[]
+  /**
+   * 排除本地作者
+   */
+  excludeLocalAuthorIds: (string | number)[]
+  /**
+   * 包含站点作者
+   */
+  includeSiteAuthorIds: (string | number)[]
+  /**
+   * 排除站点作者
+   */
+  excludeSiteAuthorIds: (string | number)[]
 
   /**
    * 文件存储路径（文件相对于工作目录的相对路径）
@@ -95,6 +111,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.excludeLocalTagIds = []
       this.includeSiteTagIds = []
       this.excludeSiteTagIds = []
+      this.includeLocalAuthorIds = []
+      this.excludeLocalAuthorIds = []
+      this.includeSiteAuthorIds = []
+      this.excludeSiteAuthorIds = []
       this.filePath = undefined
       this.fileName = undefined
       this.filenameExtension = undefined
@@ -117,6 +137,10 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.excludeLocalTagIds = worksQueryDTO.excludeLocalTagIds
       this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
       this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
+      this.includeLocalAuthorIds = worksQueryDTO.includeLocalAuthorIds
+      this.excludeLocalAuthorIds = worksQueryDTO.excludeLocalAuthorIds
+      this.includeSiteAuthorIds = worksQueryDTO.includeSiteAuthorIds
+      this.excludeSiteAuthorIds = worksQueryDTO.excludeSiteAuthorIds
       this.filePath = worksQueryDTO.filePath
       this.fileName = worksQueryDTO.fileName
       this.filenameExtension = worksQueryDTO.filenameExtension

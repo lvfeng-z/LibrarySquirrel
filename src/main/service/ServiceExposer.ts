@@ -247,6 +247,15 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('search-queryWorksPage', async (_event, args) => {
+    const queryService = new SearchService()
+    try {
+      return ApiUtil.response(await queryService.queryWorksPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', () => {

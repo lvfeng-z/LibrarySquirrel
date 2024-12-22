@@ -30,8 +30,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_TAG)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
-          : `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', 'localTag', 'id', id) AS extraData FROM local_tag`
+          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_TAG}., 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
+          : `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_TAG}, 'id', id) AS extraData FROM local_tag`
       )
     }
 
@@ -40,7 +40,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
       const statement =
         `SELECT t1.id || 'siteTag' AS value, t1.site_tag_name AS label, t1.last_use,
                   JSON_OBJECT(
-                    'type', 'siteTag',
+                    'type', ${SearchType.SITE_TAG},
                     'id', t1.id,
                     'localTag',
                     JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id),
@@ -58,8 +58,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localAuthor', 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
-          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', 'localAuthor', 'id', id) AS extraData FROM local_author`
+          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
+          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author`
       )
     }
 
@@ -68,7 +68,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
       const statement =
         `SELECT t1.id || 'siteAuthor' AS value, t1.site_author_name AS label, t1.last_use,
                   JSON_OBJECT(
-                    'type', 'siteAuthor',
+                    'type', ${SearchType.SITE_AUTHOR},
                     'id', t1.id,
                     'siteAuthor',
                     JSON_OBJECT('id', t2.id, 'siteAuthorName', t2.local_author_name),
@@ -98,26 +98,26 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
               LogUtil.error(`解析查询配置项${selectItem.label}的额外数据失败，error`, error)
             }
             if (notNullish(selectItem.extraData)) {
-              const extra = selectItem.extraData as { type: string }
+              const extra = selectItem.extraData as { type: SearchType; id: number }
               const subLabels: string[] = []
               switch (extra.type) {
-                case 'localTag':
+                case SearchType.LOCAL_TAG:
                   subLabels.push(...['tag', 'local'])
                   break
-                case 'siteTag': {
-                  const localTag = (extra as { type: string; localTag: string }).localTag
-                  const site = new Site((extra as { type: string; site: Site }).site)
-                  selectItem.extraData = { localTag: localTag, site: site }
+                case SearchType.SITE_TAG: {
+                  const localTag = (extra as { type: SearchType; id: number; localTag: string }).localTag
+                  const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
+                  selectItem.extraData = { type: extra.type, id: extra.id, localTag: localTag, site: site }
                   subLabels.push(...['tag', isNullish(site.siteName) ? '?' : site.siteName])
                   break
                 }
-                case 'localAuthor':
+                case SearchType.LOCAL_AUTHOR:
                   subLabels.push(...['author', 'local'])
                   break
-                case 'siteAuthor': {
-                  const localAuthor = (extra as { type: string; localAuthor: string }).localAuthor
-                  const site = new Site((extra as { type: string; site: Site }).site)
-                  selectItem.extraData = { localAuthor: localAuthor, site: site }
+                case SearchType.SITE_AUTHOR: {
+                  const localAuthor = (extra as { type: SearchType; id: number; localAuthor: string }).localAuthor
+                  const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
+                  selectItem.extraData = { type: extra.type, id: extra.id, localAuthor: localAuthor, site: site }
                   subLabels.push(...['author', isNullish(site.siteName) ? '?' : site.siteName])
                   break
                 }
