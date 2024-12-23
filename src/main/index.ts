@@ -98,8 +98,12 @@ Electron.app.whenReady().then(() => {
       const height = heightStr === null ? undefined : parseInt(heightStr)
       const widthStr = url.searchParams.get('width')
       const width = widthStr === null ? undefined : parseInt(widthStr)
+      const visualHeightStr = url.searchParams.get('visualHeight')
+      const visualHeight = visualHeightStr === null ? undefined : parseInt(visualHeightStr)
+      const visualWidthStr = url.searchParams.get('visualWidth')
+      const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
 
-      const data = await getWorksResource(fullPath, height, width) // 异步读取文件
+      const data = await getWorksResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
       return new Response(data) // 返回文件
     } catch (error) {
       LogUtil.error('Error handling protocol request:', String(error))

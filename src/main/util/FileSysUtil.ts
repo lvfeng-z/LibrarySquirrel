@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import SettingsService from '../service/SettingsService.ts'
 import sharp from 'sharp'
-import { isNullish } from './CommonUtil.js'
+import { isNullish, notNullish } from './CommonUtil.js'
 import { Readable, Writable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 
@@ -77,13 +77,50 @@ export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogR
  * @param fullPath 作品路径
  * @param height 返回图片的高度
  * @param width 返回图片的宽度
+ * @param visualHeight 可视区域高度
+ * @param visualWidth 可视区域宽度
  */
-export async function getWorksResource(fullPath: string, height?: number, width?: number): Promise<Buffer> {
-  const resource = await fs.readFile(fullPath)
-  if (isNullish(height) || isNullish(width)) {
-    return resource
+export async function getWorksResource(
+  fullPath: string,
+  height?: number,
+  width?: number,
+  visualHeight?: number,
+  visualWidth?: number
+): Promise<Buffer> {
+  const resource = sharp(fullPath)
+  if (isNullish(height) && notNullish(width)) {
+    return resource.resize({ width: width, fit: 'contain' }).toBuffer()
+  } else if (notNullish(height) && isNullish(width)) {
+    return resource.resize({ height: height, fit: 'contain' }).toBuffer()
+  } else if (notNullish(height) && notNullish(width)) {
+    return resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer()
+  } else if (notNullish(visualHeight) && notNullish(visualWidth)) {
+    const metadata = await resource.metadata()
+    const imageHeight = metadata.height
+    const imageWidth = metadata.width
+    if (notNullish(imageHeight) && notNullish(imageWidth)) {
+      if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
+        return resource.toBuffer()
+      } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {
+        return resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer()
+      } else if (imageHeight <= visualHeight && imageWidth > visualWidth) {
+        return resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer()
+      } else if (imageHeight > visualHeight && imageWidth > visualWidth) {
+        if (imageHeight - visualHeight >= imageWidth - visualWidth) {
+          return resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer()
+        } else {
+          return resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer()
+        }
+      } else {
+        return resource.toBuffer()
+      }
+    } else {
+      const msg = `无法获取图片的高度或宽度！path: ${fullPath}`
+      LogUtil.error(msg)
+      throw new Error(msg)
+    }
   } else {
-    return sharp(resource).resize({ height: height, width: width, fit: 'contain' }).toBuffer()
+    return resource.toBuffer()
   }
 }
 
