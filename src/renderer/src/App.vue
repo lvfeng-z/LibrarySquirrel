@@ -253,7 +253,7 @@ async function handleTest() {
                     min-height="33px"
                   />
                   <collapse-panel>
-                    <div style="padding: 5px">
+                    <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
                       <el-button> test </el-button>
                     </div>
                   </collapse-panel>

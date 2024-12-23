@@ -108,12 +108,12 @@ function handleClickOutSide() {
   align-self: center;
 }
 .collapse-panel-button-wrapper-normal {
-  bottom: -12px;
+  bottom: -13px;
   display: grid;
   align-content: end;
 }
 .collapse-panel-button-wrapper-reverse {
-  top: -12px;
+  top: -13px;
 }
 .collapse-panel-button {
   width: 50px;
