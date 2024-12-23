@@ -33,7 +33,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
       reWorksAuthor.worksId = worksDTO.id as number
       reWorksAuthor.authorRole = localAuthorDTO.authorRole
       reWorksAuthor.localAuthorId = localAuthorDTO.id as number
-      reWorksAuthor.type = ReWorksAuthorTypeEnum.LOCAL
+      reWorksAuthor.authorType = ReWorksAuthorTypeEnum.LOCAL
       return reWorksAuthor
     })
 

@@ -7,9 +7,10 @@ import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
-import { arrayIsEmpty, isNullish } from '../util/CommonUtil.js'
+import { arrayIsEmpty, arrayNotEmpty, isNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../util/MediaType.js'
+import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -29,7 +30,6 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     let whereClause: string | undefined
     if (modifiedPage.query !== undefined && page.query !== undefined) {
       const baseProperties = lodash.cloneDeep(modifiedPage.query)
-      // 生成实际列的where子句
       const whereClausesAndQuery = this.getWhereClauses(baseProperties, 't1', [
         'includeLocalTagIds',
         'excludeLocalTagIds',
@@ -46,42 +46,48 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       modifiedPage.query = whereClausesAndQuery.query
 
       // 补充虚拟列的where子句
-      if (
-        page.query.includeLocalTagIds !== undefined &&
-        page.query.includeLocalTagIds !== null &&
-        page.query.includeLocalTagIds.length > 0
-      ) {
+      if (arrayNotEmpty(page.query.includeLocalTagIds)) {
         const tagNum = page.query.includeLocalTagIds.length
         whereClauses.push(
           `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct1 WHERE ct1.works_id = t1.id AND ct1.local_tag_id IN (${page.query.includeLocalTagIds.join()}) AND ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
-      if (
-        page.query.excludeLocalTagIds !== undefined &&
-        page.query.excludeLocalTagIds !== null &&
-        page.query.excludeLocalTagIds.length > 0
-      ) {
+      if (arrayNotEmpty(page.query.excludeLocalTagIds)) {
         whereClauses.push(
           `0 = (SELECT COUNT(1) FROM re_works_tag ct2 WHERE ct2.works_id = t1.id AND ct2.local_tag_id IN (${page.query.excludeLocalTagIds.join()}) AND ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
         )
       }
-      if (
-        page.query.includeSiteTagIds !== undefined &&
-        page.query.includeSiteTagIds !== null &&
-        page.query.includeSiteTagIds.length > 0
-      ) {
+      if (arrayNotEmpty(page.query.includeSiteTagIds)) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
           `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id AND ct3.site_tag_id IN (${page.query.includeSiteTagIds.join()}) AND ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
-      if (
-        page.query.excludeSiteTagIds !== undefined &&
-        page.query.excludeSiteTagIds !== null &&
-        page.query.excludeSiteTagIds.length > 0
-      ) {
+      if (arrayNotEmpty(page.query.excludeSiteTagIds)) {
         whereClauses.push(
           `0 = (SELECT COUNT(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id AND ct4.site_tag_id IN (${page.query.excludeSiteTagIds.join()}) AND ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
+        )
+      }
+      if (arrayNotEmpty(page.query.includeLocalAuthorIds)) {
+        const tagNum = page.query.includeLocalAuthorIds.length
+        whereClauses.push(
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct5 WHERE ct5.works_id = t1.id AND ct5.local_author_id IN (${page.query.includeLocalAuthorIds.join()}) AND ct5.author_type = ${ReWorksAuthorTypeEnum.LOCAL})`
+        )
+      }
+      if (arrayNotEmpty(page.query.excludeLocalAuthorIds)) {
+        whereClauses.push(
+          `0 = (SELECT COUNT(1) FROM re_works_author ct6 WHERE ct6.works_id = t1.id AND ct6.local_author_id IN (${page.query.excludeLocalAuthorIds.join()}) AND ct6.author_type = ${ReWorksAuthorTypeEnum.LOCAL})`
+        )
+      }
+      if (arrayNotEmpty(page.query.includeSiteAuthorIds)) {
+        const tagNum = page.query.includeSiteAuthorIds.length
+        whereClauses.push(
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct7 WHERE ct7.works_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${ReWorksTagTypeEnum.SITE})`
+        )
+      }
+      if (arrayNotEmpty(page.query.excludeSiteAuthorIds)) {
+        whereClauses.push(
+          `0 = (SELECT COUNT(1) FROM re_works_author ct8 WHERE ct8.works_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${ReWorksTagTypeEnum.SITE})`
         )
       }
 
@@ -102,7 +108,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     const sort = isNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
-    const query = modifiedPage.query
+    const query = modifiedPage.query?.toPlainParams()
 
     const db = this.acquire()
     return db

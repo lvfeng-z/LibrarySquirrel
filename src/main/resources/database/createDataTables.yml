@@ -73,7 +73,7 @@ tables:
         id              integer not null
         constraint re_works_author_pk
         primary key autoincrement,
-        type            integer,
+        author_type     integer,
         works_id        integer
         constraint re_works_author_works_id_fk
         references works

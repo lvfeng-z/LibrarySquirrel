@@ -52,6 +52,8 @@ onUnmounted(() => {
 // model
 // 已选数据
 const selectedData: Ref<UnwrapRef<SelectItem[]>> = defineModel<SelectItem[]>('data', { required: true })
+// 输入文本
+const input: Ref<UnwrapRef<string | undefined>> = defineModel<string | undefined>('input', { required: true })
 
 // 变量
 // 最外部div的实例
@@ -64,8 +66,6 @@ const optionalTagBox = ref()
 const inputElement = ref()
 // hiddenSpan的实例
 const hiddenSpan = ref()
-// 输入
-const input: Ref<UnwrapRef<string | undefined>> = ref()
 // 分页参数
 const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 // 可选数据
@@ -115,11 +115,15 @@ function handleInputFocus(focus: boolean) {
 // 处理标签点击事件
 function handelTagClicked(tag: SelectItem, optional: boolean) {
   if (optional) {
+    // 待选栏
     if (isNullish(tag.disabled) || !tag.disabled) {
+      // 如果标签未禁用，则把这个标签放进已选栏，待选栏中的这个标签设为禁用，同时清除输入文本
       const tempTag = lodash.cloneDeep(tag)
       selectedData.value.push(tempTag)
       optionalCheck(tag, true)
+      input.value = undefined
     } else {
+      // 如果标签已经禁用，则从已选栏中移除这个标签，并把这个标签设为启用
       const index = selectedData.value.findIndex((selected) => selected.value === tag.value)
       if (index !== -1) {
         selectedData.value.splice(index, 1)
@@ -127,6 +131,7 @@ function handelTagClicked(tag: SelectItem, optional: boolean) {
       optionalCheck(tag, false)
     }
   } else {
+    // 已选栏
     tag.disabled = !tag.disabled
   }
 }

@@ -201,7 +201,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       reWorksAuthor.worksId = worksDTO.id as number
       reWorksAuthor.authorRole = siteAuthorDTO.authorRole
       reWorksAuthor.siteAuthorId = siteAuthorDTO.id as number
-      reWorksAuthor.type = ReWorksAuthorTypeEnum.SITE
+      reWorksAuthor.authorType = ReWorksAuthorTypeEnum.SITE
       return reWorksAuthors
     })
 

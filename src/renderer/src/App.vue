@@ -24,6 +24,7 @@ import AutoLoadTagSelect from '@renderer/components/common/AutoLoadTagSelect.vue
 import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 
 // onMounted
 onMounted(() => {
@@ -44,7 +45,7 @@ const apis = {
 }
 // sideMenu组件的实例
 const sideMenuRef = ref()
-const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
+// 悬浮页面开关
 const pageState = reactive({
   mainPage: true,
   subpage: false,
@@ -52,7 +53,9 @@ const pageState = reactive({
   showLocalAuthorManagePage: false,
   showTaskManagePage: false,
   showSettingsPage: false
-}) // 悬浮页面开关
+})
+const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
+const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
 const showExplainPath = ref(false) // 解释路径dialog的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
@@ -132,6 +135,16 @@ async function searchWorks() {
       }
     })
     .filter(notNullish)
+  if (StringUtil.isNotBlank(autoLoadInput.value)) {
+    const worksName = autoLoadInput.value
+    if (isNullish(page.query)) {
+      page.query = []
+    }
+    let tempCondition = new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: worksName, operator: CrudOperator.LIKE })
+    page.query.push(tempCondition)
+    tempCondition = new SearchCondition({ type: SearchType.WORKS_NICKNAME, value: worksName, operator: CrudOperator.LIKE })
+    page.query.push(tempCondition)
+  }
 
   apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
@@ -232,6 +245,7 @@ async function handleTest() {
                 <div class="main-page-auto-load-tag-select z-layer-3">
                   <auto-load-tag-select
                     v-model:data="selectedTagList"
+                    v-model:input="autoLoadInput"
                     :load="querySearchItemPage"
                     :page-size="50"
                     tags-gap="10px"
