@@ -20,6 +20,11 @@ const api = {
     return Electron.ipcRenderer.invoke('test-pLimitTest', args)
   },
 
+  // AppLauncher
+  appLauncherOpenImage: (args) => {
+    return Electron.ipcRenderer.invoke('appLauncher-openImage', args)
+  },
+
   // AutoExplainPath
   autoExplainPathGetListenerPage: (args) => {
     return Electron.ipcRenderer.invoke('autoExplainPath-getListenerPage', args)

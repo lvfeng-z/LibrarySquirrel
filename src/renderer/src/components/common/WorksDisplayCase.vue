@@ -15,9 +15,14 @@ const props = defineProps<{
 const emit = defineEmits(['imageClicked'])
 
 // 变量
+// 接口
+const apis = {
+  appLauncherOpenImage: window.api.appLauncherOpenImage
+}
 const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> = ref('contain')
 const caseWidth: Ref<UnwrapRef<string>> = ref(props.width === undefined ? 'auto' : String(props.width) + 'px') // 展示框宽度
 const caseHeight: Ref<UnwrapRef<string>> = ref(props.width === undefined ? 'auto' : String(props.height) + 'px') // 展示框高度
+let clickTimeout: NodeJS.Timeout
 
 // 方法
 // 判断el-image使用什么模式
@@ -28,7 +33,13 @@ function handleElImageFit() {
 }
 // 处理图片被点击
 function handleImageClicked() {
-  emit('imageClicked', props.works)
+  clearTimeout(clickTimeout)
+  clickTimeout = setTimeout(() => emit('imageClicked', props.works), 300)
+}
+// 处理图片双击事件
+function handlePictureClicked() {
+  clearTimeout(clickTimeout)
+  apis.appLauncherOpenImage(props.works.filePath)
 }
 </script>
 <template>
@@ -39,6 +50,7 @@ function handleImageClicked() {
       :src="`resource://workdir${props.works.filePath}`"
       @load="handleElImageFit"
       @click="handleImageClicked"
+      @dblclick="handlePictureClicked"
     ></el-image>
     <works-info class="works-display-case-works-info" :works="works"></works-info>
     <author-info class="works-display-case-author-info" :authors="props.works.localAuthors"></author-info>

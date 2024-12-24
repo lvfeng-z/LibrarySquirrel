@@ -4,6 +4,7 @@ import Store from 'electron-store'
 import { defaultSettings } from '../util/SettingsUtil.ts'
 import { PoolConfig } from './PoolConfig.js'
 import { TaskQueue } from './TaskQueue.js'
+import { Settings } from '../model/util/Settings.js'
 
 export enum GlobalVars {
   CONNECTION_POOL = 'CONNECTION_POOL',
@@ -15,7 +16,7 @@ export enum GlobalVars {
 type GlobalVarMapping = {
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
   [GlobalVars.MAIN_WINDOW]: Electron.BrowserWindow
-  [GlobalVars.SETTINGS]: Store<Record<string, unknown>>
+  [GlobalVars.SETTINGS]: Store<Settings>
   [GlobalVars.TASK_QUEUE]: TaskQueue
 }
 

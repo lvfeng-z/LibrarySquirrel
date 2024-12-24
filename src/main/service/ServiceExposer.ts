@@ -17,6 +17,7 @@ import AutoExplainPathService from './AutoExplainPathService.ts'
 import { dirSelect } from '../util/FileSysUtil.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 import SearchService from './SearchService.js'
+import AppLauncherService from './AppLauncherService.js'
 
 function exposeService() {
   // test
@@ -28,6 +29,18 @@ function exposeService() {
   })
   Electron.ipcMain.handle('test-pLimitTest', async () => {
     return test.pLimitTest()
+  })
+
+  // AppLauncherService
+  Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {
+    const service = new AppLauncherService()
+    try {
+      service.openImage(args)
+      return ApiUtil.response()
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
 
   //AutoExplainPathService

@@ -20,7 +20,7 @@ export default class ApiUtil {
     this.data = undefined
   }
 
-  public static response(data: unknown) {
+  public static response(data?: unknown) {
     const response = new ApiUtil()
     response.success = true
     response.msg = '操作成功'

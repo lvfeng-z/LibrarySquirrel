@@ -36,6 +36,7 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
+  appLauncherOpenImage: window.api.appLauncherOpenImage,
   localTagListByWorksId: window.api.localTagListByWorksId,
   localTagQuerySelectItemPageByWorksId: window.api.localTagQuerySelectItemPageByWorksId,
   reWorksTagLink: window.api.reWorksTagLink,
@@ -120,6 +121,10 @@ async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
     throw new Error()
   }
 }
+// 处理图片点击事件
+function handlePictureClicked() {
+  apis.appLauncherOpenImage(props.works[0].filePath)
+}
 </script>
 <template>
   <el-dialog ref="baseDialog" top="50px">
@@ -130,6 +135,7 @@ async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
             style="margin-right: 10px"
             fit="contain"
             :src="`resource://workdir/${props.works[0].filePath}?visualHeight=532&visualWidth=664`"
+            @click="handlePictureClicked"
           >
           </el-image>
         </picture>

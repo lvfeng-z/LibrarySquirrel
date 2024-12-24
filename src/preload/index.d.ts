@@ -11,6 +11,9 @@ declare global {
       testTaskPluginListenerServiceGetMonitored: function
       testPLimitTest: function
 
+      // AppLauncher
+      appLauncherOpenImage: function
+
       // AutoExplainPath
       autoExplainPathGetListenerPage: function
       autoExplainPathGetListenerList: function
