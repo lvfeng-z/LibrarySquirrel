@@ -2,11 +2,11 @@ import Electron, { dialog } from 'electron'
 import fs from 'fs/promises'
 import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
-import SettingsService from '../service/SettingsService.ts'
 import sharp from 'sharp'
 import { isNullish, notNullish } from './CommonUtil.js'
 import { Readable, Writable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -59,7 +59,7 @@ export function getRootDir(): string {
  * 打开一个文件/路径选择弹窗
  */
 export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
-  const defaultPath = SettingsService.getSettings()['workdir']
+  const defaultPath = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
   const properties: Array<'openFile' | 'openDirectory' | 'multiSelections'> = ['multiSelections']
   if (openFile) {
     properties.push('openFile')

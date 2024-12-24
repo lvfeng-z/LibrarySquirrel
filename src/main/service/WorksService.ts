@@ -3,7 +3,6 @@ import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/entity/Works.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import { WorksDao } from '../dao/WorksDao.ts'
-import SettingsService from './SettingsService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
 import { createDirIfNotExists } from '../util/FileSysUtil.ts'
@@ -28,6 +27,7 @@ import { assertNotNullish } from '../util/AssertUtil.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -42,8 +42,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public generateWorksSaveInfo(worksDTO: WorksPluginDTO, refreshMode?: boolean): WorksSaveDTO {
     const result = new WorksSaveDTO(worksDTO)
     // 读取设置中的工作目录信息
-    const settings = SettingsService.getSettings()
-    const workdir = settings.workdir
+    const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
     if (StringUtil.isBlank(workdir)) {
       const msg = `保存资源时，工作目录意外为空，taskId: ${result.taskId}`
       LogUtil.error('WorksService', msg)

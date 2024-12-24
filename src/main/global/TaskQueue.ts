@@ -3,7 +3,6 @@ import { assertNotNullish } from '../util/AssertUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
 import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
-import SettingsService from '../service/SettingsService.js'
 import { Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
@@ -12,6 +11,7 @@ import TaskWriter from '../util/TaskWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 import Task from '../model/entity/Task.js'
 import StringUtil from '../util/StringUtil.js'
+import { GlobalVar, GlobalVars } from './GlobalVar.js'
 
 /**
  * 任务队列
@@ -814,8 +814,8 @@ class TaskResourceStream extends Transform {
     this.taskService = new TaskService()
     this.pluginLoader = pluginLoader
     // 读取设置中的最大并行数
-    const settings = SettingsService.getSettings()
-    this.maxParallel = settings.importSettings.maxParallelImport >= 1 ? settings.importSettings.maxParallelImport : 1
+    const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
+    this.maxParallel = maxParallelImportInSettings >= 1 ? maxParallelImportInSettings : 1
     this.processing = 0
     this.limited = false
     this.runningObjs = []
