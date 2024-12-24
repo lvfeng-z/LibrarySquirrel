@@ -129,7 +129,7 @@ async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
           <el-image
             style="margin-right: 10px"
             fit="contain"
-            :src="`resource://workdir/${props.works[0].filePath}?visualHeight=535&visualWidth=664`"
+            :src="`resource://workdir/${props.works[0].filePath}?visualHeight=532&visualWidth=664`"
           >
           </el-image>
         </picture>
