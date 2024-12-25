@@ -129,7 +129,7 @@ function handlePictureClicked() {
 <template>
   <el-dialog ref="baseDialog" top="50px">
     <div class="limiter">
-      <el-scrollbar style="max-width: 60%">
+      <el-scrollbar style="max-width: 60%; flex-shrink: 0">
         <picture>
           <el-image
             style="margin-right: 10px"
