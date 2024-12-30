@@ -11,6 +11,11 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import { OriginType } from '@renderer/constants/OriginType.ts'
+import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
+import Page from '@renderer/model/util/Page.ts'
+import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
+import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -39,6 +44,7 @@ const apis = {
   appLauncherOpenImage: window.api.appLauncherOpenImage,
   localTagListByWorksId: window.api.localTagListByWorksId,
   localTagQuerySelectItemPageByWorksId: window.api.localTagQuerySelectItemPageByWorksId,
+  siteTagQuerySelectItemPageByWorksId: window.api.siteTagQuerySelectItemPageByWorksId,
   reWorksTagLink: window.api.reWorksTagLink,
   reWorksTagUnlink: window.api.reWorksTagUnlink,
   worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
@@ -47,6 +53,8 @@ const apis = {
 const baseDialog = ref()
 // localTag的ExchangeBox组件
 const localTagExchangeBox = ref()
+// siteTag的ExchangeBox组件
+const siteTagExchangeBox = ref()
 // 图像高度
 // const heightForImage: Ref<UnwrapRef<number>> = ref(0)
 // 图像宽度
@@ -69,8 +77,21 @@ const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
   )
   return isNullish(result) ? [] : result
 })
+// 本地标签
+const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
+  const result = worksFullInfo.value.siteTags?.map(
+    (siteTag) =>
+      new SelectItem({
+        value: siteTag.id as number,
+        label: siteTag.siteTagName as string
+      })
+  )
+  return isNullish(result) ? [] : result
+})
 // 本地标签编辑开关
 const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
+// 本地标签编辑开关
+const siteTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
@@ -90,30 +111,58 @@ async function getWorksInfo() {
   }
 }
 // 处理本地标签exchangeBox确认交换事件
-async function handleLocalTagExchangeConfirm(unbound: SelectItem[], bound: SelectItem[]) {
+async function handleTagExchangeConfirm(type: OriginType, unbound: SelectItem[], bound: SelectItem[]) {
   const worksId = worksFullInfo.value.id
   const boundIds = bound.map((item) => item.value)
   const unboundIds = unbound.map((item) => item.value)
-  const boundResponse: ApiResponse = await apis.reWorksTagLink(boundIds, worksId)
-  const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(unboundIds, worksId)
+  const boundResponse: ApiResponse = await apis.reWorksTagLink(type, boundIds, worksId)
+  const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(type, unboundIds, worksId)
   const upperSuccess = ApiUtil.check(boundResponse)
   const lowerSuccess = ApiUtil.check(unboundResponse)
   if (upperSuccess && lowerSuccess) {
-    localTagExchangeBox.value.refreshData()
+    if (OriginType.LOCAL === type) {
+      localTagExchangeBox.value.refreshData()
+    } else {
+      siteTagExchangeBox.value.refreshData()
+    }
     ApiUtil.msg(boundResponse)
-    updateWorksLocalTags()
+    updateWorksLocalTags(type)
   }
 }
 // 更新本地标签
-async function updateWorksLocalTags() {
-  const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
-  if (ApiUtil.check(response)) {
-    worksFullInfo.value.localTags = ApiUtil.data(response) as LocalTag[]
+async function updateWorksLocalTags(type: OriginType) {
+  if (OriginType.LOCAL === type) {
+    const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
+    if (ApiUtil.check(response)) {
+      worksFullInfo.value.localTags = ApiUtil.data<LocalTag[]>(response)
+    }
+  } else {
+    const tempSiteTagPage = new Page<SiteTagQueryDTO, SiteTag>()
+    const tempSiteTagQuery = new SiteTagQueryDTO()
+    tempSiteTagPage.pageSize = 100
+    tempSiteTagQuery.worksId = worksFullInfo.value.id
+    tempSiteTagQuery.boundOnWorksId = true
+    tempSiteTagPage.query = tempSiteTagQuery
+    const response = await apis.siteTagQuerySelectItemPageByWorksId(tempSiteTagPage)
+    if (ApiUtil.check(response)) {
+      const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagDTO>>(response)
+      worksFullInfo.value.siteTags = isNullish(tempResultPage?.data) ? [] : tempResultPage.data
+    }
   }
 }
 // 请求作品绑定的本地标签接口的函数
 async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
   const response = await apis.localTagQuerySelectItemPageByWorksId(page)
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    return isNullish(newPage) ? page : newPage
+  } else {
+    throw new Error()
+  }
+}
+// 请求作品绑定的站点标签接口的函数
+async function requestWorksSiteTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
+  const response = await apis.siteTagQuerySelectItemPageByWorksId(page)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
     return isNullish(newPage) ? page : newPage
@@ -163,7 +212,30 @@ function handlePictureClicked() {
                 :lower-load="requestWorksLocalTagPage"
                 :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
                 :lower-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
-                @exchange-confirm="handleLocalTagExchangeConfirm"
+                @exchange-confirm="
+                  (unbound: SelectItem[], bound: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, unbound, bound)
+                "
+              />
+            </el-drawer>
+          </el-descriptions-item>
+          <el-descriptions-item label="站点标签">
+            <el-button @click="siteTagEdit = true"> 编辑 </el-button>
+            <tag-box v-model:data="siteTags" />
+            <el-drawer v-model="siteTagEdit" size="45%" :with-header="false" @open="siteTagExchangeBox.refreshData()">
+              <exchange-box
+                ref="siteTagExchangeBox"
+                style="height: 100%"
+                upper-title="已有标签"
+                lower-title="可选标签"
+                :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+                :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+                :upper-load="requestWorksSiteTagPage"
+                :lower-load="requestWorksSiteTagPage"
+                :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
+                :lower-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
+                @exchange-confirm="
+                  (unbound: SelectItem[], bound: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, unbound, bound)
+                "
               />
             </el-drawer>
           </el-descriptions-item>

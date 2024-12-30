@@ -7,10 +7,6 @@ import StringUtil from '../util/StringUtil.ts'
 import Page from '../model/util/Page.ts'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
-import ReWorksTag from '../model/entity/ReWorksTag.ts'
-import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
-import { ReWorksTagService } from './ReWorksTagService.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import { assertNotNullish } from '../util/AssertUtil.js'
@@ -94,29 +90,50 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   /**
-   * 关联作品和标签
-   * @param siteTags
-   * @param worksDTO
+   * 分页查询作品的站点标签
+   * @param page
    */
-  async link(siteTags: SiteTag[], worksDTO: WorksDTO) {
-    // 创建关联对象
-    const links = siteTags.map((siteTag) => {
-      const reWorksTag = new ReWorksTag()
-      reWorksTag.worksId = worksDTO.id as number
-      reWorksTag.siteTagId = siteTag.id
-      reWorksTag.tagType = ReWorksTagTypeEnum.SITE
-      return reWorksTag
-    })
-
-    // 调用reWorksTagService前区分是否为注入式的DB
-    let reWorksTagService: ReWorksTagService
-    if (this.injectedDB) {
-      reWorksTagService = new ReWorksTagService(this.db)
-    } else {
-      reWorksTagService = new ReWorksTagService()
+  public async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
+    page = new Page(page)
+    if (notNullish(page.query)) {
+      page.query.operators = {
+        ...{ siteTagName: Operator.LIKE },
+        ...page.query.operators
+      }
     }
+    return await this.dao.queryPageByWorksId(page)
+  }
 
-    return reWorksTagService.saveBatch(links, true)
+  /**
+   * 分页查询作品的站点标签的SelectItem
+   * @param page
+   */
+  public async querySelectItemPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
+    page = new Page(page)
+    if (notNullish(page.query)) {
+      page.query.operators = {
+        ...{ siteTagName: Operator.LIKE },
+        ...page.query.operators
+      }
+    }
+    const sourcePage = await this.dao.queryPageByWorksId(page)
+
+    // 根据SiteTag数据生成SelectItem
+    const sourceData = sourcePage.data
+    const resultPage = sourcePage.transform<SelectItem>()
+    if (notNullish(sourceData)) {
+      resultPage.data = sourceData.map(
+        (siteTag) =>
+          new SelectItem({
+            extraData: undefined,
+            label: siteTag.siteTagName,
+            rootId: siteTag.baseSiteTagId,
+            subLabels: [StringUtil.isNotBlank(siteTag.site?.siteName) ? siteTag.site?.siteName : '?'],
+            value: String(siteTag.id)
+          })
+      )
+    }
+    return resultPage
   }
 
   /**

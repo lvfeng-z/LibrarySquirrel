@@ -18,6 +18,7 @@ import { dirSelect } from '../util/FileSysUtil.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 import SearchService from './SearchService.js'
 import AppLauncherService from './AppLauncherService.js'
+import { OriginType } from '../constant/OriginType.js'
 
 function exposeService() {
   // test
@@ -231,19 +232,19 @@ function exposeService() {
   })
 
   // ReWorksTagService
-  Electron.ipcMain.handle('reWorksTag-link', async (_event, localTagIds: number[], worksId: number) => {
+  Electron.ipcMain.handle('reWorksTag-link', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {
     const reWorksTagService = new ReWorksTagService()
     try {
-      return ApiUtil.response(await reWorksTagService.link(localTagIds, worksId))
+      return ApiUtil.response(await reWorksTagService.link(type, localTagIds, worksId))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
     }
   })
-  Electron.ipcMain.handle('reWorksTag-unlink', async (_event, localTagIds: number[], worksId: number) => {
+  Electron.ipcMain.handle('reWorksTag-unlink', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {
     const reWorksTagService = new ReWorksTagService()
     try {
-      return ApiUtil.response(await reWorksTagService.unlink(localTagIds, worksId))
+      return ApiUtil.response(await reWorksTagService.unlink(type, localTagIds, worksId))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))
@@ -344,6 +345,15 @@ function exposeService() {
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('siteTag-querySelectItemPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.querySelectItemPageByWorksId(page))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

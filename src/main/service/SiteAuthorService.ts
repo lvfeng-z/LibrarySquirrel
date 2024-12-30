@@ -6,11 +6,6 @@ import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
-import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
-import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.ts'
-import ReWorksAuthorService from './ReWorksAuthorService.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
-import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
@@ -188,32 +183,6 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
     }
-  }
-
-  /**
-   * 关联作品和作者
-   * @param siteAuthorDTOs
-   * @param worksDTO
-   */
-  async link(siteAuthorDTOs: SiteAuthorDTO[], worksDTO: WorksDTO) {
-    const reWorksAuthors = siteAuthorDTOs.map((siteAuthorDTO) => {
-      const reWorksAuthor = new ReWorksAuthor()
-      reWorksAuthor.worksId = worksDTO.id as number
-      reWorksAuthor.authorRole = siteAuthorDTO.authorRole
-      reWorksAuthor.siteAuthorId = siteAuthorDTO.id as number
-      reWorksAuthor.authorType = ReWorksAuthorTypeEnum.SITE
-      return reWorksAuthors
-    })
-
-    // 调用ReWorksAuthorService前区分是否为注入式DB
-    let reWorksAuthorService: ReWorksAuthorService
-    if (this.injectedDB) {
-      reWorksAuthorService = new ReWorksAuthorService(this.db)
-    } else {
-      reWorksAuthorService = new ReWorksAuthorService()
-    }
-
-    return reWorksAuthorService.saveBatch(reWorksAuthors, true)
   }
 
   /**

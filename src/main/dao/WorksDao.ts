@@ -5,12 +5,11 @@ import Page from '../model/util/Page.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
-import { ReWorksTagTypeEnum } from '../constant/ReWorksTagTypeEnum.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
 import { arrayIsEmpty, arrayNotEmpty, isNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../util/MediaType.js'
-import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.js'
+import { OriginType } from '../constant/OriginType.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -67,12 +66,12 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       if (arrayNotEmpty(page.query.includeSiteTagIds)) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
-          `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id AND ct3.site_tag_id IN (${page.query.includeSiteTagIds.join()}) AND ct3.tag_type = ${ReWorksTagTypeEnum.SITE})`
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id AND ct3.site_tag_id IN (${page.query.includeSiteTagIds.join()}) AND ct3.tag_type = ${OriginType.SITE})`
         )
       }
       if (arrayNotEmpty(page.query.excludeSiteTagIds)) {
         whereClauses.push(
-          `0 = (SELECT COUNT(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id AND ct4.site_tag_id IN (${page.query.excludeSiteTagIds.join()}) AND ct4.tag_type = ${ReWorksTagTypeEnum.SITE})`
+          `0 = (SELECT COUNT(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id AND ct4.site_tag_id IN (${page.query.excludeSiteTagIds.join()}) AND ct4.tag_type = ${OriginType.SITE})`
         )
       }
       if (arrayNotEmpty(page.query.includeLocalAuthorIds)) {
@@ -96,12 +95,12 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       if (arrayNotEmpty(page.query.includeSiteAuthorIds)) {
         const tagNum = page.query.includeSiteAuthorIds.length
         whereClauses.push(
-          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct7 WHERE ct7.works_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${ReWorksAuthorTypeEnum.SITE})`
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct7 WHERE ct7.works_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${OriginType.SITE})`
         )
       }
       if (arrayNotEmpty(page.query.excludeSiteAuthorIds)) {
         whereClauses.push(
-          `0 = (SELECT COUNT(1) FROM re_works_author ct8 WHERE ct8.works_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${ReWorksAuthorTypeEnum.SITE})`
+          `0 = (SELECT COUNT(1) FROM re_works_author ct8 WHERE ct8.works_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${OriginType.SITE})`
         )
       }
 

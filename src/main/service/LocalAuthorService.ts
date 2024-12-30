@@ -7,10 +7,6 @@ import LogUtil from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import Page from '../model/util/Page.ts'
 import DB from '../database/DB.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
-import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
-import { ReWorksAuthorTypeEnum } from '../constant/ReWorksAuthorTypeEnum.ts'
-import ReWorksAuthorService from './ReWorksAuthorService.ts'
 import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.ts'
 import { notNullish } from '../util/CommonUtil.ts'
 
@@ -20,32 +16,6 @@ import { notNullish } from '../util/CommonUtil.ts'
 export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor, LocalAuthorDao> {
   constructor(db?: DB) {
     super('LocalAuthorService', new LocalAuthorDao(db), db)
-  }
-
-  /**
-   * 关联本地作者和作品
-   * @param localAuthorDTOs 作者信息
-   * @param worksDTO 作品信息
-   */
-  async link(localAuthorDTOs: LocalAuthorDTO[], worksDTO: WorksDTO) {
-    const reWorksAuthors = localAuthorDTOs.map((localAuthorDTO) => {
-      const reWorksAuthor = new ReWorksAuthor()
-      reWorksAuthor.worksId = worksDTO.id as number
-      reWorksAuthor.authorRole = localAuthorDTO.authorRole
-      reWorksAuthor.localAuthorId = localAuthorDTO.id as number
-      reWorksAuthor.authorType = ReWorksAuthorTypeEnum.LOCAL
-      return reWorksAuthor
-    })
-
-    // 调用ReWorksAuthorService前区分是否为注入式DB
-    let reWorksAuthorService: ReWorksAuthorService
-    if (this.injectedDB) {
-      reWorksAuthorService = new ReWorksAuthorService(this.db)
-    } else {
-      reWorksAuthorService = new ReWorksAuthorService()
-    }
-
-    return reWorksAuthorService.saveBatch(reWorksAuthors, true)
   }
 
   /**

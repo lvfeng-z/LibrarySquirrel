@@ -37,9 +37,9 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
   sites?: string[] | undefined | null
 
   /**
-   * 查询绑定在localTagId上的，还是未绑定的（true：绑定的，false：未绑定的）
+   * 查询绑定在LocalAuthor上的，还是未绑定的（true：绑定的，false：未绑定的）
    */
-  bound?: boolean | undefined | null
+  boundOnLocalAuthorId?: boolean | undefined | null
 
   constructor(siteAuthorQueryDTO?: SiteAuthorQueryDTO) {
     if (siteAuthorQueryDTO === undefined) {
@@ -51,7 +51,7 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
       this.introduce = undefined
       this.localAuthorId = undefined
       this.sites = undefined
-      this.bound = undefined
+      this.boundOnLocalAuthorId = undefined
     } else {
       super(siteAuthorQueryDTO)
       this.siteId = siteAuthorQueryDTO.siteId
@@ -61,7 +61,7 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
       this.introduce = siteAuthorQueryDTO.introduce
       this.localAuthorId = siteAuthorQueryDTO.localAuthorId
       this.sites = siteAuthorQueryDTO.sites
-      this.bound = siteAuthorQueryDTO.bound
+      this.boundOnLocalAuthorId = siteAuthorQueryDTO.boundOnLocalAuthorId
     }
   }
 }

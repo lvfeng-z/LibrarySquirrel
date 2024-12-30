@@ -75,7 +75,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     }
 
     // 如果是bound是false，则查询local_author_id不等于给定localAuthorId的
-    if (modifiedPage.query.bound) {
+    if (modifiedPage.query.boundOnLocalAuthorId) {
       modifiedPage.query.operators = {
         ...modifiedPage.query.operators,
         ...{ localAuthorId: Operator.EQUAL, siteAuthorName: Operator.LIKE }
@@ -93,7 +93,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['bound'])
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['boundOnLocalAuthorId'])
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query

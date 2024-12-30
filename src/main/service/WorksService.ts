@@ -28,6 +28,10 @@ import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
+import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.js'
+import SiteTag from '../model/entity/SiteTag.js'
+import ReWorksAuthorService from './ReWorksAuthorService.js'
+import { OriginType } from '../constant/OriginType.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -197,26 +201,31 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
               await worksSetService.link([worksDTO], worksSetId)
             }
           }
-          // 关联作品和本地作者
-          if (arrayNotEmpty(localAuthors)) {
-            const localAuthorService = new LocalAuthorService(transactionDB)
-            await localAuthorService.link(localAuthors, worksDTO)
+          if (arrayNotEmpty(localAuthors) || arrayNotEmpty(siteAuthors)) {
+            const reWorksAuthorService = new ReWorksAuthorService(transactionDB)
+            // 关联作品和本地作者
+            if (arrayNotEmpty(localAuthors)) {
+              const localAuthorIds = localAuthors.map((localAuthor) => localAuthor.id).filter((id) => notNullish(id))
+              await reWorksAuthorService.link(OriginType.LOCAL, localAuthorIds, worksDTO.id)
+            }
+            // 关联作品和站点作者
+            if (arrayNotEmpty(siteAuthors)) {
+              const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.id).filter((id) => notNullish(id))
+              await reWorksAuthorService.link(OriginType.SITE, siteAuthorIds, worksDTO.id)
+            }
           }
-          // 关联作品和本地标签
-          if (arrayNotEmpty(localTags)) {
-            const localTagIds = localTags.map((localTag) => localTag.id).filter((localTagId) => notNullish(localTagId))
+          if (arrayNotEmpty(localTags) || arrayNotEmpty(siteTags)) {
             const reWorksTagService = new ReWorksTagService(transactionDB)
-            await reWorksTagService.link(localTagIds, worksDTO.id)
-          }
-          // 关联作品和站点作者
-          if (arrayNotEmpty(siteAuthors)) {
-            const siteAuthorService = new SiteAuthorService(transactionDB)
-            await siteAuthorService.link(siteAuthors, worksDTO)
-          }
-          // 关联作品和站点标签
-          if (arrayNotEmpty(siteTags)) {
-            const siteTagService = new SiteTagService(transactionDB)
-            await siteTagService.link(siteTags, worksDTO)
+            // 关联作品和本地标签
+            if (arrayNotEmpty(localTags)) {
+              const localTagIds = localTags.map((localTag) => localTag.id).filter((id) => notNullish(id))
+              await reWorksTagService.link(OriginType.LOCAL, localTagIds, worksDTO.id)
+            }
+            // 关联作品和站点标签
+            if (arrayNotEmpty(siteTags)) {
+              const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter((id) => notNullish(id))
+              await reWorksTagService.link(OriginType.SITE, siteTagIds, worksDTO.id)
+            }
           }
 
           return worksDTO.id
@@ -324,6 +333,21 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     // 本地标签
     const localTagService = new LocalTagService()
     worksDTO.localTags = await localTagService.listByWorksId(worksId)
+
+    // 站点作者
+    // const localAuthorService = new LocalAuthorService()
+    // worksDTO.localAuthors = await localAuthorService.listByWorksId(worksId)
+
+    // 站点标签
+    const siteTagService = new SiteTagService()
+    const siteTagPage = new Page<SiteTagQueryDTO, SiteTag>()
+    siteTagPage.pageSize = 100
+    const siteTagQuery = new SiteTagQueryDTO()
+    siteTagQuery.worksId = worksId
+    siteTagQuery.boundOnWorksId = true
+    siteTagPage.query = siteTagQuery
+    const resultSiteTagPage = await siteTagService.queryPageByWorksId(siteTagPage)
+    worksDTO.siteTags = resultSiteTagPage.data
 
     // 站点信息
     const siteService = new SiteService()

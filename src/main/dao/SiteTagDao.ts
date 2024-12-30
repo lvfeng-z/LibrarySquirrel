@@ -8,6 +8,7 @@ import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.js'
+import lodash from 'lodash'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -56,7 +57,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
 
     // 如果是bound是false，则查询local_tag_id不等于给定localTagId的
-    if (modifiedPage.query.bound) {
+    if (modifiedPage.query.boundOnLocalTagId) {
       modifiedPage.query.operators = {
         ...modifiedPage.query.operators,
         ...{ localTagId: Operator.EQUAL, siteTagName: Operator.LIKE }
@@ -74,7 +75,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['bound'])
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['boundOnLocalTagId'])
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query
@@ -154,6 +155,65 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
         const result = page.transform<SelectItem>()
         result.data = selectItems
         return result
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 分页查询作品的站点标签
+   * @param page
+   */
+  async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new Page(page)
+    if (isNullish(modifiedPage.query)) {
+      modifiedPage.query = new SiteTagQueryDTO()
+    }
+    const query = lodash.cloneDeep(modifiedPage.query)
+
+    // 调用getWhereClauses前去掉worksId和boundOnWorksId
+    query.worksId = undefined
+    query.boundOnWorksId = undefined
+
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
+                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+    const fromClause = `FROM site_tag t1
+          LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
+          LEFT JOIN site t3 ON t1.site_id = t3.id`
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1')
+    const whereClauses = whereClauseAndQuery.whereClauses
+    const modifiedQuery = whereClauseAndQuery.query
+
+    if (
+      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'boundOnWorksId') &&
+      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'worksId')
+    ) {
+      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${modifiedPage.query.worksId} AND t1.id = re_works_tag.site_tag_id)`
+      if (modifiedPage.query.boundOnWorksId) {
+        whereClauses['worksId'] = existClause
+      } else {
+        whereClauses['worksId'] = 'NOT ' + existClause
+      }
+    }
+
+    const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
+
+    let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause)
+    const sort = isNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    statement = await super.sortAndPage(statement, modifiedPage, sort)
+    const db = this.acquire()
+    return db
+      .all<unknown[], SiteTagDTO>(statement, modifiedQuery)
+      .then((rows) => {
+        const resultPage = modifiedPage.transform<SiteTagDTO>()
+        // 利用构造方法反序列化本地标签和站点的json
+        resultPage.data = rows.map((result) => new SiteTagDTO(result))
+        return resultPage
       })
       .finally(() => {
         if (!this.injectedDB) {

@@ -97,11 +97,11 @@ const api = {
   },
 
   // ReWorksTag
-  reWorksTagLink: (arg1, arg2) => {
-    return Electron.ipcRenderer.invoke('reWorksTag-link', arg1, arg2)
+  reWorksTagLink: (arg1, arg2, arg3) => {
+    return Electron.ipcRenderer.invoke('reWorksTag-link', arg1, arg2, arg3)
   },
-  reWorksTagUnlink: (arg1, arg2) => {
-    return Electron.ipcRenderer.invoke('reWorksTag-unlink', arg1, arg2)
+  reWorksTagUnlink: (arg1, arg2, arg3) => {
+    return Electron.ipcRenderer.invoke('reWorksTag-unlink', arg1, arg2, arg3)
   },
 
   // Settings
@@ -140,6 +140,9 @@ const api = {
   },
   siteTagQueryBoundOrUnboundToLocalTagPage: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-queryBoundOrUnboundToLocalTagPage', args)
+  },
+  siteTagQuerySelectItemPageByWorksId: (args) => {
+    return Electron.ipcRenderer.invoke('siteTag-querySelectItemPageByWorksId', args)
   },
 
   // Task
