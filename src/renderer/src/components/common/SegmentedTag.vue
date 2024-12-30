@@ -2,7 +2,7 @@
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import { Close } from '@element-plus/icons-vue'
 import { computed, Ref, UnwrapRef } from 'vue'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { arrayIsEmpty, isNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -20,7 +20,7 @@ const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
   return isNullish(props.item.subLabels) ? 0 : props.item.subLabels.length
 })
 const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
-  return props.closeable ? 'calc(100% - 21px)' : '100%'
+  return props.closeable ? 'calc(100% - 18px)' : '100%'
 })
 
 // 事件
@@ -57,6 +57,7 @@ function handleCloseButtonClicked() {
           :class="{
             'segmented-tag-main-text': true,
             'segmented-tag-ellipsis': true,
+            'segmented-tag-sub-text-last': arrayIsEmpty(props.item.subLabels),
             'segmented-tag-main-text-checked': !item.disabled,
             'segmented-tag-main-text-unchecked': item.disabled
           }"
@@ -72,7 +73,15 @@ function handleCloseButtonClicked() {
           }"
           @click="handleSubLabelClicked(index)"
         >
-          <span class="segmented-tag-sub-text segmented-tag-ellipsis">{{ item }}</span>
+          <span
+            :class="{
+              'segmented-tag-sub-text': true,
+              'segmented-tag-ellipsis': true,
+              'segmented-tag-sub-text-last': isNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
+            }"
+          >
+            {{ item }}
+          </span>
         </div>
       </template>
     </div>
@@ -83,10 +92,9 @@ function handleCloseButtonClicked() {
         'segmented-tag-sub-label-dark': subLabelsLength % 2 === 0,
         'segmented-tag-sub-label-light': !(subLabelsLength % 2 === 0)
       }"
+      @click="handleCloseButtonClicked"
     >
-      <button class="segmented-tag-sub-close" @click="handleCloseButtonClicked">
-        <el-icon color="rgb(166.2, 168.6, 173.4, 75%)"><Close /></el-icon>
-      </button>
+      <el-icon class="segmented-tag-sub-close" color="rgb(166.2, 168.6, 173.4, 75%)"><Close /></el-icon>
     </div>
   </div>
 </template>
@@ -164,31 +172,18 @@ function handleCloseButtonClicked() {
   text-align: center;
   color: rgb(166.2, 168.6, 173.4, 100%);
 }
+.segmented-tag-sub-text-last {
+  margin-right: 6px;
+}
 .segmented-tag-sub-close-wrapper {
   display: flex;
   align-items: center;
-}
-.segmented-tag-sub-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* 设置宽度和高度相等，以确保按钮是正圆 */
-  width: 15px;
-  height: 15px;
-  margin-left: 3px;
-  margin-right: 3px;
-
-  /* 圆角半径设置为50%以形成圆形 */
-  border-radius: 50%;
-
-  background-color: rgb(255, 255, 255, 0); /* 背景 */
-  border: none; /* 无边框 */
-  cursor: pointer; /* 鼠标悬停时显示为手型指针 */
-
+  justify-items: center;
+  width: 18px;
   transition-duration: 0.4s;
 }
-.segmented-tag-sub-close:hover {
-  background-color: rgb(166.2, 168.6, 173.4, 30%);
+.segmented-tag-sub-close {
+  margin-right: 3px;
 }
 .segmented-tag-ellipsis {
   white-space: nowrap;
