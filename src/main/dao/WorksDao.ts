@@ -85,11 +85,11 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         }
       }
       if (arrayNotEmpty(page.query.excludeLocalAuthorIds)) {
-        for (const [index, includeLocalAuthorIds] of page.query.includeLocalAuthorIds.entries()) {
+        for (const [index, excludeLocalAuthorIds] of page.query.excludeLocalAuthorIds.entries()) {
           whereClauses.push(
             `NOT EXISTS(SELECT 1 FROM re_works_author ct6_1_${index}
                 LEFT JOIN site_author ct6_2_${index} ON ct6_1_${index}.site_author_id = ct6_2_${index}.id
-             WHERE (ct6_1_${index}.local_author_id = ${includeLocalAuthorIds} OR ct6_2_${index}.local_author_id = ${includeLocalAuthorIds}) AND ct6_1_${index}.works_id = t1.id)`
+             WHERE (ct6_1_${index}.local_author_id = ${excludeLocalAuthorIds} OR ct6_2_${index}.local_author_id = ${excludeLocalAuthorIds}) AND ct6_1_${index}.works_id = t1.id)`
           )
         }
       }
