@@ -65,6 +65,7 @@ declare global {
       siteTagUpdateById: function
       siteTagUpdateBindLocalTag: function
       siteTagQueryBoundOrUnboundToLocalTagPage: function
+      siteTagQueryPageByWorksId: function
       siteTagQuerySelectItemPageByWorksId: function
       siteTagGetSelectList: function
 

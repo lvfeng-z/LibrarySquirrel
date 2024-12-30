@@ -350,6 +350,15 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('siteTag-queryPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.queryPageByWorksId(page))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('siteTag-querySelectItemPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
     try {
       const siteTagService = new SiteTagService()

@@ -141,6 +141,9 @@ const api = {
   siteTagQueryBoundOrUnboundToLocalTagPage: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-queryBoundOrUnboundToLocalTagPage', args)
   },
+  siteTagQueryPageByWorksId: (args) => {
+    return Electron.ipcRenderer.invoke('siteTag-queryPageByWorksId', args)
+  },
   siteTagQuerySelectItemPageByWorksId: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-querySelectItemPageByWorksId', args)
   },

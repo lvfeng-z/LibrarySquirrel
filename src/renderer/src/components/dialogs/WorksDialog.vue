@@ -16,6 +16,7 @@ import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
 import Page from '@renderer/model/util/Page.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 
 // props
 const props = defineProps<{
@@ -44,6 +45,7 @@ const apis = {
   appLauncherOpenImage: window.api.appLauncherOpenImage,
   localTagListByWorksId: window.api.localTagListByWorksId,
   localTagQuerySelectItemPageByWorksId: window.api.localTagQuerySelectItemPageByWorksId,
+  siteTagQueryPageByWorksId: window.api.siteTagQueryPageByWorksId,
   siteTagQuerySelectItemPageByWorksId: window.api.siteTagQuerySelectItemPageByWorksId,
   reWorksTagLink: window.api.reWorksTagLink,
   reWorksTagUnlink: window.api.reWorksTagUnlink,
@@ -83,7 +85,8 @@ const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
     (siteTag) =>
       new SelectItem({
         value: siteTag.id as number,
-        label: siteTag.siteTagName as string
+        label: siteTag.siteTagName as string,
+        subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string]
       })
   )
   return isNullish(result) ? [] : result
@@ -126,11 +129,11 @@ async function handleTagExchangeConfirm(type: OriginType, unbound: SelectItem[],
       siteTagExchangeBox.value.refreshData()
     }
     ApiUtil.msg(boundResponse)
-    updateWorksLocalTags(type)
+    updateWorksTags(type)
   }
 }
-// 更新本地标签
-async function updateWorksLocalTags(type: OriginType) {
+// 更新标签
+async function updateWorksTags(type: OriginType) {
   if (OriginType.LOCAL === type) {
     const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
     if (ApiUtil.check(response)) {
@@ -143,7 +146,7 @@ async function updateWorksLocalTags(type: OriginType) {
     tempSiteTagQuery.worksId = worksFullInfo.value.id
     tempSiteTagQuery.boundOnWorksId = true
     tempSiteTagPage.query = tempSiteTagQuery
-    const response = await apis.siteTagQuerySelectItemPageByWorksId(tempSiteTagPage)
+    const response = await apis.siteTagQueryPageByWorksId(tempSiteTagPage)
     if (ApiUtil.check(response)) {
       const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagDTO>>(response)
       worksFullInfo.value.siteTags = isNullish(tempResultPage?.data) ? [] : tempResultPage.data
