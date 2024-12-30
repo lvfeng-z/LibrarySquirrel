@@ -47,15 +47,22 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
 
       // 补充虚拟列的where子句
       if (arrayNotEmpty(page.query.includeLocalTagIds)) {
-        const tagNum = page.query.includeLocalTagIds.length
-        whereClauses.push(
-          `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct1 WHERE ct1.works_id = t1.id AND ct1.local_tag_id IN (${page.query.includeLocalTagIds.join()}) AND ct1.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
-        )
+        for (const [index, includeLocalTagId] of page.query.includeLocalTagIds.entries()) {
+          whereClauses.push(
+            `EXISTS(SELECT 1 FROM re_works_tag ct1_1_${index}
+                LEFT JOIN site_tag ct1_2_${index} ON ct1_1_${index}.site_tag_id = ct1_2_${index}.id
+             WHERE (ct1_1_${index}.local_tag_id = ${includeLocalTagId} OR ct1_2_${index}.local_tag_id = ${includeLocalTagId}) AND ct1_1_${index}.works_id = t1.id)`
+          )
+        }
       }
       if (arrayNotEmpty(page.query.excludeLocalTagIds)) {
-        whereClauses.push(
-          `0 = (SELECT COUNT(1) FROM re_works_tag ct2 WHERE ct2.works_id = t1.id AND ct2.local_tag_id IN (${page.query.excludeLocalTagIds.join()}) AND ct2.tag_type = ${ReWorksTagTypeEnum.LOCAL})`
-        )
+        for (const [index, excludeLocalTagIds] of page.query.excludeLocalTagIds.entries()) {
+          whereClauses.push(
+            `NOT EXISTS(SELECT 1 FROM re_works_tag ct2_1_${index}
+                LEFT JOIN site_tag ct2_2_${index} ON ct2_1_${index}.site_tag_id = ct2_2_${index}.id
+             WHERE (ct2_1_${index}.local_tag_id = ${excludeLocalTagIds} OR ct2_2_${index}.local_tag_id = ${excludeLocalTagIds}) AND ct2_1_${index}.works_id = t1.id)`
+          )
+        }
       }
       if (arrayNotEmpty(page.query.includeSiteTagIds)) {
         const tagNum = page.query.includeSiteTagIds.length
@@ -69,25 +76,32 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         )
       }
       if (arrayNotEmpty(page.query.includeLocalAuthorIds)) {
-        const tagNum = page.query.includeLocalAuthorIds.length
-        whereClauses.push(
-          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct5 WHERE ct5.works_id = t1.id AND ct5.local_author_id IN (${page.query.includeLocalAuthorIds.join()}) AND ct5.author_type = ${ReWorksAuthorTypeEnum.LOCAL})`
-        )
+        for (const [index, includeLocalAuthorIds] of page.query.includeLocalAuthorIds.entries()) {
+          whereClauses.push(
+            `EXISTS(SELECT 1 FROM re_works_author ct5_1_${index}
+                LEFT JOIN site_author ct5_2_${index} ON ct5_1_${index}.site_author_id = ct5_2_${index}.id
+             WHERE (ct5_1_${index}.local_author_id = ${includeLocalAuthorIds} OR ct5_2_${index}.local_author_id = ${includeLocalAuthorIds}) AND ct5_1_${index}.works_id = t1.id)`
+          )
+        }
       }
       if (arrayNotEmpty(page.query.excludeLocalAuthorIds)) {
-        whereClauses.push(
-          `0 = (SELECT COUNT(1) FROM re_works_author ct6 WHERE ct6.works_id = t1.id AND ct6.local_author_id IN (${page.query.excludeLocalAuthorIds.join()}) AND ct6.author_type = ${ReWorksAuthorTypeEnum.LOCAL})`
-        )
+        for (const [index, includeLocalAuthorIds] of page.query.includeLocalAuthorIds.entries()) {
+          whereClauses.push(
+            `NOT EXISTS(SELECT 1 FROM re_works_author ct6_1_${index}
+                LEFT JOIN site_author ct6_2_${index} ON ct6_1_${index}.site_author_id = ct6_2_${index}.id
+             WHERE (ct6_1_${index}.local_author_id = ${includeLocalAuthorIds} OR ct6_2_${index}.local_author_id = ${includeLocalAuthorIds}) AND ct6_1_${index}.works_id = t1.id)`
+          )
+        }
       }
       if (arrayNotEmpty(page.query.includeSiteAuthorIds)) {
         const tagNum = page.query.includeSiteAuthorIds.length
         whereClauses.push(
-          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct7 WHERE ct7.works_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${ReWorksTagTypeEnum.SITE})`
+          `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct7 WHERE ct7.works_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${ReWorksAuthorTypeEnum.SITE})`
         )
       }
       if (arrayNotEmpty(page.query.excludeSiteAuthorIds)) {
         whereClauses.push(
-          `0 = (SELECT COUNT(1) FROM re_works_author ct8 WHERE ct8.works_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${ReWorksTagTypeEnum.SITE})`
+          `0 = (SELECT COUNT(1) FROM re_works_author ct8 WHERE ct8.works_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${ReWorksAuthorTypeEnum.SITE})`
         )
       }
 
