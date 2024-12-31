@@ -1,20 +1,20 @@
 # Library Squirrel
 
-An Electron application with Vue and TypeScript
+这是一个能在个人电脑上维护一个类似在线艺术社区（如pixiv）的资源库的软件，软件会在硬盘的指定目录中存储作品资源，并提供作品查找、导入等功能
 
-## Recommended IDE Setup
+# 开发相关
+
+## IDE设置
 
 - [IntelliJ IDEA](https://www.jetbrains.com/idea/) / [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin)
 
-## 部署
+## 开发环境部署
 
-### 安装前准备
+### 安装
 
 安装 python 3.12
 
 安装 vs2022 的 Desktop development with C++ 工作负载和 Windows SDK: 10.0.20348.0 的单个组件
-
-### 安装
 
 ```bash
 $ yarn
