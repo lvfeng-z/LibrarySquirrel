@@ -19,6 +19,9 @@ const api = {
   testPLimitTest: (args) => {
     return Electron.ipcRenderer.invoke('test-pLimitTest', args)
   },
+  testInstallPluginTest: (args) => {
+    return Electron.ipcRenderer.invoke('test-installPluginTest', args)
+  },
 
   // AppLauncher
   appLauncherOpenImage: (args) => {

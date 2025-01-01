@@ -10,6 +10,7 @@ declare global {
       testTaskPluginListenerServiceSaveBatch: function
       testTaskPluginListenerServiceGetMonitored: function
       testPLimitTest: function
+      testInstallPluginTest: function
 
       // AppLauncher
       appLauncherOpenImage: function

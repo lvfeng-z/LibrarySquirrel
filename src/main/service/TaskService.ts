@@ -85,7 +85,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         parentTask.pluginInfo = pluginInfo
         parentTask.url = url
         parentTask.status = TaskStatusEnum.CREATED
-        parentTask.siteDomain = taskPlugin.domain
+        parentTask.siteDomain = taskPlugin.name
         parentTask.isCollection = true
         parentTask.saved = false
         taskHandler.pluginTool.events.on('change-collection-name-request', (taskName: string) => {
@@ -158,7 +158,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       task.pid = pid
       task.pluginId = taskPlugin.id as number
       task.pluginInfo = pluginInfo
-      task.siteDomain = taskPlugin.domain
+      task.siteDomain = taskPlugin.name
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -237,7 +237,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         task.pluginId = taskPlugin.id as number
         task.pluginInfo = pluginInfo
         task.status = TaskStatusEnum.CREATED
-        task.siteDomain = taskPlugin.domain
+        task.siteDomain = taskPlugin.name
         task.isCollection = false
         task.pid = parentTask.id as number
 

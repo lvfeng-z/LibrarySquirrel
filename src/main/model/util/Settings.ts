@@ -5,4 +5,7 @@ export interface Settings extends Record<string, unknown> {
   importSettings: {
     maxParallelImport: number
   }
+  plugin: {
+    localImportPluginVersion: string
+  }
 }

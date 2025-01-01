@@ -37,6 +37,7 @@ onMounted(() => {
 const apis = {
   test: window.api.localAuthorListSelectItems,
   testPLimitTest: window.api.testPLimitTest,
+  testInstallPluginTest: window.api.testInstallPluginTest,
   localTagListSelectItems: window.api.localTagListSelectItems,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   worksQueryPage: window.api.worksQueryPage,
@@ -166,7 +167,8 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
 // test
 const showTestDialog = ref(false)
 async function handleTest() {
-  showExplainPath.value = true
+  apis.testInstallPluginTest()
+  // showExplainPath.value = true
   // showTestDialog.value = true
 }
 </script>

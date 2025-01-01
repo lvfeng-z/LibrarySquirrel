@@ -29,7 +29,7 @@ export async function InitializeDB() {
 
   // 创建数据表
   // 读取当前数据库的数据表
-  listAllDataTables().then(async (currentTables) => {
+  return listAllDataTables().then((currentTables) => {
     let tableNameSqlStatements: { tables: { name: string; sql: string }[] }
     // 读取初始化yml
     try {
@@ -41,12 +41,14 @@ export async function InitializeDB() {
     }
 
     // 对于当前数据库中不存在的数据表，进行创建
+    const processList: Promise<unknown>[] = []
     if (tableNameSqlStatements.tables.length > 0) {
       const db = new DB('InitializeDatabase')
       try {
         for (const tableNameSql of tableNameSqlStatements.tables) {
           if (!currentTables.includes(tableNameSql.name)) {
-            await db.exec(tableNameSql.sql)
+            const process = db.exec(tableNameSql.sql)
+            processList.push(process)
             LogUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
           }
         }
@@ -56,5 +58,6 @@ export async function InitializeDB() {
         db.release()
       }
     }
+    return Promise.allSettled(processList)
   })
 }

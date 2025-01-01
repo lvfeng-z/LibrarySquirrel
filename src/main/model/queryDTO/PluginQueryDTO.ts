@@ -4,7 +4,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   /**
    * 插件类型
    */
-  type: number | undefined | null
+  type: string | undefined | null
 
   /**
    * 作者
@@ -12,9 +12,9 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   author: string | undefined | null
 
   /**
-   * 域名
+   * 名称
    */
-  domain: string | undefined | null
+  name: string | undefined | null
 
   /**
    * 版本
@@ -36,7 +36,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
       super()
       this.type = undefined
       this.author = undefined
-      this.domain = undefined
+      this.name = undefined
       this.version = undefined
       this.fileName = undefined
       this.sortNum = undefined
@@ -44,7 +44,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
       super(plugin)
       this.type = plugin.type
       this.author = plugin.author
-      this.domain = plugin.domain
+      this.name = plugin.name
       this.version = plugin.version
       this.fileName = plugin.fileName
       this.sortNum = plugin.sortNum

@@ -31,6 +31,9 @@ function exposeService() {
   Electron.ipcMain.handle('test-pLimitTest', async () => {
     return test.pLimitTest()
   })
+  Electron.ipcMain.handle('test-installPluginTest', async () => {
+    return test.installPluginTest()
+  })
 
   // AppLauncherService
   Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {

@@ -207,10 +207,10 @@ tables:
       create table task_plugin_listener (
         id          integer not null
         constraint task_plugin_listener_pk
-        primary key,
+            primary key,
         plugin_id   integer
-        constraint task_plugin_listener_plugin_id_fk
-        references plugin
+          constraint task_plugin_listener_plugin_id_fk
+          references plugin
         on delete cascade,
         listener    text,
         create_time integer,
@@ -271,9 +271,9 @@ tables:
         id          integer not null
         constraint plugin_pk
         primary key autoincrement,
-        type        integer,
+        type        text,
         author      text,
-        domain      text,
+        name        text,
         version     text,
         file_name   text,
         create_time integer,

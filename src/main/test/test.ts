@@ -3,6 +3,10 @@ import Database from 'better-sqlite3'
 import { getDataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import pLimit from 'p-limit'
+import PluginService from '../service/PluginService.js'
+import path from 'path'
+import { getRootDir } from '../util/FileSysUtil.js'
+import LogUtil from '../util/LogUtil.js'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')
@@ -56,8 +60,25 @@ async function pLimitTest() {
   await Promise.all(list)
 }
 
+async function installPluginTest() {
+  const pluginService = new PluginService()
+  const localPluginInstalled = await pluginService.checkInstalled('task', 'lvfeng', 'local', '1.0.0')
+  LogUtil.info('test----', localPluginInstalled ? '已安装' : '未安装')
+  if (!localPluginInstalled) {
+    let installPath: string
+    const NODE_ENV = process.env.NODE_ENV
+    if (NODE_ENV == 'development') {
+      installPath = path.join(getRootDir(), '/resources/initialization/localTaskHandler.zip')
+    } else {
+      installPath = path.join(getRootDir(), '/resources/app.asar.unpacked/initialization/localTaskHandler.zip')
+    }
+    pluginService.installPlugin(installPath)
+  }
+}
+
 export default {
   insertLocalTag10W,
   transactionTest,
-  pLimitTest
+  pLimitTest,
+  installPluginTest
 }

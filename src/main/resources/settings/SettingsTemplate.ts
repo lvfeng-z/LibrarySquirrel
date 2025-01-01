@@ -4,5 +4,8 @@ export const SettingsTemplate = {
   workdir: '',
   importSettings: {
     maxParallelImport: 3
+  },
+  plugin: {
+    localImportPluginVersion: '1.0.0'
   }
 }

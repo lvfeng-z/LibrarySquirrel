@@ -5,8 +5,10 @@ import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import LogUtil from './util/LogUtil.ts'
-import { convertPath, getWorksResource } from './util/FileSysUtil.ts'
+import { convertPath, getRootDir, getWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVar, GlobalVars } from './global/GlobalVar.ts'
+import PluginService from './service/PluginService.js'
+import path from 'path'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -115,8 +117,22 @@ Electron.app.whenReady().then(() => {
   GlobalVar.create(GlobalVars.SETTINGS)
 
   // 初始化数据库
-  InitializeDB().then(() => {
+  InitializeDB().then(async () => {
+    // 创建服务层的ipc通信
     ServiceExposer.exposeService()
+    // 初始化插件
+    const pluginService = new PluginService()
+    const localPluginInstalled = await pluginService.checkInstalled('task', 'lvfeng', 'local', '1.0.0')
+    if (!localPluginInstalled) {
+      let installPath: string
+      const NODE_ENV = process.env.NODE_ENV
+      if (NODE_ENV == 'development') {
+        installPath = path.join(getRootDir(), '/resources/initialization/localTaskHandler.zip')
+      } else {
+        installPath = path.join(getRootDir(), '/resources/app.asar.unpacked/resources/initialization/localTaskHandler.zip')
+      }
+      pluginService.installPlugin(installPath)
+    }
   })
 
   // 初始化任务队列
