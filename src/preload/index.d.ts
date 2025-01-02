@@ -11,6 +11,7 @@ declare global {
       testTaskPluginListenerServiceGetMonitored: function
       testPLimitTest: function
       testInstallPluginTest: function
+      testMainWindowMsgTest: function
 
       // AppLauncher
       appLauncherOpenImage: function

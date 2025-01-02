@@ -34,6 +34,9 @@ function exposeService() {
   Electron.ipcMain.handle('test-installPluginTest', async () => {
     return test.installPluginTest()
   })
+  Electron.ipcMain.handle('test-mainWindowMsgTest', async () => {
+    return test.mainWindowMsgTest()
+  })
 
   // AppLauncherService
   Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {

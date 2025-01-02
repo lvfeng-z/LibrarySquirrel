@@ -7,6 +7,7 @@ import PluginService from '../service/PluginService.js'
 import path from 'path'
 import { getRootDir } from '../util/FileSysUtil.js'
 import LogUtil from '../util/LogUtil.js'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')
@@ -76,9 +77,16 @@ async function installPluginTest() {
   }
 }
 
+async function mainWindowMsgTest() {
+  const gotoPageProps = { title: '需要设置工作目录', content: '请先设置工作目录', buttonText: '去设置' }
+  const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+  mainWindow.webContents.send('goto-page', gotoPageProps)
+}
+
 export default {
   insertLocalTag10W,
   transactionTest,
   pLimitTest,
-  installPluginTest
+  installPluginTest,
+  mainWindowMsgTest
 }

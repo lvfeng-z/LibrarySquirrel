@@ -25,6 +25,7 @@ import { SearchCondition, SearchType } from '@renderer/model/util/SearchConditio
 import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
+import GotoPage from '@renderer/components/dialogs/GotoPage.vue'
 
 // onMounted
 onMounted(() => {
@@ -36,6 +37,7 @@ onMounted(() => {
 // 接口
 const apis = {
   test: window.api.localAuthorListSelectItems,
+  testMainWindowMsgTest: window.api.testMainWindowMsgTest,
   testPLimitTest: window.api.testPLimitTest,
   testInstallPluginTest: window.api.testInstallPluginTest,
   localTagListSelectItems: window.api.localTagListSelectItems,
@@ -58,7 +60,9 @@ const pageState = reactive({
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
-const showExplainPath = ref(false) // 解释路径dialog的开关
+const showExplainPath = ref(false) // 解释路径对话框的开关
+const showGotoPage = ref(false) // 页面跳转对话框的开关
+const gotoPageProps = ref({ title: '', content: '', buttonText: '' })
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
 type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | ''
@@ -163,11 +167,17 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
   showExplainPath.value = true
   pathWaitingExplain.value = dir
 })
+window.electron.ipcRenderer.on('goto-page', (_event, config) => {
+  gotoPageProps.value.title = config.title
+  gotoPageProps.value.content = config.content
+  gotoPageProps.value.buttonText = config.buttonText
+  showGotoPage.value = true
+})
 
 // test
 const showTestDialog = ref(false)
 async function handleTest() {
-  apis.testInstallPluginTest()
+  apis.testMainWindowMsgTest()
   // showExplainPath.value = true
   // showTestDialog.value = true
 }
@@ -276,12 +286,16 @@ async function handleTest() {
         </div>
       </el-main>
     </el-container>
-    <explain-path
-      v-model:state="showExplainPath"
+    <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
+    <goto-page
+      v-model:state="showGotoPage"
       width="80%"
-      :string-to-explain="pathWaitingExplain"
       :close-on-click-modal="false"
-    ></explain-path>
+      :title="gotoPageProps.title"
+      :content="gotoPageProps.content"
+      :button-text="gotoPageProps.buttonText"
+      :button-click="() => showSubpage('Settings')"
+    />
     <transaction-test v-model="showTestDialog"></transaction-test>
   </div>
 </template>

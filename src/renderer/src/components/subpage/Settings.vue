@@ -15,6 +15,8 @@ const apis = reactive({
   settingsSaveSettings: window.api.settingsSaveSettings,
   settingsResetSettings: window.api.settingsResetSettings
 }) // 接口
+// 工作目录输入组件实例
+const workdirInputRef = ref()
 // 设置
 const settings: Ref<UnwrapRef<Settings>> = ref({
   initialized: true,
@@ -25,6 +27,7 @@ const settings: Ref<UnwrapRef<Settings>> = ref({
   }
 })
 const oldSettings = ref() // 原设置
+const tourStates: Ref<UnwrapRef<boolean>> = ref(true)
 
 // 方法
 // 加载设置
@@ -69,7 +72,13 @@ function resetSettings() {
     <el-scrollbar>
       <el-descriptions direction="vertical" :column="1">
         <el-descriptions-item label="工作目录">
-          <el-input v-model="settings.workdir"></el-input>
+          <el-tooltip
+            placement="top"
+            effect="customized"
+            content="LibrarySquirrel所管理的所有资源都会被保存到这个目录下，请确保这个目录所在磁盘有足够的空间，并且非必要的情况下不要更改此项"
+          >
+            <el-input ref="workdirInput" v-model="settings.workdir"></el-input>
+          </el-tooltip>
         </el-descriptions-item>
         <el-descriptions-item label="最大并发下载数">
           <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
@@ -82,7 +91,19 @@ function resetSettings() {
         </el-col>
       </el-row>
     </el-scrollbar>
+    <el-tour v-model="tourStates" :scroll-into-view-options="true">
+      <el-tour-step :target="workdirInputRef?.$el" title="工作目录" description="在这里设置工作目录"></el-tour-step>
+    </el-tour>
   </base-subpage>
 </template>
 
 <style scoped></style>
+<style>
+.el-popper.is-customized {
+  background: var(--el-color-warning-light-7);
+}
+
+.el-popper.is-customized .el-popper__arrow::before {
+  background: var(--el-color-warning-light-7);
+}
+</style>

@@ -22,6 +22,9 @@ const api = {
   testInstallPluginTest: (args) => {
     return Electron.ipcRenderer.invoke('test-installPluginTest', args)
   },
+  testMainWindowMsgTest: (args) => {
+    return Electron.ipcRenderer.invoke('test-mainWindowMsgTest', args)
+  },
 
   // AppLauncher
   appLauncherOpenImage: (args) => {

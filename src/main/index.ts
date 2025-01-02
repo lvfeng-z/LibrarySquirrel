@@ -1,5 +1,5 @@
 import Electron from 'electron'
-import Path from 'path'
+import path from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
@@ -8,7 +8,7 @@ import LogUtil from './util/LogUtil.ts'
 import { convertPath, getRootDir, getWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVar, GlobalVars } from './global/GlobalVar.ts'
 import PluginService from './service/PluginService.js'
-import path from 'path'
+import StringUtil from './util/StringUtil.js'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -19,13 +19,20 @@ function createWindow(): Electron.BrowserWindow {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: Path.join(__dirname, '../preload/index.mjs'),
+      preload: path.join(__dirname, '../preload/index.mjs'),
       sandbox: false
     }
   })
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+
+    // 检查有没有设置工作目录，没有设置的话发送提醒
+    const settings = GlobalVar.get(GlobalVars.SETTINGS).store
+    if (StringUtil.isBlank(settings.workdir)) {
+      const gotoPageProps = { title: 'LibrarySquirrel需要设置工作目录才能正常使用', content: '请先设置工作目录', buttonText: '去设置' }
+      mainWindow.webContents.send('goto-page', gotoPageProps)
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -38,7 +45,7 @@ function createWindow(): Electron.BrowserWindow {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(Path.join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 
   return mainWindow
@@ -94,7 +101,7 @@ Electron.app.whenReady().then(() => {
     try {
       // 确保格式正确后，继续处理请求
       const url = new URL(request.url)
-      const decodedUrl = decodeURIComponent(Path.join(workdir, url.pathname))
+      const decodedUrl = decodeURIComponent(path.join(workdir, url.pathname))
       const fullPath = process.platform === 'win32' ? convertPath(decodedUrl) : decodedUrl
       const heightStr = url.searchParams.get('height')
       const height = heightStr === null ? undefined : parseInt(heightStr)
