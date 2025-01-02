@@ -30,7 +30,11 @@ function createWindow(): Electron.BrowserWindow {
     // 检查有没有设置工作目录，没有设置的话发送提醒
     const settings = GlobalVar.get(GlobalVars.SETTINGS).store
     if (StringUtil.isBlank(settings.workdir)) {
-      const gotoPageProps = { title: 'LibrarySquirrel需要设置工作目录才能正常使用', content: '请先设置工作目录', buttonText: '去设置' }
+      const gotoPageProps = {
+        title: 'LibrarySquirrel需要设置工作目录才能正常使用，请先设置工作目录',
+        content: '',
+        buttonText: '去设置'
+      }
       mainWindow.webContents.send('goto-page', gotoPageProps)
     }
   })

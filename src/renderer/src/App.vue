@@ -68,6 +68,8 @@ const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义
 type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | ''
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
+// 设置页面向导配置
+const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workdir: false })
 
 // 方法
 // 查询标签选择列表
@@ -282,7 +284,7 @@ async function handleTest() {
           <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
           <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
           <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
-          <settings v-if="pageState.showSettingsPage" @close-self="closeSubpage" />
+          <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" @close-self="closeSubpage" />
         </div>
       </el-main>
     </el-container>
@@ -294,7 +296,12 @@ async function handleTest() {
       :title="gotoPageProps.title"
       :content="gotoPageProps.content"
       :button-text="gotoPageProps.buttonText"
-      :button-click="() => showSubpage('Settings')"
+      :button-click="
+        () => {
+          settingsPageTourStates.workdir = true
+          showSubpage('Settings')
+        }
+      "
     />
     <transaction-test v-model="showTestDialog"></transaction-test>
   </div>

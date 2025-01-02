@@ -279,13 +279,18 @@ function exposeService() {
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', () => {
-    return SettingsService.getSettings()
+    try {
+      return ApiUtil.response(SettingsService.getSettings())
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
   })
   Electron.ipcMain.handle('settings-saveSettings', (_event, args) => {
-    return SettingsService.saveSettings(args)
+    return ApiUtil.response(SettingsService.saveSettings(args))
   })
   Electron.ipcMain.handle('settings-resetSettings', () => {
-    return SettingsService.resetSettings()
+    return ApiUtil.response(SettingsService.resetSettings())
   })
 
   // SiteService
