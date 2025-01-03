@@ -9,6 +9,7 @@ import { convertPath, getRootDir, getWorksResource } from './util/FileSysUtil.ts
 import { GlobalVar, GlobalVars } from './global/GlobalVar.ts'
 import PluginService from './service/PluginService.js'
 import StringUtil from './util/StringUtil.js'
+import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -30,12 +31,17 @@ function createWindow(): Electron.BrowserWindow {
     // 检查有没有设置工作目录，没有设置的话发送提醒
     const settings = GlobalVar.get(GlobalVars.SETTINGS).store
     if (StringUtil.isBlank(settings.workdir)) {
-      const gotoPageProps = {
-        title: 'LibrarySquirrel需要设置工作目录才能正常使用，请先设置工作目录',
-        content: '',
-        buttonText: '去设置'
+      const gotoPageConfig: { content: string; title: string; options: ElMessageBoxOptions } = {
+        title: '请设置工作目录',
+        content: 'LibrarySquirrel需要工作目录才能正常使用',
+        options: {
+          confirmButtonText: '去设置',
+          cancelButtonText: '取消',
+          type: 'warning',
+          showClose: false
+        }
       }
-      mainWindow.webContents.send('goto-page', gotoPageProps)
+      mainWindow.webContents.send('goto-page', gotoPageConfig)
     }
   })
 

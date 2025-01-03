@@ -14,7 +14,7 @@ onBeforeMount(() => {
 })
 
 // model
-const tourStates: Ref<UnwrapRef<{ workdir: false }>> = defineModel('tourStates', { default: { workdir: false } })
+const tourStates: Ref<UnwrapRef<{ workdir: boolean }>> = defineModel('tourStates', { default: { workdir: false } })
 
 // 变量
 const apis = reactive({
@@ -73,7 +73,10 @@ async function saveSettings() {
 }
 // 所有设置重置为默认
 async function resetSettings() {
-  return saveOrReset(apis.settingsResetSettings).then(() => loadSettings())
+  const confirm = await askBeforeReset()
+  if (confirm) {
+    return saveOrReset(apis.settingsResetSettings).then(() => loadSettings())
+  }
 }
 // 递归获取已更改的设置
 function getChangedProperties(newVal: object, oldVal: object, root?: string) {
@@ -125,6 +128,26 @@ async function checkChangeSaved() {
     })
   }
 }
+// 重置前询问
+async function askBeforeReset(): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    ElMessageBox.confirm('所有设置将重置到默认状态', '是否重置?', {
+      confirmButtonText: '是',
+      cancelButtonText: '否',
+      type: 'warning'
+    })
+      .then(() => {
+        resolve(true)
+      })
+      .catch(() => {
+        ElMessage({
+          message: '取消重置',
+          type: 'warning'
+        })
+        resolve(false)
+      })
+  })
+}
 </script>
 
 <template>
@@ -173,11 +196,11 @@ async function checkChangeSaved() {
           </div>
         </el-scrollbar>
       </el-main>
-      <el-footer>
+      <el-footer height="32px">
         <el-row>
           <el-col :span="6">
             <el-button type="primary" @click="saveSettings">保存</el-button>
-            <el-button type="danger" @click="resetSettings">重置</el-button>
+            <el-button type="danger" @click="resetSettings">默认设置</el-button>
           </el-col>
         </el-row>
       </el-footer>

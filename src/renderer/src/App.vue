@@ -25,7 +25,8 @@ import { SearchCondition, SearchType } from '@renderer/model/util/SearchConditio
 import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
-import GotoPage from '@renderer/components/dialogs/GotoPage.vue'
+import { ElMessageBox } from 'element-plus'
+import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
 
 // onMounted
 onMounted(() => {
@@ -61,8 +62,6 @@ const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
 const showExplainPath = ref(false) // 解释路径对话框的开关
-const showGotoPage = ref(false) // 页面跳转对话框的开关
-const gotoPageProps = ref({ title: '', content: '', buttonText: '' })
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
 type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | ''
@@ -169,11 +168,11 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
   showExplainPath.value = true
   pathWaitingExplain.value = dir
 })
-window.electron.ipcRenderer.on('goto-page', (_event, config) => {
-  gotoPageProps.value.title = config.title
-  gotoPageProps.value.content = config.content
-  gotoPageProps.value.buttonText = config.buttonText
-  showGotoPage.value = true
+window.electron.ipcRenderer.on('goto-page', (_event, config: { content: string; title: string; options: ElMessageBoxOptions }) => {
+  ElMessageBox.alert(config.content, config.title, config.options).then(() => {
+    settingsPageTourStates.value.workdir = true
+    showSubpage('Settings')
+  })
 })
 
 // test
@@ -289,20 +288,6 @@ async function handleTest() {
       </el-main>
     </el-container>
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
-    <goto-page
-      v-model:state="showGotoPage"
-      width="80%"
-      :close-on-click-modal="false"
-      :title="gotoPageProps.title"
-      :content="gotoPageProps.content"
-      :button-text="gotoPageProps.buttonText"
-      :button-click="
-        () => {
-          settingsPageTourStates.workdir = true
-          showSubpage('Settings')
-        }
-      "
-    />
     <transaction-test v-model="showTestDialog"></transaction-test>
   </div>
 </template>
