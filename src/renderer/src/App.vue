@@ -27,6 +27,7 @@ import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import { ElMessageBox } from 'element-plus'
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
+import Developing from '@renderer/components/subpage/Developing.vue'
 
 // onMounted
 onMounted(() => {
@@ -56,7 +57,8 @@ const pageState = reactive({
   showTagManagePage: false,
   showLocalAuthorManagePage: false,
   showTaskManagePage: false,
-  showSettingsPage: false
+  showSettingsPage: false,
+  showDeveloping: false
 })
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
@@ -64,7 +66,7 @@ const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列�
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
-type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | ''
+type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 'Developing'
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
@@ -113,6 +115,9 @@ function showSubpage(pageName: subpages) {
       break
     case 'Settings':
       pageState.showSettingsPage = true
+      break
+    case 'Developing':
+      pageState.showDeveloping = true
       break
   }
 }
@@ -197,7 +202,7 @@ async function handleTest() {
                 <span>标签</span>
               </template>
               <el-menu-item index="1-1" @click="showSubpage('TagManage')">本地标签</el-menu-item>
-              <el-menu-item index="1-2">站点标签</el-menu-item>
+              <el-menu-item index="1-2" @click="showSubpage('Developing')">站点标签</el-menu-item>
             </el-sub-menu>
             <el-sub-menu index="2">
               <template #title>
@@ -205,13 +210,13 @@ async function handleTest() {
                 <span>作者</span>
               </template>
               <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')"> 本地作者 </el-menu-item>
-              <el-menu-item index="2-2">站点作者</el-menu-item>
+              <el-menu-item index="2-2" @click="showSubpage('Developing')">站点作者</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="3">
+            <el-menu-item index="3" @click="showSubpage('Developing')">
               <template #title>收藏</template>
               <el-icon><Star /></el-icon>
             </el-menu-item>
-            <el-menu-item index="4" @click="showSubpage('Settings')">
+            <el-menu-item index="4" @click="showSubpage('Developing')">
               <template #title>站点</template>
               <el-icon><Link /></el-icon>
             </el-menu-item>
@@ -284,6 +289,7 @@ async function handleTest() {
           <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
           <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
           <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" @close-self="closeSubpage" />
+          <developing v-if="pageState.showDeveloping" @close-self="closeSubpage" />
         </div>
       </el-main>
     </el-container>

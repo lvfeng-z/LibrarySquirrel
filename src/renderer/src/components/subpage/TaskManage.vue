@@ -221,7 +221,7 @@ async function importFromDir(dir: string) {
     if (data.succeed) {
       ElMessage({
         type: 'success',
-        message: `${data.plugin?.author}.${data.plugin?.domain}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+        message: `${data.plugin?.author}.${data.plugin?.name}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
       })
     } else {
       ElMessage({
@@ -240,7 +240,7 @@ async function importFromSite() {
     if (data.succeed) {
       ElMessage({
         type: 'success',
-        message: `${data.plugin?.author}.${data.plugin?.domain}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+        message: `${data.plugin?.author}.${data.plugin?.name}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
       })
     } else {
       ElMessage({
