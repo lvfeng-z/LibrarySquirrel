@@ -98,7 +98,8 @@ export class TaskQueue {
           if (operationObj.waiting() || operationObj.processing()) {
             // 如果是等待或运行状态，则无视这次操作
             const operationStr = taskOperation === TaskOperation.START ? '开始' : '恢复'
-            LogUtil.warn('TaskQueue', `无法${operationStr}任务${task}，队列中已经存在其他操作`)
+            const reason = operationObj.waiting() ? '任务正在等待中' : '任务正在进行中'
+            LogUtil.warn('TaskQueue', `无法${operationStr}任务${task.id}，${reason}`)
           } else if (operationObj.paused()) {
             // 如果是暂停状态，则把这次操作和任务的状态改成等待，然后判断原操作的任务信息是否已保存
             operationObj.status = OperationStatus.WAITING
@@ -271,7 +272,7 @@ export class TaskQueue {
           // 操作状态设为暂停
           operationObj.status = OperationStatus.PAUSED
           taskRunningObj.status = TaskStatusEnum.PAUSE
-          LogUtil.info('TaskService', `任务${taskRunningObj.taskId}暂停`)
+          LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}暂停`)
           taskSaveResultList.push({
             task: task,
             taskRunningObj: taskRunningObj,
@@ -318,7 +319,7 @@ export class TaskQueue {
             operationObj.status = OperationStatus.PAUSED
           }
           taskRunningObj.status = TaskStatusEnum.PAUSE
-          LogUtil.info('TaskService', `任务${taskRunningObj.taskId}停止`)
+          LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}停止`)
           taskSaveResultList.push({
             task: task,
             taskRunningObj: taskRunningObj,
@@ -367,10 +368,10 @@ export class TaskQueue {
       const taskRunningObj = data.taskRunningObj
       this.removeFromQueue(taskRunningObj.taskOperationObj)
       if (saveResult === TaskStatusEnum.FINISHED) {
-        LogUtil.info('TaskService', `任务${data.taskRunningObj.taskId}完成`)
+        LogUtil.info('TaskQueue', `任务${data.taskRunningObj.taskId}完成`)
         this.removeFromMap(taskRunningObj.taskId)
       } else if (saveResult === TaskStatusEnum.FAILED) {
-        LogUtil.info('TaskService', `任务${data.taskRunningObj.taskId}失败`)
+        LogUtil.info('TaskQueue', `任务${data.taskRunningObj.taskId}失败`)
       }
       this.refreshParentStatus([taskRunningObj.parentId])
     })
