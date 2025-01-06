@@ -843,7 +843,7 @@ class TaskResourceStream extends Transform {
       .catch((err) => {
         const tempTask = new Task()
         tempTask.id = chunk.taskId
-        this.emit('saveFailed', err, task, chunk)
+        this.emit('saveFailed', err, tempTask, chunk)
         callback()
       })
   }
