@@ -1,11 +1,18 @@
-export const SettingsTemplate = {
+import { Settings } from '../../model/util/Settings.js'
+
+export const SettingsTemplate: Settings = {
   initialized: false,
   programVersion: '',
   workdir: '',
   importSettings: {
     maxParallelImport: 3
   },
-  plugin: {
-    localImportPluginVersion: '1.0.0'
+  initialization: {
+    plugins: [
+      {
+        packagePath: 'initialization/localTaskHandler.zip',
+        pathType: 'Relative'
+      }
+    ]
   }
 }

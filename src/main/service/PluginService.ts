@@ -15,6 +15,8 @@ import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
 import TaskPluginListenerService from './TaskPluginListenerService.js'
 import TaskPluginListener from '../model/entity/TaskPluginListener.js'
+import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
+import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 
 /**
  * 主键查询
@@ -56,6 +58,47 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   }
 
   /**
+   * 读取插件安装包
+   * @param packagePath
+   */
+  public loadPluginPackage(packagePath: string): PluginInstallDTO {
+    const packageContent = new AdmZip(packagePath)
+    // 获取所有条目的数组
+    const entries = packageContent.getEntries()
+    let firstDirEntry: AdmZip.IZipEntry | undefined = undefined
+    for (const entry of entries) {
+      if (entry.isDirectory && entry.entryName.endsWith('/')) {
+        firstDirEntry = entry
+        break
+      }
+    }
+    const msgPrefix = '读取插件安装包出错，'
+    assertNotNullish(firstDirEntry, this.className, `${msgPrefix}安装包结构有误`)
+
+    const yamlEntry = packageContent.getEntry(`${firstDirEntry.entryName}pluginInfo.yml`)
+    assertNotNullish(yamlEntry, this.className, `${msgPrefix}没有获取到必要的安装配置`)
+    const yamlContent = yamlEntry.getData().toString('utf8')
+    const config: PluginInstallConfig = yaml.load(yamlContent)
+
+    assertNotNullish(config.type, this.className, `${msgPrefix}插件类型不能为空`)
+    assertNotNullish(config.author, this.className, `${msgPrefix}插件作者不能为空`)
+    assertNotNullish(config.name, this.className, `${msgPrefix}插件名称不能为空`)
+    assertNotNullish(config.version, this.className, `${msgPrefix}插件版本不能为空`)
+    assertNotNullish(config.fileName, this.className, `${msgPrefix}插件入口文件不能为空`)
+
+    return new PluginInstallDTO({
+      type: config.type,
+      author: config.author,
+      name: config.name,
+      version: config.version,
+      fileName: config.fileName,
+      packagePath: packagePath,
+      package: packageContent,
+      listeners: config.listeners
+    })
+  }
+
+  /**
    * 从插件包安装插件
    * @param packagePath
    */
@@ -70,22 +113,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
 
     // 从配置文件读取插件信息
     try {
-      const packageContent = new AdmZip(packagePath)
-      const yamlEntry = packageContent.getEntry('localTaskHandler/pluginInfo.yml')
-      const yamlContent = yamlEntry.getData().toString('utf8')
-      const config = yaml.load(yamlContent)
-
-      const pluginInstallDTO = new PluginInstallDTO(undefined, packagePath)
-      pluginInstallDTO.type = config.type
-      pluginInstallDTO.author = config.author
-      pluginInstallDTO.name = config.name
-      pluginInstallDTO.version = config.version
-      pluginInstallDTO.fileName = config.fileName
-
-      const msgPrefix = `安装插件${pluginInstallDTO.author}.${pluginInstallDTO.name}.${pluginInstallDTO.version}时，`
-      assertNotNullish(pluginInstallDTO.author, this.className, `${msgPrefix}插件作者名称不能为空`)
-      assertNotNullish(pluginInstallDTO.name, this.className, `${msgPrefix}插件名称不能为空`)
-      assertNotNullish(pluginInstallDTO.version, this.className, `${msgPrefix}插件版本不能为空`)
+      const pluginInstallDTO = this.loadPluginPackage(packagePath)
 
       // 安装路径
       const installPath: string = path.join(
@@ -96,10 +124,11 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         pluginInstallDTO.version
       )
       await createDirIfNotExists(installPath)
-      packageContent.extractAllTo(installPath, true)
+      pluginInstallDTO.package.extractAllTo(installPath, true)
 
-      return this.save(pluginInstallDTO).then((pluginId) => {
-        const listeners: string[] = config.listeners
+      const tempPlugin = new Plugin(pluginInstallDTO)
+      return this.save(tempPlugin).then((pluginId) => {
+        const listeners: string[] = pluginInstallDTO.listeners
         if (arrayNotEmpty(listeners)) {
           const taskPluginListenerService = new TaskPluginListenerService()
           const taskPluginListeners: TaskPluginListener[] = []
@@ -117,6 +146,39 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     } catch (e) {
       LogUtil.error(this.className, String(e))
       throw e
+    }
+  }
+
+  public async initializePlugin() {
+    const defaultPlugins = GlobalVar.get(GlobalVars.SETTINGS).store.initialization.plugins
+    for (const defaultPlugin of defaultPlugins) {
+      let packagePath: string
+      if (defaultPlugin.pathType === 'Relative') {
+        const NODE_ENV = process.env.NODE_ENV
+        if (NODE_ENV == 'development') {
+          packagePath = path.join(getRootDir(), '/resources/', defaultPlugin.packagePath)
+        } else {
+          packagePath = path.join(getRootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
+        }
+      } else {
+        packagePath = defaultPlugin.packagePath
+      }
+      const installDTO = this.loadPluginPackage(packagePath)
+      const localPluginInstalled = await this.checkInstalled(installDTO.type, installDTO.author, installDTO.name, installDTO.version)
+      if (!localPluginInstalled) {
+        let installPath: string
+        if (defaultPlugin.pathType === 'Relative') {
+          const NODE_ENV = process.env.NODE_ENV
+          if (NODE_ENV == 'development') {
+            installPath = path.join(getRootDir(), '/resources/', defaultPlugin.packagePath)
+          } else {
+            installPath = path.join(getRootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
+          }
+        } else {
+          installPath = defaultPlugin.packagePath
+        }
+        this.installPlugin(installPath)
+      }
     }
   }
 }

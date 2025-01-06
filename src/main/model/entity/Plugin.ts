@@ -26,7 +26,7 @@ export default class Plugin extends BaseEntity {
   version: string | undefined | null
 
   /**
-   * 文件名
+   * 入口文件名
    */
   fileName: string | undefined | null
 

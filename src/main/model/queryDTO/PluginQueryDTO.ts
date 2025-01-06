@@ -22,7 +22,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   version: string | undefined | null
 
   /**
-   * 类名+扩展名
+   * 入口文件名
    */
   fileName: string | undefined | null
 
