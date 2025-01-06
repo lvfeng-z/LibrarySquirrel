@@ -50,6 +50,12 @@ export class TaskQueue {
   private readonly pluginLoader: PluginLoader<TaskHandler>
 
   /**
+   * 作为任务处理流程入口的可读流
+   * @param pluginLoader
+   */
+  private inletStream: ReadableTaskRunningObject
+
+  /**
    * 任务信息保存流
    * @private
    */
@@ -67,23 +73,83 @@ export class TaskQueue {
    */
   private taskStatusChangeStream: TaskStatusChangeStream
 
-  /**
-   * 需要处理的任务运行对象的可读流
-   * @param pluginLoader
-   */
-  private readableRunningObj: ReadableTaskRunningObject
-
   constructor() {
     this.operationQueue = []
     this.taskMap = new Map()
     this.parentMap = new Map()
     this.taskService = new TaskService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
+
+    this.inletStream = new ReadableTaskRunningObject()
     this.taskInfoStream = new TaskInfoStream(this.pluginLoader)
     this.taskResourceStream = new TaskResourceStream(this.pluginLoader)
     this.taskStatusChangeStream = new TaskStatusChangeStream()
-    this.readableRunningObj = new ReadableTaskRunningObject()
     this.initializeStream()
+  }
+
+  /**
+   * 初始化任务处理流
+   * @private
+   */
+  private initializeStream() {
+    const handleError = (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+      LogUtil.error('TaskQueue', `处理任务时出错，taskId: ${task.id}，error: ${error.message}`)
+      taskRunningObj.status = TaskStatusEnum.FAILED
+      this.taskService.taskFailed(taskRunningObj.taskId).then(() => {
+        this.removeFromQueue(taskRunningObj.taskOperationObj)
+        this.removeFromMap(taskRunningObj.taskId)
+      })
+      this.refreshParentStatus([taskRunningObj.parentId])
+    }
+    // 信息保存流
+    this.taskInfoStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+      this.taskInfoStream.unpipe(this.taskResourceStream)
+      this.taskInfoStream.pipe(this.taskResourceStream)
+      handleError(error, task, taskRunningObj)
+    })
+    // 资源保存流
+    this.taskResourceStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+      this.taskInfoStream.unpipe(this.taskResourceStream)
+      this.taskInfoStream.pipe(this.taskResourceStream)
+      handleError(error, task, taskRunningObj)
+    })
+    this.taskResourceStream.on('data', (data: TaskResourceSaveResult) => {
+      const saveResult = data.status
+      const taskRunningObj = data.taskRunningObj
+      this.removeFromQueue(taskRunningObj.taskOperationObj)
+      if (saveResult === TaskStatusEnum.FINISHED) {
+        LogUtil.info('TaskQueue', `任务${data.taskRunningObj.taskId}完成`)
+        this.removeFromMap(taskRunningObj.taskId)
+      } else if (saveResult === TaskStatusEnum.FAILED) {
+        LogUtil.info('TaskQueue', `任务${data.taskRunningObj.taskId}失败`)
+      }
+      this.refreshParentStatus([taskRunningObj.parentId])
+    })
+    this.taskResourceStream.on('saveStart', (taskRunningObj: TaskRunningObj) => {
+      this.taskStatusChangeStream.addTask([
+        {
+          taskRunningObj: taskRunningObj,
+          status: TaskStatusEnum.PROCESSING
+        }
+      ])
+      const parentRunningObj = this.parentMap.get(taskRunningObj.parentId)
+      if (notNullish(parentRunningObj) && parentRunningObj.status !== TaskStatusEnum.PROCESSING) {
+        parentRunningObj.status = TaskStatusEnum.PROCESSING
+      }
+    })
+    this.taskResourceStream.on('saveFailed', handleError)
+    this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
+    // 保存结果处理流
+    this.taskStatusChangeStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+      this.taskResourceStream.unpipe(this.taskStatusChangeStream)
+      this.taskResourceStream.pipe(this.taskStatusChangeStream)
+      handleError(error, task, taskRunningObj)
+    })
+
+    // 连接
+    this.inletStream.pipe(this.taskInfoStream)
+    this.taskInfoStream.pipe(this.taskResourceStream)
+    this.taskResourceStream.pipe(this.taskStatusChangeStream)
   }
 
   /**
@@ -165,7 +231,7 @@ export class TaskQueue {
       // 刷新父任务状态
       this.setChildrenOfParent(runningObjs)
 
-      this.readableRunningObj.addArray(runningObjs)
+      this.inletStream.addArray(runningObjs)
     } else if (taskOperation === TaskOperation.PAUSE) {
       this.pauseTask(tasks)
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
@@ -332,65 +398,6 @@ export class TaskQueue {
       }
     }
     this.taskStatusChangeStream.addTask(taskSaveResultList)
-  }
-
-  /**
-   * 初始化任务处理流
-   * @private
-   */
-  private initializeStream() {
-    // TODO 触发error事件后会导致通过pipe建立的管道会断开，需要处理这个问题
-    const handleError = (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
-      LogUtil.error('TaskQueue', `处理任务时出错，taskId: ${task.id}，error: ${error.message}`)
-      taskRunningObj.status = TaskStatusEnum.FAILED
-      this.taskService.taskFailed(taskRunningObj.taskId).then(() => {
-        this.removeFromQueue(taskRunningObj.taskOperationObj)
-        this.removeFromMap(taskRunningObj.taskId)
-      })
-      this.refreshParentStatus([taskRunningObj.parentId])
-    }
-    // 信息保存流
-    this.taskInfoStream.on('error', handleError)
-    this.taskInfoStream.on('data', (data: TaskRunningObj) =>
-      LogUtil.info(
-        'test----',
-        `TaskInfoStream发送${data.taskId}, 此时监听data事件的数量为${this.taskInfoStream.listenerCount('data')}`
-      )
-    )
-    // 资源保存流
-    this.taskResourceStream.on('saveStart', (taskRunningObj: TaskRunningObj) => {
-      this.taskStatusChangeStream.addTask([
-        {
-          taskRunningObj: taskRunningObj,
-          status: TaskStatusEnum.PROCESSING
-        }
-      ])
-      const parentRunningObj = this.parentMap.get(taskRunningObj.parentId)
-      if (notNullish(parentRunningObj) && parentRunningObj.status !== TaskStatusEnum.PROCESSING) {
-        parentRunningObj.status = TaskStatusEnum.PROCESSING
-      }
-    })
-    this.taskResourceStream.on('data', (data: TaskResourceSaveResult) => {
-      const saveResult = data.status
-      const taskRunningObj = data.taskRunningObj
-      this.removeFromQueue(taskRunningObj.taskOperationObj)
-      if (saveResult === TaskStatusEnum.FINISHED) {
-        LogUtil.info('TaskQueue', `任务${data.taskRunningObj.taskId}完成`)
-        this.removeFromMap(taskRunningObj.taskId)
-      } else if (saveResult === TaskStatusEnum.FAILED) {
-        LogUtil.info('TaskQueue', `任务${data.taskRunningObj.taskId}失败`)
-      }
-      this.refreshParentStatus([taskRunningObj.parentId])
-    })
-    this.taskResourceStream.on('error', handleError)
-    this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
-    // 保存结果处理流
-    this.taskStatusChangeStream.on('error', handleError)
-
-    // 连接
-    this.readableRunningObj.pipe(this.taskInfoStream)
-    this.taskInfoStream.pipe(this.taskResourceStream)
-    this.taskResourceStream.pipe(this.taskStatusChangeStream)
   }
 
   /**
@@ -759,7 +766,7 @@ class TaskResourceStream extends Transform {
   private limited: boolean
 
   constructor(pluginLoader: PluginLoader<TaskHandler>) {
-    super({ objectMode: true, highWaterMark: 64 }) // 设置为对象模式
+    super({ objectMode: true, highWaterMark: 64, autoDestroy: false }) // 设置为对象模式
     this.taskService = new TaskService()
     this.pluginLoader = pluginLoader
     // 读取设置中的最大并行数
@@ -819,7 +826,7 @@ class TaskResourceStream extends Transform {
             }
           })
           .catch((err) => {
-            this.emit('error', err, task, chunk)
+            this.emit('saveFailed', err, task, chunk)
             this.processing--
             // 如果处于限制状态，则在此次下载失败之后解开限制
             if (this.limited) {
@@ -836,7 +843,7 @@ class TaskResourceStream extends Transform {
       .catch((err) => {
         const tempTask = new Task()
         tempTask.id = chunk.taskId
-        this.emit('error', err, tempTask, chunk)
+        this.emit('saveFailed', err, task, chunk)
         callback()
       })
   }
