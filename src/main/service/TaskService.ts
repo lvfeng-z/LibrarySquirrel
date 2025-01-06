@@ -579,7 +579,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 调用插件的resume函数，获取资源
     const resumeResponse = await taskHandler.resume(taskPluginDTO)
     assertNotNullish(resumeResponse.resourceStream, 'TaskService', `恢复任务时，插件返回的资源为空，taskId: ${taskId}`)
-    assertNotNullish(task.pendingDownloadPath, 'TaskService', `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`)
     // 判断是否需要更新作品数据
     if (resumeResponse.doUpdate) {
       const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse, true)
@@ -599,6 +598,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskWriter.readable = resumeResponse.resourceStream
     taskWriter.writable = writeable
 
+    LogUtil.info('TaskService', `任务${taskId}恢复下载`)
     return WorksService.resumeSaveWorksResource(taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         worksService.resourceFinished(worksId)
