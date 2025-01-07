@@ -1,0 +1,5 @@
+plugins:
+  - packagePath: initialization/localTaskHandler.zip
+    pathType: Relative
+  - packagePath: initialization/pixivTaskHandler.zip
+    pathType: Relative

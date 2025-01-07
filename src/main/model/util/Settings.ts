@@ -5,7 +5,4 @@ export interface Settings extends Record<string, unknown> {
   importSettings: {
     maxParallelImport: number
   }
-  initialization: {
-    plugins: { packagePath: string; pathType: 'Relative' | 'Absolute' }[]
-  }
 }

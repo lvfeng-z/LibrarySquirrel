@@ -130,6 +130,8 @@ Electron.app.whenReady().then(() => {
     }
   })
 
+  // 初始化APP_CONFIG
+  GlobalVar.create(GlobalVars.APP_CONFIG)
   // 初始化设置
   GlobalVar.create(GlobalVars.SETTINGS)
 
@@ -139,7 +141,7 @@ Electron.app.whenReady().then(() => {
     ServiceExposer.exposeService()
     // 初始化插件
     const pluginService = new PluginService()
-    pluginService.initializePlugin()
+    pluginService.preInstallPlugins()
   })
 
   // 初始化任务队列

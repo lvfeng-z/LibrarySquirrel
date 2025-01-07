@@ -63,19 +63,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    */
   public loadPluginPackage(packagePath: string): PluginInstallDTO {
     const packageContent = new AdmZip(packagePath)
-    // 获取所有条目的数组
-    const entries = packageContent.getEntries()
-    let firstDirEntry: AdmZip.IZipEntry | undefined = undefined
-    for (const entry of entries) {
-      if (entry.isDirectory && entry.entryName.endsWith('/')) {
-        firstDirEntry = entry
-        break
-      }
-    }
     const msgPrefix = '读取插件安装包出错，'
-    assertNotNullish(firstDirEntry, this.className, `${msgPrefix}安装包结构有误`)
 
-    const yamlEntry = packageContent.getEntry(`${firstDirEntry.entryName}pluginInfo.yml`)
+    const yamlEntry = packageContent.getEntry(`pluginInfo.yml`)
     assertNotNullish(yamlEntry, this.className, `${msgPrefix}没有获取到必要的安装配置`)
     const yamlContent = yamlEntry.getData().toString('utf8')
     const config: PluginInstallConfig = yaml.load(yamlContent)
@@ -111,46 +101,43 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       throw error
     }
 
-    // 从配置文件读取插件信息
-    try {
-      const pluginInstallDTO = this.loadPluginPackage(packagePath)
+    const pluginInstallDTO = this.loadPluginPackage(packagePath)
 
-      // 安装路径
-      const installPath: string = path.join(
-        getRootDir(),
-        '/resources/plugins/',
-        pluginInstallDTO.author,
-        pluginInstallDTO.name,
-        pluginInstallDTO.version
-      )
-      await createDirIfNotExists(installPath)
-      pluginInstallDTO.package.extractAllTo(installPath, true)
+    // 安装路径
+    const installPath: string = path.join(
+      getRootDir(),
+      '/resources/plugins/',
+      pluginInstallDTO.author,
+      pluginInstallDTO.name,
+      pluginInstallDTO.version
+    )
+    await createDirIfNotExists(installPath)
+    pluginInstallDTO.package.extractAllTo(installPath, true)
 
-      const tempPlugin = new Plugin(pluginInstallDTO)
-      return this.save(tempPlugin).then((pluginId) => {
-        const listeners: string[] = pluginInstallDTO.listeners
-        if (arrayNotEmpty(listeners)) {
-          const taskPluginListenerService = new TaskPluginListenerService()
-          const taskPluginListeners: TaskPluginListener[] = []
-          let taskPluginListener: TaskPluginListener
-          for (const listener of listeners) {
-            taskPluginListener = new TaskPluginListener()
-            taskPluginListener.pluginId = pluginId
-            taskPluginListener.listener = listener
-            taskPluginListeners.push(taskPluginListener)
-          }
-          taskPluginListenerService.saveBatch(taskPluginListeners)
+    const tempPlugin = new Plugin(pluginInstallDTO)
+    return this.save(tempPlugin).then((pluginId) => {
+      const listeners: string[] = pluginInstallDTO.listeners
+      if (arrayNotEmpty(listeners)) {
+        const taskPluginListenerService = new TaskPluginListenerService()
+        const taskPluginListeners: TaskPluginListener[] = []
+        let taskPluginListener: TaskPluginListener
+        for (const listener of listeners) {
+          taskPluginListener = new TaskPluginListener()
+          taskPluginListener.pluginId = pluginId
+          taskPluginListener.listener = listener
+          taskPluginListeners.push(taskPluginListener)
         }
-        LogUtil.info(this.className, `已安装插件${pluginInstallDTO.author}.${pluginInstallDTO.name}.${pluginInstallDTO.version}`)
-      })
-    } catch (e) {
-      LogUtil.error(this.className, String(e))
-      throw e
-    }
+        taskPluginListenerService.saveBatch(taskPluginListeners)
+      }
+      LogUtil.info(this.className, `已安装插件${pluginInstallDTO.author}.${pluginInstallDTO.name}.${pluginInstallDTO.version}`)
+    })
   }
 
-  public async initializePlugin() {
-    const defaultPlugins = GlobalVar.get(GlobalVars.SETTINGS).store.initialization.plugins
+  /**
+   * 预装插件
+   */
+  public async preInstallPlugins() {
+    const defaultPlugins = GlobalVar.get(GlobalVars.APP_CONFIG).plugins
     for (const defaultPlugin of defaultPlugins) {
       let packagePath: string
       if (defaultPlugin.pathType === 'Relative') {
@@ -177,7 +164,11 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         } else {
           installPath = defaultPlugin.packagePath
         }
-        this.installPlugin(installPath)
+        try {
+          this.installPlugin(installPath).catch((error) => LogUtil.error(this.className, '安装插件失败', error))
+        } catch (error) {
+          LogUtil.error(this.className, '安装插件失败', error)
+        }
       }
     }
   }

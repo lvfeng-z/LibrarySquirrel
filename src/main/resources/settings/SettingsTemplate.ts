@@ -6,13 +6,5 @@ export const SettingsTemplate: Settings = {
   workdir: '',
   importSettings: {
     maxParallelImport: 3
-  },
-  initialization: {
-    plugins: [
-      {
-        packagePath: 'initialization/localTaskHandler.zip',
-        pathType: 'Relative'
-      }
-    ]
   }
 }

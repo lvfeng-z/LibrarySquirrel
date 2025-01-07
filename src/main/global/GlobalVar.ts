@@ -5,8 +5,13 @@ import { defaultSettings } from '../util/SettingsUtil.ts'
 import { PoolConfig } from './PoolConfig.js'
 import { TaskQueue } from './TaskQueue.js'
 import { Settings } from '../model/util/Settings.js'
+import { AppConfig } from '../model/util/AppConfig.js'
+import fs from 'fs'
+import yaml from 'js-yaml'
+import appConfigYml from '../resources/config/appConfig.yml?asset'
 
 export enum GlobalVars {
+  APP_CONFIG = 'APP_CONFIG',
   CONNECTION_POOL = 'CONNECTION_POOL',
   MAIN_WINDOW = 'MAIN_WINDOW',
   SETTINGS = 'SETTINGS',
@@ -14,6 +19,7 @@ export enum GlobalVars {
 }
 // 映射类型
 type GlobalVarMapping = {
+  [GlobalVars.APP_CONFIG]: AppConfig
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
   [GlobalVars.MAIN_WINDOW]: Electron.BrowserWindow
   [GlobalVars.SETTINGS]: Store<Settings>
@@ -24,6 +30,9 @@ type GlobalVarMapping = {
 export class GlobalVar {
   public static create(globalVar: GlobalVars, arg?: unknown) {
     switch (globalVar) {
+      case GlobalVars.APP_CONFIG:
+        this.createAppConfig()
+        break
       case GlobalVars.CONNECTION_POOL:
         this.createConnectionPool()
         break
@@ -45,6 +54,9 @@ export class GlobalVar {
 
   public static destroy(globalVar: GlobalVars) {
     switch (globalVar) {
+      case GlobalVars.APP_CONFIG:
+        this.destroyAppConfig()
+        break
       case GlobalVars.CONNECTION_POOL:
         this.destroyConnectionPool()
         break
@@ -55,6 +67,30 @@ export class GlobalVar {
         this.destroyTaskQueue()
         break
     }
+  }
+
+  // APP_CONFIG
+  /**
+   * 创建APP_CONFIG
+   */
+  private static createAppConfig() {
+    // 读取初始化yml
+    try {
+      const yamlContent = fs.readFileSync(appConfigYml, 'utf-8')
+      global[GlobalVars.APP_CONFIG] = yaml.load(yamlContent)
+      LogUtil.info('GlobalVar', '已创建APP_CONFIG')
+    } catch (e) {
+      LogUtil.error('InitializeDataBase', String(e))
+      throw e
+    }
+  }
+
+  /**
+   * 销毁APP_CONFIG
+   */
+  private static destroyAppConfig() {
+    delete global[GlobalVars.APP_CONFIG]
+    LogUtil.info('GlobalVar', '已销毁APP_CONFIG')
   }
 
   // CONNECTION_POOL
