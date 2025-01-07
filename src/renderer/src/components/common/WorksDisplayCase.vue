@@ -47,13 +47,13 @@ function handlePictureClicked() {
     <el-image
       :fit="imageFit"
       class="works-display-case-image"
-      :src="`resource://workdir${props.works.filePath}`"
+      :src="`resource://workdir${props.works.filePath}?visualHeight=${caseHeight}&visualWidth=${caseWidth}`"
       @load="handleElImageFit"
       @click="handleImageClicked"
       @dblclick="handlePictureClicked"
     ></el-image>
-    <works-info class="works-display-case-works-info" :works="works"></works-info>
-    <author-info class="works-display-case-author-info" :authors="props.works.localAuthors"></author-info>
+    <works-info class="works-display-case-works-info" :works="works" />
+    <author-info class="works-display-case-author-info" :authors="props.works.localAuthors" />
   </div>
 </template>
 
@@ -63,9 +63,13 @@ function handlePictureClicked() {
   flex-direction: column;
   width: v-bind(caseWidth);
   height: v-bind(caseHeight);
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
 }
 .works-display-case-image {
-  width: 100%;
+  width: auto;
+  cursor: pointer;
 }
 .works-display-case-works-info {
   width: 100%;

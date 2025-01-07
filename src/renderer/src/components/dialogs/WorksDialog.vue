@@ -184,7 +184,7 @@ function handlePictureClicked() {
       <el-scrollbar style="max-width: 60%; flex-shrink: 0">
         <picture>
           <el-image
-            style="margin-right: 10px"
+            style="margin-right: 10px; cursor: pointer"
             fit="contain"
             :src="`resource://workdir/${props.works[0].filePath}?visualHeight=532&visualWidth=664`"
             @click="handlePictureClicked"
