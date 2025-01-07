@@ -51,16 +51,12 @@ const apis = {
   reWorksTagUnlink: window.api.reWorksTagUnlink,
   worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
 }
-// el-dialog组件实例
-const baseDialog = ref()
+// container元素实例
+const container = ref()
 // localTag的ExchangeBox组件
 const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件
 const siteTagExchangeBox = ref()
-// 图像高度
-// const heightForImage: Ref<UnwrapRef<number>> = ref(0)
-// 图像宽度
-// const widthForImage: Ref<UnwrapRef<number>> = ref(0)
 // 作品信息
 const worksFullInfo: Ref<UnwrapRef<WorksDTO>> = ref(new WorksDTO())
 // 本地作者
@@ -179,19 +175,15 @@ function handlePictureClicked() {
 }
 </script>
 <template>
-  <el-dialog ref="baseDialog" top="50px">
-    <div class="limiter">
-      <el-scrollbar style="max-width: 60%; flex-shrink: 0">
-        <picture>
-          <el-image
-            style="margin-right: 10px; cursor: pointer"
-            fit="contain"
-            :src="`resource://workdir/${props.works[0].filePath}?visualHeight=532&visualWidth=664`"
-            @click="handlePictureClicked"
-          >
-          </el-image>
-        </picture>
-      </el-scrollbar>
+  <el-dialog top="50px">
+    <div ref="container" class="works-dialog-container">
+      <el-image
+        style="height: auto; max-width: 60%; margin-right: 10px; cursor: pointer"
+        fit="contain"
+        :src="`resource://workdir/${props.works[0].filePath}`"
+        @click="handlePictureClicked"
+      >
+      </el-image>
       <el-scrollbar>
         <el-descriptions style="margin-right: 10px" direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
@@ -249,7 +241,7 @@ function handlePictureClicked() {
 </template>
 
 <style scoped>
-.limiter {
+.works-dialog-container {
   display: flex;
   flex-direction: row;
   height: calc(100vh - 16px - 16px - 16px - 50px - 50px);

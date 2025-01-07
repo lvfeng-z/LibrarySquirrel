@@ -191,7 +191,7 @@ async function handleTest() {
 
 <template>
   <div class="ui">
-    <el-container>
+    <el-container style="height: 100%">
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
         <side-menu ref="sideMenuRef" class="sideMenu" width="63px" :default-active="['1-1']">
@@ -238,7 +238,7 @@ async function handleTest() {
           </template>
         </side-menu>
       </el-aside>
-      <el-main style="padding: 1px 5px 5px 5px">
+      <el-main style="padding: 1px 5px 5px 5px; height: 100%">
         <div v-show="pageState.mainPage" class="main-page margin-box">
           <div class="main-page-searchbar">
             <el-row>
@@ -282,7 +282,9 @@ async function handleTest() {
               </el-col>
             </el-row>
           </div>
-          <works-display-area class="main-page-works-space" :works-list="imageList"></works-display-area>
+          <el-scrollbar>
+            <works-display-area class="main-page-works-space" :works-list="imageList"></works-display-area>
+          </el-scrollbar>
         </div>
         <div v-if="pageState.subpage" class="subPage">
           <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
@@ -314,8 +316,6 @@ async function handleTest() {
   width: 100%;
 }
 .main-page-works-space {
-  width: 100%;
-  height: 100%;
 }
 .main-page-auto-load-tag-select {
   height: 33px;
