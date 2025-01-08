@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import LocalAuthorDTO from '../../model/main/dto/LocalAuthorDTO.ts'
 import { notNullish } from '../../utils/CommonUtil'
-import ScrollTextBox from './ScrollTextBox.vue'
 
 // props
 const props = defineProps<{

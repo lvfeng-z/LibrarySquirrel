@@ -73,15 +73,14 @@ function handlePictureClicked() {
 .works-display-case {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 5px;
   max-height: v-bind(caseHeight);
   max-width: v-bind(caseWidth);
 }
 .works-display-case-image {
   width: auto;
   cursor: pointer;
+  max-height: calc(v-bind(caseHeight) - 100px);
+  border-radius: 10px;
 }
 .works-display-case-works-info {
   width: 100%;
