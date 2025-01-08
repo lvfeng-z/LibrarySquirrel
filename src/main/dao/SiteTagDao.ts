@@ -175,19 +175,18 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
     const query = lodash.cloneDeep(modifiedPage.query)
 
-    // 调用getWhereClauses前去掉worksId和boundOnWorksId
-    query.worksId = undefined
-    query.boundOnWorksId = undefined
-
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
                 json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClauseAndQuery = super.getWhereClauses(query, 't1')
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', ['worksId', 'boundOnWorksId'])
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
+    modifiedPage.query = modifiedQuery
+    modifiedPage.query.worksId = query.worksId
+    modifiedPage.query.boundOnWorksId = query.boundOnWorksId
 
     if (
       Object.prototype.hasOwnProperty.call(modifiedPage.query, 'boundOnWorksId') &&

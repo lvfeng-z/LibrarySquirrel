@@ -47,7 +47,7 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
   worksId?: number | null | undefined
 
   /**
-   * 查询绑定在localTagId上的，还是未绑定的（true：绑定的，false：未绑定的）
+   * 查询绑定在worksId上的，还是未绑定的（true：绑定的，false：未绑定的）
    */
   boundOnWorksId?: boolean | undefined | null
 

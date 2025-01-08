@@ -91,10 +91,19 @@ const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
 const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
 // 本地标签编辑开关
 const siteTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
-// 站点标签ExchangeBox的mainInputBoxes
-const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
+// 本地标签ExchangeBox的mainInputBoxes
+const localTagExchangeMainInput: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
     name: 'localTagName',
+    type: 'text',
+    placeholder: '搜索标签名称',
+    inputSpan: 21
+  })
+])
+// 站点标签ExchangeBox的mainInputBoxes
+const siteTagExchangeMainInput: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
+  new InputBox({
+    name: 'siteTagName',
     type: 'text',
     placeholder: '搜索标签名称',
     inputSpan: 21
@@ -201,8 +210,8 @@ function handlePictureClicked() {
                 style="height: 100%"
                 upper-title="已有标签"
                 lower-title="可选标签"
-                :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-                :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+                :upper-main-input-boxes="localTagExchangeMainInput"
+                :lower-main-input-boxes="localTagExchangeMainInput"
                 :upper-load="requestWorksLocalTagPage"
                 :lower-load="requestWorksLocalTagPage"
                 :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
@@ -222,8 +231,8 @@ function handlePictureClicked() {
                 style="height: 100%"
                 upper-title="已有标签"
                 lower-title="可选标签"
-                :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-                :lower-main-input-boxes="exchangeBoxMainInputBoxes"
+                :upper-main-input-boxes="siteTagExchangeMainInput"
+                :lower-main-input-boxes="siteTagExchangeMainInput"
                 :upper-load="requestWorksSiteTagPage"
                 :lower-load="requestWorksSiteTagPage"
                 :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"

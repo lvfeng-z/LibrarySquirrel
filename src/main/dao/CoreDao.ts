@@ -235,7 +235,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
   }
 
   /**
-   * 为查询语句附加分页字句（为第一个参数statement末端拼接分页字句并返回，最后一个参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表）
+   * 为查询语句附加分页字句（为第一个参数statement末端拼接分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
    * @param statement 需要分页的语句
    * @param page 分页配置
    * @protected
@@ -248,7 +248,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
   }
 
   /**
-   * 获取分页字句，并给参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表
+   * 获取分页字句，并给参数page的dataCount和pageCount赋值
    * @param statement 需要分页的语句
    * @param page 分页配置
    * @protected
@@ -339,7 +339,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
   }
 
   /**
-   * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值，如果不传入fromClause，则使用this.tableName作为计数语句的from子句中的唯一数据表）
+   * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
    * @param statement 需要分页的语句
    * @param page 分页参数
    * @param sort 排序参数
