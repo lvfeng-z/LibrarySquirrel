@@ -48,5 +48,9 @@ function handleImageClicked(works: WorksDTO) {
 .works-display-area-works-display-case {
   flex: 1 0 20%;
   box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  white-space: nowrap;
 }
 </style>

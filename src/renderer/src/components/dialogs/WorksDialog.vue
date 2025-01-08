@@ -178,7 +178,7 @@ function handlePictureClicked() {
   <el-dialog top="50px">
     <div ref="container" class="works-dialog-container">
       <el-image
-        style="height: auto; max-width: 60%; margin-right: 10px; cursor: pointer"
+        style="height: auto; max-width: 60%; margin-right: 10px; flex-shrink: 0; cursor: pointer"
         fit="contain"
         :src="`resource://workdir/${props.works[0].filePath}`"
         @click="handlePictureClicked"

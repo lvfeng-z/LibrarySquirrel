@@ -85,8 +85,18 @@ function handlePictureClicked() {
 }
 .works-display-case-works-info {
   width: 100%;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  white-space: nowrap;
 }
 .works-display-case-author-info {
   width: 100%;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  white-space: nowrap;
 }
 </style>
