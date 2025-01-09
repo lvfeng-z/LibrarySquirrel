@@ -1,6 +1,6 @@
 {
   "name": "library-squirrel",
-  "version": "v0.0.1-alpha.3",
+  "version": "v0.0.1-alpha.4",
   "type": "module",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
