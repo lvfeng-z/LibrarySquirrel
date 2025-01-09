@@ -9,9 +9,10 @@ import './styles/rounded-margin-box.css'
 import './styles/scroll-text-left.css'
 import './styles/scroll-text-center.css'
 import './styles/z-axis-layers.css'
-import clickOutSide from './directives/clickOutSide.ts'
 import { elementIconRegister } from './plugins/elementIcon'
-import scrollToBottom from './directives/scrollToBottom'
+import clickOutSide from './directives/clickOutSide.ts'
+import elSelectBottomed from './directives/elSelectBottomed.ts'
+import elScrollbarBottomed from './directives/elScrollbarBottomed.ts'
 
 const app = createApp(App)
 app.use(Element)
@@ -19,6 +20,8 @@ app.use(Element)
 elementIconRegister(app)
 // 注册点击外部事件的自定义指令
 app.directive('clickOutSide', clickOutSide)
-// 注册点击外部事件的自定义指令
-app.directive('scrollToBottom', scrollToBottom)
+// 注册el-select触底的的自定义指令
+app.directive('elSelectBottomed', elSelectBottomed)
+// 注册el-scrollbar触底的自定义指令
+app.directive('elScrollbarBottomed', elScrollbarBottomed)
 app.mount('#app')

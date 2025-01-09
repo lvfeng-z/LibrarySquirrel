@@ -32,6 +32,7 @@ function handleImageClicked(works: WorksDTO) {
           class="works-display-area-works-display-case"
           :works="works"
           :max-height="500"
+          :max-width="500"
           @image-clicked="handleImageClicked"
         />
       </div>

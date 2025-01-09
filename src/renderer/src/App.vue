@@ -15,7 +15,7 @@ import WorksDTO from './model/main/dto/WorksDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
-import { isNullish, notNullish } from './utils/CommonUtil'
+import { arrayNotEmpty, isNullish, notNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
@@ -62,7 +62,7 @@ const pageState = reactive({
 })
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
-const imageList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
+const worksList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
@@ -71,6 +71,8 @@ type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
 const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workdir: false })
+// 作品分页
+const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksDTO>>> = ref(new Page<SearchCondition[], WorksDTO>())
 
 // 方法
 // 查询标签选择列表
@@ -127,10 +129,7 @@ function closeSubpage() {
   pageState.mainPage = true
 }
 // 请求作品接口
-async function searchWorks() {
-  const page = new Page<SearchCondition[], WorksDTO>()
-  page.pageSize = 100
-
+async function searchWorks(page: Page<SearchCondition[], WorksDTO>): Promise<Page<WorksQueryDTO, WorksDTO>> {
   // 处理搜索框的标签
   page.query = selectedTagList.value
     .map((searchCondition) => {
@@ -157,15 +156,34 @@ async function searchWorks() {
     page.query.push(tempCondition)
   }
 
-  apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
+  return apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const page = ApiUtil.data<Page<WorksQueryDTO, WorksDTO>>(response)
-      if (notNullish(page)) {
-        const works = page.data
-        imageList.value = isNullish(works) ? [] : works
-      }
+      return ApiUtil.data<Page<WorksQueryDTO, WorksDTO>>(response)
+    } else {
+      return page
     }
   })
+}
+// 加载下一页
+async function queryWorksPage(next: boolean) {
+  // 新查询重置查询条件
+  if (!next) {
+    worksPage.value = new Page<SearchCondition[], WorksDTO>()
+    worksPage.value.pageSize = 10
+    worksList.value.length = 0
+  }
+  //查询
+  const tempPage = lodash.cloneDeep(worksPage.value)
+  tempPage.data = undefined
+  const nextPage = await searchWorks(tempPage)
+
+  // 没有新数据时，不再增加页码
+  if (arrayNotEmpty(nextPage.data)) {
+    worksPage.value.pageNumber++
+    worksPage.value.pageCount = nextPage.pageCount
+    worksPage.value.dataCount = nextPage.dataCount
+    worksList.value.push(...nextPage.data)
+  }
 }
 
 // 监听
@@ -278,13 +296,15 @@ async function handleTest() {
                 </div>
               </el-col>
               <el-col style="display: flex; justify-content: center" :span="2">
-                <el-button @click="searchWorks">搜索</el-button>
+                <el-button @click="queryWorksPage(false)">搜索</el-button>
               </el-col>
             </el-row>
           </div>
-          <el-scrollbar>
-            <works-display-area class="main-page-works-space" :works-list="imageList"></works-display-area>
-          </el-scrollbar>
+          <div class="main-page-works-space">
+            <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
+              <works-display-area style="margin-right: 8px" :works-list="worksList"></works-display-area>
+            </el-scrollbar>
+          </div>
         </div>
         <div v-if="pageState.subpage" class="subPage">
           <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
@@ -313,9 +333,12 @@ async function handleTest() {
   flex-direction: column;
 }
 .main-page-searchbar {
+  height: 33px;
   width: 100%;
 }
 .main-page-works-space {
+  height: calc(100% - 33px);
+  margin-right: 8px;
 }
 .main-page-auto-load-tag-select {
   height: 33px;

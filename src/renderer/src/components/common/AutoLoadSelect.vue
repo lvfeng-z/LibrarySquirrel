@@ -38,7 +38,7 @@ async function handleScroll(newQuery: boolean, input?: string) {
 </script>
 
 <template>
-  <el-select v-scroll-to-bottom="() => handleScroll(false)" :remote-method="(query: string) => handleScroll(true, query)">
+  <el-select v-el-select-bottomed="() => handleScroll(false)" :remote-method="(query: string) => handleScroll(true, query)">
     <el-option v-for="item in page.data" :key="item.value" :value="item.value" :label="item.label"> </el-option>
   </el-select>
 </template>
