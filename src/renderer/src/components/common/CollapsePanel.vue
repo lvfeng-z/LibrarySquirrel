@@ -64,7 +64,7 @@ function handleClickOutSide() {
           'collapse-panel-button-wrapper-reverse': props.reverse
         }"
       >
-        <div class="collapse-panel-button" @click="changeState()" />
+        <div :class="{ 'collapse-panel-button': true, 'collapse-panel-button-normal': !props.reverse }" @click="changeState()" />
       </div>
     </div>
   </div>
@@ -103,22 +103,33 @@ function handleClickOutSide() {
 .collapse-panel-button-wrapper {
   position: absolute;
   width: 50px;
-  height: 13px;
-  overflow: hidden;
+  height: 12px;
   align-self: center;
+  transition: 0.3s ease;
+}
+.collapse-panel-button-wrapper:hover {
+  height: 15px;
 }
 .collapse-panel-button-wrapper-normal {
-  bottom: -13px;
-  display: grid;
-  align-content: end;
+  overflow-x: hidden;
+  top: 100%;
 }
 .collapse-panel-button-wrapper-reverse {
-  top: -13px;
+  overflow-y: hidden;
+  bottom: 100%;
 }
 .collapse-panel-button {
+  position: absolute;
   width: 50px;
   height: 30px;
   border-radius: 100% / 100%;
-  background-image: linear-gradient(135deg, #001f3f, #0088a9, #00c9a7, #92d5c6, #ebf5ee);
+  background-color: rgb(166.2, 168.6, 173.4, 30%);
+  transition: 0.3s ease;
+}
+.collapse-panel-button-normal {
+  bottom: 0;
+}
+.collapse-panel-button:hover {
+  background-color: rgb(166.2, 168.6, 173.4, 80%);
 }
 </style>

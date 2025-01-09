@@ -195,6 +195,9 @@ function handlePictureClicked() {
       </el-image>
       <el-scrollbar>
         <el-descriptions style="margin-right: 10px" direction="horizontal" :column="1">
+          <el-descriptions-item>
+            {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
+          </el-descriptions-item>
           <el-descriptions-item label="作者">
             {{ localAuthor }}
           </el-descriptions-item>
