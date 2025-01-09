@@ -130,15 +130,14 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     }
     const query = lodash.cloneDeep(page.query)
 
-    // 调用getWhereClauses前去掉worksId和boundOnWorksId
-    query.worksId = undefined
-    query.boundOnWorksId = undefined
-
     const selectClause = 'SELECT *'
     const fromClause = 'FROM local_tag t1'
-    const whereClauseAndQuery = super.getWhereClauses(query, 't1')
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', ['worksId', 'boundOnWorksId'])
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
+    modifiedQuery.worksId = page.query.worksId
+    modifiedQuery.boundOnWorksId = page.query.boundOnWorksId
+    page.query = modifiedQuery
 
     if (
       Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') &&
