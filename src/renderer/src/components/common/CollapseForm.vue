@@ -18,44 +18,25 @@ const props = withDefaults(
 )
 
 // model
-const formData = defineModel<object>('formData', { default: {}, required: true }) // 表单数据
+const formData = defineModel<object>('formData', { default: {}, required: true }) //
+const state: Ref<UnwrapRef<boolean>> = defineModel('state', { required: true }) // 开关状态
 
 // onBeforeMount
 onBeforeMount(() => {
   calculateSpan()
 })
 
-// 暴露
-defineExpose({
-  changeState
-})
-
 // 变量
-const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 const inputBoxInRow: Ref<UnwrapRef<InputBox[][]>> = ref([]) // InputBox分行数组
-const dropdownTableHeight = ref(0) // 弃用 所有行占用的高度
 
 // 方法
-// 开启/关闭下拉表单
-function changeState(newState?: boolean) {
-  if (newState === undefined) {
-    state.value = !state.value
-  } else {
-    state.value = newState
-  }
-}
-
 // 处理InputBox布局
 function calculateSpan() {
-  // 一行的高度
-  const rowHeight = 42
-  let height = 0
   // 用于计算当前行在插入box之后还剩多少span
   let spanRest = 24
   // 临时用于储存行信息的数组
   let tempRow: InputBox[] = []
   inputBoxInRow.value.push(tempRow)
-  height += rowHeight
 
   // 遍历box数组，处理如何分布这些box
   for (const inputBox of props.inputBoxes) {
@@ -81,19 +62,15 @@ function calculateSpan() {
     } else {
       tempRow = []
       inputBoxInRow.value.push(tempRow)
-      height += rowHeight
       tempRow.push(tempInputBox)
       spanRest = 24 - boxSpan
     }
   }
-
-  // 计算完的高度赋值
-  dropdownTableHeight.value = height
 }
 </script>
 
 <template>
-  <collapse-panel :reverse="props.reverse">
+  <collapse-panel v-model:state="state" :reverse="props.reverse">
     <el-scrollbar class="dropdown-table-rows">
       <el-form v-model="formData">
         <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">

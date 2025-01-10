@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, Ref, UnwrapRef } from 'vue'
+import { Ref, UnwrapRef } from 'vue'
 
 // props
 const props = withDefaults(
@@ -11,29 +11,12 @@ const props = withDefaults(
   }
 )
 
-// 暴露
-defineExpose({
-  changeState
-})
-
-// 变量
-const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
-
-// 方法
-// 开启/关闭下拉表单
-function changeState(newState?: boolean) {
-  if (newState === undefined) {
-    state.value = !state.value
-  } else {
-    state.value = newState
-  }
-}
+// model
+const state: Ref<UnwrapRef<boolean>> = defineModel('state', { required: true }) // 开关状态
 
 // 处理组件外部点击事件
 function handleClickOutSide() {
-  if (state.value) {
-    changeState(false)
-  }
+  state.value = false
 }
 </script>
 
@@ -64,7 +47,7 @@ function handleClickOutSide() {
           'collapse-panel-button-wrapper-reverse': props.reverse
         }"
       >
-        <div :class="{ 'collapse-panel-button': true, 'collapse-panel-button-normal': !props.reverse }" @click="changeState()" />
+        <div :class="{ 'collapse-panel-button': true, 'collapse-panel-button-normal': !props.reverse }" @click="state = !state" />
       </div>
     </div>
   </div>

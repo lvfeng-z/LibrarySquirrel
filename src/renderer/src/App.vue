@@ -73,6 +73,8 @@ const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workdir: false })
 // 作品分页
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksDTO>>> = ref(new Page<SearchCondition[], WorksDTO>())
+// 搜索栏折叠面板开关
+const searchBarPanelState: Ref<boolean> = ref(false)
 
 // 方法
 // 查询标签选择列表
@@ -288,7 +290,7 @@ async function handleTest() {
                     max-height="300px"
                     min-height="33px"
                   />
-                  <collapse-panel>
+                  <collapse-panel v-model:state="searchBarPanelState">
                     <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
                       <el-button> test </el-button>
                     </div>

@@ -151,5 +151,6 @@ function getSpanValue() {
   display: grid;
   min-width: 10px;
   min-height: 10px;
+  cursor: pointer;
 }
 </style>

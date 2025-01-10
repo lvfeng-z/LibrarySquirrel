@@ -35,11 +35,10 @@ onBeforeMount(() => {
 const emits = defineEmits(['searchButtonClicked', 'createButtonClicked'])
 
 // 变量
-const dropDownForm = ref() // DropdownForm子组件
 const barButtonSpan = ref(3) // 查询和新增按钮的span
 const innerMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 主搜索栏中元素的列表
 const innerDropdownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([]) // 下拉搜索框中元素的列表
-const showDropdownFlag: Ref<UnwrapRef<boolean>> = ref(false) // 展示下拉框开关
+const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 
 // 方法
 // 处理主搜索栏和下拉搜索框
@@ -92,23 +91,21 @@ function calculateSpan() {
     innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
   }
 
-  // 下拉菜单中有内容则显示下拉菜单，否则不显示
-  showDropdownFlag.value = innerDropdownInputBoxes.value.length > 0
+  // // 下拉菜单中有内容则显示下拉菜单，否则不显示
+  // collapseState.value = innerDropdownInputBoxes.value.length > 0
 }
-
-// 展示下拉搜索框
-function handleDropdownForm() {
-  dropDownForm.value.changeState()
-}
-
 // 处理搜索按钮点击事件
 function handleSearchButtonClicked() {
   emits('searchButtonClicked')
 }
-
 // 处理新增按钮点击事件
 function handleCreateButtonClicked() {
   emits('createButtonClicked')
+}
+// 展开折叠面板
+function expandCollapsePanel(event) {
+  event.stopPropagation()
+  state.value = true
 }
 </script>
 
@@ -141,16 +138,15 @@ function handleCreateButtonClicked() {
           <el-button :disabled="props.searchButtonDisabled" @click="handleSearchButtonClicked"> 搜索 </el-button>
           <template v-if="innerDropdownInputBoxes.length > 0" #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="handleDropdownForm">更多选项</el-dropdown-item>
+              <el-dropdown-item @click="expandCollapsePanel">更多选项</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </el-col>
     </el-row>
     <collapse-form
-      v-if="showDropdownFlag"
-      ref="dropDownForm"
       v-model:form-data="params"
+      v-model:state="state"
       class="dropdown-menu rounded-borders"
       :reverse="reverse"
       :input-boxes="innerDropdownInputBoxes"
@@ -207,8 +203,6 @@ function handleCreateButtonClicked() {
   width: 100%;
   height: auto;
   margin-top: 1px;
-  background-color: white;
   background-clip: padding-box;
-  box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, 0); /* 利用内阴影模拟边框外背景透明效果 */
 }
 </style>
