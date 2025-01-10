@@ -19,13 +19,19 @@ const input = ref()
 function focus() {
   input.value.focus()
 }
+// 处理时间选择下拉框展开和关闭事件
+function handleVisibleChange(visible: boolean) {
+  if (!visible) {
+    focus()
+  }
+}
 
 // 暴露
 defineExpose({ focus })
 </script>
 
 <template>
-  <el-date-picker ref="input" style="width: 100%" v-model="data" :type="props.config.type" :placeholder="props.config.placeholder" />
+  <el-date-picker ref="input" style="width: 100%" v-model="data" :type="props.config.type" :placeholder="props.config.placeholder" @visible-change="handleVisibleChange" />
 </template>
 
 <style scoped></style>
