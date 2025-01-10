@@ -52,4 +52,7 @@ async function closeSelf() {
   right: 10px;
   margin: 0;
 }
+.base-subpage-close-button:hover {
+  transform: scale(1.05);
+}
 </style>

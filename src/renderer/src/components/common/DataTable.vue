@@ -3,7 +3,7 @@ import { onBeforeMount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
-import CommonInput from './CommentInput/CommonInput.vue'
+import PopperInput from './CommentInput/PopperInput.vue'
 import { notNullish } from '../../utils/CommonUtil'
 import { TreeNode } from 'element-plus'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
@@ -162,7 +162,7 @@ defineExpose({
             </div>
           </template>
           <template #default="scope">
-            <common-input v-model:data="scope.row[item.name]" :config="item" @data-changed="handleRowChange(scope.row)"></common-input>
+            <popper-input v-model:data="scope.row[item.name]" :config="item" @data-changed="handleRowChange(scope.row)"></popper-input>
           </template>
         </el-table-column>
       </template>

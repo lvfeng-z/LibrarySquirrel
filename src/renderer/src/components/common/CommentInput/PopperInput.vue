@@ -36,7 +36,8 @@ const data = defineModel<unknown>('data', { default: undefined, required: true }
 const emits = defineEmits(['dataChanged'])
 
 // 变量
-const inputRef = ref()
+const container = ref<HTMLElement>()
+const inputRef = ref<HTMLElement>()
 const config: Ref<UnwrapRef<CommonInputConfig>> = ref(lodash.cloneDeep(props.config))
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
 const dynamicComponent = computed(() => {
@@ -80,9 +81,7 @@ function disable() {
 }
 // 处理组件被双击事件
 function handleDblclick() {
-  if (props.config.dblclickEnable) {
-    enable()
-  }
+  enable()
 }
 // 处理失去焦点事件
 function handleBlur() {
@@ -132,18 +131,23 @@ function getSpanValue() {
 </script>
 
 <template>
-  <div class="common-input" @dblclick="handleDblclick">
-    <span v-if="disabled && props.config.type !== 'custom'">{{ getSpanValue() }}</span>
-    <component
-      markRow
-      ref="inputRef"
-      v-if="!disabled || props.config.type === 'custom'"
-      :is="dynamicComponent"
-      v-bind="{ config: config, handleDataChange: handleDataChange }"
-      v-model="data"
-      @blur="handleBlur"
-    />
-  </div>
+  <el-popover :visible="!disabled" width="auto">
+    <template #default>
+      <component
+        markRow
+        ref="inputRef"
+        :is="dynamicComponent"
+        v-bind="{ config: config, handleDataChange: handleDataChange }"
+        v-model="data"
+        @blur="handleBlur"
+      />
+    </template>
+    <template #reference>
+      <div ref="container" class="common-input" @dblclick="handleDblclick">
+        <span>{{ getSpanValue() }}</span>
+      </div>
+    </template>
+  </el-popover>
 </template>
 
 <style scoped>
