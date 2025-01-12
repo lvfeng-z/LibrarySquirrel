@@ -31,7 +31,15 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <el-date-picker ref="input" style="width: 100%" v-model="data" :type="props.config.type" :placeholder="props.config.placeholder" @visible-change="handleVisibleChange" />
+  <el-date-picker
+    ref="input"
+    style="width: 100%"
+    v-model="data"
+    :type="props.config.type"
+    :placeholder="props.config.placeholder"
+    @visible-change="handleVisibleChange"
+    @change="handleDataChange"
+  />
 </template>
 
 <style scoped></style>

@@ -103,7 +103,7 @@ function getSpanValue() {
     const datetime = new Date(data.value as number)
     const year = datetime.getFullYear() + '-'
     const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
-    const day = (datetime.getDay() + 1 < 10 ? '0' + (datetime.getDay() + 1) : datetime.getDay() + 1) + ' '
+    const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
     const date = year + month + day
     if (props.config.type === 'date') {
       return date
