@@ -4,6 +4,7 @@ import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import PopperInput from './CommentInput/PopperInput.vue'
+import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { notNullish } from '../../utils/CommonUtil'
 import { TreeNode } from 'element-plus'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
@@ -162,7 +163,12 @@ defineExpose({
             </div>
           </template>
           <template #default="scope">
-            <popper-input v-model:data="scope.row[item.name]" :config="item" @data-changed="handleRowChange(scope.row)"></popper-input>
+            <component
+              :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
+              v-model:data="scope.row[item.name]"
+              :config="item"
+              @data-changed="handleRowChange(scope.row)"
+            />
           </template>
         </el-table-column>
       </template>

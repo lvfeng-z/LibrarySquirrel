@@ -18,7 +18,7 @@ export class CommonInputConfig implements ICommonInputConfig {
     | 'switch'
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
-  dblclickEnable?: boolean // 是否可以双击启用
+  dblclickToEdit?: boolean // 是否可以双击启用
   selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
   useLoad?: boolean // 是否load函数获得选择列表数据
   load?: (query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]> // 给selectData赋值的函数
@@ -28,7 +28,7 @@ export class CommonInputConfig implements ICommonInputConfig {
   constructor(config: ICommonInputConfig) {
     this.type = config.type
     this.defaultDisabled = config.defaultDisabled
-    this.dblclickEnable = config.dblclickEnable
+    this.dblclickToEdit = config.dblclickToEdit
     this.selectData = config.selectData
     this.useLoad = config.useLoad
     this.load = config.load
@@ -58,7 +58,7 @@ export interface ICommonInputConfig {
     | 'switch'
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
-  dblclickEnable?: boolean // 是否可以双击启用
+  dblclickToEdit?: boolean // 是否可以双击启用
   selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
   useLoad?: boolean // 是否load函数获得选择列表数据
   load?: (c) => Promise<SelectItem[] | TreeSelectNode[]> // 给selectData赋值的函数

@@ -72,7 +72,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'localAuthorName',
     label: '名称',
     hide: false,

@@ -81,7 +81,9 @@ function disable() {
 }
 // 处理组件被双击事件
 function handleDblclick() {
-  enable()
+  if (props.config.dblclickToEdit) {
+    enable()
+  }
 }
 // 处理失去焦点事件
 function handleBlur() {

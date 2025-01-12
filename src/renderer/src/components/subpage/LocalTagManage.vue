@@ -73,7 +73,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'localTagName',
     label: '名称',
     hide: false,
@@ -85,7 +85,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'treeSelect',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'baseLocalTagId',
     label: '上级标签',
     hide: false,
@@ -100,7 +100,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'updateTime',
     label: '修改时间',
     hide: false,

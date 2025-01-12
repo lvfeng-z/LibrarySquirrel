@@ -52,7 +52,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'taskName',
     label: '名称',
     hide: false,
@@ -64,7 +64,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'url',
     label: 'url',
     hide: false,
@@ -75,7 +75,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'siteDomain',
     label: '站点',
     hide: false,
@@ -87,7 +87,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: true,
     name: 'createTime',
     label: '创建时间',
     hide: false,
@@ -98,7 +98,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'custom',
     defaultDisabled: true,
-    dblclickEnable: true,
+    dblclickToEdit: false,
     name: 'status',
     label: '状态',
     hide: false,
@@ -106,6 +106,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true,
+    editMethod: 'replace',
     render: (data: TaskStatesEnum): VNode => {
       let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
       let tagText: string | undefined

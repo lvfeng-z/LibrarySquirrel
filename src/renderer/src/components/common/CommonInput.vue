@@ -72,7 +72,7 @@ function getSpanValue() {
 }
 // 处理组件被双击事件
 function handleDblclick() {
-  if (props.config.dblclickEnable) {
+  if (props.config.dblclickToEdit) {
     disabled.value = false
   }
 }
