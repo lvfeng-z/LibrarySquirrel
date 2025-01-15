@@ -348,10 +348,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     await this.updateById(updateContinuableTask)
 
     // 生成作品保存用的信息
-    const worksService = new WorksService()
-    const worksSaveInfo = worksService.generateWorksSaveInfo(worksDTO)
+    const worksSaveInfo = WorksService.generateWorksSaveInfo(worksDTO)
 
     // 保存作品信息
+    const worksService = new WorksService()
     return worksService.saveWorksInfo(worksSaveInfo).then((worksId: number) => {
       // 文件的写入路径和作品id保存到任务中
       const sourceTask = new Task()
@@ -395,7 +395,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     let worksSaveInfo = new WorksSaveDTO()
     // 判断是否需要更新作品数据
     if (resourceDTO.doUpdate) {
-      worksSaveInfo = worksService.generateWorksSaveInfo(resourceDTO, true)
+      worksSaveInfo = WorksService.generateWorksSaveInfo(resourceDTO, true)
       worksSaveInfo.id = worksId
       worksService.updateById(worksSaveInfo)
     }
@@ -581,7 +581,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(resumeResponse.resourceStream, 'TaskService', `恢复任务时，插件返回的资源为空，taskId: ${taskId}`)
     // 判断是否需要更新作品数据
     if (resumeResponse.doUpdate) {
-      const worksSaveInfo = worksService.generateWorksSaveInfo(resumeResponse, true)
+      const worksSaveInfo = WorksService.generateWorksSaveInfo(resumeResponse, true)
       worksSaveInfo.id = task.localWorksId
       worksService.updateById(worksSaveInfo)
     }

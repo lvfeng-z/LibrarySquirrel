@@ -165,3 +165,27 @@ export function pipelineReadWrite(readable: Readable, writable: Writable): Promi
     readable.pipe(writable)
   })
 }
+
+export function sanitizeFileName(fileName: string): string {
+  // 定义非法字符及其对应的全角字符
+  const illegalReplacements = {
+    '\\': '＼', // 全角反斜杠
+    '/': '／', // 全角正斜杠
+    ':': '：', // 全角冒号
+    '*': '＊', // 全角星号
+    '?': '？', // 全角问号
+    '"': '＂', // 全角双引号
+    '<': '＜', // 全角小于号
+    '>': '＞', // 全角大于号
+    '|': '｜' // 全角竖线
+  }
+
+  let sanitized = fileName
+
+  // 遍历每个非法字符，并进行替换
+  for (const [illegalChar, replacement] of Object.entries(illegalReplacements)) {
+    sanitized = sanitized.split(illegalChar).join(replacement)
+  }
+
+  return sanitized
+}

@@ -23,7 +23,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   async listBySiteAuthorIds(siteAuthorIs: string[]) {
     const db = this.acquire()
-    const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id IN ${siteAuthorIs.join(',')}`
+    const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id IN (${siteAuthorIs.join(',')})`
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => this.getResultTypeDataList<SiteAuthor>(rows))

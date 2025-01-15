@@ -5,7 +5,7 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import { WorksDao } from '../dao/WorksDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
-import { createDirIfNotExists } from '../util/FileSysUtil.ts'
+import { createDirIfNotExists, sanitizeFileName } from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
@@ -43,7 +43,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO 插件返回的作品DTO
    * @param refreshMode 刷新模式（为true时，不会生成新的保存路径相关的属性）
    */
-  public generateWorksSaveInfo(worksDTO: WorksPluginDTO, refreshMode?: boolean): WorksSaveDTO {
+  public static generateWorksSaveInfo(worksDTO: WorksPluginDTO, refreshMode?: boolean): WorksSaveDTO {
     const result = new WorksSaveDTO(worksDTO)
     // 读取设置中的工作目录信息
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
@@ -54,7 +54,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
     try {
       // 处理作者信息
-      const tempName = this.getAuthorNameFromAuthorDTO(result)
+      const tempName = WorksService.getAuthorNameFromAuthorDTO(result)
       const authorName = tempName === undefined ? 'unknownAuthor' : tempName
 
       // 作品信息
@@ -65,10 +65,17 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       // 保存路径
       if (!refreshMode) {
-        const fileName = `${authorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
-        const relativeSavePath = path.join('/includeDir', authorName)
-        result.fileName = fileName
-        result.fullSavePath = path.join(workdir, relativeSavePath, fileName)
+        const standardAuthorName = sanitizeFileName(authorName)
+        const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
+
+        const fileName = `${finalAuthorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
+        const standardFileName = sanitizeFileName(fileName)
+        const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : standardFileName
+
+        const relativeSavePath = path.join('/includeDir', finalAuthorName)
+
+        result.fileName = finalFileName
+        result.fullSavePath = path.join(workdir, relativeSavePath, finalFileName)
         result.filePath = path.join(relativeSavePath, fileName)
         result.workdir = workdir
       }
@@ -87,8 +94,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param fileWriter
    */
   public static async saveWorksResource(worksDTO: WorksSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
-    assertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品时，资源意外为空，taskId: ${worksDTO.taskId}`)
-    assertNotNullish(worksDTO.fullSavePath, 'WorksService', `保存作品资源时，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`)
+    assertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品资源失败，资源意外为空，taskId: ${worksDTO.taskId}`)
+    assertNotNullish(worksDTO.fullSavePath, 'WorksService', `保存作品资源失败，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`)
 
     try {
       // 创建保存目录
@@ -363,7 +370,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @private
    */
-  private getAuthorNameFromAuthorDTO(worksDTO: WorksDTO): string | undefined {
+  private static getAuthorNameFromAuthorDTO(worksDTO: WorksDTO): string | undefined {
     let authorName: string | undefined
     // 优先使用站点作者名称
     if (worksDTO.siteAuthors !== undefined && worksDTO.siteAuthors !== null && worksDTO.siteAuthors.length > 0) {

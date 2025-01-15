@@ -34,8 +34,8 @@ export default class SiteAuthor extends BaseEntity {
   lastUse: number | null | undefined
 
   constructor(siteAuthor?: SiteAuthor) {
+    super(siteAuthor)
     if (siteAuthor === undefined) {
-      super()
       this.siteId = undefined
       this.siteAuthorId = undefined
       this.siteAuthorName = undefined
@@ -44,7 +44,6 @@ export default class SiteAuthor extends BaseEntity {
       this.localAuthorId = undefined
       this.lastUse = undefined
     } else {
-      super(siteAuthor)
       this.siteId = siteAuthor.siteId
       this.siteAuthorId = siteAuthor.siteAuthorId
       this.siteAuthorName = siteAuthor.siteAuthorName

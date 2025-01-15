@@ -10,6 +10,7 @@ import { isNullish, notNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import { Operator } from '../constant/CrudConstant.js'
+import { assertNotNullish } from '../util/AssertUtil.js'
 
 /**
  * 站点作者Service
@@ -65,37 +66,28 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   public async saveOrUpdateBatchBySiteAuthorId(siteAuthors: SiteAuthor[]): Promise<number> {
     const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId) as string[]
     const oldSiteAuthors = await this.dao.listBySiteAuthorIds(siteAuthorIds)
-    const newSiteAuthors: SiteAuthor[] = []
-    siteAuthors.forEach((siteAuthor) => {
-      if (isNullish(siteAuthor.siteAuthorId)) {
-        const msg = '保存作品时，站点作者的id意外为空'
-        LogUtil.error('SiteAuthorService', '保存作品时，站点作者的id意外为空')
-        throw new Error(msg)
-      } else if (isNullish(siteAuthor.siteId)) {
-        const msg = '保存作品时，作品的站点id意外为空'
-        LogUtil.error('SiteAuthorService', msg)
-        throw new Error(msg)
-      } else {
-        const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
-        const newSiteAuthor = lodash.cloneDeep(siteAuthor)
+    const newSiteAuthors = siteAuthors.map((siteAuthor) => {
+      assertNotNullish(siteAuthor.siteAuthorId, this.className, '保存站点作者失败，站点作者的id意外为空')
+      assertNotNullish(siteAuthor.siteId, this.className, '保存站点作者失败，站点作者的站点id意外为空')
+      const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
+      const newSiteAuthor = new SiteAuthor(siteAuthor)
 
-        if (oldSiteAuthor !== undefined) {
-          // 调整新数据
-          newSiteAuthor.id = oldSiteAuthor.id
-          newSiteAuthor.siteAuthorNameBefore = oldSiteAuthor.siteAuthorNameBefore
-          newSiteAuthor.createTime = undefined
-          newSiteAuthor.updateTime = undefined
-          // 如果站点作者的名称变更，对原本的名称写入到siteAuthorNameBefore
-          if (
-            newSiteAuthor.siteAuthorName !== oldSiteAuthor.siteAuthorName &&
-            oldSiteAuthor.siteAuthorName !== undefined &&
-            oldSiteAuthor.siteAuthorName !== null
-          ) {
-            ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.siteAuthorName)
-          }
+      if (oldSiteAuthor !== undefined) {
+        // 调整新数据
+        newSiteAuthor.id = oldSiteAuthor.id
+        newSiteAuthor.siteAuthorNameBefore = oldSiteAuthor.siteAuthorNameBefore
+        newSiteAuthor.createTime = undefined
+        newSiteAuthor.updateTime = undefined
+        // 如果站点作者的名称变更，对原本的名称写入到siteAuthorNameBefore
+        if (
+          newSiteAuthor.siteAuthorName !== oldSiteAuthor.siteAuthorName &&
+          oldSiteAuthor.siteAuthorName !== undefined &&
+          oldSiteAuthor.siteAuthorName !== null
+        ) {
+          ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.siteAuthorName)
         }
-        newSiteAuthors.push(newSiteAuthor)
       }
+      return newSiteAuthor
     })
     return super.saveOrUpdateBatchById(newSiteAuthors)
   }

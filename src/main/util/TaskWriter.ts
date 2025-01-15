@@ -51,14 +51,14 @@ export default class TaskWriter {
       if (notNullish(newWritable)) {
         this.writable = newWritable
       }
-      assertNotNullish(this.readable, 'FileWriter', '写入文件时readable为空')
-      assertNotNullish(this.writable, 'FileWriter', '写入文件时writable为空')
+      assertNotNullish(this.readable, 'TaskWriter', '写入任务资源失败，readable为空')
+      assertNotNullish(this.writable, 'TaskWriter', '写入任务资源失败，writable为空')
       const readable = this.readable
       const writable = this.writable
       let errorOccurred = false
       const readableErrorHandler = (err: Error) => {
         errorOccurred = true
-        LogUtil.error('WorksService', `readable出错${err}`)
+        LogUtil.error('TaskWriter', `readable出错${err}`)
         reject(err)
       }
       const readableEndHandler = () => {
@@ -72,7 +72,7 @@ export default class TaskWriter {
       readable.once('error', readableErrorHandler)
       writable.once('error', (err) => {
         errorOccurred = true
-        LogUtil.error('WorksService', `writable出错${err}`)
+        LogUtil.error('TaskWriter', `writable出错，${err}`)
         reject(err)
       })
       readable.once('end', readableEndHandler)
