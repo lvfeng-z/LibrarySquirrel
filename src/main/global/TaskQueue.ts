@@ -103,8 +103,8 @@ export class TaskQueue {
     }
     // 信息保存流
     this.taskInfoStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
-      this.taskInfoStream.unpipe(this.taskResourceStream)
-      this.taskInfoStream.pipe(this.taskResourceStream)
+      this.inletStream.unpipe(this.taskInfoStream)
+      this.inletStream.pipe(this.taskInfoStream)
       handleError(error, task, taskRunningObj)
     })
     // 资源保存流
