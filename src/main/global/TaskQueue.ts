@@ -10,7 +10,6 @@ import TaskDTO from '../model/dto/TaskDTO.js'
 import TaskWriter from '../util/TaskWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 import Task from '../model/entity/Task.js'
-import StringUtil from '../util/StringUtil.js'
 import { GlobalVar, GlobalVars } from './GlobalVar.js'
 
 /**
@@ -208,7 +207,7 @@ export class TaskQueue {
           }
         } else {
           const newOperationObj = new TaskOperationObj(task.id, taskOperation)
-          const infoSaved = StringUtil.isNotBlank(task.pendingDownloadPath)
+          const infoSaved = notNullish(task.localWorksId)
           taskRunningObj = new TaskRunningObj(
             newOperationObj.taskId,
             newOperationObj,
@@ -973,6 +972,7 @@ class TaskStatusChangeStream extends Writable {
     tempTask.id = saveResult.taskRunningObj.taskId
     tempTask.status = saveResult.status
     if (TaskStatusEnum.FINISHED === tempTask.status || TaskStatusEnum.FAILED === tempTask.status) {
+      tempTask.localWorksId = null
       tempTask.pendingDownloadPath = null
     }
     return tempTask

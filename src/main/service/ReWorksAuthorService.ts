@@ -4,6 +4,7 @@ import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
 import DB from '../database/DB.ts'
 import ReWorksAuthorDao from '../dao/ReWorksAuthorDao.ts'
 import { OriginType } from '../constant/OriginType.js'
+import { AuthorRole } from '../constant/AuthorRole.js'
 
 export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQueryDTO, ReWorksAuthor, ReWorksAuthorDao> {
   constructor(db?: DB) {
@@ -13,24 +14,26 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
   /**
    * 关联作品和标签
    * @param type 标签的类型
-   * @param authorIds
+   * @param authorIdRoles
    * @param worksId
    */
-  public async link(type: OriginType, authorIds: number[], worksId: number) {
-    if (authorIds.length === 0) {
+  public async link(type: OriginType, authorIdRoles: { authorId: number; role: AuthorRole }[], worksId: number) {
+    if (authorIdRoles.length === 0) {
       return 0
     }
 
     // 创建关联对象
-    const links = authorIds.map((authorId) => {
+    const links = authorIdRoles.map((authorIdRole) => {
       const reWorksAuthor = new ReWorksAuthor()
       if (OriginType.LOCAL === type) {
         reWorksAuthor.worksId = worksId
-        reWorksAuthor.localAuthorId = authorId
+        reWorksAuthor.localAuthorId = authorIdRole.authorId
+        reWorksAuthor.authorRole = authorIdRole.role
         reWorksAuthor.authorType = OriginType.LOCAL
       } else {
         reWorksAuthor.worksId = worksId
-        reWorksAuthor.localAuthorId = authorId
+        reWorksAuthor.siteAuthorId = authorIdRole.authorId
+        reWorksAuthor.authorRole = authorIdRole.role
         reWorksAuthor.authorType = OriginType.SITE
       }
       return reWorksAuthor

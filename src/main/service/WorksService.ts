@@ -32,6 +32,7 @@ import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.js'
 import SiteTag from '../model/entity/SiteTag.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
+import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -41,9 +42,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   /**
    * 生成保存作品用的信息
    * @param worksDTO 插件返回的作品DTO
-   * @param refreshMode 刷新模式（为true时，不会生成新的保存路径相关的属性）
    */
-  public static generateWorksSaveInfo(worksDTO: WorksPluginDTO, refreshMode?: boolean): WorksSaveDTO {
+  public static generateWorksSaveInfo(worksDTO: WorksPluginDTO): WorksSaveDTO {
     const result = new WorksSaveDTO(worksDTO)
     // 读取设置中的工作目录信息
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
@@ -64,21 +64,19 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       result.resourceComplete = false
 
       // 保存路径
-      if (!refreshMode) {
-        const standardAuthorName = sanitizeFileName(authorName)
-        const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
+      const standardAuthorName = sanitizeFileName(authorName)
+      const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
 
-        const fileName = `${finalAuthorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
-        const standardFileName = sanitizeFileName(fileName)
-        const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : standardFileName
+      const fileName = `${finalAuthorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
+      const standardFileName = sanitizeFileName(fileName)
+      const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : standardFileName
 
-        const relativeSavePath = path.join('/includeDir', finalAuthorName)
+      const relativeSavePath = path.join('/includeDir', finalAuthorName)
 
-        result.fileName = finalFileName
-        result.fullSavePath = path.join(workdir, relativeSavePath, finalFileName)
-        result.filePath = path.join(relativeSavePath, fileName)
-        result.workdir = workdir
-      }
+      result.fileName = finalFileName
+      result.fullSavePath = path.join(workdir, relativeSavePath, finalFileName)
+      result.filePath = path.join(relativeSavePath, fileName)
+      result.workdir = workdir
 
       return result
     } catch (error) {
@@ -132,7 +130,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public async saveWorksInfo(worksDTO: WorksDTO): Promise<number> {
     const worksSets = worksDTO.worksSets
     const site = worksDTO.site
-    const siteAuthors = worksDTO.siteAuthors
+    let siteAuthors = worksDTO.siteAuthors
     const siteTags = worksDTO.siteTags
     const localAuthors = worksDTO.localAuthors
     const localTags = worksDTO.localTags
@@ -142,7 +140,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     if (this.injectedDB) {
       db = this.db as DB
     } else {
-      db = new DB('WorksService')
+      db = new DB(this.className)
     }
     try {
       return db
@@ -169,7 +167,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                     worksSetId = oldWorksSet.id
                   }
                 } else {
-                  LogUtil.warn('WorksService', `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
+                  LogUtil.warn(this.className, `保存作品时，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
                 }
               }
             }
@@ -183,6 +181,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           if (notNullish(siteAuthors)) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
+            const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId).filter(notNullish)
+            const siteId = siteAuthors[0].siteId as number
+            const tempSiteAuthors = await siteAuthorService.listBySiteAuthor(siteAuthorIds, siteId)
+            if (arrayNotEmpty(tempSiteAuthors)) {
+              siteAuthors = tempSiteAuthors.map((tempSiteAuthor) => new SiteAuthorDTO(tempSiteAuthor))
+            }
           }
           // 保存站点标签
           if (notNullish(siteTags) && siteTags.length > 0) {
@@ -212,12 +216,29 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             const reWorksAuthorService = new ReWorksAuthorService(transactionDB)
             // 关联作品和本地作者
             if (arrayNotEmpty(localAuthors)) {
-              const localAuthorIds = localAuthors.map((localAuthor) => localAuthor.id).filter((id) => notNullish(id))
+              const localAuthorIds = localAuthors
+                .map((localAuthor) => {
+                  if (isNullish(localAuthor.id)) {
+                    return
+                  }
+                  return {
+                    authorId: localAuthor.id,
+                    role: isNullish(localAuthor.authorRole) ? AuthorRole.MAIN : localAuthor.authorRole
+                  }
+                })
+                .filter((obj) => notNullish(obj))
               await reWorksAuthorService.link(OriginType.LOCAL, localAuthorIds, worksDTO.id)
             }
             // 关联作品和站点作者
             if (arrayNotEmpty(siteAuthors)) {
-              const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.id).filter((id) => notNullish(id))
+              const siteAuthorIds = siteAuthors
+                .map((siteAuthor) => {
+                  if (isNullish(siteAuthor.id)) {
+                    return
+                  }
+                  return { authorId: siteAuthor.id, role: isNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole }
+                })
+                .filter((id) => notNullish(id))
               await reWorksAuthorService.link(OriginType.SITE, siteAuthorIds, worksDTO.id)
             }
           }
@@ -238,7 +259,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           return worksDTO.id
         }, `保存作品信息，taskId: ${worksDTO.taskId}`)
         .catch((error) => {
-          LogUtil.error('WorksService', '保存作品时出错')
+          LogUtil.error(this.className, '保存作品时出错')
           throw error
         })
         .finally(() => {
@@ -288,7 +309,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       }
       return resultPage
     } catch (error) {
-      LogUtil.error('WorksService', error)
+      LogUtil.error(this.className, error)
       throw error
     }
   }
@@ -320,7 +341,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       }
       return resultPage
     } catch (error) {
-      LogUtil.error('WorksService', error)
+      LogUtil.error(this.className, error)
       throw error
     }
   }
@@ -342,8 +363,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     worksDTO.localTags = await localTagService.listByWorksId(worksId)
 
     // 站点作者
-    // const localAuthorService = new LocalAuthorService()
-    // worksDTO.localAuthors = await localAuthorService.listByWorksId(worksId)
+    const siteAuthorService = new SiteAuthorService()
+    worksDTO.siteAuthors = await siteAuthorService.listByWorksId(worksId)
 
     // 站点标签
     const siteTagService = new SiteTagService()

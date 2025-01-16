@@ -22,21 +22,20 @@ export default class SiteAuthorDTO extends SiteAuthor {
    */
   authorRole: AuthorRole | undefined | null
 
-  constructor(siteAuthorDTO?: SiteAuthorDTO) {
-    if (siteAuthorDTO === undefined) {
-      super()
+  constructor(siteAuthor?: SiteAuthor) {
+    super(siteAuthor)
+    if (siteAuthor === undefined) {
       this.localAuthor = undefined
       this.site = undefined
       this.authorRole = undefined
     } else {
-      super(siteAuthorDTO)
-      this.localAuthor = siteAuthorDTO.localAuthor
-      if (typeof siteAuthorDTO.site == 'string') {
-        this.site = JSON.parse(siteAuthorDTO.site)
+      this.localAuthor = siteAuthor['localAuthor']
+      if (typeof siteAuthor['site'] == 'string') {
+        this.site = JSON.parse(siteAuthor['site'])
       } else {
-        this.site = siteAuthorDTO.site
+        this.site = siteAuthor['site']
       }
-      this.authorRole = siteAuthorDTO.authorRole
+      this.authorRole = siteAuthor['authorRole']
     }
   }
 }

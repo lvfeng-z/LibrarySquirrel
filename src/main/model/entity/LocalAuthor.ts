@@ -15,12 +15,11 @@ export default class LocalAuthor extends BaseEntity {
   lastUse: number | null | undefined
 
   constructor(localAuthor?: LocalAuthor) {
+    super(localAuthor)
     if (isNullish(localAuthor)) {
-      super()
       this.localAuthorName = undefined
       this.lastUse = undefined
     } else {
-      super(localAuthor)
       this.localAuthorName = localAuthor.localAuthorName
       this.lastUse = localAuthor.lastUse
     }

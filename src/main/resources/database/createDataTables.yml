@@ -82,7 +82,7 @@ tables:
         constraint re_works_author_local_author_id_fk
         references local_author
         on update cascade on delete cascade,
-        site_author_id  text
+        site_author_id  integer
         constraint re_works_author_site_tag_id_fk
         references site_tag
         on update cascade on delete cascade,

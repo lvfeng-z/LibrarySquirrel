@@ -181,4 +181,41 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
         }
       })
   }
+
+  /**
+   * 根据作者在站点的id及站点id查询
+   * @param siteAuthorIds 作者在站点的id
+   * @param siteId 站点id
+   */
+  public async listBySiteAuthor(siteAuthorIds: string[], siteId: number): Promise<SiteAuthor[]> {
+    const siteAuthorIdsStr = siteAuthorIds.join(',')
+    const statement = `SELECT * FROM site_author WHERE site_author_id IN (@siteAuthorIds) AND @siteId`
+    const db = this.acquire()
+    return db.all<unknown[], SiteAuthor>(statement, { siteAuthorIds: siteAuthorIdsStr, siteId: siteId }).finally(() => {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    })
+  }
+
+  /**
+   * 查询作品的站点标签
+   * @param worksId 作品id
+   */
+  async listByWorksId(worksId: number): Promise<SiteAuthorDTO[]> {
+    const statement = `SELECT t1.*, t2.author_role
+                       FROM site_author t1
+                              INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
+                              INNER JOIN works t3 ON t2.works_id = t3.id
+                       WHERE t3.id = ${worksId}`
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((runResult) => super.getResultTypeDataList<SiteAuthorDTO>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
 }

@@ -191,4 +191,21 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     }
     return this.dao.querySelectItemPage(page)
   }
+
+  /**
+   * 根据作者在站点的id及站点id查询
+   * @param siteAuthorIds 作者在站点的id
+   * @param siteId 站点id
+   */
+  public async listBySiteAuthor(siteAuthorIds: string[], siteId: number): Promise<SiteAuthor[]> {
+    return this.dao.listBySiteAuthor(siteAuthorIds, siteId)
+  }
+
+  /**
+   * 查询作品的站点作者
+   * @param worksId 作品id
+   */
+  async listByWorksId(worksId: number) {
+    return this.dao.listByWorksId(worksId)
+  }
 }
