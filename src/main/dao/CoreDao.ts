@@ -3,7 +3,7 @@ import StringUtil from '../util/StringUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
-import { isNullish, notNullish } from '../util/CommonUtil.js'
+import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
 import QuerySortOption from '../constant/QuerySortOption.js'
 import DB from '../database/DB.js'
 import BaseEntity from '../model/entity/BaseEntity.js'
@@ -54,77 +54,20 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param queryConditions 查询条件
    * @param alias 所查询数据表的别名
    * @param ignore 要忽略的属性名
+   * @return where子句和处理后的查询参数
    */
   protected getWhereClause(
     queryConditions: Query | undefined,
     alias?: string,
     ignore?: string[]
   ): { whereClause: string | undefined; query: Query | undefined } {
-    if (queryConditions === undefined) {
-      return { whereClause: undefined, query: undefined }
-    }
+    const modifiedQuery = this.getWhereClauses(queryConditions, alias, ignore)
 
-    const whereClauses: string[] = []
-    // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
-    const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams(ignore)
-    // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
-    Object.entries(modifiedQuery)
-      .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
-      .forEach(([key, value]) => {
-        const snakeCaseKey = StringUtil.camelToSnakeCase(key)
-        const comparator = this.getComparator(key, queryConditions.operators)
-        // 根据运算符的不同给出不同的where子句和查询参数
-        let modifiedValue: unknown
-        let whereClause: string
-        switch (comparator) {
-          case Operator.EQUAL:
-            if (value !== null) {
-              whereClause =
-                alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-              modifiedValue = value
-            } else {
-              whereClause =
-                alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NULL}`
-            }
-            break
-          case Operator.NOT_EQUAL:
-            if (value !== null) {
-              whereClause =
-                alias == undefined
-                  ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
-                  : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
-              modifiedValue = value
-            } else {
-              whereClause =
-                alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NOT_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
-            }
-            break
-          case Operator.LEFT_LIKE:
-            whereClause =
-              alias == undefined ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
-            modifiedValue = value + '%'
-            break
-          case Operator.RIGHT_LIKE:
-            whereClause =
-              alias == undefined ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}` : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
-            modifiedValue = '%' + value
-            break
-          case Operator.LIKE:
-            whereClause =
-              alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-            modifiedValue = '%' + value + '%'
-            break
-          default:
-            whereClause =
-              alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
-            modifiedValue = value
-        }
-        whereClauses.push(whereClause)
-        modifiedQuery[key] = modifiedValue
-      })
+    const whereClauses = modifiedQuery.whereClauses
+    const tempWhereClause = Object.values(whereClauses).map((value) => value)
 
-    const whereClause = this.splicingWhereClauses(whereClauses)
-    return { whereClause: whereClause, query: Object.assign(BaseQueryDTO.prototype, modifiedQuery) as Query }
+    const whereClause = this.splicingWhereClauses(tempWhereClause)
+    return { whereClause: whereClause, query: modifiedQuery.query }
   }
 
   /**
@@ -133,10 +76,10 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param alias 所查询数据表的别名
    * @param ignore 要忽略的属性名
    * @protected
-   * @return 属性名为键，where字句为值的Record对象
+   * @return 属性名为键，where子句为值的Record对象和处理后的查询参数
    */
   protected getWhereClauses(
-    queryConditions: Query,
+    queryConditions: Query | undefined,
     alias?: string,
     ignore?: string[]
   ): {
@@ -144,7 +87,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     query: Query
   } {
     if (queryConditions === undefined) {
-      return { whereClauses: {}, query: queryConditions }
+      return { whereClauses: {}, query: {} as Query }
     }
 
     const whereClauses: Record<string, string> = {}
@@ -203,6 +146,11 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
                 alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
               modifiedValue = '%' + value + '%'
               break
+            case Operator.IN:
+              whereClauses[key] =
+                alias == undefined ? `"${snakeCaseKey}" ${comparator} (@${key})` : `${alias}."${snakeCaseKey}" ${comparator} (@${key})`
+              modifiedValue = value
+              break
             default:
               whereClauses[key] =
                 alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
@@ -225,10 +173,10 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     // 指定运算符的对象转换为数组
     const assignComparatorList = assignComparator === undefined ? undefined : Object.entries(assignComparator)
     let comparator = Operator.EQUAL
-    if (assignComparatorList !== undefined && assignComparatorList.length > 0) {
-      const comparatorTarget = assignComparatorList.filter((item) => item[0] === property)
-      if (comparatorTarget.length > 0) {
-        comparator = comparatorTarget[0][1]
+    if (arrayNotEmpty(assignComparatorList)) {
+      const comparatorTarget = assignComparatorList.find((item) => item[0] === property)
+      if (notNullish(comparatorTarget)) {
+        comparator = comparatorTarget[1]
       }
     }
     return comparator

@@ -11,7 +11,8 @@ enum Operator {
   LEFT_LIKE = 'L_LIKE',
   RIGHT_LIKE = 'R_LIKE',
   IS_NULL = 'IS NULL',
-  IS_NOT_NULL = 'IS NOT NULL'
+  IS_NOT_NULL = 'IS NOT NULL',
+  IN = 'IN'
 }
 
 export { SAVE_FAILED, Operator }
