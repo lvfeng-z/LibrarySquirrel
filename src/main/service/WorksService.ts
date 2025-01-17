@@ -130,7 +130,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    */
   public async saveWorksInfo(worksDTO: WorksDTO): Promise<number> {
     const worksSets = worksDTO.worksSets
-    const site = worksDTO.site
     let siteAuthors = worksDTO.siteAuthors
     let siteTags = worksDTO.siteTags
     const localAuthors = worksDTO.localAuthors
@@ -172,11 +171,6 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                 }
               }
             }
-          }
-          // 保存站点
-          if (notNullish(site)) {
-            const siteService = new SiteService(transactionDB)
-            await siteService.saveOnNotExistByDomain(site)
           }
           // 保存站点作者
           if (notNullish(siteAuthors)) {

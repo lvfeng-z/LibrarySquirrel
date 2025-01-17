@@ -1,5 +1,6 @@
 import LogUtil from './LogUtil.js'
 import { arrayIsEmpty, isNullish } from './CommonUtil.js'
+import StringUtil from './StringUtil.js'
 
 export function assertTrue(value: boolean, caller?: string, msg?: string) {
   if (!value) {
@@ -24,6 +25,13 @@ export function assertNotNullish<T>(value: T | null | undefined, caller?: string
 
 export function assertArrayNotEmpty(value: unknown, caller?: string, msg?: string): asserts value {
   if (arrayIsEmpty(value)) {
+    LogUtil.error(caller as string, msg)
+    throw new Error(msg)
+  }
+}
+
+export function AssertNotBlank(value: string | undefined | null, caller?: string, msg?: string): asserts value {
+  if (StringUtil.isBlank(value)) {
     LogUtil.error(caller as string, msg)
     throw new Error(msg)
   }

@@ -136,16 +136,30 @@ tables:
   - name: site
     sql: |
       create table if not exists site (
-        id            integer not null
+        id               integer not null
         constraint site_pk
         primary key autoincrement,
-        site_name     text,
-        site_domain   text,
-        site_homepage text,
-        create_time   integer,
-        update_time   integer,
-        sort_num      integer
+        site_name        text,
+        site_description text,
+        create_time      integer,
+        update_time      integer,
+        sort_num         integer
       );
+
+  - name: site_domain
+    sql: |
+      create table site_domain (
+        id            integer not null
+        constraint site_domain_pk
+        primary key autoincrement,
+        site_id       integer,
+        domain        text,
+        homepage      text,
+        create_time   integer,
+        update_time   integer
+      );
+      create unique index site_domain_domain_uindex
+      on site_domain (domain);
 
   - name: local_tag
     sql: |

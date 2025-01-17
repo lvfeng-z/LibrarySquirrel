@@ -3,7 +3,7 @@ import StringUtil from '../util/StringUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
-import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
 import QuerySortOption from '../constant/QuerySortOption.js'
 import DB from '../database/DB.js'
 import BaseEntity from '../model/entity/BaseEntity.js'
@@ -267,6 +267,9 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected getResultTypeDataList<Result>(dataList: Record<string, unknown>[]): Result[] {
+    if (arrayIsEmpty(dataList)) {
+      return []
+    }
     return dataList.map((row) => this.getResultTypeData(row))
   }
 

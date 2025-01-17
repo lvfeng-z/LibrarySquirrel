@@ -189,7 +189,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   public async listBySiteAuthor(siteAuthorIds: string[], siteId: number): Promise<SiteAuthor[]> {
     const siteAuthorIdsStr = siteAuthorIds.join(',')
-    const statement = `SELECT * FROM site_author WHERE site_author_id IN (@siteAuthorIds) AND @siteId`
+    const statement = `SELECT * FROM site_author WHERE site_author_id IN (@siteAuthorIds) AND site_id = @siteId`
     const db = this.acquire()
     return db.all<unknown[], SiteAuthor>(statement, { siteAuthorIds: siteAuthorIdsStr, siteId: siteId }).finally(() => {
       if (!this.injectedDB) {

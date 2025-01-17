@@ -4,29 +4,14 @@ import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseService from './BaseService.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import StringUtil from '../util/StringUtil.ts'
-import LogUtil from '../util/LogUtil.ts'
 import DB from '../database/DB.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
+import SiteDTO from '../model/dto/SiteDTO.js'
+import SiteDomainService from './SiteDomainService.js'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DB) {
     super('SiteService', new SiteDao(db), db)
-  }
-
-  /**
-   * 基于域名确认站点是否存在，如果不存在则新增站点
-   * @param site
-   */
-  public async saveOnNotExistByDomain(site: Site) {
-    if (StringUtil.isNotBlank(site.siteDomain)) {
-      const oldSite = await this.getByDomain(site.siteDomain)
-      if (isNullish(oldSite)) {
-        await this.save(site)
-      }
-    } else {
-      LogUtil.warn('SiteService', '保存站点时，站点域名意外为空')
-    }
   }
 
   /**
@@ -51,29 +36,52 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * 根据域名查询站点
    * @param domain
    */
-  public async getByDomain(domain: string): Promise<Site | undefined> {
-    if (StringUtil.isNotBlank(domain)) {
-      const query = new SiteQueryDTO()
-      query.siteDomain = domain
-      const sites = await this.dao.list(query)
-      if (sites.length === 1) {
-        return sites[0]
-      }
-      if (sites.length > 1) {
-        LogUtil.warn('SiteAuthorService', `域名：${domain}在数据库中存在多个站点`)
-        return sites[0]
-      }
+  public async getByDomain(domain: string): Promise<SiteDTO | undefined> {
+    const site = await this.dao.getByDomain(domain)
+    if (isNullish(site)) {
       return undefined
-    } else {
-      throw new Error('')
     }
+    const siteDTO = new SiteDTO(site)
+    const siteDomainService = new SiteDomainService(this.db)
+    siteDTO.domains = await siteDomainService.listBySiteId(siteDTO.id as number)
+    return siteDTO
   }
 
   /**
-   * 获取域名为键，站点id为值的Record对象
-   * @param domains
+   * 根据域名列表查询站点列表
+   * @param domains 域名列表
    */
-  public async getIdDomainRecord(domains: string[]): Promise<Record<string, number>> {
-    return this.dao.getIdDomainRecord(domains)
+  public async listByDomains(domains: string[]): Promise<SiteDTO[] | undefined> {
+    if (arrayIsEmpty(domains)) {
+      return undefined
+    }
+    const sites = await this.listByDomains(domains)
+    if (arrayIsEmpty(sites)) {
+      return undefined
+    }
+    const siteIds = sites.map((site) => site.id).filter(notNullish)
+    const siteDomainService = new SiteDomainService(this.db)
+    const siteDomains = await siteDomainService.listBySiteIds(siteIds)
+    if (arrayNotEmpty(siteDomains)) {
+      // 生成siteId为键，siteDomain列表为值的Map
+      const siteIdDomainMap = siteDomains.reduce((acc, item) => {
+        // 检查Map中是否已经存在以当前id为键的项
+        if (!acc.has(item.id)) {
+          acc.set(item.id, [])
+        }
+        // 将当前项添加到对应id的数组中
+        acc.get(item.id).push(item)
+        return acc
+      }, new Map())
+      return sites.map((site) => {
+        const tempDTO = new SiteDTO(site)
+        tempDTO.domains = siteIdDomainMap.get(site.id)
+        return tempDTO
+      })
+    } else {
+      return sites.map((site) => {
+        return new SiteDTO(site)
+      })
+    }
   }
 }

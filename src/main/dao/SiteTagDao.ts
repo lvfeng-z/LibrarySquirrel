@@ -228,7 +228,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    */
   public async listBySiteTag(siteTagIds: string[], siteId: number): Promise<SiteTag[]> {
     const siteTagIdsStr = siteTagIds.join(',')
-    const statement = `SELECT * FROM site_tag WHERE site_tag_id IN (@siteTagIds) AND @siteId`
+    const statement = `SELECT * FROM site_tag WHERE site_tag_id IN (@siteTagIds) AND site_id = @siteId`
     const db = this.acquire()
     return db.all<unknown[], SiteTag>(statement, { siteTagIds: siteTagIdsStr, siteId: siteId }).finally(() => {
       if (!this.injectedDB) {
