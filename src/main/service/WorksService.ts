@@ -33,6 +33,7 @@ import SiteTag from '../model/entity/SiteTag.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
+import SiteTagDTO from '../model/dto/SiteTagDTO.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -131,7 +132,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     const worksSets = worksDTO.worksSets
     const site = worksDTO.site
     let siteAuthors = worksDTO.siteAuthors
-    const siteTags = worksDTO.siteTags
+    let siteTags = worksDTO.siteTags
     const localAuthors = worksDTO.localAuthors
     const localTags = worksDTO.localTags
 
@@ -181,6 +182,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           if (notNullish(siteAuthors)) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
+            // 查询站点作者，获取其id，供后面绑定使用
             const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId).filter(notNullish)
             const siteId = siteAuthors[0].siteId as number
             const tempSiteAuthors = await siteAuthorService.listBySiteAuthor(siteAuthorIds, siteId)
@@ -192,6 +194,13 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           if (notNullish(siteTags) && siteTags.length > 0) {
             const siteTagService = new SiteTagService(transactionDB)
             await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
+            // 查询站点标签，获取其id，供后面绑定使用
+            const siteTagIds = siteTags.map((siteTag) => siteTag.siteTagId).filter(notNullish)
+            const siteId = siteTags[0].siteId as number
+            const tempSiteTags = await siteTagService.listBySiteTag(siteTagIds, siteId)
+            if (arrayNotEmpty(tempSiteTags)) {
+              siteTags = tempSiteTags.map((tempSiteAuthor) => new SiteTagDTO(tempSiteAuthor))
+            }
           }
 
           // 保存作品

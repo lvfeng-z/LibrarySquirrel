@@ -2,6 +2,7 @@ import SiteTag from '../entity/SiteTag.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import Site from '../entity/Site.ts'
 import { isNullish } from '../../util/CommonUtil.ts'
+import lodash from 'lodash'
 
 export default class SiteTagDTO extends SiteTag {
   /**
@@ -14,23 +15,23 @@ export default class SiteTagDTO extends SiteTag {
    */
   site: Site | undefined | null
 
-  constructor(siteTagDTO?: SiteTagDTO) {
-    if (isNullish(siteTagDTO)) {
-      super()
+  constructor(siteTag?: SiteTag) {
+    super(siteTag)
+    if (isNullish(siteTag)) {
       this.localTag = undefined
       this.site = undefined
     } else {
-      super(siteTagDTO)
-      if (typeof siteTagDTO.localTag == 'string') {
-        this.localTag = JSON.parse(siteTagDTO.localTag)
+      if (typeof siteTag['localTag'] == 'string') {
+        this.localTag = JSON.parse(siteTag['localTag'])
       } else {
-        this.localTag = siteTagDTO.localTag
+        this.localTag = siteTag['localTag']
       }
-      if (typeof siteTagDTO.site == 'string') {
-        this.site = JSON.parse(siteTagDTO.site)
+      if (typeof siteTag['site'] == 'string') {
+        this.site = JSON.parse(siteTag['site'])
       } else {
-        this.site = siteTagDTO.site
+        this.site = siteTag['site']
       }
+      lodash.assign(this, lodash.pick(siteTag, ['localTag', 'site']))
     }
   }
 }

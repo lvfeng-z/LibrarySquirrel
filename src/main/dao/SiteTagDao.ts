@@ -220,4 +220,20 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
         }
       })
   }
+
+  /**
+   * 根据标签在站点的id及站点id查询
+   * @param siteTagIds 作者在站点的id
+   * @param siteId 站点id
+   */
+  public async listBySiteTag(siteTagIds: string[], siteId: number): Promise<SiteTag[]> {
+    const siteTagIdsStr = siteTagIds.join(',')
+    const statement = `SELECT * FROM site_tag WHERE site_tag_id IN (@siteTagIds) AND @siteId`
+    const db = this.acquire()
+    return db.all<unknown[], SiteTag>(statement, { siteTagIds: siteTagIdsStr, siteId: siteId }).finally(() => {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    })
+  }
 }
