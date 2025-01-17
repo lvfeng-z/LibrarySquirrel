@@ -30,7 +30,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_TAG)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_TAG}., 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
+          ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_TAG}, 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
           : `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_TAG}, 'id', id) AS extraData FROM local_tag`
       )
     }
@@ -45,8 +45,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                     'localTag',
                     JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id),
                     'site',
-                    JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage',
-                                t3.site_domain)
+                    JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description)
                   ) AS extraData
         FROM site_tag t1
                LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
@@ -73,8 +72,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                     'siteAuthor',
                     JSON_OBJECT('id', t2.id, 'siteAuthorName', t2.local_author_name),
                     'site',
-                    JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage',
-                                t3.site_domain)
+                    JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description)
                   ) AS extraData
         FROM site_author t1
                LEFT JOIN local_author t2 ON t1.local_author_id = t2.id

@@ -71,7 +71,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
                 json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -117,7 +117,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     // 以json字符串的形式返回本地标签和站点信息
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
                 JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -177,7 +177,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
                 json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`

@@ -89,7 +89,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.local_author_id AS localAuthorId,
                 json_object('id', t2.id, 'localAuthorName', t2.local_author_name) AS localAuthor,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -136,7 +136,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     // 以json字符串的形式返回本地作者和站点信息
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.local_author_id AS localAuthorId,
                 json_object('id', t2.id, 'localAuthorName', t2.local_author_name) AS localAuthor,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDomain', t3.site_domain, 'siteHomepage', t3.site_domain) AS site`
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
