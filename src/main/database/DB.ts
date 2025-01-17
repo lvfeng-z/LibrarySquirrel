@@ -40,6 +40,12 @@ export default class DB {
    * @private
    */
   private savepointCounter = 0
+
+  /**
+   * 是否处于事务中
+   * @private
+   */
+  private inTransaction: boolean = false
   /**
    * 是否持有排他锁
    * @private
@@ -162,12 +168,19 @@ export default class DB {
   /**
    * 预处理语句
    * @param statement 语句
-   * @param readOnly 读还是写（true：读，false：写）
+   * @param read 读还是写（true：读，false：写）
    */
   public async prepare<BindParameters extends unknown[], Result = unknown>(
     statement: string,
-    readOnly: boolean
+    read: boolean
   ): Promise<AsyncStatement<BindParameters, Result>> {
+    // 如果实例处于事务中，则无论读写，这次请求都作为写操作，这是为了在同一个DB对象中能够查看到事务未提交的更改
+    let readOnly: boolean
+    if (read) {
+      readOnly = !this.inTransaction
+    } else {
+      readOnly = false
+    }
     const connectionPromise = this.acquire(readOnly)
     return connectionPromise
       .then((connection) => {
@@ -212,6 +225,8 @@ export default class DB {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0
+    // 标记当前DB实例处于事务中
+    this.inTransaction = true
     // 创建一个当前层级的保存点
     const savepointName = `sp${this.savepointCounter++}`
     // 开启事务之前获取排他锁
@@ -240,6 +255,11 @@ export default class DB {
         this.savepointCounter--
         LogUtil.debug(this.caller, `${operation}，RELEASE ${savepointName}，result: ${result}`)
 
+        // 如果是最外层保存点，标记当前DB实例已经不处于事务中
+        if (isStartPoint) {
+          this.inTransaction = false
+        }
+
         return result
       })
       .catch((error) => {
@@ -247,6 +267,9 @@ export default class DB {
         if (isStartPoint) {
           connection.exec(`ROLLBACK`)
           LogUtil.debug(this.caller, `${operation}，ROLLBACK`)
+
+          // 标记当前DB实例已经不处于事务中
+          this.inTransaction = false
 
           // 释放排他锁
           GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
