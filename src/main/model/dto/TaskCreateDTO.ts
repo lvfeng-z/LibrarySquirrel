@@ -1,4 +1,6 @@
 import Task from '../entity/Task.ts'
+import { notNullish } from '../../util/CommonUtil.js'
+import lodash from 'lodash'
 
 /**
  * 创建任务DTO
@@ -9,17 +11,15 @@ export default class TaskCreateDTO extends Task {
    */
   saved: boolean | undefined | null
 
-  constructor(taskCreateDTO?: TaskCreateDTO | Task) {
-    if (taskCreateDTO === undefined) {
-      super()
-      this.saved = undefined
-    } else {
-      super(taskCreateDTO)
-      if (taskCreateDTO instanceof TaskCreateDTO) {
-        this.saved = taskCreateDTO.saved
-      } else {
-        this.saved = undefined
-      }
+  /**
+   * 站点domain
+   */
+  siteDomain: string | undefined | null
+
+  constructor(taskCreateDTO?: Task) {
+    super(taskCreateDTO)
+    if (notNullish(taskCreateDTO)) {
+      lodash.assign(this, lodash.pick(taskCreateDTO, ['saved', 'siteDomain']))
     }
   }
 }

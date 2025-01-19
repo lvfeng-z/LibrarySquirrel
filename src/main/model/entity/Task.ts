@@ -25,9 +25,9 @@ export default class Task extends BaseEntity {
   taskName: string | undefined | null
 
   /**
-   * 任务的站点domain
+   * 任务的站点id
    */
-  siteDomain: string | undefined | null
+  siteId: number | undefined | null
 
   /**
    * 本地作品id/本地作品集id
@@ -37,7 +37,7 @@ export default class Task extends BaseEntity {
   /**
    * 站点作品id
    */
-  siteWorksId: number | undefined | null
+  siteWorksId: string | undefined | null
 
   /**
    * 当任务是父任务时，url存储创建此父任务所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
@@ -81,7 +81,7 @@ export default class Task extends BaseEntity {
       this.isCollection = undefined
       this.pid = undefined
       this.taskName = undefined
-      this.siteDomain = undefined
+      this.siteId = undefined
       this.localWorksId = undefined
       this.siteWorksId = undefined
       this.url = undefined
@@ -97,7 +97,7 @@ export default class Task extends BaseEntity {
       this.isCollection = task.isCollection
       this.pid = task.pid
       this.taskName = task.taskName
-      this.siteDomain = task.siteDomain
+      this.siteId = task.siteId
       this.localWorksId = task.localWorksId
       this.siteWorksId = task.siteWorksId
       this.url = task.url
@@ -123,7 +123,7 @@ export default class Task extends BaseEntity {
     this.updateTime = undefined
     this.isCollection = undefined
     this.pid = undefined
-    this.siteDomain = undefined
+    this.siteId = undefined
     this.localWorksId = undefined
     this.status = undefined
     this.pluginId = undefined

@@ -37,6 +37,7 @@ import StringUtil from '../util/StringUtil.js'
 import TaskProcessingDTO from '../model/dto/TaskProcessingDTO.js'
 import Works from '../model/entity/Works.js'
 import ObjectUtil from '../util/ObjectUtil.js'
+import SiteService from './SiteService.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -87,7 +88,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         parentTask.pluginInfo = pluginInfo
         parentTask.url = url
         parentTask.status = TaskStatusEnum.CREATED
-        parentTask.siteDomain = taskPlugin.name
         parentTask.isCollection = true
         parentTask.saved = false
         taskHandler.pluginTool.events.on('change-collection-name-request', (taskName: string) => {
@@ -139,7 +139,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskPlugin 插件信息
    * @param parentTask 任务集
    */
-  async handleCreateTaskArray(tasks: Task[], url: string, taskPlugin: Plugin, parentTask: TaskCreateDTO): Promise<number> {
+  async handleCreateTaskArray(tasks: TaskCreateDTO[], url: string, taskPlugin: Plugin, parentTask: TaskCreateDTO): Promise<number> {
     // 查询插件信息，用于输出日志
     const pluginInfo = JSON.stringify(taskPlugin)
 
@@ -148,19 +148,36 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 清除所有插件不应处理的属性值
     const legalTasks = tasks.map((task) => {
-      const temp = new Task(task)
+      const temp = new TaskCreateDTO(task)
       temp.legalize()
       return temp
     })
 
+    // 用于查询和缓存站点id
+    const siteService = new SiteService()
+    const siteCache = new Map<string, number>()
     // 给任务赋值的函数
-    const assignTask = (task: Task, pid?: number): undefined => {
+    const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<undefined> => {
+      // 校验
+      if (StringUtil.isBlank(task.siteDomain)) {
+        LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
+        return
+      }
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
       task.pluginId = taskPlugin.id as number
       task.pluginInfo = pluginInfo
-      task.siteDomain = taskPlugin.name
+      let siteId: number | null | undefined = siteCache.get(task.siteDomain)
+      if (isNullish(siteId)) {
+        const tempSite = await siteService.getByDomain(task.siteDomain)
+        siteId = tempSite?.id
+      }
+      if (isNullish(siteId)) {
+        LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
+        return
+      }
+      task.siteId = siteId
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -221,8 +238,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         LogUtil.error('TaskService', '插件报错: ', error)
       })
 
+      // 用于查询和缓存站点id
+      const siteService = new SiteService()
+      const siteCache = new Map<string, number>()
       // data事件处理函数
-      createTaskStream.on('data', async (chunk) => {
+      createTaskStream.on('data', async (chunk: TaskCreateDTO) => {
+        const task = new TaskCreateDTO(chunk)
+        // 校验
+        if (StringUtil.isBlank(task.siteDomain)) {
+          LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
+          return
+        }
         itemCount++
         // 如果父任务尚未保存且任务数大于1，则先保存父任务
         if (parentTaskProcess === undefined && itemCount > 1) {
@@ -235,13 +261,21 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         // 等待父任务完成
         await parentTaskProcess
         // 创建任务对象
-        const task = chunk as Task
         task.pluginId = taskPlugin.id as number
         task.pluginInfo = pluginInfo
         task.status = TaskStatusEnum.CREATED
-        task.siteDomain = taskPlugin.name
         task.isCollection = false
         task.pid = parentTask.id as number
+        let siteId: number | null | undefined = siteCache.get(task.siteDomain)
+        if (isNullish(siteId)) {
+          const tempSite = await siteService.getByDomain(task.siteDomain)
+          siteId = tempSite?.id
+        }
+        if (isNullish(siteId)) {
+          LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
+          return
+        }
+        task.siteId = siteId
 
         // 将任务添加到队列
         taskQueue.push(task)

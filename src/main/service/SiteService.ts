@@ -36,7 +36,15 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * 根据域名查询站点
    * @param domain
    */
-  public async getByDomain(domain: string): Promise<SiteDTO | undefined> {
+  public async getByDomain(domain: string): Promise<Site | undefined> {
+    return this.dao.getByDomain(domain)
+  }
+
+  /**
+   * 根据域名查询站点DTO
+   * @param domain
+   */
+  public async getDTOByDomain(domain: string): Promise<SiteDTO | undefined> {
     const site = await this.dao.getByDomain(domain)
     if (isNullish(site)) {
       return undefined
@@ -51,11 +59,22 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * 根据域名列表查询站点列表
    * @param domains 域名列表
    */
-  public async listByDomains(domains: string[]): Promise<SiteDTO[] | undefined> {
+  public async listByDomains(domains: string[]): Promise<Site[] | undefined> {
     if (arrayIsEmpty(domains)) {
       return undefined
     }
-    const sites = await this.listByDomains(domains)
+    return this.dao.listByDomains(domains)
+  }
+
+  /**
+   * 根据域名列表查询站点DTO列表
+   * @param domains 域名列表
+   */
+  public async listDTOByDomains(domains: string[]): Promise<SiteDTO[] | undefined> {
+    if (arrayIsEmpty(domains)) {
+      return undefined
+    }
+    const sites = await this.dao.listByDomains(domains)
     if (arrayIsEmpty(sites)) {
       return undefined
     }

@@ -2,6 +2,7 @@ import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { assertNotNullish } from '../util/AssertUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
+import WorksService from '../service/WorksService.js'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
@@ -43,6 +44,12 @@ export class TaskQueue {
   private taskService: TaskService
 
   /**
+   * 任务服务
+   * @private
+   */
+  private worksService: WorksService
+
+  /**
    * 插件加载器
    * @private
    */
@@ -58,25 +65,26 @@ export class TaskQueue {
    * 任务信息保存流
    * @private
    */
-  private taskInfoStream: TaskInfoStream
+  private readonly taskInfoStream: TaskInfoStream
 
   /**
    * 任务资源保存流
    * @private
    */
-  private taskResourceStream: TaskResourceStream
+  private readonly taskResourceStream: TaskResourceStream
 
   /**
    * 任务状态改变流
    * @private
    */
-  private taskStatusChangeStream: TaskStatusChangeStream
+  private readonly taskStatusChangeStream: TaskStatusChangeStream
 
   constructor() {
     this.operationQueue = []
     this.taskMap = new Map()
     this.parentMap = new Map()
     this.taskService = new TaskService()
+    this.worksService = new WorksService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
 
     this.inletStream = new ReadableTaskRunningObject()
@@ -156,7 +164,7 @@ export class TaskQueue {
    * @param tasks 需要操作的任务
    * @param taskOperation 要执行的操作
    */
-  public pushBatch(tasks: Task[], taskOperation: TaskOperation) {
+  public async pushBatch(tasks: Task[], taskOperation: TaskOperation) {
     if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
       const taskRunningStatusList: TaskResourceSaveResult[] = [] // 用于更新数据库中任务的数据
       const runningObjs: TaskRunningObj[] = [] // 需要处理的运行对象
@@ -207,6 +215,12 @@ export class TaskQueue {
           }
         } else {
           const newOperationObj = new TaskOperationObj(task.id, taskOperation)
+          // TODO 判断是否已经保存过这个作品，如果已经保存过则提示用户
+          // 判断这个作品是否已经保存过
+          if (notNullish(task.siteId) && notNullish(task.siteWorksId)) {
+            const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksId(task.siteId, task.siteWorksId)
+            LogUtil.info('TaskQueue', existsWorksList)
+          }
           const infoSaved = notNullish(task.localWorksId)
           taskRunningObj = new TaskRunningObj(
             newOperationObj.taskId,
@@ -971,7 +985,7 @@ class TaskStatusChangeStream extends Writable {
     const tempTask = new Task()
     tempTask.id = saveResult.taskRunningObj.taskId
     tempTask.status = saveResult.status
-    if (TaskStatusEnum.FINISHED === tempTask.status || TaskStatusEnum.FAILED === tempTask.status) {
+    if (TaskStatusEnum.FINISHED === tempTask.status) {
       tempTask.localWorksId = null
       tempTask.pendingDownloadPath = null
     }
@@ -979,7 +993,7 @@ class TaskStatusChangeStream extends Writable {
   }
 }
 
-export class ReadableTaskRunningObject extends Readable {
+class ReadableTaskRunningObject extends Readable {
   /**
    * 所有待处理的数组
    * @private

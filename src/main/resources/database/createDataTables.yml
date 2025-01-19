@@ -202,7 +202,7 @@ tables:
         is_collection         integer(1),
         pid                   integer,
         task_name             text,
-        site_domain           text,
+        site_id               number,
         local_works_id        integer,
         site_works_id         text,
         url                   text,

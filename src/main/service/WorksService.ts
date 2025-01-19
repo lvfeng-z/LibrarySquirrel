@@ -434,4 +434,16 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
     return authorName
   }
+
+  /**
+   * 根据站点id和作品在站点的id查询作品列表
+   * @param siteId 站点id
+   * @param siteWorksId 作品在站点的id
+   */
+  public async listBySiteIdAndSiteWorksId(siteId: number, siteWorksId: string): Promise<Works[]> {
+    const query = new WorksQueryDTO()
+    query.siteId = siteId
+    query.siteWorksId = siteWorksId
+    return this.dao.list(query)
+  }
 }

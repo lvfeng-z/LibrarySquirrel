@@ -9,6 +9,7 @@ import LogUtil from '../util/LogUtil.js'
 import { BasePlugin } from './BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
 import { isNullish } from '../util/CommonUtil.js'
+import TaskCreateDTO from '../model/dto/TaskCreateDTO.js'
 
 export interface TaskHandler extends BasePlugin {
   pluginTool: PluginTool
@@ -18,7 +19,7 @@ export interface TaskHandler extends BasePlugin {
    * @param url 需解析的url
    * @return 根据解析结果创建的任务数组
    */
-  create(url: string): Promise<Task[] | Readable>
+  create(url: string): Promise<TaskCreateDTO[] | Readable>
 
   /**
    * 生成作品信息

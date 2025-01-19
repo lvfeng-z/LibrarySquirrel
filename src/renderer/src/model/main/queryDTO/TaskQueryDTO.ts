@@ -17,9 +17,9 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   taskName: string | undefined | null
 
   /**
-   * 任务的站点domain
+   * 任务的站点id
    */
-  siteDomain: string | undefined | null
+  siteId: string | undefined | null
 
   /**
    * 本地作品id/本地作品集id
@@ -72,7 +72,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.isCollection = undefined
       this.pid = undefined
       this.taskName = undefined
-      this.siteDomain = undefined
+      this.siteId = undefined
       this.localWorksId = undefined
       this.siteWorksId = undefined
       this.url = undefined
@@ -86,7 +86,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.isCollection = task.isCollection
       this.pid = task.pid
       this.taskName = task.taskName
-      this.siteDomain = task.siteDomain
+      this.siteId = task.siteId
       this.localWorksId = task.localWorksId
       this.siteWorksId = task.siteWorksId
       this.url = task.url
