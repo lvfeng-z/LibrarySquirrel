@@ -133,7 +133,7 @@ export class ConnectionPool {
           this.writeWaitingQueue.push({ requestWeigh: requestWeigh, resolve: resolve })
         }
       } catch (e) {
-        LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, '分配数据库连接时出现未知错误！' + String(e))
+        LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, '分配数据库连接失败，', e)
         reject(e)
       }
     })
@@ -149,11 +149,11 @@ export class ConnectionPool {
     const waitingQueue = readonly ? this.readWaitingQueue : this.writeWaitingQueue
     const connection = connectionArray[index]
     if (connection === undefined) {
-      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}-${index}`, `[${index}]释放链接时出错，链接为空`)
+      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}-${index}`, `[${index}]释放链接失败，链接为空`)
       return
     }
     if (!connection.occupied) {
-      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]释放链接时出错，链接已经处于空闲状态`)
+      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]释放链接失败，链接已经处于空闲状态`)
     }
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开始空闲计时
     if (waitingQueue.length > 0) {

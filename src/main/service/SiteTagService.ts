@@ -34,9 +34,9 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     if (target !== undefined) {
       let msg: string
       if (isNullish(target.siteId)) {
-        msg = `批量新增或更新站点标签时，站点id为空，tagName: ${target.siteTagName}`
+        msg = `批量新增或更新站点标签失败，站点id为空，tagName: ${target.siteTagName}`
       } else {
-        msg = `批量新增或更新站点标签时，站点中标签的id为空，tagName: ${target.siteTagName}`
+        msg = `批量新增或更新站点标签失败，站点中标签的id为空，tagName: ${target.siteTagName}`
       }
       LogUtil.error('SiteTagService', msg)
       throw new Error()
@@ -58,7 +58,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         return true
       }
     } else {
-      LogUtil.error('SiteTagService', '站点标签绑定在本地标签上时，localTagId意外为undefined')
+      LogUtil.error('SiteTagService', '站点标签绑定在本地标签上失败，localTagId意外为undefined')
       return false
     }
   }
@@ -68,7 +68,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page
    */
   async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
-    assertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签时，查询条件不能为空')
+    assertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 

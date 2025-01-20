@@ -11,6 +11,7 @@ import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { assertTrue } from '../util/AssertUtil.js'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
@@ -53,7 +54,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           // 查询要修改的标签原本的数据
           const old = await this.dao.getById(localTag.id)
           if (isNullish(old)) {
-            const msg = '修改本地标签时，原标签信息意外为空'
+            const msg = '修改本地标签失败，原标签信息意外为空'
             LogUtil.error('LocalTagService', msg)
             throw new Error(msg)
           }
@@ -61,17 +62,13 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           const newBaseLocalTag = new LocalTag()
           newBaseLocalTag.id = localTag.baseLocalTagId
           newBaseLocalTag.baseLocalTagId = old.baseLocalTagId
-          const result = (await this.dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) <= 0
-          if (result) {
-            const msg = '更新原下级节点时出错'
-            LogUtil.error('LocalTagService', msg)
-            throw new Error(msg)
-          }
+          const succeed = (await this.dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) > 0
+          assertTrue(succeed, '更新原下级节点失败')
         }
       }
       return await this.dao.updateById(localTag.id, localTag)
     } else {
-      const msg = '更新本地标签时，id意外为空'
+      const msg = '更新本地标签失败，id意外为空'
       LogUtil.error('LocalTagService', msg)
       throw new Error(msg)
     }

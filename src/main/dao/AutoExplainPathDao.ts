@@ -26,7 +26,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     const path = page.query?.path
     // 校验
     if (StringUtil.isBlank(path)) {
-      const msg = '分页查询自动解释时，path不能为空'
+      const msg = '分页查询自动解释失败，path不能为空'
       LogUtil.error('', msg)
       throw new Error(msg)
     }

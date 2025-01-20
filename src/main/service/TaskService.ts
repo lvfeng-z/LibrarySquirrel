@@ -122,7 +122,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           LogUtil.error('TaskService', '插件返回了不支持的类型')
         }
       } catch (error) {
-        LogUtil.error('TaskService', `插件创建任务时出现异常，url: ${url}，plugin: ${pluginInfo}，error:`, error)
+        LogUtil.error('TaskService', `插件创建任务失败，url: ${url}，plugin: ${pluginInfo}，error:`, error)
       }
     }
 
@@ -183,7 +183,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       } catch (error) {
         LogUtil.error(
           'TaskService',
-          `序列化插件保存的pluginData时出错，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
+          `序列化插件保存的pluginData失败，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
           error
         )
         return undefined
@@ -306,7 +306,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           }
           resolve(itemCount)
         } catch (error) {
-          LogUtil.error('TaskService', '处理任务流结束事件时出错，error:', error)
+          LogUtil.error('TaskService', '处理任务流结束事件失败，error:', error)
         } finally {
           LogUtil.info('TaskService', `任务流结束，创建了${itemCount}个任务`)
         }
@@ -360,7 +360,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param pluginLoader
    */
   public async saveWorksInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<boolean> {
-    assertNotNullish(task.id, 'TaskService', `保存作品信息时，任务id意外为空`)
+    assertNotNullish(task.id, 'TaskService', `保存作品信息失败，任务id意外为空`)
     const taskId = task.id
     // 加载插件
     assertNotNullish(task.pluginId, 'TaskService', `任务的插件id意外为空，taskId: ${taskId}`)
@@ -408,9 +408,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskWriter
    */
   public async startTask(task: Task, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<TaskStatusEnum> {
-    assertNotNullish(task.id, 'TaskService', `开始任务时，任务id意外为空`)
+    assertNotNullish(task.id, 'TaskService', `开始任务失败，任务id意外为空`)
     const taskId = task.id
-    assertNotNullish(task.localWorksId, 'TaskService', `开始任务时，任务的作品id意外为空`)
+    assertNotNullish(task.localWorksId, 'TaskService', `开始任务失败，任务的作品id意外为空`)
     const worksId = task.localWorksId
 
     const worksService = new WorksService()
@@ -538,10 +538,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskWriter
    */
   public async pauseTask(task: Task, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<boolean> {
-    assertNotNullish(task.id, 'TaskService', `暂停任务时，任务的id意外为空，taskId: ${task.id}`)
+    assertNotNullish(task.id, 'TaskService', `暂停任务失败，任务的id意外为空，taskId: ${task.id}`)
     const taskId = task.id
     // 加载插件
-    assertNotNullish(task.pluginId, 'TaskService', `暂停任务时，任务的pluginId意外为空，taskId: ${taskId}`)
+    assertNotNullish(task.pluginId, 'TaskService', `暂停任务失败，任务的pluginId意外为空，taskId: ${taskId}`)
     const taskHandler = await pluginLoader.load(task.pluginId)
 
     // 创建TaskPluginDTO对象
@@ -593,13 +593,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskWriter
    */
   public async resumeTask(task: Task, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<TaskStatusEnum> {
-    assertNotNullish(task.id, 'TaskService', '恢复任务时，任务id意外为空')
+    assertNotNullish(task.id, 'TaskService', '恢复任务失败，任务id意外为空')
     const taskId = task.id
-    assertNotNullish(task.localWorksId, 'TaskService', `恢复任务时，任务的localWorksId意外为空，taskId: ${taskId}`)
+    assertNotNullish(task.localWorksId, 'TaskService', `恢复任务失败，任务的localWorksId意外为空，taskId: ${taskId}`)
     const worksId = task.localWorksId
-    assertNotNullish(task.pendingDownloadPath, 'TaskService', `恢复任务时，任务的pendingDownloadPath意外为空，taskId: ${taskId}`)
+    assertNotNullish(task.pendingDownloadPath, 'TaskService', `恢复任务失败，任务的pendingDownloadPath意外为空，taskId: ${taskId}`)
     // 加载插件
-    assertNotNullish(task.pluginId, 'TaskService', `恢复任务时，任务的pluginId意外为空，taskId: ${taskId}`)
+    assertNotNullish(task.pluginId, 'TaskService', `恢复任务失败，任务的pluginId意外为空，taskId: ${taskId}`)
     const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
     // 插件用于恢复下载的任务信息
@@ -610,7 +610,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     try {
       taskPluginDTO.bytesWritten = await fs.promises.stat(task.pendingDownloadPath).then((stats) => stats.size)
     } catch (error) {
-      LogUtil.info('TasService', `恢复任务${taskId}时，先前下载的文件已经不存在 `, error)
+      LogUtil.info('TasService', `恢复任务${taskId}失败，先前下载的文件已经不存在 `, error)
       await createDirIfNotExists(path.dirname(task.pendingDownloadPath))
       taskPluginDTO.bytesWritten = 0
     }
@@ -622,7 +622,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task.status = TaskStatusEnum.PROCESSING
     // 调用插件的resume函数，获取资源
     const resumeResponse = await taskHandler.resume(taskPluginDTO)
-    assertNotNullish(resumeResponse.resourceStream, 'TaskService', `恢复任务时，插件返回的资源为空，taskId: ${taskId}`)
+    assertNotNullish(resumeResponse.resourceStream, 'TaskService', `恢复任务失败，插件返回的资源为空，taskId: ${taskId}`)
     // 判断是否需要更新作品数据
     let finalFileName: string | undefined | null // 保存修改后的finalFileName，资源下载完后再修改
     let finalFilePath: string | undefined | null // 保存修改后的finalFilePath，资源下载完后再修改
@@ -792,7 +792,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskId 任务id
    */
   public async taskProcessing(taskId: Id): Promise<number> {
-    assertNotNullish(taskId, 'TaskService', '任务标记为进行中时，任务id不能为空')
+    assertNotNullish(taskId, 'TaskService', '任务标记为进行中失败，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.PROCESSING
@@ -804,7 +804,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskId 任务id
    */
   public async taskWaiting(taskId: Id): Promise<number> {
-    assertNotNullish(taskId, 'TaskService', '任务标记为进行中时，任务id不能为空')
+    assertNotNullish(taskId, 'TaskService', '任务标记为进行中失败，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.WAITING
@@ -816,7 +816,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskId 任务id
    */
   public taskFinished(taskId: Id): Promise<number> {
-    assertNotNullish(taskId, 'TaskService', '任务标记为完成时，任务id不能为空')
+    assertNotNullish(taskId, 'TaskService', '任务标记为完成失败，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.FINISHED
@@ -828,7 +828,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskId 任务id
    */
   public taskPaused(taskId: Id): Promise<number> {
-    assertNotNullish(taskId, 'TaskService', '任务标记为暂停时，任务id不能为空')
+    assertNotNullish(taskId, 'TaskService', '任务标记为暂停失败，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.PAUSE
@@ -840,7 +840,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskId 任务id
    */
   public taskFailed(taskId: Id): Promise<number> {
-    assertNotNullish(taskId, 'TaskService', '任务标记为失败时，任务id不能为空')
+    assertNotNullish(taskId, 'TaskService', '任务标记为失败失败，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.FAILED

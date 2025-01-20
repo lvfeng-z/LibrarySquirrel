@@ -26,12 +26,12 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
     // 校验
     const legalWorksList = worksDTOs.filter((works) => {
       if (isNullish(works)) {
-        LogUtil.warn('WorksSetService', `关联作品集和作品时，作品信息意外为空`)
+        LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品信息意外为空`)
         return false
       }
       if (isNullish(!Object.hasOwn(works, 'id') || works.id)) {
         const siteWorksName = Object.hasOwn(works, 'siteWorksName') ? works.siteWorksName : 'unknown'
-        LogUtil.warn('WorksSetService', `关联作品集和作品时，作品id意外为空，siteWorksName: ${siteWorksName}`)
+        LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品id意外为空，siteWorksName: ${siteWorksName}`)
         return false
       }
       return true

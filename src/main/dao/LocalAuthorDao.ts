@@ -18,7 +18,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
    */
   public async listReWorksAuthor(worksIds: number[]): Promise<Map<number, LocalAuthorDTO[]>> {
     if (worksIds.length === 0) {
-      throw new Error('查询作品与作者联系时，作品id列表不能为空')
+      throw new Error('查询作品与作者联系失败，作品id列表不能为空')
     }
     const statement = `SELECT t2.works_id, t1.*
                        FROM local_author t1

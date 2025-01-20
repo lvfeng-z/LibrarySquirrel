@@ -141,7 +141,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    assertArrayNotEmpty(ids, this.className, '批量删除时id列表不能为空')
+    assertArrayNotEmpty(ids, this.className, '批量删除失败，id列表不能为空')
 
     const idsStr = ids.join(',')
     const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
@@ -162,7 +162,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param updateData
    */
   public async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
-    assertNotNullish(id, this.className, '更新时主键不能为空')
+    assertNotNullish(id, this.className, '更新失败，主键不能为空')
     // 设置createTime和updateTime
     updateData.updateTime = Date.now()
 
@@ -187,7 +187,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async updateBatchById(entities: Model[]): Promise<number> {
-    assertArrayNotEmpty(entities, this.className, '批量更新的对象不能为空')
+    assertArrayNotEmpty(entities, this.className, '批量更新失败，更新数据不能为空')
 
     const ids: Id[] = []
     // 对齐所有属性
@@ -252,7 +252,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
-    assertArrayNotEmpty(entities, this.className, '批量保存的对象不能为空')
+    assertArrayNotEmpty(entities, this.className, '批量保存失败，保存数据不能为空')
 
     // 对齐所有属性
     // 设置createTime和updateTime

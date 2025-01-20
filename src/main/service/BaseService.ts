@@ -83,7 +83,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param updateData
    */
   public async updateById(updateData: Model): Promise<number> {
-    assertNotNullish(updateData.id, this.className, '更新数据时，id不能为空')
+    assertNotNullish(updateData.id, this.className, '更新数据失败，id不能为空')
     return this.dao.updateById(updateData.id as number | string, updateData)
   }
 
@@ -93,7 +93,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   public async updateBatchById(entities: Model[]) {
     const check = entities.some((entity) => isNullish(entity.id))
-    assertFalse(check, this.className, '批量更新数据时，id不能为空')
+    assertFalse(check, this.className, '批量更新数据失败，id不能为空')
     return this.dao.updateBatchById(entities)
   }
 

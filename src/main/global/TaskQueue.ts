@@ -100,7 +100,7 @@ export class TaskQueue {
    */
   private initializeStream() {
     const handleError = (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
-      LogUtil.error('TaskQueue', `处理任务时出错，taskId: ${task.id}，error: ${error.message}`)
+      LogUtil.error('TaskQueue', `处理任务失败，taskId: ${task.id}，error: ${error.message}`)
       taskRunningObj.status = TaskStatusEnum.FAILED
       this.taskService.taskFailed(taskRunningObj.taskId).then(() => {
         this.removeFromQueue(taskRunningObj.taskOperationObj)
@@ -330,7 +330,7 @@ export class TaskQueue {
     const taskSaveResultList: TaskResourceSaveResult[] = []
     for (const task of tasks) {
       if (isNullish(task.id)) {
-        LogUtil.error('TaskQueue', `暂停任务时，任务id意外为空`)
+        LogUtil.error('TaskQueue', `暂停任务失败，任务id意外为空`)
         continue
       }
       const taskId = task.id
@@ -359,7 +359,7 @@ export class TaskQueue {
           })
         }
       } else {
-        const msg = `暂停任务时，任务的原操作出现了异常的值，operation: ${operation}`
+        const msg = `暂停任务失败，任务的原操作出现了异常的值，operation: ${operation}`
         LogUtil.error('TaskQueue', msg)
       }
     }
@@ -375,7 +375,7 @@ export class TaskQueue {
     const taskSaveResultList: TaskResourceSaveResult[] = []
     for (const task of tasks) {
       if (isNullish(task.id)) {
-        LogUtil.error('TaskQueue', `停止任务时，任务id意外为空`)
+        LogUtil.error('TaskQueue', `停止任务失败，任务id意外为空`)
         continue
       }
       const taskId = task.id
@@ -406,7 +406,7 @@ export class TaskQueue {
           })
         }
       } else {
-        const msg = `停止任务时，任务的原操作出现了异常的值，operation: ${operation}`
+        const msg = `停止任务失败，任务的原操作出现了异常的值，operation: ${operation}`
         LogUtil.error('TaskQueue', msg)
       }
     }
@@ -462,7 +462,7 @@ export class TaskQueue {
         let parent = this.parentMap.get(runningObj.parentId)
         if (isNullish(parent)) {
           const parentInfo = await this.taskService.getById(runningObj.parentId)
-          assertNotNullish(parentInfo?.status, 'TaskQueue', `刷新父任务${runningObj.parentId}时，任务状态意外为空`)
+          assertNotNullish(parentInfo?.status, 'TaskQueue', `刷新父任务${runningObj.parentId}失败，任务状态意外为空`)
           parent = new ParentRunningObj(runningObj.parentId, parentInfo?.status)
           this.parentMap.set(runningObj.parentId, parent)
         }
@@ -514,7 +514,7 @@ export class TaskQueue {
         } else {
           LogUtil.warn(
             'TaskQueue',
-            `刷新父任务状态时出现异常，processing: ${processing} waiting ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
+            `刷新父任务状态失败，processing: ${processing} waiting ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
           )
         }
 

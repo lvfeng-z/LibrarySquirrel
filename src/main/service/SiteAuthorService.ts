@@ -26,12 +26,12 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async saveOrUpdateBySiteAuthorId(siteAuthor: SiteAuthor): Promise<number> {
     if (isNullish(siteAuthor.siteId)) {
-      const msg = '保存作品时，作品的站点id意外为空'
+      const msg = '保存作品失败，作品的站点id意外为空'
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
     } else if (isNullish(siteAuthor.siteAuthorId)) {
-      const msg = '保存作品时，站点作者的id意外为空'
-      LogUtil.error('SiteAuthorService', '保存作品时，站点作者的id意外为空')
+      const msg = '保存作品失败，站点作者的id意外为空'
+      LogUtil.error('SiteAuthorService', '保存作品失败，站点作者的id意外为空')
       throw new Error(msg)
     } else {
       const oldSiteAuthor = await this.getBySiteAuthorId(siteAuthor.siteAuthorId, siteAuthor.siteId)
@@ -105,7 +105,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return true
       }
     } else {
-      LogUtil.error('SiteAuthorService', '站点作者绑定在本地作者上时，localAuthorId意外为undefined')
+      LogUtil.error('SiteAuthorService', '站点作者绑定在本地作者上失败，localAuthorId意外为undefined')
       return false
     }
   }

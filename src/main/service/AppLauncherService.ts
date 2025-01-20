@@ -34,7 +34,7 @@ export default class AppLauncherService {
           }
         })
         .catch((err) => {
-          console.error('打开图片时出错:', err)
+          console.error('打开图片失败:', err)
         })
     }
   }

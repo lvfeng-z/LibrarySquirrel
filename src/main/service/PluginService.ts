@@ -39,7 +39,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
 
     const plugin = await this.dao.getById(id)
     if (isNullish(plugin)) {
-      const msg = `加载插件时出错，id: ${id}不可用`
+      const msg = `加载插件失败，id: ${id}不可用`
       LogUtil.error('PluginService', msg)
       throw new Error(msg)
     } else {
