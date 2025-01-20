@@ -21,6 +21,11 @@ import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
 import Task from '@renderer/model/main/entity/Task.ts'
+import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
+import Site from '@renderer/model/main/entity/Site.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
+import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
+import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 
 // onMounted
 onMounted(() => {
@@ -30,6 +35,7 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
+  siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
   taskCreateTask: window.api.taskCreateTask,
   taskStartTask: window.api.taskStartTaskTree,
   taskRetryTask: window.api.taskRetryTaskTree,
@@ -76,7 +82,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickToEdit: true,
-    name: 'siteDomain',
+    name: 'siteName',
     label: '站点',
     hide: false,
     width: 150,
@@ -158,9 +164,11 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     inputSpan: 13
   }),
   new InputBox({
-    name: 'siteDomain',
-    type: 'text',
-    placeholder: '输入站点的名称查询',
+    name: 'siteId',
+    type: 'select',
+    placeholder: '选择站点',
+    useLoad: true,
+    load: requestSiteQuerySelectItemPage,
     inputSpan: 4
   }),
   new InputBox({
@@ -212,6 +220,20 @@ const dialogData: Ref<UnwrapRef<TaskDTO>> = ref(new TaskDTO())
 const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点资源的url
 const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
+// 请求站点分页列表的函数
+async function requestSiteQuerySelectItemPage(query: string) {
+  const sitePage: Page<SiteQueryDTO, Site> = new Page()
+  if (StringUtil.isNotBlank(query)) {
+    sitePage.query = { siteName: query }
+  }
+  const response = await apis.siteQuerySelectItemPage(sitePage)
+  if (ApiUtil.check(response)) {
+    const newSitePage = ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
+    return newSitePage.data as TreeSelectNode[]
+  } else {
+    return []
+  }
+}
 
 // 方法
 // 从本地路径导入

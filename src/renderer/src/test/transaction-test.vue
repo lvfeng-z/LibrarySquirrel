@@ -35,7 +35,7 @@ function saveWorks() {
       <el-row>
         <el-col>
           <el-form-item label="站点域名">
-            <el-input v-model="site.siteDomain"></el-input>
+            <el-input v-model="site.id"></el-input>
           </el-form-item>
         </el-col>
         <el-col>

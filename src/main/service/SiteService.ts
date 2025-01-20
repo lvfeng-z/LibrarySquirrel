@@ -8,6 +8,7 @@ import DB from '../database/DB.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
 import SiteDTO from '../model/dto/SiteDTO.js'
 import SiteDomainService from './SiteDomainService.js'
+import SiteDomain from '../model/entity/SiteDomain.js'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DB) {
@@ -83,18 +84,10 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
     const siteDomains = await siteDomainService.listBySiteIds(siteIds)
     if (arrayNotEmpty(siteDomains)) {
       // 生成siteId为键，siteDomain列表为值的Map
-      const siteIdDomainMap = siteDomains.reduce((acc, item) => {
-        // 检查Map中是否已经存在以当前id为键的项
-        if (!acc.has(item.id)) {
-          acc.set(item.id, [])
-        }
-        // 将当前项添加到对应id的数组中
-        acc.get(item.id).push(item)
-        return acc
-      }, new Map())
+      const siteIdDomainMap = Map.groupBy<number, SiteDomain>(siteDomains, (siteDomain) => siteDomain.siteId as number)
       return sites.map((site) => {
         const tempDTO = new SiteDTO(site)
-        tempDTO.domains = siteIdDomainMap.get(site.id)
+        tempDTO.domains = siteIdDomainMap.get(site.id as number)
         return tempDTO
       })
     } else {

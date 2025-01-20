@@ -38,6 +38,7 @@ import TaskProcessingDTO from '../model/dto/TaskProcessingDTO.js'
 import Works from '../model/entity/Works.js'
 import ObjectUtil from '../util/ObjectUtil.js'
 import SiteService from './SiteService.js'
+import Site from '../model/entity/Site.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -155,9 +156,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 用于查询和缓存站点id
     const siteService = new SiteService()
-    const siteCache = new Map<string, number>()
+    const siteCache = new Map<string, Promise<number>>()
     // 给任务赋值的函数
-    const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<undefined> => {
+    const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
       // 校验
       if (StringUtil.isBlank(task.siteDomain)) {
         LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
@@ -168,16 +169,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       task.pid = pid
       task.pluginId = taskPlugin.id as number
       task.pluginInfo = pluginInfo
-      let siteId: number | null | undefined = siteCache.get(task.siteDomain)
+      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
       if (isNullish(siteId)) {
-        const tempSite = await siteService.getByDomain(task.siteDomain)
-        siteId = tempSite?.id
+        const tempSite = siteService.getByDomain(task.siteDomain)
+        siteId = tempSite.then((site) => site?.id)
       }
-      if (isNullish(siteId)) {
+      task.siteId = await siteId
+      if (isNullish(task.siteId)) {
         LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
         return
       }
-      task.siteId = siteId
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -186,7 +187,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           `序列化插件保存的pluginData失败，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
           error
         )
-        return undefined
+        return
       }
     }
 
@@ -194,21 +195,20 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (legalTasks.length === 1) {
       // 如果插件返回的的任务列表长度为1，则不需要创建子任务
       const task = legalTasks[0]
-      assignTask(task)
-      return super.save(task).then(() => 1)
+      await assignTask(task)
+      const singleTask = new Task(task)
+      return super.save(singleTask).then(() => 1)
     } else {
       // 如果插件返回的的任务列表长度大于1，则创建一个父任务，所有的任务作为其子任务
       const tempTask = new Task(parentTask)
-      const pid = (await super.save(tempTask)) as number
+      const pid = await super.save(tempTask)
       parentTask.id = pid
       parentTask.saved = true
 
-      const childTasks = legalTasks
-        .map((task) => {
-          assignTask(task, pid)
-          return task
-        })
-        .filter((childTask) => childTask !== undefined) as Task[]
+      for (const task of legalTasks) {
+        await assignTask(task, pid)
+      }
+      const childTasks = legalTasks.map((taskCreateDTO) => new Task(taskCreateDTO))
 
       return super.saveBatch(childTasks)
     }
@@ -240,7 +240,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       // 用于查询和缓存站点id
       const siteService = new SiteService()
-      const siteCache = new Map<string, number>()
+      const siteCache = new Map<string, Promise<number>>()
       // data事件处理函数
       createTaskStream.on('data', async (chunk: TaskCreateDTO) => {
         const task = new TaskCreateDTO(chunk)
@@ -266,16 +266,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         task.status = TaskStatusEnum.CREATED
         task.isCollection = false
         task.pid = parentTask.id as number
-        let siteId: number | null | undefined = siteCache.get(task.siteDomain)
+        let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
         if (isNullish(siteId)) {
-          const tempSite = await siteService.getByDomain(task.siteDomain)
-          siteId = tempSite?.id
+          const tempSite = siteService.getByDomain(task.siteDomain)
+          siteId = tempSite.then((site) => site?.id)
         }
+        task.siteId = await siteId
         if (isNullish(siteId)) {
           LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
           return
         }
-        task.siteId = siteId
 
         // 将任务添加到队列
         taskQueue.push(task)
@@ -870,10 +870,73 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const resultPage = sourcePage.transform<TaskProcessingDTO>()
     const tasks = sourcePage.data
     if (notNullish(tasks) && tasks.length > 0) {
+      // 查询站点信息
+      const siteIds = tasks.map((tempTask) => tempTask.siteId).filter(notNullish)
+      let idSiteMap: Map<number, Site[]>
+      if (arrayNotEmpty(siteIds)) {
+        const siteService = new SiteService()
+        const sites = await siteService.listByIds(siteIds)
+        idSiteMap = Map.groupBy<number, Site>(sites, (site) => site.id as number)
+      }
       resultPage.data = tasks.map((task) => {
         const dto = new TaskProcessingDTO(task)
         dto.hasChildren = dto.isCollection
         dto.children = []
+        // 写入站点名称
+        if (notNullish(idSiteMap)) {
+          const tempSites = idSiteMap.get(task.siteId as number)
+          dto.siteName = tempSites?.[0].siteName
+        }
+        return dto
+      })
+    }
+    return resultPage
+  }
+
+  /**
+   * 获取父任务的子任务
+   * @param pid
+   */
+  public listChildrenTask(pid: number): Promise<Task[]> {
+    const query = new TaskQueryDTO()
+    query.pid = pid
+    return this.dao.list(query)
+  }
+
+  /**
+   * 分页查询父任务的子任务
+   * @param page
+   */
+  public async queryChildrenTaskPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
+    page = new Page(page)
+    if (notNullish(page.query)) {
+      page.query.operators = {
+        ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
+        ...page.query.operators
+      }
+      page.query.isCollection = false
+    }
+    const sourcePage = await super.queryPage(page)
+    const resultPage = sourcePage.transform<TaskProcessingDTO>()
+    const tasks = sourcePage.data
+    if (notNullish(tasks) && tasks.length > 0) {
+      // 查询站点信息
+      const siteIds = tasks.map((tempTask) => tempTask.siteId).filter(notNullish)
+      let idSiteMap: Map<number, Site[]>
+      if (arrayNotEmpty(siteIds)) {
+        const siteService = new SiteService()
+        const sites = await siteService.listByIds(siteIds)
+        idSiteMap = Map.groupBy<number, Site>(sites, (site) => site.id as number)
+      }
+      resultPage.data = tasks.map((task) => {
+        const dto = new TaskProcessingDTO(task)
+        dto.hasChildren = dto.isCollection
+        dto.children = []
+        // 写入站点名称
+        if (notNullish(idSiteMap)) {
+          const tempSites = idSiteMap.get(task.siteId as number)
+          dto.siteName = tempSites?.[0].siteName
+        }
         return dto
       })
     }
@@ -930,43 +993,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       resultPage.data = tasks
     }
 
-    return resultPage
-  }
-
-  /**
-   * 获取父任务的子任务
-   * @param pid
-   */
-  public listChildrenTask(pid: number): Promise<Task[]> {
-    const query = new TaskQueryDTO()
-    query.pid = pid
-    return this.dao.list(query)
-  }
-
-  /**
-   * 分页查询父任务的子任务
-   * @param page
-   */
-  public async queryChildrenTaskPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
-    page = new Page(page)
-    if (notNullish(page.query)) {
-      page.query.operators = {
-        ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
-        ...page.query.operators
-      }
-      page.query.isCollection = false
-    }
-    const sourcePage = await super.queryPage(page)
-    const resultPage = sourcePage.transform<TaskProcessingDTO>()
-    const tasks = sourcePage.data
-    if (notNullish(tasks) && tasks.length > 0) {
-      resultPage.data = tasks.map((task) => {
-        const dto = new TaskProcessingDTO(task)
-        dto.hasChildren = dto.isCollection
-        dto.children = []
-        return dto
-      })
-    }
     return resultPage
   }
 
