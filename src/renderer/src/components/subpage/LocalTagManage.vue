@@ -52,11 +52,11 @@ const siteTagExchangeBox = ref()
 // localTagDialog的组件实例
 const localTagDialog = ref()
 // 被改变的数据行
-const changedRows: Ref<UnwrapRef<object[]>> = ref([])
+const changedRows: Ref<UnwrapRef<LocalTag[]>> = ref([])
 // 被选中的本地标签
 const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地标签SearchTable的operationButton
-const operationButton: OperationItem[] = [
+const operationButton: OperationItem<LocalTag>[] = [
   {
     label: '保存',
     icon: 'Checked',

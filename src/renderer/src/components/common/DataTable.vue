@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="OpParam">
 import { onBeforeMount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
@@ -17,7 +17,7 @@ const props = withDefaults(
     thead: Thead[] // 表头信息
     keyOfData: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
-    operationButton?: OperationItem[] // 操作列按钮的文本、图标和代号
+    operationButton?: OperationItem<OpParam>[] // 操作列按钮的文本、图标和代号
     customOperationButton?: boolean // 是否使用自定义操作栏
     treeData?: boolean // 是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
@@ -70,7 +70,7 @@ function handleRowChange(row: object) {
   emits('rowChanged', row)
 }
 // 获取操作栏按钮
-function getOperateButton(row): OperationItem {
+function getOperateButton(row): OperationItem<OpParam> {
   if (props.operationButton !== undefined && props.operationButton.length > 0) {
     return props.operationButton.filter((item) => (item.rule === undefined ? true : item.rule(row)))[0]
   } else {
@@ -78,7 +78,7 @@ function getOperateButton(row): OperationItem {
   }
 }
 // 获取操作栏下拉按钮
-function getOperateDropDownButton(row): OperationItem[] {
+function getOperateDropDownButton(row): OperationItem<OpParam>[] {
   if (props.operationButton !== undefined && props.operationButton.length > 0) {
     return props.operationButton.filter((item) => (item.rule === undefined ? true : item.rule(row))).slice(1)
   } else {

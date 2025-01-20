@@ -55,7 +55,7 @@ const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地作者
 const localAuthorSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
 // 本地作者SearchTable的operationButton
-const operationButton: OperationItem[] = [
+const operationButton: OperationItem<LocalAuthor>[] = [
   {
     label: '保存',
     icon: 'Checked',

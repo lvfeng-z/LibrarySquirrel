@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="Query extends BaseQueryDTO">
+<script setup lang="ts" generic="Query extends BaseQueryDTO, OpParam">
 import SearchToolbar from './SearchToolbar.vue'
 import { ref } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
@@ -25,7 +25,7 @@ const props = withDefaults(
     keyOfData: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     thead: Thead[] // 表头
-    operationButton?: OperationItem[] // 数据行的操作按钮
+    operationButton?: OperationItem<OpParam>[] // 数据行的操作按钮
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
