@@ -8,18 +8,16 @@ export default class Site extends BaseEntity {
    * 主键
    */
   id: number | undefined | null
+
   /**
    * 站点名称
    */
   siteName: string | undefined | null
+
   /**
-   * 站点域名
+   * 站点描述
    */
-  siteDomain: string | undefined | null
-  /**
-   * 站点主页
-   */
-  siteHomepage: string | undefined | null
+  siteDescription: string | undefined | null
 
   /**
    * 排序号
@@ -27,19 +25,16 @@ export default class Site extends BaseEntity {
   sortNum: number | undefined | null
 
   constructor(site?: Site) {
+    super(site)
     if (site === undefined) {
-      super()
       this.id = undefined
       this.siteName = undefined
-      this.siteDomain = undefined
-      this.siteHomepage = undefined
+      this.siteDescription = undefined
       this.sortNum = undefined
     } else {
-      super(site)
       this.id = site.id
       this.siteName = site.siteName
-      this.siteDomain = site.siteDomain
-      this.siteHomepage = site.siteHomepage
+      this.siteDescription = undefined
       this.sortNum = site.sortNum
     }
   }

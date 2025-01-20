@@ -1,3 +1,5 @@
+import LogUtil from './LogUtil.js'
+
 /**
  * 去除值为undefined的属性
  * @param obj
@@ -51,7 +53,7 @@ function alignProperties(objects: object[], fill: unknown) {
 }
 
 /**
- * 合并两个对象的属性，优先选择非undefined的属性，若均为非undefined，则选择首个入参（source）的属性
+ * 合并两个对象的属性，优先选择非undefined的属性，若均为非undefined，则选择首个入参（obj1）的属性
  * @param obj1
  * @param obj2
  */
@@ -74,7 +76,7 @@ function mergeObjects(obj1: object, obj2: object): object {
     else if (obj1Own) {
       merged[key] = obj1[key]
     }
-    // 同理，如果obj2有这个key而obj1没有，直接取obj2的值
+    // 如果obj2有这个key而obj1没有，直接取obj2的值
     else if (obj2Own) {
       merged[key] = obj2[key]
     }
@@ -83,9 +85,29 @@ function mergeObjects(obj1: object, obj2: object): object {
   return merged
 }
 
+/**
+ * 将指定属性从json字符串解析为指定对象
+ * @param source
+ * @param properties
+ * @constructor
+ */
+export function ParsePropertyFromJson(source: object, properties: { property: string; constructor: new (arg) => unknown }[]) {
+  for (const property of properties) {
+    if (typeof source[property.property] === 'string') {
+      try {
+        const tempObj = JSON.parse(source[property.property])
+        source[property.property] = new property.constructor(tempObj)
+      } catch (error) {
+        LogUtil.error('ObjectUtil', error)
+      }
+    }
+  }
+}
+
 export default {
   nonUndefinedValue,
   undefinedToNull,
   alignProperties,
-  mergeObjects
+  mergeObjects,
+  ParsePropertyFromJson
 }
