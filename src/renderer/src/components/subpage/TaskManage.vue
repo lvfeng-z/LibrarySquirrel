@@ -49,8 +49,6 @@ const apis = {
 }
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
-// taskDialog的组件实例
-const taskDialogRef = ref()
 // 任务SearchTable的数据
 const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // 表头
@@ -216,6 +214,8 @@ let refreshing: boolean = false
 const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 // 当前dialog绑定数据
 const dialogData: Ref<UnwrapRef<TaskDTO>> = ref(new TaskDTO())
+// 本地标签的对话框开关
+const taskDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点下载dialog的开关
 const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点资源的url
@@ -334,7 +334,7 @@ function handleOperationButtonClicked(row: TaskDTO, code: TaskOperationCodeEnum)
   switch (code) {
     case TaskOperationCodeEnum.VIEW:
       dialogData.value = row
-      taskDialogRef.value.handleDialog(true)
+      taskDialogState.value = true
       break
     case TaskOperationCodeEnum.START:
       startTask(row, false)
@@ -491,7 +491,14 @@ async function deleteTask(ids: number[]) {
       </search-table>
     </div>
     <template #dialog>
-      <task-dialog ref="taskDialogRef" :mode="DialogMode.VIEW" :form-data="dialogData" align-center destroy-on-close width="90%" />
+      <task-dialog
+        v-model:state="taskDialogState"
+        v-model:form-data="dialogData"
+        :mode="DialogMode.VIEW"
+        align-center
+        destroy-on-close
+        width="90%"
+      />
       <el-dialog v-model="siteDownloadState" center width="80%" align-center destroy-on-close>
         <el-input v-model="siteSourceUrl" type="textarea" :rows="6" placeholder="输入url"></el-input>
         <template #footer>

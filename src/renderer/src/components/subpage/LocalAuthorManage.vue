@@ -23,6 +23,7 @@ import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryD
 import { isNullish } from '@renderer/utils/CommonUtil.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import { ElMessage } from 'element-plus'
 
 onMounted(() => {
   if (isNullish(page.value.query)) {
@@ -46,14 +47,12 @@ const apis = {
 const localAuthorSearchTable = ref()
 // siteAuthorExchangeBox的组件实例
 const siteAuthorExchangeBox = ref()
-// localAuthorDialog的组件实例
-const localAuthorDialog = ref()
 // 本地作者SearchTable的分页
 const page: Ref<UnwrapRef<Page<LocalAuthorQueryDTO, LocalAuthor>>> = ref(new Page<LocalAuthorQueryDTO, LocalAuthor>())
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 被选中的本地作者
-const localAuthorSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
+const localAuthorSelected: Ref<UnwrapRef<LocalAuthor>> = ref(new LocalAuthor())
 // 本地作者SearchTable的operationButton
 const operationButton: OperationItem<LocalAuthor>[] = [
   {
@@ -126,6 +125,10 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
 ])
 // 本地作者弹窗的mode
 const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+// 本地标签的对话框开关
+const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
+// 本地标签对话框的数据
+const dialogData: Ref<UnwrapRef<LocalAuthor>> = ref(new LocalAuthor())
 // 站点作者ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
@@ -182,21 +185,23 @@ async function requestSiteQuerySelectItemPage(query: string) {
 // 处理本地作者新增按钮点击事件
 async function handleCreateButtonClicked() {
   localAuthorDialogMode.value = DialogMode.NEW
-  await localAuthorDialog.value.handleDialog(true)
+  dialogState.value = true
 }
 // 处理本地作者数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse) {
+function handleRowButtonClicked(op: DataTableOperationResponse<LocalAuthor>) {
   switch (op.code) {
     case 'save':
-      saveRowEdit(op.data as LocalAuthor)
+      saveRowEdit(op.data)
       break
     case DialogMode.VIEW:
       localAuthorDialogMode.value = DialogMode.VIEW
-      localAuthorDialog.value.handleDialog(true, op.data)
+      dialogData.value = op.data
+      dialogState.value = true
       break
     case DialogMode.EDIT:
       localAuthorDialogMode.value = DialogMode.EDIT
-      localAuthorDialog.value.handleDialog(true, op.data)
+      dialogData.value = op.data
+      dialogState.value = true
       break
     case 'delete':
       deleteLocalAuthor(op.id)
@@ -206,14 +211,12 @@ function handleRowButtonClicked(op: DataTableOperationResponse) {
   }
 }
 // 处理被选中的本地作者改变的事件
-async function handleLocalAuthorSelectionChange(selections: object[]) {
+async function handleLocalAuthorSelectionChange(selections: LocalAuthor[]) {
   if (selections.length > 0) {
     localAuthorSelected.value = selections[0]
     // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
     await nextTick()
     siteAuthorExchangeBox.value.refreshData()
-  } else {
-    localAuthorSelected.value = {}
   }
 }
 // 处理本地作者弹窗请求成功事件
@@ -241,10 +244,17 @@ async function deleteLocalAuthor(id: string) {
 }
 // 处理站点作者ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
+  if (isNullish(localAuthorSelected.value)) {
+    ElMessage({
+      message: '确认修改时必须选中一个本地作者',
+      type: 'warning'
+    })
+    return
+  }
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
     const boundIds = bound.map((item) => item.value)
-    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value['id'], boundIds)
+    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value.id, boundIds)
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }
@@ -317,13 +327,14 @@ async function requestSiteAuthorSelectItemPage(page: IPage<BaseQueryDTO, SelectI
       </div>
     </template>
     <template #dialog>
-      <LocalAuthorDialog
-        ref="localAuthorDialog"
+      <local-author-dialog
         align-center
         destroy-on-close
+        v-model:form-data="dialogData"
+        v-model:state="dialogState"
         :mode="localAuthorDialogMode"
         @request-success="handleDialogRequestSuccess"
-      ></LocalAuthorDialog>
+      />
     </template>
   </base-subpage>
 </template>

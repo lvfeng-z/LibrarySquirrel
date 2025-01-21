@@ -1,8 +1,8 @@
 // DataTable操作点击返回类型
-interface DataTableOperationResponse {
+interface DataTableOperationResponse<T> {
   id: string
   code: string
-  data?: object
+  data: T
 }
 
 export default DataTableOperationResponse

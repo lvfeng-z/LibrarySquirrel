@@ -10,13 +10,9 @@ const props = defineProps<{
 
 // model
 // 表单数据
-const formData = defineModel<object | undefined>('formData', {
-  default: () => undefined
-})
+const formData = defineModel<object>('formData', { required: true })
 // 弹窗开关
-const state = defineModel<boolean>('state', {
-  default: () => false
-})
+const state = defineModel<boolean>('state', { required: true })
 
 // 事件
 const emits = defineEmits(['saveButtonClicked', 'cancelButtonClicked'])

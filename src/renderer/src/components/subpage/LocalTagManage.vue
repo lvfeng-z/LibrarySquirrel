@@ -23,6 +23,7 @@ import { isNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import { ElMessage } from 'element-plus'
 
 // onMounted
 onMounted(() => {
@@ -49,12 +50,10 @@ const apis = {
 const localTagSearchTable = ref()
 // siteTagExchangeBox的组件实例
 const siteTagExchangeBox = ref()
-// localTagDialog的组件实例
-const localTagDialog = ref()
 // 被改变的数据行
 const changedRows: Ref<UnwrapRef<LocalTag[]>> = ref([])
 // 被选中的本地标签
-const localTagSelected: Ref<UnwrapRef<{ id?: number }>> = ref({})
+const localTagSelected: Ref<UnwrapRef<LocalTag>> = ref(new LocalTag())
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem<LocalTag>[] = [
   {
@@ -141,6 +140,10 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
 const page: Ref<UnwrapRef<Page<LocalTagQueryDTO, LocalTag>>> = ref(new Page<LocalTagQueryDTO, LocalTag>())
 // 本地标签弹窗的mode
 const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+// 本地标签的对话框开关
+const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
+// 本地标签对话框的数据
+const dialogData: Ref<UnwrapRef<LocalTag>> = ref(new LocalTag())
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
@@ -207,21 +210,23 @@ async function requestSiteQuerySelectItemPage(query: string) {
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
-  await localTagDialog.value.handleDialog(true)
+  dialogState.value = true
 }
 // 处理本地标签数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse) {
+function handleRowButtonClicked(op: DataTableOperationResponse<LocalTag>) {
   switch (op.code) {
     case 'save':
       saveRowEdit(op.data as LocalTag)
       break
     case DialogMode.VIEW:
       localTagDialogMode.value = DialogMode.VIEW
-      localTagDialog.value.handleDialog(true, op.data)
+      dialogData.value = op.data
+      dialogState.value = true
       break
     case DialogMode.EDIT:
       localTagDialogMode.value = DialogMode.EDIT
-      localTagDialog.value.handleDialog(true, op.data)
+      dialogData.value = op.data
+      dialogState.value = true
       break
     case 'delete':
       deleteLocalTag(op.id)
@@ -231,12 +236,10 @@ function handleRowButtonClicked(op: DataTableOperationResponse) {
   }
 }
 // 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: object[]) {
+async function handleLocalTagSelectionChange(selections: LocalTag[]) {
   if (selections.length > 0) {
     localTagSelected.value = selections[0]
     siteTagExchangeBox.value.refreshData()
-  } else {
-    localTagSelected.value = {}
   }
 }
 // 处理本地标签弹窗请求成功事件
@@ -264,10 +267,17 @@ async function deleteLocalTag(id: string) {
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
+  if (isNullish(localTagSelected.value)) {
+    ElMessage({
+      message: '确认修改时必须选中一个本地标签',
+      type: 'warning'
+    })
+    return
+  }
   let upperResponse: ApiResponse
   if (bound && bound.length > 0) {
     const boundIds = bound.map((item) => item.value)
-    upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value['id'], boundIds)
+    upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value.id, boundIds)
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }
@@ -329,12 +339,12 @@ async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
             :upper-load="requestSiteTagSelectItemPage"
-            :upper-load-fixed-params="{ localTagId: localTagSelected.id, boundOnLocalTagId: true }"
+            :upper-load-fixed-params="{ localTagId: localTagSelected?.id, boundOnLocalTagId: true }"
             lower-title="可绑定站点标签"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="requestSiteTagSelectItemPage"
-            :lower-load-fixed-params="{ localTagId: localTagSelected.id, boundOnLocalTagId: false }"
+            :lower-load-fixed-params="{ localTagId: localTagSelected?.id, boundOnLocalTagId: false }"
             required-fixed-params="localTagId"
             @exchange-confirm="handleExchangeBoxConfirm"
           />
@@ -342,13 +352,14 @@ async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem
       </div>
     </template>
     <template #dialog>
-      <LocalTagDialog
-        ref="localTagDialog"
+      <local-tag-dialog
         align-center
         destroy-on-close
+        v-model:form-data="dialogData"
+        v-model:state="dialogState"
         :mode="localTagDialogMode"
         @request-success="handleDialogRequestSuccess"
-      ></LocalTagDialog>
+      />
     </template>
   </base-subpage>
 </template>

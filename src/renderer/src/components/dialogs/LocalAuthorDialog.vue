@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Ref, ref, UnwrapRef } from 'vue'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
@@ -18,24 +17,16 @@ const props = withDefaults(
   }
 )
 
+// model
+// 表单数据
+const formData = defineModel<LocalAuthor>('formData', { required: true })
+// 弹窗开关
+const state = defineModel<boolean>('state', { required: true })
+
 // 事件
 const emits = defineEmits(['requestSuccess'])
 
-// 暴露
-defineExpose({
-  handleDialog
-})
-
 // 变量
-// 弹窗开关
-const state = ref(false)
-// 表单数据
-const formData: Ref<UnwrapRef<LocalAuthor>> = ref({
-  id: undefined,
-  localAuthorName: undefined,
-  createTime: undefined,
-  updateTime: undefined
-})
 // 接口
 const apis = {
   localAuthorSave: window.api.localAuthorSave,
@@ -52,7 +43,7 @@ async function handleSaveButtonClicked() {
       const response = await apis.localAuthorSave(tempFormData)
       if (ApiUtil.check(response)) {
         emits('requestSuccess')
-        await handleDialog(false)
+        state.value = false
       }
       ApiUtil.msg(response)
     }
@@ -61,32 +52,10 @@ async function handleSaveButtonClicked() {
       const response = await apis.localAuthorUpdateById(tempFormData)
       if (ApiUtil.check(response)) {
         emits('requestSuccess')
-        await handleDialog(false)
+        state.value = false
       }
       ApiUtil.msg(response)
     }
-  }
-}
-// 开启、关闭弹窗
-async function handleDialog(newState: boolean, newFormData?: LocalAuthor) {
-  if (newState) {
-    if (newFormData) {
-      formData.value = newFormData
-    } else {
-      clearFormData()
-    }
-  } else {
-    clearFormData()
-  }
-  state.value = newState
-}
-// innerFormData置空
-function clearFormData() {
-  formData.value = {
-    id: undefined,
-    localAuthorName: undefined,
-    createTime: undefined,
-    updateTime: undefined
   }
 }
 </script>
@@ -96,9 +65,8 @@ function clearFormData() {
     v-model:form-data="formData"
     v-model:state="state"
     :mode="props.mode"
-    @close="handleDialog(false)"
     @save-button-clicked="handleSaveButtonClicked"
-    @cancel-button-clicked="handleDialog(false)"
+    @cancel-button-clicked="state = false"
   >
     <template #form>
       <el-row>

@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="Query extends BaseQueryDTO, OpParam">
+<script setup lang="ts" generic="Query extends BaseQueryDTO, Data, OpParam">
 import SearchToolbar from './SearchToolbar.vue'
 import { ref } from 'vue'
 import { InputBox } from '../../model/util/InputBox'
@@ -30,7 +30,7 @@ const props = withDefaults(
     treeData?: boolean //是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
-    search: (page: Page<Query, object>) => Promise<Page<Query, object> | undefined> // 查询函数
+    search: (page: Page<Query, Data>) => Promise<Page<Query, Data> | undefined> // 查询函数
     fixedParam?: Record<string, unknown> // 固定参数
     updateLoad?: (ids: (number | string)[]) => Promise<object[] | undefined> // 更新数据的函数
     updateProperties?: string[] // 要更新的属性名
@@ -46,10 +46,10 @@ const props = withDefaults(
 
 // model
 // DataTable的数据
-const dataList = defineModel<object[]>('dataList', { default: [], required: false })
+const dataList = defineModel<Data[]>('dataList', { default: [], required: false })
 // 分页查询配置
-const page = defineModel<Page<Query, object>>('page', {
-  default: new Page<Query, object>(),
+const page = defineModel<Page<Query, Data>>('page', {
+  default: new Page<Query, Data>(),
   required: true
 })
 // 已编辑的行
@@ -108,7 +108,7 @@ async function handleSearchButtonClicked() {
     ...searchToolbarParams.value,
     ...props.fixedParam
   } as Query
-  const newPage = await props.search(tempPage)
+  const newPage: Page<Query, Data> | undefined = await props.search(tempPage)
   if (notNullish(newPage)) {
     dataList.value = newPage.data === undefined ? [] : newPage.data
     page.value.dataCount = newPage.dataCount
@@ -126,7 +126,7 @@ async function handleSearchButtonClicked() {
   }
 }
 // 处理DataTable按钮点击
-function handleDataTableButtonClicked(operationResponse: DataTableOperationResponse) {
+function handleDataTableButtonClicked(operationResponse: DataTableOperationResponse<Data>) {
   emits('rowButtonClicked', operationResponse)
 }
 // 处理DataTable选中项改变事件
@@ -147,7 +147,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
   const idsStr: (number | string)[] = waitingUpdateIds.map((id: number | string) => (typeof id === 'number' ? String(id) : id))
 
   // 根级节点列入待刷新数组
-  let waitingUpdateList: object[]
+  let waitingUpdateList: Data[]
   waitingUpdateList = dataList.value.filter((data) => idsStr.includes(String(data[props.keyOfData])))
 
   // 根据treeData确认是否包含哪些下级数据
@@ -169,7 +169,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
         }
       }
     }
-    waitingUpdateList = tiledWaitingUpdate
+    waitingUpdateList = tiledWaitingUpdate as Data[]
   } else if (props.treeData) {
     // 只更waitingUpdateIds包含的下级数据
     // 根级节点id列表
@@ -180,7 +180,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     // 利用树形工具找到叶子节点，列入waitingUpdateList
     const tempRoot = { id: undefined, pid: undefined, children: dataList.value as TreeNode[] }
     for (const id of waitingUpdateChildIds) {
-      const child = getNode(tempRoot, id)
+      const child = getNode(tempRoot, id) as Data
       if (notNullish(child)) {
         waitingUpdateList.push(child)
       }

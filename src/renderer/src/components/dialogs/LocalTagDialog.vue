@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, Ref, ref, UnwrapRef } from 'vue'
+import { Ref, ref, UnwrapRef } from 'vue'
 import LocalTag from '../../model/main/entity/LocalTag.ts'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
@@ -20,34 +20,25 @@ const props = withDefaults(
   }
 )
 
+// model
+// 表单数据
+const formData = defineModel<LocalTag>('formData', { required: true })
+// 弹窗开关
+const state = defineModel<boolean>('state', { required: true })
+
 // 事件
 const emits = defineEmits(['requestSuccess'])
 
-// 暴露
-defineExpose({
-  handleDialog
-})
-
 // 变量
-// 弹窗开关
-const state = ref(false)
-// 表单数据
-const formData: Ref<UnwrapRef<LocalTag>> = ref({
-  id: undefined,
-  baseLocalTagId: undefined,
-  localTagName: undefined,
-  createTime: undefined,
-  updateTime: undefined
-})
-// 基础标签选择框数据
-const baseTagSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 // 接口
-const apis = reactive({
+const apis = {
   localTagSave: window.api.localTagSave,
   localTagUpdateById: window.api.localTagUpdateById,
   localTagGetTree: window.api.localTagGetTree,
   localTagGetById: window.api.localTagGetById
-})
+}
+// 基础标签选择框数据
+const baseTagSelectData: Ref<UnwrapRef<TreeSelectNode[]>> = ref([])
 
 // 方法
 // 处理保存按钮点击事件
@@ -58,7 +49,7 @@ async function handleSaveButtonClicked() {
       const response = await apis.localTagSave(tempFormData)
       if (ApiUtil.check(response)) {
         emits('requestSuccess')
-        await handleDialog(false)
+        state.value = false
       }
       ApiUtil.msg(response)
     }
@@ -67,55 +58,30 @@ async function handleSaveButtonClicked() {
       const response = await apis.localTagUpdateById(tempFormData)
       if (ApiUtil.check(response)) {
         emits('requestSuccess')
-        await handleDialog(false)
+        state.value = false
       }
       ApiUtil.msg(response)
     }
   }
 }
-// 开启、关闭弹窗
-async function handleDialog(newState: boolean, newFormData?: LocalTag) {
-  if (newState) {
-    if (newFormData) {
-      formData.value = newFormData
-      // // 请求标签详情接口
-      // const localTagInfoResponse = await apis.localTagGetById(newFormData.id)
-      // if (apiResponseCheck(localTagInfoResponse)) {
-      //   formData.value = apiResponseGetData(localTagInfoResponse) as LocalTag
-      // }
-    } else {
-      clearFormData()
-    }
-    // 请求本地标签树接口
-    const baseTagTreeResponse = await apis.localTagGetTree(0)
-    if (ApiUtil.check(baseTagTreeResponse)) {
-      // 创建临时的根节点，便于遍历整个树
-      let tempNode = new TreeSelectNode()
-      tempNode.children = ApiUtil.data(baseTagTreeResponse) as TreeSelectNode[]
-      // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
-      tempNode = new TreeSelectNode(tempNode)
-      // 绑定到临时根节点的子结点列表上
-      baseTagSelectData.value = tempNode.children as TreeSelectNode[]
+// 处理对话框开启事件
+async function handleOpen() {
+  // 请求本地标签树接口
+  const baseTagTreeResponse = await apis.localTagGetTree(0)
+  if (ApiUtil.check(baseTagTreeResponse)) {
+    // 创建临时的根节点，便于遍历整个树
+    let tempNode = new TreeSelectNode()
+    tempNode.children = ApiUtil.data(baseTagTreeResponse) as TreeSelectNode[]
+    // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
+    tempNode = new TreeSelectNode(tempNode)
+    // 绑定到临时根节点的子结点列表上
+    baseTagSelectData.value = tempNode.children as TreeSelectNode[]
 
-      // 查询当前标签对应的节点，并禁用
-      const self = getNode(tempNode, formData.value.id as number)
-      if (self !== undefined) {
-        self.disabled = true
-      }
+    // 查询当前标签对应的节点，并禁用
+    const self = getNode(tempNode, formData.value.id as number)
+    if (self !== undefined) {
+      self.disabled = true
     }
-  } else {
-    clearFormData()
-  }
-  state.value = newState
-}
-// innerFormData置空
-function clearFormData() {
-  formData.value = {
-    id: undefined,
-    baseLocalTagId: undefined,
-    localTagName: undefined,
-    createTime: undefined,
-    updateTime: undefined
   }
 }
 </script>
@@ -125,9 +91,9 @@ function clearFormData() {
     v-model:form-data="formData"
     v-model:state="state"
     :mode="props.mode"
-    @close="handleDialog(false)"
+    @open="handleOpen"
     @save-button-clicked="handleSaveButtonClicked"
-    @cancel-button-clicked="handleDialog(false)"
+    @cancel-button-clicked="state = false"
   >
     <template #form>
       <el-row>

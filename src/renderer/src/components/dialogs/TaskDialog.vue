@@ -25,12 +25,10 @@ const props = defineProps<{
 }>()
 
 // model
+// 表单数据
 const formData: Ref<UnwrapRef<TaskDTO>> = defineModel('formData', { type: Object, required: true })
-
-// 暴露
-defineExpose({
-  handleDialog
-})
+// 弹窗开关
+const state = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -53,8 +51,6 @@ const parentTaskInfo = ref()
 const children: Ref<UnwrapRef<TaskDTO[]>> = ref([])
 // 列表高度
 const heightForSearchTable: Ref<UnwrapRef<number>> = ref(0)
-// 弹窗开关
-const state = ref(false)
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
@@ -201,8 +197,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   }
 }
 // 开关dialog
-function handleDialog(newState: boolean) {
-  state.value = newState
+function handleOpen() {
   nextTick(() => {
     const baseDialogHeader = baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
     const baseDialogFooter = baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
@@ -336,7 +331,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <form-dialog ref="baseDialog" v-model:form-data="formData" v-model:state="state" :mode="props.mode">
+  <form-dialog ref="baseDialog" v-model:form-data="formData" v-model:state="state" :mode="props.mode" @open="handleOpen">
     <template #form>
       <div style="height: 100%; display: flex; flex-direction: column">
         <div ref="parentTaskInfo">

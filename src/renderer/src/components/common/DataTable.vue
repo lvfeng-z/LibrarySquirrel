@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="OpParam">
+<script setup lang="ts" generic="Data, OpParam">
 import { onBeforeMount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
@@ -62,7 +62,7 @@ function handleSelectionChange(event: object[]) {
   emits('selectionChange', selectDataList.value)
 }
 // 处理操作按钮点击事件
-function handleRowButtonClicked(operationResponse: DataTableOperationResponse) {
+function handleRowButtonClicked(operationResponse: DataTableOperationResponse<Data>) {
   emits('buttonClicked', operationResponse)
 }
 // 处理行数据变化
