@@ -122,8 +122,34 @@ const api = {
   },
 
   // Site
+  siteDeleteById: (args) => {
+    return Electron.ipcRenderer.invoke('site-deleteById', args)
+  },
+  siteQueryPage: (args) => {
+    return Electron.ipcRenderer.invoke('site-queryPage', args)
+  },
   siteQuerySelectItemPage: (args) => {
     return Electron.ipcRenderer.invoke('site-querySelectItemPage', args)
+  },
+  siteSave: (args) => {
+    return Electron.ipcRenderer.invoke('site-save', args)
+  },
+  siteUpdateById: (args) => {
+    return Electron.ipcRenderer.invoke('site-updateById', args)
+  },
+
+  // SiteDomainService
+  siteDomainDeleteById: (args) => {
+    return Electron.ipcRenderer.invoke('siteDomain-deleteById', args)
+  },
+  siteDomainQueryPage: (args) => {
+    return Electron.ipcRenderer.invoke('siteDomain-queryPage', args)
+  },
+  siteDomainSave: (args) => {
+    return Electron.ipcRenderer.invoke('siteDomain-save', args)
+  },
+  siteDomainUpdateById: (args) => {
+    return Electron.ipcRenderer.invoke('siteDomain-updateById', args)
   },
 
   // SiteAuthor

@@ -210,6 +210,7 @@ async function requestSiteQuerySelectItemPage(query: string) {
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
+  dialogData.value = new LocalTag()
   dialogState.value = true
 }
 // 处理本地标签数据行按钮点击事件

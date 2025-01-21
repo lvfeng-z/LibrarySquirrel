@@ -185,6 +185,7 @@ async function requestSiteQuerySelectItemPage(query: string) {
 // 处理本地作者新增按钮点击事件
 async function handleCreateButtonClicked() {
   localAuthorDialogMode.value = DialogMode.NEW
+  dialogData.value = new LocalAuthor()
   dialogState.value = true
 }
 // 处理本地作者数据行按钮点击事件

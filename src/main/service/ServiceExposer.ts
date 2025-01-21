@@ -19,6 +19,9 @@ import { ReWorksTagService } from './ReWorksTagService.js'
 import SearchService from './SearchService.js'
 import AppLauncherService from './AppLauncherService.js'
 import { OriginType } from '../constant/OriginType.js'
+import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.js'
+import Site from '../model/entity/Site.js'
+import SiteDomainService from './SiteDomainService.js'
 
 function exposeService() {
   // test
@@ -294,10 +297,86 @@ function exposeService() {
   })
 
   // SiteService
+  Electron.ipcMain.handle('site-deleteById', async (_event, args) => {
+    const siteService = new SiteService()
+    try {
+      return ApiUtil.response(await siteService.deleteById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('site-queryPage', async (_event, args) => {
+    const siteService = new SiteService()
+    try {
+      args = new Page<SiteQueryDTO, Site>(args)
+      return ApiUtil.response(await siteService.queryPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('site-querySelectItemPage', async (_event, args) => {
     const siteService = new SiteService()
     try {
       return ApiUtil.response(await siteService.querySelectItemPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('site-save', async (_event, args) => {
+    const siteService = new SiteService()
+    try {
+      return ApiUtil.response(await siteService.save(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('site-updateById', async (_event, args) => {
+    const siteService = new SiteService()
+    try {
+      return ApiUtil.response(await siteService.updateById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+
+  // SiteDomainService
+  Electron.ipcMain.handle('siteDomain-deleteById', async (_event, args) => {
+    const siteDomainService = new SiteDomainService()
+    try {
+      return ApiUtil.response(await siteDomainService.deleteById(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('siteDomain-queryPage', async (_event, args) => {
+    const siteDomainService = new SiteDomainService()
+    try {
+      args = new Page<SiteQueryDTO, Site>(args)
+      return ApiUtil.response(await siteDomainService.queryPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('siteDomain-save', async (_event, args) => {
+    const siteDomainService = new SiteDomainService()
+    try {
+      return ApiUtil.response(await siteDomainService.save(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
+  Electron.ipcMain.handle('siteDomain-updateById', async (_event, args) => {
+    const siteDomainService = new SiteDomainService()
+    try {
+      return ApiUtil.response(await siteDomainService.updateById(args))
     } catch (error) {
       LogUtil.error('ServiceExposer', error)
       return ApiUtil.error(String(error))

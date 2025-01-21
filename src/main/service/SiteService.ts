@@ -19,6 +19,24 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * 分页查询SelectItem
    * @param page
    */
+  public async queryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQueryDTO, Site>> {
+    if (isNullish(page)) {
+      page = new Page()
+    }
+    page.query = new SiteQueryDTO(page.query)
+    if (isNullish(page.query.operators)) {
+      page.query.operators = { siteName: Operator.LIKE }
+    }
+    if (!Object.hasOwn(page.query.operators, 'siteName')) {
+      page.query.operators['siteName'] = Operator.LIKE
+    }
+    return this.dao.queryPage(page)
+  }
+
+  /**
+   * 分页查询SelectItem
+   * @param page
+   */
   public async querySelectItemPage(page: Page<SiteQueryDTO, Site>) {
     if (isNullish(page)) {
       page = new Page()

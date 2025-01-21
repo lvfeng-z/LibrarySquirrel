@@ -27,7 +27,6 @@ export default class SiteDomain extends BaseEntity {
   constructor(siteDomain?: SiteDomain) {
     super(siteDomain)
     if (siteDomain === undefined) {
-      super()
       this.id = undefined
       this.siteId = undefined
       this.domain = undefined

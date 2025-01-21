@@ -1,6 +1,6 @@
 import Site from '../entity/Site.js'
 import SiteDomain from '../entity/SiteDomain.js'
-import { isNullish } from '../../util/CommonUtil.js'
+import { notNullish } from '../../util/CommonUtil.js'
 import lodash from 'lodash'
 
 /**
@@ -14,9 +14,7 @@ export default class SiteDTO extends Site {
 
   constructor(site?: Site) {
     super(site)
-    if (isNullish(site)) {
-      this.domains = undefined
-    } else {
+    if (notNullish(site)) {
       lodash.assign(this, lodash.pick(site, ['domains']))
     }
   }

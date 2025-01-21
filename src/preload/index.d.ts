@@ -56,7 +56,17 @@ declare global {
       settingsResetSettings: function
 
       // Site
+      siteDeleteById: function
+      siteQueryPage: function
       siteQuerySelectItemPage: function
+      siteSave: function
+      siteUpdateById: function
+
+      // SiteDomainService
+      siteDomainDeleteById: function
+      siteDomainQueryPage: function
+      siteDomainSave: function
+      siteDomainUpdateById: function
 
       // SiteAuthor
       siteAuthorUpdateBindLocalAuthor: function
