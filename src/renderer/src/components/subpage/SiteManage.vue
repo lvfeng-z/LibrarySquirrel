@@ -25,7 +25,6 @@ onMounted(() => {
   }
   sitePage.value.query.sort = { updateTime: false, createTime: false }
   siteSearchTable.value.handleSearchButtonClicked()
-  siteDomainSearchTable.value.handleSearchButtonClicked()
 })
 
 // 变量

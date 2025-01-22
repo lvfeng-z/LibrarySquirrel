@@ -31,7 +31,6 @@ const props = withDefaults(
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
     search: (page: Page<Query, Data>) => Promise<Page<Query, Data> | undefined> // 查询函数
-    fixedParam?: Record<string, unknown> // 固定参数
     updateLoad?: (ids: (number | string)[]) => Promise<object[] | undefined> // 更新数据的函数
     updateProperties?: string[] // 要更新的属性名
     createButton?: boolean // 是否展示新增按钮
@@ -105,8 +104,7 @@ async function handleSearchButtonClicked() {
   // 配置查询参数
   tempPage.query = {
     ...tempPage.query,
-    ...searchToolbarParams.value,
-    ...props.fixedParam
+    ...searchToolbarParams.value
   } as Query
   const newPage: Page<Query, Data> | undefined = await props.search(tempPage)
   if (NotNullish(newPage)) {

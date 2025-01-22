@@ -22,8 +22,8 @@ import Site from '@renderer/model/main/entity/Site.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import { ElMessage } from 'element-plus'
+import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -171,6 +171,8 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
     inputSpan: 22
   })
 ])
+// 是否禁用ExchangeBox的搜索按钮
+const disableExcSearchButton: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询本地标签的函数
@@ -239,6 +241,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse<LocalTag>) {
 // 处理被选中的本地标签改变的事件
 async function handleLocalTagSelectionChange(selections: LocalTag[]) {
   if (selections.length > 0) {
+    disableExcSearchButton.value = false
     localTagSelected.value = selections[0]
     siteTagExchangeBox.value.refreshData()
   }
@@ -296,13 +299,21 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
   }
 }
 // 请求站点标签分页选择列表的函数
-async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem>) {
-  return apis.siteTagQueryBoundOrUnboundToLocalTagPage(page).then((response) => {
+async function requestSiteTagSelectItemPage(
+  page: IPage<SiteTagQueryDTO, SelectItem>,
+  bounded: boolean
+): Promise<IPage<SiteTagQueryDTO, SelectItem>> {
+  if (IsNullish(page.query)) {
+    page.query = new SiteTagQueryDTO()
+  }
+  page.query.localTagId = localTagSelected.value.id
+  page.query.boundOnLocalTagId = bounded
+  return apis.siteTagQueryBoundOrUnboundToLocalTagPage(lodash.cloneDeep(page)).then((response) => {
     if (ApiUtil.check(response)) {
-      const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+      const newPage = ApiUtil.data<IPage<SiteTagQueryDTO, SelectItem>>(response)
       return IsNullish(newPage) ? page : newPage
     } else {
-      throw new Error()
+      return page
     }
   })
 }
@@ -339,14 +350,12 @@ async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem
             upper-title="已绑定站点标签"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-load="requestSiteTagSelectItemPage"
-            :upper-load-fixed-params="{ localTagId: localTagSelected?.id, boundOnLocalTagId: true }"
+            :upper-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, true)"
             lower-title="可绑定站点标签"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-load="requestSiteTagSelectItemPage"
-            :lower-load-fixed-params="{ localTagId: localTagSelected?.id, boundOnLocalTagId: false }"
-            required-fixed-params="localTagId"
+            :lower-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, false)"
+            :search-button-disabled="disableExcSearchButton"
             @exchange-confirm="handleExchangeBoxConfirm"
           />
         </div>

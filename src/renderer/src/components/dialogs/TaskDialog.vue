@@ -178,6 +178,10 @@ const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, 
 // 方法
 // 分页查询子任务的函数
 async function taskQueryChildrenTaskPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
+  if (IsNullish(page.query)) {
+    page.query = new TaskQueryDTO()
+  }
+  page.query.pid = formData.value.id
   const response = await apis.taskQueryChildrenTaskPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data(response) as Page<TaskQueryDTO, object>
@@ -386,7 +390,6 @@ async function deleteTask(ids: number[]) {
         :search="taskQueryChildrenTaskPage"
         :update-load="updateLoad"
         :update-properties="['schedule', 'status']"
-        :fixed-param="{ pid: formData.id }"
         :drop-down-input-boxes="[]"
         :key-of-data="keyOfData"
         :main-input-boxes="mainInputBoxes"

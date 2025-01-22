@@ -10,13 +10,14 @@ import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 import IPage from '@renderer/model/util/IPage.ts'
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import { OriginType } from '@renderer/constants/OriginType.ts'
 import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
 import Page from '@renderer/model/util/Page.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
+import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
+import lodash from 'lodash'
 
 // props
 const props = defineProps<{
@@ -159,20 +160,30 @@ async function updateWorksTags(type: OriginType) {
   }
 }
 // 请求作品绑定的本地标签接口的函数
-async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
+async function requestWorksLocalTagPage(page: IPage<LocalTagQueryDTO, SelectItem>, bounded: boolean) {
+  if (IsNullish(page.query)) {
+    page.query = new LocalTagQueryDTO()
+  }
+  page.query.worksId = worksFullInfo.value.id
+  page.query.boundOnWorksId = bounded
   const response = await apis.localTagQuerySelectItemPageByWorksId(page)
   if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    const newPage = ApiUtil.data<IPage<LocalTagQueryDTO, SelectItem>>(response)
     return IsNullish(newPage) ? page : newPage
   } else {
     throw new Error()
   }
 }
 // 请求作品绑定的站点标签接口的函数
-async function requestWorksSiteTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
-  const response = await apis.siteTagQuerySelectItemPageByWorksId(page)
+async function requestWorksSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>, bounded: boolean) {
+  if (IsNullish(page.query)) {
+    page.query = new SiteTagQueryDTO()
+  }
+  page.query.worksId = worksFullInfo.value.id
+  page.query.boundOnWorksId = bounded
+  const response = await apis.siteTagQuerySelectItemPageByWorksId(lodash.cloneDeep(page))
   if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    const newPage = ApiUtil.data<IPage<SiteTagQueryDTO, SelectItem>>(response)
     return IsNullish(newPage) ? page : newPage
   } else {
     throw new Error()
@@ -215,10 +226,9 @@ function handlePictureClicked() {
                 lower-title="可选标签"
                 :upper-main-input-boxes="localTagExchangeMainInput"
                 :lower-main-input-boxes="localTagExchangeMainInput"
-                :upper-load="requestWorksLocalTagPage"
-                :lower-load="requestWorksLocalTagPage"
-                :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
-                :lower-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
+                :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
+                :lower-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, false)"
+                :search-button-disabled="false"
                 @exchange-confirm="
                   (unbound: SelectItem[], bound: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, unbound, bound)
                 "
@@ -236,10 +246,9 @@ function handlePictureClicked() {
                 lower-title="可选标签"
                 :upper-main-input-boxes="siteTagExchangeMainInput"
                 :lower-main-input-boxes="siteTagExchangeMainInput"
-                :upper-load="requestWorksSiteTagPage"
-                :lower-load="requestWorksSiteTagPage"
-                :upper-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: true }"
-                :lower-load-fixed-params="{ worksId: worksFullInfo.id, boundOnWorksId: false }"
+                :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
+                :lower-load="(_page) => requestWorksSiteTagPage(_page, false)"
+                :search-button-disabled="false"
                 @exchange-confirm="
                   (unbound: SelectItem[], bound: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, unbound, bound)
                 "

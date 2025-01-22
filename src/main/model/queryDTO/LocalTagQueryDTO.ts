@@ -1,10 +1,10 @@
+import BaseQueryDTO from './BaseQueryDTO.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
+
 /**
  * QueryDTO
  * 站点标签
  */
-import BaseQueryDTO from './BaseQueryDTO.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
-
 export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
    * 本地标签名称

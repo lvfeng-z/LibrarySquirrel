@@ -1,13 +1,12 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Query extends object">
 import SearchToolbar from './SearchToolbar.vue'
 import { InputBox } from '../../model/util/InputBox'
-import { computed, Ref, ref, UnwrapRef } from 'vue'
+import { Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import TagBox from './TagBox.vue'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
-import IPage from '@renderer/model/util/IPage.ts'
+import { ArrayNotEmpty, NotNullish } from '../../utils/CommonUtil'
 import Page from '@renderer/model/util/Page.ts'
+import IPage from '@renderer/model/util/IPage.ts'
 
 // props
 const props = defineProps<{
@@ -17,11 +16,9 @@ const props = defineProps<{
   upperDropDownInputBoxes?: InputBox[] // upper的SearchToolbar的下拉菜单参数
   lowerMainInputBoxes?: InputBox[] // lower的SearchToolbar的主菜单参数
   lowerDropDownInputBoxes?: InputBox[] // lower的SearchToolbar的下拉菜单参数
-  upperLoad: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>> // upper的加载函数
-  lowerLoad: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>> // lower的加载函数
-  upperLoadFixedParams: object // upper的固定参数
-  lowerLoadFixedParams: object // lower的固定参数
-  requiredFixedParams?: string // 必备的固定参数，固定参数中此参数为undefined时禁用搜索按钮
+  upperLoad: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>> // upper的加载函数
+  lowerLoad: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>> // lower的加载函数
+  searchButtonDisabled: boolean
 }>()
 
 // 事件
@@ -35,9 +32,9 @@ defineExpose({
 // 变量
 const upperSearchToolbarParams = ref({}) // upper搜索栏参数
 const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
-const upperPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // upper的分页
+const upperPage = new Page<Query, SelectItem>() // upper的分页
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
-const lowerPage: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>()) // lower的分页
+const lowerPage = new Page<Query, SelectItem>() // lower的分页
 const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
 const upperTagBox = ref() // upperTagBox组件的实例
 const lowerTagBox = ref() // lowerTagBox组件的实例
@@ -45,15 +42,6 @@ const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的�
 const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
 const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
-// 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
-const searchButtonDisabled = computed(() =>
-  IsNullish(props.requiredFixedParams)
-    ? false
-    : !(
-        Object.prototype.hasOwnProperty.call(props.upperLoadFixedParams, props.requiredFixedParams) &&
-        props.upperLoadFixedParams[props.requiredFixedParams] != undefined
-      )
-)
 
 // 方法
 // 处理搜索按钮点击事件
@@ -131,35 +119,22 @@ function refreshData() {
   lowerTagBox.value.newSearch()
 }
 // 请求DataScroll下一页数据
-async function requestNextPage(
-  page: IPage<BaseQueryDTO, SelectItem>,
-  upperOrLower: boolean
-): Promise<IPage<BaseQueryDTO, SelectItem>> {
+async function requestNextPage(page: IPage<Query, SelectItem>, upperOrLower: boolean): Promise<IPage<Query, SelectItem>> {
   // 请求接口
-  let newPagePromise: Promise<IPage<BaseQueryDTO, SelectItem>>
+  let newPagePromise: Promise<IPage<Query, SelectItem>>
   if (upperOrLower) {
-    page.query = {
-      ...new BaseQueryDTO(),
-      ...props.upperLoadFixedParams,
-      ...upperSearchToolbarParams.value
-    }
+    page.query = upperSearchToolbarParams.value as Query
     newPagePromise = props.upperLoad(page)
   } else {
-    page.query = {
-      ...new BaseQueryDTO(),
-      ...props.lowerLoadFixedParams,
-      ...lowerSearchToolbarParams.value
-    }
+    page.query = lowerSearchToolbarParams.value as Query
     newPagePromise = props.lowerLoad(page)
   }
-  // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
+
   return newPagePromise.then((newPage) => {
     if (ArrayNotEmpty(newPage.data)) {
       newPage.data = leachBufferData(newPage.data, upperOrLower)
-      return newPage
-    } else {
-      return newPage
     }
+    return newPage
   })
 }
 // 滚动条位置重置(移动至顶端)
@@ -212,7 +187,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
           v-model:page="upperPage"
           v-model:data="upperData"
           class="exchange-box-upper-tag-box"
-          :load="(page) => requestNextPage(page, true)"
+          :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, true)"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
         />
       </div>
@@ -253,7 +228,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
           v-model:page="lowerPage"
           v-model:data="lowerData"
           class="exchange-box-lower-tag-box"
-          :load="(page) => requestNextPage(page, false)"
+          :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, false)"
           @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
         />
         <div class="exchange-box-lower-toolbar z-layer-1">

@@ -1,17 +1,16 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Query extends object">
 import SelectItem from '../../model/util/SelectItem'
 import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import IPage from '@renderer/model/util/IPage.ts'
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import Page from '@renderer/model/util/Page.ts'
 import lodash from 'lodash'
 
 // props
 const props = withDefaults(
   defineProps<{
-    load?: (page: IPage<BaseQueryDTO, SelectItem>) => Promise<IPage<BaseQueryDTO, SelectItem>>
+    load?: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>>
     tagCloseable?: boolean
     tagsGap?: string
     maxHeight?: string
@@ -25,7 +24,7 @@ const props = withDefaults(
 
 // model
 // 分页参数
-const page = defineModel<IPage<BaseQueryDTO, SelectItem>>('page', { default: new Page<BaseQueryDTO, SelectItem>() })
+const page = defineModel<IPage<Query, SelectItem>>('page', { default: new Page<Query, SelectItem>() })
 // 数据列表
 const data = defineModel<SelectItem[]>('data', { default: [] })
 
@@ -49,10 +48,10 @@ const hasNextPage: Ref<UnwrapRef<boolean>> = ref(false)
 // 方法
 // 处理DataScroll滚动事件
 async function handleDataScroll() {
+  if (IsNullish(props.load)) {
+    return
+  }
   try {
-    if (IsNullish(props.load)) {
-      return
-    }
     loading.value = true
     // 获得滚动条包裹的 ref 对象
     const scrollWrapper = scrollbar.value.wrapRef
@@ -83,12 +82,12 @@ async function nextPage(newSearch: boolean) {
     }
 
     nextTick().then(async () => {
-      if (NotNullish(props.load)) {
-        //查询
-        const tempPage = lodash.cloneDeep(page.value)
-        tempPage.data = undefined
-        const nextPage = await props.load(tempPage)
+      //查询
+      const tempPage = lodash.cloneDeep(page.value)
+      tempPage.data = undefined
+      const nextPage = await wrappedLoad(tempPage)
 
+      if (NotNullish(nextPage)) {
         // 新数据加入到分页数据中
         page.value.pageCount = nextPage.pageCount
         page.value.dataCount = nextPage.dataCount
@@ -137,6 +136,20 @@ function refreshLoadButton() {
     notFull = true
   }
   showLoadButton.value = hasNextPage.value && notFull
+}
+// 包装过的load
+function wrappedLoad(page: IPage<Query, SelectItem>): Promise<IPage<Query, SelectItem> | undefined> | undefined {
+  if (NotNullish(props.load)) {
+    return props
+      .load(page)
+      .then((result) => result)
+      .catch((error) => {
+        console.log(error)
+        return undefined
+      })
+  } else {
+    return undefined
+  }
 }
 
 // watch

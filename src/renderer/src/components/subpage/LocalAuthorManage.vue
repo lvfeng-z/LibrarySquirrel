@@ -21,9 +21,9 @@ import StringUtil from '@renderer/utils/StringUtil.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
-import IPage from '@renderer/model/util/IPage.ts'
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import { ElMessage } from 'element-plus'
+import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
+import IPage from '@renderer/model/util/IPage.ts'
 
 onMounted(() => {
   if (IsNullish(page.value.query)) {
@@ -156,6 +156,8 @@ const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]
     inputSpan: 22
   })
 ])
+// 是否禁用ExchangeBox的搜索按钮
+const disableExcSearchButton: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询本地作者的函数
@@ -214,6 +216,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse<LocalAuthor>) {
 // 处理被选中的本地作者改变的事件
 async function handleLocalAuthorSelectionChange(selections: LocalAuthor[]) {
   if (selections.length > 0) {
+    disableExcSearchButton.value = false
     localAuthorSelected.value = selections[0]
     // 不等待DOM更新完成会导致ExchangeBox总是使用更新之前的值查询
     await nextTick()
@@ -272,11 +275,16 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     siteAuthorExchangeBox.value.refreshData()
   }
 }
-// 请求站点标签分页选择列表的函数
-async function requestSiteAuthorSelectItemPage(page: IPage<BaseQueryDTO, SelectItem>) {
-  const response = await apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage(page)
+// 请求站点作者分页选择列表的函数
+async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, SelectItem>, bounded: boolean) {
+  if (IsNullish(page.query)) {
+    page.query = new LocalAuthorQueryDTO()
+  }
+  page.query.localAuthorId = localAuthorSelected.value.id
+  page.query.boundOnLocalAuthorId = bounded
+  const response = await apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage(lodash.cloneDeep(page))
   if (ApiUtil.check(response)) {
-    const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
+    const newPage = ApiUtil.data<Page<LocalAuthorQueryDTO, SelectItem>>(response)
     return IsNullish(newPage) ? page : newPage
   } else {
     throw new Error()
@@ -314,14 +322,12 @@ async function requestSiteAuthorSelectItemPage(page: IPage<BaseQueryDTO, SelectI
             upper-title="已绑定站点作者"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
-            :upper-load="requestSiteAuthorSelectItemPage"
-            :upper-load-fixed-params="{ localAuthorId: localAuthorSelected.id, boundOnLocalAuthorId: true }"
+            :upper-load="(_page) => requestSiteAuthorSelectItemPage(_page, true)"
             lower-title="可绑定站点作者"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
-            :lower-load="requestSiteAuthorSelectItemPage"
-            :lower-load-fixed-params="{ localAuthorId: localAuthorSelected.id, boundOnLocalAuthorId: false }"
-            required-fixed-params="localAuthorId"
+            :lower-load="(_page) => requestSiteAuthorSelectItemPage(_page, false)"
+            :search-button-disabled="disableExcSearchButton"
             @exchange-confirm="handleExchangeBoxConfirm"
           />
         </div>
