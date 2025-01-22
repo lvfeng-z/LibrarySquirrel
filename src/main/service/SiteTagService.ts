@@ -8,8 +8,8 @@ import Page from '../model/util/Page.ts'
 import BaseService from './BaseService.ts'
 import DB from '../database/DB.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
-import { assertNotNullish } from '../util/AssertUtil.js'
+import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { AssertNotNullish } from '../util/AssertUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 
 /**
@@ -33,7 +33,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     )
     if (target !== undefined) {
       let msg: string
-      if (isNullish(target.siteId)) {
+      if (IsNullish(target.siteId)) {
         msg = `批量新增或更新站点标签失败，站点id为空，tagName: ${target.siteTagName}`
       } else {
         msg = `批量新增或更新站点标签失败，站点中标签的id为空，tagName: ${target.siteTagName}`
@@ -68,7 +68,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page
    */
   async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
-    assertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
+    AssertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 
@@ -95,7 +95,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
     page = new Page(page)
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       page.query.operators = {
         ...{ siteTagName: Operator.LIKE },
         ...page.query.operators
@@ -110,7 +110,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async querySelectItemPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       page.query.operators = {
         ...{ siteTagName: Operator.LIKE },
         ...page.query.operators
@@ -121,7 +121,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     // 根据SiteTag数据生成SelectItem
     const sourceData = sourcePage.data
     const resultPage = sourcePage.transform<SelectItem>()
-    if (notNullish(sourceData)) {
+    if (NotNullish(sourceData)) {
       resultPage.data = sourceData.map(
         (siteTag) =>
           new SelectItem({
@@ -156,7 +156,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async querySelectItemPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       page.query.operators = {
         ...{ siteTagName: Operator.LIKE },
         ...page.query.operators

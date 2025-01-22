@@ -11,7 +11,7 @@ import { PathTypeEnum } from '../../constants/PathTypeEnum'
 import StringUtil from '../../utils/StringUtil'
 import Page from '../../model/util/Page.ts'
 import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQueryDTO'
-import { isNullish } from '../../utils/CommonUtil'
+import { IsNullish } from '../../utils/CommonUtil'
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
@@ -69,7 +69,7 @@ async function loadAutoExplain() {
   const response = await apis.autoExplainPathGetListenerPage(tempPage)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data(response) as Page<AutoExplainPathQueryDTO, AutoExplainPath>
-    autoExplains.value = isNullish(newPage.data) ? [] : newPage.data
+    autoExplains.value = IsNullish(newPage.data) ? [] : newPage.data
   }
 }
 // 增加一行输入栏
@@ -142,7 +142,7 @@ async function requestApi(
   // 解析响应值
   if (ApiUtil.check(response)) {
     const nextPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
-    return isNullish(nextPage) ? page : nextPage
+    return IsNullish(nextPage) ? page : nextPage
   } else {
     ApiUtil.failedMsg(response)
     return page

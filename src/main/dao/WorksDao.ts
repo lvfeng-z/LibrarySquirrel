@@ -6,9 +6,9 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
-import { arrayIsEmpty, arrayNotEmpty, isNullish } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
-import { MediaExtMapping, MediaType } from '../util/MediaType.js'
+import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
@@ -45,7 +45,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       modifiedPage.query = whereClausesAndQuery.query
 
       // 补充虚拟列的where子句
-      if (arrayNotEmpty(page.query.includeLocalTagIds)) {
+      if (ArrayNotEmpty(page.query.includeLocalTagIds)) {
         for (const [index, includeLocalTagId] of page.query.includeLocalTagIds.entries()) {
           whereClauses.push(
             `EXISTS(SELECT 1 FROM re_works_tag ct1_1_${index}
@@ -54,7 +54,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           )
         }
       }
-      if (arrayNotEmpty(page.query.excludeLocalTagIds)) {
+      if (ArrayNotEmpty(page.query.excludeLocalTagIds)) {
         for (const [index, excludeLocalTagIds] of page.query.excludeLocalTagIds.entries()) {
           whereClauses.push(
             `NOT EXISTS(SELECT 1 FROM re_works_tag ct2_1_${index}
@@ -63,18 +63,18 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           )
         }
       }
-      if (arrayNotEmpty(page.query.includeSiteTagIds)) {
+      if (ArrayNotEmpty(page.query.includeSiteTagIds)) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
           `${tagNum} = (SELECT COUNT(1) FROM re_works_tag ct3 WHERE ct3.works_id = t1.id AND ct3.site_tag_id IN (${page.query.includeSiteTagIds.join()}) AND ct3.tag_type = ${OriginType.SITE})`
         )
       }
-      if (arrayNotEmpty(page.query.excludeSiteTagIds)) {
+      if (ArrayNotEmpty(page.query.excludeSiteTagIds)) {
         whereClauses.push(
           `0 = (SELECT COUNT(1) FROM re_works_tag ct4 WHERE ct4.works_id = t1.id AND ct4.site_tag_id IN (${page.query.excludeSiteTagIds.join()}) AND ct4.tag_type = ${OriginType.SITE})`
         )
       }
-      if (arrayNotEmpty(page.query.includeLocalAuthorIds)) {
+      if (ArrayNotEmpty(page.query.includeLocalAuthorIds)) {
         for (const [index, includeLocalAuthorIds] of page.query.includeLocalAuthorIds.entries()) {
           whereClauses.push(
             `EXISTS(SELECT 1 FROM re_works_author ct5_1_${index}
@@ -83,7 +83,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           )
         }
       }
-      if (arrayNotEmpty(page.query.excludeLocalAuthorIds)) {
+      if (ArrayNotEmpty(page.query.excludeLocalAuthorIds)) {
         for (const [index, excludeLocalAuthorIds] of page.query.excludeLocalAuthorIds.entries()) {
           whereClauses.push(
             `NOT EXISTS(SELECT 1 FROM re_works_author ct6_1_${index}
@@ -92,13 +92,13 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
           )
         }
       }
-      if (arrayNotEmpty(page.query.includeSiteAuthorIds)) {
+      if (ArrayNotEmpty(page.query.includeSiteAuthorIds)) {
         const tagNum = page.query.includeSiteAuthorIds.length
         whereClauses.push(
           `${tagNum} = (SELECT COUNT(1) FROM re_works_author ct7 WHERE ct7.works_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${OriginType.SITE})`
         )
       }
-      if (arrayNotEmpty(page.query.excludeSiteAuthorIds)) {
+      if (ArrayNotEmpty(page.query.excludeSiteAuthorIds)) {
         whereClauses.push(
           `0 = (SELECT COUNT(1) FROM re_works_author ct8 WHERE ct8.works_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${OriginType.SITE})`
         )
@@ -118,7 +118,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     }
 
     // 排序和分页子句
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
     const query = modifiedPage.query?.toPlainParams()
@@ -174,7 +174,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   }
 
   private generateClause(searchConditions: SearchCondition[]): { from: string; where: string } {
-    if (arrayIsEmpty(searchConditions)) {
+    if (ArrayIsEmpty(searchConditions)) {
       return { from: '', where: '' }
     } else {
       const fromAndWhere: { from: string[]; where: string[] } = { from: [], where: [] }

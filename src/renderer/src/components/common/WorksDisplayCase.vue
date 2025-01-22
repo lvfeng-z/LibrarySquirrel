@@ -3,7 +3,7 @@ import WorksInfo from './WorksInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
 import WorksDTO from '../../model/main/dto/WorksDTO.ts'
-import { arrayNotEmpty, notNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
@@ -26,13 +26,13 @@ const caseHeight: Ref<UnwrapRef<string>> = computed(() => (props.maxHeight === u
 // src的参数
 const srcParamStr: Ref<UnwrapRef<string>> = computed(() => {
   const params: string[] = []
-  if (notNullish(props.maxHeight)) {
+  if (NotNullish(props.maxHeight)) {
     params.push(`visualHeight=${props.maxHeight}`)
   }
-  if (notNullish(props.maxWidth)) {
+  if (NotNullish(props.maxWidth)) {
     params.push(`visualWidth=${props.maxWidth}`)
   }
-  return arrayNotEmpty(params) ? '?' + params.join('&') : ''
+  return ArrayNotEmpty(params) ? '?' + params.join('&') : ''
 })
 let clickTimeout: NodeJS.Timeout
 

@@ -6,7 +6,7 @@ import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from '../dto/SiteTagDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import { Readable } from 'node:stream'
-import { isNullish } from '../../../utils/CommonUtil'
+import { IsNullish } from '../../../utils/CommonUtil'
 
 /**
  * 作品
@@ -53,7 +53,7 @@ export default class WorksDTO extends Works {
   resourceSize: number | undefined | null
 
   constructor(works?: WorksDTO | Works) {
-    if (isNullish(works)) {
+    if (IsNullish(works)) {
       super()
       this.site = undefined
       this.localAuthors = undefined

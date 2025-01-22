@@ -2,7 +2,7 @@ import BaseDao from './BaseDao.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'
-import { isNullish } from '../util/CommonUtil.js'
+import { IsNullish } from '../util/CommonUtil.js'
 
 export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
   constructor(db?: DB) {
@@ -15,7 +15,7 @@ export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
     return db
       .get<unknown[], { NUM: number }>(statements)
       .then((result) => {
-        if (isNullish(result)) {
+        if (IsNullish(result)) {
           return false
         }
         return result.NUM > 0

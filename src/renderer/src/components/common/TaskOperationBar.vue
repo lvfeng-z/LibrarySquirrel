@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { TaskStatesEnum } from '@renderer/constants/TaskStatesEnum.ts'
 import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
-import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import TaskProcessingDTO from '@renderer/model/main/dto/TaskProcessingDTO.ts'
 
@@ -73,7 +73,7 @@ function mapToButtonStatus(row: TaskDTO): {
   operation: TaskOperationCodeEnum
   processing: boolean
 } {
-  if (notNullish(row.status)) {
+  if (NotNullish(row.status)) {
     return taskStatusMapping[row.status]
   } else {
     return taskStatusMapping['0']
@@ -117,7 +117,7 @@ function mapToButtonStatus(row: TaskDTO): {
       >
         <el-progress
           style="width: 100%"
-          :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
+          :percentage="IsNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
           text-inside
           :stroke-width="15"
           striped
@@ -138,7 +138,7 @@ function mapToButtonStatus(row: TaskDTO): {
         !row.hasChildren
       "
       style="width: 100%"
-      :percentage="isNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
+      :percentage="IsNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
       text-inside
       :stroke-width="24"
       striped

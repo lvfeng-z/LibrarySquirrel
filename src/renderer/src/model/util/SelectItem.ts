@@ -1,4 +1,4 @@
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 下拉选择框选项
@@ -12,8 +12,8 @@ export default class SelectItem {
   extraData?: object | null | undefined
 
   constructor(selectItem: CSelectItem) {
-    this.value = isNullish(selectItem.value) ? '' : selectItem.value
-    this.label = isNullish(selectItem.label) ? '' : selectItem.label
+    this.value = IsNullish(selectItem.value) ? '' : selectItem.value
+    this.label = IsNullish(selectItem.label) ? '' : selectItem.label
     this.subLabels = selectItem.subLabels
     this.disabled = selectItem.disabled
     this.rootId = selectItem.rootId

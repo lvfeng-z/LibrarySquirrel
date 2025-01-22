@@ -5,7 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import ServiceExposer from './service/ServiceExposer.ts'
 import LogUtil from './util/LogUtil.ts'
-import { convertPath, getWorksResource } from './util/FileSysUtil.ts'
+import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVar, GlobalVars } from './global/GlobalVar.ts'
 import PluginService from './service/PluginService.js'
 import StringUtil from './util/StringUtil.js'
@@ -112,7 +112,7 @@ Electron.app.whenReady().then(() => {
       // 确保格式正确后，继续处理请求
       const url = new URL(request.url)
       const decodedUrl = decodeURIComponent(path.join(workdir, url.pathname))
-      const fullPath = process.platform === 'win32' ? convertPath(decodedUrl) : decodedUrl
+      const fullPath = process.platform === 'win32' ? ConvertPath(decodedUrl) : decodedUrl
       const heightStr = url.searchParams.get('height')
       const height = heightStr === null ? undefined : parseInt(heightStr)
       const widthStr = url.searchParams.get('width')
@@ -122,7 +122,7 @@ Electron.app.whenReady().then(() => {
       const visualWidthStr = url.searchParams.get('visualWidth')
       const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
 
-      const data = await getWorksResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
+      const data = await GetWorksResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
       return new Response(data) // 返回文件
     } catch (error) {
       LogUtil.error('Error handling protocol request:', String(error))

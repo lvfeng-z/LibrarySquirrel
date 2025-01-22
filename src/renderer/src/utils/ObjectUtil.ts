@@ -1,4 +1,4 @@
-function nonUndefinedValue(obj: object | undefined): object {
+export function NonUndefinedValue(obj: object | undefined): object {
   if (obj === undefined) {
     return {}
   }
@@ -7,8 +7,4 @@ function nonUndefinedValue(obj: object | undefined): object {
       return keyValue[1] !== undefined
     })
   )
-}
-
-export default {
-  nonUndefinedValue
 }

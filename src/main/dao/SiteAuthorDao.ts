@@ -6,7 +6,7 @@ import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SelectItem from '../model/util/SelectItem.js'
 
 /**
@@ -107,14 +107,14 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     if (StringUtil.isNotBlank(whereClause)) {
       statement = statement.concat(' ', whereClause)
     }
-    const sort = isNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
     const query = modifiedQuery.toPlainParams()
     // 查询
     const db = super.acquire()
     return db
-      .all<unknown[], SiteAuthorDTO>(statement, isNullish(query) ? {} : query)
+      .all<unknown[], SiteAuthorDTO>(statement, IsNullish(query) ? {} : query)
       .then((rows) => {
         const resultPage = modifiedPage.transform<SiteAuthorDTO>()
         // 利用构造方法反序列化本地作者和站点的json
@@ -142,16 +142,16 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           LEFT JOIN site t3 ON t1.site_id = t3.id`
     let whereClause: string = ''
     let query: SiteAuthorQueryDTO | undefined
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       const whereClausesAndQuery = this.getWhereClause(page.query, 't1')
-      if (notNullish(whereClausesAndQuery.whereClause)) {
+      if (NotNullish(whereClausesAndQuery.whereClause)) {
         whereClause += whereClausesAndQuery.whereClause
       }
       query = whereClausesAndQuery.query
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, page, sort, 't1')
 
     const db = this.acquire()
@@ -164,7 +164,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           selectItem.value = siteAuthorDTO.id
           selectItem.label = siteAuthorDTO.siteAuthorName
           // 站点名称列入副标题中
-          if (notNullish(siteAuthorDTO.site?.siteName)) {
+          if (NotNullish(siteAuthorDTO.site?.siteName)) {
             selectItem.subLabels = [siteAuthorDTO.site?.siteName]
           }
           // 本地作者和站点信息保存在额外数据中

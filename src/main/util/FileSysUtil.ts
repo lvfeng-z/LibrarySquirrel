@@ -3,7 +3,7 @@ import fs from 'fs/promises'
 import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
-import { isNullish, notNullish } from './CommonUtil.js'
+import { IsNullish, NotNullish } from './CommonUtil.js'
 import { Readable, Writable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
@@ -12,7 +12,7 @@ import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
  * 检查目录是否存在，如果不存在则创建此目录
  * @param dirPath
  */
-export async function createDirIfNotExists(dirPath: string): Promise<void> {
+export async function CreateDirIfNotExists(dirPath: string): Promise<void> {
   try {
     await fs.access(dirPath, fs.constants.F_OK | fs.constants.W_OK)
   } catch (error) {
@@ -31,7 +31,7 @@ export async function createDirIfNotExists(dirPath: string): Promise<void> {
  * 将类似 Unix 风格但以盘符开头的路径转换为标准的 Windows 路径格式
  * @param originalPath
  */
-export function convertPath(originalPath: string): string {
+export function ConvertPath(originalPath: string): string {
   const match = originalPath.match(/^\/([a-zA-Z])\/(.*)$/)
   if (match) {
     // 为 Windows 系统转换路径格式
@@ -44,7 +44,7 @@ export function convertPath(originalPath: string): string {
 /**
  * 获得应用当前的根目录
  */
-export function getRootDir(): string {
+export function RootDir(): string {
   let root: string
   const NODE_ENV = process.env.NODE_ENV
   if (NODE_ENV == 'development') {
@@ -58,7 +58,7 @@ export function getRootDir(): string {
 /**
  * 打开一个文件/路径选择弹窗
  */
-export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
+export async function DirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
   const defaultPath = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
   const properties: Array<'openFile' | 'openDirectory' | 'multiSelections'> = ['multiSelections']
   if (openFile) {
@@ -80,7 +80,7 @@ export async function dirSelect(openFile: boolean): Promise<Electron.OpenDialogR
  * @param visualHeight 可视区域高度
  * @param visualWidth 可视区域宽度
  */
-export async function getWorksResource(
+export async function GetWorksResource(
   fullPath: string,
   height?: number,
   width?: number,
@@ -88,17 +88,17 @@ export async function getWorksResource(
   visualWidth?: number
 ): Promise<Buffer> {
   const resource = sharp(fullPath)
-  if (isNullish(height) && notNullish(width)) {
+  if (IsNullish(height) && NotNullish(width)) {
     return resource.resize({ width: width, fit: 'contain' }).toBuffer()
-  } else if (notNullish(height) && isNullish(width)) {
+  } else if (NotNullish(height) && IsNullish(width)) {
     return resource.resize({ height: height, fit: 'contain' }).toBuffer()
-  } else if (notNullish(height) && notNullish(width)) {
+  } else if (NotNullish(height) && NotNullish(width)) {
     return resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer()
-  } else if (notNullish(visualHeight) && notNullish(visualWidth)) {
+  } else if (NotNullish(visualHeight) && NotNullish(visualWidth)) {
     const metadata = await resource.metadata()
     const imageHeight = metadata.height
     const imageWidth = metadata.width
-    if (notNullish(imageHeight) && notNullish(imageWidth)) {
+    if (NotNullish(imageHeight) && NotNullish(imageWidth)) {
       if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
         return resource.toBuffer()
       } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {
@@ -124,7 +124,7 @@ export async function getWorksResource(
   }
 }
 
-export function pipelineReadWrite(readable: Readable, writable: Writable): Promise<FileSaveResult> {
+export function PipelineReadWrite(readable: Readable, writable: Writable): Promise<FileSaveResult> {
   return new Promise((resolve, reject) => {
     let errorOccurred = false
     let paused = false
@@ -166,7 +166,7 @@ export function pipelineReadWrite(readable: Readable, writable: Writable): Promi
   })
 }
 
-export function sanitizeFileName(fileName: string): string {
+export function SanitizeFileName(fileName: string): string {
   // 定义非法字符及其对应的全角字符
   const illegalReplacements = {
     '\\': '＼', // 全角反斜杠

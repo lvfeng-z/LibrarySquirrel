@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SelectItem from '../../model/util/SelectItem'
 import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
-import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
@@ -50,7 +50,7 @@ const hasNextPage: Ref<UnwrapRef<boolean>> = ref(false)
 // 处理DataScroll滚动事件
 async function handleDataScroll() {
   try {
-    if (isNullish(props.load)) {
+    if (IsNullish(props.load)) {
       return
     }
     loading.value = true
@@ -73,7 +73,7 @@ async function handleDataScroll() {
 }
 // 处理DataScroll滚动事件
 async function nextPage(newSearch: boolean) {
-  if (notNullish(props.load)) {
+  if (NotNullish(props.load)) {
     // 新查询重置查询条件
     if (newSearch) {
       page.value.pageNumber = 1
@@ -83,7 +83,7 @@ async function nextPage(newSearch: boolean) {
     }
 
     nextTick().then(async () => {
-      if (notNullish(props.load)) {
+      if (NotNullish(props.load)) {
         //查询
         const tempPage = lodash.cloneDeep(page.value)
         tempPage.data = undefined
@@ -94,7 +94,7 @@ async function nextPage(newSearch: boolean) {
         page.value.dataCount = nextPage.dataCount
         if (nextPage.pageNumber <= nextPage.pageCount) {
           hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
-          if (arrayNotEmpty(nextPage.data)) {
+          if (ArrayNotEmpty(nextPage.data)) {
             data.value.push(...nextPage.data)
           } else {
             refreshLoadButton()
@@ -128,7 +128,7 @@ function handleTagClose(tag: SelectItem) {
 // 刷新加载按钮状态
 function refreshLoadButton() {
   let notFull: boolean
-  if (notNullish(scrollbar.value) && notNullish(container.value)) {
+  if (NotNullish(scrollbar.value) && NotNullish(container.value)) {
     const scrollHeight = scrollbar.value.wrapRef.clientHeight
     const containerHeight = container.value.offsetHeight
     const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight

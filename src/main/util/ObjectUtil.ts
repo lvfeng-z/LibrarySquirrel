@@ -4,7 +4,7 @@ import LogUtil from './LogUtil.js'
  * 去除值为undefined的属性
  * @param obj
  */
-function nonUndefinedValue(obj: object | undefined): object {
+function NonUndefinedValue(obj: object | undefined): object {
   if (obj === undefined) {
     return {}
   }
@@ -19,7 +19,7 @@ function nonUndefinedValue(obj: object | undefined): object {
  * 把所有undefined的值改为null
  * @param obj
  */
-function undefinedToNull(obj: object | undefined): object {
+function UndefinedToNull(obj: object | undefined): object {
   if (obj === undefined) {
     return {}
   }
@@ -39,7 +39,7 @@ function undefinedToNull(obj: object | undefined): object {
  * @param objects 对象列表
  * @param fill 如何填充被对齐的值
  */
-function alignProperties(objects: object[], fill: unknown) {
+function AlignProperties(objects: object[], fill: unknown) {
   // 所有可能的属性名集合
   const allPossibleProperties = [...new Set(objects.flatMap(Object.keys))]
   // 创建一个模板对象，所有属性设为fill
@@ -57,7 +57,7 @@ function alignProperties(objects: object[], fill: unknown) {
  * @param obj1
  * @param obj2
  */
-function mergeObjects(obj1: object, obj2: object): object {
+function MergeObjects(obj1: object, obj2: object): object {
   // 创建一个新的对象用于存放合并后的结果
   const merged = {}
 
@@ -105,9 +105,9 @@ export function ParsePropertyFromJson(source: object, properties: { property: st
 }
 
 export default {
-  nonUndefinedValue,
-  undefinedToNull,
-  alignProperties,
-  mergeObjects,
+  nonUndefinedValue: NonUndefinedValue,
+  undefinedToNull: UndefinedToNull,
+  alignProperties: AlignProperties,
+  mergeObjects: MergeObjects,
   ParsePropertyFromJson
 }

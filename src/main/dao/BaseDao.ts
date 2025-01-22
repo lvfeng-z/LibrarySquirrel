@@ -3,11 +3,11 @@ import DB from '../database/DB.ts'
 import BaseEntity, { Id } from '../model/entity/BaseEntity.ts'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
-import { toObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
+import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import lodash from 'lodash'
-import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
-import { assertArrayNotEmpty, assertNotNullish } from '../util/AssertUtil.js'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { AssertArrayNotEmpty, AssertNotNullish } from '../util/AssertUtil.js'
 import Page from '../model/util/Page.js'
 import CoreDao from './CoreDao.js'
 
@@ -38,7 +38,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     entity.updateTime = Date.now()
 
     // 转换为sqlite3接受的数据类型
-    const plainObject = toObjAcceptedBySqlite3(entity)
+    const plainObject = ToObjAcceptedBySqlite3(entity)
 
     const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
     const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
@@ -60,7 +60,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    assertArrayNotEmpty(entities, this.className, '批量保存的对象不能为空')
+    AssertArrayNotEmpty(entities, this.className, '批量保存的对象不能为空')
 
     // 对齐所有属性
     // 设置createTime和updateTime
@@ -68,13 +68,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       entity.createTime = Date.now()
       entity.updateTime = Date.now()
       // 转换为sqlite3接受的数据类型
-      return toObjAcceptedBySqlite3(entity)
+      return ToObjAcceptedBySqlite3(entity)
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
     const columns = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     let insertClause: string
-    if (isNullish(ignore) || !ignore) {
+    if (IsNullish(ignore) || !ignore) {
       insertClause = `INSERT INTO "${this.tableName}" (${columns})`
     } else {
       insertClause = `INSERT OR IGNORE INTO "${this.tableName}" (${columns})`
@@ -141,7 +141,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    assertArrayNotEmpty(ids, this.className, '批量删除失败，id列表不能为空')
+    AssertArrayNotEmpty(ids, this.className, '批量删除失败，id列表不能为空')
 
     const idsStr = ids.join(',')
     const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
@@ -162,12 +162,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param updateData
    */
   public async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
-    assertNotNullish(id, this.className, '更新失败，主键不能为空')
+    AssertNotNullish(id, this.className, '更新失败，主键不能为空')
     // 设置createTime和updateTime
     updateData.updateTime = Date.now()
 
     // 生成一个不包含值为undefined的属性的对象
-    const existingValue = toObjAcceptedBySqlite3(updateData)
+    const existingValue = ToObjAcceptedBySqlite3(updateData)
     const keys = Object.keys(existingValue)
     const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
     const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseEntity.PK}" = ${id}`
@@ -187,7 +187,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async updateBatchById(entities: Model[]): Promise<number> {
-    assertArrayNotEmpty(entities, this.className, '批量更新失败，更新数据不能为空')
+    AssertArrayNotEmpty(entities, this.className, '批量更新失败，更新数据不能为空')
 
     const ids: Id[] = []
     // 对齐所有属性
@@ -195,11 +195,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     let plainObject = entities.map((entity) => {
       entity.updateTime = Date.now()
       //
-      if (notNullish(entity.id)) {
+      if (NotNullish(entity.id)) {
         ids.push(entity.id)
       }
       // 转换为sqlite3接受的数据类型
-      return toObjAcceptedBySqlite3(entity)
+      return ToObjAcceptedBySqlite3(entity)
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置语句的value部分
@@ -228,7 +228,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
             numberedProperties[numberedProperty] = value
           }
         })
-        if (arrayNotEmpty(whenThenClauses)) {
+        if (ArrayNotEmpty(whenThenClauses)) {
           setClauses.push(column + ' = CASE ' + whenThenClauses.join(' ') + ' END')
         }
         index++
@@ -252,7 +252,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
-    assertArrayNotEmpty(entities, this.className, '批量保存失败，保存数据不能为空')
+    AssertArrayNotEmpty(entities, this.className, '批量保存失败，保存数据不能为空')
 
     // 对齐所有属性
     // 设置createTime和updateTime
@@ -260,7 +260,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       entity.createTime = Date.now()
       entity.updateTime = Date.now()
       // 转换为sqlite3接受的数据类型
-      return toObjAcceptedBySqlite3(entity)
+      return ToObjAcceptedBySqlite3(entity)
     })
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
@@ -318,7 +318,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         [BaseEntity.PK]: id
       })
       .then((result) => {
-        if (notNullish(result)) {
+        if (NotNullish(result)) {
           return this.getResultTypeData<Model>(result)
         } else {
           return undefined
@@ -353,7 +353,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = statement.concat(' ', whereClause)
     }
     // 拼接排序和分页字句
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
 
     // 查询
@@ -517,7 +517,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 分页和排序
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
 
     // 查询

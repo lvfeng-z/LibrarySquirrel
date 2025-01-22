@@ -5,7 +5,7 @@ import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 /**
  * 将设置全部重置到默认值
  */
-export function defaultSettings() {
+export function DefaultSettings() {
   try {
     GlobalVar.get(GlobalVars.SETTINGS).clear()
     GlobalVar.get(GlobalVars.SETTINGS).set(SettingsTemplate)

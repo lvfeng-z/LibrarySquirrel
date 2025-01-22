@@ -1,8 +1,8 @@
 import { Readable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import LogUtil from './LogUtil.js'
-import { assertNotNullish } from './AssertUtil.js'
-import { isNullish, notNullish } from './CommonUtil.js'
+import { AssertNotNullish } from './AssertUtil.js'
+import { IsNullish, NotNullish } from './CommonUtil.js'
 import fs from 'fs'
 
 export default class TaskWriter {
@@ -48,11 +48,11 @@ export default class TaskWriter {
   public doWrite(newWritable?: fs.WriteStream): Promise<FileSaveResult> {
     this.paused = false
     return new Promise((resolve, reject) => {
-      if (notNullish(newWritable)) {
+      if (NotNullish(newWritable)) {
         this.writable = newWritable
       }
-      assertNotNullish(this.readable, 'TaskWriter', '写入任务资源失败，readable为空')
-      assertNotNullish(this.writable, 'TaskWriter', '写入任务资源失败，writable为空')
+      AssertNotNullish(this.readable, 'TaskWriter', '写入任务资源失败，readable为空')
+      AssertNotNullish(this.writable, 'TaskWriter', '写入任务资源失败，writable为空')
       const readable = this.readable
       const writable = this.writable
       let errorOccurred = false
@@ -97,12 +97,12 @@ export default class TaskWriter {
   public pause() {
     if (!this.readableFinished) {
       this.paused = true
-      if (notNullish(this.readable)) {
+      if (NotNullish(this.readable)) {
         this.readable.unpipe(this.writable)
       }
-      if (notNullish(this.writable)) {
+      if (NotNullish(this.writable)) {
         this.writable.end()
-        this.bytesWritten = isNullish(this.writable) ? 0 : this.writable.bytesWritten
+        this.bytesWritten = IsNullish(this.writable) ? 0 : this.writable.bytesWritten
       }
     }
   }

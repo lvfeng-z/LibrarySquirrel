@@ -7,7 +7,7 @@ import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.js'
+import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
@@ -89,7 +89,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     if (StringUtil.isNotBlank(whereClause)) {
       statement += ' ' + whereClause
     }
-    const sort = isNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort, fromClause)
 
     // 查询
@@ -123,16 +123,16 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
           LEFT JOIN site t3 ON t1.site_id = t3.id`
     let whereClause: string = ''
     let query: SiteTagQueryDTO | undefined
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       const whereClausesAndQuery = this.getWhereClause(page.query, 't1')
-      if (notNullish(whereClausesAndQuery.whereClause)) {
+      if (NotNullish(whereClausesAndQuery.whereClause)) {
         whereClause += whereClausesAndQuery.whereClause
       }
       query = whereClausesAndQuery.query
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, page, sort, 't1')
 
     const db = this.acquire()
@@ -145,7 +145,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
           selectItem.value = siteTagDTO.id
           selectItem.label = siteTagDTO.siteTagName
           // 站点名称列入副标题中
-          if (notNullish(siteTagDTO.site?.siteName)) {
+          if (NotNullish(siteTagDTO.site?.siteName)) {
             selectItem.subLabels = [siteTagDTO.site?.siteName]
           }
           // 本地标签和站点信息保存在额外数据中
@@ -170,7 +170,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
-    if (isNullish(modifiedPage.query)) {
+    if (IsNullish(modifiedPage.query)) {
       modifiedPage.query = new SiteTagQueryDTO()
     }
     const query = lodash.cloneDeep(modifiedPage.query)
@@ -203,7 +203,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
 
     let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause)
-    const sort = isNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
     const db = this.acquire()
     return db

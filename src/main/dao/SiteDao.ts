@@ -4,7 +4,7 @@ import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'
 import SiteDTO from '../model/dto/SiteDTO.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
-import { arrayIsEmpty, arrayNotEmpty } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
@@ -24,7 +24,7 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
     return db
       .all<unknown[], SiteDomain>(statement)
       .then((rows) => {
-        if (arrayNotEmpty(rows)) {
+        if (ArrayNotEmpty(rows)) {
           siteDTO.domains = rows.map((row) => new SiteDomain(row))
           return siteDTO
         } else {
@@ -47,7 +47,7 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
     const db = this.acquire()
     try {
       const site = await db.all<unknown[], Site>(statement, { domain: domain })
-      if (arrayIsEmpty(site)) {
+      if (ArrayIsEmpty(site)) {
         return undefined
       } else if (site.length > 1) {
         LogUtil.warn(this.className, `domain: ${domain}对应了多个站点`)

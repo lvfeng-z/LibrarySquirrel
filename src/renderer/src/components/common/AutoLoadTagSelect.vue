@@ -7,7 +7,7 @@ import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash, { throttle } from 'lodash'
 import { Close } from '@element-plus/icons-vue'
-import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -44,7 +44,7 @@ onMounted(() => {
 
 // onUnmounted
 onUnmounted(() => {
-  if (notNullish(wrapper.value)) {
+  if (NotNullish(wrapper.value)) {
     resizeObserver.unobserve(wrapper.value)
   }
 })
@@ -116,7 +116,7 @@ function handleInputFocus(focus: boolean) {
 function handelTagClicked(tag: SelectItem, optional: boolean) {
   if (optional) {
     // 待选栏
-    if (isNullish(tag.disabled) || !tag.disabled) {
+    if (IsNullish(tag.disabled) || !tag.disabled) {
       // 如果标签未禁用，则把这个标签放进已选栏，待选栏中的这个标签设为禁用，同时清除输入文本
       const tempTag = lodash.cloneDeep(tag)
       selectedData.value.push(tempTag)

@@ -3,7 +3,7 @@ import StringUtil from '../util/StringUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
-import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import QuerySortOption from '../constant/QuerySortOption.js'
 import DB from '../database/DB.js'
 import BaseEntity from '../model/entity/BaseEntity.js'
@@ -27,7 +27,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
 
   protected constructor(className: string, db?: DB) {
     this.className = className
-    if (notNullish(db)) {
+    if (NotNullish(db)) {
       this.db = db
       this.injectedDB = true
     } else {
@@ -173,9 +173,9 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     // 指定运算符的对象转换为数组
     const assignComparatorList = assignComparator === undefined ? undefined : Object.entries(assignComparator)
     let comparator = Operator.EQUAL
-    if (arrayNotEmpty(assignComparatorList)) {
+    if (ArrayNotEmpty(assignComparatorList)) {
       const comparatorTarget = assignComparatorList.find((item) => item[0] === property)
-      if (notNullish(comparatorTarget)) {
+      if (NotNullish(comparatorTarget)) {
         comparator = comparatorTarget[1]
       }
     }
@@ -189,7 +189,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected async pager(statement: string, page: Page<Query, Model>): Promise<string> {
-    if (isNullish(page.paging) || page.paging) {
+    if (IsNullish(page.paging) || page.paging) {
       statement += ' ' + (await this.getPagingClause(statement, page))
     }
     return statement
@@ -252,7 +252,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     sortClauses = Object.entries(sortOption)
       .map(([column, asc]) => {
         const tempColumn = StringUtil.camelToSnakeCase(column)
-        return isNullish(alias) ? tempColumn + ' ' + (asc ? 'ASC' : 'DESC') : alias + '.' + tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
+        return IsNullish(alias) ? tempColumn + ' ' + (asc ? 'ASC' : 'DESC') : alias + '.' + tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
       })
       .join(',')
     if (StringUtil.isNotBlank(sortClauses)) {
@@ -267,7 +267,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected getResultTypeDataList<Result>(dataList: Record<string, unknown>[]): Result[] {
-    if (arrayIsEmpty(dataList)) {
+    if (ArrayIsEmpty(dataList)) {
       return []
     }
     return dataList.map((row) => this.getResultTypeData(row))

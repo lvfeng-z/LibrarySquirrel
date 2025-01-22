@@ -3,7 +3,7 @@
  * 站点标签
  */
 import BaseQueryDTO from './BaseQueryDTO.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
@@ -28,7 +28,7 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
 
   constructor(localTagQueryDTO?: LocalTagQueryDTO) {
     super(localTagQueryDTO)
-    if (isNullish(localTagQueryDTO)) {
+    if (IsNullish(localTagQueryDTO)) {
       this.localTagName = undefined
       this.baseLocalTagId = undefined
       this.worksId = undefined

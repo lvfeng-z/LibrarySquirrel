@@ -7,8 +7,8 @@ import lodash from 'lodash'
 import CommonInputDate from '@renderer/components/common/CommentInput/CommonInputDate.vue'
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
-import { isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
-import { getNode } from '@renderer/utils/TreeUtil.ts'
+import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { GetNode } from '@renderer/utils/TreeUtil.ts'
 
 // props
 const props = defineProps<{
@@ -55,7 +55,7 @@ const dynamicComponent = computed(() => {
         props.config.refreshSelectData()
         return CommonInputTreeSelect
       case 'custom':
-        if (notNullish(props.config.render)) {
+        if (NotNullish(props.config.render)) {
           return props.config.render(data.value)
         }
         break
@@ -69,7 +69,7 @@ const dynamicComponent = computed(() => {
 function enable() {
   disabled.value = false
   nextTick(() => {
-    if (notNullish(inputRef.value)) {
+    if (NotNullish(inputRef.value)) {
       inputRef.value.focus()
     }
   })
@@ -115,16 +115,16 @@ function getSpanValue() {
     }
   } else if (props.config.type === 'select') {
     let target
-    if (notNullish(props.config.selectData)) {
+    if (NotNullish(props.config.selectData)) {
       target = props.config.selectData.find((selectData) => selectData.value === data.value)
     }
-    return isNullish(target) ? '-' : target.value
+    return IsNullish(target) ? '-' : target.value
   } else if (props.config.type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = props.config.selectData as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
-    const node = getNode(tempRoot, data.value as number)
-    return isNullish(node) ? '-' : node.label
+    const node = GetNode(tempRoot, data.value as number)
+    return IsNullish(node) ? '-' : node.label
   } else {
     return data.value
   }

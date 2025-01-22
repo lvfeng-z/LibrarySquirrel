@@ -5,7 +5,7 @@ import CollapseForm from './CollapseForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -44,7 +44,7 @@ const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 // 处理主搜索栏和下拉搜索框
 function calculateSpan() {
   let spanRest = 24 - (props.createButton ? barButtonSpan.value * 2 : barButtonSpan.value)
-  if (notNullish(props.mainInputBoxes)) {
+  if (NotNullish(props.mainInputBoxes)) {
     for (const inputBox of props.mainInputBoxes) {
       // 储存当前box的长度
       let boxSpan = 0
@@ -86,7 +86,7 @@ function calculateSpan() {
     }
   }
 
-  if (notNullish(props.dropDownInputBoxes)) {
+  if (NotNullish(props.dropDownInputBoxes)) {
     const tempDropdownInputBoxes = lodash.cloneDeep(props.dropDownInputBoxes)
     innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
   }

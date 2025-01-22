@@ -5,7 +5,7 @@ import { computed, Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO.ts'
 import TagBox from './TagBox.vue'
-import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
 
@@ -47,7 +47,7 @@ const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的�
 const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
 // 是否禁用搜索按钮(检查props.upperApiStaticParams的props.requiredStaticParams属性是否为undefined)
 const searchButtonDisabled = computed(() =>
-  isNullish(props.requiredFixedParams)
+  IsNullish(props.requiredFixedParams)
     ? false
     : !(
         Object.prototype.hasOwnProperty.call(props.upperLoadFixedParams, props.requiredFixedParams) &&
@@ -62,12 +62,12 @@ async function handleSearchButtonClicked(upperOrLower: boolean) {
   resetScrollBarPosition(upperOrLower)
   if (upperOrLower) {
     await upperTagBox.value.newSearch()
-    if (notNullish(upperData.value)) {
+    if (NotNullish(upperData.value)) {
       upperData.value = leachBufferData(upperData.value, upperOrLower)
     }
   } else {
     await lowerTagBox.value.newSearch()
-    if (notNullish(lowerData.value)) {
+    if (NotNullish(lowerData.value)) {
       lowerData.value = leachBufferData(lowerData.value, upperOrLower)
     }
   }
@@ -154,7 +154,7 @@ async function requestNextPage(
   }
   // 在原有数据的基础上增加新数据，如果没请求到数据，则将分页重置回原来的状态
   return newPagePromise.then((newPage) => {
-    if (arrayNotEmpty(newPage.data)) {
+    if (ArrayNotEmpty(newPage.data)) {
       newPage.data = leachBufferData(newPage.data, upperOrLower)
       return newPage
     } else {

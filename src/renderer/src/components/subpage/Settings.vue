@@ -4,7 +4,7 @@ import { onBeforeMount, reactive, Ref, ref, UnwrapRef } from 'vue'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '../../model/util/Settings'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
-import { arrayNotEmpty, isNullish, notNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 
@@ -37,7 +37,7 @@ async function loadSettings() {
   const response = await apis.settingsGetSettings()
   if (ApiUtil.check(response)) {
     const data = ApiUtil.data<Settings>(response)
-    settings.value = isNullish(data) ? emptySettings : data
+    settings.value = IsNullish(data) ? emptySettings : data
     oldSettings = lodash.cloneDeep(settings.value)
   } else {
     ElMessage({
@@ -48,7 +48,7 @@ async function loadSettings() {
 }
 // 保存或重置设置
 async function saveOrReset(fun: (arg?: unknown) => Promise<ApiResponse>) {
-  if (notNullish(settings.value)) {
+  if (NotNullish(settings.value)) {
     const changed = getChangedProperties(settings.value, oldSettings)
     const response = await fun(changed)
     if (ApiUtil.check(response)) {
@@ -104,7 +104,7 @@ async function selectDir() {
   const response = await apis.dirSelect(false)
   if (ApiUtil.check(response)) {
     const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
-    if (!dirSelectResult.canceled && arrayNotEmpty(dirSelectResult.filePaths) && notNullish(settings.value)) {
+    if (!dirSelectResult.canceled && ArrayNotEmpty(dirSelectResult.filePaths) && NotNullish(settings.value)) {
       settings.value.workdir = dirSelectResult.filePaths[0]
     }
   }

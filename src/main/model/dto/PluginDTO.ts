@@ -1,5 +1,5 @@
 import Plugin from '../entity/Plugin.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 export default class PluginDTO extends Plugin {
   /**
@@ -8,7 +8,7 @@ export default class PluginDTO extends Plugin {
   loadPath: string | undefined | null
 
   constructor(pluginDTO?: PluginDTO | Plugin) {
-    if (isNullish(pluginDTO)) {
+    if (IsNullish(pluginDTO)) {
       super()
       this.loadPath = undefined
     } else if (pluginDTO instanceof PluginDTO) {

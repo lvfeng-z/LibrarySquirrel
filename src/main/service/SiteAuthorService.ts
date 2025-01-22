@@ -6,11 +6,11 @@ import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import { Operator } from '../constant/CrudConstant.js'
-import { assertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '../util/AssertUtil.js'
 
 /**
  * 站点作者Service
@@ -25,11 +25,11 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthor
    */
   public async saveOrUpdateBySiteAuthorId(siteAuthor: SiteAuthor): Promise<number> {
-    if (isNullish(siteAuthor.siteId)) {
+    if (IsNullish(siteAuthor.siteId)) {
       const msg = '保存作品失败，作品的站点id意外为空'
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
-    } else if (isNullish(siteAuthor.siteAuthorId)) {
+    } else if (IsNullish(siteAuthor.siteAuthorId)) {
       const msg = '保存作品失败，站点作者的id意外为空'
       LogUtil.error('SiteAuthorService', '保存作品失败，站点作者的id意外为空')
       throw new Error(msg)
@@ -67,8 +67,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId) as string[]
     const oldSiteAuthors = await this.dao.listBySiteAuthorIds(siteAuthorIds)
     const newSiteAuthors = siteAuthors.map((siteAuthor) => {
-      assertNotNullish(siteAuthor.siteAuthorId, this.className, '保存站点作者失败，站点作者的id意外为空')
-      assertNotNullish(siteAuthor.siteId, this.className, '保存站点作者失败，站点作者的站点id意外为空')
+      AssertNotNullish(siteAuthor.siteAuthorId, this.className, '保存站点作者失败，站点作者的id意外为空')
+      AssertNotNullish(siteAuthor.siteId, this.className, '保存站点作者失败，站点作者的站点id意外为空')
       const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
       const newSiteAuthor = new SiteAuthor(siteAuthor)
 
@@ -183,7 +183,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       page.query.operators = {
         ...{ siteAuthorName: Operator.LIKE },
         ...page.query.operators

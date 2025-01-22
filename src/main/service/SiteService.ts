@@ -5,7 +5,7 @@ import BaseService from './BaseService.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
-import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SiteDTO from '../model/dto/SiteDTO.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
@@ -20,11 +20,11 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param page
    */
   public async queryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQueryDTO, Site>> {
-    if (isNullish(page)) {
+    if (IsNullish(page)) {
       page = new Page()
     }
     page.query = new SiteQueryDTO(page.query)
-    if (isNullish(page.query.operators)) {
+    if (IsNullish(page.query.operators)) {
       page.query.operators = { siteName: Operator.LIKE }
     }
     if (!Object.hasOwn(page.query.operators, 'siteName')) {
@@ -38,11 +38,11 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param page
    */
   public async querySelectItemPage(page: Page<SiteQueryDTO, Site>) {
-    if (isNullish(page)) {
+    if (IsNullish(page)) {
       page = new Page()
     }
     page.query = new SiteQueryDTO(page.query)
-    if (isNullish(page.query.operators)) {
+    if (IsNullish(page.query.operators)) {
       page.query.operators = { siteName: Operator.LIKE }
     }
     if (!Object.hasOwn(page.query.operators, 'siteName')) {
@@ -65,7 +65,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    */
   public async getDTOByDomain(domain: string): Promise<SiteDTO | undefined> {
     const site = await this.dao.getByDomain(domain)
-    if (isNullish(site)) {
+    if (IsNullish(site)) {
       return undefined
     }
     const siteDTO = new SiteDTO(site)
@@ -79,7 +79,7 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param domains 域名列表
    */
   public async listByDomains(domains: string[]): Promise<Site[] | undefined> {
-    if (arrayIsEmpty(domains)) {
+    if (ArrayIsEmpty(domains)) {
       return undefined
     }
     return this.dao.listByDomains(domains)
@@ -90,17 +90,17 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param domains 域名列表
    */
   public async listDTOByDomains(domains: string[]): Promise<SiteDTO[] | undefined> {
-    if (arrayIsEmpty(domains)) {
+    if (ArrayIsEmpty(domains)) {
       return undefined
     }
     const sites = await this.dao.listByDomains(domains)
-    if (arrayIsEmpty(sites)) {
+    if (ArrayIsEmpty(sites)) {
       return undefined
     }
-    const siteIds = sites.map((site) => site.id).filter(notNullish)
+    const siteIds = sites.map((site) => site.id).filter(NotNullish)
     const siteDomainService = new SiteDomainService(this.db)
     const siteDomains = await siteDomainService.listBySiteIds(siteIds)
-    if (arrayNotEmpty(siteDomains)) {
+    if (ArrayNotEmpty(siteDomains)) {
       // 生成siteId为键，siteDomain列表为值的Map
       const siteIdDomainMap = Map.groupBy<number, SiteDomain>(siteDomains, (siteDomain) => siteDomain.siteId as number)
       return sites.map((site) => {

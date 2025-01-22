@@ -5,7 +5,7 @@ import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { Ref, ref, UnwrapRef } from 'vue'
 import lodash from 'lodash'
 import SelectItem from '../../model/util/SelectItem'
-import { arrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
@@ -27,7 +27,7 @@ async function handleScroll(newQuery: boolean, input?: string) {
   const nextPage = await props.load(tempPage, input)
 
   // 没有新数据时，不再增加页码
-  if (arrayNotEmpty(nextPage.data)) {
+  if (ArrayNotEmpty(nextPage.data)) {
     page.value.pageNumber++
     page.value.pageCount = nextPage.pageCount
     page.value.dataCount = nextPage.dataCount

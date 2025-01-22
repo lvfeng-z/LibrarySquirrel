@@ -9,7 +9,7 @@ import WorksDTO from '../model/dto/WorksDTO.js'
 import WorksService from './WorksService.js'
 import Works from '../model/entity/Works.js'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.js'
-import { arrayNotEmpty } from '../util/CommonUtil.js'
+import { ArrayNotEmpty } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import LocalTagService from './LocalTagService.js'
@@ -53,7 +53,7 @@ export default class SearchService {
     const usedSiteTag: number[] = []
     const usedLocalAuthor: number[] = []
     const usedSiteAuthor: number[] = []
-    if (arrayNotEmpty(searchConditions)) {
+    if (ArrayNotEmpty(searchConditions)) {
       for (const searchCondition of searchConditions) {
         switch (searchCondition.type) {
           case SearchType.LOCAL_TAG:
@@ -131,22 +131,22 @@ export default class SearchService {
   public async updateLastUsed(used: Map<SearchType, number[]>) {
     const usedLocalTag = used.get(SearchType.LOCAL_TAG)
     const process: Promise<number>[] = []
-    if (arrayNotEmpty(usedLocalTag)) {
+    if (ArrayNotEmpty(usedLocalTag)) {
       const localTagService = new LocalTagService()
       process.push(localTagService.updateLastUse(usedLocalTag))
     }
     const usedSiteTag = used.get(SearchType.SITE_TAG)
-    if (arrayNotEmpty(usedSiteTag)) {
+    if (ArrayNotEmpty(usedSiteTag)) {
       const siteTagService = new SiteTagService()
       process.push(siteTagService.updateLastUse(usedSiteTag))
     }
     const usedLocalAuthor = used.get(SearchType.LOCAL_AUTHOR)
-    if (arrayNotEmpty(usedLocalAuthor)) {
+    if (ArrayNotEmpty(usedLocalAuthor)) {
       const localAuthorService = new LocalAuthorService()
       process.push(localAuthorService.updateLastUse(usedLocalAuthor))
     }
     const usedSiteAuthor = used.get(SearchType.SITE_AUTHOR)
-    if (arrayNotEmpty(usedSiteAuthor)) {
+    if (ArrayNotEmpty(usedSiteAuthor)) {
       const siteAuthorService = new SiteAuthorService()
       process.push(siteAuthorService.updateLastUse(usedSiteAuthor))
     }

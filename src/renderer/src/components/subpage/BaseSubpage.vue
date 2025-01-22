@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // props
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 const props = defineProps<{
   beforeClose?: () => Promise<void>
@@ -10,7 +10,7 @@ const emits = defineEmits(['closeSelf'])
 
 // 方法
 async function closeSelf() {
-  if (notNullish(props.beforeClose)) {
+  if (NotNullish(props.beforeClose)) {
     await props.beforeClose()
   }
   emits('closeSelf')

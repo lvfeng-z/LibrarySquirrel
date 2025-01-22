@@ -2,7 +2,7 @@
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import { Close } from '@element-plus/icons-vue'
 import { computed, Ref, UnwrapRef } from 'vue'
-import { arrayIsEmpty, isNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayIsEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -17,7 +17,7 @@ const props = withDefaults(
 
 // 变量
 const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
-  return isNullish(props.item.subLabels) ? 0 : props.item.subLabels.length
+  return IsNullish(props.item.subLabels) ? 0 : props.item.subLabels.length
 })
 const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
   return props.closeable ? 'calc(100% - 18px)' : '100%'
@@ -57,7 +57,7 @@ function handleCloseButtonClicked() {
           :class="{
             'segmented-tag-main-text': true,
             'segmented-tag-ellipsis': true,
-            'segmented-tag-sub-text-last': arrayIsEmpty(props.item.subLabels),
+            'segmented-tag-sub-text-last': ArrayIsEmpty(props.item.subLabels),
             'segmented-tag-main-text-checked': !item.disabled,
             'segmented-tag-main-text-unchecked': item.disabled
           }"
@@ -77,7 +77,7 @@ function handleCloseButtonClicked() {
             :class="{
               'segmented-tag-sub-text': true,
               'segmented-tag-ellipsis': true,
-              'segmented-tag-sub-text-last': isNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
+              'segmented-tag-sub-text-last': IsNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
             }"
           >
             {{ item }}

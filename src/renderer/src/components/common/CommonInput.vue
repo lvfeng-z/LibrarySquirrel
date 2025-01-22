@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { CommonInputConfig } from '../../model/util/CommonInputConfig'
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
-import { isNullish, notNullish } from '../../utils/CommonUtil'
+import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
-import { getNode } from '../../utils/TreeUtil'
+import { GetNode } from '../../utils/TreeUtil'
 
 // props
 const props = defineProps<{
@@ -56,16 +56,16 @@ function getSpanValue() {
     }
   } else if (props.config.type === 'select') {
     let target
-    if (notNullish(props.config.selectData)) {
+    if (NotNullish(props.config.selectData)) {
       target = props.config.selectData.find((selectData) => selectData.value === data.value)
     }
-    return isNullish(target) ? '-' : target.value
+    return IsNullish(target) ? '-' : target.value
   } else if (props.config.type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = props.config.selectData as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
-    const node = getNode(tempRoot, data.value as number)
-    return isNullish(node) ? '-' : node.label
+    const node = GetNode(tempRoot, data.value as number)
+    return IsNullish(node) ? '-' : node.label
   } else {
     return data.value
   }
@@ -158,7 +158,7 @@ async function requestSelectDataApi(queryStr?: string) {
       @change="handleDataChange"
     ></el-tree-select>
     <el-switch v-if="props.config.type === 'switch'" :disabled="disabled"></el-switch>
-    <component :is="notNullish(props.config.render) ? props.config.render(data) : undefined" v-if="props.config.type === 'custom'" />
+    <component :is="NotNullish(props.config.render) ? props.config.render(data) : undefined" v-if="props.config.type === 'custom'" />
   </div>
 </template>
 

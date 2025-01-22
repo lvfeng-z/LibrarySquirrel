@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
-import { notNullish } from '../util/CommonUtil.js'
+import { NotNullish } from '../util/CommonUtil.js'
 
 /**
  * 封装的Better-SQLit3 Statement类
@@ -49,7 +49,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
         await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, this.statement.source)
         this.holdingWriteLock = true
       }
-      const runResult = this.statement.run(...params.filter(notNullish))
+      const runResult = this.statement.run(...params.filter(NotNullish))
       LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return runResult
     } finally {
@@ -61,14 +61,14 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
   }
   get(...params: BindParameters): undefined | Result {
     LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
-    return this.statement.get(...params.filter(notNullish))
+    return this.statement.get(...params.filter(NotNullish))
   }
   all(...params: BindParameters): Result[] {
     LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
-    return this.statement.all(...params.filter(notNullish))
+    return this.statement.all(...params.filter(NotNullish))
   }
   iterate(...params: BindParameters): IterableIterator<Result> {
-    return this.statement.iterate(...params.filter(notNullish))
+    return this.statement.iterate(...params.filter(NotNullish))
   }
   pluck(toggleState?: boolean): Database.Statement<BindParameters, Result> {
     return this.statement.pluck(toggleState)
@@ -80,7 +80,7 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
     return this.statement.raw(toggleState)
   }
   bind(...params: BindParameters): Database.Statement<BindParameters, Result> {
-    return this.statement.bind(...params.filter(notNullish))
+    return this.statement.bind(...params.filter(NotNullish))
   }
   columns(): Database.ColumnDefinition[] {
     return this.statement.columns()

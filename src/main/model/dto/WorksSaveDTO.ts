@@ -1,5 +1,5 @@
 import WorksPluginDTO from './WorksPluginDTO.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 保存作品信息和资源的DTO
@@ -11,7 +11,7 @@ export default class WorksSaveDTO extends WorksPluginDTO {
   fullSavePath: string | undefined | null
 
   constructor(worksSaveDTO?: WorksSaveDTO | WorksPluginDTO) {
-    if (isNullish(worksSaveDTO)) {
+    if (IsNullish(worksSaveDTO)) {
       super()
       this.fullSavePath = undefined
     } else if (worksSaveDTO instanceof WorksSaveDTO) {

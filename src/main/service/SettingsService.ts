@@ -1,4 +1,4 @@
-import { defaultSettings } from '../util/SettingsUtil.ts'
+import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from '../model/util/Settings.ts'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 import LogUtil from '../util/LogUtil.js'
@@ -30,7 +30,7 @@ function saveSettings(settings: { path: string; value: unknown }[]): boolean {
  */
 function resetSettings() {
   try {
-    defaultSettings()
+    DefaultSettings()
     return true
   } catch (e) {
     LogUtil.error('SettingsService', '重置设置失败，', e)

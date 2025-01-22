@@ -3,11 +3,11 @@ import Task from '../model/entity/Task.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import DB from '../database/DB.ts'
 import Page from '../model/util/Page.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import TaskDTO from '../model/dto/TaskDTO.ts'
-import { buildTree } from '../util/TreeUtil.ts'
+import { BuildTree } from '../util/TreeUtil.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
@@ -50,7 +50,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    */
   async queryParentPage(page: Page<TaskQueryDTO, Task>) {
     const modifiedPage = new Page(page)
-    if (isNullish(modifiedPage.query)) {
+    if (IsNullish(modifiedPage.query)) {
       modifiedPage.query = new TaskQueryDTO()
     }
     // 清除isCollection的值
@@ -61,7 +61,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
 
     // 拼接where字句
     let whereClauseList: string[] = []
-    if (notNullish(modifiedPage.query)) {
+    if (NotNullish(modifiedPage.query)) {
       // 生成where字句列表
       const whereClauseAndQuery = super.getWhereClauses(modifiedPage.query, 't1', ['siteId'])
       const whereClauses = whereClauseAndQuery.whereClauses
@@ -73,14 +73,14 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     // 查询是父任务的或者只有单个任务的
     whereClauseList.push('(t1.is_collection = 1 OR t1.pid IS NULL OR t1.pid = 0)')
     // 查询存在指定站点的子任务的
-    if (notNullish(modifiedPage.query.siteId)) {
+    if (NotNullish(modifiedPage.query.siteId)) {
       whereClauseList.push(`EXISTS(SELECT 1 FROM task ct1 WHERE ct1.pid = t1.id AND ct1.site_id = ${modifiedPage.query.siteId})`)
     }
     const tempWhereClause = super.splicingWhereClauses(whereClauseList)
     const whereClause = StringUtil.isNotBlank(tempWhereClause) ? tempWhereClause : ''
 
     let statement = selectClause.concat(' ', whereClause)
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
     // 查询
@@ -112,17 +112,17 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                             parent as (SELECT id, is_collection, 0 as pid, task_name, site_id, local_works_id, site_works_id, url, create_time, update_time,
                                               status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data FROM task WHERE id in (${idsStr}) AND is_collection = 1)
                        update task set status = ${status} WHERE id in(
-                          SELECT id FROM children ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                          SELECT id FROM children ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
                           UNION
-                          SELECT id FROM parent ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
-                          UNION
-                          SELECT id
-                          FROM task
-                          WHERE id in (SELECT pid FROM children) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                          SELECT id FROM parent ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
                           UNION
                           SELECT id
                           FROM task
-                          WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                          WHERE id in (SELECT pid FROM children) ${NotNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
+                          UNION
+                          SELECT id
+                          FROM task
+                          WHERE pid in (SELECT id FROM parent) ${NotNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        )`
     const db = this.acquire()
     return db
@@ -148,9 +148,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                             parent as (SELECT id, is_collection, 0 as pid, task_name, site_id, local_works_id, site_works_id, url, create_time, update_time,
                                               status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data FROM task WHERE id in (${idsStr}) AND is_collection = 1)
 
-                       SELECT * FROM children ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                       SELECT * FROM children ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
                        UNION
-                       SELECT * FROM parent ${notNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
+                       SELECT * FROM parent ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
                        UNION
                        SELECT id, is_collection, 0 as pid, task_name, site_id, local_works_id, site_works_id, url, create_time,
                               update_time, status, pending_download_path, continuable, plugin_id, plugin_info, plugin_data
@@ -159,14 +159,14 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        UNION
                        SELECT *
                        FROM task
-                       WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
+                       WHERE pid in (SELECT id FROM parent) ${NotNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
     let sourceTasks: TaskDTO[]
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
         sourceTasks = super.getResultTypeDataList<TaskDTO>(rows)
-        return buildTree(sourceTasks, 0)
+        return BuildTree(sourceTasks, 0)
       })
       .finally(() => {
         if (!this.injectedDB) {

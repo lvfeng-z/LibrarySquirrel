@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import LocalAuthorDTO from '../../model/main/dto/LocalAuthorDTO.ts'
-import { notNullish } from '../../utils/CommonUtil'
+import { NotNullish } from '../../utils/CommonUtil'
 
 // props
 const props = defineProps<{
@@ -9,7 +9,7 @@ const props = defineProps<{
 
 // 方法
 function getAuthorNames() {
-  if (notNullish(props.authors)) {
+  if (NotNullish(props.authors)) {
     const nameList = props.authors.map((author) => author.localAuthorName)
     return nameList.join('、')
   } else {

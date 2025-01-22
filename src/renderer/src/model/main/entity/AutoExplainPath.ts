@@ -1,6 +1,6 @@
 import BaseEntity from './BaseEntity.ts'
 import { PathTypeEnum } from '../../../constants/PathTypeEnum.ts'
-import { isNullish } from '../../../utils/CommonUtil.ts'
+import { IsNullish } from '../../../utils/CommonUtil.ts'
 
 /**
  * 自动解释路径含义
@@ -27,7 +27,7 @@ export default class AutoExplainPath extends BaseEntity {
   regularExpression: string | undefined | null
 
   constructor(autoPathExplain?: AutoExplainPath) {
-    if (isNullish(autoPathExplain)) {
+    if (IsNullish(autoPathExplain)) {
       super()
       this.id = undefined
       this.name = undefined

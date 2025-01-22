@@ -6,7 +6,7 @@ import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
+import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginFactory from './PluginFactory.js'
 import { BasePlugin } from './BasePlugin.js'
@@ -47,7 +47,7 @@ export default class PluginLoader<T extends BasePlugin> {
     // 加载并缓存插件和插件信息
     let plugin: Promise<T>
 
-    if (isNullish(this.pluginCache[pluginId])) {
+    if (IsNullish(this.pluginCache[pluginId])) {
       plugin = this.factory.create(pluginId, this.pluginTool)
       this.pluginCache[pluginId] = plugin
       return plugin
@@ -70,9 +70,9 @@ export default class PluginLoader<T extends BasePlugin> {
         for (const meaningOfPath of meaningOfPaths) {
           if (meaningOfPath.type === PathTypeEnum.AUTHOR) {
             const localAuthorService = new LocalAuthorService()
-            if (notNullish(meaningOfPath.id)) {
+            if (NotNullish(meaningOfPath.id)) {
               const localAuthor = await localAuthorService.getById(meaningOfPath.id)
-              if (isNullish(localAuthor)) {
+              if (IsNullish(localAuthor)) {
                 const msg = '附加目录含义中的作者信息失败，未查询到作者'
                 LogUtil.error('PluginLoader', msg)
                 throw new Error(msg)
@@ -83,9 +83,9 @@ export default class PluginLoader<T extends BasePlugin> {
           }
           if (meaningOfPath.type === PathTypeEnum.TAG) {
             const localTagService = new LocalTagService()
-            if (notNullish(meaningOfPath.id)) {
+            if (NotNullish(meaningOfPath.id)) {
               const localTag = await localTagService.getById(meaningOfPath.id)
-              if (isNullish(localTag)) {
+              if (IsNullish(localTag)) {
                 const msg = '附加目录含义中的标签信息失败，未查询到作者'
                 LogUtil.error('PluginLoader', msg)
                 throw new Error(msg)
@@ -96,9 +96,9 @@ export default class PluginLoader<T extends BasePlugin> {
           }
           if (meaningOfPath.type === PathTypeEnum.SITE) {
             const siteService = new SiteService()
-            if (notNullish(meaningOfPath.id)) {
+            if (NotNullish(meaningOfPath.id)) {
               const site = await siteService.getById(meaningOfPath.id)
-              if (isNullish(site)) {
+              if (IsNullish(site)) {
                 const msg = '附加目录含义中的站点信息失败，未查询到作者'
                 LogUtil.error('PluginLoader', msg)
                 throw new Error(msg)

@@ -12,7 +12,7 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import lodash from 'lodash'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteDialog from '@renderer/components/dialogs/SiteDialog.vue'
 import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO.ts'
 import SiteDomain from '@renderer/model/main/entity/SiteDomain.ts'
@@ -20,7 +20,7 @@ import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
 
 // onMounted
 onMounted(() => {
-  if (isNullish(sitePage.value.query)) {
+  if (IsNullish(sitePage.value.query)) {
     sitePage.value.query = new SiteQueryDTO()
   }
   sitePage.value.query.sort = { updateTime: false, createTime: false }
@@ -306,7 +306,7 @@ function handleSiteDialogRequestSuccess() {
 async function siteDomainQueryPage(
   page: Page<SiteDomainQueryDTO, SiteDomain>
 ): Promise<Page<SiteDomainQueryDTO, SiteDomain> | undefined> {
-  if (isNullish(page.query)) {
+  if (IsNullish(page.query)) {
     page.query = new SiteQueryDTO()
   }
   page.query.siteId = siteSelected.value.id

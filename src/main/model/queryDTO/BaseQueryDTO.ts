@@ -1,8 +1,8 @@
 import { Id } from '../entity/BaseEntity.ts'
 import { Operator } from '../../constant/CrudConstant.ts'
 import QuerySortOption from '../../constant/QuerySortOption.ts'
-import { toObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'
-import { notNullish } from '../../util/CommonUtil.js'
+import { ToObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 import StringUtil from '../../util/StringUtil.js'
 
 export default class BaseQueryDTO {
@@ -59,10 +59,10 @@ export default class BaseQueryDTO {
    */
   public toPlainParams(ignore?: string[]) {
     const fullIgnore = ['operators', 'sort']
-    if (notNullish(ignore)) {
+    if (NotNullish(ignore)) {
       fullIgnore.push(...ignore)
     }
-    return toObjAcceptedBySqlite3(this, fullIgnore)
+    return ToObjAcceptedBySqlite3(this, fullIgnore)
   }
 
   /**

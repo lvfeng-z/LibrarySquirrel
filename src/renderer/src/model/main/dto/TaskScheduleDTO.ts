@@ -1,4 +1,4 @@
-import { isNullish } from '../../../utils/CommonUtil'
+import { IsNullish } from '../../../utils/CommonUtil'
 import { TaskStatesEnum } from '../../../constants/TaskStatesEnum'
 
 export default class TaskScheduleDTO {
@@ -28,7 +28,7 @@ export default class TaskScheduleDTO {
   finished: number | undefined | null
 
   constructor(taskScheduleDTO?: TaskScheduleDTO) {
-    if (isNullish(taskScheduleDTO)) {
+    if (IsNullish(taskScheduleDTO)) {
       this.id = undefined
       this.status = undefined
       this.schedule = undefined

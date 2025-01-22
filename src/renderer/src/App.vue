@@ -15,7 +15,7 @@ import WorksDTO from './model/main/dto/WorksDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
-import { arrayNotEmpty, isNullish, notNullish } from './utils/CommonUtil'
+import { ArrayNotEmpty, IsNullish, NotNullish } from './utils/CommonUtil'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
@@ -94,7 +94,7 @@ async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?
   }
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
-    if (isNullish(newPage)) {
+    if (IsNullish(newPage)) {
       ApiUtil.msg(response)
       throw new Error(response.msg)
     }
@@ -141,20 +141,20 @@ async function searchWorks(page: Page<SearchCondition[], WorksDTO>): Promise<Pag
   page.query = selectedTagList.value
     .map((searchCondition) => {
       let operator: CrudOperator | undefined = undefined
-      if (notNullish(searchCondition.disabled) && searchCondition.disabled) {
+      if (NotNullish(searchCondition.disabled) && searchCondition.disabled) {
         operator = CrudOperator.NOT_EQUAL
       }
-      if (notNullish(searchCondition.extraData)) {
+      if (NotNullish(searchCondition.extraData)) {
         const extraData = searchCondition.extraData as { type: SearchType; id: number }
         return new SearchCondition({ type: extraData.type, value: extraData.id, operator: operator })
       } else {
         return undefined
       }
     })
-    .filter(notNullish)
+    .filter(NotNullish)
   if (StringUtil.isNotBlank(autoLoadInput.value)) {
     const worksName = autoLoadInput.value
-    if (isNullish(page.query)) {
+    if (IsNullish(page.query)) {
       page.query = []
     }
     let tempCondition = new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: worksName, operator: CrudOperator.LIKE })
@@ -185,7 +185,7 @@ async function queryWorksPage(next: boolean) {
   const nextPage = await searchWorks(tempPage)
 
   // 没有新数据时，不再增加页码
-  if (arrayNotEmpty(nextPage.data)) {
+  if (ArrayNotEmpty(nextPage.data)) {
     worksPage.value.pageNumber++
     worksPage.value.pageCount = nextPage.pageCount
     worksPage.value.dataCount = nextPage.dataCount

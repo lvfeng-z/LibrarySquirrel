@@ -8,8 +8,8 @@ import { InputBox } from '../../model/util/InputBox'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
 import { ElTag } from 'element-plus'
 import ApiUtil from '../../utils/ApiUtil'
-import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
-import { getNode } from '@renderer/utils/TreeUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
+import { GetNode } from '@renderer/utils/TreeUtil.ts'
 import { throttle } from 'lodash'
 import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
@@ -191,7 +191,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   const response = await apis.taskListSchedule(ids)
   if (ApiUtil.check(response)) {
     const scheduleList = ApiUtil.data(response) as TaskScheduleDTO[]
-    return arrayNotEmpty(scheduleList) ? scheduleList : undefined
+    return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
   } else {
     return undefined
   }
@@ -218,9 +218,9 @@ async function refreshTask() {
       const tempRoot = new TaskDTO()
       tempRoot.children = children.value
       return visibleRowsId.filter((id: number) => {
-        const task = getNode<TaskDTO>(tempRoot, id)
+        const task = GetNode<TaskDTO>(tempRoot, id)
         return (
-          notNullish(task) &&
+          NotNullish(task) &&
           (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
         )
       })
@@ -231,7 +231,7 @@ async function refreshTask() {
     while (refreshTasks.length > 0) {
       await childTaskSearchTable.value.refreshData(refreshTasks, false)
       await new Promise((resolve) => setTimeout(resolve, 500))
-      if (isNullish(childTaskSearchTable.value)) {
+      if (IsNullish(childTaskSearchTable.value)) {
         break
       }
       refreshTasks = getRefreshTasks()
@@ -316,7 +316,7 @@ function startTask(row: TaskDTO, retry: boolean) {
     apis.taskStartTask([row.id])
   }
   row.status = TaskStatesEnum.WAITING
-  if (row.isCollection && notNullish(row.children)) {
+  if (row.isCollection && NotNullish(row.children)) {
     row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
   }
 }

@@ -4,7 +4,7 @@ import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import DB from '../database/DB.ts'
 import WorksSetDao from '../dao/WorksSetDao.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
-import { isNullish } from '../util/CommonUtil.ts'
+import { IsNullish } from '../util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import ReWorksWorksSet from '../model/entity/ReWorksWorksSet.ts'
 import ReWorksWorksSetService from './ReWorksWorksSetService.ts'
@@ -25,11 +25,11 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
   link(worksDTOs: WorksDTO[], worksSetId: number) {
     // 校验
     const legalWorksList = worksDTOs.filter((works) => {
-      if (isNullish(works)) {
+      if (IsNullish(works)) {
         LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品信息意外为空`)
         return false
       }
-      if (isNullish(!Object.hasOwn(works, 'id') || works.id)) {
+      if (IsNullish(!Object.hasOwn(works, 'id') || works.id)) {
         const siteWorksName = Object.hasOwn(works, 'siteWorksName') ? works.siteWorksName : 'unknown'
         LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品id意外为空，siteWorksName: ${siteWorksName}`)
         return false

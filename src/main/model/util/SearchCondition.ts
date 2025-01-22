@@ -1,5 +1,5 @@
 import { Operator } from '../../constant/CrudConstant.js'
-import { isNullish } from '../../util/CommonUtil.js'
+import { IsNullish } from '../../util/CommonUtil.js'
 
 export class SearchCondition {
   /**
@@ -20,7 +20,7 @@ export class SearchCondition {
   constructor(searchCondition: SearchCondition) {
     this.value = searchCondition.value
     this.type = searchCondition.type
-    this.operator = isNullish(searchCondition.operator) ? Operator.EQUAL : searchCondition.operator
+    this.operator = IsNullish(searchCondition.operator) ? Operator.EQUAL : searchCondition.operator
   }
 }
 

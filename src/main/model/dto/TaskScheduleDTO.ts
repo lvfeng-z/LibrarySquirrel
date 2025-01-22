@@ -1,5 +1,5 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 export default class TaskScheduleDTO {
   /**
@@ -28,7 +28,7 @@ export default class TaskScheduleDTO {
   finished: number | undefined | null
 
   constructor(taskScheduleDTO?: TaskScheduleDTO) {
-    if (isNullish(taskScheduleDTO)) {
+    if (IsNullish(taskScheduleDTO)) {
       this.id = undefined
       this.status = undefined
       this.schedule = undefined

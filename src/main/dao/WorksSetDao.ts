@@ -3,7 +3,7 @@ import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
 import DB from '../database/DB.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { notNullish } from '../util/CommonUtil.ts'
+import { NotNullish } from '../util/CommonUtil.ts'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
   constructor(db?: DB) {
@@ -21,7 +21,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
     const whereClauseAndQuery = super.getWhereClause(queryDTO)
     const whereClause = whereClauseAndQuery.whereClause
     let modifiedQuery
-    if (notNullish(whereClauseAndQuery.query)) {
+    if (NotNullish(whereClauseAndQuery.query)) {
       modifiedQuery = whereClauseAndQuery.query.toPlainParams()
     }
     const statement = `SELECT *

@@ -1,4 +1,4 @@
-import { isNullish } from '../../../utils/CommonUtil.ts'
+import { IsNullish } from '../../../utils/CommonUtil.ts'
 import BaseEntity from './BaseEntity.ts'
 
 /**
@@ -16,7 +16,7 @@ export default class LocalAuthor extends BaseEntity {
   localAuthorName: string | undefined | null
 
   constructor(localAuthor?: LocalAuthor) {
-    if (isNullish(localAuthor)) {
+    if (IsNullish(localAuthor)) {
       super()
       this.id = undefined
       this.localAuthorName = undefined

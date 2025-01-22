@@ -1,7 +1,7 @@
 import SiteTag from '../entity/SiteTag.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import Site from '../entity/Site.ts'
-import { isNullish } from '../../../utils/CommonUtil.ts'
+import { IsNullish } from '../../../utils/CommonUtil.ts'
 
 export default class SiteTagDTO extends SiteTag {
   /**
@@ -15,7 +15,7 @@ export default class SiteTagDTO extends SiteTag {
   site: Site | undefined | null
 
   constructor(siteTagDTO?: SiteTagDTO) {
-    if (isNullish(siteTagDTO)) {
+    if (IsNullish(siteTagDTO)) {
       super()
       this.localTag = undefined
       this.site = undefined

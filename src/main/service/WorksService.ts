@@ -5,7 +5,7 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import { WorksDao } from '../dao/WorksDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import fs from 'fs'
-import { createDirIfNotExists, sanitizeFileName } from '../util/FileSysUtil.ts'
+import { CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.ts'
 import path from 'path'
 import BaseService from './BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
@@ -16,14 +16,14 @@ import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { AuthorRole } from '../constant/AuthorRole.ts'
 import TaskService from './TaskService.ts'
-import { arrayNotEmpty, isNullish, notNullish } from '../util/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
 import StringUtil from '../util/StringUtil.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
-import { assertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '../util/AssertUtil.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
@@ -65,11 +65,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       result.resourceComplete = false
 
       // 保存路径
-      const standardAuthorName = sanitizeFileName(authorName)
+      const standardAuthorName = SanitizeFileName(authorName)
       const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
 
       const fileName = `${finalAuthorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
-      const standardFileName = sanitizeFileName(fileName)
+      const standardFileName = SanitizeFileName(fileName)
       const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : standardFileName
 
       const relativeSavePath = path.join('/includeDir', finalAuthorName)
@@ -93,12 +93,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param fileWriter
    */
   public static async saveWorksResource(worksDTO: WorksSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
-    assertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品资源失败，资源意外为空，taskId: ${worksDTO.taskId}`)
-    assertNotNullish(worksDTO.fullSavePath, 'WorksService', `保存作品资源失败，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`)
+    AssertNotNullish(worksDTO.resourceStream, 'WorksService', `保存作品资源失败，资源意外为空，taskId: ${worksDTO.taskId}`)
+    AssertNotNullish(worksDTO.fullSavePath, 'WorksService', `保存作品资源失败，作品的fullSaveDir意外为空，worksId: ${worksDTO.id}`)
 
     try {
       // 创建保存目录
-      await createDirIfNotExists(path.dirname(worksDTO.fullSavePath))
+      await CreateDirIfNotExists(path.dirname(worksDTO.fullSavePath))
       // 创建写入流
       const writeStream = fs.createWriteStream(worksDTO.fullSavePath)
 
@@ -118,8 +118,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param fileWriter 任务writer
    */
   public static async resumeSaveWorksResource(fileWriter: TaskWriter): Promise<FileSaveResult> {
-    assertNotNullish(fileWriter.readable, 'WorksService', `恢复资源下载时资源流意外为空`)
-    assertNotNullish(fileWriter.writable, 'WorksService', `恢复资源下载时写入流意外为空`)
+    AssertNotNullish(fileWriter.readable, 'WorksService', `恢复资源下载时资源流意外为空`)
+    AssertNotNullish(fileWriter.writable, 'WorksService', `恢复资源下载时写入流意外为空`)
 
     return fileWriter.doWrite()
   }
@@ -147,23 +147,23 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         .transaction(async (transactionDB): Promise<number> => {
           // 如果worksSets不为空，则此作品是作品集中的作品
           let worksSetId: number = 0
-          if (notNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
+          if (NotNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
             // 遍历处理作品集数组
             for (const worksSet of worksDTO.worksSets) {
-              if (notNullish(worksSet) && notNullish(worksDTO.taskId)) {
+              if (NotNullish(worksSet) && NotNullish(worksDTO.taskId)) {
                 const taskService = new TaskService(transactionDB)
                 const includeTask = await taskService.getById(worksDTO.taskId)
-                assertNotNullish(includeTask, this.className, '修改作品集失败，任务id意外为空')
+                AssertNotNullish(includeTask, this.className, '修改作品集失败，任务id意外为空')
                 const rootTaskId = includeTask.pid
                 const siteWorksSetId = worksSet.siteWorksSetId
 
-                if (notNullish(siteWorksSetId) && notNullish(rootTaskId)) {
+                if (NotNullish(siteWorksSetId) && NotNullish(rootTaskId)) {
                   const worksSetService = new WorksSetService(transactionDB)
                   const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(siteWorksSetId, rootTaskId)
-                  if (isNullish(oldWorksSet)) {
+                  if (IsNullish(oldWorksSet)) {
                     const tempWorksSet = new WorksSet(worksSet)
                     worksSetId = await worksSetService.save(tempWorksSet)
-                  } else if (notNullish(oldWorksSet?.id)) {
+                  } else if (NotNullish(oldWorksSet?.id)) {
                     worksSetId = oldWorksSet.id
                   }
                 } else {
@@ -173,26 +173,26 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             }
           }
           // 保存站点作者
-          if (notNullish(siteAuthors)) {
+          if (NotNullish(siteAuthors)) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
             // 查询站点作者，获取其id，供后面绑定使用
-            const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId).filter(notNullish)
+            const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId).filter(NotNullish)
             const siteId = siteAuthors[0].siteId as number
             const tempSiteAuthors = await siteAuthorService.listBySiteAuthor(siteAuthorIds, siteId)
-            if (arrayNotEmpty(tempSiteAuthors)) {
+            if (ArrayNotEmpty(tempSiteAuthors)) {
               siteAuthors = tempSiteAuthors.map((tempSiteAuthor) => new SiteAuthorDTO(tempSiteAuthor))
             }
           }
           // 保存站点标签
-          if (notNullish(siteTags) && siteTags.length > 0) {
+          if (NotNullish(siteTags) && siteTags.length > 0) {
             const siteTagService = new SiteTagService(transactionDB)
             await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
             // 查询站点标签，获取其id，供后面绑定使用
-            const siteTagIds = siteTags.map((siteTag) => siteTag.siteTagId).filter(notNullish)
+            const siteTagIds = siteTags.map((siteTag) => siteTag.siteTagId).filter(NotNullish)
             const siteId = siteTags[0].siteId as number
             const tempSiteTags = await siteTagService.listBySiteTag(siteTagIds, siteId)
-            if (arrayNotEmpty(tempSiteTags)) {
+            if (ArrayNotEmpty(tempSiteTags)) {
               siteTags = tempSiteTags.map((tempSiteAuthor) => new SiteTagDTO(tempSiteAuthor))
             }
           }
@@ -203,11 +203,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           worksDTO.id = (await worksService.save(works)) as number
 
           // 关联作品和作品集
-          if (arrayNotEmpty(worksSets)) {
+          if (ArrayNotEmpty(worksSets)) {
             const worksSetService = new WorksSetService(transactionDB)
             for (const workSet of worksSets) {
-              assertNotNullish(worksDTO.taskId, this.className, `关联作品和作品集失败，作品id意外为空，taskId: ${worksDTO.taskId}`)
-              assertNotNullish(
+              AssertNotNullish(worksDTO.taskId, this.className, `关联作品和作品集失败，作品id意外为空，taskId: ${worksDTO.taskId}`)
+              AssertNotNullish(
                 workSet.siteWorksSetId,
                 this.className,
                 `关联作品和作品集失败，作品集站点id意外为空，taskId: ${worksDTO.taskId}`
@@ -215,46 +215,46 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
               await worksSetService.link([worksDTO], worksSetId)
             }
           }
-          if (arrayNotEmpty(localAuthors) || arrayNotEmpty(siteAuthors)) {
+          if (ArrayNotEmpty(localAuthors) || ArrayNotEmpty(siteAuthors)) {
             const reWorksAuthorService = new ReWorksAuthorService(transactionDB)
             // 关联作品和本地作者
-            if (arrayNotEmpty(localAuthors)) {
+            if (ArrayNotEmpty(localAuthors)) {
               const localAuthorIds = localAuthors
                 .map((localAuthor) => {
-                  if (isNullish(localAuthor.id)) {
+                  if (IsNullish(localAuthor.id)) {
                     return
                   }
                   return {
                     authorId: localAuthor.id,
-                    role: isNullish(localAuthor.authorRole) ? AuthorRole.MAIN : localAuthor.authorRole
+                    role: IsNullish(localAuthor.authorRole) ? AuthorRole.MAIN : localAuthor.authorRole
                   }
                 })
-                .filter((obj) => notNullish(obj))
+                .filter((obj) => NotNullish(obj))
               await reWorksAuthorService.link(OriginType.LOCAL, localAuthorIds, worksDTO.id)
             }
             // 关联作品和站点作者
-            if (arrayNotEmpty(siteAuthors)) {
+            if (ArrayNotEmpty(siteAuthors)) {
               const siteAuthorIds = siteAuthors
                 .map((siteAuthor) => {
-                  if (isNullish(siteAuthor.id)) {
+                  if (IsNullish(siteAuthor.id)) {
                     return
                   }
-                  return { authorId: siteAuthor.id, role: isNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole }
+                  return { authorId: siteAuthor.id, role: IsNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole }
                 })
-                .filter((id) => notNullish(id))
+                .filter((id) => NotNullish(id))
               await reWorksAuthorService.link(OriginType.SITE, siteAuthorIds, worksDTO.id)
             }
           }
-          if (arrayNotEmpty(localTags) || arrayNotEmpty(siteTags)) {
+          if (ArrayNotEmpty(localTags) || ArrayNotEmpty(siteTags)) {
             const reWorksTagService = new ReWorksTagService(transactionDB)
             // 关联作品和本地标签
-            if (arrayNotEmpty(localTags)) {
-              const localTagIds = localTags.map((localTag) => localTag.id).filter((id) => notNullish(id))
+            if (ArrayNotEmpty(localTags)) {
+              const localTagIds = localTags.map((localTag) => localTag.id).filter((id) => NotNullish(id))
               await reWorksTagService.link(OriginType.LOCAL, localTagIds, worksDTO.id)
             }
             // 关联作品和站点标签
-            if (arrayNotEmpty(siteTags)) {
-              const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter((id) => notNullish(id))
+            if (ArrayNotEmpty(siteTags)) {
+              const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter((id) => NotNullish(id))
               await reWorksTagService.link(OriginType.SITE, siteTagIds, worksDTO.id)
             }
           }
@@ -300,7 +300,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const resultPage = await this.dao.synthesisQueryPage(page)
 
       // 给每个作品附加作者信息
-      if (notNullish(resultPage.data)) {
+      if (NotNullish(resultPage.data)) {
         const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
         if (worksIds.length > 0) {
           const localAuthorService = new LocalAuthorService()
@@ -332,7 +332,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const resultPage = await this.dao.multipleConditionQueryPage(page, query)
 
       // 给每个作品附加作者信息
-      if (notNullish(resultPage.data)) {
+      if (NotNullish(resultPage.data)) {
         const worksIds = resultPage.data.map((worksDTO) => worksDTO.id) as number[]
         if (worksIds.length > 0) {
           const localAuthorService = new LocalAuthorService()
@@ -382,7 +382,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
     // 站点信息
     const siteService = new SiteService()
-    if (notNullish(worksDTO.siteId)) {
+    if (NotNullish(worksDTO.siteId)) {
       worksDTO.site = await siteService.getById(worksDTO.siteId)
     }
 

@@ -1,5 +1,5 @@
 import { VNode } from 'vue'
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { CommonInputConfig, ICommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 
 export class PopperInputConfig extends CommonInputConfig implements IPopperInputConfig {
@@ -10,7 +10,7 @@ export class PopperInputConfig extends CommonInputConfig implements IPopperInput
   }
 
   public refreshSelectData(query?: unknown) {
-    if (notNullish(this.load)) {
+    if (NotNullish(this.load)) {
       this.load(query).then((data) => (this.selectData = data))
     }
   }

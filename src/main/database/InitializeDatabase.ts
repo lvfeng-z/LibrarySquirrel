@@ -1,7 +1,7 @@
-import { getDataBasePath, listAllDataTables } from '../util/DatabaseUtil.ts'
+import { DataBasePath, ListAllDataTables } from '../util/DatabaseUtil.ts'
 import * as fs from 'fs'
 import yaml from 'js-yaml'
-import { createDirIfNotExists } from '../util/FileSysUtil.ts'
+import { CreateDirIfNotExists } from '../util/FileSysUtil.ts'
 import Database from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
@@ -14,9 +14,9 @@ import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
  * @CreationDate 2023-05-10 13:44:48
  */
 export async function InitializeDB() {
-  const dbPath = getDataBasePath()
+  const dbPath = DataBasePath()
   // 确认数据库文件路径是否存在
-  await createDirIfNotExists(dbPath)
+  await CreateDirIfNotExists(dbPath)
 
   // 创建数据库
   const options = {}
@@ -29,7 +29,7 @@ export async function InitializeDB() {
 
   // 创建数据表
   // 读取当前数据库的数据表
-  return listAllDataTables().then((currentTables) => {
+  return ListAllDataTables().then((currentTables) => {
     let tableNameSqlStatements: { tables: { name: string; sql: string }[] }
     // 读取初始化yml
     try {

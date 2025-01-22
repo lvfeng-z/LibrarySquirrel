@@ -8,7 +8,7 @@ import { Operator } from '../constant/CrudConstant.ts'
 import Page from '../model/util/Page.ts'
 import DB from '../database/DB.ts'
 import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.ts'
-import { notNullish } from '../util/CommonUtil.ts'
+import { NotNullish } from '../util/CommonUtil.ts'
 
 /**
  * 本地作者Service
@@ -38,7 +38,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
    */
   public async queryPage(page: Page<LocalAuthorQueryDTO, LocalAuthor>): Promise<Page<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
-      if (notNullish(page.query)) {
+      if (NotNullish(page.query)) {
         page.query.operators = {
           ...{ localAuthorName: Operator.LIKE },
           ...page.query.operators

@@ -1,11 +1,11 @@
 import DB from '../database/DB.ts'
 import Database from 'better-sqlite3'
-import { getDataBasePath } from '../util/DatabaseUtil.ts'
+import { DataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import pLimit from 'p-limit'
 import PluginService from '../service/PluginService.js'
 import path from 'path'
-import { getRootDir } from '../util/FileSysUtil.js'
+import { RootDir } from '../util/FileSysUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
 
@@ -34,7 +34,7 @@ async function insertLocalTag10W() {
 }
 
 async function transactionTest() {
-  const db = new Database(getDataBasePath() + DataBaseConstant.DB_FILE_NAME)
+  const db = new Database(DataBasePath() + DataBaseConstant.DB_FILE_NAME)
   const p1 = db.prepare("insert into site_author (site_author_id, site_author_name) values (1, 'test1')")
   const p2 = db.prepare("insert into site_author (site_author_id, site_author_name) values (2, 'test2')")
   const p3 = db.prepare("insert into site_author (site_author_id, site_author_name) values (3, 'test3')")
@@ -69,9 +69,9 @@ async function installPluginTest() {
     let installPath: string
     const NODE_ENV = process.env.NODE_ENV
     if (NODE_ENV == 'development') {
-      installPath = path.join(getRootDir(), '/resources/initialization/localTaskHandler.zip')
+      installPath = path.join(RootDir(), '/resources/initialization/localTaskHandler.zip')
     } else {
-      installPath = path.join(getRootDir(), '/resources/app.asar.unpacked/initialization/localTaskHandler.zip')
+      installPath = path.join(RootDir(), '/resources/app.asar.unpacked/initialization/localTaskHandler.zip')
     }
     pluginService.installPlugin(installPath)
   }

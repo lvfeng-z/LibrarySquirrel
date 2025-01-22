@@ -1,5 +1,5 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
-import { isNullish } from '../../../utils/CommonUtil'
+import { IsNullish } from '../../../utils/CommonUtil'
 
 /**
  * QueryDTO
@@ -85,7 +85,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   lastView: number | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
-    if (isNullish(worksQueryDTO)) {
+    if (IsNullish(worksQueryDTO)) {
       super()
       this.includeLocalTagIds = undefined
       this.excludeLocalTagIds = undefined

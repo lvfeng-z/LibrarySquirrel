@@ -1,5 +1,5 @@
 import BaseEntity from './BaseEntity.ts'
-import { isNullish } from '../../../utils/CommonUtil.ts'
+import { IsNullish } from '../../../utils/CommonUtil.ts'
 
 /**
  * 作品集合
@@ -43,7 +43,7 @@ export default class WorksSet extends BaseEntity {
   lastView: number | undefined | null
 
   constructor(worksSet?: WorksSet) {
-    if (isNullish(worksSet)) {
+    if (IsNullish(worksSet)) {
       super()
       this.id = undefined
       this.siteId = undefined

@@ -8,7 +8,7 @@ import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { BasePlugin } from './BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
-import { isNullish } from '../util/CommonUtil.js'
+import { IsNullish } from '../util/CommonUtil.js'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.js'
 
 export interface TaskHandler extends BasePlugin {
@@ -56,7 +56,7 @@ export interface TaskHandler extends BasePlugin {
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
   async create(pluginId: number, pluginTool?: PluginTool): Promise<TaskHandler> {
-    if (isNullish(pluginTool)) {
+    if (IsNullish(pluginTool)) {
       const msg = '创建任务插件失败，pluginTool不能为空'
       LogUtil.error('TaskHandlerFactory', msg)
       throw new Error(msg)

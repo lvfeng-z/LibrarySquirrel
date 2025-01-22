@@ -1,5 +1,5 @@
 // DataTable的表头
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { IPopperInputConfig, PopperInputConfig } from '@renderer/model/util/PopperInputConfig.ts'
 
 export class Thead extends PopperInputConfig implements IThead {
@@ -17,13 +17,13 @@ export class Thead extends PopperInputConfig implements IThead {
     super(thead)
     this.name = thead.name
     this.label = thead.label
-    this.hide = isNullish(thead.hide) ? false : thead.hide
+    this.hide = IsNullish(thead.hide) ? false : thead.hide
     this.width = thead.width
     this.headerAlign = thead.headerAlign
     this.headerTagType = thead.headerTagType
     this.dataAlign = thead.dataAlign
-    this.overHide = isNullish(thead.overHide) ? false : thead.overHide
-    this.editMethod = isNullish(thead.editMethod) ? 'popper' : thead.editMethod
+    this.overHide = IsNullish(thead.overHide) ? false : thead.overHide
+    this.editMethod = IsNullish(thead.editMethod) ? 'popper' : thead.editMethod
   }
 }
 

@@ -4,14 +4,14 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import LocalTagConstant from '../constant/LocalTagConstant.ts'
 import TreeSelectNode from '../model/util/TreeSelectNode.ts'
-import { buildTree } from '../util/TreeUtil.ts'
+import { BuildTree } from '../util/TreeUtil.ts'
 import BaseService from './BaseService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
-import { isNullish, notNullish } from '../util/CommonUtil.ts'
-import { assertTrue } from '../util/AssertUtil.js'
+import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { AssertTrue } from '../util/AssertUtil.js'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
@@ -23,7 +23,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param localTag 本地标签
    */
   public async save(localTag: LocalTag) {
-    if (isNullish(localTag.baseLocalTagId)) {
+    if (IsNullish(localTag.baseLocalTagId)) {
       localTag.baseLocalTagId = 0
     }
     return this.dao.save(localTag)
@@ -41,7 +41,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         throw new Error(msg)
       }
 
-      if (isNullish(localTag.baseLocalTagId)) {
+      if (IsNullish(localTag.baseLocalTagId)) {
         localTag.baseLocalTagId = 0
       }
 
@@ -53,7 +53,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         if (parentTagIds.includes(localTag.id)) {
           // 查询要修改的标签原本的数据
           const old = await this.dao.getById(localTag.id)
-          if (isNullish(old)) {
+          if (IsNullish(old)) {
             const msg = '修改本地标签失败，原标签信息意外为空'
             LogUtil.error('LocalTagService', msg)
             throw new Error(msg)
@@ -63,7 +63,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           newBaseLocalTag.id = localTag.baseLocalTagId
           newBaseLocalTag.baseLocalTagId = old.baseLocalTagId
           const succeed = (await this.dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) > 0
-          assertTrue(succeed, '更新原下级节点失败')
+          AssertTrue(succeed, '更新原下级节点失败')
         }
       }
       return await this.dao.updateById(localTag.id, localTag)
@@ -95,7 +95,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   public async queryPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
     try {
       page = new Page(page)
-      if (notNullish(page.query)) {
+      if (NotNullish(page.query)) {
         page.query.operators = {
           ...{ localTagName: Operator.LIKE },
           ...page.query.operators
@@ -113,7 +113,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    * @param rootId
    */
   public async getTree(rootId: number) {
-    if (isNullish(rootId)) {
+    if (IsNullish(rootId)) {
       rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
     }
 
@@ -133,7 +133,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     })
 
     // 递归生成树结构
-    return buildTree(treeNodes, rootId)
+    return BuildTree(treeNodes, rootId)
   }
 
   /**
@@ -181,7 +181,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
    */
   public async querySelectItemPageByWorksId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (notNullish(page.query)) {
+    if (NotNullish(page.query)) {
       page.query.operators = {
         ...{ localTagName: Operator.LIKE },
         ...page.query.operators
@@ -192,7 +192,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     // 根据localTag数据生成SelectItem
     const sourceData = sourcePage.data
     const resultPage = sourcePage.transform<SelectItem>()
-    if (notNullish(sourceData)) {
+    if (NotNullish(sourceData)) {
       resultPage.data = sourceData.map((localTag) => {
         const tempSelectItem = new SelectItem()
         tempSelectItem.value = localTag.id

@@ -1,5 +1,5 @@
 import BaseQueryDTO from './BaseQueryDTO.js'
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 站点域名-queryDTO
@@ -22,7 +22,7 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
 
   constructor(siteDomainQueryDTO?: SiteDomainQueryDTO) {
     super(siteDomainQueryDTO)
-    if (notNullish(siteDomainQueryDTO)) {
+    if (NotNullish(siteDomainQueryDTO)) {
       this.siteId = siteDomainQueryDTO.siteId
       this.domain = siteDomainQueryDTO.domain
       this.homepage = siteDomainQueryDTO.homepage

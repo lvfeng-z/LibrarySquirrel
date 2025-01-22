@@ -1,7 +1,7 @@
 import SelectItem from './SelectItem.ts'
 import { VNode } from 'vue'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
-import { notNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export class CommonInputConfig implements ICommonInputConfig {
   type:
@@ -37,7 +37,7 @@ export class CommonInputConfig implements ICommonInputConfig {
   }
 
   public refreshSelectData(query?: unknown) {
-    if (notNullish(this.load)) {
+    if (NotNullish(this.load)) {
       this.load(query).then((data) => (this.selectData = data))
     }
   }

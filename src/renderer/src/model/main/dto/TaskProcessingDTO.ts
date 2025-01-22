@@ -1,5 +1,5 @@
 import Task from '@renderer/model/main/entity/Task.ts'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
 
 export default class TaskProcessingDTO extends TaskDTO {
@@ -25,7 +25,7 @@ export default class TaskProcessingDTO extends TaskDTO {
 
   constructor(taskProcessingDTO?: TaskProcessingDTO | Task) {
     super(taskProcessingDTO)
-    if (isNullish(taskProcessingDTO)) {
+    if (IsNullish(taskProcessingDTO)) {
       this.schedule = undefined
       this.total = undefined
       this.finished = undefined

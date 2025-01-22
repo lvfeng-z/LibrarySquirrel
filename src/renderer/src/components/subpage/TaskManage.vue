@@ -8,10 +8,10 @@ import { InputBox } from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskDTO from '../../model/main/dto/TaskDTO'
 import { ElMessage, ElTag } from 'element-plus'
-import { arrayNotEmpty, isNullish, notNullish } from '../../utils/CommonUtil'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
-import { getNode } from '../../utils/TreeUtil'
+import { GetNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
 import Page from '../../model/util/Page.ts'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
@@ -300,7 +300,7 @@ async function load(row: unknown): Promise<TaskDTO[]> {
       const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
       // 子任务列表赋值给对应的父任务的children
       const parent = dataList.value.find((task) => (row as TaskDTO).id === task.id)
-      if (notNullish(parent)) {
+      if (NotNullish(parent)) {
         parent.children = data
       }
       return data
@@ -315,7 +315,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   const response = await apis.taskListSchedule(ids)
   if (ApiUtil.check(response)) {
     const scheduleList = ApiUtil.data(response) as TaskScheduleDTO[]
-    return arrayNotEmpty(scheduleList) ? scheduleList : undefined
+    return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
   } else {
     return undefined
   }
@@ -323,7 +323,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
 // 给行添加选择器，用于区分父任务和子任务
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   const row = data.row as TaskDTO
-  if (row.hasChildren || isNullish(row.pid) || row.pid === 0) {
+  if (row.hasChildren || IsNullish(row.pid) || row.pid === 0) {
     return 'task-manage-search-table-parent-row'
   } else {
     return 'task-manage-search-table-child-row'
@@ -377,7 +377,7 @@ async function selectDir(openFile: boolean) {
 }
 // 打开站点下载dialog
 function handleSiteDownloadDialog(_event, newState?: boolean) {
-  if (notNullish(newState)) {
+  if (NotNullish(newState)) {
     siteDownloadState.value = newState
   } else {
     siteDownloadState.value = !siteDownloadState.value
@@ -395,9 +395,9 @@ async function refreshTask() {
       const tempRoot = new TaskDTO()
       tempRoot.children = dataList.value
       return visibleRowsId.filter((id: number) => {
-        const task = getNode<TaskDTO>(tempRoot, id)
+        const task = GetNode<TaskDTO>(tempRoot, id)
         return (
-          notNullish(task) &&
+          NotNullish(task) &&
           (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
         )
       })
@@ -408,7 +408,7 @@ async function refreshTask() {
     while (refreshTasks.length > 0) {
       await taskManageSearchTable.value.refreshData(refreshTasks, false)
       await new Promise((resolve) => setTimeout(resolve, 500))
-      if (isNullish(taskManageSearchTable.value)) {
+      if (IsNullish(taskManageSearchTable.value)) {
         break
       }
       refreshTasks = getRefreshTasks()
@@ -428,7 +428,7 @@ function startTask(row: TaskDTO, retry: boolean) {
     apis.taskStartTask([row.id])
   }
   row.status = TaskStatesEnum.WAITING
-  if (row.isCollection && notNullish(row.children)) {
+  if (row.isCollection && NotNullish(row.children)) {
     row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
   }
 }

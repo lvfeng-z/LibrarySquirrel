@@ -20,13 +20,13 @@ import Site from '@renderer/model/main/entity/Site.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import { ElMessage } from 'element-plus'
 
 onMounted(() => {
-  if (isNullish(page.value.query)) {
+  if (IsNullish(page.value.query)) {
     page.value.query = new LocalAuthorQueryDTO()
   }
   page.value.query.sort = { updateTime: false, createTime: false }
@@ -245,7 +245,7 @@ async function deleteLocalAuthor(id: string) {
 }
 // 处理站点作者ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
-  if (isNullish(localAuthorSelected.value)) {
+  if (IsNullish(localAuthorSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地作者',
       type: 'warning'
@@ -277,7 +277,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<BaseQueryDTO, SelectI
   const response = await apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage(page)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
-    return isNullish(newPage) ? page : newPage
+    return IsNullish(newPage) ? page : newPage
   } else {
     throw new Error()
   }

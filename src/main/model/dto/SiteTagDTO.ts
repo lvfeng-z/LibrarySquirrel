@@ -1,7 +1,7 @@
 import SiteTag from '../entity/SiteTag.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import Site from '../entity/Site.ts'
-import { notNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 import { ParsePropertyFromJson } from '../../util/ObjectUtil.js'
 import lodash from 'lodash'
 
@@ -18,7 +18,7 @@ export default class SiteTagDTO extends SiteTag {
 
   constructor(siteTag?: SiteTag) {
     super(siteTag)
-    if (notNullish(siteTag)) {
+    if (NotNullish(siteTag)) {
       lodash.assign(this, lodash.assign(siteTag, ['localTag', 'site']))
       const properties = [
         {

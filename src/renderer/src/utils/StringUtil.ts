@@ -1,7 +1,7 @@
-import { isNullish } from './CommonUtil.ts'
+import { IsNullish } from './CommonUtil.ts'
 
 function isBlank(input: string | null | undefined): input is undefined | null | '' {
-  if (isNullish(input)) {
+  if (IsNullish(input)) {
     return true
   }
   return /^\s*$/.test(input)

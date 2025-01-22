@@ -19,7 +19,7 @@ import Page from '@renderer/model/util/Page.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { isNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
@@ -27,7 +27,7 @@ import { ElMessage } from 'element-plus'
 
 // onMounted
 onMounted(() => {
-  if (isNullish(page.value.query)) {
+  if (IsNullish(page.value.query)) {
     page.value.query = new LocalTagQueryDTO()
   }
   page.value.query.sort = { updateTime: false, createTime: false }
@@ -185,7 +185,7 @@ async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<
 }
 // 请求本地标签树的函数
 async function requestLocalTagTree(query: number) {
-  const param = isNullish(query) ? undefined : Number(query)
+  const param = IsNullish(query) ? undefined : Number(query)
   const response = await apis.localTagGetTree(param)
   if (ApiUtil.check(response)) {
     return ApiUtil.data(response) as TreeSelectNode[]
@@ -268,7 +268,7 @@ async function deleteLocalTag(id: string) {
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
-  if (isNullish(localTagSelected.value)) {
+  if (IsNullish(localTagSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地标签',
       type: 'warning'
@@ -300,7 +300,7 @@ async function requestSiteTagSelectItemPage(page: IPage<BaseQueryDTO, SelectItem
   return apis.siteTagQueryBoundOrUnboundToLocalTagPage(page).then((response) => {
     if (ApiUtil.check(response)) {
       const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
-      return isNullish(newPage) ? page : newPage
+      return IsNullish(newPage) ? page : newPage
     } else {
       throw new Error()
     }

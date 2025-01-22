@@ -1,5 +1,5 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 本地作者
@@ -11,7 +11,7 @@ export default class LocalAuthorQueryDTO extends BaseQueryDTO {
   localAuthorName: string | undefined | null
 
   constructor(localAuthorQueryDTO?: LocalAuthorQueryDTO) {
-    if (isNullish(localAuthorQueryDTO)) {
+    if (IsNullish(localAuthorQueryDTO)) {
       super()
       this.localAuthorName = undefined
     } else {

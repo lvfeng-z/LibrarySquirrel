@@ -14,7 +14,7 @@ import LocalAuthorService from './LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import AutoExplainPathService from './AutoExplainPathService.ts'
-import { dirSelect } from '../util/FileSysUtil.ts'
+import { DirSelect } from '../util/FileSysUtil.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 import SearchService from './SearchService.js'
 import AppLauncherService from './AppLauncherService.js'
@@ -613,7 +613,7 @@ function exposeService() {
 
   // FileSysUtil
   Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, args): Promise<ApiUtil> => {
-    const result = await dirSelect(args)
+    const result = await DirSelect(args)
     return ApiUtil.response(result)
   })
 }

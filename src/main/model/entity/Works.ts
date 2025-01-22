@@ -1,5 +1,5 @@
 import BaseEntity from './BaseEntity.ts'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品
@@ -79,7 +79,7 @@ export default class Works extends BaseEntity {
   resourceComplete: boolean | undefined | null
 
   constructor(works?: Works) {
-    if (isNullish(works)) {
+    if (IsNullish(works)) {
       super()
       this.id = undefined
       this.filePath = undefined

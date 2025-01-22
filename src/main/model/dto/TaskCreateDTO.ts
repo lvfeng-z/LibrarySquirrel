@@ -1,5 +1,5 @@
 import Task from '../entity/Task.ts'
-import { notNullish } from '../../util/CommonUtil.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 import lodash from 'lodash'
 
 /**
@@ -18,7 +18,7 @@ export default class TaskCreateDTO extends Task {
 
   constructor(taskCreateDTO?: Task) {
     super(taskCreateDTO)
-    if (notNullish(taskCreateDTO)) {
+    if (NotNullish(taskCreateDTO)) {
       lodash.assign(this, lodash.pick(taskCreateDTO, ['saved', 'siteDomain']))
     }
   }

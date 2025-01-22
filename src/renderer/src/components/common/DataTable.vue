@@ -5,7 +5,7 @@ import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
-import { notNullish } from '../../utils/CommonUtil'
+import { NotNullish } from '../../utils/CommonUtil'
 import { TreeNode } from 'element-plus'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
@@ -51,7 +51,7 @@ const currentFactor: Ref<UnwrapRef<object>> = ref({})
 async function initializeThead() {
   for (const item of props.thead) {
     // 给selectData赋值
-    if (notNullish(item.load)) {
+    if (NotNullish(item.load)) {
       item.refreshSelectData()
     }
   }

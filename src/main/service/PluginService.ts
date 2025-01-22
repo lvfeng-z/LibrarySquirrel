@@ -1,15 +1,15 @@
 import path from 'path'
 import PluginDao from '../dao/PluginDao.ts'
-import { createDirIfNotExists, getRootDir } from '../util/FileSysUtil.ts'
+import { CreateDirIfNotExists, RootDir } from '../util/FileSysUtil.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import BaseService from './BaseService.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'
-import { arrayNotEmpty, isNullish } from '../util/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '../util/CommonUtil.ts'
 import PluginDTO from '../model/dto/PluginDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '../model/dto/PluginInstallDTO.js'
-import { assertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '../util/AssertUtil.js'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
@@ -38,7 +38,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const resourcePath = '/resources/plugins'
 
     const plugin = await this.dao.getById(id)
-    if (isNullish(plugin)) {
+    if (IsNullish(plugin)) {
       const msg = `加载插件失败，id: ${id}不可用`
       LogUtil.error('PluginService', msg)
       throw new Error(msg)
@@ -46,7 +46,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       const dto = new PluginDTO(plugin)
       dto.loadPath = path.join(
         'file://',
-        getRootDir(),
+        RootDir(),
         resourcePath,
         plugin.author as string,
         plugin.name as string,
@@ -66,15 +66,15 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const msgPrefix = '读取插件安装包出错，'
 
     const yamlEntry = packageContent.getEntry(`pluginInfo.yml`)
-    assertNotNullish(yamlEntry, this.className, `${msgPrefix}没有获取到必要的安装配置`)
+    AssertNotNullish(yamlEntry, this.className, `${msgPrefix}没有获取到必要的安装配置`)
     const yamlContent = yamlEntry.getData().toString('utf8')
     const config: PluginInstallConfig = yaml.load(yamlContent)
 
-    assertNotNullish(config.type, this.className, `${msgPrefix}插件类型不能为空`)
-    assertNotNullish(config.author, this.className, `${msgPrefix}插件作者不能为空`)
-    assertNotNullish(config.name, this.className, `${msgPrefix}插件名称不能为空`)
-    assertNotNullish(config.version, this.className, `${msgPrefix}插件版本不能为空`)
-    assertNotNullish(config.fileName, this.className, `${msgPrefix}插件入口文件不能为空`)
+    AssertNotNullish(config.type, this.className, `${msgPrefix}插件类型不能为空`)
+    AssertNotNullish(config.author, this.className, `${msgPrefix}插件作者不能为空`)
+    AssertNotNullish(config.name, this.className, `${msgPrefix}插件名称不能为空`)
+    AssertNotNullish(config.version, this.className, `${msgPrefix}插件版本不能为空`)
+    AssertNotNullish(config.fileName, this.className, `${msgPrefix}插件入口文件不能为空`)
 
     return new PluginInstallDTO({
       type: config.type,
@@ -93,7 +93,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * @param packagePath
    */
   public async installPlugin(packagePath: string): Promise<void> {
-    assertNotNullish(packagePath, this.className, `插件包路径不能为空`)
+    AssertNotNullish(packagePath, this.className, `插件包路径不能为空`)
     try {
       fs.promises.access(packagePath, fs.constants.F_OK)
     } catch (error) {
@@ -105,19 +105,19 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
 
     // 安装路径
     const installPath: string = path.join(
-      getRootDir(),
+      RootDir(),
       '/resources/plugins/',
       pluginInstallDTO.author,
       pluginInstallDTO.name,
       pluginInstallDTO.version
     )
-    await createDirIfNotExists(installPath)
+    await CreateDirIfNotExists(installPath)
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
     const tempPlugin = new Plugin(pluginInstallDTO)
     return this.save(tempPlugin).then((pluginId) => {
       const listeners: string[] = pluginInstallDTO.listeners
-      if (arrayNotEmpty(listeners)) {
+      if (ArrayNotEmpty(listeners)) {
         const taskPluginListenerService = new TaskPluginListenerService()
         const taskPluginListeners: TaskPluginListener[] = []
         let taskPluginListener: TaskPluginListener
@@ -143,9 +143,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       if (defaultPlugin.pathType === 'Relative') {
         const NODE_ENV = process.env.NODE_ENV
         if (NODE_ENV == 'development') {
-          packagePath = path.join(getRootDir(), '/resources/', defaultPlugin.packagePath)
+          packagePath = path.join(RootDir(), '/resources/', defaultPlugin.packagePath)
         } else {
-          packagePath = path.join(getRootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
+          packagePath = path.join(RootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
         }
       } else {
         packagePath = defaultPlugin.packagePath
@@ -157,9 +157,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         if (defaultPlugin.pathType === 'Relative') {
           const NODE_ENV = process.env.NODE_ENV
           if (NODE_ENV == 'development') {
-            installPath = path.join(getRootDir(), '/resources/', defaultPlugin.packagePath)
+            installPath = path.join(RootDir(), '/resources/', defaultPlugin.packagePath)
           } else {
-            installPath = path.join(getRootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
+            installPath = path.join(RootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
           }
         } else {
           installPath = defaultPlugin.packagePath

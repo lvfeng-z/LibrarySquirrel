@@ -1,5 +1,5 @@
 import Task from '../entity/Task.js'
-import { isNullish } from '../../util/CommonUtil.js'
+import { IsNullish } from '../../util/CommonUtil.js'
 import TaskDTO from './TaskDTO.js'
 
 export default class TaskProcessingDTO extends TaskDTO {
@@ -25,7 +25,7 @@ export default class TaskProcessingDTO extends TaskDTO {
 
   constructor(taskProcessingDTO?: TaskProcessingDTO | Task) {
     super(taskProcessingDTO)
-    if (isNullish(taskProcessingDTO)) {
+    if (IsNullish(taskProcessingDTO)) {
       this.schedule = undefined
       this.total = undefined
       this.finished = undefined

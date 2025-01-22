@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WorksDTO from '../../model/main/dto/WorksDTO'
 import { computed, onMounted, Ref, ref, UnwrapRef } from 'vue'
-import { isNullish } from '../../utils/CommonUtil'
+import { IsNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
@@ -62,7 +62,7 @@ const worksFullInfo: Ref<UnwrapRef<WorksDTO>> = ref(new WorksDTO())
 // 本地作者
 const localAuthor: Ref<UnwrapRef<string>> = computed(() => {
   const names = worksFullInfo.value.localAuthors?.map((localAuthor) => localAuthor.localAuthorName)
-  return isNullish(names) ? '' : names.join(',')
+  return IsNullish(names) ? '' : names.join(',')
 })
 // 本地标签
 const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
@@ -73,7 +73,7 @@ const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
         label: localTag.localTagName as string
       })
   )
-  return isNullish(result) ? [] : result
+  return IsNullish(result) ? [] : result
 })
 // 本地标签
 const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
@@ -85,7 +85,7 @@ const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
         subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string]
       })
   )
-  return isNullish(result) ? [] : result
+  return IsNullish(result) ? [] : result
 })
 // 本地标签编辑开关
 const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
@@ -154,7 +154,7 @@ async function updateWorksTags(type: OriginType) {
     const response = await apis.siteTagQueryPageByWorksId(tempSiteTagPage)
     if (ApiUtil.check(response)) {
       const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagDTO>>(response)
-      worksFullInfo.value.siteTags = isNullish(tempResultPage?.data) ? [] : tempResultPage.data
+      worksFullInfo.value.siteTags = IsNullish(tempResultPage?.data) ? [] : tempResultPage.data
     }
   }
 }
@@ -163,7 +163,7 @@ async function requestWorksLocalTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
   const response = await apis.localTagQuerySelectItemPageByWorksId(page)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
-    return isNullish(newPage) ? page : newPage
+    return IsNullish(newPage) ? page : newPage
   } else {
     throw new Error()
   }
@@ -173,7 +173,7 @@ async function requestWorksSiteTagPage(page: IPage<BaseQueryDTO, SelectItem>) {
   const response = await apis.siteTagQuerySelectItemPageByWorksId(page)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<BaseQueryDTO, SelectItem>>(response)
-    return isNullish(newPage) ? page : newPage
+    return IsNullish(newPage) ? page : newPage
   } else {
     throw new Error()
   }

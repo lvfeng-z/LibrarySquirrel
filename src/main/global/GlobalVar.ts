@@ -1,7 +1,7 @@
 import LogUtil from '../util/LogUtil.ts'
 import { ConnectionPool } from '../database/ConnectionPool.ts'
 import Store from 'electron-store'
-import { defaultSettings } from '../util/SettingsUtil.ts'
+import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { PoolConfig } from './PoolConfig.js'
 import { TaskQueue } from './TaskQueue.js'
 import { Settings } from '../model/util/Settings.js'
@@ -127,7 +127,7 @@ export class GlobalVar {
     const settings = new Store<Record<string, unknown>>()
     global[GlobalVars.SETTINGS] = settings
     if (!settings.get('initialized', false)) {
-      defaultSettings()
+      DefaultSettings()
     }
     LogUtil.info('GlobalVar', '已创建设置')
   }

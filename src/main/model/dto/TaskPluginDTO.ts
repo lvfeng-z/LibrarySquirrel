@@ -1,6 +1,6 @@
 import Task from '../entity/Task.ts'
 import { Readable } from 'node:stream'
-import { isNullish } from '../../util/CommonUtil.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
 
 export class TaskPluginDTO extends Task {
   /**
@@ -14,7 +14,7 @@ export class TaskPluginDTO extends Task {
   bytesWritten: number
 
   constructor(taskPluginDTO: TaskPluginDTO | Task) {
-    if (isNullish(taskPluginDTO)) {
+    if (IsNullish(taskPluginDTO)) {
       super()
       this.resourceStream = undefined
       this.bytesWritten = 0

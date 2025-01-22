@@ -5,7 +5,7 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from './BaseDao.ts'
 import DB from '../database/DB.ts'
 import Page from '../model/util/Page.js'
-import { isNullish } from '../util/CommonUtil.js'
+import { IsNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
@@ -125,7 +125,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param page
    */
   async queryPageByWorksId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
-    if (isNullish(page.query)) {
+    if (IsNullish(page.query)) {
       page.query = new LocalTagQueryDTO()
     }
     const query = lodash.cloneDeep(page.query)
@@ -154,7 +154,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = isNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await super.sortAndPage(statement, page, sort)
     const db = this.acquire()
     return db

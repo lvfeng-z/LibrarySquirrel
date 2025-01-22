@@ -5,7 +5,7 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import TreeSelectNode from '../../model/util/TreeSelectNode'
 import lodash from 'lodash'
-import { getNode } from '../../utils/TreeUtil'
+import { GetNode } from '../../utils/TreeUtil'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 
 // props
@@ -78,7 +78,7 @@ async function handleOpen() {
     baseTagSelectData.value = tempNode.children as TreeSelectNode[]
 
     // 查询当前标签对应的节点，并禁用
-    const self = getNode(tempNode, formData.value.id as number)
+    const self = GetNode(tempNode, formData.value.id as number)
     if (self !== undefined) {
       self.disabled = true
     }
