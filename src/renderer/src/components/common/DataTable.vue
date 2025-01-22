@@ -18,6 +18,7 @@ const props = withDefaults(
     keyOfData: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     operationButton?: OperationItem<OpParam>[] // 操作列按钮的文本、图标和代号
+    operationWidth?: number // 操作栏宽度
     customOperationButton?: boolean // 是否使用自定义操作栏
     treeData?: boolean // 是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
@@ -177,7 +178,8 @@ defineExpose({
       v-if="(props.operationButton !== undefined && props.operationButton.length > 0) || props.customOperationButton"
       fixed="right"
       align="center"
-      min-width="104"
+      :width="operationWidth"
+      :min-width="100"
     >
       <template #header>
         <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
@@ -221,7 +223,7 @@ defineExpose({
     </el-table-column>
     <el-table-column :hidden="true" :width="1">
       <template #default="scope">
-        <div :row-key="scope.row[keyOfData]" class="row-key-col" style="width: 0; height: 0; position: absolute"></div>
+        <div :row-key="scope.row[keyOfData]" class="row-key-col" style="width: 0; height: 0; position: absolute" />
       </template>
     </el-table-column>
   </el-table>

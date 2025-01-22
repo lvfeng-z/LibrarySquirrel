@@ -26,6 +26,7 @@ const props = withDefaults(
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     thead: Thead[] // 表头
     operationButton?: OperationItem<OpParam>[] // 数据行的操作按钮
+    operationWidth?: number // 操作栏宽度
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
@@ -249,6 +250,7 @@ defineExpose({
         :key-of-data="keyOfData"
         :table-row-class-name="tableRowClassName"
         :operation-button="operationButton"
+        :operation-width="operationWidth"
         :custom-operation-button="customOperationButton"
         :tree-data="treeData"
         :lazy="props.treeLazy"

@@ -41,6 +41,8 @@ const apis = {
 const siteSearchTable = ref()
 // 站点域名数据表组件的实例
 const siteDomainSearchTable = ref()
+// 站点域名侧边数据表组件的实例
+const siteDomainSideTable = ref()
 // 站点分页参数
 const sitePage: Ref<Page<SiteQueryDTO, Site>> = ref(new Page<SiteQueryDTO, Site>())
 // 站点被修改的行
@@ -54,6 +56,7 @@ const siteOperationButton: OperationItem<Site>[] = [
     code: 'save',
     rule: (row) => siteChangedRows.value.includes(row)
   },
+  { label: '绑定域名', icon: 'Paperclip', code: 'bind' },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
@@ -230,6 +233,8 @@ const siteDomainDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 const siteDomainDialogState: Ref<boolean> = ref(false)
 // 站点对话框的数据
 const siteDomainDialogData: Ref<UnwrapRef<SiteDomain>> = ref(new SiteDomain())
+// 站点域名侧边栏开关
+const siteDomainSideTableState: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询站点
@@ -253,6 +258,9 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
   switch (op.code) {
     case 'save':
       saveSiteRowEdit(op.data)
+      break
+    case 'bind':
+      siteDomainSideTableState.value = true
       break
     case DialogMode.VIEW:
       siteDialogMode.value = DialogMode.VIEW
@@ -383,6 +391,7 @@ async function deleteSiteDomain(id: string) {
             key-of-data="id"
             :create-button="true"
             :operation-button="siteOperationButton"
+            :operation-width="140"
             :thead="siteThead"
             :main-input-boxes="siteMainInputBoxes"
             :drop-down-input-boxes="[]"
@@ -414,9 +423,35 @@ async function deleteSiteDomain(id: string) {
             @create-button-clicked="handleSiteDomainCreateButtonClicked"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
             @selection-change="handleSiteSelectionChange"
-          ></search-table>
+          >
+          </search-table>
         </div>
       </div>
+      <el-drawer
+        v-model="siteDomainSideTableState"
+        size="45%"
+        :with-header="false"
+        @open="siteDomainSideTable.handleSearchButtonClicked()"
+      >
+        <search-table
+          ref="siteDomainSideTable"
+          v-model:page="siteDomainPage"
+          v-model:changed-rows="siteDomainChangedRows"
+          class="site-manage-left-search-table"
+          key-of-data="id"
+          :operation-button="siteDomainOperationButton"
+          :thead="siteDomainThead"
+          :main-input-boxes="siteDomainMainInputBoxes"
+          :drop-down-input-boxes="[]"
+          :search="siteDomainQueryPage"
+          :multi-select="true"
+          :selectable="true"
+          :page-sizes="[10, 20, 50, 100, 1000]"
+          @create-button-clicked="handleSiteDomainCreateButtonClicked"
+          @row-button-clicked="handleSiteDomainRowButtonClicked"
+          @selection-change="handleSiteSelectionChange"
+        />
+      </el-drawer>
     </template>
     <template #dialog>
       <site-dialog
