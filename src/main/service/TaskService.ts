@@ -25,7 +25,7 @@ import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
 import path from 'path'
 import TaskCreateResponse from '../model/util/TaskCreateResponse.ts'
-import { AssertArrayNotEmpty, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty, AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
 import { CreateDirIfNotExists } from '../util/FileSysUtil.js'
 import { GetNode } from '../util/TreeUtil.js'
 import { Id } from '../model/entity/BaseEntity.js'
@@ -160,10 +160,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 给任务赋值的函数
     const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
       // 校验
-      if (StringUtil.isBlank(task.siteDomain)) {
-        LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
-        return
-      }
+      AssertNotBlank(task.siteDomain, this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
@@ -175,10 +172,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         siteId = tempSite.then((site) => site?.id)
       }
       task.siteId = await siteId
-      if (IsNullish(task.siteId)) {
-        LogUtil.error(this.className, '创建任务失败，插件返回的任务信息中缺少站点domain')
-        return
-      }
+      AssertNotNullish(task.siteId, this.className, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -278,7 +272,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
 
         // 将任务添加到队列
-        taskQueue.push(task)
+        taskQueue.push(new Task(task))
 
         // 如果队列中的任务数量超过上限，则暂停流
         if (taskQueue.length >= queueMax && !isPaused) {
@@ -289,7 +283,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         // 每batchSize个任务处理一次
         if (taskQueue.length % batchSize === 0) {
-          await processTasks()
+          await saveTasks()
         }
       })
 
@@ -302,7 +296,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           } else if (itemCount === 1) {
             await super.save(taskQueue[0])
           } else if (taskQueue.length > 0) {
-            await processTasks()
+            await saveTasks()
           }
           resolve(itemCount)
         } catch (error) {
@@ -331,8 +325,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         return pid
       }
 
-      // 处理任务队列的函数
-      const processTasks = async (): Promise<void> => {
+      // 保存任务队列的函数
+      const saveTasks = async (): Promise<void> => {
         const taskBuffer: Task[] = []
         // 从队列中取出最多batchSize个任务
         while (taskQueue.length > 0 && taskBuffer.length < batchSize) {
