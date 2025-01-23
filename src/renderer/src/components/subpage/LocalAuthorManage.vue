@@ -30,7 +30,7 @@ onMounted(() => {
     page.value.query = new LocalAuthorQueryDTO()
   }
   page.value.query.sort = { updateTime: false, createTime: false }
-  localAuthorSearchTable.value.handleSearchButtonClicked()
+  localAuthorSearchTable.value.doSearch()
 })
 
 // 变量
@@ -225,7 +225,7 @@ async function handleLocalAuthorSelectionChange(selections: LocalAuthor[]) {
 }
 // 处理本地作者弹窗请求成功事件
 function handleDialogRequestSuccess() {
-  localAuthorSearchTable.value.handleSearchButtonClicked()
+  localAuthorSearchTable.value.doSearch()
 }
 // 保存行数据编辑
 async function saveRowEdit(newData: LocalAuthor) {
@@ -243,7 +243,7 @@ async function deleteLocalAuthor(id: string) {
   const response = await apis.localAuthorDeleteById(id)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await localAuthorSearchTable.value.handleSearchButtonClicked()
+    await localAuthorSearchTable.value.doSearch()
   }
 }
 // 处理站点作者ExchangeBox确认交换的事件

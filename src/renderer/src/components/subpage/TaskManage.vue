@@ -29,7 +29,7 @@ import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 
 // onMounted
 onMounted(() => {
-  taskManageSearchTable.value.handleSearchButtonClicked()
+  taskManageSearchTable.value.doSearch()
 })
 
 // 变量
@@ -273,7 +273,7 @@ async function importFromSite() {
     }
   }
   // 刷新一次列表
-  taskManageSearchTable.value.handleSearchButtonClicked()
+  taskManageSearchTable.value.doSearch()
 }
 // 分页查询子任务的函数
 async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
@@ -371,7 +371,7 @@ async function selectDir(openFile: boolean) {
         await importFromDir(dir)
       }
       // 刷新一次列表
-      taskManageSearchTable.value.handleSearchButtonClicked()
+      taskManageSearchTable.value.doSearch()
     }
   }
 }
@@ -437,7 +437,7 @@ async function deleteTask(ids: number[]) {
   const response = await apis.taskDeleteTask(ids)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await taskManageSearchTable.value.handleSearchButtonClicked()
+    await taskManageSearchTable.value.doSearch()
   }
 }
 </script>

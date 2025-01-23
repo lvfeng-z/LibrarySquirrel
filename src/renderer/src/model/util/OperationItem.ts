@@ -25,4 +25,9 @@ export default interface OperationItem<RowType> {
    * @param row 行数据
    */
   rule?: (row: RowType) => boolean
+
+  /**
+   * 点击后是否选中此数据
+   */
+  clickToSelect?: boolean
 }

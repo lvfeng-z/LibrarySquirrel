@@ -31,7 +31,7 @@ onMounted(() => {
     page.value.query = new LocalTagQueryDTO()
   }
   page.value.query.sort = { updateTime: false, createTime: false }
-  localTagSearchTable.value.handleSearchButtonClicked()
+  localTagSearchTable.value.doSearch()
 })
 
 // 变量
@@ -248,7 +248,7 @@ async function handleLocalTagSelectionChange(selections: LocalTag[]) {
 }
 // 处理本地标签弹窗请求成功事件
 function handleDialogRequestSuccess() {
-  localTagSearchTable.value.handleSearchButtonClicked()
+  localTagSearchTable.value.doSearch()
 }
 // 保存行数据编辑
 async function saveRowEdit(newData: LocalTag) {
@@ -266,7 +266,7 @@ async function deleteLocalTag(id: string) {
   const response = await apis.localTagDeleteById(id)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await localTagSearchTable.value.handleSearchButtonClicked()
+    await localTagSearchTable.value.doSearch()
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件

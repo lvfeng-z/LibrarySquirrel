@@ -45,7 +45,7 @@ const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>(
 
 // 方法
 // 处理搜索按钮点击事件
-async function handleSearchButtonClicked(upperOrLower: boolean) {
+async function doSearch(upperOrLower: boolean) {
   // 点击搜索按钮后，分页和滚动条位置重置，已经存在于buffer中的数据从分页数据中清除
   resetScrollBarPosition(upperOrLower)
   if (upperOrLower) {
@@ -178,7 +178,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :main-input-boxes="upperMainInputBoxes"
             :search-button-disabled="searchButtonDisabled"
             :params="upperSearchToolbarParams"
-            @search-button-clicked="handleSearchButtonClicked(true)"
+            @search-button-clicked="doSearch(true)"
           >
           </search-toolbar>
         </div>
@@ -239,7 +239,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :reverse="true"
             :search-button-disabled="searchButtonDisabled"
             :params="lowerSearchToolbarParams"
-            @search-button-clicked="handleSearchButtonClicked(false)"
+            @search-button-clicked="doSearch(false)"
           >
           </search-toolbar>
         </div>

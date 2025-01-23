@@ -207,7 +207,7 @@ function handleOpen() {
     const baseDialogFooter = baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
     heightForSearchTable.value = parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
 
-    childTaskSearchTable.value.handleSearchButtonClicked()
+    childTaskSearchTable.value.doSearch()
   })
 }
 // 刷新任务进度和状态
@@ -329,7 +329,7 @@ async function deleteTask(ids: number[]) {
   const response = await apis.taskDeleteTask(ids)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await childTaskSearchTable.value.handleSearchButtonClicked()
+    await childTaskSearchTable.value.doSearch()
   }
 }
 </script>

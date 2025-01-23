@@ -99,8 +99,9 @@ const wrappedLoad = IsNullish(props.treeLoad)
 function handleCreateButtonClicked() {
   emits('createButtonClicked')
 }
-// 处理搜索按钮点击事件
-async function handleSearchButtonClicked() {
+// 搜索页面并刷新数据
+async function doSearch() {
+  dataTableRef.value.cancelAllSelection()
   const tempPage = lodash.cloneDeep(page.value)
   // 配置查询参数
   tempPage.query = {
@@ -204,11 +205,11 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
 // 分页栏
 // 当前页变化
 function handlePageNumberChange() {
-  handleSearchButtonClicked()
+  doSearch()
 }
 // 页面大小变化
 function handlePageSizeChange() {
-  handleSearchButtonClicked()
+  doSearch()
 }
 // 处理编辑事件
 function handleRowChange(changedRow: object) {
@@ -221,7 +222,7 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
 
 // 暴露
 defineExpose({
-  handleSearchButtonClicked,
+  doSearch,
   refreshData,
   getVisibleRows
 })
@@ -237,7 +238,7 @@ defineExpose({
       :drop-down-input-boxes="dropDownInputBoxes"
       :main-input-boxes="mainInputBoxes"
       @create-button-clicked="handleCreateButtonClicked"
-      @search-button-clicked="handleSearchButtonClicked"
+      @search-button-clicked="doSearch"
     />
     <div class="search-table-data">
       <data-table

@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="Data, OpParam">
-import { onBeforeMount, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, onMounted, Ref, ref } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
@@ -43,9 +43,9 @@ onMounted(() => {
 const data = defineModel<unknown[]>('tableData', { default: [] })
 
 // 变量
-const dataTable = ref() // el-table的组件实例
-const selectDataList: Ref<UnwrapRef<object[]>> = ref([])
-const currentFactor: Ref<UnwrapRef<object>> = ref({})
+const dataTable = ref() // el-table组件的实例
+const selectDataList: Ref<Data[]> = ref([])
+const selectedDataKey: Ref<string> = ref('')
 
 // 方法
 // 初始化表头
@@ -58,12 +58,30 @@ async function initializeThead() {
   }
 }
 // 处理选中事件
-function handleSelectionChange(event: object[]) {
+function handleSelectionChange(event: Data[]) {
   selectDataList.value = event
   emits('selectionChange', selectDataList.value)
 }
+// 取消所有选中
+function cancelAllSelection() {
+  selectDataList.value.length = 0
+  dataTable.value.clearSelection()
+}
 // 处理操作按钮点击事件
-function handleRowButtonClicked(operationResponse: DataTableOperationResponse<Data>) {
+function handleRowButtonClicked(operation: { row: Data; operationItem: OperationItem<OpParam> }) {
+  if (operation.operationItem.clickToSelect) {
+    if (props.multiSelect) {
+      dataTable.value.toggleRowSelection(operation.row, true)
+    } else {
+      selectedDataKey.value = operation.row[props.keyOfData]
+    }
+    handleSelectionChange([operation.row])
+  }
+  const operationResponse: DataTableOperationResponse<Data> = {
+    id: operation.row[props.keyOfData],
+    code: operation.operationItem.code,
+    data: operation.row
+  }
   emits('buttonClicked', operationResponse)
 }
 // 处理行数据变化
@@ -121,7 +139,8 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'sc
 
 // 暴露
 defineExpose({
-  getVisibleRows
+  getVisibleRows,
+  cancelAllSelection
 })
 </script>
 
@@ -140,9 +159,7 @@ defineExpose({
     <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />
     <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
       <template #default="{ row }">
-        <el-radio v-model="currentFactor[props.keyOfData]" :value="row[props.keyOfData]" @change="handleSelectionChange([row])"
-          >{{ '' }}
-        </el-radio>
+        <el-radio v-model="selectedDataKey" :value="row[props.keyOfData]" @change="handleSelectionChange([row])" />
       </template>
     </el-table-column>
     <el-table-column v-if="props.treeData" width="25" />
@@ -179,7 +196,7 @@ defineExpose({
       fixed="right"
       align="center"
       :width="operationWidth"
-      :min-width="100"
+      :min-width="104"
     >
       <template #header>
         <el-tag size="default" type="warning">{{ '操作' }}</el-tag>
@@ -189,29 +206,14 @@ defineExpose({
           <el-button
             :type="getOperateButton(row).buttonType"
             :icon="getOperateButton(row).icon"
-            @click="
-              handleRowButtonClicked({
-                id: row[props.keyOfData],
-                code: getOperateButton(row).code,
-                data: row
-              })
-            "
+            @click="handleRowButtonClicked({ row: row, operationItem: getOperateButton(row) })"
           >
             {{ getOperateButton(row).label }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <template v-for="item in getOperateDropDownButton(row)" :key="item.code">
-                <el-dropdown-item
-                  :icon="item.icon"
-                  @click="
-                    handleRowButtonClicked({
-                      id: row[props.keyOfData],
-                      code: item.code,
-                      data: row
-                    })
-                  "
-                >
+                <el-dropdown-item :icon="item.icon" @click="handleRowButtonClicked({ row: row, operationItem: item })">
                   {{ item.label }}
                 </el-dropdown-item>
               </template>
