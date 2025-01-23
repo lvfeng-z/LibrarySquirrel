@@ -151,6 +151,9 @@ const api = {
   siteDomainUpdateById: (args) => {
     return Electron.ipcRenderer.invoke('siteDomain-updateById', args)
   },
+  siteDomainQueryDTOPageBySite: (args) => {
+    return Electron.ipcRenderer.invoke('siteDomain-queryDTOPageBySite', args)
+  },
 
   // SiteAuthor
   siteAuthorUpdateBindLocalAuthor: (arg1, arg2) => {

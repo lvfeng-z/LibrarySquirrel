@@ -20,12 +20,18 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
    */
   homepage?: string | undefined | null
 
+  /**
+   * 查询绑定在siteId指定站点的还是未绑定的
+   */
+  boundOnSite?: boolean | undefined | null
+
   constructor(siteDomainQueryDTO?: SiteDomainQueryDTO) {
     super(siteDomainQueryDTO)
     if (NotNullish(siteDomainQueryDTO)) {
       this.siteId = siteDomainQueryDTO.siteId
       this.domain = siteDomainQueryDTO.domain
       this.homepage = siteDomainQueryDTO.homepage
+      this.boundOnSite = siteDomainQueryDTO.boundOnSite
     }
   }
 }

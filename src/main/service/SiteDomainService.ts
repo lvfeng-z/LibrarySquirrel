@@ -4,6 +4,10 @@ import SiteDomain from '../model/entity/SiteDomain.js'
 import SiteDomainDao from '../dao/SiteDomainDao.js'
 import DB from '../database/DB.js'
 import { Operator } from '../constant/CrudConstant.js'
+import Page from '../model/util/Page.js'
+import { AssertNotNullish } from '../util/AssertUtil.js'
+import { IsNullish } from '../util/CommonUtil.js'
+import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
 
 export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, SiteDomain, SiteDomainDao> {
   constructor(db?: DB) {
@@ -40,5 +44,17 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
     query.domain = domains.join(',')
     query.operators = { domain: Operator.IN }
     return super.list(query)
+  }
+
+  /**
+   * 分页查询绑定或未绑定到站点的域名
+   * @param page
+   */
+  public async queryDTOPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
+    AssertNotNullish(page.query, this.className, '查询站点域名失败，查询参数为空')
+    if (IsNullish(page.query.sort)) {
+      page.query.sort = { updateTime: false, createTime: false }
+    }
+    return this.dao.queryPageBySite(page)
   }
 }

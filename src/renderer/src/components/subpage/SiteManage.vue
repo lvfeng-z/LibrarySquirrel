@@ -15,8 +15,9 @@ import Site from '@renderer/model/main/entity/Site.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteDialog from '@renderer/components/dialogs/SiteDialog.vue'
 import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO.ts'
-import SiteDomain from '@renderer/model/main/entity/SiteDomain.ts'
+import SiteDomainDTO from '@renderer/model/main/dto/SiteDomainDTO.ts'
 import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
+import { ElMessage } from 'element-plus'
 
 // onMounted
 onMounted(() => {
@@ -24,7 +25,7 @@ onMounted(() => {
     sitePage.value.query = new SiteQueryDTO()
   }
   sitePage.value.query.sort = { updateTime: false, createTime: false }
-  siteSearchTable.value.handleSearchButtonClicked()
+  siteSearchTable.value.doSearch()
 })
 
 // 变量
@@ -35,14 +36,15 @@ const apis = {
   siteDomainDeleteById: window.api.siteDomainDeleteById,
   siteDomainQueryPage: window.api.siteDomainQueryPage,
   siteDomainSave: window.api.siteDomainSave,
-  siteDomainUpdateById: window.api.siteDomainUpdateById
+  siteDomainUpdateById: window.api.siteDomainUpdateById,
+  siteDomainQueryDTOPageBySite: window.api.siteDomainQueryDTOPageBySite
 }
 // 站点数据表组件的实例
 const siteSearchTable = ref()
 // 站点域名数据表组件的实例
 const siteDomainSearchTable = ref()
 // 站点域名侧边数据表组件的实例
-const siteDomainSideTable = ref()
+const siteDomainDrawerTable = ref()
 // 站点分页参数
 const sitePage: Ref<Page<SiteQueryDTO, Site>> = ref(new Page<SiteQueryDTO, Site>())
 // 站点被修改的行
@@ -56,7 +58,7 @@ const siteOperationButton: OperationItem<Site>[] = [
     code: 'save',
     rule: (row) => siteChangedRows.value.includes(row)
   },
-  { label: '绑定域名', icon: 'Paperclip', code: 'bind' },
+  { label: '绑定域名', icon: 'Paperclip', code: 'bind', clickToSelect: true },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
@@ -134,11 +136,11 @@ const siteDialogData: Ref<UnwrapRef<Site>> = ref(new Site())
 // 被选中的站点
 const siteSelected: Ref<UnwrapRef<Site>> = ref(new Site())
 // 站点域名分页参数
-const siteDomainPage: Ref<Page<SiteDomainQueryDTO, SiteDomain>> = ref(new Page<SiteDomainQueryDTO, SiteDomain>())
+const siteDomainPage: Ref<Page<SiteDomainQueryDTO, SiteDomainDTO>> = ref(new Page<SiteDomainQueryDTO, SiteDomainDTO>())
 // 站点域名被修改的行
-const siteDomainChangedRows: Ref<SiteDomain[]> = ref([])
+const siteDomainChangedRows: Ref<SiteDomainDTO[]> = ref([])
 // 站点域名操作栏按钮
-const siteDomainOperationButton: OperationItem<SiteDomain>[] = [
+const siteDomainOperationButton: OperationItem<SiteDomainDTO>[] = [
   {
     label: '保存',
     icon: 'Checked',
@@ -146,6 +148,7 @@ const siteDomainOperationButton: OperationItem<SiteDomain>[] = [
     code: 'save',
     rule: (row) => siteDomainChangedRows.value.includes(row)
   },
+  { label: '解绑', icon: 'DocumentDelete', code: 'unbind' },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
@@ -168,7 +171,7 @@ const siteDomainThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickToEdit: true,
-    name: 'siteName',
+    name: 'site.siteName',
     label: '对应站点',
     hide: false,
     width: 150,
@@ -232,9 +235,23 @@ const siteDomainDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点对话框开关
 const siteDomainDialogState: Ref<boolean> = ref(false)
 // 站点对话框的数据
-const siteDomainDialogData: Ref<UnwrapRef<SiteDomain>> = ref(new SiteDomain())
+const siteDomainDialogData: Ref<UnwrapRef<SiteDomainDTO>> = ref(new SiteDomainDTO())
 // 站点域名侧边栏开关
-const siteDomainSideTableState: Ref<boolean> = ref(false)
+const siteDomainDrawerState: Ref<boolean> = ref(false)
+// 站点域名侧边数据表操作栏按钮
+const siteDomainDrawerOperationButton: OperationItem<SiteDomainDTO>[] = [
+  {
+    label: '保存',
+    icon: 'Checked',
+    buttonType: 'primary',
+    code: 'save',
+    rule: (row) => siteDomainChangedRows.value.includes(row)
+  },
+  { label: '绑定', icon: 'Paperclip', code: 'bind' },
+  { label: '查看', icon: 'view', code: DialogMode.VIEW },
+  { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
+  { label: '删除', icon: 'delete', code: 'delete' }
+]
 
 // 方法
 // 分页查询站点
@@ -260,7 +277,7 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
       saveSiteRowEdit(op.data)
       break
     case 'bind':
-      siteDomainSideTableState.value = true
+      siteDomainDrawerState.value = true
       break
     case DialogMode.VIEW:
       siteDialogMode.value = DialogMode.VIEW
@@ -284,7 +301,7 @@ async function handleSiteSelectionChange(selections: Site[]) {
   if (selections.length > 0) {
     siteSelected.value = selections[0]
   }
-  siteDomainSearchTable.value.handleSearchButtonClicked()
+  siteDomainSearchTable.value.doSearch()
 }
 // 保存站点行数据编辑
 async function saveSiteRowEdit(newData: Site) {
@@ -302,24 +319,41 @@ async function deleteSite(id: string) {
   const response = await apis.siteDeleteById(id)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await siteSearchTable.value.handleSearchButtonClicked()
+    await siteSearchTable.value.doSearch()
   }
 }
 // 处理站点弹窗请求成功事件
 function handleSiteDialogRequestSuccess() {
-  siteSearchTable.value.handleSearchButtonClicked()
+  siteSearchTable.value.doSearch()
 }
 // 分页查询站点域名
 async function siteDomainQueryPage(
-  page: Page<SiteDomainQueryDTO, SiteDomain>
-): Promise<Page<SiteDomainQueryDTO, SiteDomain> | undefined> {
+  page: Page<SiteDomainQueryDTO, SiteDomainDTO>
+): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO> | undefined> {
   if (IsNullish(page.query)) {
     page.query = new SiteQueryDTO()
   }
   page.query.siteId = siteSelected.value.id
   const response = await apis.siteDomainQueryPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data<Page<SiteDomainQueryDTO, SiteDomain>>(response)
+    return ApiUtil.data<Page<SiteDomainQueryDTO, SiteDomainDTO>>(response)
+  } else {
+    ApiUtil.msg(response)
+    return undefined
+  }
+}
+// 分页查询站点域名
+async function siteDomainQueryPageBySite(
+  page: Page<SiteDomainQueryDTO, SiteDomainDTO>
+): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO> | undefined> {
+  if (IsNullish(page.query)) {
+    page.query = new SiteQueryDTO()
+  }
+  page.query.siteId = siteSelected.value.id
+  page.query.boundOnSite = false
+  const response = await apis.siteDomainQueryDTOPageBySite(page)
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data<Page<SiteDomainQueryDTO, SiteDomainDTO>>(response)
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -327,19 +361,25 @@ async function siteDomainQueryPage(
 }
 // 处理站点域名弹窗请求成功事件
 function handleSiteDomainDialogRequestSuccess() {
-  siteDomainSearchTable.value.handleSearchButtonClicked()
+  siteDomainSearchTable.value.doSearch()
 }
 // 处理站点域名新增按钮点击事件
 async function handleSiteDomainCreateButtonClicked() {
   siteDomainDialogMode.value = DialogMode.NEW
-  siteDomainDialogData.value = new SiteDomain()
+  siteDomainDialogData.value = new SiteDomainDTO()
   siteDomainDialogState.value = true
 }
 // 处理站点域名数据行按钮点击事件
-function handleSiteDomainRowButtonClicked(op: DataTableOperationResponse<SiteDomain>) {
+function handleSiteDomainRowButtonClicked(op: DataTableOperationResponse<SiteDomainDTO>) {
   switch (op.code) {
     case 'save':
       saveSiteDomainRowEdit(op.data)
+      break
+    case 'bind':
+      changeDomainBind(Number(op.id), siteSelected.value.id as number, true)
+      break
+    case 'unbind':
+      changeDomainBind(Number(op.id), siteSelected.value.id as number, false)
       break
     case DialogMode.VIEW:
       siteDomainDialogMode.value = DialogMode.VIEW
@@ -359,7 +399,7 @@ function handleSiteDomainRowButtonClicked(op: DataTableOperationResponse<SiteDom
   }
 }
 // 保存站点域名行数据编辑
-async function saveSiteDomainRowEdit(newData: SiteDomain) {
+async function saveSiteDomainRowEdit(newData: SiteDomainDTO) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.siteDomainUpdateById(tempData)
@@ -374,7 +414,34 @@ async function deleteSiteDomain(id: string) {
   const response = await apis.siteDomainDeleteById(id)
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
-    await siteDomainSearchTable.value.handleSearchButtonClicked()
+    await siteDomainSearchTable.value.doSearch()
+  }
+}
+// 域名绑定到站点上
+async function changeDomainBind(siteDomainId: number, siteId: number, bind: boolean) {
+  const tempData = new SiteDomainDTO()
+  tempData.id = siteDomainId
+  if (bind) {
+    tempData.siteId = siteId
+  } else {
+    tempData.siteId = null
+  }
+
+  const response = await apis.siteDomainUpdateById(tempData)
+  siteDomainSearchTable.value.doSearch()
+  if (siteDomainDrawerState.value) {
+    siteDomainDrawerTable.value.doSearch()
+  }
+  if (ApiUtil.check(response)) {
+    ElMessage({
+      message: `${bind ? '绑定' : '解绑'}成功`,
+      type: 'success'
+    })
+  } else {
+    ElMessage({
+      message: `${bind ? '绑定' : '解绑'}失败，${response.message}`,
+      type: 'error'
+    })
   }
 }
 </script>
@@ -402,7 +469,8 @@ async function deleteSiteDomain(id: string) {
             @create-button-clicked="handleSiteCreateButtonClicked"
             @row-button-clicked="handleSiteRowButtonClicked"
             @selection-change="handleSiteSelectionChange"
-          ></search-table>
+          >
+          </search-table>
         </div>
         <div class="site-manage-right">
           <search-table
@@ -422,36 +490,30 @@ async function deleteSiteDomain(id: string) {
             :page-sizes="[10, 20, 50, 100, 1000]"
             @create-button-clicked="handleSiteDomainCreateButtonClicked"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
-            @selection-change="handleSiteSelectionChange"
           >
           </search-table>
         </div>
+        <el-drawer v-model="siteDomainDrawerState" size="45%" :with-header="false" @open="siteDomainDrawerTable.doSearch()">
+          <search-table
+            ref="siteDomainDrawerTable"
+            v-model:page="siteDomainPage"
+            v-model:changed-rows="siteDomainChangedRows"
+            class="site-manage-left-search-table"
+            key-of-data="id"
+            :operation-button="siteDomainDrawerOperationButton"
+            :thead="siteDomainThead"
+            :main-input-boxes="siteDomainMainInputBoxes"
+            :drop-down-input-boxes="[]"
+            :search="siteDomainQueryPageBySite"
+            :multi-select="false"
+            :selectable="false"
+            :page-sizes="[10, 20, 50, 100, 1000]"
+            @create-button-clicked="handleSiteDomainCreateButtonClicked"
+            @row-button-clicked="handleSiteDomainRowButtonClicked"
+            @selection-change="handleSiteSelectionChange"
+          />
+        </el-drawer>
       </div>
-      <el-drawer
-        v-model="siteDomainSideTableState"
-        size="45%"
-        :with-header="false"
-        @open="siteDomainSideTable.handleSearchButtonClicked()"
-      >
-        <search-table
-          ref="siteDomainSideTable"
-          v-model:page="siteDomainPage"
-          v-model:changed-rows="siteDomainChangedRows"
-          class="site-manage-left-search-table"
-          key-of-data="id"
-          :operation-button="siteDomainOperationButton"
-          :thead="siteDomainThead"
-          :main-input-boxes="siteDomainMainInputBoxes"
-          :drop-down-input-boxes="[]"
-          :search="siteDomainQueryPage"
-          :multi-select="true"
-          :selectable="true"
-          :page-sizes="[10, 20, 50, 100, 1000]"
-          @create-button-clicked="handleSiteDomainCreateButtonClicked"
-          @row-button-clicked="handleSiteDomainRowButtonClicked"
-          @selection-change="handleSiteSelectionChange"
-        />
-      </el-drawer>
     </template>
     <template #dialog>
       <site-dialog

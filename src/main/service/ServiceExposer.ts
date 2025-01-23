@@ -382,6 +382,16 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('siteDomain-queryDTOPageBySite', async (_event, args) => {
+    const siteDomainService = new SiteDomainService()
+    try {
+      args = new Page(args)
+      return ApiUtil.response(await siteDomainService.queryDTOPageBySite(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
 
   // SiteAuthorService
   Electron.ipcMain.handle('siteAuthor-updateBindLocalAuthor', async (_event, arg1, arg2) => {
