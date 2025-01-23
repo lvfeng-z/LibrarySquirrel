@@ -40,11 +40,11 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    * @param whereClauses
    */
-  protected splicingWhereClauses(whereClauses: string[]): string | undefined {
-    if (whereClauses.length > 0) {
-      return `WHERE ${whereClauses.length > 1 ? whereClauses.join(' AND ') : whereClauses[0]}`
+  protected splicingWhereClauses(whereClauses: string[]): string {
+    if (ArrayNotEmpty(whereClauses)) {
+      return `WHERE ${whereClauses.join(' AND ')}`
     } else {
-      return undefined
+      return ''
     }
   }
 
@@ -56,11 +56,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param ignore 要忽略的属性名
    * @return where子句和处理后的查询参数
    */
-  protected getWhereClause(
-    queryConditions: Query | undefined,
-    alias?: string,
-    ignore?: string[]
-  ): { whereClause: string | undefined; query: Query | undefined } {
+  protected getWhereClause(queryConditions: Query, alias?: string, ignore?: string[]): { whereClause: string; query: Query } {
     const modifiedQuery = this.getWhereClauses(queryConditions, alias, ignore)
 
     const whereClauses = modifiedQuery.whereClauses
@@ -79,17 +75,13 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @return 属性名为键，where子句为值的Record对象和处理后的查询参数
    */
   protected getWhereClauses(
-    queryConditions: Query | undefined,
+    queryConditions: Query,
     alias?: string,
     ignore?: string[]
   ): {
     whereClauses: Record<string, string>
     query: Query
   } {
-    if (queryConditions === undefined) {
-      return { whereClauses: {}, query: {} as Query }
-    }
-
     const whereClauses: Record<string, string> = {}
     const modifiedQuery = lodash.cloneDeep(queryConditions).toPlainParams(ignore)
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
@@ -213,6 +205,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
       const countResult = (await db.get(countSql, notNullishValue)) as { total: number }
       page.dataCount = countResult.total
       page.pageCount = Math.ceil(countResult.total / page.pageSize)
+      page.currentCount = Math.max(0, page.dataCount - page.pageSize * (page.pageNumber - 1))
 
       // 计算偏移量
       const offset = (page.pageNumber - 1) * page.pageSize
@@ -297,9 +290,12 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param alias 表别名
    * @protected
    */
-  protected async sortAndPage(statement: string, page: Page<Query, Model>, sort: QuerySortOption, alias?: string): Promise<string> {
-    statement = this.sorter(statement, sort, alias)
-    statement = await this.pager(statement, page)
-    return statement
+  protected async sortAndPage(statement: string, page: Page<Query, Model>, sort?: QuerySortOption, alias?: string): Promise<string> {
+    let tempStatement = statement
+    if (NotNullish(sort)) {
+      tempStatement = this.sorter(tempStatement, sort, alias)
+    }
+    tempStatement = await this.pager(tempStatement, page)
+    return tempStatement
   }
 }

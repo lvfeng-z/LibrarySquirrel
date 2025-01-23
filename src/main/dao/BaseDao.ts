@@ -355,6 +355,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 拼接排序和分页字句
     const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
+    if (modifiedPage.currentCount < 1) {
+      modifiedPage.data = []
+      return modifiedPage
+    }
 
     // 查询
     const query = modifiedPage.query?.toPlainParams()
@@ -502,15 +506,18 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
                         FROM ${this.tableName}`
     }
 
+    let whereClause: string | undefined
+    const modifiedPage = new Page(page)
     // 拼接where子句
     page = new Page<Query, Model>(page)
-    const whereClauseAndQuery = this.getWhereClause(page.query)
+    if (NotNullish(page.query)) {
+      const whereClauseAndQuery = this.getWhereClause(page.query)
 
-    // 修改过的查询条件
-    const modifiedPage = new Page(page)
-    modifiedPage.query = whereClauseAndQuery.query
+      // 修改过的查询条件
+      modifiedPage.query = whereClauseAndQuery.query
 
-    const whereClause = whereClauseAndQuery.whereClause
+      whereClause = whereClauseAndQuery.whereClause
+    }
     let statement = selectClause
     if (whereClause !== undefined) {
       statement = selectClause + ' ' + whereClause
@@ -519,6 +526,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 分页和排序
     const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
+    if (page.currentCount < 1) {
+      const result = modifiedPage.transform<SelectItem>()
+      result.data = []
+      return result
+    }
 
     // 查询
     const query = modifiedPage.query?.toPlainParams()

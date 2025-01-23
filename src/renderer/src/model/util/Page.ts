@@ -23,6 +23,10 @@ export default class Page<Query, Result> implements IPage<Query, Result> {
    */
   dataCount: number
   /**
+   * 本页数据量
+   */
+  currentCount: number
+  /**
    * 查询条件
    */
   query?: Query
@@ -38,6 +42,7 @@ export default class Page<Query, Result> implements IPage<Query, Result> {
       this.pageSize = 10
       this.pageCount = 0
       this.dataCount = 0
+      this.currentCount = 0
       this.query = undefined
       this.data = undefined
     } else {
@@ -46,6 +51,7 @@ export default class Page<Query, Result> implements IPage<Query, Result> {
       this.pageSize = page.pageSize
       this.pageCount = page.pageCount
       this.dataCount = page.dataCount
+      this.currentCount = page.currentCount
       this.query = Object.assign(new BaseQueryDTO(), page.query)
       this.data = page.data
     }
@@ -61,6 +67,7 @@ export default class Page<Query, Result> implements IPage<Query, Result> {
     result.pageSize = this.pageSize
     result.pageCount = this.pageCount
     result.dataCount = this.dataCount
+    result.currentCount = this.currentCount
     result.query = this.query
     result.data = []
 
@@ -77,6 +84,7 @@ export default class Page<Query, Result> implements IPage<Query, Result> {
     result.pageSize = this.pageSize
     result.pageCount = this.pageCount
     result.dataCount = this.dataCount
+    result.currentCount = this.currentCount
     result.query = undefined
     result.data = undefined
 

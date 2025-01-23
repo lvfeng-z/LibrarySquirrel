@@ -20,6 +20,10 @@ export default interface IPage<Query, Result> {
    */
   dataCount: number
   /**
+   * 本页数据量
+   */
+  currentCount: number
+  /**
    * 查询条件
    */
   query?: Query
