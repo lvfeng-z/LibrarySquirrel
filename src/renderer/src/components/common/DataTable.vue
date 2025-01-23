@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="Data, OpParam">
 import { onBeforeMount, onMounted, Ref, ref } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
-import { Thead } from '../../model/util/Thead'
+import { GetPropByPath, SetPropByPath, Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
@@ -183,9 +183,10 @@ defineExpose({
           <template #default="scope">
             <component
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
-              v-model:data="scope.row[item.name]"
+              :data="GetPropByPath(scope.row, item.name)"
               :config="item"
               @data-changed="handleRowChange(scope.row)"
+              @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.name, newValue)"
             />
           </template>
         </el-table-column>
