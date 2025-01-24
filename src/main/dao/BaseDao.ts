@@ -541,7 +541,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 分页和排序
     const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
-    if (page.currentCount < 1) {
+    if (modifiedPage.currentCount < 1) {
       const result = modifiedPage.transform<SelectItem>()
       result.data = []
       return result
