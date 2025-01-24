@@ -14,7 +14,7 @@ import Site from '../model/entity/Site.js'
 
 export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
   constructor(db?: DB) {
-    super('SearchDao', db)
+    super(db)
   }
 
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
@@ -121,13 +121,13 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                 }
                 default:
                   LogUtil.error(
-                    this.className,
+                    this.constructor.name,
                     `解析查询配置项${selectItem.label}的额外数据失败，出现了意外的类型，type: ${extra.type}`
                   )
               }
               selectItem.subLabels = subLabels
             } else {
-              LogUtil.error(this.className, `解析查询配置项${selectItem.label}的额外数据失败，额外数据意外为空`)
+              LogUtil.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据意外为空`)
             }
           }
         })

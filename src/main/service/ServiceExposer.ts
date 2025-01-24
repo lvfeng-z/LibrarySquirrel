@@ -382,6 +382,16 @@ function exposeService() {
       return ApiUtil.error(String(error))
     }
   })
+  Electron.ipcMain.handle('siteDomain-queryDTOPage', async (_event, args) => {
+    const siteDomainService = new SiteDomainService()
+    try {
+      args = new Page(args)
+      return ApiUtil.response(await siteDomainService.queryDTOPage(args))
+    } catch (error) {
+      LogUtil.error('ServiceExposer', error)
+      return ApiUtil.error(String(error))
+    }
+  })
   Electron.ipcMain.handle('siteDomain-queryDTOPageBySite', async (_event, args) => {
     const siteDomainService = new SiteDomainService()
     try {

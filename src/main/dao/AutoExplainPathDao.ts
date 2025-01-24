@@ -13,7 +13,7 @@ import { IsNullish } from '../util/CommonUtil.js'
  */
 export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO, AutoExplainPath> {
   constructor(db?: DB) {
-    super('auto_explain_path', 'AutoExplainPathDao', db)
+    super('auto_explain_path', AutoExplainPath, db)
   }
 
   /**
@@ -44,7 +44,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
-        resultPage.data = super.getResultTypeDataList<AutoExplainPath>(rows)
+        resultPage.data = super.toResultTypeDataList<AutoExplainPath>(rows)
         return resultPage
       })
       .finally(() => {
@@ -63,7 +63,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => super.getResultTypeDataList<AutoExplainPath>(rows))
+      .then((rows) => super.toResultTypeDataList<AutoExplainPath>(rows))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

@@ -14,7 +14,7 @@ export default class TaskPluginListenerService extends BaseService<
   TaskPluginListenerDao
 > {
   constructor(db?: DB) {
-    super('TaskPluginListenerService', new TaskPluginListenerDao(db), db)
+    super(TaskPluginListenerDao, db)
   }
 
   saveBatch(entities: TaskPluginListener[]) {

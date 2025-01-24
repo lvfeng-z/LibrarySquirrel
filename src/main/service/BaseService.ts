@@ -12,11 +12,6 @@ import SelectItem from '../model/util/SelectItem.js'
  */
 export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseEntity, Dao extends BaseDao<Query, Model>> {
   /**
-   * 子类名称
-   */
-  protected readonly className: string
-
-  /**
    * dao
    */
   protected dao: Dao
@@ -33,9 +28,8 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(childClassName: string, dao: Dao, db?: DB) {
-    this.className = childClassName
-    this.dao = dao
+  protected constructor(dao: new (db?: DB) => Dao, db?: DB) {
+    this.dao = new dao(db)
     if (IsNullish(db)) {
       this.db = undefined
       this.injectedDB = false
@@ -83,8 +77,8 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param updateData
    */
   public async updateById(updateData: Model): Promise<number> {
-    AssertNotNullish(updateData.id, this.className, '更新数据失败，id不能为空')
-    return this.dao.updateById(updateData.id as number | string, updateData)
+    AssertNotNullish(updateData.id, this.constructor.name, '更新数据失败，id不能为空')
+    return this.dao.updateById(updateData)
   }
 
   /**
@@ -93,7 +87,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   public async updateBatchById(entities: Model[]) {
     const check = entities.some((entity) => IsNullish(entity.id))
-    AssertFalse(check, this.className, '批量更新数据失败，id不能为空')
+    AssertFalse(check, this.constructor.name, '批量更新数据失败，id不能为空')
     return this.dao.updateBatchById(entities)
   }
 

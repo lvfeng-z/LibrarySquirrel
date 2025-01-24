@@ -10,7 +10,7 @@ import Page from '../model/util/Page.ts'
  */
 export default class AutoExplainPathService extends BaseService<AutoExplainPathQueryDTO, AutoExplainPath, AutoExplainPathDao> {
   constructor(db?: DB) {
-    super('AutoExplainPathService', new AutoExplainPathDao(db), db)
+    super(AutoExplainPathDao, db)
   }
 
   /**

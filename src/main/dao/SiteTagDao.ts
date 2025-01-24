@@ -14,7 +14,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
   constructor(db?: DB) {
-    super('site_tag', 'SiteTagDao', db)
+    super('site_tag', SiteTag, db)
   }
 
   /**

@@ -16,10 +16,10 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
    * 分页查询绑定或未绑定到站点的域名
    * @param page
    */
-  async queryPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>) {
+  public async queryPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
     const modifiedPage = new Page(page)
-    AssertNotNullish(page.query, this.className, '查询站点域名失败，查询参数为空')
-    AssertNotNullish(modifiedPage.query, this.className, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(page.query, this.constructor.name, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(modifiedPage.query, this.constructor.name, '查询站点域名失败，查询参数为空')
     const selectClause = `SELECT t1.*,
           JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description, 'sortNum', t2.sort_num) as site
         FROM ${this.tableName} t1

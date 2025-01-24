@@ -10,7 +10,7 @@ import lodash from 'lodash'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
-    super('local_tag', 'LocalTagDao', db)
+    super('local_tag', LocalTag, db)
   }
 
   public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
@@ -64,7 +64,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth })
-      .then((result) => this.getResultTypeDataList<LocalTag>(result))
+      .then((result) => this.toResultTypeDataList<LocalTag>(result))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -91,7 +91,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, { nodeId: nodeId })
-      .then((result) => this.getResultTypeDataList<LocalTag>(result))
+      .then((result) => this.toResultTypeDataList<LocalTag>(result))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -112,7 +112,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.getResultTypeDataList<LocalTag>(runResult))
+      .then((runResult) => super.toResultTypeDataList<LocalTag>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -160,7 +160,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     return db
       .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
       .then((rows) => {
-        page.data = super.getResultTypeDataList<LocalTag>(rows)
+        page.data = super.toResultTypeDataList<LocalTag>(rows)
         return page
       })
       .finally(() => {

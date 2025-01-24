@@ -12,7 +12,7 @@ import SiteDomain from '../model/entity/SiteDomain.js'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DB) {
-    super('SiteService', new SiteDao(db), db)
+    super(SiteDao, db)
   }
 
   /**

@@ -6,6 +6,6 @@ import DB from '../database/DB.ts'
 
 export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQueryDTO, ReWorksWorksSet, ReWorksWorksSetDao> {
   constructor(db?: DB) {
-    super('ReWorksWorksSetService', new ReWorksWorksSetDao(db), db)
+    super(ReWorksWorksSetDao, db)
   }
 }

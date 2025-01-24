@@ -6,7 +6,7 @@ import { IsNullish } from '../util/CommonUtil.js'
 
 export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
   constructor(db?: DB) {
-    super('plugin', 'PluginDao', db)
+    super('plugin', Plugin, db)
   }
 
   public async checkInstalled(type: string, author: string, name: string, version: string) {

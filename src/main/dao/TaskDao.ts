@@ -12,7 +12,7 @@ import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   constructor(db?: DB) {
-    super('task', 'TaskDao', db)
+    super('task', Task, db)
   }
 
   /**
@@ -88,7 +88,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     return db
       .all<unknown[], Record<string, unknown>>(statement, modifiedPage.query)
       .then((rows) => {
-        modifiedPage.data = super.getResultTypeDataList<Task>(rows)
+        modifiedPage.data = super.toResultTypeDataList<Task>(rows)
         return modifiedPage
       })
       .finally(() => {
@@ -165,7 +165,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
-        sourceTasks = super.getResultTypeDataList<TaskDTO>(rows)
+        sourceTasks = super.toResultTypeDataList<TaskDTO>(rows)
         return BuildTree(sourceTasks, 0)
       })
       .finally(() => {
@@ -187,7 +187,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => super.getResultTypeDataList<TaskScheduleDTO>(rows))
+      .then((rows) => super.toResultTypeDataList<TaskScheduleDTO>(rows))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

@@ -11,7 +11,7 @@ import { AssertNotNullish } from '../util/AssertUtil.js'
  */
 export class ReWorksTagService extends BaseService<ReWorksTagQueryDTO, ReWorksTag, ReWorksTagDao> {
   constructor(db?: DB) {
-    super('ReWorksTagService', new ReWorksTagDao(db), db)
+    super(ReWorksTagDao, db)
   }
 
   /**
@@ -21,7 +21,7 @@ export class ReWorksTagService extends BaseService<ReWorksTagQueryDTO, ReWorksTa
    * @param worksId
    */
   public async link(type: OriginType, tagIds: number[], worksId: number) {
-    AssertNotNullish(worksId, this.className, `关联作品和标签出错，作品id不能为空`)
+    AssertNotNullish(worksId, this.constructor.name, `关联作品和标签出错，作品id不能为空`)
     if (tagIds.length === 0) {
       return 0
     }

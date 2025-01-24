@@ -15,7 +15,7 @@ import { AssertTrue } from '../util/AssertUtil.js'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
-    super('LocalTagService', new LocalTagDao(db), db)
+    super(LocalTagDao, db)
   }
 
   /**
@@ -62,11 +62,11 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           const newBaseLocalTag = new LocalTag()
           newBaseLocalTag.id = localTag.baseLocalTagId
           newBaseLocalTag.baseLocalTagId = old.baseLocalTagId
-          const succeed = (await this.dao.updateById(newBaseLocalTag.id, newBaseLocalTag)) > 0
+          const succeed = (await this.dao.updateById(newBaseLocalTag)) > 0
           AssertTrue(succeed, '更新原下级节点失败')
         }
       }
-      return await this.dao.updateById(localTag.id, localTag)
+      return await this.dao.updateById(localTag)
     } else {
       const msg = '更新本地标签失败，id意外为空'
       LogUtil.error('LocalTagService', msg)

@@ -24,7 +24,7 @@ import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
  */
 export default class PluginService extends BaseService<PluginQueryDTO, Plugin, PluginDao> {
   constructor(db?: DB) {
-    super('PluginService', new PluginDao(db), db)
+    super(PluginDao, db)
   }
 
   public async checkInstalled(type: string, author: string, name: string, version: string): Promise<boolean> {
@@ -66,15 +66,15 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const msgPrefix = '读取插件安装包出错，'
 
     const yamlEntry = packageContent.getEntry(`pluginInfo.yml`)
-    AssertNotNullish(yamlEntry, this.className, `${msgPrefix}没有获取到必要的安装配置`)
+    AssertNotNullish(yamlEntry, this.constructor.name, `${msgPrefix}没有获取到必要的安装配置`)
     const yamlContent = yamlEntry.getData().toString('utf8')
     const config: PluginInstallConfig = yaml.load(yamlContent)
 
-    AssertNotNullish(config.type, this.className, `${msgPrefix}插件类型不能为空`)
-    AssertNotNullish(config.author, this.className, `${msgPrefix}插件作者不能为空`)
-    AssertNotNullish(config.name, this.className, `${msgPrefix}插件名称不能为空`)
-    AssertNotNullish(config.version, this.className, `${msgPrefix}插件版本不能为空`)
-    AssertNotNullish(config.fileName, this.className, `${msgPrefix}插件入口文件不能为空`)
+    AssertNotNullish(config.type, this.constructor.name, `${msgPrefix}插件类型不能为空`)
+    AssertNotNullish(config.author, this.constructor.name, `${msgPrefix}插件作者不能为空`)
+    AssertNotNullish(config.name, this.constructor.name, `${msgPrefix}插件名称不能为空`)
+    AssertNotNullish(config.version, this.constructor.name, `${msgPrefix}插件版本不能为空`)
+    AssertNotNullish(config.fileName, this.constructor.name, `${msgPrefix}插件入口文件不能为空`)
 
     return new PluginInstallDTO({
       type: config.type,
@@ -93,11 +93,11 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * @param packagePath
    */
   public async installPlugin(packagePath: string): Promise<void> {
-    AssertNotNullish(packagePath, this.className, `插件包路径不能为空`)
+    AssertNotNullish(packagePath, this.constructor.name, `插件包路径不能为空`)
     try {
       fs.promises.access(packagePath, fs.constants.F_OK)
     } catch (error) {
-      LogUtil.error(this.className, `插件包"${packagePath}"不存在`)
+      LogUtil.error(this.constructor.name, `插件包"${packagePath}"不存在`)
       throw error
     }
 
@@ -129,7 +129,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         }
         taskPluginListenerService.saveBatch(taskPluginListeners)
       }
-      LogUtil.info(this.className, `已安装插件${pluginInstallDTO.author}.${pluginInstallDTO.name}.${pluginInstallDTO.version}`)
+      LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}.${pluginInstallDTO.name}.${pluginInstallDTO.version}`)
     })
   }
 
@@ -165,9 +165,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
           installPath = defaultPlugin.packagePath
         }
         try {
-          this.installPlugin(installPath).catch((error) => LogUtil.error(this.className, '安装插件失败', error))
+          this.installPlugin(installPath).catch((error) => LogUtil.error(this.constructor.name, '安装插件失败', error))
         } catch (error) {
-          LogUtil.error(this.className, '安装插件失败', error)
+          LogUtil.error(this.constructor.name, '安装插件失败', error)
         }
       }
     }

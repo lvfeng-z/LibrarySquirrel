@@ -37,7 +37,7 @@ import SiteTagDTO from '../model/dto/SiteTagDTO.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
-    super('WorksService', new WorksDao(db), db)
+    super(WorksDao, db)
   }
 
   /**
@@ -140,7 +140,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     if (this.injectedDB) {
       db = this.db as DB
     } else {
-      db = new DB(this.className)
+      db = new DB(this.constructor.name)
     }
     try {
       return db
@@ -153,7 +153,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
               if (NotNullish(worksSet) && NotNullish(worksDTO.taskId)) {
                 const taskService = new TaskService(transactionDB)
                 const includeTask = await taskService.getById(worksDTO.taskId)
-                AssertNotNullish(includeTask, this.className, '修改作品集失败，任务id意外为空')
+                AssertNotNullish(includeTask, this.constructor.name, '修改作品集失败，任务id意外为空')
                 const rootTaskId = includeTask.pid
                 const siteWorksSetId = worksSet.siteWorksSetId
 
@@ -167,7 +167,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                     worksSetId = oldWorksSet.id
                   }
                 } else {
-                  LogUtil.warn(this.className, `保存作品失败，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
+                  LogUtil.warn(this.constructor.name, `保存作品失败，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
                 }
               }
             }
@@ -206,10 +206,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           if (ArrayNotEmpty(worksSets)) {
             const worksSetService = new WorksSetService(transactionDB)
             for (const workSet of worksSets) {
-              AssertNotNullish(worksDTO.taskId, this.className, `关联作品和作品集失败，作品id意外为空，taskId: ${worksDTO.taskId}`)
+              AssertNotNullish(
+                worksDTO.taskId,
+                this.constructor.name,
+                `关联作品和作品集失败，作品id意外为空，taskId: ${worksDTO.taskId}`
+              )
               AssertNotNullish(
                 workSet.siteWorksSetId,
-                this.className,
+                this.constructor.name,
                 `关联作品和作品集失败，作品集站点id意外为空，taskId: ${worksDTO.taskId}`
               )
               await worksSetService.link([worksDTO], worksSetId)
@@ -262,7 +266,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           return worksDTO.id
         }, `保存作品信息，taskId: ${worksDTO.taskId}`)
         .catch((error) => {
-          LogUtil.error(this.className, '保存作品失败')
+          LogUtil.error(this.constructor.name, '保存作品失败')
           throw error
         })
         .finally(() => {
@@ -312,7 +316,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       }
       return resultPage
     } catch (error) {
-      LogUtil.error(this.className, error)
+      LogUtil.error(this.constructor.name, error)
       throw error
     }
   }
@@ -344,7 +348,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       }
       return resultPage
     } catch (error) {
-      LogUtil.error(this.className, error)
+      LogUtil.error(this.constructor.name, error)
       throw error
     }
   }

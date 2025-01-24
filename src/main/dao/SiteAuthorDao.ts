@@ -14,7 +14,7 @@ import SelectItem from '../model/util/SelectItem.js'
  */
 export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAuthor> {
   constructor(db?: DB) {
-    super('site_author', 'SiteAuthorDao', db)
+    super('site_author', SiteAuthor, db)
   }
 
   /**
@@ -26,7 +26,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id IN (${siteAuthorIs.join(',')})`
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => this.getResultTypeDataList<SiteAuthor>(rows))
+      .then((rows) => this.toResultTypeDataList<SiteAuthor>(rows))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -211,7 +211,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.getResultTypeDataList<SiteAuthorDTO>(runResult))
+      .then((runResult) => super.toResultTypeDataList<SiteAuthorDTO>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

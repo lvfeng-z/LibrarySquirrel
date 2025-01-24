@@ -9,7 +9,7 @@ import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.ts'
  */
 export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAuthor> {
   constructor(db?: DB) {
-    super('local_author', 'LocalAuthorDao', db)
+    super('local_author', LocalAuthor, db)
   }
 
   /**
@@ -29,7 +29,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
         type relationShipType = LocalAuthorDTO & { worksId: number }
-        const relationShips = this.getResultTypeDataList<relationShipType>(rows)
+        const relationShips = this.toResultTypeDataList<relationShipType>(rows)
 
         // 返回一个worksId为键，相同worksId的元素为数组为值的Map
         return relationShips.reduce((map: Map<number, LocalAuthorDTO[]>, relationShip: relationShipType) => {
@@ -61,7 +61,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.getResultTypeDataList<LocalAuthorDTO>(runResult))
+      .then((runResult) => super.toResultTypeDataList<LocalAuthorDTO>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

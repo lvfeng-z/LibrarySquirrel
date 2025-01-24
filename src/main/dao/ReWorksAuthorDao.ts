@@ -9,7 +9,7 @@ import { OriginType } from '../constant/OriginType.js'
  */
 export default class ReWorksAuthorDao extends BaseDao<ReWorksAuthorQueryDTO, ReWorksAuthor> {
   constructor(db?: DB) {
-    super('re_works_author', 'ReWorksAuthorDao', db)
+    super('re_works_author', ReWorksAuthor, db)
   }
 
   /**

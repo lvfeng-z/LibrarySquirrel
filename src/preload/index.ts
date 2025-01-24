@@ -151,6 +151,9 @@ const api = {
   siteDomainUpdateById: (args) => {
     return Electron.ipcRenderer.invoke('siteDomain-updateById', args)
   },
+  siteDomainQueryDTOPage: (args) => {
+    return Electron.ipcRenderer.invoke('siteDomain-queryDTOPage', args)
+  },
   siteDomainQueryDTOPageBySite: (args) => {
     return Electron.ipcRenderer.invoke('siteDomain-queryDTOPageBySite', args)
   },

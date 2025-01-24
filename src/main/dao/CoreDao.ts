@@ -15,18 +15,12 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    */
   protected db: DB | undefined
   /**
-   * 继承者类名
-   * @private
-   */
-  protected readonly className: string
-  /**
    * 是否为注入的链接实例
    * @private
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(className: string, db?: DB) {
-    this.className = className
+  protected constructor(db?: DB) {
     if (NotNullish(db)) {
       this.db = db
       this.injectedDB = true
@@ -259,11 +253,11 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param dataList
    * @protected
    */
-  protected getResultTypeDataList<Result>(dataList: Record<string, unknown>[]): Result[] {
+  protected toResultTypeDataList<Result>(dataList: Record<string, unknown>[]): Result[] {
     if (ArrayIsEmpty(dataList)) {
       return []
     }
-    return dataList.map((row) => this.getResultTypeData(row))
+    return dataList.map((row) => this.toResultTypeData(row))
   }
 
   /**
@@ -271,13 +265,13 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    * @param data
    */
-  protected getResultTypeData<Result>(data: Record<string, unknown>): Result {
+  protected toResultTypeData<Result>(data: Record<string, unknown>): Result {
     return Object.fromEntries(Object.entries(data).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])) as Result
   }
 
   protected acquire() {
     if (this.db === undefined) {
-      this.db = new DB(this.className)
+      this.db = new DB(this.constructor.name)
     }
     return this.db
   }

@@ -67,6 +67,7 @@ declare global {
       siteDomainQueryPage: function
       siteDomainSave: function
       siteDomainUpdateById: function
+      siteDomainQueryDTOPage: function
       siteDomainQueryDTOPageBySite: function
 
       // SiteAuthor

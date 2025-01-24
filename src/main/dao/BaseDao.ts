@@ -7,7 +7,7 @@ import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import lodash from 'lodash'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
-import { AssertArrayNotEmpty, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty, AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
 import Page from '../model/util/Page.js'
 import CoreDao from './CoreDao.js'
 
@@ -23,8 +23,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected tableName: string
 
-  protected constructor(tableName: string, className: string, db?: DB) {
-    super(className, db)
+  /**
+   * 实体类的构造函数
+   * @protected
+   */
+  protected entityConstr: new (src?: Model) => Model
+
+  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model, db?: DB) {
+    super(db)
+    this.entityConstr = entityConstr
     this.tableName = tableName
   }
 
@@ -33,12 +40,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entity
    */
   public async save(entity: Model): Promise<number> {
+    const standardEntity = new this.entityConstr(entity)
     // 设置createTime和updateTime
-    entity.createTime = Date.now()
-    entity.updateTime = Date.now()
+    standardEntity.createTime = Date.now()
+    standardEntity.updateTime = Date.now()
 
     // 转换为sqlite3接受的数据类型
-    const plainObject = ToObjAcceptedBySqlite3(entity)
+    const plainObject = ToObjAcceptedBySqlite3(standardEntity)
 
     const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
     const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
@@ -60,11 +68,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    AssertArrayNotEmpty(entities, this.className, '批量保存的对象不能为空')
+    AssertArrayNotEmpty(entities, this.constructor.name, '批量保存的对象不能为空')
+    const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     // 对齐所有属性
     // 设置createTime和updateTime
-    let plainObject = entities.map((entity) => {
+    let plainObject = standardEntities.map((entity) => {
       entity.createTime = Date.now()
       entity.updateTime = Date.now()
       // 转换为sqlite3接受的数据类型
@@ -141,7 +150,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    AssertArrayNotEmpty(ids, this.className, '批量删除失败，id列表不能为空')
+    AssertArrayNotEmpty(ids, this.constructor.name, '批量删除失败，id列表不能为空')
 
     const idsStr = ids.join(',')
     const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
@@ -158,19 +167,19 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
   /**
    * 更新
-   * @param id
-   * @param updateData
+   * @param entity
    */
-  public async updateById(id: PrimaryKey, updateData: Model): Promise<number> {
-    AssertNotNullish(id, this.className, '更新失败，主键不能为空')
+  public async updateById(entity: Model): Promise<number> {
+    AssertNotNullish(entity.id, this.constructor.name, '更新失败，主键不能为空')
+    const standardEntity = new this.entityConstr(entity)
     // 设置createTime和updateTime
-    updateData.updateTime = Date.now()
+    standardEntity.updateTime = Date.now()
 
     // 生成一个不包含值为undefined的属性的对象
-    const existingValue = ToObjAcceptedBySqlite3(updateData)
+    const existingValue = ToObjAcceptedBySqlite3(standardEntity)
     const keys = Object.keys(existingValue)
     const setClauses = keys.map((item) => `${StringUtil.camelToSnakeCase(item)} = @${item}`)
-    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseEntity.PK}" = ${id}`
+    const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseEntity.PK}" = @${BaseEntity.PK}`
     const db = this.acquire()
     return db
       .run(statement, existingValue)
@@ -187,12 +196,15 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async updateBatchById(entities: Model[]): Promise<number> {
-    AssertArrayNotEmpty(entities, this.className, '批量更新失败，更新数据不能为空')
+    AssertArrayNotEmpty(entities, this.constructor.name, '批量更新失败，更新数据不能为空')
+    const hasNullId = entities.some((entity) => IsNullish(entity.id))
+    AssertFalse(hasNullId, '批量更新失败，更新数据中存在id为空的项')
+    const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     const ids: Id[] = []
     // 对齐所有属性
     // 设置createTime和updateTime
-    let plainObject = entities.map((entity) => {
+    let plainObject = standardEntities.map((entity) => {
       entity.updateTime = Date.now()
       //
       if (NotNullish(entity.id)) {
@@ -252,11 +264,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
-    AssertArrayNotEmpty(entities, this.className, '批量保存失败，保存数据不能为空')
+    AssertArrayNotEmpty(entities, this.constructor.name, '批量保存失败，保存数据不能为空')
+    const hasNullId = entities.some((entity) => IsNullish(entity.id))
+    AssertFalse(hasNullId, '批量更新失败，更新数据中存在id为空的项')
+    const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     // 对齐所有属性
     // 设置createTime和updateTime
-    let plainObject = entities.map((entity) => {
+    let plainObject = standardEntities.map((entity) => {
       entity.createTime = Date.now()
       entity.updateTime = Date.now()
       // 转换为sqlite3接受的数据类型
@@ -319,7 +334,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       })
       .then((result) => {
         if (NotNullish(result)) {
-          return this.getResultTypeData<Model>(result)
+          return this.toResultTypeData<Model>(result)
         } else {
           return undefined
         }
@@ -367,7 +382,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
       .then((rows) => {
         // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
-        modifiedPage.data = this.getResultTypeDataList<Model>(rows)
+        modifiedPage.data = this.toResultTypeDataList<Model>(rows)
         return modifiedPage
       })
       .finally(() => {
@@ -406,7 +421,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, nonUndefinedValue)
-      .then((rows) => this.getResultTypeDataList<Model>(rows))
+      .then((rows) => this.toResultTypeDataList<Model>(rows))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -427,7 +442,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => this.getResultTypeDataList<Model>(rows))
+      .then((rows) => this.toResultTypeDataList<Model>(rows))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

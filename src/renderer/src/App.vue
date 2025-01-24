@@ -208,8 +208,8 @@ window.electron.ipcRenderer.on('goto-page', (_event, config: { content: string; 
 // test
 const showTestDialog = ref(false)
 async function handleTest() {
-  apis.testMainWindowMsgTest()
-  // showExplainPath.value = true
+  // apis.testMainWindowMsgTest()
+  showExplainPath.value = true
   // showTestDialog.value = true
 }
 </script>
@@ -257,7 +257,7 @@ async function handleTest() {
               <el-icon><Setting /></el-icon>
             </el-menu-item>
             <el-menu-item index="7" @click="handleTest">
-              <template #title>TEST</template>
+              <template #title>测试按钮</template>
               <el-icon><Coordinate /></el-icon>
             </el-menu-item>
           </template>

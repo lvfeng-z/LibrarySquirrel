@@ -17,7 +17,7 @@ import { AssertNotNullish } from '../util/AssertUtil.js'
  */
 export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor, SiteAuthorDao> {
   constructor(db?: DB) {
-    super('SiteAuthorService', new SiteAuthorDao(db), db)
+    super(SiteAuthorDao, db)
   }
 
   /**
@@ -67,8 +67,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId) as string[]
     const oldSiteAuthors = await this.dao.listBySiteAuthorIds(siteAuthorIds)
     const newSiteAuthors = siteAuthors.map((siteAuthor) => {
-      AssertNotNullish(siteAuthor.siteAuthorId, this.className, '保存站点作者失败，站点作者的id意外为空')
-      AssertNotNullish(siteAuthor.siteId, this.className, '保存站点作者失败，站点作者的站点id意外为空')
+      AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id意外为空')
+      AssertNotNullish(siteAuthor.siteId, this.constructor.name, '保存站点作者失败，站点作者的站点id意外为空')
       const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
       const newSiteAuthor = new SiteAuthor(siteAuthor)
 

@@ -17,7 +17,7 @@ import { Operator } from '../constant/CrudConstant.js'
  */
 export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag, SiteTagDao> {
   constructor(db?: DB) {
-    super('SiteTagService', new SiteTagDao(db), db)
+    super(SiteTagDao, db)
   }
 
   /**
@@ -68,7 +68,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page
    */
   async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
-    AssertNotNullish(page.query, this.className, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
+    AssertNotNullish(page.query, this.constructor.name, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 

@@ -8,7 +8,7 @@ import { AuthorRole } from '../constant/AuthorRole.js'
 
 export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQueryDTO, ReWorksAuthor, ReWorksAuthorDao> {
   constructor(db?: DB) {
-    super('ReWorksAuthorService', new ReWorksAuthorDao(db), db)
+    super(ReWorksAuthorDao, db)
   }
 
   /**

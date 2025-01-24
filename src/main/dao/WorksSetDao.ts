@@ -7,7 +7,7 @@ import { NotNullish } from '../util/CommonUtil.ts'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
   constructor(db?: DB) {
-    super('works_set', 'WorksSetDao', db)
+    super('works_set', WorksSet, db)
   }
 
   /**
@@ -30,7 +30,7 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
     return db
       .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
       .then((rows) => {
-        const result = super.getResultTypeDataList(rows) as WorksSet[]
+        const result = super.toResultTypeDataList(rows) as WorksSet[]
         if (result.length > 1) {
           LogUtil.warn(
             'WorksSetDao',

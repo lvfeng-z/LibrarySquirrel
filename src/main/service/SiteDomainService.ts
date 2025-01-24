@@ -11,7 +11,7 @@ import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
 
 export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, SiteDomain, SiteDomainDao> {
   constructor(db?: DB) {
-    super('', new SiteDomainDao(db), db)
+    super(SiteDomainDao, db)
   }
 
   /**
@@ -51,7 +51,7 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
    * @param page
    */
   public async queryDTOPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
-    AssertNotNullish(page.query, this.className, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(page.query, this.constructor.name, '查询站点域名失败，查询参数为空')
     if (IsNullish(page.query.sort)) {
       page.query.sort = { updateTime: false, createTime: false }
     }

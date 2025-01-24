@@ -9,7 +9,7 @@ import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
   constructor(db?: DB) {
-    super('site', 'SiteDao', db)
+    super('site', Site, db)
   }
 
   /**
@@ -50,7 +50,7 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
       if (ArrayIsEmpty(site)) {
         return undefined
       } else if (site.length > 1) {
-        LogUtil.warn(this.className, `domain: ${domain}对应了多个站点`)
+        LogUtil.warn(this.constructor.name, `domain: ${domain}对应了多个站点`)
       }
       return new Site(site[0])
     } finally {

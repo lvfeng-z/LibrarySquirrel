@@ -13,7 +13,7 @@ import { OriginType } from '../constant/OriginType.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
-    super('works', 'WorksDao', db)
+    super('works', Works, db)
   }
 
   /**
@@ -127,7 +127,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     return db
       .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
       .then((rows) => {
-        const result = this.getResultTypeDataList<WorksDTO>(rows)
+        const result = this.toResultTypeDataList<WorksDTO>(rows)
         // 利用构造函数处理JSON字符串
         modifiedPage.data = result.map((worksDTO) => new WorksDTO(worksDTO))
 
@@ -160,7 +160,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
-        const result = this.getResultTypeDataList<WorksDTO>(rows)
+        const result = this.toResultTypeDataList<WorksDTO>(rows)
         // 利用构造函数处理JSON字符串
         modifiedPage.data = result.map((worksDTO) => new WorksDTO(worksDTO))
 

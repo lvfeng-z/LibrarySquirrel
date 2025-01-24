@@ -14,7 +14,7 @@ import ReWorksWorksSetService from './ReWorksWorksSetService.ts'
  */
 export default class WorksSetService extends BaseService<WorksSetQueryDTO, WorksSet, WorksSetDao> {
   constructor(db?: DB) {
-    super('WorksSetService', new WorksSetDao(db), db)
+    super(WorksSetDao, db)
   }
 
   /**

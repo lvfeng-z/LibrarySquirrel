@@ -9,7 +9,7 @@ import { OriginType } from '../constant/OriginType.js'
  */
 export class ReWorksTagDao extends BaseDao<ReWorksTagQueryDTO, ReWorksTag> {
   constructor(db?: DB) {
-    super('re_works_tag', 'ReWorksTagDao', db)
+    super('re_works_tag', ReWorksTag, db)
   }
 
   /**

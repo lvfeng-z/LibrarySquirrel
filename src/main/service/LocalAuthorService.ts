@@ -15,7 +15,7 @@ import { NotNullish } from '../util/CommonUtil.ts'
  */
 export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor, LocalAuthorDao> {
   constructor(db?: DB) {
-    super('LocalAuthorService', new LocalAuthorDao(db), db)
+    super(LocalAuthorDao, db)
   }
 
   /**
