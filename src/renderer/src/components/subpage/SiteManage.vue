@@ -34,7 +34,7 @@ const apis = {
   siteQueryPage: window.api.siteQueryPage,
   siteUpdateById: window.api.siteUpdateById,
   siteDomainDeleteById: window.api.siteDomainDeleteById,
-  siteDomainQueryPage: window.api.siteDomainQueryPage,
+  siteDomainQueryDTOPage: window.api.siteDomainQueryDTOPage,
   siteDomainSave: window.api.siteDomainSave,
   siteDomainUpdateById: window.api.siteDomainUpdateById,
   siteDomainQueryDTOPageBySite: window.api.siteDomainQueryDTOPageBySite
@@ -154,7 +154,7 @@ const siteDomainOperationButton: OperationItem<SiteDomainDTO>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 站点域名的表头
-const siteDomainThead: Ref<UnwrapRef<Thead[]>> = ref([
+const siteDomainThead: Ref<Thead[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -170,7 +170,7 @@ const siteDomainThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
+    dblclickToEdit: false,
     name: 'site.siteName',
     label: '对应站点',
     hide: false,
@@ -334,7 +334,7 @@ async function siteDomainQueryPage(
     page.query = new SiteQueryDTO()
   }
   page.query.siteId = siteSelected.value.id
-  const response = await apis.siteDomainQueryPage(page)
+  const response = await apis.siteDomainQueryDTOPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data<Page<SiteDomainQueryDTO, SiteDomainDTO>>(response)
   } else {

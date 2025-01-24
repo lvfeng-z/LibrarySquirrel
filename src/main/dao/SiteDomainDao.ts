@@ -9,7 +9,42 @@ import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
 
 export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomain> {
   constructor(db?: DB) {
-    super('site_domain', 'SiteDomainDao', db)
+    super('site_domain', SiteDomain, db)
+  }
+
+  /**
+   * 分页查询DTO
+   * @param page
+   */
+  public async queryDTOPage(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
+    const modifiedPage = new Page(page)
+    AssertNotNullish(modifiedPage.query, this.constructor.name, '查询站点域名失败，查询参数为空')
+    const selectClause = `SELECT t1.*,
+          JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description, 'sortNum', t2.sort_num) as site
+        FROM ${this.tableName} t1
+          LEFT JOIN site t2 ON t1.site_id = t2.id`
+    const whereClauseAndQuery = super.getWhereClause(modifiedPage.query, 't1', ['boundOnSite'])
+    const whereClause = whereClauseAndQuery.whereClause
+    const modifiedQuery = whereClauseAndQuery.query
+    modifiedPage.query = modifiedQuery
+    let statement = selectClause + ' ' + whereClause
+    statement = await super.sortAndPage(statement, modifiedPage, modifiedPage.query.sort)
+    if (modifiedPage.currentCount < 1) {
+      return modifiedPage
+    }
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+      .then((rows) => {
+        const temp = super.toResultTypeDataList<SiteDomainDTO>(rows)
+        modifiedPage.data = temp.map((row) => new SiteDomainDTO(row))
+        return modifiedPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   /**
@@ -49,9 +84,10 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
     }
     const db = this.acquire()
     return db
-      .all<unknown[], SiteDomain>(statement, modifiedQuery)
+      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
       .then((rows) => {
-        modifiedPage.data = rows.map((row) => new SiteDomainDTO(row))
+        const temp = super.toResultTypeDataList<SiteDomainDTO>(rows)
+        modifiedPage.data = temp.map((row) => new SiteDomainDTO(row))
         return modifiedPage
       })
       .finally(() => {

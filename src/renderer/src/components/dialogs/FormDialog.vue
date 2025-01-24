@@ -5,7 +5,6 @@ import DialogMode from '@renderer/model/util/DialogMode.ts'
 // props
 const props = defineProps<{
   mode: DialogMode
-  header?: string // 标题
 }>()
 
 // model
@@ -54,8 +53,8 @@ function handleChangeState() {
 
 <template>
   <el-dialog v-model="state" center @open="handleChangeState">
-    <template v-if="props.header" #header>
-      <h4>{{ props.header }}</h4>
+    <template #header>
+      <slot name="header" />
     </template>
     <el-scrollbar ref="scrollbarRef">
       <el-form

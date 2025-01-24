@@ -47,6 +47,21 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
   }
 
   /**
+   * 分页查询DTO
+   * @param page
+   */
+  public async queryDTOPage(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
+    if (IsNullish(page.query)) {
+      page.query = new SiteDomainQueryDTO()
+    }
+    if (IsNullish(page.query.sort)) {
+      page.query.sort = { updateTime: false, createTime: false }
+    }
+    page.query.operators = { domain: Operator.LIKE }
+    return this.dao.queryDTOPage(page)
+  }
+
+  /**
    * 分页查询绑定或未绑定到站点的域名
    * @param page
    */
@@ -55,6 +70,7 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
     if (IsNullish(page.query.sort)) {
       page.query.sort = { updateTime: false, createTime: false }
     }
+    page.query.operators = { domain: Operator.LIKE }
     return this.dao.queryPageBySite(page)
   }
 }

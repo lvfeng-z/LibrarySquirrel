@@ -67,6 +67,9 @@ async function handleSaveButtonClicked() {
     @save-button-clicked="handleSaveButtonClicked"
     @cancel-button-clicked="state = false"
   >
+    <template #header>
+      <span style="font-size: 20px">站点</span>
+    </template>
     <template #form>
       <el-row>
         <el-col>
