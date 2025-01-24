@@ -1,25 +1,20 @@
-import WorksPluginDTO from './WorksPluginDTO.ts'
 import { IsNullish } from '../../util/CommonUtil.ts'
+import WorksDTO from './WorksDTO.js'
+import lodash from 'lodash'
 
 /**
  * 保存作品信息和资源的DTO
  */
-export default class WorksSaveDTO extends WorksPluginDTO {
+export default class WorksSaveDTO extends WorksDTO {
   /**
    * 保存路径
    */
   fullSavePath: string | undefined | null
 
-  constructor(worksSaveDTO?: WorksSaveDTO | WorksPluginDTO) {
+  constructor(worksSaveDTO?: WorksDTO) {
+    super(worksSaveDTO)
     if (IsNullish(worksSaveDTO)) {
-      super()
-      this.fullSavePath = undefined
-    } else if (worksSaveDTO instanceof WorksSaveDTO) {
-      super(worksSaveDTO)
-      this.fullSavePath = worksSaveDTO.fullSavePath
-    } else {
-      super(worksSaveDTO)
-      this.fullSavePath = undefined
+      lodash.assign(this, lodash.pick(worksSaveDTO, ['fullSavePath']))
     }
   }
 }

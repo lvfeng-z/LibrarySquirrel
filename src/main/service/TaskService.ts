@@ -361,25 +361,25 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
 
     // 调用插件的generateWorksInfo方法，获取作品信息
-    let worksDTO: WorksPluginDTO
+    let worksPluginDTO: WorksPluginDTO
     try {
-      worksDTO = await taskHandler.generateWorksInfo(task)
+      worksPluginDTO = await taskHandler.generateWorksInfo(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件获取作品信息时失败`, error)
       return false
     }
-    worksDTO.taskId = taskId
-    worksDTO.siteId = task.siteId
+    worksPluginDTO.taskId = taskId
+    worksPluginDTO.siteId = task.siteId
 
     // 保存远程资源是否可接续
-    task.continuable = worksDTO.continuable
+    task.continuable = worksPluginDTO.continuable
     const updateContinuableTask = new Task()
     updateContinuableTask.id = taskId
-    updateContinuableTask.continuable = worksDTO.continuable
+    updateContinuableTask.continuable = worksPluginDTO.continuable
     await this.updateById(updateContinuableTask)
 
     // 生成作品保存用的信息
-    const worksSaveInfo = WorksService.generateWorksSaveInfo(worksDTO)
+    const worksSaveInfo = await WorksService.createWorksSaveInfo(worksPluginDTO)
 
     // 保存作品信息
     const worksService = new WorksService()
@@ -426,11 +426,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     const oldWorks = await worksService.getFullWorksInfoById(task.localWorksId)
     AssertNotNullish(oldWorks, `开始任务失败，任务的作品id不可用，taskId: ${taskId}`)
-    const merged = ObjectUtil.mergeObjects(resourceDTO, oldWorks)
-    let worksSaveInfo: WorksSaveDTO = new WorksSaveDTO(merged as WorksSaveDTO)
+    resourceDTO = ObjectUtil.mergeObjects<WorksPluginDTO>(resourceDTO, oldWorks, (src) => new WorksPluginDTO(src))
+    let worksSaveInfo: WorksSaveDTO = new WorksSaveDTO(oldWorks)
     // 判断是否需要更新作品数据
     if (resourceDTO.doUpdate) {
-      worksSaveInfo = WorksService.generateWorksSaveInfo(worksSaveInfo)
+      worksSaveInfo = await WorksService.createWorksSaveInfo(resourceDTO)
       // 如果插件更新了作品信息，则重新生成下载路径，并保存到任务中
       task.pendingDownloadPath = worksSaveInfo.fullSavePath
       const taskUpdate = this.updateById(new Task(task))
@@ -620,14 +620,18 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 标记为进行中
     task.status = TaskStatusEnum.PROCESSING
     // 调用插件的resume函数，获取资源
-    const resumeResponse = await taskHandler.resume(taskPluginDTO)
+    let resumeResponse = await taskHandler.resume(taskPluginDTO)
     AssertNotNullish(resumeResponse.resourceStream, this.constructor.name, `恢复任务失败，插件返回的资源为空，taskId: ${taskId}`)
+
+    const oldWorks = await worksService.getFullWorksInfoById(task.localWorksId)
+    AssertNotNullish(oldWorks, `恢复任务失败，任务的作品id不可用，taskId: ${taskId}`)
+    resumeResponse = ObjectUtil.mergeObjects<WorksPluginDTO>(resumeResponse, oldWorks, (src) => new WorksPluginDTO(src))
     // 判断是否需要更新作品数据
     let finalFileName: string | undefined | null // 保存修改后的finalFileName，资源下载完后再修改
     let finalFilePath: string | undefined | null // 保存修改后的finalFilePath，资源下载完后再修改
     let finalFilenameExtension: string | undefined | null // 保存修改后的finalFilenameExtension，资源下载完后再修改
     if (resumeResponse.doUpdate) {
-      const worksSaveInfo = WorksService.generateWorksSaveInfo(resumeResponse)
+      const worksSaveInfo = await WorksService.createWorksSaveInfo(resumeResponse)
       worksSaveInfo.id = task.localWorksId
       worksService.updateById(new Works(worksSaveInfo))
       finalFileName = worksSaveInfo.fileName
@@ -635,6 +639,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       finalFilenameExtension = worksSaveInfo.filenameExtension
     }
     let writeable: fs.WriteStream
+    // 判断是否可接续，然后从任务中获取保存路径
     if (resumeResponse.continuable) {
       writeable = fs.createWriteStream(task.pendingDownloadPath, { flags: 'a' })
       writeable.bytesWritten = taskPluginDTO.bytesWritten
@@ -644,7 +649,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 配置任务writer
     taskWriter.bytesSum = resumeResponse.resourceSize
-    taskWriter.readable = resumeResponse.resourceStream
+    taskWriter.readable = resumeResponse.resourceStream as Readable
     taskWriter.writable = writeable
 
     LogUtil.info(this.constructor.name, `任务${taskId}恢复下载`)

@@ -13,6 +13,7 @@ import { Operator } from '../constant/CrudConstant.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
 import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
+import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
 
 /**
  * 站点作者Service
@@ -214,21 +215,31 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   /**
    * 生成用于保存的站点作者信息
    */
-  public async generateSaveInfos(siteAuthors: SiteAuthorPluginDTO[]) {
+  public static async createSaveInfos(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorDTO[]> {
+    const result: SiteAuthorDTO[] = []
     // 用于查询和缓存站点id
     const siteService = new SiteService()
     const siteCache = new Map<string, Promise<number>>()
     for (const siteAuthor of siteAuthors) {
       if (IsNullish(siteAuthor.siteDomain)) {
+        result.push(new SiteAuthorDTO(siteAuthor))
         continue
       }
-      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
-      if (IsNullish(siteId)) {
+      let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
+      if (IsNullish(siteIdPromise)) {
         const tempSite = siteService.getByDomain(siteAuthor.siteDomain)
-        siteId = tempSite.then((site) => site?.id)
+        siteIdPromise = tempSite.then((site) => site?.id)
       }
-      siteAuthor.siteId = await siteId
-      AssertNotNullish(siteAuthor.siteId, this.constructor.name, `创建任务失败，没有找到域名${siteAuthor.siteDomain}对应的站点`)
+      const siteId = await siteIdPromise
+      if (IsNullish(siteId)) {
+        result.push(new SiteAuthorDTO(siteAuthor))
+        continue
+      }
+      const tempDTO = new SiteAuthorDTO(siteAuthor)
+      tempDTO.siteId = siteId
+      tempDTO.authorRole = siteAuthor.authorRole
+      result.push(tempDTO)
     }
+    return result
   }
 }

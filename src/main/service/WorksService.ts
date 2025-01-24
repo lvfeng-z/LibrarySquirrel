@@ -41,10 +41,11 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   /**
-   * 生成保存作品用的信息
-   * @param worksDTO 插件返回的作品DTO
+   * 根据插件返回的作品DTO生成保存作品用的信息
+   * @param worksPluginDTO 插件返回的作品DTO
    */
-  public static generateWorksSaveInfo(worksDTO: WorksPluginDTO): WorksSaveDTO {
+  public static async createWorksSaveInfo(worksPluginDTO: WorksPluginDTO): Promise<WorksSaveDTO> {
+    const worksDTO = new WorksDTO(worksPluginDTO)
     const result = new WorksSaveDTO(worksDTO)
     // 读取设置中的工作目录信息
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
@@ -55,6 +56,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
     try {
       // 处理作者信息
+      if (NotNullish(worksPluginDTO.siteAuthors)) {
+        result.siteAuthors = await SiteAuthorService.createSaveInfos(worksPluginDTO.siteAuthors)
+      }
       const tempName = WorksService.getAuthorNameFromAuthorDTO(result)
       const authorName = tempName === undefined ? 'unknownAuthor' : tempName
       // 作品信息
@@ -79,7 +83,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
       return result
     } catch (error) {
-      const msg = `保存作品失败，taskId: ${worksDTO.taskId}`
+      const msg = `保存作品失败，taskId: ${worksPluginDTO.taskId}`
       LogUtil.error('WorksService', msg, error)
       throw error
     }
@@ -126,7 +130,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 保存作品信息
    * @param worksDTO
    */
-  public async saveWorksInfo(worksDTO: WorksDTO): Promise<number> {
+  public async saveWorksInfo(worksDTO: WorksSaveDTO): Promise<number> {
     const worksSets = worksDTO.worksSets
     let siteAuthors = worksDTO.siteAuthors
     let siteTags = worksDTO.siteTags

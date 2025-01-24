@@ -56,8 +56,9 @@ function AlignProperties(objects: object[], fill: unknown) {
  * 合并两个对象的属性，优先选择非undefined的属性，若均为非undefined，则选择首个入参（obj1）的属性
  * @param obj1
  * @param obj2
+ * @param constr
  */
-function MergeObjects(obj1: object, obj2: object): object {
+function MergeObjects<T>(obj1: object, obj2: object, constr: (src) => T): T {
   // 创建一个新的对象用于存放合并后的结果
   const merged = {}
 
@@ -82,7 +83,7 @@ function MergeObjects(obj1: object, obj2: object): object {
     }
   })
 
-  return merged
+  return constr(merged)
 }
 
 /**

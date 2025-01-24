@@ -265,8 +265,6 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
     AssertArrayNotEmpty(entities, this.constructor.name, '批量保存失败，保存数据不能为空')
-    const hasNullId = entities.some((entity) => IsNullish(entity.id))
-    AssertFalse(hasNullId, '批量更新失败，更新数据中存在id为空的项')
     const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     // 对齐所有属性

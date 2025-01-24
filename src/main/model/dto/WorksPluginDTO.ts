@@ -2,7 +2,7 @@ import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import LocalAuthorDTO from './LocalAuthorDTO.ts'
-import SiteAuthorDTO from './SiteAuthorDTO.ts'
+import SiteAuthorPluginDTO from './SiteAuthorPluginDTO.js'
 import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import { Readable } from 'node:stream'
@@ -33,7 +33,7 @@ export default class WorksPluginDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthors: SiteAuthorDTO[] | undefined | null
+  siteAuthors: SiteAuthorPluginDTO[] | undefined | null
 
   /**
    * 站点标签数组
