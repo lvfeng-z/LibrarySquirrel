@@ -35,6 +35,7 @@ defineExpose({ focus })
     ref="input"
     style="width: 100%"
     v-model="data"
+    value-format="x"
     :type="props.config.type"
     :placeholder="props.config.placeholder"
     @visible-change="handleVisibleChange"
