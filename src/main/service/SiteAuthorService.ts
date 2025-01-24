@@ -11,6 +11,8 @@ import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import { Operator } from '../constant/CrudConstant.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
+import SiteService from './SiteService.js'
+import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
 
 /**
  * 站点作者Service
@@ -205,7 +207,28 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * 查询作品的站点作者
    * @param worksId 作品id
    */
-  async listByWorksId(worksId: number) {
+  public async listByWorksId(worksId: number) {
     return this.dao.listByWorksId(worksId)
+  }
+
+  /**
+   * 生成用于保存的站点作者信息
+   */
+  public async generateSaveInfos(siteAuthors: SiteAuthorPluginDTO[]) {
+    // 用于查询和缓存站点id
+    const siteService = new SiteService()
+    const siteCache = new Map<string, Promise<number>>()
+    for (const siteAuthor of siteAuthors) {
+      if (IsNullish(siteAuthor.siteDomain)) {
+        continue
+      }
+      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
+      if (IsNullish(siteId)) {
+        const tempSite = siteService.getByDomain(siteAuthor.siteDomain)
+        siteId = tempSite.then((site) => site?.id)
+      }
+      siteAuthor.siteId = await siteId
+      AssertNotNullish(siteAuthor.siteId, this.constructor.name, `创建任务失败，没有找到域名${siteAuthor.siteDomain}对应的站点`)
+    }
   }
 }

@@ -57,10 +57,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       // 处理作者信息
       const tempName = WorksService.getAuthorNameFromAuthorDTO(result)
       const authorName = tempName === undefined ? 'unknownAuthor' : tempName
-
       // 作品信息
       const siteWorksName = result.siteWorksName === undefined ? 'unknownWorksName' : result.siteWorksName
-
       // 资源状态
       result.resourceComplete = false
 

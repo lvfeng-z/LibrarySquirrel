@@ -369,6 +369,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       return false
     }
     worksDTO.taskId = taskId
+    worksDTO.siteId = task.siteId
 
     // 保存远程资源是否可接续
     task.continuable = worksDTO.continuable
