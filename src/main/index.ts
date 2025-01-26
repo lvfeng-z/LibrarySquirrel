@@ -3,10 +3,10 @@ import path from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
-import ServiceExposer from './service/ServiceExposer.ts'
+import MainProcessApi from './base/MainProcessApi.js'
 import LogUtil from './util/LogUtil.ts'
 import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
-import { GlobalVar, GlobalVars } from './global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from './base/GlobalVar.ts'
 import PluginService from './service/PluginService.js'
 import StringUtil from './util/StringUtil.js'
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
@@ -138,7 +138,7 @@ Electron.app.whenReady().then(() => {
   // 初始化数据库
   InitializeDB().then(() => {
     // 创建服务层的ipc通信
-    ServiceExposer.exposeService()
+    MainProcessApi.exposeService()
     // 初始化插件
     const pluginService = new PluginService()
     pluginService.preInstallPlugins()

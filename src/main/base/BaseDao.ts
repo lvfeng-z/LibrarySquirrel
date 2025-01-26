@@ -1,7 +1,7 @@
 import StringUtil from '../util/StringUtil.ts'
 import DB from '../database/DB.ts'
 import BaseEntity, { Id } from './BaseEntity.ts'
-import BaseQueryDTO from './BaseQueryDTO.ts'
+import { BaseQueryDTO, ToPlainParams } from './BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/util/SelectItem.ts'
@@ -374,10 +374,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const query = modifiedPage.query?.toPlainParams()
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedPage.query)) {
+      plainParams = ToPlainParams(modifiedPage.query)
+    }
     const db = this.acquire()
     return db
-      .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
+      .all<unknown[], Record<string, unknown>>(statement, plainParams)
       .then((rows) => {
         // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
         modifiedPage.data = this.toResultTypeDataList<Model>(rows)
@@ -415,7 +418,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(modifiedQuery?.toPlainParams())
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedQuery)) {
+      plainParams = ToPlainParams(modifiedQuery)
+    }
+    // 查询
+    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, nonUndefinedValue)
@@ -481,7 +489,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const queryObj = modifiedQuery?.toPlainParams()
+    const queryObj = ToPlainParams(modifiedQuery)
     return db
       .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
       .then((rows) => rows.map((row) => new SelectItem(row)))
@@ -546,10 +554,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const query = modifiedPage.query?.toPlainParams()
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedPage.query)) {
+      plainParams = ToPlainParams(modifiedPage.query)
+    }
     const db = this.acquire()
     return db
-      .all<unknown[], SelectItem>(statement, query === undefined ? {} : query)
+      .all<unknown[], SelectItem>(statement, plainParams)
       .then((rows) => {
         const selectItems = rows.map((row) => new SelectItem(row))
         const result = modifiedPage.transform<SelectItem>()

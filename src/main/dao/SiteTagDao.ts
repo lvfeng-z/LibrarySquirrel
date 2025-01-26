@@ -9,6 +9,7 @@ import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
+import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -95,7 +96,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     // 查询
     const db = super.acquire()
     return db
-      .all<unknown[], SiteTagDTO>(statement, modifiedQuery.toPlainParams())
+      .all<unknown[], SiteTagDTO>(statement, ToPlainParams(modifiedQuery))
       .then((rows) => {
         const resultPage = modifiedPage.transform<SiteTagDTO>()
         // 利用构造方法反序列化本地标签和站点的json

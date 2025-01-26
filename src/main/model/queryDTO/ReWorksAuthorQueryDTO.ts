@@ -1,4 +1,4 @@
-import BaseQueryDTO from '../../base/BaseQueryDTO.ts'
+import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
 
 export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {

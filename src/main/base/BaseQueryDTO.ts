@@ -3,9 +3,8 @@ import { Operator } from '../constant/CrudConstant.ts'
 import QuerySortOption from '../constant/QuerySortOption.ts'
 import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import { NotNullish } from '../util/CommonUtil.js'
-import StringUtil from '../util/StringUtil.js'
 
-export default class BaseQueryDTO {
+export class BaseQueryDTO {
   /**
    * 主键
    */
@@ -53,22 +52,15 @@ export default class BaseQueryDTO {
       this.sort = baseQueryDTO.sort
     }
   }
+}
 
-  /**
-   * 获取仅包含查询参数的对象
-   */
-  public toPlainParams(ignore?: string[]) {
-    const fullIgnore = ['operators', 'sort']
-    if (NotNullish(ignore)) {
-      fullIgnore.push(...ignore)
-    }
-    return ToObjAcceptedBySqlite3(this, fullIgnore)
+/**
+ * 获取仅包含查询参数的对象
+ */
+export function ToPlainParams<T extends BaseQueryDTO>(queryDTO: T, ignore?: string[]) {
+  const fullIgnore = ['operators', 'sort']
+  if (NotNullish(ignore)) {
+    fullIgnore.push(...ignore)
   }
-
-  /**
-   * 获取keyword的全匹配字符串
-   */
-  public keywordForFullMatch(): string | undefined {
-    return StringUtil.isBlank(this.keyword) ? undefined : '%' + this.keyword + '%'
-  }
+  return ToObjAcceptedBySqlite3(queryDTO, fullIgnore)
 }

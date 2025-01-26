@@ -1,8 +1,9 @@
+import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+
 /**
  * QueryDTO
  * 站点标签
  */
-import BaseQueryDTO from '../../base/BaseQueryDTO.ts'
 
 export default class SiteQueryDTO extends BaseQueryDTO {
   /**

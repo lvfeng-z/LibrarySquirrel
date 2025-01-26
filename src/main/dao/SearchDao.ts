@@ -1,4 +1,4 @@
-import BaseQueryDTO from '../base/BaseQueryDTO.js'
+import { BaseQueryDTO, ToPlainParams } from '../base/BaseQueryDTO.js'
 import BaseEntity from '../base/BaseEntity.js'
 import DB from '../database/DB.js'
 import CoreDao from '../base/CoreDao.js'
@@ -20,7 +20,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
     const query = page.query
     const statements: string[] = []
-    const keyword = query?.keywordForFullMatch()
+    const keyword = '%' + query?.keyword + '%'
     const hasKeyword = StringUtil.isNotBlank(keyword)
     if (hasKeyword && NotNullish(query)) {
       query.keyword = keyword
@@ -84,9 +84,14 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     let statement = `SELECT * FROM (${statements.join(' UNION ALL ')}) t`
     statement = await super.sortAndPage(statement, page, { lastUse: false }, 't')
 
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(query)) {
+      plainParams = ToPlainParams(query, ['types'])
+    }
+
     const db = this.acquire()
     return db
-      .all<unknown[], SelectItem>(statement, query?.toPlainParams(['types']))
+      .all<unknown[], SelectItem>(statement, plainParams)
       .then((rows) => {
         rows.forEach((selectItem) => {
           if (NotNullish(selectItem.extraData)) {

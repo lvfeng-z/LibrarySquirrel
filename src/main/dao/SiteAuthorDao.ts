@@ -8,6 +8,7 @@ import StringUtil from '../util/StringUtil.ts'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SelectItem from '../model/util/SelectItem.js'
+import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 /**
  * 站点作者Dao
@@ -110,7 +111,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
-    const query = modifiedQuery.toPlainParams()
+    const query = ToPlainParams(modifiedQuery)
     // 查询
     const db = super.acquire()
     return db

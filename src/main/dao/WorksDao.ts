@@ -6,10 +6,11 @@ import WorksDTO from '../model/dto/WorksDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
+import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db?: DB) {
@@ -121,7 +122,10 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
-    const query = modifiedPage.query?.toPlainParams()
+    let query: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedPage.query)) {
+      query = ToPlainParams(modifiedPage.query)
+    }
 
     const db = this.acquire()
     return db

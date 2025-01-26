@@ -1,4 +1,4 @@
-import BaseQueryDTO from '../../base/BaseQueryDTO.ts'
+import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
 
 export default class TaskPluginListenerQueryDTO extends BaseQueryDTO {
   /**
