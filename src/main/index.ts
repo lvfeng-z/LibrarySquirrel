@@ -141,7 +141,7 @@ Electron.app.whenReady().then(() => {
     MainProcessApi.exposeService()
     // 初始化插件
     const pluginService = new PluginService()
-    pluginService.preInstallPlugins()
+    pluginService.preInstallPlugin()
   })
 
   // 初始化任务队列

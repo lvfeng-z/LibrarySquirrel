@@ -143,7 +143,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 预装插件
    */
-  public async preInstallPlugins() {
+  public async preInstallPlugin() {
     const defaultPlugins = GlobalVar.get(GlobalVars.APP_CONFIG).plugins
     for (const defaultPlugin of defaultPlugins) {
       let packagePath: string
@@ -179,4 +179,18 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       }
     }
   }
+
+  // /**
+  //  * 重新安装插件
+  //  */
+  // public async reInstallPlugin() {
+  //
+  // }
+  //
+  // /**
+  //  * 卸载插件
+  //  */
+  // public async unInstallPlugin() {
+  //
+  // }
 }

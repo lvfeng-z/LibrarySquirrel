@@ -5,7 +5,7 @@ import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
 import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { CollectionTag, Coordinate, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
+import { CollectionTag, Coordinate, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
 import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -29,6 +29,7 @@ import { ElMessageBox } from 'element-plus'
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
 import Developing from '@renderer/components/subpage/Developing.vue'
 import SiteManage from '@renderer/components/subpage/SiteManage.vue'
+import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 
 // onMounted
 onMounted(() => {
@@ -57,6 +58,7 @@ const pageState = reactive({
   subpage: false,
   showTagManagePage: false,
   showLocalAuthorManagePage: false,
+  showPluginManagePage: false,
   showTaskManagePage: false,
   showSiteManagePage: false,
   showSettingsPage: false,
@@ -68,7 +70,7 @@ const worksList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列�
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
-type subpages = 'TagManage' | 'LocalAuthorManage' | 'TaskManage' | 'Settings' | 'SiteManage' | 'Developing'
+type subpages = 'TagManage' | 'LocalAuthorManage' | 'PluginManage' | 'TaskManage' | 'Settings' | 'SiteManage' | 'Developing'
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
@@ -115,6 +117,9 @@ function showSubpage(pageName: subpages) {
       break
     case 'LocalAuthorManage':
       pageState.showLocalAuthorManagePage = true
+      break
+    case 'PluginManage':
+      pageState.showPluginManagePage = true
       break
     case 'TaskManage':
       pageState.showTaskManagePage = true
@@ -252,11 +257,15 @@ async function handleTest() {
               </template>
               <el-menu-item index="5-1" @click="showSubpage('TaskManage')">任务管理</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="6" @click="showSubpage('Settings')">
+            <el-menu-item index="6" @click="showSubpage('PluginManage')">
+              <template #title>插件</template>
+              <el-icon><Ticket /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="7" @click="showSubpage('Settings')">
               <template #title>设置</template>
               <el-icon><Setting /></el-icon>
             </el-menu-item>
-            <el-menu-item index="7" @click="handleTest">
+            <el-menu-item index="8" @click="handleTest">
               <template #title>测试按钮</template>
               <el-icon><Coordinate /></el-icon>
             </el-menu-item>
@@ -316,6 +325,7 @@ async function handleTest() {
         <div v-if="pageState.subpage" class="subPage">
           <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
           <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
+          <plugin-manage v-if="pageState.showPluginManagePage" @close-self="closeSubpage" />
           <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
           <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" @close-self="closeSubpage" />
           <site-manage v-if="pageState.showSiteManagePage" @close-self="closeSubpage" />

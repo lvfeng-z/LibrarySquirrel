@@ -94,6 +94,11 @@ const api = {
     return Electron.ipcRenderer.invoke('localTag-querySelectItemPageByWorksId', args)
   },
 
+  // Plugin
+  pluginQueryPage: (args) => {
+    return Electron.ipcRenderer.invoke('plugin-queryPage', args)
+  },
+
   // SearchService
   searchQuerySearchConditionPage: (args) => {
     return Electron.ipcRenderer.invoke('search-querySearchConditionPage', args)

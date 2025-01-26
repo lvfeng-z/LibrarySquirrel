@@ -42,6 +42,9 @@ declare global {
       localTagListByWorksId: function
       localTagQuerySelectItemPageByWorksId: function
 
+      // Plugin
+      pluginQueryPage: function
+
       // ReWorksTag
       reWorksTagLink: function
       reWorksTagUnlink: function
