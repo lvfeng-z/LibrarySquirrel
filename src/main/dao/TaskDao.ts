@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import Task from '../model/entity/Task.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import DB from '../database/DB.ts'

@@ -7,7 +7,7 @@ import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
 import createDataTables from '../resources/database/createDataTables.yml?asset'
 import DB from './DB.ts'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 
 /**
  * @Description: 初始化数据库，同时创建一个全局连接池实例

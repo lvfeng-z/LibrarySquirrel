@@ -1,4 +1,4 @@
-import BaseQueryDTO from './BaseQueryDTO.ts'
+import BaseQueryDTO from '../../base/BaseQueryDTO.ts'
 
 /**
  * 作品与标签关联查询DTO

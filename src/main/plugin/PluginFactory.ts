@@ -1,4 +1,4 @@
-import { BasePlugin } from './BasePlugin.js'
+import { BasePlugin } from '../base/BasePlugin.js'
 import PluginTool from './PluginTool.js'
 
 export default interface PluginFactory<T extends BasePlugin> {

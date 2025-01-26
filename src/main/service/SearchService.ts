@@ -1,6 +1,6 @@
 import SearchConditionQueryDTO from '../model/queryDTO/SearchConditionQueryDTO.js'
 import Page from '../model/util/Page.js'
-import BaseEntity from '../model/entity/BaseEntity.js'
+import BaseEntity from '../base/BaseEntity.js'
 import SelectItem from '../model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
 import SearchDao from '../dao/SearchDao.js'

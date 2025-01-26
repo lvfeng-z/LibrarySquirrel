@@ -1,4 +1,4 @@
-import { ConnectionPoolConfig } from '../database/ConnectionPool.js'
+import { ConnectionPoolConfig } from './ConnectionPool.js'
 import { DataBasePath } from '../util/DatabaseUtil.js'
 import DataBaseConstant from '../constant/DataBaseConstant.js'
 

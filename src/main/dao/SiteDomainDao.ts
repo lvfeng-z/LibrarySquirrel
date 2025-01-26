@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import DB from '../database/DB.ts'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import SiteDomainQueryDTO from '../model/queryDTO/SiteDomainQueryDTO.js'

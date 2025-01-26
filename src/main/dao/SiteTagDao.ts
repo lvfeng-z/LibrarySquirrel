@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import SiteTag from '../model/entity/SiteTag.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
 import SelectItem from '../model/util/SelectItem.ts'

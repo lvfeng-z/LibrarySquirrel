@@ -1,6 +1,6 @@
 import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from '../model/util/Settings.ts'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 import LogUtil from '../util/LogUtil.js'
 
 /**

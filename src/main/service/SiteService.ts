@@ -1,7 +1,7 @@
 import Site from '../model/entity/Site.ts'
 import SiteDao from '../dao/SiteDao.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'

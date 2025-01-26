@@ -1,6 +1,6 @@
 import Electron from 'electron'
 import { ExternalAppEnum } from '../constant/ExternalAppEnum.js'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import path from 'path'
 
 export default class AppLauncherService {

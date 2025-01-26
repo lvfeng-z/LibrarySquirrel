@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 import { NotNullish } from '../util/CommonUtil.js'
 
 /**

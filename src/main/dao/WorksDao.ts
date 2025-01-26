@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/entity/Works.ts'
 import Page from '../model/util/Page.ts'

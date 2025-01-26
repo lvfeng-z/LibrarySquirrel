@@ -1,4 +1,4 @@
-import BaseEntity from './BaseEntity.ts'
+import BaseEntity from '../../base/BaseEntity.ts'
 import { IsNullish } from '../../util/CommonUtil.ts'
 
 /**

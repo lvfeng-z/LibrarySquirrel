@@ -1,4 +1,4 @@
-import BaseEntity from './BaseEntity.ts'
+import BaseEntity from '../../base/BaseEntity.ts'
 
 export default class TaskPluginListener extends BaseEntity {
   /**

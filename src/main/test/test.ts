@@ -7,7 +7,7 @@ import PluginService from '../service/PluginService.js'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.js'
 import LogUtil from '../util/LogUtil.js'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')

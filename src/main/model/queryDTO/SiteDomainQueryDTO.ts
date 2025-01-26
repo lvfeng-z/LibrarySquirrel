@@ -1,4 +1,4 @@
-import BaseQueryDTO from './BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 import { NotNullish } from '../../util/CommonUtil.js'
 
 /**

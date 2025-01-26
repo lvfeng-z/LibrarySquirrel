@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
 import DB from '../database/DB.ts'

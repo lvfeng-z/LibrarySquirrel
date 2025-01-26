@@ -1,4 +1,4 @@
-import BaseService from './BaseService.js'
+import BaseService from '../base/BaseService.js'
 import SiteDomainQueryDTO from '../model/queryDTO/SiteDomainQueryDTO.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import SiteDomainDao from '../dao/SiteDomainDao.js'

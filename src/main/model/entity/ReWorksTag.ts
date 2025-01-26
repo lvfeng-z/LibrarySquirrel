@@ -1,4 +1,4 @@
-import BaseEntity from './BaseEntity.ts'
+import BaseEntity from '../../base/BaseEntity.ts'
 
 /**
  * 作品-标签关联表

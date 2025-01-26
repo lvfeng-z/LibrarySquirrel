@@ -1,4 +1,4 @@
-import BaseEntity from './BaseEntity.ts'
+import BaseEntity from '../../base/BaseEntity.ts'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
 
 export default class ReWorksAuthor extends BaseEntity {

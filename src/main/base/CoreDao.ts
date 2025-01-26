@@ -1,12 +1,12 @@
 import lodash from 'lodash'
 import StringUtil from '../util/StringUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
-import BaseQueryDTO from '../model/queryDTO/BaseQueryDTO.js'
+import BaseQueryDTO from './BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import QuerySortOption from '../constant/QuerySortOption.js'
 import DB from '../database/DB.js'
-import BaseEntity from '../model/entity/BaseEntity.js'
+import BaseEntity from './BaseEntity.js'
 
 export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
   /**

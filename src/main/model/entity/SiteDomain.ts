@@ -1,4 +1,4 @@
-import BaseEntity from './BaseEntity.js'
+import BaseEntity from '../../base/BaseEntity.js'
 
 /**
  * 站点域名

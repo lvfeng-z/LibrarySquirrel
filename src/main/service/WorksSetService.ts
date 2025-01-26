@@ -1,4 +1,4 @@
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
 import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import DB from '../database/DB.ts'

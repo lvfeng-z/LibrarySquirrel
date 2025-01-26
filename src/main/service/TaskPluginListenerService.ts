@@ -1,6 +1,6 @@
 import TaskPluginListener from '../model/entity/TaskPluginListener.ts'
 import TaskPluginListenerDao from '../dao/TaskPluginListenerDao.ts'
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import TaskPluginListenerQueryDTO from '../model/queryDTO/TaskPluginListenerQueryDTO.ts'
 import DB from '../database/DB.ts'
 import Plugin from '../model/entity/Plugin.js'

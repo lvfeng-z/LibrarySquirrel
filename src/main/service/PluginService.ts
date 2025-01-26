@@ -2,7 +2,7 @@ import path from 'path'
 import PluginDao from '../dao/PluginDao.ts'
 import { CreateDirIfNotExists, RootDir } from '../util/FileSysUtil.ts'
 import Plugin from '../model/entity/Plugin.ts'
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'
 import { ArrayNotEmpty, IsNullish } from '../util/CommonUtil.ts'
@@ -16,7 +16,7 @@ import AdmZip from 'adm-zip'
 import TaskPluginListenerService from './TaskPluginListenerService.js'
 import TaskPluginListener from '../model/entity/TaskPluginListener.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 
 /**
  * 主键查询
@@ -27,6 +27,13 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     super(PluginDao, db)
   }
 
+  /**
+   * 检查插件是否以及安装
+   * @param type 类型
+   * @param author 作者
+   * @param name 名称
+   * @param version 版本号
+   */
   public async checkInstalled(type: string, author: string, name: string, version: string): Promise<boolean> {
     return this.dao.checkInstalled(type, author, name, version)
   }

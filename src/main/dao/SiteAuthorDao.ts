@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthor from '../model/entity/SiteAuthor.ts'
 import DB from '../database/DB.ts'

@@ -6,7 +6,7 @@ import sharp from 'sharp'
 import { IsNullish, NotNullish } from './CommonUtil.js'
 import { Readable, Writable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录

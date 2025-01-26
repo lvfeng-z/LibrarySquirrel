@@ -1,4 +1,4 @@
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.ts'
 import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
 import AutoExplainPathDao from '../dao/AutoExplainPathDao.ts'

@@ -1,4 +1,4 @@
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import ReWorksAuthorQueryDTO from '../model/queryDTO/ReWorksAuthorQueryDTO.ts'
 import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
 import DB from '../database/DB.ts'

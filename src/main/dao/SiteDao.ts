@@ -1,6 +1,6 @@
 import Site from '../model/entity/Site.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import DB from '../database/DB.ts'
 import SiteDTO from '../model/dto/SiteDTO.js'
 import SiteDomain from '../model/entity/SiteDomain.js'

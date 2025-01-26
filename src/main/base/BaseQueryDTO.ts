@@ -1,9 +1,9 @@
-import { Id } from '../entity/BaseEntity.ts'
-import { Operator } from '../../constant/CrudConstant.ts'
-import QuerySortOption from '../../constant/QuerySortOption.ts'
-import { ToObjAcceptedBySqlite3 } from '../../util/DatabaseUtil.ts'
-import { NotNullish } from '../../util/CommonUtil.js'
-import StringUtil from '../../util/StringUtil.js'
+import { Id } from './BaseEntity.ts'
+import { Operator } from '../constant/CrudConstant.ts'
+import QuerySortOption from '../constant/QuerySortOption.ts'
+import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
+import { NotNullish } from '../util/CommonUtil.js'
+import StringUtil from '../util/StringUtil.js'
 
 export default class BaseQueryDTO {
   /**

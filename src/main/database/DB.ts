@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import AsyncStatement from './AsyncStatement.ts'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 import { Connection, RequestWeight } from './ConnectionPool.ts'
 
 /**

@@ -1,6 +1,6 @@
 import { SettingsTemplate } from '../resources/settings/SettingsTemplate.js'
 import LogUtil from './LogUtil.ts'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.ts'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 
 /**
  * 将设置全部重置到默认值

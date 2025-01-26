@@ -1,4 +1,4 @@
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.ts'
 import LocalAuthor from '../model/entity/LocalAuthor.ts'
 import LocalAuthorDao from '../dao/LocalAuthorDao.ts'

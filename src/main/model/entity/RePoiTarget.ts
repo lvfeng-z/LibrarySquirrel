@@ -1,4 +1,4 @@
-import BaseEntity from './BaseEntity.ts'
+import BaseEntity from '../../base/BaseEntity.ts'
 
 /**
  * 兴趣点-目标关联表

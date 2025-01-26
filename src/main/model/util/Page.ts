@@ -1,4 +1,4 @@
-import BaseQueryDTO from '../queryDTO/BaseQueryDTO.ts'
+import BaseQueryDTO from '../../base/BaseQueryDTO.ts'
 
 export default class Page<Query, Result> {
   /**

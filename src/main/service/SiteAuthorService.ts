@@ -1,4 +1,4 @@
-import BaseService from './BaseService.ts'
+import BaseService from '../base/BaseService.ts'
 import SiteAuthor from '../model/entity/SiteAuthor.ts'
 import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorDao from '../dao/SiteAuthorDao.ts'

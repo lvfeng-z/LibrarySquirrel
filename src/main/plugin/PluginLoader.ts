@@ -9,8 +9,8 @@ import SiteService from '../service/SiteService.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginFactory from './PluginFactory.js'
-import { BasePlugin } from './BasePlugin.js'
-import { GlobalVar, GlobalVars } from '../global/GlobalVar.js'
+import { BasePlugin } from '../base/BasePlugin.js'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 
 export default class PluginLoader<T extends BasePlugin> {
   /**

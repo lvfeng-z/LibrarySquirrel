@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import ReWorksAuthorQueryDTO from '../model/queryDTO/ReWorksAuthorQueryDTO.ts'
 import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
 import DB from '../database/DB.ts'

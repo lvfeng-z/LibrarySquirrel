@@ -1,4 +1,4 @@
-import BaseDao from './BaseDao.ts'
+import BaseDao from '../base/BaseDao.ts'
 import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.ts'
 import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
 import DB from '../database/DB.ts'
