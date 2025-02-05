@@ -211,7 +211,6 @@ tables:
         status                smallint,
         pending_download_path text,
         continuable           integer(1),
-        plugin_id             integer,
         plugin_author         text,
         plugin_name           text,
         plugin_version        text,
