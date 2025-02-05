@@ -12,6 +12,9 @@ import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import Site from '../model/entity/Site.js'
 
+/**
+ * 作品查询Dao
+ */
 export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
   constructor(db?: DB) {
     super(db)
@@ -20,8 +23,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
     const query = page.query
     const statements: string[] = []
-    const keyword = '%' + query?.keyword + '%'
-    const hasKeyword = StringUtil.isNotBlank(keyword)
+    const hasKeyword = StringUtil.isNotBlank(query?.keyword)
+    const keyword = hasKeyword ? undefined : '%' + query?.keyword + '%'
     if (hasKeyword && NotNullish(query)) {
       query.keyword = keyword
     }
