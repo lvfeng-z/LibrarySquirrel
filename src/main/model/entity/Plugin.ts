@@ -4,7 +4,8 @@ export default class Plugin extends BaseEntity {
   /**
    * 主键
    */
-  id: number | null | undefined
+  id: number | undefined | null
+
   /**
    * 插件类型
    */
@@ -31,6 +32,11 @@ export default class Plugin extends BaseEntity {
   fileName: string | undefined | null
 
   /**
+   * 安装包路径
+   */
+  packagePath: string | undefined | null
+
+  /**
    * 排序号
    */
   sortNum: number | undefined | null
@@ -44,6 +50,7 @@ export default class Plugin extends BaseEntity {
       this.name = undefined
       this.version = undefined
       this.fileName = undefined
+      this.packagePath = undefined
       this.sortNum = undefined
     } else {
       super(plugin)
@@ -53,6 +60,7 @@ export default class Plugin extends BaseEntity {
       this.name = plugin.name
       this.version = plugin.version
       this.fileName = plugin.fileName
+      this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum
     }
   }

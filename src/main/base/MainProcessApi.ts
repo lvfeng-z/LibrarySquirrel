@@ -238,6 +238,22 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('plugin-reInstall', async (_event, args) => {
+    const pluginService = new PluginService()
+    try {
+      return ApiUtil.response(await pluginService.reInstall(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+  Electron.ipcMain.handle('plugin-unInstall', async (_event, args) => {
+    const pluginService = new PluginService()
+    try {
+      return ApiUtil.response(await pluginService.unInstall(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
 
   // ReWorksTagService
   Electron.ipcMain.handle('reWorksTag-link', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {

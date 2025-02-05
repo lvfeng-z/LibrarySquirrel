@@ -60,14 +60,19 @@ export default class Task extends BaseEntity {
   continuable: boolean | undefined | null
 
   /**
-   * 插件id
+   * 插件作者
    */
-  pluginId: number | undefined | null
+  pluginAuthor: string | undefined | null
 
   /**
-   * 插件信息
+   * 插件名称
    */
-  pluginInfo: string | undefined | null
+  pluginName: string | undefined | null
+
+  /**
+   * 插件版本
+   */
+  pluginVersion: string | undefined | null
 
   /**
    * 插件数据
@@ -88,8 +93,9 @@ export default class Task extends BaseEntity {
       this.status = undefined
       this.pendingDownloadPath = undefined
       this.continuable = undefined
-      this.pluginId = undefined
-      this.pluginInfo = undefined
+      this.pluginAuthor = undefined
+      this.pluginName = undefined
+      this.pluginVersion = undefined
       this.pluginData = undefined
     } else {
       super(task)
@@ -104,8 +110,9 @@ export default class Task extends BaseEntity {
       this.status = task.status
       this.pendingDownloadPath = task.pendingDownloadPath
       this.continuable = task.continuable
-      this.pluginId = task.pluginId
-      this.pluginInfo = task.pluginInfo
+      this.pluginAuthor = task.pluginAuthor
+      this.pluginName = task.pluginName
+      this.pluginVersion = task.pluginVersion
       if (typeof task.pluginData === 'string') {
         this.pluginData = JSON.parse(task.pluginData)
       } else {
@@ -126,7 +133,8 @@ export default class Task extends BaseEntity {
     this.siteId = undefined
     this.localWorksId = undefined
     this.status = undefined
-    this.pluginId = undefined
-    this.pluginInfo = undefined
+    this.pluginAuthor = undefined
+    this.pluginName = undefined
+    this.pluginVersion = undefined
   }
 }

@@ -85,8 +85,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         // 任务集
         const parentTask = new TaskCreateDTO()
-        parentTask.pluginId = taskPlugin.id as number
-        parentTask.pluginInfo = pluginInfo
+        parentTask.pluginAuthor = taskPlugin.author
+        parentTask.pluginName = taskPlugin.name
+        parentTask.pluginVersion = taskPlugin.version
         parentTask.url = url
         parentTask.status = TaskStatusEnum.CREATED
         parentTask.isCollection = true
@@ -164,8 +165,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
-      task.pluginId = taskPlugin.id as number
-      task.pluginInfo = pluginInfo
+      task.pluginAuthor = taskPlugin.author
+      task.pluginName = taskPlugin.name
+      task.pluginVersion = taskPlugin.version
       let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
       if (IsNullish(siteId)) {
         const tempSite = siteService.getByDomain(task.siteDomain)
@@ -255,8 +257,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         // 等待父任务完成
         await parentTaskProcess
         // 创建任务对象
-        task.pluginId = taskPlugin.id as number
-        task.pluginInfo = pluginInfo
+        task.pluginAuthor = taskPlugin.author
+        task.pluginName = taskPlugin.name
+        task.pluginVersion = taskPlugin.version
         task.status = TaskStatusEnum.CREATED
         task.isCollection = false
         task.pid = parentTask.id as number
@@ -357,8 +360,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     AssertNotNullish(task.id, this.constructor.name, `保存作品信息失败，任务id意外为空`)
     const taskId = task.id
     // 加载插件
-    AssertNotNullish(task.pluginId, this.constructor.name, `任务的插件id意外为空，taskId: ${taskId}`)
-    const taskHandler: TaskHandler = await pluginLoader.load(task.pluginId)
+    const pluginService = new PluginService()
+    const plugin = await pluginService.getByInfo(task.pluginAuthor, task.pluginName, task.pluginVersion)
+    task.pluginAuthor = plugin.author
+    task.pluginName = plugin.name
+    task.pluginVersion = plugin.version
+    const taskHandler: TaskHandler = await pluginLoader.load(plugin.id)
 
     // 调用插件的generateWorksInfo方法，获取作品信息
     let worksPluginDTO: WorksPluginDTO

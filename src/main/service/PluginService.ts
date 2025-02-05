@@ -5,11 +5,11 @@ import Plugin from '../model/entity/Plugin.ts'
 import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'
-import { ArrayNotEmpty, IsNullish } from '../util/CommonUtil.ts'
+import { ArrayNotEmpty } from '../util/CommonUtil.ts'
 import PluginDTO from '../model/dto/PluginDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '../model/dto/PluginInstallDTO.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
@@ -17,6 +17,8 @@ import TaskPluginListenerService from './TaskPluginListenerService.js'
 import TaskPluginListener from '../model/entity/TaskPluginListener.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { RESOURCE_PATH } from '../constant/CommonConstant.js'
+import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 
 /**
  * 主键查询
@@ -39,29 +41,34 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   }
 
   /**
+   * 根据作者、名称、版本号获取插件
+   */
+  public async getByInfo(author: string, name: string, version: string): Promise<Plugin | undefined> {
+    const query = new PluginQueryDTO()
+    query.author = author
+    query.name = name
+    query.version = version
+    const plugins = await this.list(query)
+    if (ArrayNotEmpty(plugins)) {
+      return plugins[0]
+    } else {
+      return undefined
+    }
+  }
+
+  /**
    * 根据id获取插件加载路径
    */
   public async getDTOById(id: number): Promise<PluginDTO> {
-    const resourcePath = '/resources/plugins'
-
     const plugin = await this.dao.getById(id)
-    if (IsNullish(plugin)) {
-      const msg = `加载插件失败，id: ${id}不可用`
-      LogUtil.error('PluginService', msg)
-      throw new Error(msg)
-    } else {
-      const dto = new PluginDTO(plugin)
-      dto.loadPath = path.join(
-        'file://',
-        RootDir(),
-        resourcePath,
-        plugin.author as string,
-        plugin.name as string,
-        plugin.version as string,
-        plugin.fileName as string
-      )
-      return dto
-    }
+    AssertNotNullish(plugin, this.constructor.name, `加载插件失败，pluginId: ${id}不可用`)
+    const dto = new PluginDTO(plugin)
+    AssertNotNullish(plugin.author, `生成插件加载路径失败，插件的作者为空，pluginId: ${id}`)
+    AssertNotNullish(plugin.name, `生成插件加载路径失败，插件的名称为空，pluginId: ${id}`)
+    AssertNotNullish(plugin.version, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
+    AssertNotNullish(plugin.fileName, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
+    dto.loadPath = path.join('file://', RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.fileName)
+    return dto
   }
 
   /**
@@ -99,21 +106,35 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 从插件包安装插件
    * @param packagePath
    */
-  public async installPlugin(packagePath: string): Promise<void> {
+  public async install(packagePath: string): Promise<void> {
     AssertNotNullish(packagePath, this.constructor.name, `插件包路径不能为空`)
     try {
-      fs.promises.access(packagePath, fs.constants.F_OK)
+      await fs.promises.access(packagePath, fs.constants.F_OK)
     } catch (error) {
-      LogUtil.error(this.constructor.name, `插件包"${packagePath}"不存在`)
+      LogUtil.error(this.constructor.name, `安装插件失败，找不到插件包"${packagePath}"`)
       throw error
     }
 
     const pluginInstallDTO = this.loadPluginPackage(packagePath)
 
+    // 复制安装包
+    const packageFileName = path.basename(packagePath)
+    const backupPath: string = path.join(
+      RootDir(),
+      PLUGIN_PACKAGE,
+      pluginInstallDTO.author,
+      pluginInstallDTO.name,
+      pluginInstallDTO.version
+    )
+    const fullBackupPath = path.join(backupPath, packageFileName)
+    await CreateDirIfNotExists(backupPath)
+    fs.promises.copyFile(packagePath, fullBackupPath)
+    pluginInstallDTO.packagePath = fullBackupPath
+
     // 安装路径
     const installPath: string = path.join(
       RootDir(),
-      '/resources/plugins/',
+      PLUGIN_RUNTIME,
       pluginInstallDTO.author,
       pluginInstallDTO.name,
       pluginInstallDTO.version
@@ -136,24 +157,19 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         }
         taskPluginListenerService.saveBatch(taskPluginListeners)
       }
-      LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}.${pluginInstallDTO.name}.${pluginInstallDTO.version}`)
+      LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
     })
   }
 
   /**
    * 预装插件
    */
-  public async preInstallPlugin() {
+  public async preInstall() {
     const defaultPlugins = GlobalVar.get(GlobalVars.APP_CONFIG).plugins
     for (const defaultPlugin of defaultPlugins) {
       let packagePath: string
       if (defaultPlugin.pathType === 'Relative') {
-        const NODE_ENV = process.env.NODE_ENV
-        if (NODE_ENV == 'development') {
-          packagePath = path.join(RootDir(), '/resources/', defaultPlugin.packagePath)
-        } else {
-          packagePath = path.join(RootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
-        }
+        packagePath = path.join(RootDir(), RESOURCE_PATH, defaultPlugin.packagePath)
       } else {
         packagePath = defaultPlugin.packagePath
       }
@@ -162,17 +178,12 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       if (!localPluginInstalled) {
         let installPath: string
         if (defaultPlugin.pathType === 'Relative') {
-          const NODE_ENV = process.env.NODE_ENV
-          if (NODE_ENV == 'development') {
-            installPath = path.join(RootDir(), '/resources/', defaultPlugin.packagePath)
-          } else {
-            installPath = path.join(RootDir(), '/resources/app.asar.unpacked/resources/', defaultPlugin.packagePath)
-          }
+          installPath = path.join(RootDir(), RESOURCE_PATH, defaultPlugin.packagePath)
         } else {
           installPath = defaultPlugin.packagePath
         }
         try {
-          this.installPlugin(installPath).catch((error) => LogUtil.error(this.constructor.name, '安装插件失败', error))
+          this.install(installPath).catch((error) => LogUtil.error(this.constructor.name, '安装插件失败', error))
         } catch (error) {
           LogUtil.error(this.constructor.name, '安装插件失败', error)
         }
@@ -180,17 +191,39 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     }
   }
 
-  // /**
-  //  * 重新安装插件
-  //  */
-  // public async reInstallPlugin() {
-  //
-  // }
-  //
-  // /**
-  //  * 卸载插件
-  //  */
-  // public async unInstallPlugin() {
-  //
-  // }
+  /**
+   * 重新安装插件
+   */
+  public async reInstall(pluginId: number) {
+    const plugin = await this.getById(pluginId)
+    AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    try {
+      await this.unInstall(pluginId)
+    } catch (error) {
+      if ((error as { code: string }).code !== 'ENOENT') {
+        throw error
+      }
+    }
+    AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    return this.install(plugin.packagePath)
+  }
+
+  /**
+   * 卸载插件
+   */
+  public async unInstall(pluginId: number) {
+    const plugin = await this.getById(pluginId)
+    AssertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    AssertNotNullish(plugin.author, `卸载插件失败，找不到插件所在目录，因为插件的作者为空，pluginId: ${pluginId}`)
+    AssertNotNullish(plugin.name, `卸载插件失败，找不到插件所在目录，因为插件的名称为空，pluginId: ${pluginId}`)
+    AssertNotNullish(plugin.version, `卸载插件失败，找不到插件所在目录，因为插件的版本为空，pluginId: ${pluginId}`)
+    const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version)
+    try {
+      await fs.promises.rm(pluginPath, { recursive: true })
+    } catch (error) {
+      LogUtil.error(this.constructor.name, `卸载插件失败，plugin: ${plugin.author}-${plugin.name}-${plugin.version},`, error)
+      throw error
+    }
+    return this.deleteById(pluginId)
+  }
 }

@@ -24,7 +24,9 @@ onMounted(() => {
 
 // 变量
 const apis = {
-  pluginQueryPage: window.api.pluginQueryPage
+  pluginQueryPage: window.api.pluginQueryPage,
+  pluginReInstall: window.api.pluginReInstall,
+  pluginUnInstall: window.api.pluginUnInstall
 }
 // 插件数据表组件的实例
 const pluginSearchTable = ref()
@@ -36,8 +38,7 @@ const pluginPage: Ref<Page<PluginQueryDTO, Plugin>> = ref(new Page<PluginQueryDT
 const pluginChangedRows: Ref<Plugin[]> = ref([])
 // 插件操作栏按钮
 const pluginOperationButton: OperationItem<Plugin>[] = [
-  { label: '查看', icon: 'view', code: DialogMode.VIEW },
-  { label: '重新安装', icon: 'TakeawayBox', code: 'reinstall' },
+  { label: '修复', icon: 'Refresh', code: 'reinstall' },
   { label: '卸载', icon: 'delete', code: 'uninstall' }
 ]
 // 插件的表头
@@ -132,16 +133,13 @@ async function handleCreateButtonClicked() {
 }
 // 处理插件数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
+  // TODO 添加重装和卸载的响应
   switch (op.code) {
-    case DialogMode.VIEW:
-      pluginDialogMode.value = DialogMode.VIEW
-      pluginDialogData.value = op.data
-      pluginDialogState.value = true
+    case 'reinstall':
+      apis.pluginReInstall(op.id)
       break
-    case DialogMode.EDIT:
-      pluginDialogMode.value = DialogMode.EDIT
-      pluginDialogData.value = op.data
-      pluginDialogState.value = true
+    case 'uninstall':
+      apis.pluginUnInstall(op.id)
       break
     default:
       break

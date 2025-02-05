@@ -27,6 +27,11 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   fileName: string | undefined | null
 
   /**
+   * 安装包路径
+   */
+  packagePath: string | undefined | null
+
+  /**
    * 排序号
    */
   sortNum: number | undefined | null
@@ -39,6 +44,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
       this.name = undefined
       this.version = undefined
       this.fileName = undefined
+      this.packagePath = undefined
       this.sortNum = undefined
     } else {
       super(plugin)
@@ -47,6 +53,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
       this.name = plugin.name
       this.version = plugin.version
       this.fileName = plugin.fileName
+      this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum
     }
   }

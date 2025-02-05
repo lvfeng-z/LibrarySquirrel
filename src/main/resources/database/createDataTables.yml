@@ -212,7 +212,9 @@ tables:
         pending_download_path text,
         continuable           integer(1),
         plugin_id             integer,
-        plugin_info           text,
+        plugin_author         text,
+        plugin_name           text,
+        plugin_version        text,
         plugin_data           text
       );
 
@@ -282,15 +284,16 @@ tables:
     sql: |
       create table plugin
       (
-        id          integer not null
+        id            integer not null
         constraint plugin_pk
         primary key autoincrement,
-        type        text,
-        author      text,
-        name        text,
-        version     text,
-        file_name   text,
-        create_time integer,
-        update_time integer,
-        sort_num    integer
+        type          text,
+        author        text,
+        name          text,
+        version       text,
+        file_name     text,
+        package_path  text,
+        create_time   integer,
+        update_time   integer,
+        sort_num      integer
       );

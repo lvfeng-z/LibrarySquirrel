@@ -18,10 +18,10 @@ import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
 
 /**
- * 查询服务类
+ * 作品查询服务类
  */
 export default class SearchService {
-  dao: SearchDao
+  private dao: SearchDao
 
   constructor() {
     this.dao = new SearchDao()

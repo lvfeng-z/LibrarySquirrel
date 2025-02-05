@@ -9,7 +9,7 @@ out
 /database
 
 #plugin
-/resources/plugins
+/plugin
 
 #idea
 .idea

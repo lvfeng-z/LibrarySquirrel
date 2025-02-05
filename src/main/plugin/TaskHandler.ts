@@ -4,12 +4,10 @@ import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
 import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
 import PluginService from '../service/PluginService.js'
-import StringUtil from '../util/StringUtil.js'
-import LogUtil from '../util/LogUtil.js'
 import { BasePlugin } from '../base/BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
-import { IsNullish } from '../util/CommonUtil.js'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.js'
+import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
 
 export interface TaskHandler extends BasePlugin {
   pluginTool: PluginTool
@@ -56,75 +54,41 @@ export interface TaskHandler extends BasePlugin {
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
   async create(pluginId: number, pluginTool?: PluginTool): Promise<TaskHandler> {
-    if (IsNullish(pluginTool)) {
-      const msg = '创建任务插件失败，pluginTool不能为空'
-      LogUtil.error('TaskHandlerFactory', msg)
-      throw new Error(msg)
-    }
+    AssertNotNullish(pluginTool, this.constructor.name, `创建任务插件失败，pluginTool不能为空`)
 
     const pluginService = new PluginService()
     const pluginDTO = await pluginService.getDTOById(pluginId)
+    AssertNotBlank(pluginDTO.loadPath, this.constructor.name, `创建任务插件失败，插件加载入口不可用`)
     const pluginInfo = JSON.stringify(pluginDTO)
-    const loadPath = pluginDTO.loadPath
-    if (StringUtil.isBlank(loadPath)) {
-      const msg = '未获取到插件信息'
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
 
-    const module = await import(loadPath)
+    const module = await import(pluginDTO.loadPath)
     const response = new module.default(pluginTool)
 
     // 验证taskPlugin是否实现了TaskHandler接口
     let isTaskHandler: boolean
-    // 查询插件信息，日志用
     // create方法
     isTaskHandler = 'create' in response && typeof response.create === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件失败，插件未实现create方法，${pluginInfo}`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现create方法，${pluginInfo}`)
 
     // generateWorksInfo方法
     isTaskHandler = 'generateWorksInfo' in response && typeof response.start === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件失败，插件未实现generateWorksInfo方法，${pluginInfo}`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现generateWorksInfo方法，${pluginInfo}`)
 
     // start方法
     isTaskHandler = 'start' in response && typeof response.start === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件失败，插件未实现start方法，${pluginInfo}`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现start方法，${pluginInfo}`)
 
     // retry方法
     isTaskHandler = 'retry' in response && typeof response.retry === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件失败，插件未实现retry方法，${pluginInfo}`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现retry方法，${pluginInfo}`)
 
     // pause方法
     isTaskHandler = 'pause' in response && typeof response.retry === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件失败，插件未实现pause方法，${pluginInfo}`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现pause方法，${pluginInfo}`)
 
     // resume方法
     isTaskHandler = 'resume' in response && typeof response.retry === 'function'
-    if (!isTaskHandler) {
-      const msg = `加载任务插件失败，插件未实现resume方法，${pluginInfo}`
-      LogUtil.error('PluginLoader', msg)
-      throw new Error(msg)
-    }
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现resume方法，${pluginInfo}`)
 
     const taskHandler = response as TaskHandler
     taskHandler.pluginId = pluginId

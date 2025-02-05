@@ -98,6 +98,12 @@ const api = {
   pluginQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('plugin-queryPage', args)
   },
+  pluginReInstall: (args) => {
+    return Electron.ipcRenderer.invoke('plugin-reInstall', args)
+  },
+  pluginUnInstall: (args) => {
+    return Electron.ipcRenderer.invoke('plugin-unInstall', args)
+  },
 
   // SearchService
   searchQuerySearchConditionPage: (args) => {
