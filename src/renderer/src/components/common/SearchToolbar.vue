@@ -5,7 +5,7 @@ import CollapseForm from './CollapseForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -145,6 +145,7 @@ function expandCollapsePanel(event) {
       </el-col>
     </el-row>
     <collapse-form
+      v-if="ArrayNotEmpty(innerDropdownInputBoxes)"
       v-model:form-data="params"
       v-model:state="state"
       class="dropdown-menu rounded-borders"

@@ -12,6 +12,7 @@ import DataTableOperationResponse from '@renderer/model/util/DataTableOperationR
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import Plugin from '@renderer/model/main/entity/Plugin.ts'
 import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
+import { ElMessage } from 'element-plus'
 
 // onMounted
 onMounted(() => {
@@ -50,7 +51,6 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'name',
     label: '名称',
     hide: false,
-    width: 100,
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true
@@ -62,7 +62,6 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'author',
     label: '作者',
     hide: false,
-    width: 400,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
@@ -76,7 +75,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'version',
     label: '版本号',
     hide: false,
-    width: 200,
+    width: 100,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
@@ -89,7 +88,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     name: 'createTime',
     label: '安装时间',
     hide: false,
-    width: 200,
+    width: 180,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
@@ -133,13 +132,12 @@ async function handleCreateButtonClicked() {
 }
 // 处理插件数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
-  // TODO 添加重装和卸载的响应
   switch (op.code) {
     case 'reinstall':
-      apis.pluginReInstall(op.id)
+      reInstall(op.id)
       break
     case 'uninstall':
-      apis.pluginUnInstall(op.id)
+      unInstall(op.id)
       break
     default:
       break
@@ -151,6 +149,38 @@ async function handleSelectionChange(selections: Plugin[]) {
     pluginSelected.value = selections[0]
   }
   pluginDomainSearchTable.value.doSearch()
+}
+// 重新安装
+async function reInstall(pluginId: string) {
+  const response = await apis.pluginReInstall(pluginId)
+  pluginSearchTable.value.doSearch()
+  if (ApiUtil.check(response)) {
+    ElMessage({
+      type: 'success',
+      message: '修复完成'
+    })
+  } else {
+    ElMessage({
+      type: 'success',
+      message: `修复失败，${response.message}`
+    })
+  }
+}
+// 卸载
+async function unInstall(pluginId: string) {
+  const response = await apis.pluginUnInstall(pluginId)
+  pluginSearchTable.value.doSearch()
+  if (ApiUtil.check(response)) {
+    ElMessage({
+      type: 'success',
+      message: '已卸载'
+    })
+  } else {
+    ElMessage({
+      type: 'success',
+      message: `卸载失败，${response.message}`
+    })
+  }
 }
 </script>
 <template>
@@ -172,6 +202,7 @@ async function handleSelectionChange(selections: Plugin[]) {
           :multi-select="false"
           :selectable="true"
           :page-sizes="[10, 20, 50, 100]"
+          :operation-width="150"
           @create-button-clicked="handleCreateButtonClicked"
           @row-button-clicked="handleRowButtonClicked"
           @selection-change="handleSelectionChange"
