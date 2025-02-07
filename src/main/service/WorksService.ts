@@ -59,7 +59,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       if (NotNullish(worksPluginDTO.siteAuthors)) {
         result.siteAuthors = await SiteAuthorService.createSaveInfos(worksPluginDTO.siteAuthors)
       }
-      const tempName = WorksService.getAuthorNameFromAuthorDTO(result)
+      const tempName = WorksService.getAuthorName(result)
       const authorName = tempName === undefined ? 'unknownAuthor' : tempName
       // 作品信息
       const siteWorksName = result.siteWorksName === undefined ? 'unknownWorksName' : result.siteWorksName
@@ -400,7 +400,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksDTO
    * @private
    */
-  private static getAuthorNameFromAuthorDTO(worksDTO: WorksDTO): string | undefined {
+  private static getAuthorName(worksDTO: WorksDTO): string | undefined {
     let authorName: string | undefined
     // 优先使用站点作者名称
     if (worksDTO.siteAuthors !== undefined && worksDTO.siteAuthors !== null && worksDTO.siteAuthors.length > 0) {

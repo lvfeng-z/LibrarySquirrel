@@ -6,7 +6,7 @@ import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import { Readable } from 'node:stream'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import lodash from 'lodash'
 
 /**
  * 作品
@@ -52,37 +52,20 @@ export default class WorksDTO extends Works {
    */
   resourceSize: number | undefined | null
 
-  constructor(works?: WorksDTO | Works) {
-    if (IsNullish(works)) {
-      super()
-      this.site = undefined
-      this.localAuthors = undefined
-      this.siteAuthors = undefined
-      this.localTags = undefined
-      this.siteTags = undefined
-      this.worksSets = undefined
-      this.resourceStream = undefined
-      this.resourceSize = undefined
-    } else if (works instanceof WorksDTO) {
-      super(works)
-      this.site = works.site
-      this.localAuthors = works.localAuthors
-      this.localTags = works.localTags
-      this.siteAuthors = works.siteAuthors
-      this.siteTags = works.siteTags
-      this.worksSets = works.worksSets
-      this.resourceStream = works.resourceStream
-      this.resourceSize = works.resourceSize
-    } else {
-      super(works)
-      this.site = undefined
-      this.localAuthors = undefined
-      this.siteAuthors = undefined
-      this.localTags = undefined
-      this.siteTags = undefined
-      this.worksSets = undefined
-      this.resourceStream = undefined
-      this.resourceSize = undefined
-    }
+  constructor(works?: Works) {
+    super(works)
+    lodash.assign(
+      this,
+      lodash.pick(works, [
+        'site',
+        'localAuthors',
+        'localTags',
+        'siteAuthors',
+        'siteTags',
+        'worksSets',
+        'resourceStream',
+        'resourceSize'
+      ])
+    )
   }
 }
