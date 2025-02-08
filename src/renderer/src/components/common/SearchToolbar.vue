@@ -149,7 +149,7 @@ function expandCollapsePanel(event) {
       v-model:form-data="params"
       v-model:state="state"
       class="dropdown-menu rounded-borders"
-      :reverse="reverse"
+      :position="reverse ? 'bottom' : 'top'"
       :input-boxes="innerDropdownInputBoxes"
     />
   </div>

@@ -20,7 +20,7 @@ import Site from '@renderer/model/main/entity/Site.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
@@ -247,7 +247,7 @@ async function deleteLocalAuthor(id: string) {
   }
 }
 // 处理站点作者ExchangeBox确认交换的事件
-async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
+async function handleExchangeBoxConfirm(upper: SelectItem[], lower: SelectItem[]) {
   if (IsNullish(localAuthorSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地作者',
@@ -256,15 +256,15 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     return
   }
   let upperResponse: ApiResponse
-  if (bound && bound.length > 0) {
-    const boundIds = bound.map((item) => item.value)
+  if (ArrayNotEmpty(upper)) {
+    const boundIds = upper.map((item) => item.value)
     upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value.id, boundIds)
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }
   let lowerResponse: ApiResponse
-  if (unBound && unBound.length > 0) {
-    const unBoundIds = unBound.map((item) => item.value)
+  if (ArrayNotEmpty(lower)) {
+    const unBoundIds = lower.map((item) => item.value)
     lowerResponse = await apis.siteAuthorUpdateBindLocalAuthor(null, unBoundIds)
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }

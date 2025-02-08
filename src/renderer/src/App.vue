@@ -30,6 +30,7 @@ import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/
 import Developing from '@renderer/components/subpage/Developing.vue'
 import SiteManage from '@renderer/components/subpage/SiteManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
+import Test from '@renderer/components/subpage/Test.vue'
 
 // onMounted
 onMounted(() => {
@@ -62,7 +63,8 @@ const pageState = reactive({
   showTaskManagePage: false,
   showSiteManagePage: false,
   showSettingsPage: false,
-  showDeveloping: false
+  showDeveloping: false,
+  showTest: false
 })
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
@@ -70,7 +72,7 @@ const worksList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列�
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
-type subpages = 'TagManage' | 'LocalAuthorManage' | 'PluginManage' | 'TaskManage' | 'Settings' | 'SiteManage' | 'Developing'
+type subpages = 'TagManage' | 'LocalAuthorManage' | 'PluginManage' | 'TaskManage' | 'Settings' | 'SiteManage' | 'Developing' | 'Test'
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
@@ -132,6 +134,9 @@ function showSubpage(pageName: subpages) {
       break
     case 'Developing':
       pageState.showDeveloping = true
+      break
+    case 'Test':
+      pageState.showTest = true
       break
   }
 }
@@ -265,7 +270,7 @@ async function handleTest() {
               <template #title>设置</template>
               <el-icon><Setting /></el-icon>
             </el-menu-item>
-            <el-menu-item index="8" @click="handleTest">
+            <el-menu-item index="8" @click="showSubpage('Test')">
               <template #title>测试按钮</template>
               <el-icon><Coordinate /></el-icon>
             </el-menu-item>
@@ -330,6 +335,7 @@ async function handleTest() {
           <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" @close-self="closeSubpage" />
           <site-manage v-if="pageState.showSiteManagePage" @close-self="closeSubpage" />
           <developing v-if="pageState.showDeveloping" @close-self="closeSubpage" />
+          <test v-if="pageState.showTest" @close-self="closeSubpage" />
         </div>
       </el-main>
     </el-container>

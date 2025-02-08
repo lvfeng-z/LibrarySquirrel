@@ -120,10 +120,10 @@ async function getWorksInfo() {
   }
 }
 // 处理本地标签exchangeBox确认交换事件
-async function handleTagExchangeConfirm(type: OriginType, unbound: SelectItem[], bound: SelectItem[]) {
+async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[]) {
   const worksId = worksFullInfo.value.id
-  const boundIds = bound.map((item) => item.value)
-  const unboundIds = unbound.map((item) => item.value)
+  const boundIds = upper.map((item) => item.value)
+  const unboundIds = lower.map((item) => item.value)
   const boundResponse: ApiResponse = await apis.reWorksTagLink(type, boundIds, worksId)
   const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(type, unboundIds, worksId)
   const upperSuccess = ApiUtil.check(boundResponse)

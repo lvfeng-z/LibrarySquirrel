@@ -19,7 +19,7 @@ import Page from '@renderer/model/util/Page.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { ElMessage } from 'element-plus'
@@ -270,7 +270,7 @@ async function deleteLocalTag(id: string) {
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件
-async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem[]) {
+async function handleExchangeBoxConfirm(upper: SelectItem[], lower: SelectItem[]) {
   if (IsNullish(localTagSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地标签',
@@ -279,15 +279,15 @@ async function handleExchangeBoxConfirm(unBound: SelectItem[], bound: SelectItem
     return
   }
   let upperResponse: ApiResponse
-  if (bound && bound.length > 0) {
-    const boundIds = bound.map((item) => item.value)
+  if (ArrayNotEmpty(upper)) {
+    const boundIds = upper.map((item) => item.value)
     upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value.id, boundIds)
   } else {
     upperResponse = { success: true, msg: '', data: undefined }
   }
   let lowerResponse: ApiResponse
-  if (unBound && unBound.length > 0) {
-    const unBoundIds = unBound.map((item) => item.value)
+  if (ArrayNotEmpty(lower)) {
+    const unBoundIds = lower.map((item) => item.value)
     lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
   } else {
     lowerResponse = { success: true, msg: '', data: undefined }
