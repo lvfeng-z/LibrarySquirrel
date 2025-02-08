@@ -48,15 +48,7 @@ function handleClickOutSide() {
           'collapse-panel-container-horizontal-close': (left || right) && !state
         }"
       >
-        <div
-          :class="{
-            'collapse-panel-container-vertical-wrapper': top || bottom,
-            'collapse-panel-container-horizontal-wrapper': left || right,
-            'rounded-borders': true
-          }"
-        >
-          <slot />
-        </div>
+        <slot />
       </div>
       <div
         :class="{
@@ -109,9 +101,8 @@ function handleClickOutSide() {
   flex-direction: row-reverse;
 }
 .collapse-panel-container {
-  display: grid;
   overflow: hidden;
-  transition: 1s ease;
+  transition: 0.3s ease;
 }
 .collapse-panel-container-vertical {
   width: 100%;
@@ -120,22 +111,16 @@ function handleClickOutSide() {
   height: 100%;
 }
 .collapse-panel-container-vertical-open {
-  grid-template-rows: 1fr;
+  height: auto;
 }
 .collapse-panel-container-vertical-close {
-  grid-template-rows: 0fr;
+  height: 0;
 }
 .collapse-panel-container-horizontal-open {
-  grid-template-columns: 1fr;
+  width: auto;
 }
 .collapse-panel-container-horizontal-close {
-  grid-template-columns: 1fr;
-}
-.collapse-panel-container-vertical-wrapper {
-  min-height: 0;
-}
-.collapse-panel-container-horizontal-wrapper {
-  min-width: 0;
+  width: 0;
 }
 .collapse-panel-button-wrapper {
   position: absolute;

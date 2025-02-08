@@ -197,9 +197,11 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
           />
           <collapse-panel :state="upperBufferState" position="right">
-            <div style="height: 100%; width: 200px; background-color: #1b1b1f">
-              <el-button>test</el-button>
-            </div>
+            <tag-box
+              v-model:data="upperBufferData"
+              class="exchange-box-middle-buffer-upper"
+              @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperBuffer')"
+            />
           </collapse-panel>
         </div>
       </div>
@@ -211,7 +213,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
         </el-check-tag>
       </div>
       <div class="exchange-box-lower-main">
-        <div style="display: flex; flex-direction: row; width: 100%; height: 100%">
+        <div style="display: flex; flex-direction: row-reverse; width: 100%; height: 100%">
           <tag-box
             ref="lowerTagBox"
             v-model:page="lowerPage"
@@ -220,7 +222,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, false)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           />
-          <collapse-panel :state="lowerBufferState" position="right">
+          <collapse-panel :state="lowerBufferState" position="left">
             <tag-box
               v-model:data="lowerBufferData"
               class="exchange-box-middle-buffer-lower"
