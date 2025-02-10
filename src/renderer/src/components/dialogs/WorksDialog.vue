@@ -166,10 +166,11 @@ async function requestWorksLocalTagPage(page: IPage<LocalTagQueryDTO, SelectItem
   }
   page.query.worksId = worksFullInfo.value.id
   page.query.boundOnWorksId = bounded
-  const response = await apis.localTagQuerySelectItemPageByWorksId(page)
+  const tempPage = lodash.cloneDeep(page)
+  const response = await apis.localTagQuerySelectItemPageByWorksId(tempPage)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<LocalTagQueryDTO, SelectItem>>(response)
-    return IsNullish(newPage) ? page : newPage
+    return IsNullish(newPage) ? tempPage : newPage
   } else {
     throw new Error()
   }

@@ -196,7 +196,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, true)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
           />
-          <collapse-panel :state="upperBufferState" position="right">
+          <collapse-panel :state="upperBufferState" max-length="200px" position="right">
             <tag-box
               v-model:data="upperBufferData"
               class="exchange-box-middle-buffer-upper"
@@ -222,7 +222,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, false)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           />
-          <collapse-panel :state="lowerBufferState" position="left">
+          <collapse-panel :state="lowerBufferState" max-length="200px" position="left">
             <tag-box
               v-model:data="lowerBufferData"
               class="exchange-box-middle-buffer-lower"

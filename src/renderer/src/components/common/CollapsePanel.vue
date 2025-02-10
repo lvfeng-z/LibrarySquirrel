@@ -5,9 +5,11 @@ import { computed, Ref, UnwrapRef } from 'vue'
 const props = withDefaults(
   defineProps<{
     position?: 'top' | 'bottom' | 'left' | 'right'
+    maxLength?: string
   }>(),
   {
-    position: 'top'
+    position: 'top',
+    maxLength: 'auto'
   }
 )
 
@@ -78,27 +80,30 @@ function handleClickOutSide() {
 .collapse-panel {
   position: absolute;
   display: flex;
-  pointer-events: fill;
 }
 .collapse-panel-top {
   width: 100%;
   top: 0;
   flex-direction: column;
+  max-height: v-bind(maxLength);
 }
 .collapse-panel-bottom {
   width: 100%;
   bottom: 0;
   flex-direction: column-reverse;
+  max-height: v-bind(maxLength);
 }
 .collapse-panel-left {
   height: 100%;
   left: 0;
   flex-direction: row;
+  max-width: v-bind(maxLength);
 }
 .collapse-panel-right {
   height: 100%;
   right: 0;
   flex-direction: row-reverse;
+  max-width: v-bind(maxLength);
 }
 .collapse-panel-container {
   overflow: hidden;

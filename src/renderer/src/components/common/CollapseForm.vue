@@ -11,6 +11,7 @@ const props = withDefaults(
   defineProps<{
     inputBoxes: InputBox[] // InputBox数组
     position?: 'top' | 'bottom' | 'left' | 'right'
+    maxLength?: string
   }>(),
   {
     position: 'top'
@@ -70,7 +71,7 @@ function calculateSpan() {
 </script>
 
 <template>
-  <collapse-panel v-model:state="state" :position="props.position">
+  <collapse-panel v-model:state="state" :position="props.position" :maxLength="props.maxLength">
     <el-scrollbar class="dropdown-table-rows">
       <el-form v-model="formData">
         <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">
