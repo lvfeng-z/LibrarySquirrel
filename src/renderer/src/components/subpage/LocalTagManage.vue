@@ -348,10 +348,12 @@ async function requestSiteTagSelectItemPage(
           <exchange-box
             ref="siteTagExchangeBox"
             upper-title="已绑定站点标签"
+            upper-tips="点此绑定"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
             :upper-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, true)"
             lower-title="可绑定站点标签"
+            lower-tips="点此解绑"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, false)"

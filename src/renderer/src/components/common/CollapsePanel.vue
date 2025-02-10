@@ -6,10 +6,12 @@ const props = withDefaults(
   defineProps<{
     position?: 'top' | 'bottom' | 'left' | 'right'
     maxLength?: string
+    toggleOnOutsideClick?: boolean
   }>(),
   {
     position: 'top',
-    maxLength: 'auto'
+    maxLength: 'auto',
+    toggleOnOutsideClick: true
   }
 )
 
@@ -24,7 +26,9 @@ const right: Ref<boolean> = computed(() => props.position === 'right')
 
 // 处理组件外部点击事件
 function handleClickOutSide() {
-  state.value = false
+  if (props.toggleOnOutsideClick) {
+    state.value = false
+  }
 }
 </script>
 

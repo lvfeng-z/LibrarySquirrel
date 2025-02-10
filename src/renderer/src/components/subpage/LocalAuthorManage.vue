@@ -320,10 +320,12 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
           <exchange-box
             ref="siteAuthorExchangeBox"
             upper-title="已绑定站点作者"
+            upper-tips="点此绑定"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
             :upper-load="(_page) => requestSiteAuthorSelectItemPage(_page, true)"
             lower-title="可绑定站点作者"
+            lower-tips="点此解绑"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page) => requestSiteAuthorSelectItemPage(_page, false)"

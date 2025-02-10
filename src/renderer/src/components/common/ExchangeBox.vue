@@ -4,7 +4,7 @@ import { InputBox } from '../../model/util/InputBox'
 import { Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from './TagBox.vue'
-import { ArrayNotEmpty, NotNullish } from '../../utils/CommonUtil'
+import { ArrayIsEmpty, ArrayNotEmpty, NotNullish } from '../../utils/CommonUtil'
 import Page from '@renderer/model/util/Page.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
@@ -12,7 +12,9 @@ import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 // props
 const props = defineProps<{
   upperTitle: string // upper的标题
+  upperTips: string // upper在有缓冲数据时的提示
   lowerTitle: string // lower的标题
+  lowerTips: string // lower在有缓冲数据时的提示
   upperMainInputBoxes?: InputBox[] // upper的SearchToolbar的主菜单参数
   upperDropDownInputBoxes?: InputBox[] // upper的SearchToolbar的下拉菜单参数
   lowerMainInputBoxes?: InputBox[] // lower的SearchToolbar的主菜单参数
@@ -89,6 +91,7 @@ function handleCheckTagClick(tag: SelectItem, type: 'upperData' | 'upperBuffer' 
     default:
       break
   }
+  handleBufferToggle()
 }
 // 元素由source移动至target
 function exchange(source: SelectItem[], target: SelectItem[], item: SelectItem) {
@@ -110,6 +113,8 @@ function handleClearButtonClicked() {
   lowerData.value.push(...upperBufferData.value)
   lowerBufferData.value = []
   lowerBufferId.value.clear()
+  handleBufferToggle()
+  refreshData()
 }
 // 刷新内容
 function refreshData() {
@@ -120,6 +125,7 @@ function refreshData() {
   resetScrollBarPosition()
   upperTagBox.value.newSearch()
   lowerTagBox.value.newSearch()
+  handleBufferToggle()
 }
 // 请求DataScroll下一页数据
 async function requestNextPage(page: IPage<Query, SelectItem>, upperOrLower: boolean): Promise<IPage<Query, SelectItem>> {
@@ -165,6 +171,11 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
     })
   }
 }
+// 处理buffer是否折叠
+function handleBufferToggle() {
+  upperBufferState.value = ArrayNotEmpty(upperBufferData.value)
+  lowerBufferState.value = ArrayNotEmpty(lowerBufferData.value)
+}
 </script>
 
 <template>
@@ -172,7 +183,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
     <div class="exchange-box-upper">
       <div class="exchange-box-upper-name">
         <el-check-tag :checked="true" class="exchange-box-middle-confirm-button" type="primary" @click="handleExchangeConfirm">
-          {{ upperTitle }}
+          {{ ArrayIsEmpty(upperBufferData) ? upperTitle : upperTips }}
         </el-check-tag>
       </div>
       <div class="exchange-box-upper-main">
@@ -196,7 +207,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, true)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
           />
-          <collapse-panel :state="upperBufferState" max-length="200px" position="right">
+          <collapse-panel :state="upperBufferState" :toggle-on-outside-click="false" max-length="200px" position="right">
             <tag-box
               v-model:data="upperBufferData"
               class="exchange-box-middle-buffer-upper"
@@ -209,7 +220,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
     <div class="exchange-box-lower">
       <div class="exchange-box-lower-name">
         <el-check-tag :checked="false" class="exchange-box-middle-clear-button" type="info" @click="handleClearButtonClicked">
-          {{ lowerTitle }}
+          {{ ArrayIsEmpty(lowerBufferData) ? lowerTitle : lowerTips }}
         </el-check-tag>
       </div>
       <div class="exchange-box-lower-main">
@@ -222,7 +233,7 @@ function leachBufferData(increment: SelectItem[], upperOrLower: boolean) {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, false)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           />
-          <collapse-panel :state="lowerBufferState" max-length="200px" position="left">
+          <collapse-panel :state="lowerBufferState" :toggle-on-outside-click="false" max-length="200px" position="left">
             <tag-box
               v-model:data="lowerBufferData"
               class="exchange-box-middle-buffer-lower"

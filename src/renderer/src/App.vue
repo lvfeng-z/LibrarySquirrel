@@ -217,11 +217,11 @@ window.electron.ipcRenderer.on('goto-page', (_event, config: { content: string; 
 
 // test
 const showTestDialog = ref(false)
-async function handleTest() {
-  // apis.testMainWindowMsgTest()
-  showExplainPath.value = true
-  // showTestDialog.value = true
-}
+// async function handleTest() {
+//   // apis.testMainWindowMsgTest()
+//   showExplainPath.value = true
+//   // showTestDialog.value = true
+// }
 </script>
 
 <template>
