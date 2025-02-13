@@ -207,7 +207,25 @@ function handleBufferToggle() {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, true)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
           />
-          <collapse-panel :state="upperBufferState" :toggle-on-outside-click="false" max-length="200px" position="right">
+          <collapse-panel
+            class="exchange-box-upper-op-button-group"
+            :state="upperBufferState"
+            :toggle-on-outside-click="false"
+            hide-handle
+            max-length="200px"
+            position="left"
+            border-radios="10px"
+          >
+            <div class="exchange-box-upper-op-button-upper"></div>
+            <div class="exchange-box-upper-op-button-lower"></div>
+          </collapse-panel>
+          <collapse-panel
+            class="exchange-box-middle-buffer-upper-panel"
+            :state="upperBufferState"
+            :toggle-on-outside-click="false"
+            max-length="200px"
+            position="right"
+          >
             <tag-box
               v-model:data="upperBufferData"
               class="exchange-box-middle-buffer-upper"
@@ -224,7 +242,7 @@ function handleBufferToggle() {
         </el-check-tag>
       </div>
       <div class="exchange-box-lower-main">
-        <div style="display: flex; flex-direction: row-reverse; width: 100%; height: 100%">
+        <div style="display: flex; width: 100%; height: 100%">
           <tag-box
             ref="lowerTagBox"
             v-model:page="lowerPage"
@@ -233,7 +251,25 @@ function handleBufferToggle() {
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, false)"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           />
-          <collapse-panel :state="lowerBufferState" :toggle-on-outside-click="false" max-length="200px" position="left">
+          <collapse-panel
+            class="exchange-box-lower-op-button-group"
+            :state="lowerBufferState"
+            :toggle-on-outside-click="false"
+            hide-handle
+            max-length="200px"
+            position="left"
+            border-radios="10px"
+          >
+            <div class="exchange-box-lower-op-button-upper"></div>
+            <div class="exchange-box-lower-op-button-lower"></div>
+          </collapse-panel>
+          <collapse-panel
+            class="exchange-box-middle-buffer-lower-panel"
+            :state="lowerBufferState"
+            :toggle-on-outside-click="false"
+            max-length="200px"
+            position="right"
+          >
             <tag-box
               v-model:data="lowerBufferData"
               class="exchange-box-middle-buffer-lower"
@@ -291,6 +327,7 @@ function handleBufferToggle() {
   height: 32px;
 }
 .exchange-box-upper-tag-box {
+  order: 2;
   width: 100%;
   height: 100%;
   background-color: #ffffff;
@@ -311,10 +348,41 @@ function handleBufferToggle() {
   align-items: center;
   box-sizing: border-box;
 }
+.exchange-box-upper-op-button-group {
+  height: 100px;
+  margin: auto;
+  order: 1;
+}
+.exchange-box-upper-op-button-upper {
+  height: 50%;
+  width: 30px;
+  transition: 0.5s;
+  cursor: pointer;
+  background-color: var(--el-fill-color-dark);
+}
+.exchange-box-upper-op-button-upper:hover {
+  background-color: var(--el-fill-color-lighter);
+}
+.exchange-box-upper-op-button-lower {
+  height: 50%;
+  width: 30px;
+  transition: 0.5s;
+  cursor: pointer;
+  background-color: var(--el-fill-color-dark);
+}
+.exchange-box-upper-op-button-lower:hover {
+  background-color: var(--el-fill-color-lighter);
+}
+.exchange-box-middle-buffer-upper-panel {
+  order: 3;
+}
 .exchange-box-middle-buffer-upper {
   height: 100%;
   background-color: #ffffff;
   box-sizing: border-box;
+}
+.exchange-box-middle-buffer-lower-panel {
+  order: 3;
 }
 .exchange-box-middle-buffer-lower {
   height: 100%;
@@ -347,8 +415,34 @@ function handleBufferToggle() {
   height: 32px;
 }
 .exchange-box-lower-tag-box {
+  order: 2;
   width: 100%;
   height: 100%;
   background-color: #fbfbfb;
+}
+.exchange-box-lower-op-button-group {
+  height: 100px;
+  margin: auto;
+  order: 1;
+}
+.exchange-box-lower-op-button-upper {
+  height: 50%;
+  width: 30px;
+  transition: 0.5s;
+  cursor: pointer;
+  background-color: var(--el-fill-color-dark);
+}
+.exchange-box-lower-op-button-upper:hover {
+  background-color: var(--el-fill-color-lighter);
+}
+.exchange-box-lower-op-button-lower {
+  height: 50%;
+  width: 30px;
+  transition: 0.5s;
+  cursor: pointer;
+  background-color: var(--el-fill-color-dark);
+}
+.exchange-box-lower-op-button-lower:hover {
+  background-color: var(--el-fill-color-lighter);
 }
 </style>

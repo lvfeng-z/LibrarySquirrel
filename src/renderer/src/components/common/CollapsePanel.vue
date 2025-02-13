@@ -7,11 +7,15 @@ const props = withDefaults(
     position?: 'top' | 'bottom' | 'left' | 'right'
     maxLength?: string
     toggleOnOutsideClick?: boolean
+    hideHandle?: boolean
+    borderRadios?: string
   }>(),
   {
     position: 'top',
     maxLength: 'auto',
-    toggleOnOutsideClick: true
+    toggleOnOutsideClick: true,
+    hideHandle: false,
+    borderRadios: '0'
   }
 )
 
@@ -46,8 +50,10 @@ function handleClickOutSide() {
       <div
         :class="{
           'collapse-panel-container': true,
-          'collapse-panel-container-vertical': top || bottom,
-          'collapse-panel-container-horizontal': left || right,
+          'collapse-panel-container-top': top,
+          'collapse-panel-container-bottom': bottom,
+          'collapse-panel-container-left': left,
+          'collapse-panel-container-right': right,
           'collapse-panel-container-vertical-open': (top || bottom) && state,
           'collapse-panel-container-vertical-close': (top || bottom) && !state,
           'collapse-panel-container-horizontal-open': (left || right) && state,
@@ -57,6 +63,7 @@ function handleClickOutSide() {
         <slot />
       </div>
       <div
+        v-show="!hideHandle"
         :class="{
           'collapse-panel-button-wrapper': true,
           'collapse-panel-button-wrapper-top': top,
@@ -113,11 +120,25 @@ function handleClickOutSide() {
   overflow: hidden;
   transition: 0.3s ease;
 }
-.collapse-panel-container-vertical {
+.collapse-panel-container-top {
   width: 100%;
+  border-bottom-left-radius: v-bind(borderRadios);
+  border-bottom-right-radius: v-bind(borderRadios);
 }
-.collapse-panel-container-horizontal {
+.collapse-panel-container-bottom {
+  width: 100%;
+  border-top-left-radius: v-bind(borderRadios);
+  border-top-right-radius: v-bind(borderRadios);
+}
+.collapse-panel-container-left {
   height: 100%;
+  border-top-right-radius: v-bind(borderRadios);
+  border-bottom-right-radius: v-bind(borderRadios);
+}
+.collapse-panel-container-right {
+  height: 100%;
+  border-top-left-radius: v-bind(borderRadios);
+  border-bottom-left-radius: v-bind(borderRadios);
 }
 .collapse-panel-container-vertical-open {
   height: auto;
@@ -177,6 +198,7 @@ function handleClickOutSide() {
   border-radius: 100% / 100%;
   background-color: rgb(166.2, 168.6, 173.4, 30%);
   transition: 0.3s ease;
+  cursor: pointer;
 }
 .collapse-panel-button:hover {
   background-color: rgb(166.2, 168.6, 173.4, 80%);
