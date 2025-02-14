@@ -247,7 +247,7 @@ async function deleteLocalAuthor(id: string) {
   }
 }
 // 处理站点作者ExchangeBox确认交换的事件
-async function handleExchangeBoxConfirm(upper: SelectItem[], lower: SelectItem[]) {
+async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: SelectItem[], lower: SelectItem[]) {
   if (IsNullish(localAuthorSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地作者',
@@ -255,25 +255,28 @@ async function handleExchangeBoxConfirm(upper: SelectItem[], lower: SelectItem[]
     })
     return
   }
-  let upperResponse: ApiResponse
-  if (ArrayNotEmpty(upper)) {
-    const boundIds = upper.map((item) => item.value)
-    upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value.id, boundIds)
-  } else {
-    upperResponse = { success: true, msg: '', data: undefined }
+
+  if (IsNullish(isUpper) ? true : isUpper) {
+    let upperResponse: ApiResponse
+    if (ArrayNotEmpty(upper)) {
+      const boundIds = upper.map((item) => item.value)
+      upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value.id, boundIds)
+    } else {
+      upperResponse = { success: true, msg: '', data: undefined }
+    }
+    ApiUtil.failedMsg(upperResponse)
   }
-  let lowerResponse: ApiResponse
-  if (ArrayNotEmpty(lower)) {
-    const unBoundIds = lower.map((item) => item.value)
-    lowerResponse = await apis.siteAuthorUpdateBindLocalAuthor(null, unBoundIds)
-  } else {
-    lowerResponse = { success: true, msg: '', data: undefined }
+  if (IsNullish(isUpper) ? true : !isUpper) {
+    let lowerResponse: ApiResponse
+    if (ArrayNotEmpty(lower)) {
+      const unBoundIds = lower.map((item) => item.value)
+      lowerResponse = await apis.siteAuthorUpdateBindLocalAuthor(null, unBoundIds)
+    } else {
+      lowerResponse = { success: true, msg: '', data: undefined }
+    }
+    ApiUtil.failedMsg(lowerResponse)
   }
-  ApiUtil.failedMsg(upperResponse)
-  ApiUtil.failedMsg(lowerResponse)
-  if (ApiUtil.check(lowerResponse) && ApiUtil.check(upperResponse)) {
-    siteAuthorExchangeBox.value.refreshData()
-  }
+  siteAuthorExchangeBox.value.refreshData(isUpper)
 }
 // 请求站点作者分页选择列表的函数
 async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, SelectItem>, bounded: boolean) {
@@ -330,7 +333,9 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page) => requestSiteAuthorSelectItemPage(_page, false)"
             :search-button-disabled="disableExcSearchButton"
-            @exchange-confirm="handleExchangeBoxConfirm"
+            @upper-confirm="(upper, lower) => handleExchangeBoxConfirm(true, upper, lower)"
+            @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
+            @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"
           />
         </div>
       </div>

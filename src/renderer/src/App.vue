@@ -309,7 +309,7 @@ const showTestDialog = ref(false)
                     max-height="300px"
                     min-height="33px"
                   />
-                  <collapse-panel v-model:state="searchBarPanelState">
+                  <collapse-panel v-model:state="searchBarPanelState" border-radios="10px">
                     <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
                       <el-button> test </el-button>
                     </div>

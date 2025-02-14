@@ -270,33 +270,36 @@ async function deleteLocalTag(id: string) {
   }
 }
 // 处理站点标签ExchangeBox确认交换的事件
-async function handleExchangeBoxConfirm(upper: SelectItem[], lower: SelectItem[]) {
+async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: SelectItem[], lower: SelectItem[]) {
   if (IsNullish(localTagSelected.value)) {
     ElMessage({
-      message: '确认修改时必须选中一个本地标签',
+      message: '确认修改时必须选中一个本地作者',
       type: 'warning'
     })
     return
   }
-  let upperResponse: ApiResponse
-  if (ArrayNotEmpty(upper)) {
-    const boundIds = upper.map((item) => item.value)
-    upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value.id, boundIds)
-  } else {
-    upperResponse = { success: true, msg: '', data: undefined }
+
+  if (IsNullish(isUpper) ? true : isUpper) {
+    let upperResponse: ApiResponse
+    if (ArrayNotEmpty(upper)) {
+      const boundIds = upper.map((item) => item.value)
+      upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value.id, boundIds)
+    } else {
+      upperResponse = { success: true, msg: '', data: undefined }
+    }
+    ApiUtil.failedMsg(upperResponse)
   }
-  let lowerResponse: ApiResponse
-  if (ArrayNotEmpty(lower)) {
-    const unBoundIds = lower.map((item) => item.value)
-    lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
-  } else {
-    lowerResponse = { success: true, msg: '', data: undefined }
+  if (IsNullish(isUpper) ? true : !isUpper) {
+    let lowerResponse: ApiResponse
+    if (ArrayNotEmpty(lower)) {
+      const unBoundIds = lower.map((item) => item.value)
+      lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
+    } else {
+      lowerResponse = { success: true, msg: '', data: undefined }
+    }
+    ApiUtil.failedMsg(lowerResponse)
   }
-  ApiUtil.msg(upperResponse)
-  ApiUtil.msg(lowerResponse)
-  if (ApiUtil.check(lowerResponse) && ApiUtil.check(upperResponse)) {
-    siteTagExchangeBox.value.refreshData()
-  }
+  siteTagExchangeBox.value.refreshData(isUpper)
 }
 // 请求站点标签分页选择列表的函数
 async function requestSiteTagSelectItemPage(
@@ -358,7 +361,9 @@ async function requestSiteTagSelectItemPage(
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, false)"
             :search-button-disabled="disableExcSearchButton"
-            @exchange-confirm="handleExchangeBoxConfirm"
+            @upper-confirm="(upper, lower) => handleExchangeBoxConfirm(true, upper, lower)"
+            @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
+            @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"
           />
         </div>
       </div>

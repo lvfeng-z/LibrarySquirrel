@@ -120,23 +120,28 @@ async function getWorksInfo() {
   }
 }
 // 处理本地标签exchangeBox确认交换事件
-async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[]) {
+async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[], isUpper?: boolean) {
   const worksId = worksFullInfo.value.id
-  const boundIds = upper.map((item) => item.value)
-  const unboundIds = lower.map((item) => item.value)
-  const boundResponse: ApiResponse = await apis.reWorksTagLink(type, boundIds, worksId)
-  const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(type, unboundIds, worksId)
-  const upperSuccess = ApiUtil.check(boundResponse)
-  const lowerSuccess = ApiUtil.check(unboundResponse)
-  if (upperSuccess && lowerSuccess) {
-    if (OriginType.LOCAL === type) {
-      localTagExchangeBox.value.refreshData()
-    } else {
-      siteTagExchangeBox.value.refreshData()
+  if (IsNullish(isUpper) ? true : isUpper) {
+    const boundIds = upper.map((item) => item.value)
+    const boundResponse: ApiResponse = await apis.reWorksTagLink(type, boundIds, worksId)
+    if (ApiUtil.check(boundResponse)) {
+      ApiUtil.msg(boundResponse)
     }
-    ApiUtil.msg(boundResponse)
-    updateWorksTags(type)
   }
+  if (IsNullish(isUpper) ? true : !isUpper) {
+    const unboundIds = lower.map((item) => item.value)
+    const unboundResponse: ApiResponse = await apis.reWorksTagUnlink(type, unboundIds, worksId)
+    if (ApiUtil.check(unboundResponse)) {
+      ApiUtil.msg(unboundResponse)
+    }
+  }
+  if (OriginType.LOCAL === type) {
+    localTagExchangeBox.value.refreshData(isUpper)
+  } else {
+    siteTagExchangeBox.value.refreshData(isUpper)
+  }
+  updateWorksTags(type)
 }
 // 更新标签
 async function updateWorksTags(type: OriginType) {
@@ -232,9 +237,13 @@ function handlePictureClicked() {
                 :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
                 :lower-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, false)"
                 :search-button-disabled="false"
-                @exchange-confirm="
-                  (unbound: SelectItem[], bound: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, unbound, bound)
+                @upper-confirm="
+                  (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, true)
                 "
+                @lower-confirm="
+                  (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, false)
+                "
+                @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
               />
             </el-drawer>
           </el-descriptions-item>
@@ -254,9 +263,9 @@ function handlePictureClicked() {
                 :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
                 :lower-load="(_page) => requestWorksSiteTagPage(_page, false)"
                 :search-button-disabled="false"
-                @exchange-confirm="
-                  (unbound: SelectItem[], bound: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, unbound, bound)
-                "
+                @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
+                @lower-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
+                @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
               />
             </el-drawer>
           </el-descriptions-item>
