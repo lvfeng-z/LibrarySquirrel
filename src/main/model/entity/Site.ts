@@ -34,7 +34,7 @@ export default class Site extends BaseEntity {
     } else {
       this.id = site.id
       this.siteName = site.siteName
-      this.siteDescription = undefined
+      this.siteDescription = site.siteDescription
       this.sortNum = site.sortNum
     }
   }
