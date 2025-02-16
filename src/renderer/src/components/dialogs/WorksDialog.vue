@@ -204,14 +204,14 @@ function handlePictureClicked() {
   <el-dialog top="50px">
     <div ref="container" class="works-dialog-container">
       <el-image
-        style="height: auto; max-width: 60%; margin-right: 10px; flex-shrink: 0; cursor: pointer"
+        class="works-dialog-image"
         fit="contain"
         :src="`resource://workdir/${props.works[0].filePath}`"
         @click="handlePictureClicked"
       >
       </el-image>
       <el-scrollbar>
-        <el-descriptions style="margin-right: 10px" direction="horizontal" :column="1">
+        <el-descriptions class="works-dialog-info" direction="horizontal" :column="1">
           <el-descriptions-item>
             {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
           </el-descriptions-item>
@@ -227,11 +227,7 @@ function handlePictureClicked() {
             <el-drawer v-model="localTagEdit" size="45%" :with-header="false" @open="localTagExchangeBox.refreshData()">
               <exchange-box
                 ref="localTagExchangeBox"
-                style="height: 100%"
-                upper-title="已有标签"
-                upper-tips="点此绑定"
-                lower-title="可选标签"
-                lower-tips="点此解绑"
+                class="works-dialog-tag-exchange-box"
                 :upper-main-input-boxes="localTagExchangeMainInput"
                 :lower-main-input-boxes="localTagExchangeMainInput"
                 :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
@@ -244,7 +240,18 @@ function handlePictureClicked() {
                   (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, false)
                 "
                 @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
-              />
+              >
+                <template #upperTitle>
+                  <div class="works-dialog-tag-exchange-box-title">
+                    <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
+                  </div>
+                </template>
+                <template #lowerTitle>
+                  <div class="works-dialog-tag-exchange-box-title">
+                    <span class="works-dialog-tag-exchange-box-title-text">未绑定</span>
+                  </div>
+                </template>
+              </exchange-box>
             </el-drawer>
           </el-descriptions-item>
           <el-descriptions-item label="站点标签">
@@ -253,11 +260,9 @@ function handlePictureClicked() {
             <el-drawer v-model="siteTagEdit" size="45%" :with-header="false" @open="siteTagExchangeBox.refreshData()">
               <exchange-box
                 ref="siteTagExchangeBox"
-                style="height: 100%"
+                class="works-dialog-tag-exchange-box"
                 upper-title="已有标签"
-                upper-tips="点此绑定"
                 lower-title="可选标签"
-                lower-tips="点此解绑"
                 :upper-main-input-boxes="siteTagExchangeMainInput"
                 :lower-main-input-boxes="siteTagExchangeMainInput"
                 :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
@@ -266,7 +271,18 @@ function handlePictureClicked() {
                 @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
                 @lower-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
                 @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
-              />
+              >
+                <template #upperTitle>
+                  <div class="works-dialog-tag-exchange-box-title">
+                    <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
+                  </div>
+                </template>
+                <template #lowerTitle>
+                  <div class="works-dialog-tag-exchange-box-title">
+                    <span class="works-dialog-tag-exchange-box-title-text">未绑定</span>
+                  </div>
+                </template>
+              </exchange-box>
             </el-drawer>
           </el-descriptions-item>
         </el-descriptions>
@@ -280,5 +296,31 @@ function handlePictureClicked() {
   display: flex;
   flex-direction: row;
   height: calc(100vh - 16px - 16px - 16px - 50px - 50px);
+}
+.works-dialog-image {
+  height: auto;
+  max-width: 60%;
+  margin-right: 10px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.works-dialog-info {
+  margin-right: 10px;
+}
+.works-dialog-tag-exchange-box {
+  height: 100%;
+}
+.works-dialog-tag-exchange-box-title {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--el-border-color);
+  border-radius: 5px;
+}
+.works-dialog-tag-exchange-box-title-text {
+  text-align: center;
+  writing-mode: vertical-lr;
+  color: var(--el-text-color-regular);
 }
 </style>

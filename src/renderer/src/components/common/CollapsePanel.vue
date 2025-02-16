@@ -97,24 +97,28 @@ function handleClickOutSide() {
   top: 0;
   flex-direction: column;
   max-height: v-bind(maxLength);
+  box-shadow: 0 10px 10px -5px rgba(0, 0, 0, 0.1);
 }
 .collapse-panel-bottom {
   width: 100%;
   bottom: 0;
   flex-direction: column-reverse;
   max-height: v-bind(maxLength);
+  box-shadow: 0 -10px 10px -5px rgba(0, 0, 0, 0.1);
 }
 .collapse-panel-left {
   height: 100%;
   left: 0;
   flex-direction: row;
   max-width: v-bind(maxLength);
+  box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1);
 }
 .collapse-panel-right {
   height: 100%;
   right: 0;
   flex-direction: row-reverse;
   max-width: v-bind(maxLength);
+  box-shadow: -10px 0 10px -5px rgba(0, 0, 0, 0.1);
 }
 .collapse-panel-container {
   overflow: hidden;

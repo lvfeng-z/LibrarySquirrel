@@ -12,10 +12,6 @@ import { Check, Close } from '@element-plus/icons-vue'
 
 // props
 const props = defineProps<{
-  upperTitle: string // upper的标题
-  upperTips: string // upper在有缓冲数据时的提示
-  lowerTitle: string // lower的标题
-  lowerTips: string // lower在有缓冲数据时的提示
   upperMainInputBoxes?: InputBox[] // upper的SearchToolbar的主菜单参数
   upperDropDownInputBoxes?: InputBox[] // upper的SearchToolbar的下拉菜单参数
   lowerMainInputBoxes?: InputBox[] // lower的SearchToolbar的主菜单参数
@@ -194,9 +190,9 @@ function handleBufferToggle() {
 
 <template>
   <div class="exchange-box">
-    <div class="exchange-box-name">
-      <div class="exchange-box-upper-name">
-        {{ upperTitle }}
+    <div class="exchange-box-title">
+      <div class="exchange-box-upper-title">
+        <slot name="upperTitle" />
       </div>
       <div class="exchange-box-all-op">
         <el-tooltip placement="right" :enterable="false">
@@ -216,8 +212,8 @@ function handleBufferToggle() {
           <template #content>全部清空</template>
         </el-tooltip>
       </div>
-      <div class="exchange-box-lower-name">
-        {{ lowerTitle }}
+      <div class="exchange-box-lower-title">
+        <slot name="lowerTitle" />
       </div>
     </div>
     <div class="exchange-box-main">
@@ -252,10 +248,10 @@ function handleBufferToggle() {
             border-radios="10px"
           >
             <div class="exchange-box-upper-op-button-upper" @click="handleExchangeConfirm(true)">
-              <el-icon><Check /></el-icon>
+              <el-icon class="exchange-box-upper-op-button-upper-icon"><Check /></el-icon>
             </div>
             <div class="exchange-box-upper-op-button-lower" @click="handleClearButtonClicked(true)">
-              <el-icon><Close /></el-icon>
+              <el-icon class="exchange-box-upper-op-button-lower-icon"><Close /></el-icon>
             </div>
           </collapse-panel>
           <collapse-panel
@@ -337,7 +333,7 @@ function handleBufferToggle() {
   width: 100%;
   height: 100%;
 }
-.exchange-box-name {
+.exchange-box-title {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -348,25 +344,15 @@ function handleBufferToggle() {
   flex-direction: column;
   width: calc(100% - 40px);
 }
-.exchange-box-upper-name {
+.exchange-box-upper-title {
   display: flex;
   flex-grow: 1;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  writing-mode: vertical-lr;
-  background-color: var(--el-fill-color-lighter);
-  border-top-left-radius: 6px;
 }
-.exchange-box-lower-name {
+.exchange-box-lower-title {
   display: flex;
   flex-grow: 1;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  writing-mode: vertical-lr;
-  background-color: var(--el-fill-color-darker);
-  border-bottom-left-radius: 6px;
 }
 .exchange-box-all-op {
   width: 100%;
@@ -379,6 +365,9 @@ function handleBufferToggle() {
   height: 50%;
   color: var(--el-color-primary);
   background-color: var(--el-color-primary-light-8);
+  box-sizing: border-box;
+  border: 1px solid var(--el-color-primary-light-5);
+  border-bottom: none;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   cursor: pointer;
@@ -400,6 +389,9 @@ function handleBufferToggle() {
   height: 50%;
   color: var(--el-color-danger);
   background-color: var(--el-color-danger-light-8);
+  box-sizing: border-box;
+  border: 1px solid var(--el-color-danger-light-5);
+  border-top: none;
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
   cursor: pointer;
@@ -450,10 +442,17 @@ function handleBufferToggle() {
   width: 20px;
   transition: 0.5s;
   cursor: pointer;
-  background-color: var(--el-fill-color-light);
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-8);
 }
 .exchange-box-upper-op-button-upper:hover {
-  background-color: var(--el-fill-color-darker);
+  background-color: var(--el-color-primary-light-9);
+}
+.exchange-box-upper-op-button-upper-icon {
+  transition: 0.3s;
+}
+.exchange-box-upper-op-button-upper:hover .exchange-box-upper-op-button-upper-icon {
+  scale: 1.2;
 }
 .exchange-box-upper-op-button-lower {
   display: flex;
@@ -463,10 +462,17 @@ function handleBufferToggle() {
   width: 20px;
   transition: 0.5s;
   cursor: pointer;
-  background-color: var(--el-fill-color-light);
+  color: var(--el-color-danger);
+  background-color: var(--el-color-danger-light-8);
 }
 .exchange-box-upper-op-button-lower:hover {
-  background-color: var(--el-fill-color-darker);
+  background-color: var(--el-color-danger-light-9);
+}
+.exchange-box-upper-op-button-lower-icon {
+  transition: 0.3s;
+}
+.exchange-box-upper-op-button-lower:hover .exchange-box-upper-op-button-lower-icon {
+  scale: 1.2;
 }
 .exchange-box-middle-buffer-upper-panel {
   order: 3;
@@ -519,10 +525,11 @@ function handleBufferToggle() {
   width: 20px;
   transition: 0.5s;
   cursor: pointer;
-  background-color: var(--el-fill-color-darker);
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-8);
 }
 .exchange-box-lower-op-button-upper:hover {
-  background-color: var(--el-fill-color-light);
+  background-color: var(--el-color-primary-light-9);
 }
 .exchange-box-lower-op-button-lower {
   display: flex;
@@ -532,9 +539,10 @@ function handleBufferToggle() {
   width: 20px;
   transition: 0.5s;
   cursor: pointer;
-  background-color: var(--el-fill-color-darker);
+  color: var(--el-color-danger);
+  background-color: var(--el-color-danger-light-8);
 }
 .exchange-box-lower-op-button-lower:hover {
-  background-color: var(--el-fill-color-light);
+  background-color: var(--el-color-danger-light-9);
 }
 </style>

@@ -322,13 +322,9 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
         <div class="local-author-manage-right">
           <exchange-box
             ref="siteAuthorExchangeBox"
-            upper-title="已绑定站点作者"
-            upper-tips="点此绑定"
             :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :upper-main-input-boxes="exchangeBoxMainInputBoxes"
             :upper-load="(_page) => requestSiteAuthorSelectItemPage(_page, true)"
-            lower-title="可绑定站点作者"
-            lower-tips="点此解绑"
             :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page) => requestSiteAuthorSelectItemPage(_page, false)"
@@ -336,7 +332,18 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
             @upper-confirm="(upper, lower) => handleExchangeBoxConfirm(true, upper, lower)"
             @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
             @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"
-          />
+          >
+            <template #upperTitle>
+              <div class="local-author-manage-site-author-title">
+                <span class="local-author-manage-site-author-title-text">已绑定站点作者</span>
+              </div>
+            </template>
+            <template #lowerTitle>
+              <div class="local-author-manage-site-author-title">
+                <span class="local-author-manage-site-author-title-text">未绑定站点作者</span>
+              </div>
+            </template>
+          </exchange-box>
         </div>
       </div>
     </template>
@@ -376,5 +383,19 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
   width: calc(50% - 5px);
   height: 100%;
   margin-left: 5px;
+}
+.local-author-manage-site-author-title {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--el-border-color);
+  border-radius: 5px;
+  background-color: var(--el-fill-color-blank);
+}
+.local-author-manage-site-author-title-text {
+  text-align: center;
+  writing-mode: vertical-lr;
+  color: var(--el-text-color-regular);
 }
 </style>
