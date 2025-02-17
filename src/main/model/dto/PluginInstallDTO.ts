@@ -1,5 +1,6 @@
 import Plugin from '../entity/Plugin.ts'
 import AdmZip from 'adm-zip'
+import PluginInstallConfig from '../../plugin/PluginInstallConfig.js'
 
 export default class PluginInstallDTO extends Plugin {
   /**
@@ -38,6 +39,11 @@ export default class PluginInstallDTO extends Plugin {
   package: AdmZip
 
   /**
+   * 域名列表
+   */
+  domains: { domain: string; homepage: string }[]
+
+  /**
    * 监听路径列表
    */
   listeners: string[]
@@ -51,36 +57,12 @@ export default class PluginInstallDTO extends Plugin {
     this.fileName = pluginDTO.fileName
     this.packagePath = pluginDTO.packagePath
     this.package = pluginDTO.package
+    this.domains = pluginDTO.domains
     this.listeners = pluginDTO.listeners
   }
 }
 
-interface PluginInstallDTOConstr {
-  /**
-   * 插件类型
-   */
-  type: string
-
-  /**
-   * 作者
-   */
-  author: string
-
-  /**
-   * 名称
-   */
-  name: string
-
-  /**
-   * 版本
-   */
-  version: string
-
-  /**
-   * 文件名
-   */
-  fileName: string
-
+interface PluginInstallDTOConstr extends PluginInstallConfig {
   /**
    * 安装包路径
    */
@@ -90,9 +72,4 @@ interface PluginInstallDTOConstr {
    * 安装包
    */
   package: AdmZip
-
-  /**
-   * 监听路径列表
-   */
-  listeners: string[]
 }

@@ -8,10 +8,29 @@ import Page from '../model/util/Page.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { IsNullish } from '../util/CommonUtil.js'
 import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
+import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, SiteDomain, SiteDomainDao> {
   constructor(db?: DB) {
     super(SiteDomainDao, db)
+  }
+
+  /**
+   * 保存
+   * @param entity
+   */
+  public async save(entity: SiteDomain) {
+    try {
+      return await super.save(entity)
+    } catch (error) {
+      if ((error as { code: string }).code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        const tempError = new Error('域名已存在')
+        LogUtil.error(this.constructor.name, tempError)
+        throw tempError
+      } else {
+        throw error
+      }
+    }
   }
 
   /**

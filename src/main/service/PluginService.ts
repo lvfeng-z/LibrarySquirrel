@@ -19,6 +19,8 @@ import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import { RESOURCE_PATH } from '../constant/CommonConstant.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
+import SiteDomainService from './SiteDomainService.js'
+import SiteDomain from '../model/entity/SiteDomain.js'
 
 /**
  * 主键查询
@@ -98,6 +100,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       fileName: config.fileName,
       packagePath: packagePath,
       package: packageContent,
+      domains: config.domains,
       listeners: config.listeners
     })
   }
@@ -144,6 +147,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
 
     const tempPlugin = new Plugin(pluginInstallDTO)
     return this.save(tempPlugin).then((pluginId) => {
+      // 任务创建监听器
       const listeners: string[] = pluginInstallDTO.listeners
       if (ArrayNotEmpty(listeners)) {
         const taskPluginListenerService = new TaskPluginListenerService()
@@ -156,6 +160,18 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
           taskPluginListeners.push(taskPluginListener)
         }
         taskPluginListenerService.saveBatch(taskPluginListeners)
+      }
+      // 域名
+      const domains = pluginInstallDTO.domains
+      if (ArrayNotEmpty(domains)) {
+        const siteDomainService = new SiteDomainService()
+        const siteDomains: SiteDomain[] = domains.map((domain) => {
+          const tempSiteDomain = new SiteDomain()
+          tempSiteDomain.domain = domain.domain
+          tempSiteDomain.homepage = domain.homepage
+          return tempSiteDomain
+        })
+        siteDomainService.saveBatch(siteDomains, true)
       }
       LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
     })

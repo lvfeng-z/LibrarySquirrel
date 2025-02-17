@@ -25,6 +25,11 @@ export default interface PluginInstallConfig {
   fileName: string
 
   /**
+   * 域名列表
+   */
+  domains: { domain: string; homepage: string }[]
+
+  /**
    * 监听路径列表
    */
   listeners: string[]
