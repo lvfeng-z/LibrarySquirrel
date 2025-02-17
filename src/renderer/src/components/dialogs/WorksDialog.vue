@@ -89,6 +89,8 @@ const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
   return IsNullish(result) ? [] : result
 })
 // 本地标签编辑开关
+const drawerState: Ref<boolean> = ref(false)
+// 本地标签编辑开关
 const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
 // 本地标签编辑开关
 const siteTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
@@ -199,6 +201,26 @@ async function requestWorksSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>,
 function handlePictureClicked() {
   apis.appLauncherOpenImage(props.works[0].filePath)
 }
+// 打开本地标签和站点标签的抽屉面板
+function openDrawer(isLocal: boolean) {
+  drawerState.value = true
+  if (isLocal) {
+    siteTagEdit.value = false
+    localTagEdit.value = true
+  } else {
+    localTagEdit.value = false
+    siteTagEdit.value = true
+  }
+}
+//
+function handleDrawerOpen() {
+  if (localTagEdit.value) {
+    localTagExchangeBox.value.refreshData(true)
+  }
+  if (siteTagEdit.value) {
+    siteTagExchangeBox.value.refreshData()
+  }
+}
 </script>
 <template>
   <el-dialog top="50px">
@@ -222,71 +244,67 @@ function handlePictureClicked() {
             {{ worksFullInfo.site?.siteName }}
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
-            <el-button @click="localTagEdit = true"> 编辑 </el-button>
+            <el-button @click="openDrawer(true)"> 编辑 </el-button>
             <tag-box v-model:data="localTags" />
-            <el-drawer v-model="localTagEdit" size="45%" :with-header="false" @open="localTagExchangeBox.refreshData()">
-              <exchange-box
-                ref="localTagExchangeBox"
-                class="works-dialog-tag-exchange-box"
-                :upper-main-input-boxes="localTagExchangeMainInput"
-                :lower-main-input-boxes="localTagExchangeMainInput"
-                :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
-                :lower-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, false)"
-                :search-button-disabled="false"
-                @upper-confirm="
-                  (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, true)
-                "
-                @lower-confirm="
-                  (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, false)
-                "
-                @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
-              >
-                <template #upperTitle>
-                  <div class="works-dialog-tag-exchange-box-title">
-                    <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
-                  </div>
-                </template>
-                <template #lowerTitle>
-                  <div class="works-dialog-tag-exchange-box-title">
-                    <span class="works-dialog-tag-exchange-box-title-text">未绑定</span>
-                  </div>
-                </template>
-              </exchange-box>
-            </el-drawer>
           </el-descriptions-item>
           <el-descriptions-item label="站点标签">
-            <el-button @click="siteTagEdit = true"> 编辑 </el-button>
+            <el-button @click="openDrawer(false)"> 编辑 </el-button>
             <tag-box v-model:data="siteTags" />
-            <el-drawer v-model="siteTagEdit" size="45%" :with-header="false" @open="siteTagExchangeBox.refreshData()">
-              <exchange-box
-                ref="siteTagExchangeBox"
-                class="works-dialog-tag-exchange-box"
-                upper-title="已有标签"
-                lower-title="可选标签"
-                :upper-main-input-boxes="siteTagExchangeMainInput"
-                :lower-main-input-boxes="siteTagExchangeMainInput"
-                :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
-                :lower-load="(_page) => requestWorksSiteTagPage(_page, false)"
-                :search-button-disabled="false"
-                @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
-                @lower-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
-                @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
-              >
-                <template #upperTitle>
-                  <div class="works-dialog-tag-exchange-box-title">
-                    <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
-                  </div>
-                </template>
-                <template #lowerTitle>
-                  <div class="works-dialog-tag-exchange-box-title">
-                    <span class="works-dialog-tag-exchange-box-title-text">未绑定</span>
-                  </div>
-                </template>
-              </exchange-box>
-            </el-drawer>
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
+      <el-drawer v-model="drawerState" size="45%" :with-header="false" @open="handleDrawerOpen" :open-delay="1">
+        <exchange-box
+          v-if="localTagEdit"
+          ref="localTagExchangeBox"
+          class="works-dialog-tag-exchange-box"
+          :upper-main-input-boxes="localTagExchangeMainInput"
+          :lower-main-input-boxes="localTagExchangeMainInput"
+          :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
+          :lower-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, false)"
+          :search-button-disabled="false"
+          @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, true)"
+          @lower-confirm="
+            (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, false)
+          "
+          @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
+        >
+          <template #upperTitle>
+            <div class="works-dialog-tag-exchange-box-title">
+              <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
+            </div>
+          </template>
+          <template #lowerTitle>
+            <div class="works-dialog-tag-exchange-box-title">
+              <span class="works-dialog-tag-exchange-box-title-text">未绑定</span>
+            </div>
+          </template>
+        </exchange-box>
+        <exchange-box
+          v-if="siteTagEdit"
+          ref="siteTagExchangeBox"
+          class="works-dialog-tag-exchange-box"
+          :upper-main-input-boxes="siteTagExchangeMainInput"
+          :lower-main-input-boxes="siteTagExchangeMainInput"
+          :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
+          :lower-load="(_page) => requestWorksSiteTagPage(_page, false)"
+          :search-button-disabled="false"
+          @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
+          @lower-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
+          @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
+        >
+          <template #upperTitle>
+            <div class="works-dialog-tag-exchange-box-title">
+              <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
+            </div>
+          </template>
+          <template #lowerTitle>
+            <div class="works-dialog-tag-exchange-box-title">
+              <span class="works-dialog-tag-exchange-box-title-text">未绑定</span>
+            </div>
+          </template>
+        </exchange-box>
+      </el-drawer>
     </div>
   </el-dialog>
 </template>

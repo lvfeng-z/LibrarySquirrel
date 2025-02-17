@@ -289,10 +289,10 @@ function handleBufferToggle() {
             border-radios="10px"
           >
             <div class="exchange-box-lower-op-button-upper" @click="handleExchangeConfirm(false)">
-              <el-icon><Check /></el-icon>
+              <el-icon class="exchange-box-lower-op-button-upper-icon"><Check /></el-icon>
             </div>
             <div class="exchange-box-lower-op-button-lower" @click="handleClearButtonClicked(false)">
-              <el-icon><Close /></el-icon>
+              <el-icon class="exchange-box-lower-op-button-lower-icon"><Close /></el-icon>
             </div>
           </collapse-panel>
           <collapse-panel
@@ -531,6 +531,12 @@ function handleBufferToggle() {
 .exchange-box-lower-op-button-upper:hover {
   background-color: var(--el-color-primary-light-9);
 }
+.exchange-box-lower-op-button-upper-icon {
+  transition: 0.3s;
+}
+.exchange-box-lower-op-button-upper:hover .exchange-box-lower-op-button-upper-icon {
+  scale: 1.2;
+}
 .exchange-box-lower-op-button-lower {
   display: flex;
   justify-content: center;
@@ -544,5 +550,11 @@ function handleBufferToggle() {
 }
 .exchange-box-lower-op-button-lower:hover {
   background-color: var(--el-color-danger-light-9);
+}
+.exchange-box-lower-op-button-lower-icon {
+  transition: 0.3s;
+}
+.exchange-box-lower-op-button-lower:hover .exchange-box-lower-op-button-lower-icon {
+  scale: 1.2;
 }
 </style>
