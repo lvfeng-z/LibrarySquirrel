@@ -26,11 +26,12 @@ import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import { ElMessageBox } from 'element-plus'
-import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
 import Developing from '@renderer/components/subpage/Developing.vue'
 import SiteManage from '@renderer/components/subpage/SiteManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
+import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
+import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
 
 // onMounted
 onMounted(() => {
@@ -72,7 +73,6 @@ const worksList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列�
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
-type subpages = 'TagManage' | 'LocalAuthorManage' | 'PluginManage' | 'TaskManage' | 'Settings' | 'SiteManage' | 'Developing' | 'Test'
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
@@ -81,6 +81,10 @@ const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workd
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksDTO>>> = ref(new Page<SearchCondition[], WorksDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
+//
+const subpageProps: Ref<{ siteManageFocusOnSiteDomainId: string[] | undefined }> = ref({
+  siteManageFocusOnSiteDomainId: undefined
+})
 
 // 方法
 // 查询标签选择列表
@@ -109,33 +113,33 @@ async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?
   }
 }
 // 开启副页面
-function showSubpage(pageName: subpages) {
+function showSubpage(pageName: SubPageEnum) {
   closeSubpage()
   pageState.subpage = true
   pageState.mainPage = false
   switch (pageName) {
-    case 'TagManage':
+    case SubPageEnum.TagManage:
       pageState.showTagManagePage = true
       break
-    case 'LocalAuthorManage':
+    case SubPageEnum.LocalAuthorManage:
       pageState.showLocalAuthorManagePage = true
       break
-    case 'PluginManage':
+    case SubPageEnum.PluginManage:
       pageState.showPluginManagePage = true
       break
-    case 'TaskManage':
+    case SubPageEnum.TaskManage:
       pageState.showTaskManagePage = true
       break
-    case 'Settings':
+    case SubPageEnum.Settings:
       pageState.showSettingsPage = true
       break
-    case 'SiteManage':
+    case SubPageEnum.SiteManage:
       pageState.showSiteManagePage = true
       break
-    case 'Developing':
+    case SubPageEnum.Developing:
       pageState.showDeveloping = true
       break
-    case 'Test':
+    case SubPageEnum.Test:
       pageState.showTest = true
       break
   }
@@ -208,10 +212,18 @@ window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
   showExplainPath.value = true
   pathWaitingExplain.value = dir
 })
-window.electron.ipcRenderer.on('goto-page', (_event, config: { content: string; title: string; options: ElMessageBoxOptions }) => {
+window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => {
   ElMessageBox.alert(config.content, config.title, config.options).then(() => {
-    settingsPageTourStates.value.workdir = true
-    showSubpage('Settings')
+    switch (config.page) {
+      case SubPageEnum.Settings:
+        settingsPageTourStates.value.workdir = true
+        showSubpage(SubPageEnum.Settings)
+        break
+      case SubPageEnum.SiteManage:
+        subpageProps.value.siteManageFocusOnSiteDomainId = config.extraData as string[]
+        showSubpage(SubPageEnum.SiteManage)
+        break
+    }
   })
 })
 
@@ -236,22 +248,22 @@ const showTestDialog = ref(false)
                 <el-icon><CollectionTag /></el-icon>
                 <span>标签</span>
               </template>
-              <el-menu-item index="1-1" @click="showSubpage('TagManage')">本地标签</el-menu-item>
-              <el-menu-item index="1-2" @click="showSubpage('Developing')">站点标签</el-menu-item>
+              <el-menu-item index="1-1" @click="showSubpage(SubPageEnum.TagManage)">本地标签</el-menu-item>
+              <el-menu-item index="1-2" @click="showSubpage(SubPageEnum.Developing)">站点标签</el-menu-item>
             </el-sub-menu>
             <el-sub-menu index="2">
               <template #title>
                 <el-icon><User /></el-icon>
                 <span>作者</span>
               </template>
-              <el-menu-item index="2-1" @click="showSubpage('LocalAuthorManage')"> 本地作者 </el-menu-item>
-              <el-menu-item index="2-2" @click="showSubpage('Developing')">站点作者</el-menu-item>
+              <el-menu-item index="2-1" @click="showSubpage(SubPageEnum.LocalAuthorManage)"> 本地作者 </el-menu-item>
+              <el-menu-item index="2-2" @click="showSubpage(SubPageEnum.Developing)">站点作者</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="3" @click="showSubpage('Developing')">
+            <el-menu-item index="3" @click="showSubpage(SubPageEnum.Developing)">
               <template #title>收藏</template>
               <el-icon><Star /></el-icon>
             </el-menu-item>
-            <el-menu-item index="4" @click="showSubpage('SiteManage')">
+            <el-menu-item index="4" @click="showSubpage(SubPageEnum.SiteManage)">
               <template #title>站点</template>
               <el-icon><Link /></el-icon>
             </el-menu-item>
@@ -260,17 +272,17 @@ const showTestDialog = ref(false)
                 <el-icon><List /></el-icon>
                 <span>任务</span>
               </template>
-              <el-menu-item index="5-1" @click="showSubpage('TaskManage')">任务管理</el-menu-item>
+              <el-menu-item index="5-1" @click="showSubpage(SubPageEnum.TaskManage)">任务管理</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="6" @click="showSubpage('PluginManage')">
+            <el-menu-item index="6" @click="showSubpage(SubPageEnum.PluginManage)">
               <template #title>插件</template>
               <el-icon><Ticket /></el-icon>
             </el-menu-item>
-            <el-menu-item index="7" @click="showSubpage('Settings')">
+            <el-menu-item index="7" @click="showSubpage(SubPageEnum.Settings)">
               <template #title>设置</template>
               <el-icon><Setting /></el-icon>
             </el-menu-item>
-            <el-menu-item index="8" @click="showSubpage('Test')">
+            <el-menu-item index="8" @click="showSubpage(SubPageEnum.Test)">
               <template #title>测试按钮</template>
               <el-icon><Coordinate /></el-icon>
             </el-menu-item>
@@ -333,7 +345,11 @@ const showTestDialog = ref(false)
           <plugin-manage v-if="pageState.showPluginManagePage" @close-self="closeSubpage" />
           <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
           <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" @close-self="closeSubpage" />
-          <site-manage v-if="pageState.showSiteManagePage" @close-self="closeSubpage" />
+          <site-manage
+            v-if="pageState.showSiteManagePage"
+            :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId"
+            @close-self="closeSubpage"
+          />
           <developing v-if="pageState.showDeveloping" @close-self="closeSubpage" />
           <test v-if="pageState.showTest" @close-self="closeSubpage" />
         </div>

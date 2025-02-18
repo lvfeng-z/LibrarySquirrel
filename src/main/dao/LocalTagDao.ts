@@ -145,13 +145,13 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     ) {
       const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${page.query.worksId} AND t1.id = re_works_tag.local_tag_id)`
       if (page.query.boundOnWorksId) {
-        whereClauses['worksId'] = existClause
+        whereClauses.set('worksId', existClause)
       } else {
-        whereClauses['worksId'] = 'NOT ' + existClause
+        whereClauses.set('worksId', 'NOT ' + existClause)
       }
     }
 
-    const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
+    const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
     const sort = IsNullish(page.query?.sort) ? {} : page.query.sort

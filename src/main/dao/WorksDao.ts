@@ -41,7 +41,10 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         'excludeSiteAuthorIds'
       ])
 
-      const whereClauses = Object.entries(whereClausesAndQuery.whereClauses).map((item) => item[1])
+      const whereClauses = whereClausesAndQuery.whereClauses
+        .values()
+        .toArray()
+        .map((item) => item[1])
 
       modifiedPage.query = whereClausesAndQuery.query
 

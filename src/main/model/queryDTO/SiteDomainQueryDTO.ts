@@ -25,6 +25,11 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
    */
   boundOnSite?: boolean | undefined | null
 
+  /**
+   * 域名列表
+   */
+  domains?: string[] | string
+
   constructor(siteDomainQueryDTO?: SiteDomainQueryDTO) {
     super(siteDomainQueryDTO)
     if (NotNullish(siteDomainQueryDTO)) {
@@ -32,6 +37,7 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
       this.domain = siteDomainQueryDTO.domain
       this.homepage = siteDomainQueryDTO.homepage
       this.boundOnSite = siteDomainQueryDTO.boundOnSite
+      this.domains = siteDomainQueryDTO.domains
     }
   }
 }

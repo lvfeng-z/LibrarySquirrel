@@ -1,14 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 站点域名
  */
 export default class SiteDomain extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-
   /**
    * 站点id
    */
@@ -26,13 +22,7 @@ export default class SiteDomain extends BaseEntity {
 
   constructor(siteDomain?: SiteDomain) {
     super(siteDomain)
-    if (siteDomain === undefined) {
-      this.id = undefined
-      this.siteId = undefined
-      this.domain = undefined
-      this.homepage = undefined
-    } else {
-      this.id = siteDomain.id
+    if (NotNullish(siteDomain)) {
       this.siteId = siteDomain.siteId
       this.domain = siteDomain.domain
       this.homepage = siteDomain.homepage

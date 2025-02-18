@@ -21,6 +21,8 @@ import { RESOURCE_PATH } from '../constant/CommonConstant.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
+import GotoPageConfig from '../model/util/GotoPageConfig.js'
+import { SubPageEnum } from '../constant/SubPageEnum.js'
 
 /**
  * 主键查询
@@ -146,35 +148,51 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
     const tempPlugin = new Plugin(pluginInstallDTO)
-    return this.save(tempPlugin).then((pluginId) => {
-      // 任务创建监听器
-      const listeners: string[] = pluginInstallDTO.listeners
-      if (ArrayNotEmpty(listeners)) {
-        const taskPluginListenerService = new TaskPluginListenerService()
-        const taskPluginListeners: TaskPluginListener[] = []
-        let taskPluginListener: TaskPluginListener
-        for (const listener of listeners) {
-          taskPluginListener = new TaskPluginListener()
-          taskPluginListener.pluginId = pluginId
-          taskPluginListener.listener = listener
-          taskPluginListeners.push(taskPluginListener)
+    const pluginId = await this.save(tempPlugin)
+
+    // 任务创建监听器
+    const listeners: string[] = pluginInstallDTO.listeners
+    if (ArrayNotEmpty(listeners)) {
+      const taskPluginListenerService = new TaskPluginListenerService()
+      const taskPluginListeners: TaskPluginListener[] = []
+      let taskPluginListener: TaskPluginListener
+      for (const listener of listeners) {
+        taskPluginListener = new TaskPluginListener()
+        taskPluginListener.pluginId = pluginId
+        taskPluginListener.listener = listener
+        taskPluginListeners.push(taskPluginListener)
+      }
+      taskPluginListenerService.saveBatch(taskPluginListeners)
+    }
+    // 域名
+    const domains = pluginInstallDTO.domains
+    if (ArrayNotEmpty(domains)) {
+      const siteDomainService = new SiteDomainService()
+      const siteDomains: SiteDomain[] = domains.map((domain) => {
+        const tempSiteDomain = new SiteDomain()
+        tempSiteDomain.domain = domain.domain
+        tempSiteDomain.homepage = domain.homepage
+        return tempSiteDomain
+      })
+      siteDomainService.saveBatch(siteDomains, true).then(() => {
+        const tempDomains = siteDomains.map((siteDomain) => siteDomain.domain)
+        const gotoPageConfig: GotoPageConfig = {
+          page: SubPageEnum.SiteManage,
+          title: '插件创建了新的域名',
+          content: '建议将新的域名绑定到站点，以免影响插件使用',
+          options: {
+            confirmButtonText: '去绑定',
+            cancelButtonText: '以后再说',
+            type: 'warning',
+            showClose: false
+          },
+          extraData: tempDomains
         }
-        taskPluginListenerService.saveBatch(taskPluginListeners)
-      }
-      // 域名
-      const domains = pluginInstallDTO.domains
-      if (ArrayNotEmpty(domains)) {
-        const siteDomainService = new SiteDomainService()
-        const siteDomains: SiteDomain[] = domains.map((domain) => {
-          const tempSiteDomain = new SiteDomain()
-          tempSiteDomain.domain = domain.domain
-          tempSiteDomain.homepage = domain.homepage
-          return tempSiteDomain
-        })
-        siteDomainService.saveBatch(siteDomains, true)
-      }
-      LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
-    })
+        const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+        mainWindow.webContents.send('goto-page', gotoPageConfig)
+      })
+    }
+    LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
   }
 
   /**

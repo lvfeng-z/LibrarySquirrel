@@ -54,9 +54,8 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     const modifiedQuery = this.getWhereClauses(queryConditions, alias, ignore)
 
     const whereClauses = modifiedQuery.whereClauses
-    const tempWhereClause = Object.values(whereClauses).map((value) => value)
 
-    const whereClause = this.splicingWhereClauses(tempWhereClause)
+    const whereClause = this.splicingWhereClauses(whereClauses.values().toArray())
     return { whereClause: whereClause, query: modifiedQuery.query }
   }
 
@@ -73,10 +72,10 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     alias?: string,
     ignore?: string[]
   ): {
-    whereClauses: Record<string, string>
+    whereClauses: Map<string, string>
     query: Query
   } {
-    const whereClauses: Record<string, string> = {}
+    const whereClauses: Map<string, string> = new Map<string, string>()
     const modifiedQuery = ToPlainParams(lodash.cloneDeep(queryConditions), ignore)
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
@@ -91,55 +90,73 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
           switch (comparator) {
             case Operator.EQUAL:
               if (value !== null) {
-                whereClauses[key] =
+                whereClauses.set(
+                  key,
                   alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+                )
                 modifiedValue = value
               } else {
-                whereClauses[key] =
+                whereClauses.set(
+                  key,
                   alias == undefined ? `"${snakeCaseKey}" ${Operator.IS_NULL}` : `${alias}."${snakeCaseKey}" ${Operator.IS_NULL}`
+                )
               }
               break
             case Operator.NOT_EQUAL:
               if (value !== null) {
-                whereClauses[key] =
+                whereClauses.set(
+                  key,
                   alias == undefined
                     ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
                     : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
+                )
                 modifiedValue = value
               } else {
-                whereClauses[key] =
+                whereClauses.set(
+                  key,
                   alias == undefined
                     ? `"${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
                     : `${alias}."${snakeCaseKey}" ${Operator.IS_NOT_NULL}`
+                )
               }
               break
             case Operator.LEFT_LIKE:
-              whereClauses[key] =
+              whereClauses.set(
+                key,
                 alias == undefined
                   ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
                   : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+              )
               modifiedValue = value + '%'
               break
             case Operator.RIGHT_LIKE:
-              whereClauses[key] =
+              whereClauses.set(
+                key,
                 alias == undefined
                   ? `"${snakeCaseKey}" ${Operator.LIKE} @${key}`
                   : `${alias}."${snakeCaseKey}" ${Operator.LIKE} @${key}`
+              )
               modifiedValue = '%' + value
               break
             case Operator.LIKE:
-              whereClauses[key] =
+              whereClauses.set(
+                key,
                 alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              )
               modifiedValue = '%' + value + '%'
               break
             case Operator.IN:
-              whereClauses[key] =
+              whereClauses.set(
+                key,
                 alias == undefined ? `"${snakeCaseKey}" ${comparator} (@${key})` : `${alias}."${snakeCaseKey}" ${comparator} (@${key})`
+              )
               modifiedValue = value
               break
             default:
-              whereClauses[key] =
+              whereClauses.set(
+                key,
                 alias == undefined ? `"${snakeCaseKey}" ${comparator} @${key}` : `${alias}."${snakeCaseKey}" ${comparator} @${key}`
+              )
               modifiedValue = value
           }
           modifiedQuery[key] = modifiedValue

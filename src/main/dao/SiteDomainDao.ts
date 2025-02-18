@@ -6,6 +6,7 @@ import Page from '../model/util/Page.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import StringUtil from '../util/StringUtil.js'
 import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
+import { ArrayNotEmpty } from '../util/CommonUtil.js'
 
 export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomain> {
   constructor(db?: DB) {
@@ -23,10 +24,19 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
           JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description, 'sortNum', t2.sort_num) as site
         FROM ${this.tableName} t1
           LEFT JOIN site t2 ON t1.site_id = t2.id`
-    const whereClauseAndQuery = super.getWhereClause(modifiedPage.query, 't1', ['boundOnSite'])
-    const whereClause = whereClauseAndQuery.whereClause
+    const whereClauseAndQuery = super.getWhereClauses(modifiedPage.query, 't1', ['boundOnSite', 'domains'])
+    const whereClauseMap = whereClauseAndQuery.whereClauses
+
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery
+
+    const whereClauseArray = whereClauseMap.values().toArray()
+    if (ArrayNotEmpty(page.query?.domains)) {
+      whereClauseArray.push('domain IN (@domains)')
+      modifiedQuery.domains = page.query.domains.join()
+    }
+    const whereClause = super.splicingWhereClauses(whereClauseArray)
+
     let statement = selectClause + ' ' + whereClause
     statement = await super.sortAndPage(statement, modifiedPage, modifiedPage.query.sort)
     if (modifiedPage.currentCount < 1) {

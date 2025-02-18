@@ -100,7 +100,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const modifiedQuery = whereClausesAndQuery.query
     modifiedPage.query = modifiedQuery
 
-    const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
+    const whereClauseArray = whereClauses.values().toArray()
 
     // 拼接sql语句
     let statement = selectClause.concat(' ', fromClause)

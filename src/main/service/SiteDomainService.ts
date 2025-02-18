@@ -76,7 +76,7 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
     if (IsNullish(page.query.sort)) {
       page.query.sort = { updateTime: false, createTime: false }
     }
-    page.query.operators = { domain: Operator.LIKE }
+    page.query.operators = { domain: Operator.LIKE, domains: Operator.IN }
     return this.dao.queryDTOPage(page)
   }
 

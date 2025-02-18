@@ -12,12 +12,16 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import lodash from 'lodash'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteDialog from '@renderer/components/dialogs/SiteDialog.vue'
 import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO.ts'
 import SiteDomainDTO from '@renderer/model/main/dto/SiteDomainDTO.ts'
 import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
 import { ElMessage } from 'element-plus'
+
+const props = defineProps<{
+  focusOnDomains?: string[] | undefined
+}>()
 
 // onMounted
 onMounted(() => {
@@ -26,6 +30,14 @@ onMounted(() => {
   }
   sitePage.value.query.sort = { updateTime: false, createTime: false }
   siteSearchTable.value.doSearch()
+  if (NotNullish(props.focusOnDomains)) {
+    if (IsNullish(siteDomainPage.value.query)) {
+      siteDomainPage.value.query = new SiteDomainQueryDTO()
+    }
+    siteDomainPage.value.query.sort = { updateTime: false, createTime: false }
+    siteDomainPage.value.query.domains = props.focusOnDomains
+    siteDomainSearchTable.value.doSearch()
+  }
 })
 
 // 变量

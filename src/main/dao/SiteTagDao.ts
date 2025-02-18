@@ -82,7 +82,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const modifiedQuery = whereClausesAndQuery.query
     modifiedPage.query = modifiedQuery
 
-    const whereClauseArray = Object.entries(whereClauses).map((whereClause) => whereClause[1])
+    const whereClauseArray = whereClauses.values().toArray()
 
     // 拼接sql语句
     let statement = selectClause + ' ' + fromClause
@@ -195,13 +195,13 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     ) {
       const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${modifiedPage.query.worksId} AND t1.id = re_works_tag.site_tag_id)`
       if (modifiedPage.query.boundOnWorksId) {
-        whereClauses['worksId'] = existClause
+        whereClauses.set('worksId', existClause)
       } else {
-        whereClauses['worksId'] = 'NOT ' + existClause
+        whereClauses.set('worksId', 'NOT ' + existClause)
       }
     }
 
-    const whereClause = super.splicingWhereClauses(Object.values(whereClauses))
+    const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
     let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause)
     const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort

@@ -9,7 +9,8 @@ import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVar, GlobalVars } from './base/GlobalVar.ts'
 import PluginService from './service/PluginService.js'
 import StringUtil from './util/StringUtil.js'
-import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
+import GotoPageConfig from './model/util/GotoPageConfig.js'
+import { SubPageEnum } from './constant/SubPageEnum.js'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -31,7 +32,8 @@ function createWindow(): Electron.BrowserWindow {
     // 检查有没有设置工作目录，没有设置的话发送提醒
     const settings = GlobalVar.get(GlobalVars.SETTINGS).store
     if (StringUtil.isBlank(settings.workdir)) {
-      const gotoPageConfig: { content: string; title: string; options: ElMessageBoxOptions } = {
+      const gotoPageConfig: GotoPageConfig = {
+        page: SubPageEnum.Settings,
         title: '请设置工作目录',
         content: 'LibrarySquirrel需要工作目录才能正常使用',
         options: {
