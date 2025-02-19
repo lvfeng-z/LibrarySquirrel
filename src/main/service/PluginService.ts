@@ -23,6 +23,7 @@ import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import GotoPageConfig from '../model/util/GotoPageConfig.js'
 import { SubPageEnum } from '../constant/SubPageEnum.js'
+import { pathToFileURL } from 'node:url'
 
 /**
  * 主键查询
@@ -71,7 +72,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     AssertNotNullish(plugin.name, `生成插件加载路径失败，插件的名称为空，pluginId: ${id}`)
     AssertNotNullish(plugin.version, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
     AssertNotNullish(plugin.fileName, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
-    dto.loadPath = path.join('file://', RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.fileName)
+    dto.loadPath = pathToFileURL(
+      path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.fileName)
+    ).href
     return dto
   }
 

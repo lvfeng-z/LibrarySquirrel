@@ -215,7 +215,7 @@ function openDrawer(isLocal: boolean) {
 //
 function handleDrawerOpen() {
   if (localTagEdit.value) {
-    localTagExchangeBox.value.refreshData(true)
+    localTagExchangeBox.value.refreshData()
   }
   if (siteTagEdit.value) {
     siteTagExchangeBox.value.refreshData()
@@ -253,7 +253,7 @@ function handleDrawerOpen() {
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
-      <el-drawer v-model="drawerState" size="45%" :with-header="false" @open="handleDrawerOpen" :open-delay="1">
+      <el-drawer v-model="drawerState" size="45%" :with-header="false" :open-delay="1" @open="handleDrawerOpen">
         <exchange-box
           v-if="localTagEdit"
           ref="localTagExchangeBox"
