@@ -60,6 +60,37 @@ function createWindow(): Electron.BrowserWindow {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 
+  // 创建右键菜单
+  const contextMenu = Electron.Menu.buildFromTemplate([
+    {
+      label: '复制',
+      role: 'copy'
+    },
+    {
+      label: '粘贴',
+      role: 'paste'
+    },
+    {
+      label: '剪切',
+      role: 'cut'
+    },
+    {
+      type: 'separator' // 分隔线
+    },
+    {
+      label: '查看源代码',
+      click: () => {
+        mainWindow.webContents.openDevTools() // 打开开发者工具
+      }
+    }
+  ])
+
+  // 监听右键点击事件并显示菜单
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  mainWindow.webContents.on('context-menu', (_event, _params) => {
+    contextMenu.popup() // 弹出右键菜单
+  })
+
   return mainWindow
 }
 
