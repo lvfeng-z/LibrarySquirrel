@@ -24,7 +24,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     const query = page.query
     const statements: string[] = []
     const hasKeyword = StringUtil.isNotBlank(query?.keyword)
-    const keyword = hasKeyword ? undefined : '%' + query?.keyword + '%'
+    const keyword = hasKeyword ? '%' + query?.keyword + '%' : undefined
     if (hasKeyword && NotNullish(query)) {
       query.keyword = keyword
     }
