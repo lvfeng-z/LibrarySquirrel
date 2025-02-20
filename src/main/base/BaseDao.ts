@@ -278,7 +278,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     plainObject = ObjectUtil.alignProperties(plainObject, null)
     // 按照第一个对象的属性设置insert子句的value部分
     const columns = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
-    const insertClause = `INSERT OR REPLACE INTO "${this.tableName}" (${columns})`
+    const insertClause = `INSERT INTO "${this.tableName}" (${columns})`
+    const excludedClause = columns.filter((column) => BaseEntity.PK !== column).map((column) => `${column} = EXCLUDED.${column}`)
+    const upsertClause = `ON CONFLICT(id) DO UPDATE SET ${excludedClause.join(',')}`
     const valuesClauses: string[] = []
 
     // 存储编号后的所有属性
@@ -288,13 +290,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     plainObject.forEach((entity) => {
       // 给对象的属性编号，放进新的对象中
       const tempNumberedProperties = Object.fromEntries(
-        Object.entries(entity).map(([key, value]) => [StringUtil.camelToSnakeCase(key).concat(String(index)), value])
+        Object.entries(entity).map(([key, value]) => [StringUtil.camelToSnakeCase(key) + String(index), value])
       )
 
       // 获取values子句
       valuesClauses.push(
         Object.keys(tempNumberedProperties)
-          .map((key) => '@'.concat(key))
+          .map((key) => `@${key}`)
           .join()
       )
 
@@ -304,9 +306,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       index++
     })
 
-    const valuesClause = 'VALUES ' + valuesClauses.map((valuesClause) => '('.concat(valuesClause, ')')).join()
+    const valuesClause = 'VALUES ' + valuesClauses.map((valuesClause) => `(${valuesClause})`).join()
 
-    const statement = insertClause.concat(' ', valuesClause)
+    const statement = insertClause + ' ' + valuesClause + ' ' + upsertClause
 
     const db = this.acquire()
     return db

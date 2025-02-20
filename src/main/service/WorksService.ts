@@ -149,7 +149,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         .transaction(async (transactionDB): Promise<number> => {
           // 如果worksSets不为空，则此作品是作品集中的作品
           let worksSetId: number = 0
-          if (NotNullish(worksDTO.worksSets) && worksDTO.worksSets.length > 0) {
+          if (ArrayNotEmpty(worksDTO.worksSets)) {
             // 遍历处理作品集数组
             for (const worksSet of worksDTO.worksSets) {
               if (NotNullish(worksSet) && NotNullish(worksDTO.taskId)) {
@@ -175,7 +175,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             }
           }
           // 保存站点作者
-          if (NotNullish(siteAuthors)) {
+          if (ArrayNotEmpty(siteAuthors)) {
             const siteAuthorService = new SiteAuthorService(transactionDB)
             await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
             // 查询站点作者，获取其id，供后面绑定使用
@@ -187,7 +187,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             }
           }
           // 保存站点标签
-          if (NotNullish(siteTags) && siteTags.length > 0) {
+          if (ArrayNotEmpty(siteTags)) {
             const siteTagService = new SiteTagService(transactionDB)
             await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
             // 查询站点标签，获取其id，供后面绑定使用
@@ -235,7 +235,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                     role: IsNullish(localAuthor.authorRole) ? AuthorRole.MAIN : localAuthor.authorRole
                   }
                 })
-                .filter((obj) => NotNullish(obj))
+                .filter(NotNullish)
               await reWorksAuthorService.link(OriginType.LOCAL, localAuthorIds, worksDTO.id)
             }
             // 关联作品和站点作者
@@ -247,7 +247,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                   }
                   return { authorId: siteAuthor.id, role: IsNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole }
                 })
-                .filter((id) => NotNullish(id))
+                .filter(NotNullish)
               await reWorksAuthorService.link(OriginType.SITE, siteAuthorIds, worksDTO.id)
             }
           }
@@ -255,12 +255,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             const reWorksTagService = new ReWorksTagService(transactionDB)
             // 关联作品和本地标签
             if (ArrayNotEmpty(localTags)) {
-              const localTagIds = localTags.map((localTag) => localTag.id).filter((id) => NotNullish(id))
+              const localTagIds = localTags.map((localTag) => localTag.id).filter(NotNullish)
               await reWorksTagService.link(OriginType.LOCAL, localTagIds, worksDTO.id)
             }
             // 关联作品和站点标签
             if (ArrayNotEmpty(siteTags)) {
-              const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter((id) => NotNullish(id))
+              const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter(NotNullish)
               await reWorksTagService.link(OriginType.SITE, siteTagIds, worksDTO.id)
             }
           }
