@@ -21,7 +21,7 @@ const apis = {
   appLauncherOpenImage: window.api.appLauncherOpenImage
 }
 const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> = ref('contain')
-const caseWidth: Ref<UnwrapRef<string>> = computed(() => (props.maxWidth === undefined ? 'auto' : String(props.maxWidth) + 'px')) // 展示框宽度
+// const caseWidth: Ref<UnwrapRef<string>> = computed(() => (props.maxWidth === undefined ? 'auto' : String(props.maxWidth) + 'px')) // 展示框宽度
 const caseHeight: Ref<UnwrapRef<string>> = computed(() => (props.maxHeight === undefined ? 'auto' : String(props.maxHeight) + 'px')) // 展示框高度
 // src的参数
 const srcParamStr: Ref<UnwrapRef<string>> = computed(() => {
@@ -34,7 +34,7 @@ const srcParamStr: Ref<UnwrapRef<string>> = computed(() => {
   }
   return ArrayNotEmpty(params) ? '?' + params.join('&') : ''
 })
-let clickTimeout: NodeJS.Timeout
+let clickTimeout
 
 // 方法
 // 判断el-image使用什么模式
@@ -73,8 +73,6 @@ function handlePictureClicked() {
 .works-display-case {
   display: flex;
   flex-direction: column;
-  max-height: v-bind(caseHeight);
-  max-width: v-bind(caseWidth);
 }
 .works-display-case-image {
   width: auto;

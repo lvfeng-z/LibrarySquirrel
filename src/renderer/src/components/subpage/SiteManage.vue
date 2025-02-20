@@ -505,7 +505,13 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
           >
           </search-table>
         </div>
-        <el-drawer v-model="siteDomainDrawerState" size="45%" :with-header="false" @open="siteDomainDrawerTable.doSearch()">
+        <el-drawer
+          v-model="siteDomainDrawerState"
+          :open-delay="1"
+          size="45%"
+          :with-header="false"
+          @open="siteDomainDrawerTable.doSearch()"
+        >
           <search-table
             ref="siteDomainDrawerTable"
             v-model:page="siteDomainPage"
@@ -529,18 +535,18 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
     </template>
     <template #dialog>
       <site-dialog
-        align-center
-        destroy-on-close
         v-model:form-data="siteDialogData"
         v-model:state="siteDialogState"
+        align-center
+        destroy-on-close
         :mode="siteDialogMode"
         @request-success="handleSiteDialogRequestSuccess"
       />
       <site-domain-dialog
-        align-center
-        destroy-on-close
         v-model:form-data="siteDomainDialogData"
         v-model:state="siteDomainDialogState"
+        align-center
+        destroy-on-close
         :mode="siteDomainDialogMode"
         @request-success="handleSiteDomainDialogRequestSuccess"
       />
