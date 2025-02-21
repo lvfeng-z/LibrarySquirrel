@@ -61,6 +61,14 @@ export default class TaskWriter {
         LogUtil.error('TaskWriter', `readable出错${err}`)
         reject(err)
       }
+      if (!readable.listeners('error').includes(readableErrorHandler)) {
+        readable.once('error', readableErrorHandler)
+      }
+      writable.once('error', (err) => {
+        errorOccurred = true
+        LogUtil.error('TaskWriter', `writable出错，${err}`)
+        reject(err)
+      })
       const readableEndHandler = () => {
         this.readableFinished = true
         if (!errorOccurred) {
@@ -69,17 +77,9 @@ export default class TaskWriter {
           reject()
         }
       }
-      readable.once('error', readableErrorHandler)
-      writable.once('error', (err) => {
-        errorOccurred = true
-        LogUtil.error('TaskWriter', `writable出错，${err}`)
-        reject(err)
-      })
-      readable.once('end', readableEndHandler)
-      readable.once('pause', () => {
-        readable.removeListener('error', readableErrorHandler)
-        readable.removeListener('end', readableEndHandler)
-      })
+      if (!readable.listeners('end').includes(readableEndHandler)) {
+        readable.once('end', readableEndHandler)
+      }
       writable.once('finish', () => {
         if (!errorOccurred) {
           return this.paused ? resolve(FileSaveResult.PAUSE) : resolve(FileSaveResult.FINISH)
