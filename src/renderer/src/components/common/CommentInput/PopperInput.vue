@@ -136,11 +136,11 @@ function getSpanValue() {
   <el-popover :visible="!disabled" width="auto">
     <template #default>
       <component
-        markRow
-        ref="inputRef"
         :is="dynamicComponent"
+        ref="inputRef"
         v-bind="{ config: config, handleDataChange: handleDataChange }"
         v-model="data"
+        mark-row
         @blur="handleBlur"
       />
     </template>

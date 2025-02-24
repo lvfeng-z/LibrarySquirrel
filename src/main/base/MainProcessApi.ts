@@ -27,23 +27,29 @@ import PluginService from '../service/PluginService.js'
 function exposeService() {
   // test
   Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
+    LogUtil.info('MainProcessApi', 'test-insertLocalTag10W')
     return test.insertLocalTag10W()
   })
   Electron.ipcMain.handle('test-transactionTest', async () => {
+    LogUtil.info('MainProcessApi', 'test-transactionTest')
     return test.transactionTest()
   })
   Electron.ipcMain.handle('test-pLimitTest', async () => {
+    LogUtil.info('MainProcessApi', 'test-pLimitTest')
     return test.pLimitTest()
   })
   Electron.ipcMain.handle('test-installPluginTest', async () => {
+    LogUtil.info('MainProcessApi', 'test-installPluginTest')
     return test.installPluginTest()
   })
   Electron.ipcMain.handle('test-mainWindowMsgTest', async () => {
+    LogUtil.info('MainProcessApi', 'test-mainWindowMsgTest')
     return test.mainWindowMsgTest()
   })
 
   // AppLauncherService
   Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'appLauncher-openImage')
     const service = new AppLauncherService()
     try {
       service.openImage(args)
@@ -55,6 +61,7 @@ function exposeService() {
 
   //AutoExplainPathService
   Electron.ipcMain.handle('autoExplainPath-getListenerPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'autoExplainPath-getListenerPage')
     const service = new AutoExplainPathService()
     try {
       const page = await service.getListenerPage(args)
@@ -64,6 +71,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('autoExplainPath-getListenerList', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'autoExplainPath-getListenerList')
     const service = new AutoExplainPathService()
     try {
       const page = await service.getListenerList(args)
@@ -75,6 +83,7 @@ function exposeService() {
 
   // LocalAuthorService
   Electron.ipcMain.handle('localAuthor-save', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-save')
     const service = new LocalAuthorService()
     try {
       const page = await service.save(args)
@@ -84,6 +93,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localAuthor-deleteById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-deleteById')
     const service = new LocalAuthorService()
     try {
       const page = await service.deleteById(args)
@@ -93,6 +103,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localAuthor-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-updateById')
     const service = new LocalAuthorService()
     try {
       const page = await service.updateById(args)
@@ -102,6 +113,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localAuthor-getById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-getById')
     const service = new LocalAuthorService()
     try {
       const page = await service.getById(args)
@@ -111,6 +123,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localAuthor-queryPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-queryPage')
     const service = new LocalAuthorService()
     args = new Page(args)
     try {
@@ -121,6 +134,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localAuthor-listSelectItems', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-listSelectItems')
     const service = new LocalAuthorService()
     try {
       const result = await service.listSelectItems(args)
@@ -130,6 +144,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localAuthor-querySelectItemPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localAuthor-querySelectItemPage')
     const service = new LocalAuthorService()
     try {
       const result = await service.querySelectItemPage(args)
@@ -141,6 +156,7 @@ function exposeService() {
 
   // LocalTagService
   Electron.ipcMain.handle('localTag-save', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-save')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.save(args))
@@ -149,6 +165,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-deleteById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-deleteById')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.deleteById(args))
@@ -157,6 +174,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-updateById')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.updateById(args))
@@ -165,6 +183,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-queryPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-queryPage')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.queryPage(args))
@@ -173,6 +192,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-getById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-getById')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.getById(args))
@@ -181,6 +201,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-getTree', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-getTree')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.getTree(args))
@@ -189,6 +210,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-listSelectItems', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-listSelectItems')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.listSelectItems(args))
@@ -197,6 +219,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-querySelectItemPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-querySelectItemPage')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.querySelectItemPage(args))
@@ -205,6 +228,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-listByWorksId', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-listByWorksId')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.listByWorksId(args))
@@ -213,6 +237,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('localTag-querySelectItemPageByWorksId', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-querySelectItemPageByWorksId')
     const localTagService = new LocalTagService()
     try {
       return ApiUtil.response(await localTagService.querySelectItemPageByWorksId(args))
@@ -223,6 +248,7 @@ function exposeService() {
 
   // PluginService
   Electron.ipcMain.handle('plugin-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-updateById')
     const pluginService = new PluginService()
     try {
       return ApiUtil.response(await pluginService.updateById(args))
@@ -231,6 +257,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('plugin-queryPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-queryPage')
     const pluginService = new PluginService()
     try {
       return ApiUtil.response(await pluginService.queryPage(args))
@@ -239,6 +266,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('plugin-reInstall', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-reInstall')
     const pluginService = new PluginService()
     try {
       return ApiUtil.response(await pluginService.reInstall(args))
@@ -247,6 +275,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('plugin-unInstall', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-unInstall')
     const pluginService = new PluginService()
     try {
       return ApiUtil.response(await pluginService.unInstall(args))
@@ -257,6 +286,7 @@ function exposeService() {
 
   // ReWorksTagService
   Electron.ipcMain.handle('reWorksTag-link', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {
+    LogUtil.info('MainProcessApi', 'reWorksTag-link')
     const reWorksTagService = new ReWorksTagService()
     try {
       return ApiUtil.response(await reWorksTagService.link(type, localTagIds, worksId))
@@ -265,6 +295,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('reWorksTag-unlink', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {
+    LogUtil.info('MainProcessApi', 'reWorksTag-unlink')
     const reWorksTagService = new ReWorksTagService()
     try {
       return ApiUtil.response(await reWorksTagService.unlink(type, localTagIds, worksId))
@@ -275,6 +306,7 @@ function exposeService() {
 
   // SearchService
   Electron.ipcMain.handle('search-querySearchConditionPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'search-querySearchConditionPage')
     const queryService = new SearchService()
     try {
       return ApiUtil.response(await queryService.querySearchConditionPage(args))
@@ -283,6 +315,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('search-queryWorksPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'search-queryWorksPage')
     const queryService = new SearchService()
     try {
       return ApiUtil.response(await queryService.queryWorksPage(args))
@@ -308,6 +341,7 @@ function exposeService() {
 
   // SiteService
   Electron.ipcMain.handle('site-deleteById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'site-deleteById')
     const siteService = new SiteService()
     try {
       return ApiUtil.response(await siteService.deleteById(args))
@@ -316,6 +350,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('site-queryPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'site-queryPage')
     const siteService = new SiteService()
     try {
       args = new Page<SiteQueryDTO, Site>(args)
@@ -325,6 +360,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('site-querySelectItemPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'site-querySelectItemPage')
     const siteService = new SiteService()
     try {
       return ApiUtil.response(await siteService.querySelectItemPage(args))
@@ -333,6 +369,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('site-save', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'site-save')
     const siteService = new SiteService()
     try {
       return ApiUtil.response(await siteService.save(args))
@@ -341,6 +378,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('site-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'site-updateById')
     const siteService = new SiteService()
     try {
       return ApiUtil.response(await siteService.updateById(args))
@@ -351,6 +389,7 @@ function exposeService() {
 
   // SiteDomainService
   Electron.ipcMain.handle('siteDomain-deleteById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteDomain-deleteById')
     const siteDomainService = new SiteDomainService()
     try {
       return ApiUtil.response(await siteDomainService.deleteById(args))
@@ -359,6 +398,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteDomain-queryPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteDomain-queryPage')
     const siteDomainService = new SiteDomainService()
     try {
       args = new Page<SiteQueryDTO, Site>(args)
@@ -368,6 +408,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteDomain-save', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteDomain-save')
     const siteDomainService = new SiteDomainService()
     try {
       return ApiUtil.response(await siteDomainService.save(args))
@@ -376,6 +417,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteDomain-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteDomain-updateById')
     const siteDomainService = new SiteDomainService()
     try {
       return ApiUtil.response(await siteDomainService.updateById(args))
@@ -384,6 +426,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteDomain-queryDTOPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteDomain-queryDTOPage')
     const siteDomainService = new SiteDomainService()
     try {
       args = new Page(args)
@@ -393,6 +436,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteDomain-queryDTOPageBySite', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteDomain-queryDTOPageBySite')
     const siteDomainService = new SiteDomainService()
     try {
       args = new Page(args)
@@ -404,6 +448,7 @@ function exposeService() {
 
   // SiteAuthorService
   Electron.ipcMain.handle('siteAuthor-updateBindLocalAuthor', async (_event, arg1, arg2) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-updateBindLocalAuthor')
     const siteAuthorService = new SiteAuthorService()
     try {
       return ApiUtil.response(await siteAuthorService.updateBindLocalAuthor(arg1, arg2))
@@ -412,6 +457,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-queryBoundOrUnboundInLocalAuthorPage')
     const siteAuthorService = new SiteAuthorService()
     try {
       return ApiUtil.response(await siteAuthorService.queryBoundOrUnboundInLocalAuthorPage(args))
@@ -422,6 +468,7 @@ function exposeService() {
 
   // SiteTagService
   Electron.ipcMain.handle('siteTag-save', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteTag-save')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.save(args))
@@ -430,6 +477,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteTag-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteTag-updateById')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.updateById(args))
@@ -438,6 +486,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteTag-updateBindLocalTag', async (_event, localTagId: string | null, siteTagIds: string[]) => {
+    LogUtil.info('MainProcessApi', 'siteTag-updateBindLocalTag')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.updateBindLocalTag(localTagId, siteTagIds))
@@ -446,6 +495,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteTag-queryBoundOrUnboundToLocalTagPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-queryBoundOrUnboundToLocalTagPage')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))
@@ -454,6 +504,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteTag-queryPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-queryPageByWorksId')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.queryPageByWorksId(page))
@@ -462,6 +513,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('siteTag-querySelectItemPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-querySelectItemPageByWorksId')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.querySelectItemPageByWorksId(page))
@@ -472,6 +524,7 @@ function exposeService() {
 
   // TaskService
   Electron.ipcMain.handle('task-createTask', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-createTask')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.createTask(args))
@@ -480,6 +533,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-startTaskTree', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-startTaskTree')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.startTaskTree(args))
@@ -488,6 +542,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-retryTaskTree', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-retryTaskTree')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.retryTaskTree(args))
@@ -496,6 +551,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-deleteTask', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-deleteTask')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.deleteTask(args))
@@ -504,6 +560,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-queryPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-queryPage')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.queryPage(args))
@@ -512,6 +569,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-queryParentPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-queryParentPage')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.queryParentPage(args))
@@ -520,6 +578,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-queryTreeDataPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-queryTreeDataPage')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.queryTreeDataPage(args))
@@ -528,6 +587,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-listChildrenTask', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-listChildrenTask')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.listChildrenTask(args))
@@ -536,6 +596,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-queryChildrenTaskPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-queryChildrenTaskPage')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.queryChildrenTaskPage(args))
@@ -544,6 +605,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-listSchedule', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-listSchedule')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.listSchedule(args))
@@ -552,6 +614,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-pauseTaskTree', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-pauseTaskTree')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.pauseTaskTree(args))
@@ -560,6 +623,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-resumeTaskTree', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-resumeTaskTree')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.resumeTaskTree(args))

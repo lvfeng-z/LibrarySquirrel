@@ -118,17 +118,18 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     }
 
     // 递归查询rootId的子节点
-    const localTags = await this.dao.selectTreeNode(rootId)
+    const localTags = await this.dao.selectTreeNode(rootId, 1)
     // 子节点转换为TreeSelectNode类型
-    const treeNodes = localTags.map((localTag) => {
+    const treeNodes = localTags.map((localTagDTO) => {
       const treeSelectNode = new TreeSelectNode()
       treeSelectNode.children = []
       treeSelectNode.extraData = undefined
-      treeSelectNode.id = localTag.id as number
-      treeSelectNode.label = localTag.localTagName
-      treeSelectNode.pid = localTag.baseLocalTagId as number
+      treeSelectNode.id = localTagDTO.id as number
+      treeSelectNode.label = localTagDTO.localTagName
+      treeSelectNode.pid = localTagDTO.baseLocalTagId as number
       treeSelectNode.secondaryLabel = ''
-      treeSelectNode.value = localTag.id as number
+      treeSelectNode.value = localTagDTO.id as number
+      treeSelectNode.isLeaf = localTagDTO.isLeaf
       return treeSelectNode
     })
 

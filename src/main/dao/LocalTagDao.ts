@@ -7,6 +7,7 @@ import DB from '../database/DB.ts'
 import Page from '../model/util/Page.js'
 import { IsNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
+import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
@@ -51,20 +52,20 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     }
     const statement = `WITH RECURSIVE treeNode AS
          (
-           SELECT *, 1 AS level
-           FROM local_tag
+           SELECT *, 1 AS level, NOT EXISTS(SELECT 1 FROM local_tag WHERE base_local_tag_id = t1.id) AS isLeaf
+           FROM local_tag t1
            WHERE base_local_tag_id = @rootId
            UNION ALL
-           SELECT local_tag.*, treeNode.level + 1 AS level
-           FROM local_tag
-           JOIN treeNode ON local_tag.base_local_tag_id = treeNode.id
+           SELECT t1.*, treeNode.level + 1 AS level, NOT EXISTS(SELECT 1 FROM local_tag WHERE base_local_tag_id = t1.id) AS isLeaf
+           FROM local_tag t1
+           JOIN treeNode ON t1.base_local_tag_id = treeNode.id
            WHERE treeNode.level < @depth
          )
          SELECT * FROM treeNode`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth })
-      .then((result) => this.toResultTypeDataList<LocalTag>(result))
+      .then((result) => this.toResultTypeDataList<LocalTagDTO>(result))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

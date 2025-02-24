@@ -377,10 +377,10 @@ async function requestSiteTagSelectItemPage(
     </template>
     <template #dialog>
       <local-tag-dialog
-        align-center
-        destroy-on-close
         v-model:form-data="dialogData"
         v-model:state="dialogState"
+        align-center
+        destroy-on-close
         :mode="localTagDialogMode"
         @request-success="handleDialogRequestSuccess"
       />

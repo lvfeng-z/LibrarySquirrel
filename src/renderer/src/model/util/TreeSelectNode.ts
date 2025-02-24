@@ -7,6 +7,7 @@ export default class TreeSelectNode implements TreeNode {
   id: string | number | undefined | null
   pid: string | number | undefined | null
   children: TreeSelectNode[] | undefined | null
+  isLeaf: boolean | undefined | null
   value: string | number | null | undefined
   label: string | null | undefined
   secondaryLabel: string | null | undefined
@@ -18,6 +19,7 @@ export default class TreeSelectNode implements TreeNode {
       this.id = undefined
       this.pid = undefined
       this.children = undefined
+      this.isLeaf = undefined
       this.value = undefined
       this.label = undefined
       this.secondaryLabel = undefined
@@ -27,6 +29,7 @@ export default class TreeSelectNode implements TreeNode {
       this.id = treeSelectNode.id
       this.pid = treeSelectNode.pid
       this.children = treeSelectNode.children
+      this.isLeaf = treeSelectNode.isLeaf
       this.value = treeSelectNode.value
       this.label = treeSelectNode.label
       this.secondaryLabel = treeSelectNode.secondaryLabel
