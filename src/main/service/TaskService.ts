@@ -368,10 +368,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task.pluginVersion = plugin.version
     const taskHandler: TaskHandler = await pluginLoader.load(plugin.id)
 
-    // 调用插件的generateWorksInfo方法，获取作品信息
+    // 调用插件的createWorksInfo方法，获取作品信息
     let worksPluginDTO: WorksPluginDTO
     try {
-      worksPluginDTO = await taskHandler.generateWorksInfo(task)
+      worksPluginDTO = await taskHandler.createWorksInfo(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件获取作品信息时失败`, error)
       return false

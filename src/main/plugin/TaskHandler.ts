@@ -23,7 +23,7 @@ export interface TaskHandler extends BasePlugin {
    * 生成作品信息
    * @param task 需开始的任务
    */
-  generateWorksInfo(task: Task): Promise<WorksPluginDTO>
+  createWorksInfo(task: Task): Promise<WorksPluginDTO>
 
   /**
    * 获取用于开始任务的读取流
@@ -70,9 +70,9 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     isTaskHandler = 'create' in response && typeof response.create === 'function'
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现create方法，${pluginInfo}`)
 
-    // generateWorksInfo方法
-    isTaskHandler = 'generateWorksInfo' in response && typeof response.start === 'function'
-    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现generateWorksInfo方法，${pluginInfo}`)
+    // createWorksInfo方法
+    isTaskHandler = 'createWorksInfo' in response && typeof response.start === 'function'
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现createWorksInfo方法，${pluginInfo}`)
 
     // start方法
     isTaskHandler = 'start' in response && typeof response.start === 'function'
