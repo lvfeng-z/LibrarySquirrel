@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import { ref } from 'vue'
+import { ElTreeSelect } from 'element-plus'
 
 // props
 const props = defineProps<{
@@ -14,6 +15,12 @@ const data = defineModel('data', { default: undefined, required: false })
 // 变量
 // el-input组件的实例
 const input = ref()
+// 树形选择组件配置
+const treeProps = {
+  label: 'label',
+  children: 'children',
+  isLeaf: 'isLeaf'
+}
 
 // 方法
 function focus() {
@@ -33,9 +40,10 @@ defineExpose({ focus })
     :remote="props.config.useLoad"
     :remote-method="(query: unknown) => props.config.refreshSelectData(query)"
     :filterable="props.config.useLoad"
+    :props="treeProps"
     clearable
     @change="handleDataChange"
-  ></el-tree-select>
+  />
 </template>
 
 <style scoped></style>

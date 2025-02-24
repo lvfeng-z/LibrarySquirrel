@@ -19,11 +19,13 @@ export class CommonInputConfig implements ICommonInputConfig {
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
   dblclickToEdit?: boolean // 是否可以双击启用
+  placeholder?: string // 占位符
+  render?: (data?) => VNode
   selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
   useLoad?: boolean // 是否load函数获得选择列表数据
   load?: (query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]> // 给selectData赋值的函数
-  placeholder?: string // 占位符
-  render?: (data?) => VNode
+  lazy?: boolean // 选择列表是否开启懒加载
+  treeLoad?: (node, resolve, query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]>
 
   constructor(config: ICommonInputConfig) {
     this.type = config.type
@@ -59,9 +61,10 @@ export interface ICommonInputConfig {
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
   dblclickToEdit?: boolean // 是否可以双击启用
+  placeholder?: string // 占位符
+  render?: (data?) => VNode
   selectData?: SelectItem[] | TreeSelectNode[] // 选择列表数据
   useLoad?: boolean // 是否load函数获得选择列表数据
   load?: (c) => Promise<SelectItem[] | TreeSelectNode[]> // 给selectData赋值的函数
-  placeholder?: string // 占位符
-  render?: (data?) => VNode
+  lazy?: boolean // 选择列表是否开启懒加载
 }

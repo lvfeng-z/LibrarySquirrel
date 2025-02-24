@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
 import LocalTag from '../../model/main/entity/LocalTag.ts'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
@@ -37,8 +36,7 @@ const apis = {
   localTagGetTree: window.api.localTagGetTree,
   localTagGetById: window.api.localTagGetById
 }
-// 基础标签选择框数据
-const baseTagSelectData: Ref<TreeSelectNode[]> = ref([])
+// 树形选择组件配置
 const treeProps = {
   label: 'label',
   children: 'children',
@@ -69,29 +67,6 @@ async function handleSaveButtonClicked() {
     }
   }
 }
-// // 处理对话框开启事件
-// async function handleOpen() {
-//   // 请求本地标签树接口
-//   const baseTagTreeResponse = await apis.localTagGetTree(0)
-//   if (ApiUtil.check(baseTagTreeResponse)) {
-//     // 创建临时的根节点，便于遍历整个树
-//     let tempNode = new TreeSelectNode()
-//     tempNode.children = ApiUtil.data<TreeSelectNode[]>(baseTagTreeResponse)
-//     tempNode.children?.forEach((child) => {
-//       child.isLeaf = true
-//     })
-//     // 根据接口响应值，重新构建树，否则子节点不包含getNode方法
-//     tempNode = new TreeSelectNode(tempNode)
-//     // 绑定到临时根节点的子结点列表上
-//     baseTagSelectData.value = tempNode.children as TreeSelectNode[]
-//
-//     // 查询当前标签对应的节点，并禁用
-//     const self = GetNode(tempNode, formData.value.id as number)
-//     if (self !== undefined) {
-//       self.disabled = true
-//     }
-//   }
-// }
 async function load(node, resolve) {
   if (node.isLeaf) {
     return resolve([])
@@ -99,17 +74,13 @@ async function load(node, resolve) {
   const baseTagTreeResponse = await apis.localTagGetTree(node.data.id)
   if (ApiUtil.check(baseTagTreeResponse)) {
     const children = ApiUtil.data<TreeSelectNode[]>(baseTagTreeResponse)
-    const r = children?.map((child) => {
+    children?.forEach((child) => {
       child.isLeaf = Boolean(child.isLeaf)
-      return {
-        id: child.id,
-        value: child.id,
-        label: child.label,
-        isLeaf: child.isLeaf
+      if (formData.value.id === child.id) {
+        child.disabled = true
       }
     })
-    resolve(r)
-    console.log(baseTagSelectData.value)
+    resolve(children)
   } else {
     return resolve([])
   }
@@ -135,14 +106,7 @@ async function load(node, resolve) {
       <el-row>
         <el-col>
           <el-form-item label="基础标签">
-            <el-tree-select
-              v-model="formData.baseLocalTagId"
-              :lazy="true"
-              :load="load"
-              :props="treeProps"
-              :cache-data="baseTagSelectData"
-              clearable
-            />
+            <el-tree-select v-model="formData.baseLocalTagId" :lazy="true" :load="load" :props="treeProps" clearable />
           </el-form-item>
         </el-col>
       </el-row>

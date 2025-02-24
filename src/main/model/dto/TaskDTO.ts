@@ -1,5 +1,6 @@
 import Task from '../entity/Task.ts'
 import TreeNode from '../util/TreeNode.ts'
+import lodash from 'lodash'
 
 /**
  * 任务
@@ -15,20 +16,13 @@ export default class TaskDTO extends Task implements TreeNode {
    */
   hasChildren: boolean | undefined | null
 
-  constructor(taskDTO?: TaskDTO | Task) {
-    if (taskDTO === undefined) {
-      super()
-      this.children = undefined
-      this.hasChildren = undefined
-    } else {
-      super(taskDTO)
-      if (taskDTO instanceof TaskDTO) {
-        this.children = taskDTO.children
-        this.hasChildren = taskDTO.hasChildren
-      } else {
-        this.children = undefined
-        this.hasChildren = undefined
-      }
-    }
+  /**
+   * 是否为叶子节点
+   */
+  isLeaf: boolean | undefined | null
+
+  constructor(taskDTO?: Task) {
+    super(taskDTO)
+    lodash.assign(this, lodash.pick(taskDTO, ['children', 'hasChildren', 'isLeaf']))
   }
 }

@@ -178,7 +178,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     const waitingUpdateChildIds = waitingUpdateIds.filter((id) => !waitingUpdateRootIds.includes(id))
 
     // 利用树形工具找到叶子节点，列入waitingUpdateList
-    const tempRoot = { id: undefined, pid: undefined, children: dataList.value as TreeNode[] }
+    const tempRoot = { id: undefined, pid: undefined, children: dataList.value as TreeNode[], isLeaf: false }
     for (const id of waitingUpdateChildIds) {
       const child = GetNode(tempRoot, id) as Data
       if (NotNullish(child)) {

@@ -94,7 +94,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: true,
     useLoad: true,
-    load: requestLocalTagTree
+    load: requestLocalTagTree,
+    lazy: true
   }),
   new Thead({
     type: 'datetime',
