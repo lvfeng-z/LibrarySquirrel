@@ -2,6 +2,7 @@ import SelectItem from './SelectItem.ts'
 import { VNode } from 'vue'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import IPage from '@renderer/model/util/IPage.ts'
 
 export class CommonInputConfig implements ICommonInputConfig {
   type:
@@ -15,6 +16,7 @@ export class CommonInputConfig implements ICommonInputConfig {
     | 'radio'
     | 'select'
     | 'treeSelect'
+    | 'autoLoadSelect'
     | 'switch'
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
@@ -23,7 +25,9 @@ export class CommonInputConfig implements ICommonInputConfig {
   render?: (data?) => VNode
   selectList?: SelectItem[] | TreeSelectNode[] // select | treeSelect - 选择列表数据
   remote?: boolean // select | treeSelect - 是否使用remoteMethod函数获得选择列表数据
-  remoteMethod?: (query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]> // select | treeSelect - 给selectData赋值的函数
+  remoteMethod?: (query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]> // select | treeSelect - 选择项接口
+  remotePaging?: boolean // select - 是否使用分页接口
+  remotePageMethod?: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>> // select - 分页接口
   lazy?: boolean // treeSelect - 选择列表是否开启懒加载
   load?: (rootId?, node?) => Promise<TreeSelectNode[]> // treeSelect - 懒加载函数
 
@@ -36,6 +40,8 @@ export class CommonInputConfig implements ICommonInputConfig {
     this.selectList = config.selectList
     this.remote = config.remote
     this.remoteMethod = config.remoteMethod
+    this.remotePaging = config.remotePaging
+    this.remotePageMethod = config.remotePageMethod
     this.lazy = config.lazy
     this.load = config.load
   }
@@ -59,6 +65,7 @@ export interface ICommonInputConfig {
     | 'radio'
     | 'select'
     | 'treeSelect'
+    | 'autoLoadSelect'
     | 'switch'
     | 'custom' // 类型
   defaultDisabled?: boolean // 默认是否开启
@@ -67,7 +74,9 @@ export interface ICommonInputConfig {
   render?: (data?) => VNode
   selectList?: SelectItem[] | TreeSelectNode[] // select | treeSelect - 选择列表数据
   remote?: boolean // select | treeSelect - 是否使用remoteMethod函数获得选择列表数据
-  remoteMethod?: (query?) => Promise<SelectItem[] | TreeSelectNode[]> // select | treeSelect - 给selectData赋值的函数
+  remoteMethod?: (query?) => Promise<SelectItem[] | TreeSelectNode[]> // select | treeSelect - 选择项接口
+  remotePaging?: boolean // select - 是否使用分页接口
+  remotePageMethod?: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>> // select - 分页接口
   lazy?: boolean // treeSelect - 选择列表是否开启懒加载
   load?: (rootId?, node?) => Promise<TreeSelectNode[]> // treeSelect - 懒加载函数
 }

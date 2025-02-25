@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { Ref, ref, UnwrapRef } from 'vue'
 import lodash from 'lodash'
 import SelectItem from '../../model/util/SelectItem'
@@ -9,17 +8,20 @@ import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
-  load: (page: IPage<BaseQueryDTO, SelectItem>, input?: string) => Promise<IPage<BaseQueryDTO, SelectItem>>
+  load: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>>
 }>()
 
 // 变量
-const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
+// el-select组件的实例
+const select = ref()
+const page: Ref<UnwrapRef<IPage<unknown, SelectItem>>> = ref(new Page<unknown, SelectItem>())
 
+// 方法
 // 处理DataScroll滚动事件
 async function handleScroll(newQuery: boolean, input?: string) {
   // 新查询重置查询条件
   if (newQuery) {
-    page.value = new Page<BaseQueryDTO, SelectItem>()
+    page.value = new Page<unknown, SelectItem>()
   }
   //查询
   const tempPage = lodash.cloneDeep(page.value)
@@ -35,10 +37,20 @@ async function handleScroll(newQuery: boolean, input?: string) {
     page.value.data = [...oldData, ...nextPage.data]
   }
 }
+function focus() {
+  select.value.focus()
+}
+
+// 暴露
+defineExpose({ focus })
 </script>
 
 <template>
-  <el-select v-el-select-bottomed="() => handleScroll(false)" :remote-method="(query: string) => handleScroll(true, query)">
+  <el-select
+    ref="select"
+    v-el-select-bottomed="() => handleScroll(false)"
+    :remote-method="(query: string) => handleScroll(true, query)"
+  >
     <el-option v-for="item in page.data" :key="item.value" :value="item.value" :label="item.label"> </el-option>
   </el-select>
 </template>

@@ -14,7 +14,6 @@ import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQu
 import { IsNullish } from '../../utils/CommonUtil'
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
 // props
 const props = defineProps<{
@@ -131,9 +130,9 @@ function getInputRowApiParamName(pathType: PathTypeEnum): string {
 // 请求选择项分页接口
 async function requestApi(
   pathType: PathTypeEnum,
-  page: IPage<BaseQueryDTO, SelectItem>,
+  page: IPage<unknown, SelectItem>,
   input?: string
-): Promise<IPage<BaseQueryDTO, SelectItem>> {
+): Promise<IPage<unknown, SelectItem>> {
   const api = getInputRowDataApi(pathType)
   const paramName = getInputRowApiParamName(pathType)
   page.query = { [paramName]: input }
@@ -141,7 +140,7 @@ async function requestApi(
 
   // 解析响应值
   if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
+    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
     return IsNullish(nextPage) ? page : nextPage
   } else {
     ApiUtil.failedMsg(response)
@@ -189,7 +188,7 @@ function getOptions(str: string, reg: string) {
                   v-model="meaningOfPath.id"
                   remote
                   filterable
-                  :load="(page: IPage<BaseQueryDTO, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
+                  :load="(page: IPage<unknown, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
                 >
                 </auto-load-select>
                 <el-date-picker

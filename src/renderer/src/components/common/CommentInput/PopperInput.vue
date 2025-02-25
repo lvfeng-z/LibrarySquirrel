@@ -7,6 +7,7 @@ import lodash from 'lodash'
 import CommonInputDate from '@renderer/components/common/CommentInput/CommonInputDate.vue'
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
+import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
 
@@ -55,6 +56,8 @@ const dynamicComponent = computed(() => {
       case 'treeSelect':
         props.config.refreshSelectData()
         return CommonInputTreeSelect
+      case 'autoLoadSelect':
+        return CommonInputAutoLoadSelect
       case 'custom':
         if (NotNullish(props.config.render)) {
           return props.config.render(data.value)
