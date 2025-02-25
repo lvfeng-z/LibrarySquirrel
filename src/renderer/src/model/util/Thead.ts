@@ -3,8 +3,9 @@ import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { IPopperInputConfig, PopperInputConfig } from '@renderer/model/util/PopperInputConfig.ts'
 
 export class Thead extends PopperInputConfig implements IThead {
-  name: string // 字段名
-  label?: string // 标题名称
+  valueKey: string // 值的键名
+  labelKey?: string // 展示文本的键名
+  title?: string // 标题名称
   hide?: boolean // 是否隐藏
   width?: number // 数据列宽度
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
@@ -15,8 +16,8 @@ export class Thead extends PopperInputConfig implements IThead {
 
   constructor(thead: IThead) {
     super(thead)
-    this.name = thead.name
-    this.label = thead.label
+    this.valueKey = thead.valueKey
+    this.title = thead.title
     this.hide = IsNullish(thead.hide) ? false : thead.hide
     this.width = thead.width
     this.headerAlign = thead.headerAlign
@@ -28,8 +29,9 @@ export class Thead extends PopperInputConfig implements IThead {
 }
 
 export interface IThead extends IPopperInputConfig {
-  name: string // 字段名
-  label?: string // 标题名称
+  valueKey: string // 值的键名
+  labelKey?: string // 展示文本的键名
+  title?: string // 标题名称
   hide?: boolean // 是否隐藏
   width?: number // 数据列宽度
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置

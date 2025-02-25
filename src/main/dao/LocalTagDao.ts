@@ -5,9 +5,10 @@ import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
 import DB from '../database/DB.ts'
 import Page from '../model/util/Page.js'
-import { IsNullish } from '../util/CommonUtil.js'
+import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import LocalTagDTO from '../model/dto/LocalTagDTO.js'
+import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db?: DB) {
@@ -169,5 +170,57 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
           db.release()
         }
       })
+  }
+
+  /**
+   * 分页查询DTO
+   * @param page
+   */
+  async queryDTOPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTagDTO>> {
+    const selectClause = `SELECT t1.*, JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name) AS baseTag
+                          FROM local_tag t1
+                                 INNER JOIN local_tag t2 ON t1.base_local_tag_id = t2.id`
+
+    // 生成where字句
+    let whereClause: string | undefined
+    const modifiedPage = new Page(page)
+    if (page.query) {
+      const whereClauseAndQuery = this.getWhereClause(page.query)
+      whereClause = whereClauseAndQuery.whereClause
+
+      // 修改过的查询条件
+      modifiedPage.query = whereClauseAndQuery.query
+    }
+
+    // 拼接查询语句
+    let statement = selectClause
+    if (whereClause !== undefined) {
+      statement = statement.concat(' ', whereClause)
+    }
+    // 拼接排序和分页字句
+    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
+    if (modifiedPage.currentCount < 1) {
+      modifiedPage.data = []
+      return modifiedPage.transform<LocalTagDTO>()
+    }
+
+    // 查询
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedPage.query)) {
+      plainParams = ToPlainParams(modifiedPage.query)
+    }
+    const db = this.acquire()
+    try {
+      const rows = await db.all<unknown[], LocalTagDTO>(statement, plainParams)
+      const resultList = rows.map((row) => new LocalTagDTO(row))
+      const resultPage = modifiedPage.transform<LocalTagDTO>()
+      resultPage.data = resultList
+      return resultPage
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
   }
 }

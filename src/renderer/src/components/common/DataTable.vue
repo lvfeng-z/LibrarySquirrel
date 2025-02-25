@@ -166,8 +166,8 @@ defineExpose({
       <template v-if="!item.hide">
         <el-table-column
           :key="index"
-          :prop="item.name"
-          :label="item.label"
+          :prop="item.valueKey"
+          :label="item.title"
           :width="item.width"
           :align="item.dataAlign"
           :show-overflow-tooltip="item.overHide"
@@ -175,17 +175,17 @@ defineExpose({
           <template #header>
             <div :style="{ textAlign: item.headerAlign }">
               <el-tag size="default" :type="item.headerTagType">
-                {{ item.label }}
+                {{ item.title }}
               </el-tag>
             </div>
           </template>
           <template #default="scope">
             <component
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
-              :data="GetPropByPath(scope.row, item.name)"
+              :data="GetPropByPath(scope.row, item.valueKey)"
               :config="item"
               @data-changed="handleRowChange(scope.row)"
-              @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.name, newValue)"
+              @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.valueKey, newValue)"
             />
           </template>
         </el-table-column>

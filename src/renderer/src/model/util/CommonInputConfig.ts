@@ -19,6 +19,7 @@ export class CommonInputConfig implements ICommonInputConfig {
     | 'autoLoadSelect'
     | 'switch'
     | 'custom' // 类型
+  text?: string // 需要展示的文本
   defaultDisabled?: boolean // 默认是否开启
   dblclickToEdit?: boolean // 是否可以双击启用
   placeholder?: string // 占位符
@@ -68,6 +69,7 @@ export interface ICommonInputConfig {
     | 'autoLoadSelect'
     | 'switch'
     | 'custom' // 类型
+  text?: string // 需要展示的文本
   defaultDisabled?: boolean // 默认是否开启
   dblclickToEdit?: boolean // 是否可以双击启用
   placeholder?: string // 占位符

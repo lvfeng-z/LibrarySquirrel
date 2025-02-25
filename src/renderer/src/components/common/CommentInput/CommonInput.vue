@@ -10,6 +10,7 @@ import CommonInputTreeSelect from '@renderer/components/common/CommentInput/Comm
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 
 // props
 const props = defineProps<{
@@ -101,6 +102,9 @@ function handleDataChange() {
 function getSpanValue() {
   if (props.config.type === 'custom') {
     return
+  }
+  if (StringUtil.isNotBlank(props.config.text)) {
+    return props.config.text
   }
   if (props.config.type === 'date' || props.config.type === 'datetime') {
     const datetime = new Date(data.value as number)

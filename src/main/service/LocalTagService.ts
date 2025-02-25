@@ -12,6 +12,7 @@ import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertTrue } from '../util/AssertUtil.js'
+import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
   constructor(db?: DB) {
@@ -102,6 +103,26 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         }
       }
       return super.queryPage(page)
+    } catch (error) {
+      LogUtil.error('LocalTagService', error)
+      throw error
+    }
+  }
+
+  /**
+   * 分页查询DTO
+   * @param page
+   */
+  public async queryDTOPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTagDTO>> {
+    try {
+      page = new Page(page)
+      if (NotNullish(page.query)) {
+        page.query.operators = {
+          ...{ localTagName: Operator.LIKE },
+          ...page.query.operators
+        }
+      }
+      return this.dao.queryDTOPage(page)
     } catch (error) {
       LogUtil.error('LocalTagService', error)
       throw error
