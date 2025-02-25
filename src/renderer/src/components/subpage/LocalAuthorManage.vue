@@ -72,7 +72,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickToEdit: true,
-    valueKey: 'localAuthorName',
+    key: 'localAuthorName',
     title: '名称',
     hide: false,
     width: 150,
@@ -83,7 +83,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    valueKey: 'updateTime',
+    key: 'updateTime',
     title: '修改时间',
     hide: false,
     width: 200,
@@ -95,7 +95,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    valueKey: 'createTime',
+    key: 'createTime',
     title: '创建时间',
     hide: false,
     width: 200,

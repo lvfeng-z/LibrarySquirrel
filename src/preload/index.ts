@@ -75,6 +75,9 @@ const api = {
   localTagQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('localTag-queryPage', args)
   },
+  localTagQueryDTOPage: (args) => {
+    return Electron.ipcRenderer.invoke('localTag-queryDTOPage', args)
+  },
   localTagGetById: (args) => {
     return Electron.ipcRenderer.invoke('localTag-getById', args)
   },

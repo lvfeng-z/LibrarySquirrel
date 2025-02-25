@@ -33,6 +33,7 @@ defineExpose({ focus })
     :filterable="props.config.remote"
     :load="config.remotePageMethod"
     clearable
+    @change="handleDataChange"
   >
     <el-option v-for="item in props.config.selectList" :key="item.value" :value="item.value" :label="item.label" />
   </auto-load-select>

@@ -40,6 +40,7 @@ const apis = {
   localTagDeleteById: window.api.localTagDeleteById,
   localTagUpdateById: window.api.localTagUpdateById,
   localTagQueryPage: window.api.localTagQueryPage,
+  localTagQueryDTOPage: window.api.localTagQueryDTOPage,
   localTagListSelectItems: window.api.localTagListSelectItems,
   localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
   localTagGetTree: window.api.localTagGetTree,
@@ -86,8 +87,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'autoLoadSelect',
     defaultDisabled: true,
     dblclickToEdit: true,
-    valueKey: 'baseLocalTagId',
-    labelKey: 'baseLocalTagId',
+    valueKey: 'baseTag.id',
+    labelKey: 'baseTag.localTagName',
     title: '上级标签',
     hide: false,
     width: 150,
@@ -181,9 +182,9 @@ const disableExcSearchButton: Ref<boolean> = ref(false)
 // 方法
 // 分页查询本地标签的函数
 async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<Page<LocalTagQueryDTO, object> | undefined> {
-  const response = await apis.localTagQueryPage(page)
+  const response = await apis.localTagQueryDTOPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
+    return ApiUtil.data<Page<LocalTagQueryDTO, object>>(response)
   } else {
     ApiUtil.msg(response)
     return undefined

@@ -179,13 +179,13 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   async queryDTOPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTagDTO>> {
     const selectClause = `SELECT t1.*, JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name) AS baseTag
                           FROM local_tag t1
-                                 INNER JOIN local_tag t2 ON t1.base_local_tag_id = t2.id`
+                                 LEFT JOIN local_tag t2 ON t1.base_local_tag_id = t2.id`
 
     // 生成where字句
     let whereClause: string | undefined
     const modifiedPage = new Page(page)
     if (page.query) {
-      const whereClauseAndQuery = this.getWhereClause(page.query)
+      const whereClauseAndQuery = this.getWhereClause(page.query, 't1')
       whereClause = whereClauseAndQuery.whereClause
 
       // 修改过的查询条件
@@ -199,7 +199,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     }
     // 拼接排序和分页字句
     const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
-    statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
+    statement = await this.sortAndPage(statement, modifiedPage, sort, 't1')
     if (modifiedPage.currentCount < 1) {
       modifiedPage.data = []
       return modifiedPage.transform<LocalTagDTO>()
@@ -212,8 +212,8 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     }
     const db = this.acquire()
     try {
-      const rows = await db.all<unknown[], LocalTagDTO>(statement, plainParams)
-      const resultList = rows.map((row) => new LocalTagDTO(row))
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement, plainParams)
+      const resultList = rows.map((row) => new LocalTagDTO(super.toResultTypeData<LocalTagDTO>(row)))
       const resultPage = modifiedPage.transform<LocalTagDTO>()
       resultPage.data = resultList
       return resultPage

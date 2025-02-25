@@ -1,11 +1,13 @@
 <script setup lang="ts" generic="Data, OpParam">
 import { onBeforeMount, onMounted, Ref, ref } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
-import { GetPropByPath, SetPropByPath, Thead } from '../../model/util/Thead'
+import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { TreeNode } from 'element-plus'
+import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -184,6 +186,7 @@ defineExpose({
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
               :data="GetPropByPath(scope.row, item.valueKey)"
               :config="item"
+              :text="StringUtil.isBlank(item.labelKey) ? undefined : GetPropByPath(scope.row, item.labelKey)"
               @data-changed="handleRowChange(scope.row)"
               @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.valueKey, newValue)"
             />

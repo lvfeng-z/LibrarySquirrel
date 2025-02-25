@@ -35,6 +35,7 @@ declare global {
       localTagUpdateById: function
       localTagLink: function
       localTagQueryPage: function
+      localTagQueryDTOPage: function
       localTagGetById: function
       localTagGetTree: function
       localTagListSelectItems: function

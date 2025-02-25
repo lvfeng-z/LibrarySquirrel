@@ -191,6 +191,15 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('localTag-queryDTOPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-queryDTOPage')
+    const localTagService = new LocalTagService()
+    try {
+      return ApiUtil.response(await localTagService.queryDTOPage(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('localTag-getById', async (_event, args) => {
     LogUtil.info('MainProcessApi', 'localTag-getById')
     const localTagService = new LocalTagService()

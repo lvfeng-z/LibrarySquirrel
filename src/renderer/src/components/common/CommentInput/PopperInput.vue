@@ -14,6 +14,7 @@ import { GetNode } from '@renderer/utils/TreeUtil.ts'
 // props
 const props = defineProps<{
   config: CommonInputConfig
+  text?: unknown
 }>()
 
 // onBeforeMount
@@ -67,6 +68,43 @@ const dynamicComponent = computed(() => {
   }
   return undefined
 })
+const spanText = computed(() => {
+  if (props.config.type === 'custom') {
+    return
+  }
+  if (NotNullish(props.text)) {
+    return props.text
+  }
+  if (props.config.type === 'date' || props.config.type === 'datetime') {
+    const datetime = new Date(data.value as number)
+    const year = datetime.getFullYear() + '-'
+    const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
+    const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
+    const date = year + month + day
+    if (props.config.type === 'date') {
+      return date
+    } else {
+      const hour = (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
+      const minute = (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
+      const second = datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
+      return date + hour + minute + second
+    }
+  } else if (props.config.type === 'select') {
+    let target
+    if (NotNullish(props.config.selectList)) {
+      target = props.config.selectList.find((selectData) => selectData.value === data.value)
+    }
+    return IsNullish(target) ? '-' : target.value
+  } else if (props.config.type === 'treeSelect') {
+    let tempRoot = new TreeSelectNode()
+    tempRoot.children = props.config.selectList as TreeSelectNode[]
+    tempRoot = new TreeSelectNode(tempRoot)
+    const node = GetNode(tempRoot, data.value as number)
+    return IsNullish(node) ? '-' : node.label
+  } else {
+    return data.value
+  }
+})
 
 // 方法
 // 启用
@@ -98,41 +136,6 @@ function handleBlur() {
 function handleDataChange() {
   emits('dataChanged')
 }
-// 获取span要显示的值
-function getSpanValue() {
-  if (props.config.type === 'custom') {
-    return
-  }
-  if (props.config.type === 'date' || props.config.type === 'datetime') {
-    const datetime = new Date(data.value as number)
-    const year = datetime.getFullYear() + '-'
-    const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
-    const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
-    const date = year + month + day
-    if (props.config.type === 'date') {
-      return date
-    } else {
-      const hour = (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
-      const minute = (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
-      const second = datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
-      return date + hour + minute + second
-    }
-  } else if (props.config.type === 'select') {
-    let target
-    if (NotNullish(props.config.selectList)) {
-      target = props.config.selectList.find((selectData) => selectData.value === data.value)
-    }
-    return IsNullish(target) ? '-' : target.value
-  } else if (props.config.type === 'treeSelect') {
-    let tempRoot = new TreeSelectNode()
-    tempRoot.children = props.config.selectList as TreeSelectNode[]
-    tempRoot = new TreeSelectNode(tempRoot)
-    const node = GetNode(tempRoot, data.value as number)
-    return IsNullish(node) ? '-' : node.label
-  } else {
-    return data.value
-  }
-}
 </script>
 
 <template>
@@ -149,7 +152,7 @@ function getSpanValue() {
     </template>
     <template #reference>
       <div ref="container" class="common-input" @dblclick="handleDblclick">
-        <span>{{ getSpanValue() }}</span>
+        <span>{{ spanText }}</span>
       </div>
     </template>
   </el-popover>

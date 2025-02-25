@@ -1,13 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import lodash from 'lodash'
 
 /**
  * 本地标签
  */
 export default class LocalTag extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | null | undefined
   /**
    * 本地标签名称
    */
@@ -22,18 +19,7 @@ export default class LocalTag extends BaseEntity {
   lastUse: number | null | undefined
 
   constructor(localTag?: LocalTag) {
-    if (localTag === undefined) {
-      super()
-      this.id = undefined
-      this.localTagName = undefined
-      this.baseLocalTagId = undefined
-      this.lastUse = undefined
-    } else {
-      super(localTag)
-      this.id = localTag.id
-      this.localTagName = localTag.localTagName
-      this.baseLocalTagId = localTag.baseLocalTagId
-      this.lastUse = localTag.lastUse
-    }
+    super(localTag)
+    lodash.assign(this, lodash.pick(localTag, ['localTagName', 'baseLocalTagId', 'lastUse']))
   }
 }

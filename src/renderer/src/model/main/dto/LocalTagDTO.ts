@@ -1,6 +1,6 @@
 import LocalTag from '../entity/LocalTag.js'
 import lodash from 'lodash'
-import { NotNullish } from '../../util/CommonUtil.js'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export default class LocalTagDTO extends LocalTag {
   /**
@@ -16,7 +16,7 @@ export default class LocalTagDTO extends LocalTag {
   constructor(localTagDTO?: LocalTagDTO) {
     super(localTagDTO)
     if (NotNullish(localTagDTO)) {
-      const baseTag = lodash.pick(localTagDTO, ['baseTag']).baseTag
+      const baseTag = lodash.pick(localTagDTO, ['baseTag'])
       if (typeof baseTag === 'string') {
         localTagDTO.baseTag = JSON.parse(baseTag)
       }

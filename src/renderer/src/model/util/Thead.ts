@@ -17,6 +17,7 @@ export class Thead extends PopperInputConfig implements IThead {
   constructor(thead: IThead) {
     super(thead)
     this.valueKey = thead.valueKey
+    this.labelKey = thead.labelKey
     this.title = thead.title
     this.hide = IsNullish(thead.hide) ? false : thead.hide
     this.width = thead.width
@@ -39,41 +40,4 @@ export interface IThead extends IPopperInputConfig {
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   overHide?: boolean //列超出长度时是否省略
   editMethod?: 'replace' | 'popper'
-}
-
-export function GetPropByPath(obj: object, path: string) {
-  // 将路径字符串按照'.'分割成数组
-  const properties = path.split('.')
-
-  // 遍历数组，逐步访问obj中的属性
-  let result = obj
-  for (const prop of properties) {
-    if (result[prop] === undefined) {
-      // 如果属性不存在，则返回undefined
-      return undefined
-    }
-    result = result[prop]
-  }
-  return result
-}
-
-export function SetPropByPath(obj: object, path: string, val: unknown) {
-  // 将路径字符串按照'.'分割成数组
-  const properties = path.split('.')
-
-  // 遍历数组，逐步访问obj中的属性
-  let result = obj
-  let index = 1
-  for (const prop of properties) {
-    if (result[prop] === undefined) {
-      // 如果属性不存在，则返回undefined
-      return
-    }
-    if (index === properties.length) {
-      result[prop] = val
-      break
-    }
-    result = result[prop]
-    index++
-  }
 }
