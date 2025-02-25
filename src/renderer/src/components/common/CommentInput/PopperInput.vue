@@ -116,13 +116,13 @@ function getSpanValue() {
     }
   } else if (props.config.type === 'select') {
     let target
-    if (NotNullish(props.config.selectData)) {
-      target = props.config.selectData.find((selectData) => selectData.value === data.value)
+    if (NotNullish(props.config.selectList)) {
+      target = props.config.selectList.find((selectData) => selectData.value === data.value)
     }
     return IsNullish(target) ? '-' : target.value
   } else if (props.config.type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
-    tempRoot.children = props.config.selectData as TreeSelectNode[]
+    tempRoot.children = props.config.selectList as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
     const node = GetNode(tempRoot, data.value as number)
     return IsNullish(node) ? '-' : node.label

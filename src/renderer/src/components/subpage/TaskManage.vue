@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
 import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
@@ -165,8 +166,8 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     name: 'siteId',
     type: 'select',
     placeholder: '选择站点',
-    useLoad: true,
-    load: requestSiteQuerySelectItemPage,
+    remote: true,
+    remoteMethod: requestSiteQuerySelectItemPage,
     inputSpan: 4
   }),
   new InputBox({
@@ -174,7 +175,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     type: 'select',
     placeholder: '选择状态',
     inputSpan: 4,
-    selectData: [
+    selectList: [
       {
         value: TaskStatesEnum.CREATED,
         label: '已创建'

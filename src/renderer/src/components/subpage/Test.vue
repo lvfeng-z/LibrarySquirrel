@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { ElTreeSelect } from 'element-plus'
 
 const value = ref()
 const value2 = ref(5)

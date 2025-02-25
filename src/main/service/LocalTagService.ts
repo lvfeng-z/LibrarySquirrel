@@ -110,15 +110,19 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
 
   /**
    * 获取本地标签树形结构
-   * @param rootId
+   * @param rootId 根节点id
+   * @param depth 查询深度
    */
-  public async getTree(rootId: number) {
+  public async getTree(rootId: number, depth?: number) {
     if (IsNullish(rootId)) {
       rootId = LocalTagConstant.ROOT_LOCAL_TAG_ID
     }
+    if (IsNullish(depth)) {
+      depth = 1
+    }
 
     // 递归查询rootId的子节点
-    const localTags = await this.dao.selectTreeNode(rootId, 1)
+    const localTags = await this.dao.selectTreeNode(rootId, depth)
     // 子节点转换为TreeSelectNode类型
     const treeNodes = localTags.map((localTagDTO) => {
       const treeSelectNode = new TreeSelectNode()

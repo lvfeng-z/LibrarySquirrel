@@ -134,7 +134,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     type: 'select',
     placeholder: '选择状态',
     inputSpan: 4,
-    selectData: [
+    selectList: [
       {
         value: TaskStatesEnum.CREATED,
         label: '已创建'

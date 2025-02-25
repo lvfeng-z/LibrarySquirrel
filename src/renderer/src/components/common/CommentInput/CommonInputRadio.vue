@@ -24,7 +24,7 @@ function focus() {
 defineExpose({ focus })
 </script>
 <template>
-  <el-radio-group ref="input" v-if="props.config.type === 'radio'"></el-radio-group>
+  <el-radio-group v-if="props.config.type === 'radio'" ref="input"></el-radio-group>
 </template>
 
 <style scoped></style>

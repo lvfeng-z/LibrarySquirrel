@@ -200,11 +200,11 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('localTag-getTree', async (_event, args) => {
+  Electron.ipcMain.handle('localTag-getTree', async (_event, arg1, arg2?) => {
     LogUtil.info('MainProcessApi', 'localTag-getTree')
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.getTree(args))
+      return ApiUtil.response(await localTagService.getTree(arg1, arg2))
     } catch (error) {
       return returnError(error)
     }

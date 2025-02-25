@@ -24,7 +24,7 @@ function focus() {
 defineExpose({ focus })
 </script>
 <template>
-  <el-switch ref="input" v-if="props.config.type === 'switch'"></el-switch>
+  <el-switch v-if="props.config.type === 'switch'" ref="input"></el-switch>
 </template>
 
 <style scoped></style>

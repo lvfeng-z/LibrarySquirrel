@@ -19,7 +19,7 @@ import Page from '@renderer/model/util/Page.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { ElMessage } from 'element-plus'
@@ -41,6 +41,7 @@ const apis = {
   localTagUpdateById: window.api.localTagUpdateById,
   localTagQueryPage: window.api.localTagQueryPage,
   localTagListSelectItems: window.api.localTagListSelectItems,
+  localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
   localTagGetTree: window.api.localTagGetTree,
   siteTagUpdateBindLocalTag: window.api.siteTagUpdateBindLocalTag,
   siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
@@ -93,9 +94,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     overHide: true,
-    useLoad: true,
-    load: requestLocalTagTree,
-    lazy: true
+    lazy: true,
+    load: lazyRequestLocalTagTree
   }),
   new Thead({
     type: 'datetime',
@@ -124,8 +124,8 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     type: 'treeSelect',
     placeholder: '选择上级标签',
     inputSpan: 8,
-    useLoad: true,
-    load: requestLocalTagTree
+    remote: true,
+    remoteMethod: requestLocalTagTree
   })
 ])
 // 本地标签SearchTable的dropDownInputBoxes
@@ -157,8 +157,8 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     name: 'siteId',
     type: 'select',
     placeholder: '选择站点',
-    useLoad: true,
-    load: requestSiteQuerySelectItemPage,
+    remote: true,
+    remoteMethod: requestSiteQuerySelectItemPage,
     inputSpan: 9
   })
 ])
@@ -192,6 +192,25 @@ async function requestLocalTagTree(query: number) {
   const response = await apis.localTagGetTree(param)
   if (ApiUtil.check(response)) {
     return ApiUtil.data(response) as TreeSelectNode[]
+  } else {
+    return []
+  }
+}
+// 请求本地标签树的函数
+async function lazyRequestLocalTagTree(rootId: string, node): Promise<TreeSelectNode[]> {
+  const baseTagTreeResponse = await apis.localTagGetTree(rootId, 10)
+  if (ApiUtil.check(baseTagTreeResponse)) {
+    const children = ApiUtil.data<TreeSelectNode[]>(baseTagTreeResponse)
+    if (ArrayIsEmpty(children)) {
+      return []
+    }
+    children.forEach((child) => {
+      child.isLeaf = Boolean(child.isLeaf)
+      if (node.data.id === child.id) {
+        child.disabled = true
+      }
+    })
+    return children
   } else {
     return []
   }

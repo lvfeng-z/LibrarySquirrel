@@ -11,7 +11,7 @@ const props = defineProps<{
 // 方法
 
 // model
-const data = defineModel('data', { default: undefined, required: false })
+const data = defineModel<unknown>('data', { default: undefined, required: false })
 
 // 变量
 // el-input组件的实例
@@ -30,12 +30,12 @@ defineExpose({ focus })
     ref="input"
     v-model="data"
     :placeholder="props.config.placeholder"
-    :remote="props.config.useLoad"
+    :remote="props.config.remote"
     :remote-method="(query: unknown) => props.config.refreshSelectData(query)"
-    :filterable="props.config.useLoad"
+    :filterable="props.config.remote"
     clearable
   >
-    <el-option v-for="item in props.config.selectData" :key="item.value" :value="item.value" :label="item.label" />
+    <el-option v-for="item in props.config.selectList" :key="item.value" :value="item.value" :label="item.label" />
   </el-select>
 </template>
 

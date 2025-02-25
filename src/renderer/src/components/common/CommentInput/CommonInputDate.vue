@@ -9,7 +9,7 @@ const props = defineProps<{
 }>()
 
 // model
-const data = defineModel('data', { default: undefined, required: false })
+const data = defineModel<unknown>('data', { default: undefined, required: false })
 
 // 变量
 // el-input组件的实例
@@ -33,8 +33,8 @@ defineExpose({ focus })
 <template>
   <el-date-picker
     ref="input"
-    style="width: 100%"
     v-model="data"
+    style="width: 100%"
     value-format="x"
     :type="props.config.type"
     :placeholder="props.config.placeholder"

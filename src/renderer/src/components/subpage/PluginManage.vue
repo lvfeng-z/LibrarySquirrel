@@ -65,8 +65,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true,
-    useLoad: true
+    overHide: true
   }),
   new Thead({
     type: 'text',

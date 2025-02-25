@@ -24,7 +24,7 @@ function focus() {
 defineExpose({ focus })
 </script>
 <template>
-  <el-checkbox-group ref="input" v-if="props.config.type === 'checkbox'"></el-checkbox-group>
+  <el-checkbox-group v-if="props.config.type === 'checkbox'" ref="input"></el-checkbox-group>
 </template>
 
 <style scoped></style>

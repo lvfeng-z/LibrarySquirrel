@@ -141,8 +141,8 @@ const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     name: 'siteId',
     type: 'select',
     placeholder: '选择站点',
-    useLoad: true,
-    load: requestSiteQuerySelectItemPage,
+    remote: true,
+    remoteMethod: requestSiteQuerySelectItemPage,
     inputSpan: 9
   })
 ])
@@ -349,10 +349,10 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
     </template>
     <template #dialog>
       <local-author-dialog
-        align-center
-        destroy-on-close
         v-model:form-data="dialogData"
         v-model:state="dialogState"
+        align-center
+        destroy-on-close
         :mode="localAuthorDialogMode"
         @request-success="handleDialogRequestSuccess"
       />

@@ -100,8 +100,7 @@ const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true,
-    useLoad: true
+    overHide: true
   }),
   new Thead({
     type: 'datetime',
@@ -203,8 +202,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true,
-    useLoad: true
+    overHide: true
   }),
   new Thead({
     type: 'datetime',
