@@ -7,6 +7,7 @@ import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { TreeNode } from 'element-plus'
 import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -185,6 +186,7 @@ defineExpose({
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
               :data="GetPropByPath(scope.row, item.key)"
               :config="item"
+              :cache-data="StringUtil.isBlank(item.cacheDataKey) ? undefined : scope.row[item.cacheDataKey]"
               @data-changed="handleRowChange(scope.row)"
               @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
             />

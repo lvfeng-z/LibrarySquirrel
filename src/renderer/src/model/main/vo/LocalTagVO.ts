@@ -15,7 +15,7 @@ export default class LocalTagVO extends LocalTag {
     if (NotNullish(localTagDTO)) {
       const baseTag = lodash.pick(localTagDTO, ['baseTag']).baseTag
       if (NotNullish(baseTag)) {
-        this.baseTag = new SelectItem({ value: String(baseTag.id), label: String(baseTag.localTagName) })
+        this.baseTag = new SelectItem({ value: Number(baseTag.id), label: String(baseTag.localTagName) })
       }
     }
   }

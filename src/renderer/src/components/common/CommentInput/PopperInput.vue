@@ -10,13 +10,12 @@ import CommonInputTreeSelect from '@renderer/components/common/CommentInput/Comm
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
-import { GetPropByPath } from '@renderer/utils/ObjectUtil.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
-import { AssertNotBlank } from '@renderer/utils/AssertUtil.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
 
 // props
 const props = defineProps<{
   config: CommonInputConfig
+  cacheData?: SelectItem // autoLoadSelect - 在选择项加载之前用于展示的数据
 }>()
 
 // onBeforeMount
@@ -74,18 +73,8 @@ const spanText = computed(() => {
   if (props.config.type === 'custom') {
     return
   }
-  let value: unknown
-  let label: string = ''
-  if (props.config.objectMode) {
-    AssertNotBlank(props.config.valueKey)
-    AssertNotBlank(props.config.labelKey)
-    value = GetPropByPath(data.value as object, props.config.valueKey)
-    label = GetPropByPath(data.value as object, props.config.labelKey) as string
-  } else {
-    value = data.value
-  }
   if (props.config.type === 'date' || props.config.type === 'datetime') {
-    const datetime = new Date(value as number)
+    const datetime = new Date(data.value as number)
     const year = datetime.getFullYear() + '-'
     const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
     const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
@@ -101,23 +90,19 @@ const spanText = computed(() => {
   } else if (props.config.type === 'select') {
     let target
     if (NotNullish(props.config.selectList)) {
-      target = props.config.selectList.find((selectData) => selectData.value === value)
+      target = props.config.selectList.find((selectData) => selectData.value === data.value)
     }
     return IsNullish(target) ? '-' : target.value
   } else if (props.config.type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = props.config.selectList as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
-    const node = GetNode(tempRoot, value as number)
+    const node = GetNode(tempRoot, data.value as number)
     return IsNullish(node) ? '-' : node.label
   } else if (props.config.type === 'autoLoadSelect') {
-    if (StringUtil.isNotBlank(label)) {
-      return label
-    } else {
-      return value
-    }
+    return IsNullish(props.cacheData) ? '-' : props.cacheData.label
   } else {
-    return value
+    return data.value
   }
 })
 
@@ -148,8 +133,8 @@ function handleBlur() {
   }
 }
 // 处理数据改变事件
-function handleDataChange() {
-  emits('dataChanged')
+function handleDataChange(newData) {
+  emits('dataChanged', newData)
 }
 </script>
 
@@ -159,7 +144,7 @@ function handleDataChange() {
       <component
         :is="dynamicComponent"
         ref="inputRef"
-        v-bind="{ config: config }"
+        v-bind="{ config: config, cacheData: cacheData }"
         v-model="data"
         mark-row
         @blur="handleBlur"

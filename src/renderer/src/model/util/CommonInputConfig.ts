@@ -31,9 +31,6 @@ export class CommonInputConfig implements ICommonInputConfig {
   remotePageMethod?: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>> // select - 分页接口
   lazy?: boolean // treeSelect - 选择列表是否开启懒加载
   load?: (rootId?, node?) => Promise<TreeSelectNode[]> // treeSelect - 懒加载函数
-  objectMode?: boolean
-  valueKey?: string // 值的键名
-  labelKey?: string // 展示文本的键名
 
   constructor(config: ICommonInputConfig) {
     this.type = config.type
@@ -48,9 +45,6 @@ export class CommonInputConfig implements ICommonInputConfig {
     this.remotePageMethod = config.remotePageMethod
     this.lazy = config.lazy
     this.load = config.load
-    this.objectMode = config.objectMode
-    this.valueKey = config.valueKey
-    this.labelKey = config.labelKey
   }
 
   public refreshSelectData(query?: unknown) {
@@ -87,7 +81,4 @@ export interface ICommonInputConfig {
   remotePageMethod?: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>> // select - 分页接口
   lazy?: boolean // treeSelect - 选择列表是否开启懒加载
   load?: (rootId?, node?) => Promise<TreeSelectNode[]> // treeSelect - 懒加载函数
-  objectMode?: boolean
-  valueKey?: string // 值的键名
-  labelKey?: string // 展示文本的键名
 }

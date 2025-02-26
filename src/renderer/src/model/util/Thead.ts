@@ -12,6 +12,7 @@ export class Thead extends PopperInputConfig implements IThead {
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   overHide?: boolean //列超出长度时是否省略
   editMethod?: 'replace' | 'popper'
+  cacheDataKey?: string
 
   constructor(thead: IThead) {
     super(thead)
@@ -24,6 +25,7 @@ export class Thead extends PopperInputConfig implements IThead {
     this.dataAlign = thead.dataAlign
     this.overHide = IsNullish(thead.overHide) ? false : thead.overHide
     this.editMethod = IsNullish(thead.editMethod) ? 'popper' : thead.editMethod
+    this.cacheDataKey = thead.cacheDataKey
   }
 }
 
@@ -35,6 +37,7 @@ export interface IThead extends IPopperInputConfig {
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
-  overHide?: boolean //列超出长度时是否省略
+  overHide?: boolean // 列超出长度时是否省略
   editMethod?: 'replace' | 'popper'
+  cacheDataKey?: string
 }

@@ -89,7 +89,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'autoLoadSelect',
     defaultDisabled: true,
     dblclickToEdit: true,
-    key: 'baseTag',
+    key: 'baseLocalTagId',
     title: '上级标签',
     hide: false,
     width: 150,
@@ -100,9 +100,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     remote: true,
     remotePaging: true,
     remotePageMethod: requestApi,
-    objectMode: true,
-    valueKey: 'id',
-    labelKey: 'localTagName'
+    cacheDataKey: 'baseTag'
   }),
   new Thead({
     type: 'datetime',
@@ -188,10 +186,11 @@ const disableExcSearchButton: Ref<boolean> = ref(false)
 async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<Page<LocalTagQueryDTO, object> | undefined> {
   const response = await apis.localTagQueryDTOPage(page)
   if (ApiUtil.check(response)) {
-    const responsePage = ApiUtil.data<Page<LocalTagQueryDTO, LocalTagDTO>>(response)
+    let responsePage = ApiUtil.data<Page<LocalTagQueryDTO, LocalTagDTO>>(response)
     if (IsNullish(responsePage)) {
       return undefined
     }
+    responsePage = new Page(responsePage)
     const voList = responsePage.data?.map((item: LocalTagDTO) => new LocalTagVO(item))
     const result = responsePage.transform<LocalTagVO>()
     result.data = voList

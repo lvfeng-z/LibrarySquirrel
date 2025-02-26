@@ -103,7 +103,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'custom',
     defaultDisabled: true,
     dblclickToEdit: true,
-    name: 'status',
+    key: 'status',
     label: '状态',
     hide: false,
     width: 80,

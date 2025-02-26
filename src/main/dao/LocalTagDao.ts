@@ -177,7 +177,8 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param page
    */
   async queryDTOPage(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTagDTO>> {
-    const selectClause = `SELECT t1.*, JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name) AS baseTag
+    const selectClause = `SELECT t1.*,
+                                 CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name) END AS baseTag
                           FROM local_tag t1
                                  LEFT JOIN local_tag t2 ON t1.base_local_tag_id = t2.id`
 
