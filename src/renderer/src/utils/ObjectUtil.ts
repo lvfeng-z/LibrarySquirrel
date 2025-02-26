@@ -9,7 +9,7 @@ export function NonUndefinedValue(obj: object | undefined): object {
   )
 }
 
-export function GetPropByPath(obj: object, path: string): object | undefined {
+export function GetPropByPath(obj: object, path: string): unknown | undefined {
   // 将路径字符串按照'.'分割成数组
   const properties = path.split('.')
 

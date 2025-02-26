@@ -9,6 +9,7 @@ import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 // props
 const props = defineProps<{
   load: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>>
+  valueKey?: string
 }>()
 
 // 变量
@@ -49,9 +50,10 @@ defineExpose({ focus })
   <el-select
     ref="select"
     v-el-select-bottomed="() => handleScroll(false)"
+    :value-key="valueKey"
     :remote-method="(query: string) => handleScroll(true, query)"
   >
-    <el-option v-for="item in page.data" :key="item.value" :value="item.value" :label="item.label"> </el-option>
+    <slot name="default" :list="page.data" />
   </el-select>
 </template>
 

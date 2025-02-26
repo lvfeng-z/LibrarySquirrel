@@ -5,7 +5,6 @@ import { ref } from 'vue'
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  handleDataChange: () => void
 }>()
 
 // model
@@ -20,11 +19,14 @@ function focus() {
   input.value.focus()
 }
 
+// 事件
+const emits = defineEmits(['change'])
+
 // 暴露
 defineExpose({ focus })
 </script>
 <template>
-  <el-switch v-if="props.config.type === 'switch'" ref="input"></el-switch>
+  <el-switch v-if="props.config.type === 'switch'" ref="input" @change="() => emits('change')"></el-switch>
 </template>
 
 <style scoped></style>

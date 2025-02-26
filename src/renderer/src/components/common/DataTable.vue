@@ -7,7 +7,6 @@ import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { TreeNode } from 'element-plus'
 import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -168,7 +167,7 @@ defineExpose({
       <template v-if="!item.hide">
         <el-table-column
           :key="index"
-          :prop="item.valueKey"
+          :prop="item.key"
           :label="item.title"
           :width="item.width"
           :align="item.dataAlign"
@@ -184,11 +183,10 @@ defineExpose({
           <template #default="scope">
             <component
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
-              :data="GetPropByPath(scope.row, item.valueKey)"
+              :data="GetPropByPath(scope.row, item.key)"
               :config="item"
-              :text="StringUtil.isBlank(item.labelKey) ? undefined : GetPropByPath(scope.row, item.labelKey)"
               @data-changed="handleRowChange(scope.row)"
-              @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.valueKey, newValue)"
+              @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
             />
           </template>
         </el-table-column>

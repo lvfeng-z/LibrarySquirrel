@@ -24,6 +24,8 @@ import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
+import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
+import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
 
 // onMounted
 onMounted(() => {
@@ -75,7 +77,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickToEdit: true,
-    valueKey: 'localTagName',
+    key: 'localTagName',
     title: '名称',
     hide: false,
     width: 150,
@@ -87,8 +89,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'autoLoadSelect',
     defaultDisabled: true,
     dblclickToEdit: true,
-    valueKey: 'baseTag.id',
-    labelKey: 'baseTag.localTagName',
+    key: 'baseTag',
     title: '上级标签',
     hide: false,
     width: 150,
@@ -98,13 +99,16 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: requestApi
+    remotePageMethod: requestApi,
+    objectMode: true,
+    valueKey: 'id',
+    labelKey: 'localTagName'
   }),
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
     dblclickToEdit: true,
-    valueKey: 'updateTime',
+    key: 'updateTime',
     title: '修改时间',
     hide: false,
     width: 200,
@@ -184,7 +188,14 @@ const disableExcSearchButton: Ref<boolean> = ref(false)
 async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<Page<LocalTagQueryDTO, object> | undefined> {
   const response = await apis.localTagQueryDTOPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data<Page<LocalTagQueryDTO, object>>(response)
+    const responsePage = ApiUtil.data<Page<LocalTagQueryDTO, LocalTagDTO>>(response)
+    if (IsNullish(responsePage)) {
+      return undefined
+    }
+    const voList = responsePage.data?.map((item: LocalTagDTO) => new LocalTagVO(item))
+    const result = responsePage.transform<LocalTagVO>()
+    result.data = voList
+    return result
   } else {
     ApiUtil.msg(response)
     return undefined

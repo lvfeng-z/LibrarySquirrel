@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import { ref } from 'vue'
+import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  handleDataChange: () => void
 }>()
 
 // model
@@ -21,6 +20,9 @@ function focus() {
   input.value.focus()
 }
 
+// 事件
+const emits = defineEmits(['change'])
+
 // 暴露
 defineExpose({ focus })
 </script>
@@ -32,10 +34,13 @@ defineExpose({ focus })
     :remote="props.config.remote"
     :filterable="props.config.remote"
     :load="config.remotePageMethod"
+    :value-key="props.config.valueKey"
     clearable
-    @change="handleDataChange"
+    @change="() => emits('change')"
   >
-    <el-option v-for="item in props.config.selectList" :key="item.value" :value="item.value" :label="item.label" />
+    <template #default="{ list }">
+      <el-option v-for="item in list" :key="item.value" :value="config.objectMode ? item : item.value" :label="item.label" />
+    </template>
   </auto-load-select>
 </template>
 

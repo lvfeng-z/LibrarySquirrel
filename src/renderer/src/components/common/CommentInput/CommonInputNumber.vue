@@ -5,7 +5,6 @@ import { ref } from 'vue'
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  handleDataChange: () => void
 }>()
 
 // model
@@ -20,6 +19,9 @@ function focus() {
   input.value.focus()
 }
 
+// 事件
+const emits = defineEmits(['change'])
+
 // 暴露
 defineExpose({ focus })
 </script>
@@ -29,7 +31,7 @@ defineExpose({ focus })
     v-model="data"
     :placeholder="props.config.placeholder"
     clearable
-    @change="handleDataChange"
+    @change="() => emits('change')"
   ></el-input-number>
 </template>
 

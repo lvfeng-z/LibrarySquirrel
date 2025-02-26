@@ -5,7 +5,6 @@ import { ref } from 'vue'
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  handleDataChange: () => void
 }>()
 
 // model
@@ -26,6 +25,9 @@ function handleVisibleChange(visible: boolean) {
   }
 }
 
+// 事件
+const emits = defineEmits(['change'])
+
 // 暴露
 defineExpose({ focus })
 </script>
@@ -39,7 +41,7 @@ defineExpose({ focus })
     :type="props.config.type"
     :placeholder="props.config.placeholder"
     @visible-change="handleVisibleChange"
-    @change="handleDataChange"
+    @change="() => emits('change')"
   />
 </template>
 

@@ -7,7 +7,6 @@ import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  handleDataChange: () => void
 }>()
 
 // model
@@ -37,6 +36,9 @@ function innerLoad(node, resolve) {
   props.config.load(node.data.id, node).then((children) => resolve(children))
 }
 
+// 事件
+const emits = defineEmits(['change'])
+
 // 暴露
 defineExpose({ focus })
 </script>
@@ -54,7 +56,7 @@ defineExpose({ focus })
     :lazy="config.lazy"
     :load="innerLoad"
     clearable
-    @change="handleDataChange"
+    @change="() => emits('change')"
   />
 </template>
 

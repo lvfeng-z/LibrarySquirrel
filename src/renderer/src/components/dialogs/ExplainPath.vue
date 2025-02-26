@@ -190,6 +190,9 @@ function getOptions(str: string, reg: string) {
                   filterable
                   :load="(page: IPage<unknown, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
                 >
+                  <template #default="{ list }">
+                    <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                  </template>
                 </auto-load-select>
                 <el-date-picker
                   v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
