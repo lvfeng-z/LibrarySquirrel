@@ -8,13 +8,14 @@ import CommonInputDate from '@renderer/components/common/CommentInput/CommonInpu
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayIsEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
 
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  text?: unknown
+  cacheData?: SelectItem // autoLoadSelect - 在选择项加载之前用于展示的数据
 }>()
 
 // onBeforeMount
@@ -41,6 +42,7 @@ const emits = defineEmits(['dataChanged'])
 const inputRef = ref()
 const config: Ref<UnwrapRef<CommonInputConfig>> = ref(lodash.cloneDeep(props.config))
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
+const selectList: Ref<SelectItem[]> = ref([])
 const dynamicComponent = computed(() => {
   if (!disabled.value || props.config.type === 'custom') {
     switch (props.config.type) {
@@ -66,6 +68,47 @@ const dynamicComponent = computed(() => {
     }
   }
   return undefined
+})
+const spanText = computed(() => {
+  if (props.config.type === 'custom') {
+    return
+  }
+  if (props.config.type === 'date' || props.config.type === 'datetime') {
+    const datetime = new Date(data.value as number)
+    const year = datetime.getFullYear() + '-'
+    const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
+    const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
+    const date = year + month + day
+    if (props.config.type === 'date') {
+      return date
+    } else {
+      const hour = (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
+      const minute = (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
+      const second = datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
+      return date + hour + minute + second
+    }
+  } else if (props.config.type === 'select') {
+    let target
+    if (NotNullish(props.config.selectList)) {
+      target = props.config.selectList.find((selectData) => selectData.value === data.value)
+    }
+    return IsNullish(target) ? '-' : target.value
+  } else if (props.config.type === 'treeSelect') {
+    let tempRoot = new TreeSelectNode()
+    tempRoot.children = props.config.selectList as TreeSelectNode[]
+    tempRoot = new TreeSelectNode(tempRoot)
+    const node = GetNode(tempRoot, data.value as number)
+    return IsNullish(node) ? '-' : node.label
+  } else if (props.config.type === 'autoLoadSelect') {
+    if (ArrayIsEmpty(selectList.value)) {
+      return IsNullish(props.cacheData) ? '-' : props.cacheData.label
+    } else {
+      const target = selectList.value.find((selectData) => selectData.value === data.value)
+      return IsNullish(target) ? '-' : target.label
+    }
+  } else {
+    return data.value
+  }
 })
 
 // 方法
@@ -95,60 +138,24 @@ function handleBlur() {
   }
 }
 // 处理数据改变事件
-function handleDataChange() {
-  emits('dataChanged')
-}
-// 获取span要显示的值
-function getSpanValue() {
-  if (props.config.type === 'custom') {
-    return
-  }
-  if (NotNullish(props.text)) {
-    return props.text
-  }
-  if (props.config.type === 'date' || props.config.type === 'datetime') {
-    const datetime = new Date(data.value as number)
-    const year = datetime.getFullYear() + '-'
-    const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
-    const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
-    const date = year + month + day
-    if (props.config.type === 'date') {
-      return date
-    } else {
-      const hour = (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
-      const minute = (datetime.getMinutes() < 10 ? '0' + datetime.getMinutes() : datetime.getMinutes()) + ':'
-      const second = datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
-      return date + hour + minute + second
-    }
-  } else if (props.config.type === 'select') {
-    let target
-    if (NotNullish(props.config.selectList)) {
-      target = props.config.selectList.find((selectData) => selectData.value === data.value)
-    }
-    return IsNullish(target) ? '-' : target.value
-  } else if (props.config.type === 'treeSelect') {
-    let tempRoot = new TreeSelectNode()
-    tempRoot.children = props.config.selectList as TreeSelectNode[]
-    tempRoot = new TreeSelectNode(tempRoot)
-    const node = GetNode(tempRoot, data.value as number)
-    return IsNullish(node) ? '-' : node.label
-  } else {
-    return data.value
-  }
+function handleDataChange(newData) {
+  emits('dataChanged', newData)
 }
 </script>
 
 <template>
   <div class="common-input" @dblclick="handleDblclick">
-    <span v-if="disabled && props.config.type !== 'custom'">{{ getSpanValue() }}</span>
+    <span v-if="disabled && props.config.type !== 'custom'">{{ spanText }}</span>
     <component
       :is="dynamicComponent"
       v-if="!disabled || props.config.type === 'custom'"
       ref="inputRef"
-      v-bind="{ config: config, handleDataChange: handleDataChange }"
+      v-bind="{ config: config, cacheData: cacheData }"
       v-model="data"
+      v-model:select-list="selectList"
       mark-row
       @blur="handleBlur"
+      @change="handleDataChange"
     />
   </div>
 </template>

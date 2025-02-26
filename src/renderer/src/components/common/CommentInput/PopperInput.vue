@@ -8,7 +8,7 @@ import CommonInputDate from '@renderer/components/common/CommentInput/CommonInpu
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayIsEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 
@@ -43,6 +43,7 @@ const container = ref<HTMLElement>()
 const inputRef = ref<HTMLElement>()
 const config: Ref<UnwrapRef<CommonInputConfig>> = ref(lodash.cloneDeep(props.config))
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
+const selectList: Ref<SelectItem[]> = ref([])
 const dynamicComponent = computed(() => {
   if (!disabled.value || props.config.type === 'custom') {
     switch (props.config.type) {
@@ -100,7 +101,12 @@ const spanText = computed(() => {
     const node = GetNode(tempRoot, data.value as number)
     return IsNullish(node) ? '-' : node.label
   } else if (props.config.type === 'autoLoadSelect') {
-    return IsNullish(props.cacheData) ? '-' : props.cacheData.label
+    if (ArrayIsEmpty(selectList.value)) {
+      return IsNullish(props.cacheData) ? '-' : props.cacheData.label
+    } else {
+      const target = selectList.value.find((selectData) => selectData.value === data.value)
+      return IsNullish(target) ? '-' : target.label
+    }
   } else {
     return data.value
   }
@@ -146,6 +152,7 @@ function handleDataChange(newData) {
         ref="inputRef"
         v-bind="{ config: config, cacheData: cacheData }"
         v-model="data"
+        v-model:select-list="selectList"
         mark-row
         @blur="handleBlur"
         @change="handleDataChange"

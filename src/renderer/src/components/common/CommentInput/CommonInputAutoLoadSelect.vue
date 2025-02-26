@@ -14,7 +14,8 @@ const props = defineProps<{
 }>()
 
 // model
-const data = defineModel<unknown>('data', { default: undefined, required: false })
+const data = defineModel<string | number>('data', { default: undefined, required: false })
+const selectList = defineModel<SelectItem[]>('selectList')
 
 // 变量
 // el-input组件的实例
@@ -38,13 +39,18 @@ defineExpose({ focus })
 <template>
   <auto-load-select
     ref="input"
-    v-model="data"
+    v-model:data="data"
+    v-model:select-list="selectList"
     :placeholder="props.config.placeholder"
     :remote="props.config.remote"
     :filterable="props.config.remote"
     :load="load"
     clearable
-    @change="() => emits('change')"
+    @change="
+      () => {
+        emits('change')
+      }
+    "
   >
     <template #default="{ list }">
       <el-option v-if="NotNullish(cacheData)" :hidden="true" :value="cacheData.value" :label="cacheData.label" />
