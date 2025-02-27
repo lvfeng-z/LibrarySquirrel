@@ -505,7 +505,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
       } catch (error) {
         LogUtil.error(this.constructor.name, error)
-        this.taskFailed(parent.id)
+        this.taskFailed(parent.id, String(error))
       }
     }
   }
@@ -855,12 +855,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 任务失败
    * @param taskId 任务id
+   * @param errorMessage 错误信息
    */
-  public taskFailed(taskId: Id): Promise<number> {
+  public taskFailed(taskId: Id, errorMessage?: string): Promise<number> {
     AssertNotNullish(taskId, this.constructor.name, '任务标记为失败失败，任务id不能为空')
     const task = new Task()
     task.id = taskId
     task.status = TaskStatusEnum.FAILED
+    task.errorMessage = errorMessage
     return this.updateById(task)
   }
 

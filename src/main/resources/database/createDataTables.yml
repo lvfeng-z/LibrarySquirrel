@@ -214,7 +214,8 @@ tables:
         plugin_author         text,
         plugin_name           text,
         plugin_version        text,
-        plugin_data           text
+        plugin_data           text,
+        error_message         text
       );
 
   - name: task_plugin_listener

@@ -424,9 +424,17 @@ function handleScroll() {
 // 开始任务
 function startTask(row: TaskDTO, retry: boolean) {
   if (retry) {
-    apis.taskRetryTask([row.id])
+    apis.taskRetryTask([row.id]).then((response: ApiResponse) => {
+      if (!ApiUtil.check(response)) {
+        ApiUtil.failedMsg(response)
+      }
+    })
   } else {
-    apis.taskStartTask([row.id])
+    apis.taskStartTask([row.id]).then((response: ApiResponse) => {
+      if (!ApiUtil.check(response)) {
+        ApiUtil.failedMsg(response)
+      }
+    })
   }
   row.status = TaskStatesEnum.WAITING
   if (row.isCollection && NotNullish(row.children)) {

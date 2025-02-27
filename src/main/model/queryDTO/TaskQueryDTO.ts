@@ -66,6 +66,11 @@ export default class TaskQueryDTO extends BaseQueryDTO {
    */
   pluginData: { [key: string]: unknown } | string | undefined | null
 
+  /**
+   * 错误信息
+   */
+  errorMessage: string | undefined | null
+
   constructor(task?: TaskQueryDTO) {
     super(task)
     if (task === undefined) {
@@ -82,6 +87,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.pluginId = undefined
       this.pluginInfo = undefined
       this.pluginData = undefined
+      this.errorMessage = undefined
     } else {
       this.isCollection = task.isCollection
       this.pid = task.pid
@@ -100,6 +106,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       } else {
         this.pluginData = task.pluginData
       }
+      this.errorMessage = task.errorMessage
     }
   }
 }

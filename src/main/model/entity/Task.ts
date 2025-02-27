@@ -1,14 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 任务
  */
 export default class Task extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-
   /**
    * 是否是父任务
    */
@@ -79,26 +75,14 @@ export default class Task extends BaseEntity {
    */
   pluginData: { [key: string]: unknown } | string | undefined | null
 
+  /**
+   * 错误信息
+   */
+  errorMessage: string | undefined | null
+
   constructor(task?: Task) {
-    if (task === undefined) {
-      super()
-      this.id = undefined
-      this.isCollection = undefined
-      this.pid = undefined
-      this.taskName = undefined
-      this.siteId = undefined
-      this.localWorksId = undefined
-      this.siteWorksId = undefined
-      this.url = undefined
-      this.status = undefined
-      this.pendingDownloadPath = undefined
-      this.continuable = undefined
-      this.pluginAuthor = undefined
-      this.pluginName = undefined
-      this.pluginVersion = undefined
-      this.pluginData = undefined
-    } else {
-      super(task)
+    super(task)
+    if (NotNullish(task)) {
       this.id = task.id
       this.isCollection = task.isCollection
       this.pid = task.pid
@@ -118,6 +102,7 @@ export default class Task extends BaseEntity {
       } else {
         this.pluginData = task.pluginData
       }
+      this.errorMessage = task.errorMessage
     }
   }
 

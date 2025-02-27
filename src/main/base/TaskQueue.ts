@@ -102,7 +102,7 @@ export class TaskQueue {
     const handleError = (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
       LogUtil.error('TaskQueue', `处理任务失败，taskId: ${task.id}，error: ${error.message}`)
       taskRunningObj.status = TaskStatusEnum.FAILED
-      this.taskService.taskFailed(taskRunningObj.taskId).then(() => {
+      this.taskService.taskFailed(taskRunningObj.taskId, error.message).then(() => {
         this.removeFromQueue(taskRunningObj.taskOperationObj)
         this.removeFromMap(taskRunningObj.taskId)
       })
