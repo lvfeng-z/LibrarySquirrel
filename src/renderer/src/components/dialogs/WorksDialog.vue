@@ -263,6 +263,7 @@ function handleDrawerOpen() {
           :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
           :lower-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, false)"
           :search-button-disabled="false"
+          tags-gap="10px"
           @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, true)"
           @lower-confirm="
             (upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower, false)
@@ -289,6 +290,7 @@ function handleDrawerOpen() {
           :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
           :lower-load="(_page) => requestWorksSiteTagPage(_page, false)"
           :search-button-disabled="false"
+          tags-gap="10px"
           @upper-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
           @lower-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
           @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"

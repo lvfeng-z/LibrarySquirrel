@@ -377,6 +377,7 @@ async function requestSiteTagSelectItemPage(
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, false)"
             :search-button-disabled="disableExcSearchButton"
+            tags-gap="10px"
             @upper-confirm="(upper, lower) => handleExchangeBoxConfirm(true, upper, lower)"
             @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
             @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"

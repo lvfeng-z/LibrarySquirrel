@@ -19,6 +19,7 @@ const props = defineProps<{
   upperLoad: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>> // upper的加载函数
   lowerLoad: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>> // lower的加载函数
   searchButtonDisabled: boolean
+  tagsGap?: string
 }>()
 
 // 事件
@@ -236,6 +237,7 @@ function handleBufferToggle() {
             v-model:data="upperData"
             class="exchange-box-upper-tag-box"
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, true)"
+            :tags-gap="tagsGap"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'upperData')"
           />
           <collapse-panel
@@ -277,6 +279,7 @@ function handleBufferToggle() {
             v-model:data="lowerData"
             class="exchange-box-lower-tag-box"
             :load="(_page: IPage<Query, SelectItem>) => requestNextPage(_page, false)"
+            :tags-gap="tagsGap"
             @tag-clicked="(tag: SelectItem) => handleCheckTagClick(tag, 'lowerData')"
           />
           <collapse-panel

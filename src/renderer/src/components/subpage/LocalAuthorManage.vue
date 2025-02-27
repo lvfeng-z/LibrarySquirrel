@@ -329,6 +329,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
             :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page) => requestSiteAuthorSelectItemPage(_page, false)"
             :search-button-disabled="disableExcSearchButton"
+            tags-gap="10px"
             @upper-confirm="(upper, lower) => handleExchangeBoxConfirm(true, upper, lower)"
             @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
             @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"

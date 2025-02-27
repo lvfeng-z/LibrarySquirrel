@@ -144,8 +144,13 @@ defineExpose({
   getVisibleRows,
   cancelAllSelection
 })
-function tst(scope, item): SelectItem | undefined {
+function getCacheData(scope, item): SelectItem | undefined {
   return StringUtil.isBlank(item.cacheDataKey) ? undefined : (GetPropByPath(scope.row, item.cacheDataKey) as SelectItem | undefined)
+}
+function setCacheData(scope, item, newData) {
+  if (StringUtil.isNotBlank(item.cacheDataKey)) {
+    SetPropByPath(scope.row, item.cacheDataKey, newData)
+  }
 }
 </script>
 
@@ -190,16 +195,10 @@ function tst(scope, item): SelectItem | undefined {
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
               :data="GetPropByPath(scope.row, item.key)"
               :config="item"
-              :cache-data="tst(scope, item)"
+              :cache-data="getCacheData(scope, item)"
               @data-changed="handleRowChange(scope.row)"
               @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
-              @update:cache-data="
-                (newData: SelectItem) => {
-                  if (StringUtil.isNotBlank(item.cacheDataKey)) {
-                    SetPropByPath(scope.row, item.cacheDataKey, newData)
-                  }
-                }
-              "
+              @update:cache-data="(newData) => setCacheData(scope, item, newData)"
             />
           </template>
         </el-table-column>
