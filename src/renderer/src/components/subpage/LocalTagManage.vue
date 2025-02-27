@@ -13,15 +13,14 @@ import { InputBox } from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
-import LocalTag from '../../model/main/entity/LocalTag.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
 import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
-import IPage from '@renderer/model/util/IPage.ts'
 import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
@@ -55,11 +54,11 @@ const localTagSearchTable = ref()
 // siteTagExchangeBox的组件实例
 const siteTagExchangeBox = ref()
 // 被改变的数据行
-const changedRows: Ref<UnwrapRef<LocalTag[]>> = ref([])
+const changedRows: Ref<UnwrapRef<LocalTagVO[]>> = ref([])
 // 被选中的本地标签
-const localTagSelected: Ref<UnwrapRef<LocalTag>> = ref(new LocalTag())
+const localTagSelected: Ref<UnwrapRef<LocalTagVO>> = ref(new LocalTagVO())
 // 本地标签SearchTable的operationButton
-const operationButton: OperationItem<LocalTag>[] = [
+const operationButton: OperationItem<LocalTagVO>[] = [
   {
     label: '保存',
     icon: 'Checked',
@@ -100,7 +99,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: requestApi,
+    remotePageMethod: localTagQuerySelectItemPage,
     cacheDataKey: 'baseTag'
   }),
   new Thead({
@@ -132,7 +131,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
     inputSpan: 8,
     remote: true,
     remotePaging: true,
-    remotePageMethod: requestApi
+    remotePageMethod: localTagQuerySelectItemPage
   })
 ])
 // 本地标签SearchTable的dropDownInputBoxes
@@ -145,13 +144,13 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   })
 ])
 // 本地标签SearchTable的分页
-const page: Ref<UnwrapRef<Page<LocalTagQueryDTO, LocalTag>>> = ref(new Page<LocalTagQueryDTO, LocalTag>())
+const page: Ref<UnwrapRef<Page<LocalTagQueryDTO, LocalTagDTO>>> = ref(new Page<LocalTagQueryDTO, LocalTagDTO>())
 // 本地标签弹窗的mode
 const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 本地标签的对话框开关
 const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 本地标签对话框的数据
-const dialogData: Ref<UnwrapRef<LocalTag>> = ref(new LocalTag())
+const dialogData: Ref<UnwrapRef<LocalTagVO>> = ref(new LocalTagVO())
 // 站点标签ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
@@ -201,8 +200,8 @@ async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<
     return undefined
   }
 }
-// 请求选择项分页接口
-async function requestApi(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
+// 请求标签选择项分页接口
+async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
   page.query = { localTagName: input }
   const response = await apis.localTagQuerySelectItemPage(page)
 
@@ -232,14 +231,14 @@ async function requestSiteQuerySelectItemPage(query: string) {
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
-  dialogData.value = new LocalTag()
+  dialogData.value = new LocalTagVO()
   dialogState.value = true
 }
 // 处理本地标签数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse<LocalTag>) {
+function handleRowButtonClicked(op: DataTableOperationResponse<LocalTagVO>) {
   switch (op.code) {
     case 'save':
-      saveRowEdit(op.data as LocalTag)
+      saveRowEdit(op.data)
       break
     case DialogMode.VIEW:
       localTagDialogMode.value = DialogMode.VIEW
@@ -259,7 +258,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse<LocalTag>) {
   }
 }
 // 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: LocalTag[]) {
+async function handleLocalTagSelectionChange(selections: LocalTagVO[]) {
   if (selections.length > 0) {
     disableExcSearchButton.value = false
     localTagSelected.value = selections[0]
@@ -271,7 +270,7 @@ function handleDialogRequestSuccess() {
   localTagSearchTable.value.doSearch()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData: LocalTag) {
+async function saveRowEdit(newData: LocalTagVO) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localTagUpdateById(tempData)

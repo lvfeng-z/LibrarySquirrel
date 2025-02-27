@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import LocalTag from '../../model/main/entity/LocalTag.ts'
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
-import TreeSelectNode from '../../model/util/TreeSelectNode'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import { ElTreeSelect } from 'element-plus'
+import IPage from '@renderer/model/util/IPage.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
+import Page from '@renderer/model/util/Page.ts'
+import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
 
 // props
 const props = withDefaults(
@@ -21,7 +24,7 @@ const props = withDefaults(
 
 // model
 // 表单数据
-const formData = defineModel<LocalTag>('formData', { required: true })
+const formData = defineModel<LocalTagVO>('formData', { required: true })
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
@@ -33,14 +36,9 @@ const emits = defineEmits(['requestSuccess'])
 const apis = {
   localTagSave: window.api.localTagSave,
   localTagUpdateById: window.api.localTagUpdateById,
+  localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
   localTagGetTree: window.api.localTagGetTree,
   localTagGetById: window.api.localTagGetById
-}
-// 树形选择组件配置
-const treeProps = {
-  label: 'label',
-  children: 'children',
-  isLeaf: 'isLeaf'
 }
 
 // 方法
@@ -67,22 +65,36 @@ async function handleSaveButtonClicked() {
     }
   }
 }
-async function load(node, resolve) {
-  if (node.isLeaf) {
-    return resolve([])
-  }
-  const baseTagTreeResponse = await apis.localTagGetTree(node.data.id)
-  if (ApiUtil.check(baseTagTreeResponse)) {
-    const children = ApiUtil.data<TreeSelectNode[]>(baseTagTreeResponse)
-    children?.forEach((child) => {
-      child.isLeaf = Boolean(child.isLeaf)
-      if (formData.value.id === child.id) {
-        child.disabled = true
-      }
-    })
-    resolve(children)
+// async function load(node, resolve) {
+//   if (node.isLeaf) {
+//     return resolve([])
+//   }
+//   const baseTagTreeResponse = await apis.localTagGetTree(node.data.id)
+//   if (ApiUtil.check(baseTagTreeResponse)) {
+//     const children = ApiUtil.data<TreeSelectNode[]>(baseTagTreeResponse)
+//     children?.forEach((child) => {
+//       child.isLeaf = Boolean(child.isLeaf)
+//       if (formData.value.id === child.id) {
+//         child.disabled = true
+//       }
+//     })
+//     resolve(children)
+//   } else {
+//     return resolve([])
+//   }
+// }
+// 请求标签选择项分页接口
+async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
+  page.query = { localTagName: input }
+  const response = await apis.localTagQuerySelectItemPage(page)
+
+  // 解析响应值
+  if (ApiUtil.check(response)) {
+    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
+    return IsNullish(nextPage) ? page : nextPage
   } else {
-    return resolve([])
+    ApiUtil.failedMsg(response)
+    return page
   }
 }
 </script>
@@ -106,7 +118,17 @@ async function load(node, resolve) {
       <el-row>
         <el-col>
           <el-form-item label="基础标签">
-            <el-tree-select v-model="formData.baseLocalTagId" :lazy="true" :load="load" :props="treeProps" clearable />
+            <auto-load-select v-model="formData.baseLocalTagId" :load="localTagQuerySelectItemPage" remote filterable clearable>
+              <template #default="{ list }">
+                <el-option
+                  v-if="NotNullish(formData.baseTag)"
+                  :hidden="true"
+                  :value="formData.baseTag.value"
+                  :label="formData.baseTag.label"
+                ></el-option>
+                <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+              </template>
+            </auto-load-select>
           </el-form-item>
         </el-col>
       </el-row>
