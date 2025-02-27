@@ -614,7 +614,7 @@ function exposeService() {
     }
   })
   Electron.ipcMain.handle('task-listSchedule', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-listSchedule')
+    // LogUtil.info('MainProcessApi', 'task-listSchedule')
     try {
       const taskService = new TaskService()
       return ApiUtil.response(await taskService.listSchedule(args))

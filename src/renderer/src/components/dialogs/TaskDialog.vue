@@ -102,7 +102,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'custom',
     defaultDisabled: true,
-    dblclickToEdit: true,
+    dblclickToEdit: false,
     key: 'status',
     title: '状态',
     hide: false,
@@ -110,6 +110,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     dataAlign: 'center',
     overHide: true,
+    editMethod: 'replace',
     render: getTaskStatusElTag
   })
 ])

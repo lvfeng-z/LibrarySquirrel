@@ -23,7 +23,7 @@
     "watch": "chcp 65001 & electron-vite dev --watch"
   },
   "engines": {
-    "node": "22.11.0"
+    "node": "22.14.0"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
@@ -43,26 +43,26 @@
     "@electron-toolkit/eslint-config-prettier": "3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.20.0",
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.21.0",
     "@rushstack/eslint-patch": "^1.10.5",
     "@types/adm-zip": "^0.5.7",
     "@types/better-sqlite3": "^7.6.12",
     "@types/electron-store": "^3.2.2",
-    "@types/node": "^22.13.4",
-    "@typescript-eslint/parser": "^8.24.1",
+    "@types/node": "^22.13.5",
+    "@typescript-eslint/parser": "^8.25.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.4.0",
-    "electron": "34.2.0",
+    "electron": "34.3.0",
     "electron-builder": "^25.1.8",
     "electron-vite": "^3.0.0",
-    "eslint": "^9.20.1",
+    "eslint": "^9.21.0",
     "eslint-plugin-vue": "^9.32.0",
-    "prettier": "^3.5.1",
+    "prettier": "^3.5.2",
     "typescript": "5.7.3",
-    "vite": "^6.1.0",
+    "vite": "^6.2.0",
     "vue": "^3.5.13",
-    "vue-tsc": "^2.2.2"
+    "vue-tsc": "^2.2.4"
   }
 }
