@@ -15,7 +15,6 @@ import SelectItem from '@renderer/model/util/SelectItem.ts'
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  cacheData?: SelectItem // autoLoadSelect - 在选择项加载之前用于展示的数据
 }>()
 
 // onBeforeMount
@@ -34,6 +33,8 @@ onBeforeMount(() => {
 
 // model
 const data = defineModel<unknown>('data', { default: undefined, required: true })
+// 在选择项加载之前用于展示的数据
+const cacheData = defineModel<SelectItem>('cacheData', { default: undefined, required: false })
 
 // 事件
 const emits = defineEmits(['dataChanged'])
@@ -102,7 +103,7 @@ const spanText = computed(() => {
     return IsNullish(node) ? '-' : node.label
   } else if (props.config.type === 'autoLoadSelect') {
     if (ArrayIsEmpty(selectList.value)) {
-      return IsNullish(props.cacheData) ? '-' : props.cacheData.label
+      return IsNullish(cacheData.value) ? '-' : cacheData.value.label
     } else {
       const target = selectList.value.find((selectData) => selectData.value === data.value)
       return IsNullish(target) ? '-' : target.label
@@ -153,6 +154,7 @@ function handleDataChange(newData) {
         v-bind="{ config: config, cacheData: cacheData }"
         v-model="data"
         v-model:select-list="selectList"
+        v-model:cache-data="cacheData"
         mark-row
         @blur="handleBlur"
         @change="handleDataChange"

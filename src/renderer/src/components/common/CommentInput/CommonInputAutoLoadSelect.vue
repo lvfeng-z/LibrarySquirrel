@@ -10,12 +10,13 @@ import { AssertNotNullish } from '@renderer/utils/AssertUtil.ts'
 // props
 const props = defineProps<{
   config: CommonInputConfig
-  cacheData?: SelectItem // autoLoadSelect - 在选择项加载之前用于展示的数据
 }>()
 
 // model
 const data = defineModel<string | number>('data', { default: undefined, required: false })
-const selectList = defineModel<SelectItem[]>('selectList')
+const selectList = defineModel<SelectItem[]>('selectList', { default: undefined, required: false })
+// 在选择项加载之前用于展示的数据
+const cacheData = defineModel<SelectItem>('cacheData', { default: undefined, required: false })
 
 // 变量
 // el-input组件的实例
@@ -28,6 +29,13 @@ function focus() {
 function load(page: IPage<unknown, SelectItem>, input?: string) {
   AssertNotNullish(props.config.remotePageMethod)
   return props.config.remotePageMethod(page, input)
+}
+function handleChange(newData: string | number) {
+  const newCache = selectList.value.find((selectData) => selectData.value === newData)
+  if (NotNullish(newCache)) {
+    cacheData.value = newCache
+  }
+  emits('change', newData)
 }
 
 // 事件
@@ -46,11 +54,7 @@ defineExpose({ focus })
     :filterable="props.config.remote"
     :load="load"
     clearable
-    @change="
-      () => {
-        emits('change')
-      }
-    "
+    @change="handleChange"
   >
     <template #default="{ list }">
       <el-option v-if="NotNullish(cacheData)" :hidden="true" :value="cacheData.value" :label="cacheData.label" />

@@ -8,6 +8,7 @@ import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vu
 import { TreeNode } from 'element-plus'
 import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
 //todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
@@ -143,6 +144,9 @@ defineExpose({
   getVisibleRows,
   cancelAllSelection
 })
+function tst(scope, item): SelectItem | undefined {
+  return StringUtil.isBlank(item.cacheDataKey) ? undefined : (GetPropByPath(scope.row, item.cacheDataKey) as SelectItem | undefined)
+}
 </script>
 
 <template>
@@ -186,9 +190,16 @@ defineExpose({
               :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
               :data="GetPropByPath(scope.row, item.key)"
               :config="item"
-              :cache-data="StringUtil.isBlank(item.cacheDataKey) ? undefined : scope.row[item.cacheDataKey]"
+              :cache-data="tst(scope, item)"
               @data-changed="handleRowChange(scope.row)"
               @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
+              @update:cache-data="
+                (newData: SelectItem) => {
+                  if (StringUtil.isNotBlank(item.cacheDataKey)) {
+                    SetPropByPath(scope.row, item.cacheDataKey, newData)
+                  }
+                }
+              "
             />
           </template>
         </el-table-column>
