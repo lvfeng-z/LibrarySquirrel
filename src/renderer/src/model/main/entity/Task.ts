@@ -1,14 +1,10 @@
 import BaseEntity from './BaseEntity.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 任务
  */
 export default class Task extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-
   /**
    * 是否是父任务
    */
@@ -60,39 +56,33 @@ export default class Task extends BaseEntity {
   continuable: boolean | undefined | null
 
   /**
-   * 插件id
+   * 插件作者
    */
-  pluginId: number | undefined | null
+  pluginAuthor: string | undefined | null
 
   /**
-   * 插件信息
+   * 插件名称
    */
-  pluginInfo: string | undefined | null
+  pluginName: string | undefined | null
+
+  /**
+   * 插件版本
+   */
+  pluginVersion: string | undefined | null
 
   /**
    * 插件数据
    */
   pluginData: { [key: string]: unknown } | string | undefined | null
 
+  /**
+   * 错误信息
+   */
+  errorMessage: string | undefined | null
+
   constructor(task?: Task) {
-    if (task === undefined) {
-      super()
-      this.id = undefined
-      this.isCollection = undefined
-      this.pid = undefined
-      this.taskName = undefined
-      this.siteId = undefined
-      this.localWorksId = undefined
-      this.siteWorksId = undefined
-      this.url = undefined
-      this.status = undefined
-      this.pendingDownloadPath = undefined
-      this.continuable = undefined
-      this.pluginId = undefined
-      this.pluginInfo = undefined
-      this.pluginData = undefined
-    } else {
-      super(task)
+    super(task)
+    if (NotNullish(task)) {
       this.id = task.id
       this.isCollection = task.isCollection
       this.pid = task.pid
@@ -104,13 +94,15 @@ export default class Task extends BaseEntity {
       this.status = task.status
       this.pendingDownloadPath = task.pendingDownloadPath
       this.continuable = task.continuable
-      this.pluginId = task.pluginId
-      this.pluginInfo = task.pluginInfo
+      this.pluginAuthor = task.pluginAuthor
+      this.pluginName = task.pluginName
+      this.pluginVersion = task.pluginVersion
       if (typeof task.pluginData === 'string') {
         this.pluginData = JSON.parse(task.pluginData)
       } else {
         this.pluginData = task.pluginData
       }
+      this.errorMessage = task.errorMessage
     }
   }
 }

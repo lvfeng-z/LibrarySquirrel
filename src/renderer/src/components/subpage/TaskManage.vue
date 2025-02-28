@@ -110,7 +110,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 80,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true,
+    overHide: false,
     editMethod: 'replace',
     render: (data: TaskStatesEnum): VNode => {
       let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined

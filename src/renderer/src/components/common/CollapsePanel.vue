@@ -37,7 +37,7 @@ function handleClickOutSide() {
 </script>
 
 <template>
-  <div style="position: relative" v-click-out-side="handleClickOutSide">
+  <div v-click-out-side="handleClickOutSide" style="position: relative">
     <div
       :class="{
         'collapse-panel': true,
