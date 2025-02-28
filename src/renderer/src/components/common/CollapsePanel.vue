@@ -20,7 +20,7 @@ const props = withDefaults(
 )
 
 // model
-const state: Ref<UnwrapRef<boolean>> = defineModel('state', { required: true }) // 开关状态
+const state: Ref<UnwrapRef<boolean>> = defineModel<boolean>('state', { required: true }) // 开关状态
 
 // 变量
 const top: Ref<boolean> = computed(() => props.position === 'top')
@@ -37,14 +37,14 @@ function handleClickOutSide() {
 </script>
 
 <template>
-  <div v-click-out-side="handleClickOutSide" style="position: relative">
+  <div v-click-out-side="handleClickOutSide" class="collapse-panel">
     <div
       :class="{
-        'collapse-panel': true,
-        'collapse-panel-top': top,
-        'collapse-panel-bottom': bottom,
-        'collapse-panel-left': left,
-        'collapse-panel-right': right
+        'collapse-panel-main': true,
+        'collapse-panel-main-top': top,
+        'collapse-panel-main-bottom': bottom,
+        'collapse-panel-main-left': left,
+        'collapse-panel-main-right': right
       }"
     >
       <div
@@ -89,31 +89,34 @@ function handleClickOutSide() {
 
 <style scoped>
 .collapse-panel {
+  position: relative;
+}
+.collapse-panel-main {
   position: absolute;
   display: flex;
 }
-.collapse-panel-top {
+.collapse-panel-main-top {
   width: 100%;
   top: 0;
   flex-direction: column;
   max-height: v-bind(maxLength);
   box-shadow: 0 10px 10px -5px rgba(0, 0, 0, 0.1);
 }
-.collapse-panel-bottom {
+.collapse-panel-main-bottom {
   width: 100%;
   bottom: 0;
   flex-direction: column-reverse;
   max-height: v-bind(maxLength);
   box-shadow: 0 -10px 10px -5px rgba(0, 0, 0, 0.1);
 }
-.collapse-panel-left {
+.collapse-panel-main-left {
   height: 100%;
   left: 0;
   flex-direction: row;
   max-width: v-bind(maxLength);
   box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1);
 }
-.collapse-panel-right {
+.collapse-panel-main-right {
   height: 100%;
   right: 0;
   flex-direction: row-reverse;
