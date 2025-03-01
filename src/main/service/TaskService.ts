@@ -15,7 +15,7 @@ import lodash from 'lodash'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import TaskDTO from '../model/dto/TaskDTO.ts'
+import TaskTreeDTO from '../model/dto/TaskTreeDTO.ts'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
@@ -34,7 +34,7 @@ import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { TaskOperation } from '../base/TaskQueue.js'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
 import StringUtil from '../util/StringUtil.js'
-import TaskProcessingDTO from '../model/dto/TaskProcessingDTO.js'
+import TaskProgressTreeDTO from '../model/dto/TaskProgressTreeDTO.js'
 import Works from '../model/entity/Works.js'
 import ObjectUtil from '../util/ObjectUtil.js'
 import SiteService from './SiteService.js'
@@ -488,12 +488,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskTree: TaskDTO[] = await this.dao.listTaskTree(taskIds, includeStatus)
+    const taskTree: TaskTreeDTO[] = await this.dao.listTaskTree(taskIds, includeStatus)
 
     for (const parent of taskTree) {
       try {
         // 获取要处理的任务
-        let children: TaskDTO[]
+        let children: TaskTreeDTO[]
         if (parent.isCollection && ArrayNotEmpty(parent.children)) {
           children = parent.children
         } else if (!parent.isCollection) {
@@ -580,7 +580,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     for (const parent of taskTree) {
       // 获取要处理的任务
-      let children: TaskDTO[]
+      let children: TaskTreeDTO[]
       if (parent.isCollection && ArrayNotEmpty(parent.children)) {
         children = parent.children
       } else if (!parent.isCollection) {
@@ -693,11 +693,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async resumeTaskTree(ids: number[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskTree: TaskDTO[] = await this.dao.listTaskTree(ids, [TaskStatusEnum.PAUSE])
+    const taskTree: TaskTreeDTO[] = await this.dao.listTaskTree(ids, [TaskStatusEnum.PAUSE])
 
     for (const parent of taskTree) {
       // 获取要处理的任务
-      let children: TaskDTO[]
+      let children: TaskTreeDTO[]
       if (parent.isCollection && ArrayNotEmpty(parent.children)) {
         children = parent.children
       } else if (!parent.isCollection) {
@@ -714,7 +714,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 根据父任务的children刷新其状态
    * @param root 父任务
    */
-  public async refreshParentTaskStatus(root: TaskDTO): Promise<TaskStatusEnum> {
+  public async refreshParentTaskStatus(root: TaskTreeDTO): Promise<TaskStatusEnum> {
     AssertNotNullish(root.isCollection, this.constructor.name, '刷新状态的任务不能为子任务')
     AssertTrue(root.isCollection, this.constructor.name, '刷新状态的任务不能为子任务')
     const originalStatus = root.status
@@ -759,7 +759,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async deleteTask(taskIds: number[]): Promise<number> {
     let waitingDelete: number[] = []
     const taskTree = await this.dao.listTaskTree(taskIds)
-    const root = new TaskDTO()
+    const root = new TaskTreeDTO()
     root.children = taskTree
     for (const requestDeleteId of taskIds) {
       const tempTask = GetNode(root, requestDeleteId)
@@ -878,7 +878,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询父任务
    * @param page
    */
-  public async queryParentPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
+  public async queryParentPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProgressTreeDTO>> {
     if (NotNullish(page.query)) {
       page.query.operators = {
         ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
@@ -886,7 +886,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
     }
     const sourcePage = await this.dao.queryParentPage(page)
-    const resultPage = sourcePage.transform<TaskProcessingDTO>()
+    const resultPage = sourcePage.transform<TaskProgressTreeDTO>()
     const tasks = sourcePage.data
     if (NotNullish(tasks) && tasks.length > 0) {
       // 查询站点信息
@@ -898,7 +898,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         idSiteMap = Map.groupBy<number, Site>(sites, (site) => site.id as number)
       }
       resultPage.data = tasks.map((task) => {
-        const dto = new TaskProcessingDTO(task)
+        const dto = new TaskProgressTreeDTO(task)
         dto.hasChildren = dto.isCollection
         dto.children = []
         // 写入站点名称
@@ -926,7 +926,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 分页查询父任务的子任务
    * @param page
    */
-  public async queryChildrenTaskPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProcessingDTO>> {
+  public async queryChildrenTaskPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProgressTreeDTO>> {
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
@@ -936,7 +936,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       page.query.isCollection = false
     }
     const sourcePage = await super.queryPage(page)
-    const resultPage = sourcePage.transform<TaskProcessingDTO>()
+    const resultPage = sourcePage.transform<TaskProgressTreeDTO>()
     const tasks = sourcePage.data
     if (NotNullish(tasks) && tasks.length > 0) {
       // 查询站点信息
@@ -948,7 +948,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         idSiteMap = Map.groupBy<number, Site>(sites, (site) => site.id as number)
       }
       resultPage.data = tasks.map((task) => {
-        const dto = new TaskProcessingDTO(task)
+        const dto = new TaskProgressTreeDTO(task)
         dto.hasChildren = dto.isCollection
         dto.children = []
         // 写入站点名称
@@ -974,11 +974,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
     }
     const sourcePage = await super.queryPage(page)
-    const resultPage = sourcePage.transform<TaskDTO>()
+    const resultPage = sourcePage.transform<TaskTreeDTO>()
 
     // 组装为树形数据
     if (NotNullish(sourcePage.data) && sourcePage.data.length > 0) {
-      const tasks = sourcePage.data.map((task) => new TaskDTO(task))
+      const tasks = sourcePage.data.map((task) => new TaskTreeDTO(task))
       for (let index = 0; index < tasks.length; index++) {
         if (tasks[index].isCollection) {
           // 初始化children数组

@@ -6,7 +6,7 @@ import Page from '../model/util/Page.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
-import TaskDTO from '../model/dto/TaskDTO.ts'
+import TaskTreeDTO from '../model/dto/TaskTreeDTO.ts'
 import { BuildTree } from '../util/TreeUtil.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 
@@ -143,7 +143,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
    * @param taskIds 任务id
    * @param includeStatus 指定的任务状态
    */
-  async listTaskTree(taskIds: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskDTO[]> {
+  async listTaskTree(taskIds: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskTreeDTO[]> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
     const statement = `WITH children AS (SELECT id, is_collection, IFNULL(pid, 0) AS pid, task_name, site_id, local_works_id, site_works_id, url, create_time, update_time,
@@ -163,12 +163,12 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        SELECT *
                        FROM task
                        WHERE pid in (SELECT id FROM parent) ${NotNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
-    let sourceTasks: TaskDTO[]
+    let sourceTasks: TaskTreeDTO[]
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
-        sourceTasks = super.toResultTypeDataList<TaskDTO>(rows)
+        sourceTasks = super.toResultTypeDataList<TaskTreeDTO>(rows)
         return BuildTree(sourceTasks, 0)
       })
       .finally(() => {

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { TaskStatesEnum } from '@renderer/constants/TaskStatesEnum.ts'
-import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
+import TaskTreeDTO from '@renderer/model/main/dto/TaskTreeDTO.ts'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
-import TaskProcessingDTO from '@renderer/model/main/dto/TaskProcessingDTO.ts'
+import TaskProgressTreeDTO from '@renderer/model/main/dto/TaskProgressTreeDTO.ts'
 
 // props
 const props = defineProps<{
-  row: TaskProcessingDTO
-  buttonClicked: (row: TaskDTO, code: TaskOperationCodeEnum) => void
+  row: TaskProgressTreeDTO
+  buttonClicked: (row: TaskTreeDTO, code: TaskOperationCodeEnum) => void
 }>()
 
 // 变量
@@ -67,7 +67,7 @@ const taskStatusMapping: {
 
 // 方法
 // 任务状态映射为按钮状态
-function mapToButtonStatus(row: TaskDTO): {
+function mapToButtonStatus(row: TaskTreeDTO): {
   tooltip: string
   icon: string
   operation: TaskOperationCodeEnum

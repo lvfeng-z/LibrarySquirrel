@@ -1,15 +1,15 @@
 import Task from '../entity/Task.ts'
-import TreeNode from '../util/TreeNode.ts'
+import TreeNode from '../../util/TreeNode.ts'
 import lodash from 'lodash'
 
 /**
  * 任务
  */
-export default class TaskDTO extends Task implements TreeNode {
+export default class TaskTreeDTO extends Task implements TreeNode {
   /**
    * 子任务（用于el-table的树形数据回显）
    */
-  children: TaskDTO[] | undefined | null
+  children: TaskTreeDTO[] | undefined | null
 
   /**
    * 是否有子任务（用于el-table的树形数据回显）
@@ -21,7 +21,7 @@ export default class TaskDTO extends Task implements TreeNode {
    */
   isLeaf: boolean | undefined | null
 
-  constructor(taskDTO?: Task) {
+  constructor(taskDTO?: TaskTreeDTO | Task) {
     super(taskDTO)
     lodash.assign(this, lodash.pick(taskDTO, ['children', 'hasChildren', 'isLeaf']))
   }

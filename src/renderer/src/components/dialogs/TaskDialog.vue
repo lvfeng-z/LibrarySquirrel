@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DialogMode from '../../model/util/DialogMode'
 import { h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
-import TaskDTO from '../../model/main/dto/TaskDTO'
+import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
 import { InputBox } from '../../model/util/InputBox'
@@ -26,7 +26,7 @@ const props = defineProps<{
 
 // model
 // 表单数据
-const formData: Ref<UnwrapRef<TaskDTO>> = defineModel('formData', { type: Object, required: true })
+const formData: Ref<UnwrapRef<TaskTreeDTO>> = defineModel('formData', { type: Object, required: true })
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
@@ -48,7 +48,7 @@ const baseDialog = ref()
 // parentTaskInfo的dom元素
 const parentTaskInfo = ref()
 // 下级任务
-const children: Ref<UnwrapRef<TaskDTO[]>> = ref([])
+const children: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
 // 列表高度
 const heightForSearchTable: Ref<UnwrapRef<number>> = ref(0)
 // 表头
@@ -220,10 +220,10 @@ async function refreshTask() {
       // 获取可视区域及附近的行id
       const visibleRowsId = childTaskSearchTable.value.getVisibleRows(200, 200).map((id: string) => Number(id))
       // 利用树形工具找到所有id对应的数据，判断是否需要刷新
-      const tempRoot = new TaskDTO()
+      const tempRoot = new TaskTreeDTO()
       tempRoot.children = children.value
       return visibleRowsId.filter((id: number) => {
-        const task = GetNode<TaskDTO>(tempRoot, id)
+        const task = GetNode<TaskTreeDTO>(tempRoot, id)
         return (
           NotNullish(task) &&
           (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
@@ -249,7 +249,7 @@ function handleScroll() {
   throttleRefreshTask()
 }
 // 处理操作栏按钮点击事件
-function handleOperationButtonClicked(row: TaskDTO, code: TaskOperationCodeEnum) {
+function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeEnum) {
   switch (code) {
     case TaskOperationCodeEnum.START:
       startTask(row, false)
@@ -314,7 +314,7 @@ function getTaskStatusElTag(data: TaskStatesEnum): VNode {
   return h('div', { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } }, elTag)
 }
 // 开始任务
-function startTask(row: TaskDTO, retry: boolean) {
+function startTask(row: TaskTreeDTO, retry: boolean) {
   if (retry) {
     apis.taskRetryTask([row.id])
   } else {

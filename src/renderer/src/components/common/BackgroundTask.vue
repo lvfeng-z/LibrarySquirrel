@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
-import { useTaskStatusStore } from '@renderer/store/UseTaskStatusStore.ts'
 
 // model
 // 开关状态
 const state = defineModel<boolean>('state', { required: true })
-// 任务列表
-const taskList = defineModel<object>('taskList', { required: true })
-
-// 方法
-function add() {
-  const taskStatus = useTaskStatusStore()
-  taskStatus.get(1)
-}
-
-// 暴露
-defineExpose({ add })
+// // 任务列表
+// const taskList = defineModel<object>('taskList', { required: true })
+//
+// // 方法
+// function add() {
+//   const taskStatus = useTaskStatusStore()
+//   taskStatus.get(1)
+// }
+//
+// // 暴露
+// defineExpose({ add })
 </script>
 
 <template>

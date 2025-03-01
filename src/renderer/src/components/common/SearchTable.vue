@@ -11,7 +11,6 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/
 import TreeNode from '../../model/util/TreeNode'
 import { TreeNode as ElTreeNode } from 'element-plus'
 import { GetNode } from '../../utils/TreeUtil'
-import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
 import DataTable from '@renderer/components/common/DataTable.vue'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 
@@ -83,7 +82,7 @@ const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknow
 const wrappedLoad = IsNullish(props.treeLoad)
   ? undefined
   : async (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => {
-      const rowId = (row as TaskDTO).id as number
+      const rowId = Number(lodash.pick(row, props.keyOfData))
       if (!treeRefreshMap.has(rowId)) {
         treeRefreshMap.set(rowId, { treeNode: treeNode, resolve: resolve })
       }

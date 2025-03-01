@@ -7,7 +7,7 @@ import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
 import { InputBox } from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
-import TaskDTO from '../../model/main/dto/TaskDTO'
+import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import { ElMessage, ElTag } from 'element-plus'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
@@ -51,7 +51,7 @@ const apis = {
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
 // 任务SearchTable的数据
-const dataList: Ref<UnwrapRef<TaskDTO[]>> = ref([])
+const dataList: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
@@ -214,7 +214,7 @@ let refreshing: boolean = false
 // 防抖动refreshTask
 const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 // 当前dialog绑定数据
-const dialogData: Ref<UnwrapRef<TaskDTO>> = ref(new TaskDTO())
+const dialogData: Ref<UnwrapRef<TaskTreeDTO>> = ref(new TaskTreeDTO())
 // 本地标签的对话框开关
 const taskDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点下载dialog的开关
@@ -287,20 +287,20 @@ async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Pa
   }
 }
 // 懒加载处理函数
-async function load(row: unknown): Promise<TaskDTO[]> {
+async function load(row: unknown): Promise<TaskTreeDTO[]> {
   // 配置分页参数
   const pageCondition: Page<TaskQueryDTO, object> = new Page()
   pageCondition.pageSize = 100
   pageCondition.pageNumber = 1
   // 配置查询参数
-  pageCondition.query = { ...new TaskQueryDTO(), ...{ pid: (row as TaskDTO).id } }
+  pageCondition.query = { ...new TaskQueryDTO(), ...{ pid: (row as TaskTreeDTO).id } }
 
   return apis.taskQueryChildrenTaskPage(pageCondition).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
       const page = ApiUtil.data(response) as Page<TaskQueryDTO, object>
-      const data = (page.data === undefined ? [] : page.data) as TaskDTO[]
+      const data = (page.data === undefined ? [] : page.data) as TaskTreeDTO[]
       // 子任务列表赋值给对应的父任务的children
-      const parent = dataList.value.find((task) => (row as TaskDTO).id === task.id)
+      const parent = dataList.value.find((task) => (row as TaskTreeDTO).id === task.id)
       if (NotNullish(parent)) {
         parent.children = data
       }
@@ -323,7 +323,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
 }
 // 给行添加选择器，用于区分父任务和子任务
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
-  const row = data.row as TaskDTO
+  const row = data.row as TaskTreeDTO
   if (row.hasChildren || IsNullish(row.pid) || row.pid === 0) {
     return 'task-manage-search-table-parent-row'
   } else {
@@ -331,7 +331,7 @@ function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   }
 }
 // 处理操作栏按钮点击事件
-function handleOperationButtonClicked(row: TaskDTO, code: TaskOperationCodeEnum) {
+function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeEnum) {
   switch (code) {
     case TaskOperationCodeEnum.VIEW:
       dialogData.value = row
@@ -393,10 +393,10 @@ async function refreshTask() {
       // 获取可视区域及附近的行id
       const visibleRowsId = taskManageSearchTable.value.getVisibleRows(200, 200).map((id: string) => Number(id))
       // 利用树形工具找到所有id对应的数据，判断是否需要刷新
-      const tempRoot = new TaskDTO()
+      const tempRoot = new TaskTreeDTO()
       tempRoot.children = dataList.value
       return visibleRowsId.filter((id: number) => {
-        const task = GetNode<TaskDTO>(tempRoot, id)
+        const task = GetNode<TaskTreeDTO>(tempRoot, id)
         return (
           NotNullish(task) &&
           (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
@@ -422,7 +422,7 @@ function handleScroll() {
   throttleRefreshTask()
 }
 // 开始任务
-function startTask(row: TaskDTO, retry: boolean) {
+function startTask(row: TaskTreeDTO, retry: boolean) {
   if (retry) {
     apis.taskRetryTask([row.id]).then((response: ApiResponse) => {
       if (!ApiUtil.check(response)) {

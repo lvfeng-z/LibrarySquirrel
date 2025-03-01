@@ -1,8 +1,8 @@
 import Task from '@renderer/model/main/entity/Task.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
-import TaskDTO from '@renderer/model/main/dto/TaskDTO.ts'
+import TaskTreeDTO from '@renderer/model/main/dto/TaskTreeDTO.ts'
 
-export default class TaskProcessingDTO extends TaskDTO {
+export default class TaskProgressTreeDTO extends TaskTreeDTO {
   /**
    * 进度
    */
@@ -23,7 +23,7 @@ export default class TaskProcessingDTO extends TaskDTO {
    */
   siteName: string | undefined | null
 
-  constructor(taskProcessingDTO?: TaskProcessingDTO | Task) {
+  constructor(taskProcessingDTO?: TaskProgressTreeDTO | Task) {
     super(taskProcessingDTO)
     if (IsNullish(taskProcessingDTO)) {
       this.schedule = undefined
@@ -31,7 +31,7 @@ export default class TaskProcessingDTO extends TaskDTO {
       this.finished = undefined
       this.siteName = undefined
     } else {
-      if (taskProcessingDTO instanceof TaskProcessingDTO) {
+      if (taskProcessingDTO instanceof TaskProgressTreeDTO) {
         this.schedule = taskProcessingDTO.schedule
         this.total = taskProcessingDTO.total
         this.finished = taskProcessingDTO.finished

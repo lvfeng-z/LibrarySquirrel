@@ -7,7 +7,6 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/Comm
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
-import TaskDTO from '../model/dto/TaskDTO.js'
 import TaskWriter from '../util/TaskWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 import Task from '../model/entity/Task.js'
@@ -99,7 +98,7 @@ export class TaskQueue {
    * @private
    */
   private initializeStream() {
-    const handleError = (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+    const handleError = (error: Error, task: Task, taskRunningObj: TaskRunningObj) => {
       LogUtil.error('TaskQueue', `处理任务失败，taskId: ${task.id}，error: ${error.message}`)
       taskRunningObj.status = TaskStatusEnum.FAILED
       this.taskService.taskFailed(taskRunningObj.taskId, error.message).then(() => {
@@ -109,13 +108,13 @@ export class TaskQueue {
       this.refreshParentStatus([taskRunningObj.parentId])
     }
     // 信息保存流
-    this.taskInfoStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+    this.taskInfoStream.on('error', (error: Error, task: Task, taskRunningObj: TaskRunningObj) => {
       this.inletStream.unpipe(this.taskInfoStream)
       this.inletStream.pipe(this.taskInfoStream)
       handleError(error, task, taskRunningObj)
     })
     // 资源保存流
-    this.taskResourceStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+    this.taskResourceStream.on('error', (error: Error, task: Task, taskRunningObj: TaskRunningObj) => {
       this.taskInfoStream.unpipe(this.taskResourceStream)
       this.taskInfoStream.pipe(this.taskResourceStream)
       handleError(error, task, taskRunningObj)
@@ -147,7 +146,7 @@ export class TaskQueue {
     this.taskResourceStream.on('saveFailed', handleError)
     this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
     // 保存结果处理流
-    this.taskStatusChangeStream.on('error', (error: Error, task: TaskDTO, taskRunningObj: TaskRunningObj) => {
+    this.taskStatusChangeStream.on('error', (error: Error, task: Task, taskRunningObj: TaskRunningObj) => {
       this.taskResourceStream.unpipe(this.taskStatusChangeStream)
       this.taskResourceStream.pipe(this.taskStatusChangeStream)
       handleError(error, task, taskRunningObj)
@@ -927,7 +926,7 @@ class TaskStatusChangeStream extends Writable {
         tempTasks = [this.generateTaskFromSaveResult(chunk)]
       }
       this.batchUpdateBuffer.push(...tempTasks)
-      if (this.batchUpdateBuffer.length >= 100 || !ArrayNotEmpty(this.saveResultList)) {
+      if (this.batchUpdateBuffer.length >= 100 || ArrayIsEmpty(this.saveResultList)) {
         const temp = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
         this.taskService.updateBatchById(temp).catch((error) => LogUtil.error('TaskQueue', error))
       }
