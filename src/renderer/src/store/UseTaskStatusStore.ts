@@ -1,11 +1,10 @@
 import { defineStore } from 'pinia'
-import { ITaskStatus } from '@renderer/model/main/interface/TaskStatus.ts'
-import TaskProcessingDTO from '@renderer/model/main/dto/TaskProcessingDTO.ts'
+import TaskProgressMapTreeDTO from '@renderer/model/main/dto/TaskProgressMapTreeDTO.ts'
 
 export const useTaskStatusStore = defineStore('taskStatus', {
-  state: (): Map<number, ITaskStatus> => {
-    const r = new Map<number, ITaskStatus>()
-    r.set(1, new TaskProcessingDTO())
+  state: (): Map<number, TaskProgressMapTreeDTO> => {
+    const r = new Map<number, TaskProgressMapTreeDTO>()
+    r.set(1, new TaskProgressMapTreeDTO())
     return r
   }
 })

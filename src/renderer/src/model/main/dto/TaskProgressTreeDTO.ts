@@ -1,47 +1,29 @@
-import Task from '@renderer/model/main/entity/Task.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import TaskTreeDTO from '@renderer/model/main/dto/TaskTreeDTO.ts'
+import TaskProgressDTO from '@renderer/model/main/dto/TaskProgressDTO.ts'
+import lodash from 'lodash'
+import TreeNode from '@renderer/model/util/TreeNode.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
-export default class TaskProgressTreeDTO extends TaskTreeDTO {
+export default class TaskProgressTreeDTO extends TaskProgressDTO implements TreeNode {
   /**
-   * 进度
+   * 子任务（用于el-table的树形数据回显）
    */
-  schedule: number | undefined | null
-
-  /**
-   * 总量
-   */
-  total: number | undefined | null
-
-  /**
-   * 已完成的量
-   */
-  finished: number | undefined | null
+  children: TaskTreeDTO[] | undefined | null
 
   /**
-   * 站点名称
+   * 是否有子任务（用于el-table的树形数据回显）
    */
-  siteName: string | undefined | null
+  hasChildren: boolean | undefined | null
 
-  constructor(taskProcessingDTO?: TaskProgressTreeDTO | Task) {
+  /**
+   * 是否为叶子节点
+   */
+  isLeaf: boolean | undefined | null
+
+  constructor(taskProcessingDTO?: TaskProgressDTO) {
     super(taskProcessingDTO)
-    if (IsNullish(taskProcessingDTO)) {
-      this.schedule = undefined
-      this.total = undefined
-      this.finished = undefined
-      this.siteName = undefined
-    } else {
-      if (taskProcessingDTO instanceof TaskProgressTreeDTO) {
-        this.schedule = taskProcessingDTO.schedule
-        this.total = taskProcessingDTO.total
-        this.finished = taskProcessingDTO.finished
-        this.siteName = taskProcessingDTO.siteName
-      } else {
-        this.schedule = undefined
-        this.total = undefined
-        this.finished = undefined
-        this.siteName = undefined
-      }
+    if (NotNullish(taskProcessingDTO)) {
+      lodash.assign(this, lodash.pick(taskProcessingDTO, ['children', 'hasChildren', 'isLeaf']))
     }
   }
 }
