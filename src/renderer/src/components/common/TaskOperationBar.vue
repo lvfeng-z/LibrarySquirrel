@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TaskStatesEnum } from '@renderer/constants/TaskStatesEnum.ts'
+import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
 import TaskTreeDTO from '@renderer/model/main/dto/TaskTreeDTO.ts'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
@@ -14,50 +14,50 @@ const props = defineProps<{
 // 变量
 // 任务状态与操作按钮状态的对应关系
 const taskStatusMapping: {
-  [K in TaskStatesEnum]: {
+  [K in TaskStatusEnum]: {
     tooltip: string
     icon: string
     operation: TaskOperationCodeEnum
     processing: boolean
   }
 } = {
-  [TaskStatesEnum.CREATED]: {
+  [TaskStatusEnum.CREATED]: {
     tooltip: '开始',
     icon: 'VideoPlay',
     operation: TaskOperationCodeEnum.START,
     processing: false
   },
-  [TaskStatesEnum.PROCESSING]: {
+  [TaskStatusEnum.PROCESSING]: {
     tooltip: '暂停',
     icon: 'VideoPause',
     operation: TaskOperationCodeEnum.PAUSE,
     processing: true
   },
-  [TaskStatesEnum.WAITING]: {
+  [TaskStatusEnum.WAITING]: {
     tooltip: '等待中',
     icon: 'Loading',
     operation: TaskOperationCodeEnum.START,
     processing: true
   },
-  [TaskStatesEnum.PAUSE]: {
+  [TaskStatusEnum.PAUSE]: {
     tooltip: '继续',
     icon: 'RefreshRight',
     operation: TaskOperationCodeEnum.RESUME,
     processing: false
   },
-  [TaskStatesEnum.FINISHED]: {
+  [TaskStatusEnum.FINISHED]: {
     tooltip: '再次下载',
     icon: 'RefreshRight',
     operation: TaskOperationCodeEnum.RETRY,
     processing: false
   },
-  [TaskStatesEnum.PARTLY_FINISHED]: {
+  [TaskStatusEnum.PARTLY_FINISHED]: {
     tooltip: '开始',
     icon: 'VideoPlay',
     operation: TaskOperationCodeEnum.START,
     processing: false
   },
-  [TaskStatesEnum.FAILED]: {
+  [TaskStatusEnum.FAILED]: {
     tooltip: '重试',
     icon: 'RefreshRight',
     operation: TaskOperationCodeEnum.RETRY,
@@ -85,7 +85,7 @@ function mapToButtonStatus(row: TaskTreeDTO): {
   <div>
     <el-button-group
       v-show="
-        (row.status !== TaskStatesEnum.PROCESSING && row.status !== TaskStatesEnum.WAITING && row.status !== TaskStatesEnum.PAUSE) ||
+        (row.status !== TaskStatusEnum.PROCESSING && row.status !== TaskStatusEnum.WAITING && row.status !== TaskStatusEnum.PAUSE) ||
         row.hasChildren
       "
       style="margin-left: auto; margin-right: auto; flex-shrink: 0"
@@ -111,7 +111,7 @@ function mapToButtonStatus(row: TaskTreeDTO): {
     <transition name="task-operation-bar-el-progress-fade">
       <div
         v-if="
-          (row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING || row.status === TaskStatesEnum.PAUSE) &&
+          (row.status === TaskStatusEnum.PROCESSING || row.status === TaskStatusEnum.WAITING || row.status === TaskStatusEnum.PAUSE) &&
           row.hasChildren
         "
       >
@@ -134,7 +134,7 @@ function mapToButtonStatus(row: TaskTreeDTO): {
     </transition>
     <el-progress
       v-show="
-        (row.status === TaskStatesEnum.PROCESSING || row.status === TaskStatesEnum.WAITING || row.status === TaskStatesEnum.PAUSE) &&
+        (row.status === TaskStatusEnum.PROCESSING || row.status === TaskStatusEnum.WAITING || row.status === TaskStatusEnum.PAUSE) &&
         !row.hasChildren
       "
       style="width: 100%"

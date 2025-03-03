@@ -1,4 +1,5 @@
 import LogUtil from './LogUtil.js'
+import lodash from 'lodash'
 
 /**
  * 去除值为undefined的属性
@@ -103,6 +104,16 @@ export function ParsePropertyFromJson(source: object, properties: { property: st
       }
     }
   }
+}
+
+export function CopyIgnoreUndefined(target: object, source: object) {
+  lodash.assignWith(target, source, (targetValue, sourceValue) => {
+    if (sourceValue === undefined) {
+      return targetValue
+    } else {
+      return sourceValue
+    }
+  })
 }
 
 export default {

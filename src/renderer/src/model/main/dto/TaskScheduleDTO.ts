@@ -1,5 +1,6 @@
-import { IsNullish } from '../../../utils/CommonUtil'
-import { TaskStatesEnum } from '../../../constants/TaskStatesEnum'
+import { NotNullish } from '../../../utils/CommonUtil'
+import { TaskStatusEnum } from '../../../constants/TaskStatusEnum.ts'
+import lodash from 'lodash'
 
 export default class TaskScheduleDTO {
   /**
@@ -8,9 +9,14 @@ export default class TaskScheduleDTO {
   id: number | undefined | null
 
   /**
+   * 上级任务id
+   */
+  pid: number | undefined | null
+
+  /**
    * 状态
    */
-  status: TaskStatesEnum | undefined | null
+  status: TaskStatusEnum | undefined | null
 
   /**
    * 进度
@@ -18,28 +24,18 @@ export default class TaskScheduleDTO {
   schedule: number | undefined | null
 
   /**
-   * 总量
+   * 总量（父任务的子任务总量）
    */
   total: number | undefined | null
 
   /**
-   * 已完成的量
+   * 已完成的量（父任务的已完成子任务的量）
    */
   finished: number | undefined | null
 
   constructor(taskScheduleDTO?: TaskScheduleDTO) {
-    if (IsNullish(taskScheduleDTO)) {
-      this.id = undefined
-      this.status = undefined
-      this.schedule = undefined
-      this.total = undefined
-      this.finished = undefined
-    } else {
-      this.id = taskScheduleDTO.id
-      this.status = taskScheduleDTO.status
-      this.schedule = taskScheduleDTO.schedule
-      this.total = taskScheduleDTO.total
-      this.finished = taskScheduleDTO.finished
+    if (NotNullish(taskScheduleDTO)) {
+      lodash.assign(this, lodash.pick(taskScheduleDTO, ['id', 'pid', 'status', 'schedule', 'total', 'finished']))
     }
   }
 }

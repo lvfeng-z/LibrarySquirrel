@@ -21,7 +21,7 @@ export default class TaskProgressMapTreeDTO extends TaskProgressDTO {
   constructor(task?: TaskProgressDTO) {
     super(task)
     if (NotNullish(task)) {
-      lodash.assign(this, lodash.pick(task, ['children', 'hasChildren', 'isLeaf', 'schedule', 'total', 'finished', 'siteName']))
+      lodash.assign(this, lodash.pick(task, ['children', 'hasChildren', 'isLeaf']))
     }
   }
 }

@@ -275,6 +275,7 @@ export class TaskQueue {
 
       return new TaskScheduleDTO({
         id: taskId,
+        pid: undefined,
         status: parentRunningObj.status,
         schedule: schedule,
         total: parentRunningObj.children.size,
@@ -290,6 +291,7 @@ export class TaskQueue {
     if (TaskStatusEnum.FINISHED === taskRunningObj.status) {
       return new TaskScheduleDTO({
         id: taskId,
+        pid: taskRunningObj.parentId,
         status: TaskStatusEnum.FINISHED,
         schedule: 100,
         total: undefined,
@@ -301,6 +303,7 @@ export class TaskQueue {
       if (writer.bytesSum === 0) {
         return new TaskScheduleDTO({
           id: taskId,
+          pid: taskRunningObj.parentId,
           status: taskRunningObj.status,
           schedule: 0,
           total: undefined,
@@ -310,6 +313,7 @@ export class TaskQueue {
         const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
         return new TaskScheduleDTO({
           id: taskId,
+          pid: taskRunningObj.parentId,
           status: taskRunningObj.status,
           schedule: schedule,
           total: undefined,

@@ -19,7 +19,7 @@ const state = defineModel<boolean>('state', { required: true })
 
 <template>
   <collapse-panel v-model:state="state">
-    <slot name="default" />
+    <div></div>
   </collapse-panel>
 </template>
 

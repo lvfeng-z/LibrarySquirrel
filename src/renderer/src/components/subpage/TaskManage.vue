@@ -11,7 +11,7 @@ import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import { ElMessage, ElTag } from 'element-plus'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
-import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
+import { TaskStatusEnum } from '../../constants/TaskStatusEnum.ts'
 import { GetNode } from '../../utils/TreeUtil'
 import TaskDialog from '../dialogs/TaskDialog.vue'
 import Page from '../../model/util/Page.ts'
@@ -112,35 +112,35 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     dataAlign: 'center',
     overHide: false,
     editMethod: 'replace',
-    render: (data: TaskStatesEnum): VNode => {
+    render: (data: TaskStatusEnum): VNode => {
       let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
       let tagText: string | undefined
       switch (data) {
-        case TaskStatesEnum.CREATED:
+        case TaskStatusEnum.CREATED:
           tagType = 'primary'
           tagText = '已创建'
           break
-        case TaskStatesEnum.PROCESSING:
+        case TaskStatusEnum.PROCESSING:
           tagType = 'warning'
           tagText = '进行中'
           break
-        case TaskStatesEnum.WAITING:
+        case TaskStatusEnum.WAITING:
           tagType = 'warning'
           tagText = '等待中'
           break
-        case TaskStatesEnum.PAUSE:
+        case TaskStatusEnum.PAUSE:
           tagType = 'info'
           tagText = '已暂停'
           break
-        case TaskStatesEnum.FINISHED:
+        case TaskStatusEnum.FINISHED:
           tagType = 'success'
           tagText = '完成'
           break
-        case TaskStatesEnum.PARTLY_FINISHED:
+        case TaskStatusEnum.PARTLY_FINISHED:
           tagType = 'success'
           tagText = '部分完成'
           break
-        case TaskStatesEnum.FAILED:
+        case TaskStatusEnum.FAILED:
           tagType = 'danger'
           tagText = '失败'
           break
@@ -177,31 +177,31 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     inputSpan: 4,
     selectList: [
       {
-        value: TaskStatesEnum.CREATED,
+        value: TaskStatusEnum.CREATED,
         label: '已创建'
       },
       {
-        value: TaskStatesEnum.PROCESSING,
+        value: TaskStatusEnum.PROCESSING,
         label: '进行中'
       },
       {
-        value: TaskStatesEnum.WAITING,
+        value: TaskStatusEnum.WAITING,
         label: '等待中'
       },
       {
-        value: TaskStatesEnum.PAUSE,
+        value: TaskStatusEnum.PAUSE,
         label: '暂停'
       },
       {
-        value: TaskStatesEnum.FINISHED,
+        value: TaskStatusEnum.FINISHED,
         label: '已完成'
       },
       {
-        value: TaskStatesEnum.FAILED,
+        value: TaskStatusEnum.FAILED,
         label: '失败'
       },
       {
-        value: TaskStatesEnum.PARTLY_FINISHED,
+        value: TaskStatusEnum.PARTLY_FINISHED,
         label: '部分完成'
       }
     ]
@@ -399,7 +399,7 @@ async function refreshTask() {
         const task = GetNode<TaskTreeDTO>(tempRoot, id)
         return (
           NotNullish(task) &&
-          (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
+          (task.status === TaskStatusEnum.WAITING || task.status === TaskStatusEnum.PROCESSING || task.status === TaskStatusEnum.PAUSE)
         )
       })
     }
@@ -436,9 +436,9 @@ function startTask(row: TaskTreeDTO, retry: boolean) {
       }
     })
   }
-  row.status = TaskStatesEnum.WAITING
+  row.status = TaskStatusEnum.WAITING
   if (row.isCollection && NotNullish(row.children)) {
-    row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
+    row.children.forEach((child) => (child.status = TaskStatusEnum.WAITING))
   }
 }
 // 删除任务

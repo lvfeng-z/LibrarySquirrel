@@ -1,3 +1,5 @@
+import lodash from 'lodash'
+
 export function NonUndefinedValue(obj: object | undefined): object {
   if (obj === undefined) {
     return {}
@@ -44,4 +46,14 @@ export function SetPropByPath(obj: object, path: string, val: unknown) {
     result = result[prop]
     index++
   }
+}
+
+export function CopyIgnoreUndefined(target: object, source: object) {
+  lodash.assignWith(target, source, (targetValue, sourceValue) => {
+    if (sourceValue === undefined) {
+      return targetValue
+    } else {
+      return sourceValue
+    }
+  })
 }

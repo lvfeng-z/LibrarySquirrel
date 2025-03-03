@@ -5,7 +5,7 @@ import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
 import { InputBox } from '../../model/util/InputBox'
-import { TaskStatesEnum } from '../../constants/TaskStatesEnum'
+import { TaskStatusEnum } from '../../constants/TaskStatusEnum.ts'
 import { ElTag } from 'element-plus'
 import ApiUtil from '../../utils/ApiUtil'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
@@ -137,31 +137,31 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
     inputSpan: 4,
     selectList: [
       {
-        value: TaskStatesEnum.CREATED,
+        value: TaskStatusEnum.CREATED,
         label: '已创建'
       },
       {
-        value: TaskStatesEnum.PROCESSING,
+        value: TaskStatusEnum.PROCESSING,
         label: '进行中'
       },
       {
-        value: TaskStatesEnum.WAITING,
+        value: TaskStatusEnum.WAITING,
         label: '等待中'
       },
       {
-        value: TaskStatesEnum.PAUSE,
+        value: TaskStatusEnum.PAUSE,
         label: '暂停'
       },
       {
-        value: TaskStatesEnum.FINISHED,
+        value: TaskStatusEnum.FINISHED,
         label: '已完成'
       },
       {
-        value: TaskStatesEnum.FAILED,
+        value: TaskStatusEnum.FAILED,
         label: '失败'
       },
       {
-        value: TaskStatesEnum.PARTLY_FINISHED,
+        value: TaskStatusEnum.PARTLY_FINISHED,
         label: '部分完成'
       }
     ]
@@ -226,7 +226,7 @@ async function refreshTask() {
         const task = GetNode<TaskTreeDTO>(tempRoot, id)
         return (
           NotNullish(task) &&
-          (task.status === TaskStatesEnum.WAITING || task.status === TaskStatesEnum.PROCESSING || task.status === TaskStatesEnum.PAUSE)
+          (task.status === TaskStatusEnum.WAITING || task.status === TaskStatusEnum.PROCESSING || task.status === TaskStatusEnum.PAUSE)
         )
       })
     }
@@ -277,35 +277,35 @@ function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeE
   }
 }
 // 获取表示任务状态的ElTag的render函数
-function getTaskStatusElTag(data: TaskStatesEnum): VNode {
+function getTaskStatusElTag(data: TaskStatusEnum): VNode {
   let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
   let tagText: string | undefined
   switch (data) {
-    case TaskStatesEnum.CREATED:
+    case TaskStatusEnum.CREATED:
       tagType = 'primary'
       tagText = '已创建'
       break
-    case TaskStatesEnum.PROCESSING:
+    case TaskStatusEnum.PROCESSING:
       tagType = 'warning'
       tagText = '进行中'
       break
-    case TaskStatesEnum.WAITING:
+    case TaskStatusEnum.WAITING:
       tagType = 'warning'
       tagText = '等待中'
       break
-    case TaskStatesEnum.PAUSE:
+    case TaskStatusEnum.PAUSE:
       tagType = 'info'
       tagText = '已暂停'
       break
-    case TaskStatesEnum.FINISHED:
+    case TaskStatusEnum.FINISHED:
       tagType = 'success'
       tagText = '完成'
       break
-    case TaskStatesEnum.PARTLY_FINISHED:
+    case TaskStatusEnum.PARTLY_FINISHED:
       tagType = 'success'
       tagText = '部分完成'
       break
-    case TaskStatesEnum.FAILED:
+    case TaskStatusEnum.FAILED:
       tagType = 'danger'
       tagText = '失败'
       break
@@ -320,9 +320,9 @@ function startTask(row: TaskTreeDTO, retry: boolean) {
   } else {
     apis.taskStartTask([row.id])
   }
-  row.status = TaskStatesEnum.WAITING
+  row.status = TaskStatusEnum.WAITING
   if (row.isCollection && NotNullish(row.children)) {
-    row.children.forEach((child) => (child.status = TaskStatesEnum.WAITING))
+    row.children.forEach((child) => (child.status = TaskStatusEnum.WAITING))
   }
 }
 // 删除任务
@@ -362,7 +362,7 @@ async function deleteTask(ids: number[]) {
             </el-col>
             <el-col :span="3">
               <el-form-item label="状态">
-                <component :is="getTaskStatusElTag(formData.status as TaskStatesEnum)" />
+                <component :is="getTaskStatusElTag(formData.status as TaskStatusEnum)" />
               </el-form-item>
             </el-col>
             <el-col :span="7">
