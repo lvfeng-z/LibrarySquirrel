@@ -1,13 +1,14 @@
 import { GlobalVar, GlobalVars } from './GlobalVar.js'
 
 export enum RenderEvent {
-  TASK_LIST_SET_CHILDREN = 'taskList-setChildren',
-  TASK_LIST_UPDATE_CHILDREN = 'taskList-updateChildren',
-  TASK_LIST_UPDATE_CHILDREN_SCHEDULE = 'taskList-updateChildrenSchedule',
-  TASK_LIST_SET_PARENT = 'taskList-setParent',
-  TASK_LIST_UPDATE_PARENT = 'taskList-updateParent',
-  TASK_LIST_UPDATE_PARENT_SCHEDULE = 'taskList-updateParentSchedule',
-  TASK_LIST_REMOVE_PARENT = 'taskList-removeParent'
+  TASK_SET_TASK = 'task-setTask',
+  TASK_UPDATE_TASK = 'task-updateTask',
+  TASK_UPDATE_TASK_SCHEDULE = 'task-updateTaskSchedule',
+  TASK_REMOVE_TASK = 'task-removeTask',
+  PARENT_TASK_SET_PARENT_TASK = 'parentTask-setParentTask',
+  PARENT_TASK_UPDATE_PARENT_TASK = 'parentTask-updateParentTask',
+  PARENT_TASK_UPDATE_PARENT_TASK_SCHEDULE = 'parentTask-updateParentTaskSchedule',
+  PARENT_TASK_REMOVE_PARENT_TASK = 'parentTask-removeParentTask'
 }
 
 /**

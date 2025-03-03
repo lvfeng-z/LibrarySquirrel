@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElTreeSelect } from 'element-plus'
-import { useTaskStatusStore } from '@renderer/store/UseTaskStatusStore.ts'
+import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 
 const value = ref()
 const value2 = ref(5)
 
-const taskStatus = useTaskStatusStore()
+const taskStatus = useTaskStore()
 
 const cacheData = [
   { value: 5, label: 'lazy load node5' },
@@ -53,6 +53,7 @@ const load = (node, resolve) => {
     <div>
       {{ taskStatus.$state.entries() }}
     </div>
+    <el-button @click="console.log(taskStatus.$state)">test</el-button>
   </div>
 </template>
 

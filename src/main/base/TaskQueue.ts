@@ -545,7 +545,7 @@ export class TaskQueue {
     // 任务状态推送到渲染进程
     const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
     CopyIgnoreUndefined(taskProgressMapTreeDTO, task)
-    SendMsgToRender(RenderEvent.TASK_LIST_SET_CHILDREN, taskProgressMapTreeDTO)
+    SendMsgToRender(RenderEvent.TASK_SET_TASK, taskProgressMapTreeDTO)
   }
 
   private inletParentTask(parentRunningObj: ParentRunningObj, task: Task) {
@@ -553,7 +553,7 @@ export class TaskQueue {
     // 任务状态推送到渲染进程
     const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
     CopyIgnoreUndefined(taskProgressMapTreeDTO, task)
-    SendMsgToRender(RenderEvent.TASK_LIST_SET_PARENT, taskProgressMapTreeDTO)
+    SendMsgToRender(RenderEvent.PARENT_TASK_SET_PARENT_TASK, taskProgressMapTreeDTO)
   }
   // private getStream(): ReadableTaskRunningObject {
   //   if (isNullish(this.readableRunningObj)) {
