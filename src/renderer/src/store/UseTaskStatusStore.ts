@@ -13,7 +13,7 @@ export const useTaskStatusStore = defineStore('taskStatus', {
 
 export function setChildren(taskList: TaskProgressMapTreeDTO[]): void {
   const pidChildrenMap = lodash.groupBy(taskList, 'pid')
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   Object.entries(pidChildrenMap).forEach(([pid, tempTaskList]) => {
     const parent = taskStatus.get(Number(pid))
     tempTaskList.forEach((task) => {
@@ -33,7 +33,7 @@ export function setChildren(taskList: TaskProgressMapTreeDTO[]): void {
 
 export function updateChildren(taskList: TaskProgressMapTreeDTO[]): void {
   const pidChildrenMap = lodash.groupBy(taskList, 'pid')
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   Object.entries(pidChildrenMap).forEach(([pid, tempTaskList]) => {
     const parent = taskStatus.get(Number(pid))
     tempTaskList.forEach((task) => {
@@ -57,7 +57,7 @@ export function updateChildren(taskList: TaskProgressMapTreeDTO[]): void {
 
 export function updateChildrenSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
   const pidChildrenMap = lodash.groupBy(scheduleDTOList, 'pid')
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   Object.entries(pidChildrenMap).forEach(([pid, tempTaskList]) => {
     const parent = taskStatus.get(Number(pid))
     tempTaskList.forEach((task) => {
@@ -83,14 +83,14 @@ export function updateChildrenSchedule(scheduleDTOList: TaskScheduleDTO[]): void
 }
 
 // export function removeChildren(ids: number[]) {
-//   const taskStatus = useTaskStatusStore()
+//   const taskStatus = useTaskStatusStore().$state
 //   if (ArrayNotEmpty(ids)) {
 //     ids.forEach((id) => taskStatus.delete(id))
 //   }
 // }
 
 export function setParent(taskList: TaskProgressMapTreeDTO[]): void {
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   taskList.forEach((task) => {
     if (IsNullish(task.id)) {
       throw new Error('UseTaskStatusStore: 赋值父任务失败，任务id为空')
@@ -100,7 +100,7 @@ export function setParent(taskList: TaskProgressMapTreeDTO[]): void {
 }
 
 export function updateParent(taskList: TaskProgressMapTreeDTO[]): void {
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   taskList.forEach((task) => {
     if (IsNullish(task.id)) {
       throw new Error('UseTaskStatusStore: 赋值父任务失败，任务id为空')
@@ -113,7 +113,7 @@ export function updateParent(taskList: TaskProgressMapTreeDTO[]): void {
 }
 
 export function updateParentSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   scheduleDTOList.forEach((scheduleDTO) => {
     if (IsNullish(scheduleDTO.id)) {
       throw new Error('UseTaskStatusStore: 赋值父任务失败，任务id为空')
@@ -129,7 +129,7 @@ export function updateParentSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
 }
 
 export function removeParent(ids: number[]) {
-  const taskStatus = useTaskStatusStore()
+  const taskStatus = useTaskStatusStore().$state
   if (ArrayNotEmpty(ids)) {
     ids.forEach((id) => taskStatus.delete(id))
   }

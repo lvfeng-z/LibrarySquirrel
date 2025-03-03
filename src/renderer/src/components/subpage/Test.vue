@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElTreeSelect } from 'element-plus'
+import { useTaskStatusStore } from '@renderer/store/UseTaskStatusStore.ts'
 
 const value = ref()
 const value2 = ref(5)
+
+const taskStatus = useTaskStatusStore()
 
 const cacheData = [
   { value: 5, label: 'lazy load node5' },
@@ -46,8 +49,10 @@ const load = (node, resolve) => {
     </div>
     <el-tree-select v-model="value" lazy :load="load" :props="props" style="width: 240px" />
     <el-divider />
-    <VersionTag version="2.2.26" /> show lazy load label:
     <el-tree-select v-model="value2" lazy :load="load" :props="props" :cache-data="cacheData" style="width: 240px" />
+    <div>
+      {{ taskStatus.$state.entries() }}
+    </div>
   </div>
 </template>
 

@@ -11,6 +11,9 @@ import TaskWriter from '../util/TaskWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 import Task from '../model/entity/Task.js'
 import { GlobalVar, GlobalVars } from './GlobalVar.js'
+import { RenderEvent, SendMsgToRender } from './EventToRender.js'
+import TaskProgressMapTreeDTO from '../model/dto/TaskProgressMapTreeDTO.js'
+import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
 
 /**
  * 任务队列
@@ -55,7 +58,7 @@ export class TaskQueue {
   private readonly pluginLoader: PluginLoader<TaskHandler>
 
   /**
-   * 作为任务处理流程入口的可读流
+   * 作为任务处理流程入口的流
    * @param pluginLoader
    */
   private inletStream: ReadableTaskRunningObject
@@ -152,7 +155,7 @@ export class TaskQueue {
       handleError(error, task, taskRunningObj)
     })
 
-    // 连接
+    // 建立管道
     this.inletStream.pipe(this.taskInfoStream)
     this.taskInfoStream.pipe(this.taskResourceStream)
     this.taskResourceStream.pipe(this.taskStatusChangeStream)
@@ -229,7 +232,7 @@ export class TaskQueue {
             task.pid,
             infoSaved
           )
-          this.taskMap.set(newOperationObj.taskId, taskRunningObj)
+          this.inletTask(taskRunningObj, task)
           this.insertQueue(newOperationObj)
           taskRunningStatusList.push({
             taskRunningObj: taskRunningObj,
@@ -467,7 +470,7 @@ export class TaskQueue {
           const parentInfo = await this.taskService.getById(runningObj.parentId)
           AssertNotNullish(parentInfo?.status, 'TaskQueue', `刷新父任务${runningObj.parentId}失败，任务状态意外为空`)
           parent = new ParentRunningObj(runningObj.parentId, parentInfo?.status)
-          this.parentMap.set(runningObj.parentId, parent)
+          this.inletParentTask(parent, parentInfo)
         }
         parent.children.set(runningObj.taskId, runningObj)
         parentWaitingRefreshSet.add(runningObj.parentId)
@@ -537,6 +540,21 @@ export class TaskQueue {
     }
   }
 
+  private inletTask(taskRunningObj: TaskRunningObj, task: Task) {
+    this.taskMap.set(taskRunningObj.taskId, taskRunningObj)
+    // 任务状态推送到渲染进程
+    const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
+    CopyIgnoreUndefined(taskProgressMapTreeDTO, task)
+    SendMsgToRender(RenderEvent.TASK_LIST_SET_CHILDREN, taskProgressMapTreeDTO)
+  }
+
+  private inletParentTask(parentRunningObj: ParentRunningObj, task: Task) {
+    this.parentMap.set(parentRunningObj.taskId, parentRunningObj)
+    // 任务状态推送到渲染进程
+    const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
+    CopyIgnoreUndefined(taskProgressMapTreeDTO, task)
+    SendMsgToRender(RenderEvent.TASK_LIST_SET_PARENT, taskProgressMapTreeDTO)
+  }
   // private getStream(): ReadableTaskRunningObject {
   //   if (isNullish(this.readableRunningObj)) {
   //     this.readableRunningObj = new ReadableTaskRunningObject()
@@ -996,6 +1014,9 @@ class TaskStatusChangeStream extends Writable {
   }
 }
 
+/**
+ * 任务运行对象流
+ */
 class ReadableTaskRunningObject extends Readable {
   /**
    * 所有待处理的数组
