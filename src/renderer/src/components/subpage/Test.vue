@@ -2,11 +2,13 @@
 import { ref } from 'vue'
 import { ElTreeSelect } from 'element-plus'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
+import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 
 const value = ref()
 const value2 = ref(5)
 
-const taskStatus = useTaskStore()
+const taskStatus = useTaskStore().$state
+const parentTaskStatus = useParentTaskStore().$state
 
 const cacheData = [
   { value: 5, label: 'lazy load node5' },
@@ -51,9 +53,16 @@ const load = (node, resolve) => {
     <el-divider />
     <el-tree-select v-model="value2" lazy :load="load" :props="props" :cache-data="cacheData" style="width: 240px" />
     <div>
-      {{ taskStatus.$state.entries() }}
+      <template v-for="item in taskStatus.values()" :key="item.id">
+        <span style="white-space: nowrap">{{ item }}</span>
+      </template>
     </div>
-    <el-button @click="console.log(taskStatus.$state)">test</el-button>
+    <div>
+      <template v-for="item in parentTaskStatus.values()" :key="item.id">
+        <span style="white-space: nowrap">{{ item }}</span>
+      </template>
+    </div>
+    <el-button @click="console.log(taskStatus)">test</el-button>
   </div>
 </template>
 

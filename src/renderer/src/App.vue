@@ -32,6 +32,7 @@ import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
+import BackgroundTask from '@renderer/components/common/BackgroundTask.vue'
 
 // onMounted
 onMounted(() => {
@@ -85,6 +86,8 @@ const searchBarPanelState: Ref<boolean> = ref(false)
 const subpageProps: Ref<{ siteManageFocusOnSiteDomainId: string[] | undefined }> = ref({
   siteManageFocusOnSiteDomainId: undefined
 })
+// 后台任务列表开关
+const backgroundTaskState: Ref<boolean> = ref(false)
 
 // 方法
 // 查询标签选择列表
@@ -289,7 +292,7 @@ const showTestDialog = ref(false)
           </template>
         </side-menu>
       </el-aside>
-      <el-main style="padding: 1px 5px 5px 5px; height: 100%">
+      <el-main class="main">
         <div v-show="pageState.mainPage" class="main-page margin-box">
           <div class="main-page-searchbar">
             <el-row>
@@ -354,6 +357,7 @@ const showTestDialog = ref(false)
           <test v-if="pageState.showTest" @close-self="closeSubpage" />
         </div>
       </el-main>
+      <background-task class="main-background-task z-layer-3" :state="backgroundTaskState" />
     </el-container>
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
     <transaction-test v-model="showTestDialog"></transaction-test>
@@ -367,6 +371,15 @@ const showTestDialog = ref(false)
   width: 100%;
   height: 100%;
   background-color: #fafafa;
+}
+.main {
+  display: flex;
+  padding: 1px 5px 5px 5px;
+  height: 100%;
+}
+.main-background-task {
+  align-self: center;
+  height: 80%;
 }
 .main-page {
   display: flex;
