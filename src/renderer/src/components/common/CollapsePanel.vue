@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, Ref, UnwrapRef } from 'vue'
+import { computed, ref, Ref, UnwrapRef, watch } from 'vue'
 
 // props
 const props = withDefaults(
@@ -9,13 +9,15 @@ const props = withDefaults(
     toggleOnOutsideClick?: boolean
     hideHandle?: boolean
     borderRadios?: string
+    destroyOnClose?: boolean
   }>(),
   {
     position: 'top',
     maxLength: 'auto',
     toggleOnOutsideClick: true,
     hideHandle: false,
-    borderRadios: '0'
+    borderRadios: '0',
+    destroyOnClose: false
   }
 )
 
@@ -27,6 +29,7 @@ const top: Ref<boolean> = computed(() => props.position === 'top')
 const bottom: Ref<boolean> = computed(() => props.position === 'bottom')
 const left: Ref<boolean> = computed(() => props.position === 'left')
 const right: Ref<boolean> = computed(() => props.position === 'right')
+const delayedState: Ref<boolean> = ref(state.value)
 
 // 处理组件外部点击事件
 function handleClickOutSide() {
@@ -34,6 +37,16 @@ function handleClickOutSide() {
     state.value = false
   }
 }
+
+// watch
+// 控制delayedState跟随state延迟变化，用于支持关闭状态下销毁开关开启时的动画
+watch(state, (newValue: boolean) => {
+  if (newValue) {
+    delayedState.value = newValue
+  } else {
+    setTimeout(() => (delayedState.value = newValue), 300)
+  }
+})
 </script>
 
 <template>
@@ -60,7 +73,7 @@ function handleClickOutSide() {
           'collapse-panel-container-horizontal-close': (left || right) && !state
         }"
       >
-        <slot />
+        <slot v-if="delayedState || !destroyOnClose" />
       </div>
       <div
         v-show="!hideHandle"

@@ -12,7 +12,7 @@ const parentTaskStatus = useParentTaskStore().$state
 </script>
 
 <template>
-  <collapse-panel v-model:state="state" border-radios="10px" position="right">
+  <collapse-panel v-model:state="state" :destroy-on-close="true" border-radios="10px" position="right">
     <div style="height: 100%; width: 300px; background-color: rgb(255, 255, 255, 0.9)">
       <div>
         父任务
