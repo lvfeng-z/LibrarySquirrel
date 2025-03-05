@@ -17,6 +17,8 @@ const parentTaskStatus = useParentTaskStore().$state
       <div>
         父任务
         <template v-for="item in parentTaskStatus.values()" :key="item.id">
+          <br />
+          {{ item.status }}
           <el-progress
             style="width: 100%"
             :percentage="IsNullish(item.schedule) ? 0 : Math.round(item.schedule * 100) / 100"
@@ -37,6 +39,8 @@ const parentTaskStatus = useParentTaskStore().$state
       <div>
         子任务
         <template v-for="item in taskStatus.values()" :key="item.id">
+          <br />
+          {{ item.status }}
           <el-progress
             style="width: 100%"
             :percentage="IsNullish(item.schedule) ? 0 : Math.round(item.schedule * 100) / 100"

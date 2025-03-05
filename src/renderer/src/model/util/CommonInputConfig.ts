@@ -23,7 +23,7 @@ export class CommonInputConfig implements ICommonInputConfig {
   defaultDisabled?: boolean // 默认是否开启
   dblclickToEdit?: boolean // 是否可以双击启用
   placeholder?: string // 占位符
-  render?: (data?) => VNode
+  render?: (data?, extraData?) => VNode
   selectList?: SelectItem[] | TreeSelectNode[] // select | treeSelect - 选择列表数据
   remote?: boolean // select | treeSelect - 是否使用remoteMethod函数获得选择列表数据
   remoteMethod?: (query?: unknown) => Promise<SelectItem[] | TreeSelectNode[]> // select | treeSelect - 选择项接口
@@ -73,7 +73,7 @@ export interface ICommonInputConfig {
   defaultDisabled?: boolean // 默认是否开启
   dblclickToEdit?: boolean // 是否可以双击启用
   placeholder?: string // 占位符
-  render?: (data?) => VNode
+  render?: (data?, extraData?) => VNode // 渲染函数
   selectList?: SelectItem[] | TreeSelectNode[] // select | treeSelect - 选择列表数据
   remote?: boolean // select | treeSelect - 是否使用remoteMethod函数获得选择列表数据
   remoteMethod?: (query?) => Promise<SelectItem[] | TreeSelectNode[]> // select | treeSelect - 选择项接口

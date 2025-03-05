@@ -143,7 +143,7 @@ export class TaskQueue {
       ])
       const parentRunningObj = this.parentMap.get(taskRunningObj.parentId)
       if (NotNullish(parentRunningObj) && parentRunningObj.status !== TaskStatusEnum.PROCESSING) {
-        taskRunningObj.changeStatus(TaskStatusEnum.PROCESSING, false)
+        parentRunningObj.changeStatus(TaskStatusEnum.PROCESSING, true)
       }
     })
     this.taskResourceStream.on('saveFailed', handleError)
@@ -328,6 +328,9 @@ export class TaskQueue {
     return undefined
   }
 
+  /**
+   * 循环推送子任务的进度
+   */
   public async pushTaskSchedule(): Promise<void> {
     while (NotNullish(this.taskMap) && this.taskMap.size > 0) {
       const taskScheduleList = this.taskMap
@@ -335,18 +338,8 @@ export class TaskQueue {
         .toArray()
         .map((taskRunningObj) => {
           const taskId = taskRunningObj.taskId
-          if (TaskStatusEnum.FINISHED === taskRunningObj.status) {
-            return new TaskScheduleDTO({
-              id: taskId,
-              pid: taskRunningObj.parentId,
-              status: TaskStatusEnum.FINISHED,
-              schedule: 100,
-              total: undefined,
-              finished: undefined
-            })
-          }
           const writer = taskRunningObj.taskWriter
-          if (TaskStatusEnum.PROCESSING === taskRunningObj.status || TaskStatusEnum.PAUSE === taskRunningObj.status) {
+          if (TaskStatusEnum.PROCESSING === taskRunningObj.status) {
             if (writer.bytesSum === 0) {
               return new TaskScheduleDTO({
                 id: taskId,
@@ -376,6 +369,9 @@ export class TaskQueue {
     }
   }
 
+  /**
+   * 循环推送父任务的进度
+   */
   public async pushParentTaskSchedule(): Promise<void> {
     while (NotNullish(this.parentMap) && this.parentMap.size > 0) {
       const taskScheduleList = this.parentMap
@@ -403,7 +399,6 @@ export class TaskQueue {
           })
         })
       SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
-      LogUtil.info('test----', '更新父任务进度')
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
   }
@@ -583,7 +578,7 @@ export class TaskQueue {
         } else {
           LogUtil.warn(
             'TaskQueue',
-            `刷新父任务状态失败，processing: ${processing} waiting ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
+            `刷新父任务状态失败，processing: ${processing} waiting: ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
           )
         }
 
@@ -754,9 +749,9 @@ class TaskStatus {
     task.id = this.taskId
     task.status = status
     if (isParent) {
-      SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_TASK, [task])
-    } else {
       SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_UPDATE_PARENT_TASK, [task])
+    } else {
+      SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_TASK, [task])
     }
   }
 }

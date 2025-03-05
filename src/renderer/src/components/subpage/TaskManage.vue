@@ -18,7 +18,7 @@ import Page from '../../model/util/Page.ts'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
-import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
+import TaskOperationBarActive from '@renderer/components/common/TaskOperationBarActive.vue'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
 import Task from '@renderer/model/main/entity/Task.ts'
@@ -27,6 +27,8 @@ import Site from '@renderer/model/main/entity/Site.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
+import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
+import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 
 // onMounted
 onMounted(() => {
@@ -43,7 +45,6 @@ const apis = {
   taskDeleteTask: window.api.taskDeleteTask,
   taskQueryParentPage: window.api.taskQueryParentPage,
   taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage,
-  taskListSchedule: window.api.taskListSchedule,
   taskPauseTaskTree: window.api.taskPauseTaskTree,
   taskResumeTaskTree: window.api.taskResumeTaskTree,
   dirSelect: window.api.dirSelect
@@ -152,8 +153,6 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
 ])
 // 任务SearchTable的分页
 const page: Ref<UnwrapRef<Page<TaskQueryDTO, Task>>> = ref(new Page<TaskQueryDTO, Task>())
-// 数据主键
-const keyOfData: string = 'id'
 // 主搜索栏的inputBox
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   new InputBox({
@@ -235,6 +234,8 @@ async function requestSiteQuerySelectItemPage(query: string) {
     return []
   }
 }
+const taskStatusStore = useTaskStore().$state
+const parentTaskStatusStore = useParentTaskStore().$state
 
 // 方法
 // 从本地路径导入
@@ -313,13 +314,9 @@ async function load(row: unknown): Promise<TaskTreeDTO[]> {
 }
 // 更新进度的数据加载函数
 async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] | undefined> {
-  const response = await apis.taskListSchedule(ids)
-  if (ApiUtil.check(response)) {
-    const scheduleList = ApiUtil.data(response) as TaskScheduleDTO[]
-    return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
-  } else {
-    return undefined
-  }
+  const scheduleList = ids.map((id) => parentTaskStatusStore.get(Number(id))).filter(NotNullish)
+  scheduleList.concat(ids.map((id) => taskStatusStore.get(Number(id))).filter(NotNullish))
+  return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
 }
 // 给行添加选择器，用于区分父任务和子任务
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
@@ -481,21 +478,21 @@ async function deleteTask(ids: number[]) {
         :thead="thead"
         :search="taskQueryParentPage"
         :update-load="updateLoad"
-        :update-properties="['schedule', 'status', 'total', 'finished']"
+        :update-properties="['status']"
         :main-input-boxes="mainInputBoxes"
         :drop-down-input-boxes="[]"
-        :key-of-data="keyOfData"
+        key-of-data="id"
         :table-row-class-name="tableRowClassName"
         :tree-lazy="true"
         :tree-load="load"
         :multi-select="true"
-        :default-page-size="50"
+        :default-page-size="10"
         :custom-operation-button="true"
         :tree-data="true"
         @scroll="handleScroll"
       >
         <template #customOperations="{ row }">
-          <task-operation-bar :row="row" :button-clicked="handleOperationButtonClicked" />
+          <task-operation-bar-active :row="row" :button-clicked="handleOperationButtonClicked" />
         </template>
       </search-table>
     </div>
