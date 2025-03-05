@@ -15,6 +15,7 @@ import SelectItem from '@renderer/model/util/SelectItem.ts'
 // props
 const props = defineProps<{
   config: CommonInputConfig
+  extraData?: unknown
 }>()
 
 // onBeforeMount

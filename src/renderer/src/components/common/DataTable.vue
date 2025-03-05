@@ -196,6 +196,7 @@ function setCacheData(scope, item, newData) {
               :data="GetPropByPath(scope.row, item.key)"
               :config="item"
               :cache-data="getCacheData(scope, item)"
+              :extra-data="scope.row"
               @data-changed="handleRowChange(scope.row)"
               @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
               @update:cache-data="(newData) => setCacheData(scope, item, newData)"

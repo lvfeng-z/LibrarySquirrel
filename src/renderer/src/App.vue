@@ -241,7 +241,7 @@ const showTestDialog = ref(false)
 
 <template>
   <div class="ui">
-    <el-container style="height: 100%">
+    <el-container>
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
         <side-menu ref="sideMenuRef" class="sideMenu" width="63px" :default-active="['1-1']">
@@ -292,7 +292,7 @@ const showTestDialog = ref(false)
           </template>
         </side-menu>
       </el-aside>
-      <el-main class="main">
+      <el-main style="padding: 0">
         <div v-show="pageState.mainPage" class="main-page margin-box">
           <div class="main-page-searchbar">
             <el-row>
@@ -372,14 +372,9 @@ const showTestDialog = ref(false)
   height: 100%;
   background-color: #fafafa;
 }
-.main {
-  display: flex;
-  padding: 1px 5px 5px 5px;
-  height: 100%;
-}
 .main-background-task {
   align-self: center;
-  height: 80%;
+  height: 85%;
 }
 .main-page {
   display: flex;

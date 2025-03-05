@@ -15,6 +15,7 @@ import SelectItem from '@renderer/model/util/SelectItem.ts'
 // props
 const props = defineProps<{
   config: CommonInputConfig
+  extraData?: unknown
 }>()
 
 // onBeforeMount
@@ -63,7 +64,7 @@ const dynamicComponent = computed(() => {
         return CommonInputAutoLoadSelect
       case 'custom':
         if (NotNullish(props.config.render)) {
-          return props.config.render(data.value)
+          return props.config.render(data.value, props.extraData)
         }
         break
     }
