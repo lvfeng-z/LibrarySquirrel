@@ -228,6 +228,9 @@ const api = {
   taskQueryChildrenTaskPage: (args) => {
     return Electron.ipcRenderer.invoke('task-queryChildrenTaskPage', args)
   },
+  taskListStatus: (args) => {
+    return Electron.ipcRenderer.invoke('task-listStatus', args)
+  },
   taskListSchedule: (args) => {
     return Electron.ipcRenderer.invoke('task-listSchedule', args)
   },

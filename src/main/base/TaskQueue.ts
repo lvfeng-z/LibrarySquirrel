@@ -606,6 +606,11 @@ export class TaskQueue {
    * @private
    */
   private inletTask(taskRunningObj: TaskRunningObj, task: Task) {
+    // 清除原有的删除定时器
+    const oldObj = this.taskMap.get(taskRunningObj.taskId)
+    if (NotNullish(oldObj)) {
+      clearTimeout(oldObj.clearTimeoutId)
+    }
     this.taskMap.set(taskRunningObj.taskId, taskRunningObj)
     // 任务状态推送到渲染进程
     const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
@@ -620,6 +625,11 @@ export class TaskQueue {
    * @private
    */
   private inletParentTask(parentRunningObj: ParentRunningObj, task: Task) {
+    // 清除原有的删除定时器
+    const oldObj = this.taskMap.get(parentRunningObj.taskId)
+    if (NotNullish(oldObj)) {
+      clearTimeout(oldObj.clearTimeoutId)
+    }
     this.parentMap.set(parentRunningObj.taskId, parentRunningObj)
     // 任务状态推送到渲染进程
     const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
@@ -633,9 +643,16 @@ export class TaskQueue {
    * @private
    */
   private removeTask(taskId: number) {
-    this.taskMap.delete(taskId)
-    // 任务状态推送到渲染进程
-    SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, [taskId])
+    const runningObj = this.taskMap.get(taskId)
+    if (NotNullish(runningObj)) {
+      runningObj.clearTimeoutId = setTimeout(() => {
+        this.taskMap.delete(taskId)
+        // 任务状态推送到渲染进程
+        SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, [taskId])
+      }, 5000)
+    } else {
+      LogUtil.warn(this.constructor.name, `移除任务运行对象失败，任务运行对象不存在，taskId: ${taskId}`)
+    }
   }
 
   /**
@@ -644,9 +661,16 @@ export class TaskQueue {
    * @private
    */
   private removeParentTask(taskId: number) {
-    this.parentMap.delete(taskId)
-    // 任务状态推送到渲染进程
-    SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_REMOVE_PARENT_TASK, [taskId])
+    const runningObj = this.parentMap.get(taskId)
+    if (NotNullish(runningObj)) {
+      runningObj.clearTimeoutId = setTimeout(() => {
+        this.parentMap.delete(taskId)
+        // 任务状态推送到渲染进程
+        SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_REMOVE_PARENT_TASK, [taskId])
+      }, 5000)
+    } else {
+      LogUtil.warn(this.constructor.name, `移除父任务运行对象失败，父任务运行对象不存在，taskId: ${taskId}`)
+    }
   }
   // private getStream(): ReadableTaskRunningObject {
   //   if (isNullish(this.readableRunningObj)) {
@@ -729,11 +753,16 @@ class TaskStatus {
    * 任务状态
    */
   status: TaskStatusEnum
+  /**
+   * 清理定时器id
+   */
+  clearTimeoutId: NodeJS.Timeout | undefined
 
   constructor(taskId: number, status: TaskStatusEnum, isParent: boolean) {
     this.taskId = taskId
     this.status = status
     this.changeStatus(status, isParent)
+    this.clearTimeoutId = undefined
   }
 
   /**

@@ -613,6 +613,15 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('task-listStatus', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-listStatus')
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.listStatus(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('task-listSchedule', async (_event, args) => {
     // LogUtil.info('MainProcessApi', 'task-listSchedule')
     try {

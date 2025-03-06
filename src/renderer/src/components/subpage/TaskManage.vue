@@ -40,6 +40,7 @@ onMounted(() => {
 const apis = {
   siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
   taskCreateTask: window.api.taskCreateTask,
+  taskListStatus: window.api.taskListStatus,
   taskStartTask: window.api.taskStartTaskTree,
   taskRetryTask: window.api.taskRetryTaskTree,
   taskDeleteTask: window.api.taskDeleteTask,
@@ -314,8 +315,30 @@ async function load(row: unknown): Promise<TaskTreeDTO[]> {
 }
 // 更新进度的数据加载函数
 async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] | undefined> {
-  const scheduleList = ids.map((id) => parentTaskStatusStore.get(Number(id))).filter(NotNullish)
-  scheduleList.concat(ids.map((id) => taskStatusStore.get(Number(id))).filter(NotNullish))
+  const scheduleList: TaskScheduleDTO[] = []
+  const notFoundList: (number | string)[] = []
+  for (const id of ids) {
+    let tempStatus = parentTaskStatusStore.get(Number(id))
+    if (NotNullish(tempStatus)) {
+      scheduleList.push(tempStatus)
+      continue
+    }
+    tempStatus = taskStatusStore.get(Number(id))
+    if (NotNullish(tempStatus)) {
+      scheduleList.push(tempStatus)
+      continue
+    }
+    notFoundList.push(id)
+  }
+  if (ArrayNotEmpty(notFoundList)) {
+    const response = await apis.taskListStatus(notFoundList)
+    if (ApiUtil.check(response)) {
+      const responseScheduleList = ApiUtil.data<TaskScheduleDTO[]>(response)
+      if (ArrayNotEmpty(responseScheduleList)) {
+        scheduleList.push(...responseScheduleList)
+      }
+    }
+  }
   return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
 }
 // 给行添加选择器，用于区分父任务和子任务

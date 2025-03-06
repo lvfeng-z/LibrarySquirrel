@@ -99,6 +99,7 @@ declare global {
       taskQueryTreeDataPage: function
       taskListChildrenTask: function
       taskQueryChildrenTaskPage: function
+      taskListStatus: function
       taskListSchedule: function
       taskPauseTaskTree: function
       taskResumeTaskTree: function
