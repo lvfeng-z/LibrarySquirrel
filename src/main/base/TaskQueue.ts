@@ -14,6 +14,7 @@ import { GlobalVar, GlobalVars } from './GlobalVar.js'
 import { RenderEvent, SendMsgToRender } from './EventToRender.js'
 import TaskProgressMapTreeDTO from '../model/dto/TaskProgressMapTreeDTO.js'
 import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
+import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
 
 /**
  * 任务队列
@@ -401,6 +402,29 @@ export class TaskQueue {
       SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
+  }
+
+  /**
+   * 获取任务树
+   * @param ids
+   * @param includeStatus
+   */
+  public async listTaskTree(ids: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskTreeDTO[]> {
+    const fullTree = await this.taskService.listTaskTree(ids)
+    if (ArrayIsEmpty(includeStatus)) {
+      return fullTree
+    }
+    for (const tempParent of fullTree) {
+      if (IsNullish(tempParent.children)) {
+        continue
+      }
+      for (const tempChild of tempParent.children) {
+        this.taskMap.get(tempChild.id)
+        if (includeStatus.includes(tempChild.status as number)) {
+        }
+      }
+    }
+    return fullTree
   }
 
   /**

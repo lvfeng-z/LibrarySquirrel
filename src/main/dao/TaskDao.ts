@@ -139,7 +139,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   }
 
   /**
-   * 获取树形任务列表
+   * 获取指定任务所在的树形任务列表
    * @param taskIds 任务id
    * @param includeStatus 指定的任务状态
    */

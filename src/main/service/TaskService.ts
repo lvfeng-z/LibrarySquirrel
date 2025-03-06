@@ -482,6 +482,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 获取指定任务所在的树形任务列表
+   * @param taskIds 任务id
+   * @param includeStatus 指定的任务状态
+   */
+  public async listTaskTree(taskIds: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskTreeDTO[]> {
+    return this.dao.listTaskTree(taskIds, includeStatus)
+  }
+
+  /**
    * 处理任务
    * @param taskIds 任务id列表
    * @param includeStatus 要处理的任务状态
