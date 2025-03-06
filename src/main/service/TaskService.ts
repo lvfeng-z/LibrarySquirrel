@@ -497,7 +497,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskTree: TaskTreeDTO[] = await this.dao.listTaskTree(taskIds, includeStatus)
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskTree = await taskQueue.listTaskTree(taskIds, includeStatus)
 
     for (const parent of taskTree) {
       try {
@@ -585,7 +586,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param ids id列表
    */
   public async pauseTaskTree(ids: number[]): Promise<void> {
-    const taskTree = await this.dao.listTaskTree(ids, [TaskStatusEnum.PROCESSING, TaskStatusEnum.WAITING])
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskTree = await taskQueue.listTaskTree(ids, [TaskStatusEnum.PROCESSING, TaskStatusEnum.WAITING])
 
     for (const parent of taskTree) {
       // 获取要处理的任务
@@ -702,7 +704,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async resumeTaskTree(ids: number[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskTree: TaskTreeDTO[] = await this.dao.listTaskTree(ids, [TaskStatusEnum.PAUSE])
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskTree = await taskQueue.listTaskTree(ids, [TaskStatusEnum.PAUSE])
 
     for (const parent of taskTree) {
       // 获取要处理的任务

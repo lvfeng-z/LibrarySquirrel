@@ -414,17 +414,40 @@ export class TaskQueue {
     if (ArrayIsEmpty(includeStatus)) {
       return fullTree
     }
+    const result: TaskTreeDTO[] = []
+
+    // 遍历任务数，寻找符合条件的任务
     for (const tempParent of fullTree) {
       if (IsNullish(tempParent.children)) {
         continue
       }
-      for (const tempChild of tempParent.children) {
-        this.taskMap.get(tempChild.id)
-        if (includeStatus.includes(tempChild.status as number)) {
+      const tempChildren = tempParent.children
+      tempParent.children = []
+      let inserted = false
+      for (const tempChild of tempChildren) {
+        if (IsNullish(tempChild.id)) {
+          continue
+        }
+        // 优先使用任务池中的任务状态
+        const tempRunningObj = this.taskMap.get(tempChild.id)
+        if (NotNullish(tempRunningObj)) {
+          if (includeStatus.includes(tempRunningObj.status)) {
+            if (!inserted) {
+              result.push(tempParent)
+              inserted = true
+            }
+            tempParent.children.push(tempChild)
+          }
+        } else if (includeStatus.includes(tempChild.status as TaskStatusEnum)) {
+          if (!inserted) {
+            result.push(tempParent)
+            inserted = true
+          }
+          tempParent.children.push(tempChild)
         }
       }
     }
-    return fullTree
+    return result
   }
 
   /**
