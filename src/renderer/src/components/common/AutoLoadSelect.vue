@@ -25,9 +25,9 @@ const page: Ref<IPage<unknown, SelectItem>> = ref(new Page<unknown, SelectItem>(
 async function handleScroll(newQuery: boolean, input?: string) {
   // 新查询重置查询条件
   if (newQuery) {
-    selectList.value.length = 0
     page.value = new Page<unknown, SelectItem>()
-    page.value.data = selectList.value
+    page.value.data = []
+    selectList.value = page.value.data
   }
   //查询
   const tempPage = lodash.cloneDeep(page.value)
@@ -56,8 +56,9 @@ defineExpose({ focus })
     v-model="data"
     v-el-select-bottomed="() => handleScroll(false)"
     :remote-method="(query: string) => handleScroll(true, query)"
+    remote
   >
-    <slot name="default" :list="page.data" />
+    <slot name="default" :list="selectList" />
   </el-select>
 </template>
 
