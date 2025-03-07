@@ -39,7 +39,7 @@ const taskStatusMapping: {
   [TaskStatusEnum.WAITING]: {
     tooltip: '等待中',
     icon: 'Loading',
-    operation: TaskOperationCodeEnum.START,
+    operation: TaskOperationCodeEnum.PAUSE,
     processing: true
   },
   [TaskStatusEnum.PAUSE]: {
