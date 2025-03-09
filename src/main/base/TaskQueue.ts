@@ -165,50 +165,15 @@ export class TaskQueue {
         AssertNotNullish(task.id)
         let taskRunningObj = this.taskMap.get(task.id)
         if (NotNullish(taskRunningObj)) {
-          // 任务已有操作的情况下，根据原操作的状态判断怎么处理新操作
-          const operationObj = taskRunningObj.taskOperationObj
-          if (operationObj.waiting() || operationObj.processing()) {
-            // 如果是等待或运行状态，则无视这次操作
-            const operationStr = taskOperation === TaskOperation.START ? '开始' : '恢复'
-            const reason = operationObj.waiting() ? '任务正在等待中' : '任务正在进行中'
-            LogUtil.warn('TaskQueue', `无法${operationStr}任务${task.id}，${reason}`)
-          } else if (operationObj.canceled()) {
-            // 如果是暂停状态，则把这次操作和任务的状态改成等待，然后判断原操作的任务信息是否已保存
-            operationObj.status = OperationStatus.WAITING
+          try {
+            taskRunningObj.insertOp(taskOperation)
             taskRunningObj.changeStatus(TaskStatusEnum.WAITING, false)
-            // 如果资源曾经开始保存过，则强制把操作改成恢复，否则改成开始
-            if (taskRunningObj.resourceHadStarted) {
-              taskRunningObj.taskOperationObj.operation = TaskOperation.RESUME
-            } else {
-              taskRunningObj.taskOperationObj.operation = TaskOperation.START
-            }
-            if (taskRunningObj.infoSaved) {
-              // 如果原操作的任务信息已经保存，则此操作推入资源保存流中，如果没有保存，则忽略此操作（此时任务开始的操作正在任务信息保存流中，如果把新的操作推入资源保存流中，就会出现恢复操作先于开始操作的情况）
-              if (TaskOperation.START === taskOperation) {
-                LogUtil.warn('TaskQueue', `任务${taskRunningObj.taskId}已经开始，无法再次开始，此次开始操作已经转换为恢复`)
-              }
-              runningObjs.push(taskRunningObj)
-            }
-            // 操作插入到队列中
-            this.insertQueue(operationObj)
-            taskRunningStatusList.push({
-              taskRunningObj: taskRunningObj,
-              status: TaskStatusEnum.WAITING
-            })
-          } else {
-            clearTimeout(taskRunningObj.clearTimeoutId)
-            // 如果是结束状态，操作加入到操作队列中
-            operationObj.status = OperationStatus.WAITING
-            taskRunningObj.changeStatus(TaskStatusEnum.WAITING, false)
-            this.insertQueue(operationObj)
-            taskRunningStatusList.push({
-              taskRunningObj: taskRunningObj,
-              status: TaskStatusEnum.WAITING
-            })
             runningObjs.push(taskRunningObj)
+          } catch (error) {
+            LogUtil.warn(this.constructor.name, `操作任务${task.id}失败，`, error)
           }
         } else {
-          const newOperationObj = new TaskOperationObj(task.id, taskOperation)
+          const newOperationObj = new TaskOperationObj(task.id, [taskOperation])
           // TODO 判断是否已经保存过这个作品，如果已经保存过则提示用户
           // 判断这个作品是否已经保存过
           if (NotNullish(task.siteId) && NotNullish(task.siteWorksId)) {
@@ -225,7 +190,6 @@ export class TaskQueue {
             infoSaved
           )
           this.inletTask(taskRunningObj, task)
-          this.insertQueue(newOperationObj)
           taskRunningStatusList.push({
             taskRunningObj: taskRunningObj,
             status: TaskStatusEnum.WAITING
@@ -459,27 +423,24 @@ export class TaskQueue {
         LogUtil.error('TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
         continue
       }
-      const operationObj = taskRunningObj.taskOperationObj
-      const operation = operationObj.operation
-      if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
-        if (!operationObj.over()) {
-          // 对于已开始的任务，调用taskService的pauseTask进行暂停
-          if (operationObj.processing()) {
-            this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
-          }
-          // 操作状态设为暂停
-          operationObj.status = OperationStatus.CANCELED
-          taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
-          LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}暂停`)
-          taskSaveResultList.push({
-            task: task,
-            taskRunningObj: taskRunningObj,
-            status: TaskStatusEnum.PAUSE
-          })
+      try {
+        taskRunningObj.insertOp(TaskOperation.PAUSE)
+        taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
+      } catch (error) {
+        LogUtil.warn(this.constructor.name, `操作任务${task.id}失败，`, error)
+        continue
+      }
+      if (!taskRunningObj.over()) {
+        // 对于已开始的任务，调用taskService的pauseTask进行暂停
+        if (taskRunningObj.processing()) {
+          this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
         }
-      } else {
-        const msg = `暂停任务失败，任务的原操作出现了异常的值，operation: ${operation}`
-        LogUtil.error('TaskQueue', msg)
+        LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}暂停`)
+        taskSaveResultList.push({
+          task: task,
+          taskRunningObj: taskRunningObj,
+          status: TaskStatusEnum.PAUSE
+        })
       }
     }
     this.taskStatusChangeStream.addTask(taskSaveResultList)
@@ -503,29 +464,26 @@ export class TaskQueue {
         LogUtil.error('TaskQueue', `无法停止任务${taskId}，队列中没有这个任务`)
         continue
       }
-      const operationObj = taskRunningObj.taskOperationObj
-      const operation = operationObj.operation
-      if (TaskOperation.START === operation || TaskOperation.RESUME === operation) {
-        if (!operationObj.over()) {
-          // 操作状态设为暂停，资源处理流遇到未开始的任务就会停止
-          operationObj.status = OperationStatus.CANCELED
-          // 对于已开始的任务，调用taskService的pauseTask进行停止
-          if (operationObj.processing()) {
-            this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
-          } else {
-            operationObj.status = OperationStatus.CANCELED
-          }
-          taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
-          LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}停止`)
-          taskSaveResultList.push({
-            task: task,
-            taskRunningObj: taskRunningObj,
-            status: TaskStatusEnum.PAUSE
-          })
+      try {
+        taskRunningObj.insertOp(TaskOperation.PAUSE)
+        taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
+      } catch (error) {
+        LogUtil.warn(this.constructor.name, `操作任务${task.id}失败，`, error)
+        continue
+      }
+      if (!taskRunningObj.over()) {
+        // 对于已开始的任务，调用taskService的pauseTask进行暂停
+        if (taskRunningObj.processing()) {
+          // TODO 还没有实现停止任务的方法
+          this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
         }
-      } else {
-        const msg = `停止任务失败，任务的原操作出现了异常的值，operation: ${operation}`
-        LogUtil.error('TaskQueue', msg)
+        taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
+        LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}停止`)
+        taskSaveResultList.push({
+          task: task,
+          taskRunningObj: taskRunningObj,
+          status: TaskStatusEnum.PAUSE
+        })
       }
     }
     this.taskStatusChangeStream.addTask(taskSaveResultList)
@@ -710,16 +668,6 @@ export enum TaskOperation {
 }
 
 /**
- * 操作状态
- */
-enum OperationStatus {
-  WAITING = 1,
-  PROCESSING = 2,
-  CANCELED = 3,
-  OVER = 4
-}
-
-/**
  * 任务操作对象
  */
 export class TaskOperationObj {
@@ -730,32 +678,11 @@ export class TaskOperationObj {
   /**
    * 操作
    */
-  public operation: TaskOperation
-  /**
-   * 操作状态
-   */
-  public status: OperationStatus
+  public operation: TaskOperation[]
 
-  constructor(taskId: number, operation: TaskOperation) {
+  constructor(taskId: number, operation: TaskOperation[]) {
     this.taskId = taskId
     this.operation = operation
-    this.status = OperationStatus.WAITING
-  }
-
-  public waiting(): boolean {
-    return this.status === OperationStatus.WAITING
-  }
-
-  public processing(): boolean {
-    return this.status === OperationStatus.PROCESSING
-  }
-
-  public canceled(): boolean {
-    return this.status === OperationStatus.CANCELED
-  }
-
-  public over(): boolean {
-    return this.status === OperationStatus.OVER
   }
 }
 
@@ -801,16 +728,32 @@ class TaskStatus {
       SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_TASK, [task])
     }
   }
+
+  public waiting(): boolean {
+    return this.status === TaskStatusEnum.WAITING
+  }
+
+  public processing(): boolean {
+    return this.status === TaskStatusEnum.PROCESSING
+  }
+
+  public paused(): boolean {
+    return this.status === TaskStatusEnum.PAUSE
+  }
+
+  public over(): boolean {
+    return this.status === TaskStatusEnum.FINISHED || this.status === TaskStatusEnum.FAILED
+  }
 }
 
 /**
  * 任务运行对象
  */
-export class TaskRunningObj extends TaskStatus {
+class TaskRunningObj extends TaskStatus {
   /**
    * 任务操作对象
    */
-  public taskOperationObj: TaskOperationObj[]
+  public taskOperationObj: TaskOperationObj
   /**
    * 写入器
    */
@@ -830,7 +773,7 @@ export class TaskRunningObj extends TaskStatus {
 
   constructor(
     taskId: number,
-    taskOperationObj: TaskOperationObj[],
+    taskOperationObj: TaskOperationObj,
     status: TaskStatusEnum,
     taskWriter: TaskWriter,
     parentId?: number | null | undefined,
@@ -845,26 +788,176 @@ export class TaskRunningObj extends TaskStatus {
     this.resourceHadStarted = IsNullish(resourceHadStarted) ? false : resourceHadStarted
   }
 
+  public insertOp(newOp: TaskOperation) {
+    const currentOp = this.inferOp()
+
+    if (!this.isValidOp(currentOp, newOp)) {
+      throw new Error(
+        `无法执行操作 ${newOp}，任务${this.taskId}处于不适当的状态, 当前操作为：${currentOp}, taskStatus: ${this.status}`
+      )
+    }
+
+    // 如果是有效的状态转换，则添加操作到队列
+    this.taskOperationObj.operation.push(newOp)
+  }
+
   /**
    * 推断需要执行的操作
    */
   public inferOp(): TaskOperation | undefined {
-    if (ArrayIsEmpty(this.taskOperationObj)) {
+    if (ArrayIsEmpty(this.taskOperationObj.operation)) {
       return undefined
     }
-    let result: TaskOperation | undefined
-    let current: TaskOperation | undefined
-    for (const tempOp of this.taskOperationObj) {
-      current = tempOp.operation
+    let result: TaskOperation | undefined = undefined
+    // 逐个推断操作
+    for (const tempOp of this.taskOperationObj.operation) {
       switch (result) {
         case undefined:
-          result
+          result = tempOp
+          break
+        case TaskOperation.START:
+          if (TaskOperation.START === tempOp) {
+            continue
+          } else if (TaskOperation.PAUSE === tempOp) {
+            result = TaskOperation.PAUSE
+          } else if (TaskOperation.RESUME === tempOp) {
+            continue
+          } else if (TaskOperation.STOP === tempOp) {
+            result = TaskOperation.STOP
+          }
+          break
+        case TaskOperation.PAUSE:
+          if (TaskOperation.START === tempOp) {
+            continue
+          } else if (TaskOperation.PAUSE === tempOp) {
+            continue
+          } else if (TaskOperation.RESUME === tempOp) {
+            result = TaskOperation.RESUME
+          } else if (TaskOperation.STOP === tempOp) {
+            result = TaskOperation.STOP
+          }
+          break
+        case TaskOperation.RESUME:
+          if (TaskOperation.START === tempOp) {
+            continue
+          } else if (TaskOperation.PAUSE === tempOp) {
+            result = TaskOperation.PAUSE
+          } else if (TaskOperation.RESUME === tempOp) {
+            continue
+          } else if (TaskOperation.STOP === tempOp) {
+            result = TaskOperation.STOP
+          }
           break
         case TaskOperation.STOP:
           break
       }
     }
+    // 校验操作是否适用于当前的状态
+    switch (result) {
+      case undefined:
+        break
+      case TaskOperation.START:
+        if (this.status !== TaskStatusEnum.WAITING) {
+          result = undefined
+        }
+        break
+      case TaskOperation.PAUSE:
+        if (this.status !== TaskStatusEnum.PROCESSING && this.status !== TaskStatusEnum.WAITING) {
+          result = undefined
+        }
+        break
+      case TaskOperation.RESUME:
+        if (this.status !== TaskStatusEnum.WAITING) {
+          result = undefined
+        }
+        break
+      case TaskOperation.STOP:
+        if (
+          this.status !== TaskStatusEnum.PROCESSING &&
+          this.status !== TaskStatusEnum.WAITING &&
+          this.status !== TaskStatusEnum.PAUSE
+        ) {
+          result = undefined
+        }
+        break
+    }
     return result
+  }
+
+  /**
+   * 执行操作
+   * @description 推断操作后，清除这些操作
+   */
+  public exeOp(): TaskOperation | undefined {
+    const result = this.inferOp()
+    this.taskOperationObj.operation.length = 0
+    return result
+  }
+
+  /**
+   * 新增操作是否可用
+   * @param currentOp 当前操作
+   * @param newOp 新增操作
+   * @private
+   */
+  private isValidOp(currentOp: TaskOperation | undefined, newOp: TaskOperation): boolean {
+    switch (newOp) {
+      case TaskOperation.START:
+        if (currentOp === undefined) {
+          return (
+            TaskStatusEnum.CREATED === this.status || TaskStatusEnum.FINISHED === this.status || TaskStatusEnum.FAILED === this.status
+          )
+        } else if (currentOp === TaskOperation.START) {
+          return false
+        } else if (currentOp === TaskOperation.PAUSE) {
+          return false
+        } else if (currentOp === TaskOperation.RESUME) {
+          return false
+        } else if (currentOp === TaskOperation.STOP) {
+          return true
+        }
+        break
+      case TaskOperation.PAUSE:
+        if (currentOp === undefined) {
+          return TaskStatusEnum.PROCESSING === this.status || TaskStatusEnum.WAITING === this.status
+        } else if (currentOp === TaskOperation.START) {
+          return true
+        } else if (currentOp === TaskOperation.PAUSE) {
+          break
+        } else if (currentOp === TaskOperation.RESUME) {
+          return true
+        } else if (currentOp === TaskOperation.STOP) {
+          return false
+        }
+        break
+      case TaskOperation.RESUME:
+        if (currentOp === undefined) {
+          return TaskStatusEnum.PAUSE === this.status
+        } else if (currentOp === TaskOperation.START) {
+          return false
+        } else if (currentOp === TaskOperation.PAUSE) {
+          return true
+        } else if (currentOp === TaskOperation.RESUME) {
+          return false
+        } else if (currentOp === TaskOperation.STOP) {
+          return false
+        }
+        break
+      case TaskOperation.STOP:
+        if (currentOp === undefined) {
+          return TaskStatusEnum.PROCESSING === this.status || TaskStatusEnum.WAITING === this.status
+        } else if (currentOp === TaskOperation.START) {
+          return true
+        } else if (currentOp === TaskOperation.PAUSE) {
+          return true
+        } else if (currentOp === TaskOperation.RESUME) {
+          return true
+        } else if (currentOp === TaskOperation.STOP) {
+          return false
+        }
+        break
+    }
+    return false
   }
 }
 
@@ -886,7 +979,7 @@ class ParentRunningObj extends TaskStatus {
 /**
  * 任务信息保存流
  */
-export class TaskInfoStream extends Transform {
+class TaskInfoStream extends Transform {
   /**
    * 任务服务
    * @private
@@ -910,6 +1003,7 @@ export class TaskInfoStream extends Transform {
       callback()
       return
     }
+    chunk.infoSaved = true
 
     let task: Task | undefined = new Task()
     task.id = chunk.taskId
@@ -917,14 +1011,20 @@ export class TaskInfoStream extends Transform {
       task = await this.taskService.getById(chunk.taskId)
       // 开始保存任务信息
       AssertNotNullish(task, 'TaskQueue', `下载任务${chunk.taskId}失败，任务id无效`)
-      const result = await this.taskService.saveWorksInfo(task, this.pluginLoader)
-      if (result) {
-        chunk.infoSaved = true
-        this.push(chunk)
-        callback()
-      } else {
-        this.handleError(chunk, callback, undefined, task)
+      try {
+        const result = await this.taskService.saveWorksInfo(task, this.pluginLoader)
+        if (!result) {
+          chunk.infoSaved = false
+          this.handleError(chunk, callback, undefined, task)
+          return
+        }
+      } catch (error) {
+        chunk.infoSaved = false
+        this.handleError(chunk, callback, error as Error, task)
+        return
       }
+      this.push(chunk)
+      callback()
     } catch (error) {
       this.handleError(chunk, callback, error as Error, task)
     }
@@ -939,7 +1039,7 @@ export class TaskInfoStream extends Transform {
    * @private
    */
   private handleError(taskRunningObj: TaskRunningObj, callback: () => void, error?: Error, task?: Task) {
-    const msg = `下载任务${taskRunningObj.taskId}失败`
+    const msg = `保存任务${taskRunningObj.taskId}的作品信息失败`
     if (IsNullish(error)) {
       error = new Error(msg)
     } else {
@@ -993,15 +1093,15 @@ class TaskResourceStream extends Transform {
   }
 
   _transform(chunk: TaskRunningObj, _encoding: string, callback: TransformCallback): void {
+    const currentOp = chunk.exeOp()
     this.taskService
       .getById(chunk.taskId)
       .then((task) => {
-        // 开始之前检查操作是否被取消
-        if (chunk.taskOperationObj.canceled()) {
+        // 开始之前检查当前的操作
+        if (TaskOperation.PAUSE === currentOp || TaskOperation.STOP === currentOp || IsNullish(currentOp)) {
           callback()
           return
         }
-        chunk.taskOperationObj.status = OperationStatus.PROCESSING
         chunk.changeStatus(TaskStatusEnum.PROCESSING, false)
         // 发出任务开始保存的事件
         this.emit('saveStart', chunk)
@@ -1011,7 +1111,7 @@ class TaskResourceStream extends Transform {
         chunk.resourceHadStarted = true
         const taskWriter = chunk.taskWriter
         const saveResultPromise: Promise<TaskStatusEnum> =
-          chunk.taskOperationObj.operation === TaskOperation.RESUME
+          currentOp === TaskOperation.RESUME
             ? this.taskService.resumeTask(task, this.pluginLoader, taskWriter)
             : this.taskService.startTask(task, this.pluginLoader, taskWriter)
 
@@ -1023,17 +1123,16 @@ class TaskResourceStream extends Transform {
           .then((saveResult: TaskStatusEnum) => {
             chunk.changeStatus(saveResult, false)
             if (TaskStatusEnum.PAUSE !== saveResult) {
-              chunk.taskOperationObj.status = OperationStatus.OVER
               this.push({
                 task: task,
                 taskRunningObj: chunk,
                 status: saveResult
               })
             }
-            if (TaskStatusEnum.FINISHED === saveResult) {
-              chunk.infoSaved = false
-              chunk.resourceHadStarted = false
-            }
+            // if (TaskStatusEnum.FINISHED === saveResult) {
+            //   chunk.infoSaved = false
+            //   chunk.resourceHadStarted = false
+            // }
             this.processing--
             // 如果处于限制状态，则在此次下载完成之后解开限制
             if (this.limited) {
