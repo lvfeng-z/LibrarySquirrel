@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
 import WorksService from '../service/WorksService.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
+import { Readable, Transform, TransformCallback } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import TaskWriter from '../util/TaskWriter.js'
@@ -98,9 +98,12 @@ export class TaskQueue {
     const handleError = (error: Error, task: Task, taskRunningObj: TaskRunningObj) => {
       LogUtil.error('TaskQueue', `处理任务失败，taskId: ${task.id}，error: ${error.message}`)
       taskRunningObj.changeStatus(TaskStatusEnum.FAILED, false)
-      this.taskService.taskFailed(taskRunningObj.taskId, error.message).then(() => {
-        this.removeTask(taskRunningObj.taskId)
-      })
+      this.taskStatusChangeStream.addTask([
+        {
+          taskRunningObj: taskRunningObj,
+          status: TaskStatusEnum.FAILED
+        }
+      ])
       this.refreshParentStatus([taskRunningObj.parentId])
     }
     // 信息保存流
@@ -144,6 +147,16 @@ export class TaskQueue {
       this.taskResourceStream.unpipe(this.taskStatusChangeStream)
       this.taskResourceStream.pipe(this.taskStatusChangeStream)
       handleError(error, task, taskRunningObj)
+    })
+    this.taskStatusChangeStream.on('data', (tasks: Task[]) => {
+      if (ArrayNotEmpty(tasks)) {
+        tasks.forEach((task) => {
+          if (TaskStatusEnum.FINISHED === task.status || TaskStatusEnum.FAILED === task.status) {
+            AssertNotNullish(task.id, this.constructor.name, '移除任务的运行对象失败，任务id不能为空')
+            this.removeTask(task.id)
+          }
+        })
+      }
     })
 
     // 建立管道
@@ -428,16 +441,16 @@ export class TaskQueue {
       }
       try {
         taskRunningObj.insertOp(TaskOperation.PAUSE)
-        taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
       } catch (error) {
         LogUtil.warn(this.constructor.name, `操作任务${task.id}失败，`, error)
         continue
       }
+      // 对于已开始的任务，调用taskService的pauseTask进行暂停
+      if (taskRunningObj.processing()) {
+        this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
+      }
+      taskRunningObj.changeStatus(TaskStatusEnum.PAUSE, false)
       if (!taskRunningObj.over()) {
-        // 对于已开始的任务，调用taskService的pauseTask进行暂停
-        if (taskRunningObj.processing()) {
-          this.taskService.pauseTask(task, this.pluginLoader, taskRunningObj.taskWriter)
-        }
         LogUtil.info('TaskQueue', `任务${taskRunningObj.taskId}暂停`)
         taskSaveResultList.push({
           task: task,
@@ -1179,7 +1192,7 @@ interface TaskResourceSaveResult {
 /**
  * 任务状态改变流
  */
-class TaskStatusChangeStream extends Writable {
+class TaskStatusChangeStream extends Transform {
   /**
    * 任务服务
    * @private
@@ -1219,7 +1232,7 @@ class TaskStatusChangeStream extends Writable {
     })
   }
 
-  async _write(
+  async _transform(
     chunk: TaskResourceSaveResult[] | TaskResourceSaveResult,
     _encoding: string,
     callback: TransformCallback
@@ -1235,6 +1248,7 @@ class TaskStatusChangeStream extends Writable {
       if (this.batchUpdateBuffer.length >= 100 || ArrayIsEmpty(this.saveResultList)) {
         const temp = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
         this.taskService.updateBatchById(temp).catch((error) => LogUtil.error('TaskQueue', error))
+        this.push(temp)
       }
     } catch (error) {
       LogUtil.error('TaskQueue', error)
