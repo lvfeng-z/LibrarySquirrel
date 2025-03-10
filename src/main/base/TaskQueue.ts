@@ -636,7 +636,7 @@ export class TaskQueue {
   private removeTask(taskId: number) {
     const runningObj = this.taskMap.get(taskId)
     if (NotNullish(runningObj)) {
-      LogUtil.info(this.constructor.name, `移除任务运行对象，taskId: ${taskId}`)
+      LogUtil.warn(this.constructor.name, `移除任务运行对象，taskId: ${taskId}`)
       runningObj.clearTimeoutId = setTimeout(() => {
         this.taskMap.delete(taskId)
         // 任务状态推送到渲染进程
@@ -824,130 +824,80 @@ class TaskRunningObj extends TaskStatus {
     if (ArrayIsEmpty(this.taskOperationObj.operation)) {
       return undefined
     }
-    let current: TaskOperation | undefined = undefined
+    let result: TaskOperation | undefined = undefined
     // 逐个推断操作
-    const operations = this.taskOperationObj.operation
-    for (const op of operations) {
-      switch (this.status) {
-        case TaskStatusEnum.CREATED:
-        case TaskStatusEnum.FINISHED:
-        case TaskStatusEnum.FAILED:
-          if (current === undefined) {
-            if (op === TaskOperation.START) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-            break
-          } else if (current === TaskOperation.START) {
-            if (op === TaskOperation.PAUSE || op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-          } else if (current === TaskOperation.PAUSE) {
-            if (op === TaskOperation.RESUME) {
-              current = TaskOperation.START
-            } else if (op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-          } else if (current === TaskOperation.RESUME) {
-            LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-          } else if (current === TaskOperation.STOP) {
-            if (op === TaskOperation.START) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
+    for (const tempOp of this.taskOperationObj.operation) {
+      switch (result) {
+        case undefined:
+          result = tempOp
+          break
+        case TaskOperation.START:
+          if (TaskOperation.START === tempOp) {
+            continue
+          } else if (TaskOperation.PAUSE === tempOp) {
+            result = TaskOperation.PAUSE
+          } else if (TaskOperation.RESUME === tempOp) {
+            continue
+          } else if (TaskOperation.STOP === tempOp) {
+            result = TaskOperation.STOP
           }
           break
-        case TaskStatusEnum.PROCESSING:
-          if (current === undefined) {
-            if (op === TaskOperation.PAUSE || op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-            break
-          } else if (current === TaskOperation.START) {
-            LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-          } else if (current === TaskOperation.PAUSE) {
-            if (op === TaskOperation.RESUME) {
-              current = undefined
-            } else if (op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-          } else if (current === TaskOperation.RESUME) {
-            LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-          } else if (current === TaskOperation.STOP) {
-            if (op === TaskOperation.START) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
+        case TaskOperation.PAUSE:
+          if (TaskOperation.START === tempOp) {
+            continue
+          } else if (TaskOperation.PAUSE === tempOp) {
+            continue
+          } else if (TaskOperation.RESUME === tempOp) {
+            result = TaskOperation.RESUME
+          } else if (TaskOperation.STOP === tempOp) {
+            result = TaskOperation.STOP
           }
           break
-        case TaskStatusEnum.WAITING:
-          if (current === undefined) {
-            if (op === TaskOperation.START || op === TaskOperation.PAUSE || op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-            break
-          } else if (current === TaskOperation.START) {
-            if (op === TaskOperation.PAUSE || op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-          } else if (current === TaskOperation.PAUSE) {
-            if (op === TaskOperation.RESUME) {
-              current = undefined
-            } else if (op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-          } else if (current === TaskOperation.RESUME) {
-            LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-          } else if (current === TaskOperation.STOP) {
-            if (op === TaskOperation.START) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
+        case TaskOperation.RESUME:
+          if (TaskOperation.START === tempOp) {
+            continue
+          } else if (TaskOperation.PAUSE === tempOp) {
+            result = TaskOperation.PAUSE
+          } else if (TaskOperation.RESUME === tempOp) {
+            continue
+          } else if (TaskOperation.STOP === tempOp) {
+            result = TaskOperation.STOP
           }
           break
-        case TaskStatusEnum.PAUSE:
-          if (current === undefined) {
-            if (op === TaskOperation.RESUME || op === TaskOperation.STOP) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-            break
-          } else if (current === TaskOperation.START) {
-            LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-          } else if (current === TaskOperation.PAUSE) {
-            LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-          } else if (current === TaskOperation.RESUME) {
-            current = op
-          } else if (current === TaskOperation.STOP) {
-            if (op === TaskOperation.START) {
-              current = op
-            } else {
-              LogUtil.warn(this.constructor.name, `推断操作时出现不合理的操作: ${operations}，当前状态: ${this.status}`)
-            }
-          }
+        case TaskOperation.STOP:
           break
       }
     }
-    return current
+    // 校验操作是否适用于当前的状态
+    switch (result) {
+      case undefined:
+        break
+      case TaskOperation.START:
+        if (this.status !== TaskStatusEnum.WAITING) {
+          result = undefined
+        }
+        break
+      case TaskOperation.PAUSE:
+        if (this.status !== TaskStatusEnum.PROCESSING && this.status !== TaskStatusEnum.WAITING) {
+          result = undefined
+        }
+        break
+      case TaskOperation.RESUME:
+        if (this.status !== TaskStatusEnum.WAITING) {
+          result = undefined
+        }
+        break
+      case TaskOperation.STOP:
+        if (
+          this.status !== TaskStatusEnum.PROCESSING &&
+          this.status !== TaskStatusEnum.WAITING &&
+          this.status !== TaskStatusEnum.PAUSE
+        ) {
+          result = undefined
+        }
+        break
+    }
+    return result
   }
 
   /**
@@ -967,43 +917,59 @@ class TaskRunningObj extends TaskStatus {
    * @private
    */
   private isValidOp(currentOp: TaskOperation | undefined, newOp: TaskOperation): boolean {
-    switch (this.status) {
-      case TaskStatusEnum.CREATED:
-      case TaskStatusEnum.FINISHED:
-      case TaskStatusEnum.FAILED:
+    switch (newOp) {
+      case TaskOperation.START:
         if (currentOp === undefined) {
-          return newOp === TaskOperation.START
+          return (
+            TaskStatusEnum.CREATED === this.status || TaskStatusEnum.FINISHED === this.status || TaskStatusEnum.FAILED === this.status
+          )
         } else if (currentOp === TaskOperation.START) {
-          return newOp === TaskOperation.PAUSE || newOp === TaskOperation.STOP
-        }
-        break
-      case TaskStatusEnum.PROCESSING:
-        if (currentOp === undefined) {
-          return newOp === TaskOperation.PAUSE || newOp === TaskOperation.STOP
+          return false
         } else if (currentOp === TaskOperation.PAUSE) {
-          return newOp === TaskOperation.RESUME || newOp === TaskOperation.STOP
-        } else if (currentOp === TaskOperation.STOP) {
-          return newOp === TaskOperation.START
-        }
-        break
-      case TaskStatusEnum.WAITING:
-        if (currentOp === undefined) {
-          return newOp === TaskOperation.START || newOp === TaskOperation.PAUSE || newOp === TaskOperation.STOP
-        } else if (currentOp === TaskOperation.START) {
-          return newOp === TaskOperation.PAUSE || newOp === TaskOperation.STOP
-        } else if (currentOp === TaskOperation.PAUSE) {
-          return newOp === TaskOperation.RESUME || newOp === TaskOperation.STOP
-        } else if (currentOp === TaskOperation.STOP) {
-          return newOp === TaskOperation.START
-        }
-        break
-      case TaskStatusEnum.PAUSE:
-        if (currentOp === undefined) {
-          return newOp === TaskOperation.RESUME
+          return false
         } else if (currentOp === TaskOperation.RESUME) {
-          return newOp === TaskOperation.PAUSE || newOp === TaskOperation.STOP
+          return false
         } else if (currentOp === TaskOperation.STOP) {
-          return newOp === TaskOperation.START
+          return true
+        }
+        break
+      case TaskOperation.PAUSE:
+        if (currentOp === undefined) {
+          return TaskStatusEnum.PROCESSING === this.status || TaskStatusEnum.WAITING === this.status
+        } else if (currentOp === TaskOperation.START) {
+          return true
+        } else if (currentOp === TaskOperation.PAUSE) {
+          break
+        } else if (currentOp === TaskOperation.RESUME) {
+          return true
+        } else if (currentOp === TaskOperation.STOP) {
+          return false
+        }
+        break
+      case TaskOperation.RESUME:
+        if (currentOp === undefined) {
+          return TaskStatusEnum.PAUSE === this.status
+        } else if (currentOp === TaskOperation.START) {
+          return false
+        } else if (currentOp === TaskOperation.PAUSE) {
+          return true
+        } else if (currentOp === TaskOperation.RESUME) {
+          return false
+        } else if (currentOp === TaskOperation.STOP) {
+          return false
+        }
+        break
+      case TaskOperation.STOP:
+        if (currentOp === undefined) {
+          return TaskStatusEnum.PROCESSING === this.status || TaskStatusEnum.WAITING === this.status
+        } else if (currentOp === TaskOperation.START) {
+          return true
+        } else if (currentOp === TaskOperation.PAUSE) {
+          return true
+        } else if (currentOp === TaskOperation.RESUME) {
+          return true
+        } else if (currentOp === TaskOperation.STOP) {
+          return false
         }
         break
     }
