@@ -37,7 +37,8 @@
     "element-plus": "2.9.4",
     "pinia": "^3.0.1",
     "sharp": "^0.33.5",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.0.0",

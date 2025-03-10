@@ -29,6 +29,8 @@ import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
+import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
+import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
 
 // onMounted
 onMounted(() => {
@@ -241,40 +243,48 @@ const parentTaskStatusStore = useParentTaskStore().$state
 // 方法
 // 从本地路径导入
 async function importFromDir(dir: string) {
-  const response = await apis.taskCreateTask('file://'.concat(dir))
-  if (ApiUtil.check(response)) {
-    const data = ApiUtil.data(response) as TaskCreateResponse
-    if (data.succeed) {
-      ElMessage({
-        type: 'success',
-        message: `${data.plugin?.author}.${data.plugin?.name}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
-      })
+  const responsePromise = apis.taskCreateTask('file://'.concat(dir))
+  const backgroundItem = new BackgroundItem()
+  backgroundItem.title = `正在从【${dir}】创建任务`
+  backgroundItem.removeOnSettle = responsePromise.then((response: ApiResponse) => {
+    if (ApiUtil.check(response)) {
+      const data = ApiUtil.data<TaskCreateResponse>(response)
+      if (NotNullish(data)) {
+        return `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+      } else {
+        return '创建成功'
+      }
     } else {
-      ElMessage({
-        type: 'error',
-        message: data.msg as string
-      })
+      return '创建失败'
     }
-  }
+  })
+  backgroundItem.noticeOnRemove = true
+  const backgroundItemStore = useBackgroundItemStore()
+  backgroundItemStore.add(backgroundItem)
+  // 刷新一次列表
+  taskManageSearchTable.value.doSearch()
 }
 // 从站点url导入
 async function importFromSite() {
-  const response = await apis.taskCreateTask(siteSourceUrl.value)
-  if (ApiUtil.check(response)) {
-    siteDownloadState.value = false
-    const data = ApiUtil.data(response) as TaskCreateResponse
-    if (data.succeed) {
-      ElMessage({
-        type: 'success',
-        message: `${data.plugin?.author}.${data.plugin?.name}.${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
-      })
+  const responsePromise = apis.taskCreateTask(siteSourceUrl.value)
+  siteDownloadState.value = false
+  const backgroundItem = new BackgroundItem()
+  backgroundItem.title = `正在从【${siteSourceUrl.value}】创建任务`
+  backgroundItem.removeOnSettle = responsePromise.then((response: ApiResponse) => {
+    if (ApiUtil.check(response)) {
+      const data = ApiUtil.data<TaskCreateResponse>(response)
+      if (NotNullish(data)) {
+        return `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+      } else {
+        return '创建成功'
+      }
     } else {
-      ElMessage({
-        type: 'error',
-        message: data.msg as string
-      })
+      return '创建失败'
     }
-  }
+  })
+  backgroundItem.noticeOnRemove = true
+  const backgroundItemStore = useBackgroundItemStore()
+  backgroundItemStore.add(backgroundItem)
   // 刷新一次列表
   taskManageSearchTable.value.doSearch()
 }
@@ -391,8 +401,6 @@ async function selectDir(openFile: boolean) {
       for (const dir of dirSelectResult.filePaths) {
         await importFromDir(dir)
       }
-      // 刷新一次列表
-      taskManageSearchTable.value.doSearch()
     }
   }
 }

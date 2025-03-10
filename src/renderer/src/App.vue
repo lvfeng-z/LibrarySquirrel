@@ -32,7 +32,7 @@ import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
-import BackgroundTask from '@renderer/components/common/BackgroundTask.vue'
+import BackgroundList from '@renderer/components/common/BackgroundList.vue'
 
 // onMounted
 onMounted(() => {
@@ -357,7 +357,7 @@ const showTestDialog = ref(false)
           <test v-if="pageState.showTest" @close-self="closeSubpage" />
         </div>
       </el-main>
-      <background-task class="main-background-task z-layer-3" :state="backgroundTaskState" />
+      <background-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
     </el-container>
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
     <transaction-test v-model="showTestDialog"></transaction-test>

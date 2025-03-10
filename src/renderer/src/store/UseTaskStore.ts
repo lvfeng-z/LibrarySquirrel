@@ -24,7 +24,7 @@ export function updateTask(taskList: TaskProgressDTO[]): void {
   const taskStatus = useTaskStore().$state
   taskList.forEach((task) => {
     if (IsNullish(task.id)) {
-      throw new Error('UseTaskStatusStore: 赋值任务失败，任务id为空')
+      throw new Error('UseTaskStatusStore: 更新任务失败，任务id为空')
     }
     const oldTask = taskStatus.get(task.id)
     if (NotNullish(oldTask)) {
@@ -37,7 +37,7 @@ export function updateTaskSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
   const taskStatus = useTaskStore().$state
   scheduleDTOList.forEach((scheduleDTO) => {
     if (IsNullish(scheduleDTO.id)) {
-      throw new Error('UseTaskStatusStore: 赋值任务失败，任务id为空')
+      throw new Error('UseTaskStatusStore: 更新任务进度失败，任务id为空')
     }
     const task = taskStatus.get(scheduleDTO.id)
     if (NotNullish(task)) {
