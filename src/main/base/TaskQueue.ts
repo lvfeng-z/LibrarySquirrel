@@ -371,9 +371,12 @@ export class TaskQueue {
     }
     const result: TaskTreeDTO[] = []
 
-    // 遍历任务数，寻找符合条件的任务
+    // 遍历任务树，寻找符合条件的任务
     for (const tempParent of fullTree) {
-      if (IsNullish(tempParent.children)) {
+      if (ArrayIsEmpty(tempParent.children)) {
+        if (!tempParent.isCollection) {
+          result.push(tempParent)
+        }
         continue
       }
       const tempChildren = tempParent.children
