@@ -5,7 +5,7 @@ import Plugin from '../model/entity/Plugin.ts'
 import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'
-import { ArrayNotEmpty } from '../util/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import PluginDTO from '../model/dto/PluginDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '../model/dto/PluginInstallDTO.js'
@@ -24,6 +24,8 @@ import GotoPageConfig from '../model/util/GotoPageConfig.js'
 import { SubPageEnum } from '../constant/SubPageEnum.js'
 import { pathToFileURL } from 'node:url'
 import PluginInstallResultDTO from '../model/dto/PluginInstallResultDTO.js'
+import SiteService from './SiteService.js'
+import lodash from 'lodash'
 
 /**
  * 主键查询
@@ -171,19 +173,46 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         await taskPluginListenerService.saveBatch(taskPluginListeners)
       }
       // 域名
-      const domains = pluginInstallDTO.domains
-      if (ArrayNotEmpty(domains)) {
+      const domainConfigs = pluginInstallDTO.domains
+      if (ArrayNotEmpty(domainConfigs)) {
         const siteDomainService = new SiteDomainService(db)
-        const siteDomains: SiteDomain[] = domains.map((domain) => {
+        const siteDomains: SiteDomain[] = domainConfigs.map((domain) => {
           const tempSiteDomain = new SiteDomain()
           tempSiteDomain.domain = domain.domain
           tempSiteDomain.homepage = domain.homepage
           return tempSiteDomain
         })
         await siteDomainService.saveBatch(siteDomains, true)
+
+        // 插件的域名关联到站点上
+        const bindableConfig = domainConfigs.filter((domain) => NotNullish(domain.site))
+        if (ArrayNotEmpty(bindableConfig)) {
+          const bindableDomain = bindableConfig.map((domain) => domain.domain)
+          const newDomains = await siteDomainService.listByDomains(bindableDomain)
+          if (ArrayNotEmpty(newDomains)) {
+            const notBindDomains = newDomains.filter((newDomain) => IsNullish(newDomain.siteId))
+            if (ArrayNotEmpty(notBindDomains)) {
+              const siteNames = bindableConfig.map((domain) => domain.site).filter(NotNullish)
+              const siteService = new SiteService(db)
+              const siteList = await siteService.listByNames(siteNames)
+              const domainConfigMap = lodash.keyBy(bindableConfig, 'domain')
+              const nameSiteMap = lodash.keyBy(siteList, 'siteName')
+              notBindDomains.forEach((siteDomain) => {
+                if (NotNullish(siteDomain.domain)) {
+                  const tempConfig = domainConfigMap[siteDomain.domain]
+                  if (NotNullish(tempConfig.site)) {
+                    const targetSite = nameSiteMap[tempConfig.site]
+                    siteDomain.siteId = targetSite?.id
+                  }
+                }
+              })
+              await siteDomainService.updateBatchById(notBindDomains)
+            }
+          }
+        }
       }
       LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
-      return new PluginInstallResultDTO(tempPlugin, domains, listeners)
+      return new PluginInstallResultDTO(tempPlugin, domainConfigs, listeners)
     }, '保存插件、监听器和域名')
   }
 

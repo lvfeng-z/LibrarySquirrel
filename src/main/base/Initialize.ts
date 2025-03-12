@@ -55,7 +55,6 @@ export async function Initialize() {
       }
       try {
         await pluginService.install(installPath)
-        // TODO 把预装插件的域名自动关联到站点上
       } catch (error) {
         LogUtil.error('Initialize', '安装插件失败', error)
       }

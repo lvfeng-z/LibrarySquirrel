@@ -41,7 +41,7 @@ export default class PluginInstallDTO extends Plugin {
   /**
    * 域名列表
    */
-  domains: { domain: string; homepage: string }[]
+  domains: { domain: string; homepage: string; site?: string }[]
 
   /**
    * 监听路径列表
