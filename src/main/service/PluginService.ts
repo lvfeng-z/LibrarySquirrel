@@ -17,13 +17,13 @@ import TaskPluginListenerService from './TaskPluginListenerService.js'
 import TaskPluginListener from '../model/entity/TaskPluginListener.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
-import { RESOURCE_PATH } from '../constant/CommonConstant.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import GotoPageConfig from '../model/util/GotoPageConfig.js'
 import { SubPageEnum } from '../constant/SubPageEnum.js'
 import { pathToFileURL } from 'node:url'
+import PluginInstallResultDTO from '../model/dto/PluginInstallResultDTO.js'
 
 /**
  * 主键查询
@@ -114,7 +114,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 从插件包安装插件
    * @param packagePath
    */
-  public async install(packagePath: string): Promise<void> {
+  public async install(packagePath: string): Promise<PluginInstallResultDTO> {
     AssertNotNullish(packagePath, this.constructor.name, `插件包路径不能为空`)
     try {
       await fs.promises.access(packagePath, fs.constants.F_OK)
@@ -150,82 +150,65 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     await CreateDirIfNotExists(installPath)
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
-    const tempPlugin = new Plugin(pluginInstallDTO)
-    const pluginId = await this.save(tempPlugin)
+    const db = new DB(this.constructor.name)
+    return db.transaction(async () => {
+      const tempPlugin = new Plugin(pluginInstallDTO)
+      const pluginService = new PluginService(db)
+      const pluginId = await pluginService.save(tempPlugin)
 
-    // 任务创建监听器
-    const listeners: string[] = pluginInstallDTO.listeners
-    if (ArrayNotEmpty(listeners)) {
-      const taskPluginListenerService = new TaskPluginListenerService()
-      const taskPluginListeners: TaskPluginListener[] = []
-      let taskPluginListener: TaskPluginListener
-      for (const listener of listeners) {
-        taskPluginListener = new TaskPluginListener()
-        taskPluginListener.pluginId = pluginId
-        taskPluginListener.listener = listener
-        taskPluginListeners.push(taskPluginListener)
-      }
-      taskPluginListenerService.saveBatch(taskPluginListeners)
-    }
-    // 域名
-    const domains = pluginInstallDTO.domains
-    if (ArrayNotEmpty(domains)) {
-      const siteDomainService = new SiteDomainService()
-      const siteDomains: SiteDomain[] = domains.map((domain) => {
-        const tempSiteDomain = new SiteDomain()
-        tempSiteDomain.domain = domain.domain
-        tempSiteDomain.homepage = domain.homepage
-        return tempSiteDomain
-      })
-      siteDomainService.saveBatch(siteDomains, true).then(() => {
-        const tempDomains = siteDomains.map((siteDomain) => siteDomain.domain)
-        const gotoPageConfig: GotoPageConfig = {
-          page: SubPageEnum.SiteManage,
-          title: '插件创建了新的域名',
-          content: '建议将新的域名绑定到站点，以免影响插件使用',
-          options: {
-            confirmButtonText: '去绑定',
-            cancelButtonText: '以后再说',
-            type: 'warning',
-            showClose: false
-          },
-          extraData: tempDomains
+      // 任务创建监听器
+      const listeners: string[] = pluginInstallDTO.listeners
+      if (ArrayNotEmpty(listeners)) {
+        const taskPluginListenerService = new TaskPluginListenerService(db)
+        const taskPluginListeners: TaskPluginListener[] = []
+        let taskPluginListener: TaskPluginListener
+        for (const listener of listeners) {
+          taskPluginListener = new TaskPluginListener()
+          taskPluginListener.pluginId = pluginId
+          taskPluginListener.listener = listener
+          taskPluginListeners.push(taskPluginListener)
         }
-        const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
-        mainWindow.webContents.send('goto-page', gotoPageConfig)
-      })
-    }
-    LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
+        await taskPluginListenerService.saveBatch(taskPluginListeners)
+      }
+      // 域名
+      const domains = pluginInstallDTO.domains
+      if (ArrayNotEmpty(domains)) {
+        const siteDomainService = new SiteDomainService(db)
+        const siteDomains: SiteDomain[] = domains.map((domain) => {
+          const tempSiteDomain = new SiteDomain()
+          tempSiteDomain.domain = domain.domain
+          tempSiteDomain.homepage = domain.homepage
+          return tempSiteDomain
+        })
+        await siteDomainService.saveBatch(siteDomains, true)
+      }
+      LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
+      return new PluginInstallResultDTO(tempPlugin, domains, listeners)
+    }, '保存插件、监听器和域名')
   }
 
   /**
-   * 预装插件
+   * 从插件包安装插件
+   * @param packagePath
    */
-  public async preInstall() {
-    const defaultPlugins = GlobalVar.get(GlobalVars.APP_CONFIG).plugins
-    for (const defaultPlugin of defaultPlugins) {
-      let packagePath: string
-      if (defaultPlugin.pathType === 'Relative') {
-        packagePath = path.join(RootDir(), RESOURCE_PATH, defaultPlugin.packagePath)
-      } else {
-        packagePath = defaultPlugin.packagePath
+  public async installAndNotice(packagePath: string) {
+    this.install(packagePath).then((installResult) => {
+      const tempDomains = installResult.domains.map((siteDomain) => siteDomain.domain)
+      const gotoPageConfig: GotoPageConfig = {
+        page: SubPageEnum.SiteManage,
+        title: '插件创建了新的域名',
+        content: '建议将新的域名绑定到站点，以免影响插件使用',
+        options: {
+          confirmButtonText: '去绑定',
+          cancelButtonText: '以后再说',
+          type: 'warning',
+          showClose: false
+        },
+        extraData: tempDomains
       }
-      const installDTO = this.loadPluginPackage(packagePath)
-      const localPluginInstalled = await this.checkInstalled(installDTO.type, installDTO.author, installDTO.name, installDTO.version)
-      if (!localPluginInstalled) {
-        let installPath: string
-        if (defaultPlugin.pathType === 'Relative') {
-          installPath = path.join(RootDir(), RESOURCE_PATH, defaultPlugin.packagePath)
-        } else {
-          installPath = defaultPlugin.packagePath
-        }
-        try {
-          this.install(installPath).catch((error) => LogUtil.error(this.constructor.name, '安装插件失败', error))
-        } catch (error) {
-          LogUtil.error(this.constructor.name, '安装插件失败', error)
-        }
-      }
-    }
+      const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+      mainWindow.webContents.send('goto-page', gotoPageConfig)
+    })
   }
 
   /**

@@ -114,4 +114,12 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
       })
     }
   }
+
+  /**
+   * 根据站点名称查询
+   * @param siteNames
+   */
+  async listByNames(siteNames: string[]) {
+    return this.dao.listByNames(siteNames)
+  }
 }

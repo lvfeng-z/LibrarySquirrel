@@ -7,10 +7,10 @@ import MainProcessApi from './base/MainProcessApi.js'
 import LogUtil from './util/LogUtil.ts'
 import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVar, GlobalVars } from './base/GlobalVar.ts'
-import PluginService from './service/PluginService.js'
 import StringUtil from './util/StringUtil.js'
 import GotoPageConfig from './model/util/GotoPageConfig.js'
 import { SubPageEnum } from './constant/SubPageEnum.js'
+import { Initialize } from './base/Initialize.js'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -169,11 +169,9 @@ Electron.app.whenReady().then(() => {
 
   // 初始化数据库
   InitializeDB().then(() => {
+    Initialize()
     // 创建服务层的ipc通信
     MainProcessApi.exposeService()
-    // 初始化插件
-    const pluginService = new PluginService()
-    pluginService.preInstall()
   })
 
   // 初始化任务队列

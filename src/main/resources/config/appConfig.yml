@@ -1,3 +1,27 @@
+sites:
+  - name: local
+    description: 此电脑
+  - name: pixiv
+    description: |
+      pixiv是喜欢插画、对插画感兴趣的朋友们的交流平台。在这里，您可以投稿自己的插画作品，并与其他用户轻松展开交流。
+
+      在这里，您投稿的插画作品和添加书签的作品，就是您的个人资料，
+      您可以从这里开始和其他用户展开交流。
+      pixiv的插画投稿范围非常广泛，我们还会经常举办用户发起的插画企画，以及官方的插画比赛活动。当然，您也可以把这里当成是与同伴合作创造新的作品的创作平台。
+
+      注册・使用免费。
+  - name: exhentai
+    description: With more than a million absolutely free hentai doujinshi, manga, cosplay and CG galleries, E-Hentai Galleries is the world's largest free Hentai
+  - name: devainart
+    description: |
+      We are where art starts, but that's only the beginning. We are the movement for the liberation of creative expression. We believe that art is for everyone, and we're creating the cultural context for how it is created, discovered, and shared.
+      Fella
+
+      Founded in August 2000, DeviantArt is the largest online social network for artists and art enthusiasts, and a platform for emerging and established artists to exhibit, promote, and share their works with an enthusiastic, art-centric community. We have over 100 million registered members worldwide and host over 650 million pieces of art on the platform. Our members -- known as deviants -- upload tens of thousands of original pieces of art every day, everything from painting and sculpture to digital art, pixel art, films, and anime.
+
+      Artists love us because we are an inclusive and supportive community. We help them find their identity through self-expression. We provide the tools, resources, and exposure to enable them to become better, more successful artists. We inspire people to create art by feeding their creativity. We can't help it - it runs through our veins and compels us to nurture it in others. This is DeviantArt.
+  - name: aryion
+    description: This site was created to let artists, writers, or whoever else has a similar interest to contribute material to this community. Some of the material here is of an adult nature. If you are under 18 years of age or may be offended by the material here you must leave now. ABSOLUTELY NO EXCEPTIONS!
 plugins:
   - packagePath: initialization/localTaskHandler.zip
     pathType: Relative

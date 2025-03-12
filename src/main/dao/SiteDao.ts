@@ -64,12 +64,31 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
    * 根据域名列表查询站点列表
    * @param domains
    */
-  public async listByDomains(domains: string[]): Promise<Site[] | undefined> {
-    const domainsStr = domains.join(',')
-    const statement = `SELECT t1.* FROM site t1 INNER JOIN site_domain t2 ON t1.id = t2.site_id WHERE t2.domain IN @domainsStr`
+  public async listByDomains(domains: string[]): Promise<Site[]> {
+    const domainsStr = domains.map((domain) => `'${domain}'`).join(',')
+    const statement = `SELECT t1.* FROM site t1 INNER JOIN site_domain t2 ON t1.id = t2.site_id WHERE t2.domain IN (${domainsStr})`
     const db = this.acquire()
     try {
-      return db.all<unknown[], Site>(statement, { domainsStr: domainsStr })
+      const rows = await db.all<unknown[], Record<string, string>>(statement)
+      return this.toResultTypeDataList<Site>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 根据站点名称查询
+   * @param siteNames
+   */
+  async listByNames(siteNames: string[]): Promise<Site[]> {
+    const siteNamesStr = siteNames.map((siteName) => `'${siteName}'`).join(',')
+    const statement = `SELECT * FROM site WHERE site_name IN (${siteNamesStr})`
+    const db = this.acquire()
+    try {
+      const rows = await db.all<unknown[], Record<string, string>>(statement)
+      return this.toResultTypeDataList<Site>(rows)
     } finally {
       if (!this.injectedDB) {
         db.release()

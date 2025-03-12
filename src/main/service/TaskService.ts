@@ -121,7 +121,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             plugin: taskPlugin
           })
         } else {
-          LogUtil.error(this.constructor.name, '插件返回了不支持的类型')
+          LogUtil.error(this.constructor.name, '插件创建任务失败，插件返回了不支持的类型')
         }
       } catch (error) {
         LogUtil.error(this.constructor.name, `插件创建任务失败，url: ${url}，plugin: ${pluginInfo}，error:`, error)
@@ -270,7 +270,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
         task.siteId = await siteId
         if (IsNullish(siteId)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点domain')
+          LogUtil.error(this.constructor.name, '创建任务失败，找不到插件返回的域名')
           return
         }
 
