@@ -20,6 +20,16 @@ export default interface PluginInstallConfig {
   version: string
 
   /**
+   * 描述
+   */
+  description: string
+
+  /**
+   * 更新日志
+   */
+  changelog: string
+
+  /**
    * 入口文件名
    */
   fileName: string

@@ -13,6 +13,7 @@ import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import Plugin from '@renderer/model/main/entity/Plugin.ts'
 import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
 import { ElMessage } from 'element-plus'
+import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
 
 // onMounted
 onMounted(() => {
@@ -42,6 +43,7 @@ const pluginPage: Ref<Page<PluginQueryDTO, Plugin>> = ref(new Page<PluginQueryDT
 const pluginChangedRows: Ref<Plugin[]> = ref([])
 // 插件操作栏按钮
 const pluginOperationButton: OperationItem<Plugin>[] = [
+  { label: '查看', icon: 'View', code: DialogMode.VIEW },
   { label: '修复', icon: 'Refresh', code: 'reinstall' },
   { label: '卸载', icon: 'delete', code: 'uninstall' }
 ]
@@ -114,6 +116,10 @@ const pluginDialogState: Ref<boolean> = ref(false)
 const pluginDialogData: Ref<UnwrapRef<Plugin>> = ref(new Plugin())
 // 被选中的插件
 const pluginSelected: Ref<UnwrapRef<Plugin>> = ref(new Plugin())
+// 对话框开关
+const dialogState: Ref<boolean> = ref(false)
+// 对话框的数据
+const dialogData: Ref<Plugin> = ref(new Plugin())
 
 // 方法
 // 分页查询插件
@@ -135,6 +141,10 @@ async function handleCreateButtonClicked() {
 // 处理插件数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
   switch (op.code) {
+    case DialogMode.VIEW:
+      dialogData.value = op.data
+      dialogState.value = true
+      break
     case 'reinstall':
       reInstall(op.id)
       break
@@ -163,7 +173,7 @@ async function reInstall(pluginId: string) {
     })
   } else {
     ElMessage({
-      type: 'success',
+      type: 'error',
       message: `修复失败，${response.message}`
     })
   }
@@ -179,7 +189,7 @@ async function unInstall(pluginId: string) {
     })
   } else {
     ElMessage({
-      type: 'success',
+      type: 'error',
       message: `卸载失败，${response.message}`
     })
   }
@@ -212,7 +222,9 @@ async function unInstall(pluginId: string) {
         </search-table>
       </div>
     </template>
-    <template #dialog></template>
+    <template #dialog>
+      <plugin-dialog v-model:form-data="dialogData" v-model:state="dialogState" :mode="DialogMode.VIEW" />
+    </template>
   </base-subpage>
 </template>
 

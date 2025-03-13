@@ -104,6 +104,8 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       author: config.author,
       name: config.name,
       version: config.version,
+      description: config.description,
+      changelog: config.changelog,
       fileName: config.fileName,
       packagePath: packagePath,
       package: packageContent,

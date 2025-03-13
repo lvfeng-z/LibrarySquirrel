@@ -1,11 +1,7 @@
-import BaseEntity from '../../base/BaseEntity.ts'
+import BaseEntity from '../../base/BaseEntity.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 export default class Plugin extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-
   /**
    * 插件类型
    */
@@ -27,6 +23,16 @@ export default class Plugin extends BaseEntity {
   version: string | undefined | null
 
   /**
+   * 描述
+   */
+  description: string | undefined | null
+
+  /**
+   * 更新日志
+   */
+  changelog: string | undefined | null
+
+  /**
    * 入口文件名
    */
   fileName: string | undefined | null
@@ -42,23 +48,14 @@ export default class Plugin extends BaseEntity {
   sortNum: number | undefined | null
 
   constructor(plugin?: Plugin) {
-    if (plugin === undefined) {
-      super()
-      this.id = undefined
-      this.type = undefined
-      this.author = undefined
-      this.name = undefined
-      this.version = undefined
-      this.fileName = undefined
-      this.packagePath = undefined
-      this.sortNum = undefined
-    } else {
-      super(plugin)
-      this.id = plugin.id
+    super(plugin)
+    if (NotNullish(plugin)) {
       this.type = plugin.type
       this.author = plugin.author
       this.name = plugin.name
       this.version = plugin.version
+      this.description = plugin.description
+      this.changelog = plugin.changelog
       this.fileName = plugin.fileName
       this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum

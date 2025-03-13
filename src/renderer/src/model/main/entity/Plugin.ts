@@ -1,10 +1,11 @@
-import BaseEntity from './BaseEntity.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import BaseEntity from '@renderer/model/main/entity/BaseEntity.ts'
 
 export default class Plugin extends BaseEntity {
   /**
    * 插件类型
    */
-  type: number | undefined | null
+  type: string | undefined | null
 
   /**
    * 作者
@@ -22,9 +23,24 @@ export default class Plugin extends BaseEntity {
   version: string | undefined | null
 
   /**
-   * 类名+扩展名
+   * 描述
+   */
+  description: string | undefined | null
+
+  /**
+   * 更新日志
+   */
+  changelog: string | undefined | null
+
+  /**
+   * 入口文件名
    */
   fileName: string | undefined | null
+
+  /**
+   * 安装包路径
+   */
+  packagePath: string | undefined | null
 
   /**
    * 排序号
@@ -32,21 +48,16 @@ export default class Plugin extends BaseEntity {
   sortNum: number | undefined | null
 
   constructor(plugin?: Plugin) {
-    if (plugin === undefined) {
-      super()
-      this.type = undefined
-      this.author = undefined
-      this.name = undefined
-      this.version = undefined
-      this.fileName = undefined
-      this.sortNum = undefined
-    } else {
-      super(plugin)
+    super(plugin)
+    if (NotNullish(plugin)) {
       this.type = plugin.type
       this.author = plugin.author
       this.name = plugin.name
       this.version = plugin.version
+      this.description = plugin.description
+      this.changelog = plugin.changelog
       this.fileName = plugin.fileName
+      this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum
     }
   }
