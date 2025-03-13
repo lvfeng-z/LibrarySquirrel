@@ -76,12 +76,19 @@ export class TaskQueue {
    */
   private readonly taskStatusChangeStream: TaskStatusChangeStream
 
+  /**
+   * 是否已经关闭
+   * @private
+   */
+  private closed: boolean
+
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
     this.taskService = new TaskService()
     this.worksService = new WorksService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
+    this.closed = false
 
     this.inletStream = new ReadableTaskRunInstance()
     this.taskInfoStream = new TaskInfoStream()
@@ -167,6 +174,10 @@ export class TaskQueue {
    * @param taskOperation 要执行的操作
    */
   public async pushBatch(tasks: Task[], taskOperation: TaskOperation) {
+    if (this.closed) {
+      LogUtil.warn(this.constructor.name, '无法执行操作，任务队列已经关闭')
+      return
+    }
     if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
       this.processTask(tasks)
     } else if (taskOperation === TaskOperation.PAUSE) {
@@ -374,6 +385,26 @@ export class TaskQueue {
     return result
   }
 
+  /**
+   * 暂停所有任务
+   */
+  public async shutdown() {
+    this.closed = true
+    this.taskMap.values().forEach((runInst) => {
+      try {
+        // TODO 暂停任务
+        // runInst.pause()
+      } catch (error) {
+        LogUtil.error(this.constructor.name, error)
+      }
+    })
+  }
+
+  /**
+   * 开始处理任务
+   * @param tasks 需要处理的任务
+   * @private
+   */
   private async processTask(tasks: Task[]) {
     const needChangeStatusList: TaskResourceSaveResult[] = [] // 用于更新数据库中任务的数据
     const runInstances: TaskRunInstance[] = [] // 需要处理的运行实例
