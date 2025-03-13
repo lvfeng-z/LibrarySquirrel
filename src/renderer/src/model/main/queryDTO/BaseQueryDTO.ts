@@ -1,6 +1,6 @@
 import { Id } from '@renderer/model/main/entity/BaseEntity.ts'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
-import QuerySortOption from '@renderer/model/util/QuerySortOption.ts'
+import { QuerySortOption } from '@renderer/model/util/QuerySortOption.ts'
 
 export default class BaseQueryDTO {
   /**
@@ -31,7 +31,7 @@ export default class BaseQueryDTO {
   /**
    * 排序字段(第一个元素为排序字段名称，第二个字段为排序方式)
    */
-  sort?: QuerySortOption
+  sort?: QuerySortOption[]
 
   constructor(baseQueryDTO?: BaseQueryDTO) {
     if (baseQueryDTO === undefined) {

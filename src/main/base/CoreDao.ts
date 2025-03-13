@@ -4,7 +4,7 @@ import { Operator } from '../constant/CrudConstant.js'
 import { BaseQueryDTO, ToPlainParams } from './BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import QuerySortOption from '../constant/QuerySortOption.js'
+import { QuerySortOption } from '../constant/QuerySortOption.js'
 import DB from '../database/DB.js'
 import BaseEntity from './BaseEntity.js'
 
@@ -239,7 +239,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param alias 表别名
    * @protected
    */
-  protected sorter(statement: string, sortOption?: QuerySortOption, alias?: string): string {
+  protected sorter(statement: string, sortOption?: QuerySortOption[], alias?: string): string {
     if (sortOption === undefined) {
       return statement
     }
@@ -254,11 +254,11 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param sortOption
    * @param alias
    */
-  protected getSortClause(sortOption: QuerySortOption, alias?: string): string {
+  protected getSortClause(sortOption: QuerySortOption[], alias?: string): string {
     let sortClauses: string
-    sortClauses = Object.entries(sortOption)
-      .map(([column, asc]) => {
-        const tempColumn = StringUtil.camelToSnakeCase(column)
+    sortClauses = sortOption
+      .map(({ key, asc }) => {
+        const tempColumn = StringUtil.camelToSnakeCase(key)
         return IsNullish(alias) ? tempColumn + ' ' + (asc ? 'ASC' : 'DESC') : alias + '.' + tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
       })
       .join(',')
@@ -304,7 +304,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param alias 表别名
    * @protected
    */
-  protected async sortAndPage(statement: string, page: Page<Query, Model>, sort?: QuerySortOption, alias?: string): Promise<string> {
+  protected async sortAndPage(statement: string, page: Page<Query, Model>, sort?: QuerySortOption[], alias?: string): Promise<string> {
     let tempStatement = statement
     if (NotNullish(sort)) {
       tempStatement = this.sorter(tempStatement, sort, alias)

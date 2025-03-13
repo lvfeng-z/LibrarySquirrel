@@ -31,7 +31,10 @@ onMounted(() => {
   if (IsNullish(page.value.query)) {
     page.value.query = new LocalTagQueryDTO()
   }
-  page.value.query.sort = { updateTime: false, createTime: false }
+  page.value.query.sort = [
+    { key: 'updateTime', asc: false },
+    { key: 'createTime', asc: false }
+  ]
   localTagSearchTable.value.doSearch()
 })
 

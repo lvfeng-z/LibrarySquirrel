@@ -74,7 +74,10 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
       page.query = new SiteDomainQueryDTO()
     }
     if (IsNullish(page.query.sort)) {
-      page.query.sort = { updateTime: false, createTime: false }
+      page.query.sort = [
+        { key: 'updateTime', asc: false },
+        { key: 'createTime', asc: false }
+      ]
     }
     page.query.operators = { domain: Operator.LIKE, domains: Operator.IN }
     return this.dao.queryDTOPage(page)
@@ -87,7 +90,10 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
   public async queryDTOPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
     AssertNotNullish(page.query, this.constructor.name, '查询站点域名失败，查询参数为空')
     if (IsNullish(page.query.sort)) {
-      page.query.sort = { updateTime: false, createTime: false }
+      page.query.sort = [
+        { key: 'updateTime', asc: false },
+        { key: 'createTime', asc: false }
+      ]
     }
     page.query.operators = { domain: Operator.LIKE }
     return this.dao.queryPageBySite(page)

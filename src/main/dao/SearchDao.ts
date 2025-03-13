@@ -85,7 +85,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
 
     // 连接语句
     let statement = `SELECT * FROM (${statements.join(' UNION ALL ')}) t`
-    statement = await super.sortAndPage(statement, page, { lastUse: false }, 't')
+    statement = await super.sortAndPage(statement, page, [{ key: 'lastUse', asc: false }], 't')
 
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(query)) {

@@ -1,6 +1,6 @@
 import { Id } from './BaseEntity.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import QuerySortOption from '../constant/QuerySortOption.ts'
+import { QuerySortOption } from '../constant/QuerySortOption.ts'
 import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import { NotNullish } from '../util/CommonUtil.js'
 
@@ -33,7 +33,7 @@ export class BaseQueryDTO {
   /**
    * 排序配置
    */
-  sort?: QuerySortOption | undefined
+  sort?: QuerySortOption[] | undefined
 
   constructor(baseQueryDTO?: BaseQueryDTO) {
     if (baseQueryDTO === undefined) {

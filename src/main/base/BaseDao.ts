@@ -368,7 +368,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
       statement = statement.concat(' ', whereClause)
     }
     // 拼接排序和分页字句
-    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
     if (modifiedPage.currentCount < 1) {
       modifiedPage.data = []
@@ -547,7 +547,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 分页和排序
-    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
     if (modifiedPage.currentCount < 1) {
       const result = modifiedPage.transform<SelectItem>()

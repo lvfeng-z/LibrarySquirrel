@@ -156,7 +156,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await super.sortAndPage(statement, page, sort)
     const db = this.acquire()
     return db
@@ -199,7 +199,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       statement = statement.concat(' ', whereClause)
     }
     // 拼接排序和分页字句
-    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, 't1')
     if (modifiedPage.currentCount < 1) {
       modifiedPage.data = []

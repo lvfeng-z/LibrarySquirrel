@@ -19,7 +19,10 @@ onMounted(() => {
   if (IsNullish(pluginPage.value.query)) {
     pluginPage.value.query = new PluginQueryDTO()
   }
-  pluginPage.value.query.sort = { updateTime: false, createTime: false }
+  pluginPage.value.query.sort = [
+    { key: 'updateTime', asc: false },
+    { key: 'createTime', asc: false }
+  ]
   pluginSearchTable.value.doSearch()
 })
 

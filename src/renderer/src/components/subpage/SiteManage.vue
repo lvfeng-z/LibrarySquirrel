@@ -28,13 +28,19 @@ onMounted(() => {
   if (IsNullish(sitePage.value.query)) {
     sitePage.value.query = new SiteQueryDTO()
   }
-  sitePage.value.query.sort = { updateTime: false, createTime: false }
+  sitePage.value.query.sort = [
+    { key: 'updateTime', asc: false },
+    { key: 'createTime', asc: false }
+  ]
   siteSearchTable.value.doSearch()
   if (NotNullish(props.focusOnDomains)) {
     if (IsNullish(siteDomainPage.value.query)) {
       siteDomainPage.value.query = new SiteDomainQueryDTO()
     }
-    siteDomainPage.value.query.sort = { updateTime: false, createTime: false }
+    siteDomainPage.value.query.sort = [
+      { key: 'updateTime', asc: false },
+      { key: 'createTime', asc: false }
+    ]
     siteDomainPage.value.query.domains = props.focusOnDomains
     siteDomainSearchTable.value.doSearch()
   }

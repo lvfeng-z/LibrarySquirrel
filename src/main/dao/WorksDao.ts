@@ -122,7 +122,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     }
 
     // 排序和分页子句
-    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
     let query: Record<string, unknown> | undefined = undefined

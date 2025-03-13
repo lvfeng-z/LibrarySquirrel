@@ -90,7 +90,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     if (StringUtil.isNotBlank(whereClause)) {
       statement += ' ' + whereClause
     }
-    const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort, fromClause)
 
     // 查询
@@ -133,7 +133,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = IsNullish(page.query?.sort) ? {} : page.query.sort
+    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, page, sort, 't1')
 
     const db = this.acquire()
@@ -204,7 +204,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
     let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause)
-    const sort = IsNullish(modifiedPage.query?.sort) ? {} : modifiedPage.query.sort
+    const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
     const db = this.acquire()
     return db
