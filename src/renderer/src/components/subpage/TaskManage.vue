@@ -262,7 +262,7 @@ async function importFromDir(dir: string) {
   const backgroundItemStore = useBackgroundItemStore()
   backgroundItemStore.add(backgroundItem)
   // 刷新一次列表
-  taskManageSearchTable.value.doSearch()
+  responsePromise.then(() => taskManageSearchTable.value.doSearch())
 }
 // 从站点url导入
 async function importFromSite() {
@@ -286,10 +286,27 @@ async function importFromSite() {
   const backgroundItemStore = useBackgroundItemStore()
   backgroundItemStore.add(backgroundItem)
   // 刷新一次列表
-  taskManageSearchTable.value.doSearch()
+  responsePromise.then(() => taskManageSearchTable.value.doSearch())
 }
 // 分页查询子任务的函数
 async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
+  if (IsNullish(page.query)) {
+    page.query = new TaskQueryDTO()
+  }
+  if (ArrayNotEmpty(page.query.sort)) {
+    page.query.sort = [
+      ...page.query.sort,
+      ...[
+        { key: 'createTime', asc: false },
+        { key: 'updateTime', asc: false }
+      ]
+    ]
+  } else {
+    page.query.sort = [
+      { key: 'createTime', asc: false },
+      { key: 'updateTime', asc: false }
+    ]
+  }
   const response = await apis.taskQueryParentPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data(response) as Page<TaskQueryDTO, object>
