@@ -78,7 +78,7 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="主页">
-            <el-input type="textarea" autosize v-model="formData.homepage"></el-input>
+            <el-input v-model="formData.homepage" type="textarea" autosize></el-input>
           </el-form-item>
         </el-col>
       </el-row>

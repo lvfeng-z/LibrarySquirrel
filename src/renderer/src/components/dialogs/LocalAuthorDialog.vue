@@ -61,13 +61,7 @@ async function handleSaveButtonClicked() {
 </script>
 
 <template>
-  <form-dialog
-    v-model:form-data="formData"
-    v-model:state="state"
-    :mode="props.mode"
-    @save-button-clicked="handleSaveButtonClicked"
-    @cancel-button-clicked="state = false"
-  >
+  <form-dialog v-model:form-data="formData" v-model:state="state" :mode="props.mode" @save-button-clicked="handleSaveButtonClicked">
     <template #form>
       <el-row>
         <el-col>

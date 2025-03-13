@@ -227,7 +227,7 @@ async function handleLocalAuthorSelectionChange(selections: LocalAuthor[]) {
   }
 }
 // 处理本地作者弹窗请求成功事件
-function handleDialogRequestSuccess() {
+function refreshTable() {
   localAuthorSearchTable.value.doSearch()
 }
 // 保存行数据编辑
@@ -239,6 +239,7 @@ async function saveRowEdit(newData: LocalAuthor) {
   if (ApiUtil.check(response)) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
+    refreshTable()
   }
 }
 // 删除本地作者
@@ -358,7 +359,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
         align-center
         destroy-on-close
         :mode="localAuthorDialogMode"
-        @request-success="handleDialogRequestSuccess"
+        @request-success="refreshTable"
       />
     </template>
   </base-subpage>

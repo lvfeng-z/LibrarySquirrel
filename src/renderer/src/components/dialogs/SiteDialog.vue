@@ -60,13 +60,7 @@ async function handleSaveButtonClicked() {
 </script>
 
 <template>
-  <form-dialog
-    v-model:form-data="formData"
-    v-model:state="state"
-    :mode="props.mode"
-    @save-button-clicked="handleSaveButtonClicked"
-    @cancel-button-clicked="state = false"
-  >
+  <form-dialog v-model:form-data="formData" v-model:state="state" :mode="props.mode" @save-button-clicked="handleSaveButtonClicked">
     <template #header>
       <span style="font-size: 20px">站点</span>
     </template>
@@ -81,7 +75,7 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="描述">
-            <el-input type="textarea" autosize v-model="formData.siteDescription"></el-input>
+            <el-input v-model="formData.siteDescription" type="textarea" autosize></el-input>
           </el-form-item>
         </el-col>
       </el-row>

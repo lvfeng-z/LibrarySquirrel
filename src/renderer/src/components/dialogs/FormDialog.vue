@@ -35,8 +35,9 @@ const saveButtonState = computed(() => {
 function handleSaveButtonClicked() {
   emits('saveButtonClicked')
 }
-// 处理保存按钮点击事件
+// 处理取消按钮点击事件
 function handleCancelButtonClicked() {
+  state.value = false
   emits('cancelButtonClicked')
 }
 // 开启对话框
@@ -67,14 +68,16 @@ function handleChangeState() {
       <slot name="afterForm" />
     </el-scrollbar>
     <template #footer>
-      <el-row>
-        <el-col v-show="saveButtonState" :span="3">
-          <el-button type="primary" @click="handleSaveButtonClicked">保存</el-button>
-        </el-col>
-        <el-col :span="3">
-          <el-button @click="handleCancelButtonClicked">取消</el-button>
-        </el-col>
-      </el-row>
+      <slot name="footer">
+        <el-row>
+          <el-col v-show="saveButtonState" :span="3">
+            <el-button type="primary" @click="handleSaveButtonClicked">保存</el-button>
+          </el-col>
+          <el-col :span="3">
+            <el-button @click="handleCancelButtonClicked">取消</el-button>
+          </el-col>
+        </el-row>
+      </slot>
     </template>
   </el-dialog>
 </template>

@@ -269,7 +269,7 @@ async function handleLocalTagSelectionChange(selections: LocalTagVO[]) {
   }
 }
 // 处理本地标签弹窗请求成功事件
-function handleDialogRequestSuccess() {
+function refreshTable() {
   localTagSearchTable.value.doSearch()
 }
 // 保存行数据编辑
@@ -281,6 +281,7 @@ async function saveRowEdit(newData: LocalTagVO) {
   if (ApiUtil.check(response)) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
+    refreshTable()
   }
 }
 // 删除本地标签
@@ -405,7 +406,7 @@ async function requestSiteTagSelectItemPage(
         align-center
         destroy-on-close
         :mode="localTagDialogMode"
-        @request-success="handleDialogRequestSuccess"
+        @request-success="refreshTable"
       />
     </template>
   </base-subpage>
