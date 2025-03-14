@@ -94,7 +94,7 @@ export default class TaskWriter {
   /**
    * 暂停下载
    */
-  public pause() {
+  public pause(): boolean {
     if (!this.readableFinished) {
       this.paused = true
       if (NotNullish(this.readable)) {
@@ -104,6 +104,9 @@ export default class TaskWriter {
         this.writable.end()
         this.bytesWritten = IsNullish(this.writable) ? 0 : this.writable.bytesWritten
       }
+      return true
+    } else {
+      return false
     }
   }
 }

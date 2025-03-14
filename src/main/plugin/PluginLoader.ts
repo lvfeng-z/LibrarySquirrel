@@ -62,7 +62,7 @@ export default class PluginLoader<T extends BasePlugin> {
    * @param event
    * @private
    */
-  private async attachExplainPathEvents(event: EventEmitter) {
+  private attachExplainPathEvents(event: EventEmitter) {
     // 处理插件工具的explain-path-request事件
     event.on('explain-path-request', (dir) => {
       // 监听渲染进程的explain-path-response事件

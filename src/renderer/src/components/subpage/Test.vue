@@ -54,12 +54,18 @@ const load = (node, resolve) => {
     <el-tree-select v-model="value2" lazy :load="load" :props="props" :cache-data="cacheData" style="width: 240px" />
     <div>
       <template v-for="item in taskStatus.values()" :key="item.id">
-        <span style="white-space: nowrap">{{ item }}</span>
+        <span style="white-space: nowrap">
+          {{ 'id: ' + item.id + ', ' + 'taskName: ' + item.taskName + ', ' + 'pid:' + item.pid + ', ' + 'status: ' + item.status }}
+        </span>
+        <br />
       </template>
     </div>
     <div>
       <template v-for="item in parentTaskStatus.values()" :key="item.id">
-        <span style="white-space: nowrap">{{ item }}</span>
+        <span style="white-space: nowrap">
+          {{ 'id: ' + item.id + ', ' + 'taskName: ' + item.taskName + ', ' + 'pid:' + item.pid + ', ' + 'status: ' + item.status }}
+        </span>
+        <br />
       </template>
     </div>
     <el-button @click="console.log(taskStatus)">test</el-button>

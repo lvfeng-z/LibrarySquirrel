@@ -42,7 +42,7 @@ export interface TaskHandler extends BasePlugin {
    * @description 暂停读取流
    * @param task 需要暂停的任务
    */
-  pause(task: TaskPluginDTO): void
+  pause(task: TaskPluginDTO): Promise<void>
 
   /**
    * 恢复下载任务

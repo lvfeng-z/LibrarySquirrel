@@ -15,6 +15,7 @@ import { RenderEvent, SendMsgToRender } from './EventToRender.js'
 import TaskProgressMapTreeDTO from '../model/dto/TaskProgressMapTreeDTO.js'
 import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
 import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
+import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
 
 /**
  * 任务队列
@@ -105,12 +106,7 @@ export class TaskQueue {
     const handleError = (error: Error, taskRunInstance: TaskRunInstance) => {
       LogUtil.error('TaskQueue', `处理任务失败，taskId: ${taskRunInstance.taskId}，error: ${error.message}`)
       taskRunInstance.failed()
-      this.taskStatusChangeStream.addTask([
-        {
-          taskRunInstance: taskRunInstance,
-          status: TaskStatusEnum.FAILED
-        }
-      ])
+      this.taskStatusChangeStream.addTask([taskRunInstance])
       this.refreshParentStatus([taskRunInstance.parentId])
     }
     // 信息保存流
@@ -125,23 +121,17 @@ export class TaskQueue {
       this.taskInfoStream.pipe(this.taskResourceStream)
       handleError(error, taskRunInstance)
     })
-    this.taskResourceStream.on('data', (data: TaskResourceSaveResult) => {
-      const saveResult = data.status
-      const taskRunInstance = data.taskRunInstance
-      if (saveResult === TaskStatusEnum.FINISHED) {
-        LogUtil.info('TaskQueue', `任务${data.taskRunInstance.taskId}完成`)
-      } else if (saveResult === TaskStatusEnum.FAILED) {
-        LogUtil.info('TaskQueue', `任务${data.taskRunInstance.taskId}失败`)
+    this.taskResourceStream.on('data', (taskRunInstance: TaskRunInstance) => {
+      if (taskRunInstance.status === TaskStatusEnum.FINISHED) {
+        LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}完成`)
+      } else if (taskRunInstance.status === TaskStatusEnum.FAILED) {
+        LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}失败`)
       }
       this.refreshParentStatus([taskRunInstance.parentId])
     })
     this.taskResourceStream.on('saveStart', (taskRunInstance: TaskRunInstance) => {
-      this.taskStatusChangeStream.addTask([
-        {
-          taskRunInstance: taskRunInstance,
-          status: TaskStatusEnum.PROCESSING
-        }
-      ])
+      this.taskStatusChangeStream.addTask([taskRunInstance])
+      this.refreshParentStatus([taskRunInstance.parentId])
     })
     this.taskResourceStream.on('saveFailed', handleError)
     this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
@@ -390,14 +380,16 @@ export class TaskQueue {
    */
   public async shutdown() {
     this.closed = true
-    this.taskMap.values().forEach((runInst) => {
+    const runInstList = this.taskMap.values()
+    for (const runInst of runInstList) {
       try {
-        // TODO 暂停任务
-        // runInst.pause()
+        await runInst.pause()
       } catch (error) {
+        runInst.failed()
         LogUtil.error(this.constructor.name, error)
       }
-    })
+    }
+    this.taskStatusChangeStream.addTask(runInstList.toArray())
   }
 
   /**
@@ -406,7 +398,7 @@ export class TaskQueue {
    * @private
    */
   private async processTask(tasks: Task[]) {
-    const needChangeStatusList: TaskResourceSaveResult[] = [] // 用于更新数据库中任务的数据
+    const needChangeStatusList: TaskRunInstance[] = [] // 用于更新数据库中任务的数据
     const runInstances: TaskRunInstance[] = [] // 需要处理的运行实例
     for (const task of tasks) {
       AssertNotNullish(task.id)
@@ -437,13 +429,11 @@ export class TaskQueue {
           this.pluginLoader,
           task.pid
         )
+        task.status = TaskStatusEnum.WAITING
         taskRunInstance.inStream = true
         runInstances.push(taskRunInstance)
         this.inletTask(taskRunInstance, task)
-        needChangeStatusList.push({
-          taskRunInstance: taskRunInstance,
-          status: TaskStatusEnum.WAITING
-        })
+        needChangeStatusList.push(taskRunInstance)
       }
     }
     // 所有任务设置为等待中
@@ -459,8 +449,8 @@ export class TaskQueue {
    * @param tasks 要停暂停的任务
    * @private
    */
-  private pauseTask(tasks: Task[]) {
-    const taskSaveResultList: TaskResourceSaveResult[] = []
+  private async pauseTask(tasks: Task[]) {
+    const taskSaveResultList: TaskRunInstance[] = []
     for (const task of tasks) {
       if (IsNullish(task.id)) {
         LogUtil.error('TaskQueue', `暂停任务失败，任务id不能为空`)
@@ -473,12 +463,9 @@ export class TaskQueue {
         continue
       }
       try {
-        taskRunInstance.pause(task)
+        taskRunInstance.pause()
         if (!taskRunInstance.over()) {
-          taskSaveResultList.push({
-            taskRunInstance: taskRunInstance,
-            status: TaskStatusEnum.PAUSE
-          })
+          taskSaveResultList.push(taskRunInstance)
         }
       } catch (error) {
         LogUtil.error(this.constructor.name, error)
@@ -492,8 +479,8 @@ export class TaskQueue {
    * @param tasks 要停停止的任务
    * @private
    */
-  private stopTask(tasks: Task[]) {
-    const taskSaveResultList: TaskResourceSaveResult[] = []
+  private async stopTask(tasks: Task[]) {
+    const taskSaveResultList: TaskRunInstance[] = []
     for (const task of tasks) {
       if (IsNullish(task.id)) {
         LogUtil.error('TaskQueue', `停止任务失败，任务id不能为空`)
@@ -506,12 +493,9 @@ export class TaskQueue {
         continue
       }
       try {
-        taskRunInstance.stop(task)
+        await taskRunInstance.stop()
         if (!taskRunInstance.over()) {
-          taskSaveResultList.push({
-            taskRunInstance: taskRunInstance,
-            status: TaskStatusEnum.PAUSE
-          })
+          taskSaveResultList.push(taskRunInstance)
         }
       } catch (error) {
         LogUtil.info(this.constructor.name, error)
@@ -621,9 +605,9 @@ export class TaskQueue {
     }
     this.taskMap.set(taskRunInstance.taskId, taskRunInstance)
     // 任务状态推送到渲染进程
-    const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
-    CopyIgnoreUndefined(taskProgressMapTreeDTO, task)
-    SendMsgToRender(RenderEvent.TASK_STATUS_SET_TASK, [taskProgressMapTreeDTO])
+    const taskProgressDTO = new TaskProgressDTO()
+    CopyIgnoreUndefined(taskProgressDTO, task)
+    SendMsgToRender(RenderEvent.TASK_STATUS_SET_TASK, [taskProgressDTO])
   }
 
   /**
@@ -836,31 +820,31 @@ class TaskRunInstance extends TaskStatus {
     }
   }
 
-  public pause(task: Task) {
+  public pause(): Promise<boolean> {
     if (this.status === TaskStatusEnum.PROCESSING || this.status === TaskStatusEnum.WAITING) {
+      let result: Promise<boolean> = Promise.resolve(true)
       // 对于已开始的任务，调用taskService的pauseTask进行暂停
       if (this.processing()) {
-        this.taskService.pauseTask(task, this.pluginLoader, this.taskWriter)
+        result = this.taskService.pauseTask(this.taskId, this.pluginLoader, this.taskWriter)
       }
       this.changeStatus(TaskStatusEnum.PAUSE)
-      if (!this.over()) {
-        LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
-      }
+      LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
+      return result
     } else {
       throw new Error(`无法暂停任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
     }
   }
 
-  public stop(task: Task) {
+  public stop() {
     if (this.status === TaskStatusEnum.PROCESSING || this.status === TaskStatusEnum.WAITING || this.status === TaskStatusEnum.PAUSE) {
+      let result: Promise<boolean> = Promise.resolve(true)
       // 对于已开始的任务，调用taskService的pauseTask进行暂停
       if (this.processing()) {
-        this.taskService.pauseTask(task, this.pluginLoader, this.taskWriter)
+        result = this.taskService.pauseTask(this.taskId, this.pluginLoader, this.taskWriter)
       }
       this.changeStatus(TaskStatusEnum.PAUSE)
-      if (!this.over()) {
-        LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
-      }
+      LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
+      return result
     } else {
       throw new Error(`无法停止任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
     }
@@ -925,7 +909,11 @@ class TaskInfoStream extends Transform {
     task.id = chunk.taskId
     try {
       await chunk.saveInfo()
-      this.push(chunk)
+      if (chunk.paused()) {
+        chunk.inStream = false
+      } else {
+        this.push(chunk)
+      }
       callback()
     } catch (error) {
       this.handleError(chunk, callback, error as Error, task)
@@ -1001,10 +989,9 @@ class TaskResourceStream extends Transform {
       .process()
       .then((saveResult: TaskStatusEnum) => {
         chunk.inStream = false
-        this.push({
-          taskRunInstance: chunk,
-          status: saveResult
-        })
+        if (TaskStatusEnum.PAUSE !== saveResult) {
+          this.push(chunk)
+        }
         this.processing--
         // 如果处于限制状态，则在此次下载完成之后解开限制
         if (this.limited) {
@@ -1031,14 +1018,6 @@ class TaskResourceStream extends Transform {
 }
 
 /**
- * 任务资源保存结果
- */
-interface TaskResourceSaveResult {
-  taskRunInstance: TaskRunInstance
-  status: TaskStatusEnum
-}
-
-/**
  * 任务状态改变流
  */
 class TaskStatusChangeStream extends Transform {
@@ -1051,7 +1030,7 @@ class TaskStatusChangeStream extends Transform {
    * 资源保存结果列表
    * @private
    */
-  private saveResultList: TaskResourceSaveResult[]
+  private saveResultList: TaskRunInstance[]
   /**
    * 是否正在循环写入
    * @private
@@ -1081,11 +1060,7 @@ class TaskStatusChangeStream extends Transform {
     })
   }
 
-  async _transform(
-    chunk: TaskResourceSaveResult[] | TaskResourceSaveResult,
-    _encoding: string,
-    callback: TransformCallback
-  ): Promise<void> {
+  async _transform(chunk: TaskRunInstance[] | TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
     try {
       let tempTasks: Task[]
       if (chunk instanceof Array) {
@@ -1110,7 +1085,7 @@ class TaskStatusChangeStream extends Transform {
    * 添加处理结果
    * @param tasks
    */
-  public addTask(tasks: TaskResourceSaveResult[]) {
+  public addTask(tasks: TaskRunInstance[]) {
     this.saveResultList.push(...tasks)
     this.loopSaveResult()
   }
@@ -1149,9 +1124,9 @@ class TaskStatusChangeStream extends Transform {
    * @param saveResult 保存结果
    * @private
    */
-  private generateTaskFromSaveResult(saveResult: TaskResourceSaveResult) {
+  private generateTaskFromSaveResult(saveResult: TaskRunInstance) {
     const tempTask = new Task()
-    tempTask.id = saveResult.taskRunInstance.taskId
+    tempTask.id = saveResult.taskId
     tempTask.status = saveResult.status
     if (TaskStatusEnum.FINISHED === tempTask.status) {
       tempTask.localWorksId = null

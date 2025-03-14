@@ -549,13 +549,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 暂停任务
-   * @param task 任务
+   * @param taskId 任务id
    * @param pluginLoader 插件加载器
    * @param taskWriter
    */
-  public async pauseTask(task: Task, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<boolean> {
-    AssertNotNullish(task.id, this.constructor.name, `暂停任务失败，任务的id意外为空，taskId: ${task.id}`)
-    const taskId = task.id
+  public async pauseTask(taskId: number, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<boolean> {
+    const task = await this.getById(taskId)
+    AssertNotNullish(task, this.constructor.name, `无法暂停任务${taskId}，任务id不可用`)
     // 加载插件
     const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '暂停任务失败')
     AssertNotNullish(plugin?.id, this.constructor.name, `暂停任务失败，创建任务的插件id意外为空，taskId: ${taskId}`)
@@ -566,19 +566,23 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskPluginDTO.resourceStream = taskWriter.readable
 
     // 暂停写入
-    taskWriter.pause()
+    const finished = taskWriter.pause()
 
-    // 调用插件的pause方法
-    try {
-      taskHandler.pause(taskPluginDTO)
-    } catch (error) {
-      LogUtil.error(this.constructor.name, '调用插件的pause方法出错: ', error)
-      if (NotNullish(taskWriter.readable)) {
-        taskWriter.readable.pause()
+    if (!finished) {
+      // 调用插件的pause方法
+      try {
+        await taskHandler.pause(taskPluginDTO)
+      } catch (error) {
+        LogUtil.error(this.constructor.name, '调用插件的pause方法出错: ', error)
+        if (NotNullish(taskWriter.readable)) {
+          taskWriter.readable.pause()
+        }
       }
+      task.status = TaskStatusEnum.PAUSE
+      return true
+    } else {
+      return false
     }
-    task.status = TaskStatusEnum.PAUSE
-    return true
   }
 
   /**
