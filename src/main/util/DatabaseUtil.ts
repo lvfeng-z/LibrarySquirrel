@@ -39,7 +39,7 @@ export function ToObjAcceptedBySqlite3(obj: object | undefined, ignore?: string[
         if (typeof value === 'boolean') {
           return [key, value ? 1 : 0]
         }
-        if (value !== null && typeof value === 'object') {
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
           return [key, JSON.stringify(value)]
         }
         return [key, value]

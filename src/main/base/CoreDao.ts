@@ -7,6 +7,7 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/Comm
 import { QuerySortOption } from '../constant/QuerySortOption.js'
 import DB from '../database/DB.js'
 import BaseEntity from './BaseEntity.js'
+import LogUtil from '../util/LogUtil.js'
 
 export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
   /**
@@ -146,11 +147,18 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
               modifiedValue = '%' + value + '%'
               break
             case Operator.IN:
+              if (!Array.isArray(value)) {
+                const msg = `生成where子句失败，处理IN条件时比较值不是数组类型`
+                LogUtil.error(this.constructor.name, msg)
+                throw new Error(msg)
+              }
               whereClauses.set(
                 key,
-                alias == undefined ? `"${snakeCaseKey}" ${comparator} (@${key})` : `${alias}."${snakeCaseKey}" ${comparator} (@${key})`
+                alias == undefined
+                  ? `"${snakeCaseKey}" ${comparator} (${value.map((e) => `'${e}'`).join()})`
+                  : `${alias}."${snakeCaseKey}" ${comparator} (${value.map((e) => `'${e}'`).join()})`
               )
-              modifiedValue = value
+              modifiedValue = undefined
               break
             default:
               whereClauses.set(
