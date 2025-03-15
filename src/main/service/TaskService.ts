@@ -939,6 +939,17 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
+   * 获取父任务的子任务
+   * @param pidList
+   */
+  public listChildrenByParentsTask(pidList: number[]): Promise<Task[]> {
+    const query = new TaskQueryDTO()
+    query.pid = pidList
+    query.operators = { pid: Operator.IN }
+    return this.dao.list(query)
+  }
+
+  /**
    * 分页查询父任务的子任务
    * @param page
    */

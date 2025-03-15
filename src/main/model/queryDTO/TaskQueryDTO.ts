@@ -9,7 +9,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   /**
    * 上级任务id
    */
-  pid: number | undefined | null
+  pid: number | number[] | undefined | null
 
   /**
    * 任务名称

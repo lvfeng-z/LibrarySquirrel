@@ -16,6 +16,7 @@ import TaskProgressMapTreeDTO from '../model/dto/TaskProgressMapTreeDTO.js'
 import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
 import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
 import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
+import lodash from 'lodash'
 
 /**
  * 任务队列
@@ -141,15 +142,11 @@ export class TaskQueue {
       this.taskResourceStream.pipe(this.taskStatusChangeStream)
       handleError(error, taskRunInstance)
     })
-    this.taskStatusChangeStream.on('data', (tasks: Task[]) => {
-      if (ArrayNotEmpty(tasks)) {
-        tasks.forEach((task) => {
-          if (TaskStatusEnum.FINISHED === task.status || TaskStatusEnum.FAILED === task.status) {
-            AssertNotNullish(task.id, this.constructor.name, '移除任务的运行实例失败，任务id不能为空')
-            this.removeTask(task.id)
-          }
-        })
-      }
+    this.taskStatusChangeStream.on('data', (tasks: TaskRunInstance[]) => {
+      tasks.forEach((task) => {
+        task.saveHadStarted = false
+        task.infoSaved = false
+      })
     })
 
     // 建立管道
@@ -439,7 +436,7 @@ export class TaskQueue {
     // 所有任务设置为等待中
     this.taskStatusChangeStream.addTask(needChangeStatusList)
     // 刷新父任务状态
-    this.setChildrenOfParent(runInstances)
+    this.fillChildren(runInstances)
 
     this.inletStream.addArray(runInstances)
   }
@@ -505,27 +502,52 @@ export class TaskQueue {
   }
 
   /**
-   * 设置父任务的子任务
+   * 补全父任务的子任务
    * @param runInstances 子任务运行实例列表
    * @private
    */
-  private async setChildrenOfParent(runInstances: TaskRunInstance[]) {
-    const parentWaitingRefreshSet: Set<number> = new Set()
-    for (const runInstance of runInstances) {
-      if (NotNullish(runInstance.parentId) && runInstance.parentId !== 0) {
-        let parent = this.parentMap.get(runInstance.parentId)
-        if (IsNullish(parent)) {
-          const parentInfo = await this.taskService.getById(runInstance.parentId)
-          AssertNotNullish(parentInfo?.status, 'TaskQueue', `刷新父任务${runInstance.parentId}失败，任务状态意外为空`)
-          parent = new ParentRunInstance(runInstance.parentId, parentInfo?.status)
-          this.inletParentTask(parent, parentInfo)
+  private async fillChildren(runInstances: TaskRunInstance[]) {
+    const existingPid = this.parentMap.keys().toArray()
+    const notExistingPid = [
+      ...new Set(
+        runInstances
+          .map((runInstance) => {
+            if (NotNullish(runInstance.parentId) && runInstance.parentId !== 0 && !existingPid.includes(runInstance.parentId)) {
+              return runInstance.parentId
+            } else {
+              return undefined
+            }
+          })
+          .filter(NotNullish)
+      )
+    ]
+    let parentList: Task[] = []
+    if (ArrayNotEmpty(notExistingPid)) {
+      parentList = await this.taskService.listByIds(notExistingPid)
+    }
+    if (ArrayNotEmpty(parentList)) {
+      const allChildren = await this.taskService.listChildrenByParentsTask(notExistingPid)
+      const pidChildrenMap: Map<number, Task[]> = Map.groupBy(allChildren, (child) => child.pid as number)
+      const pidChildrenInstMap: object = lodash.keyBy(runInstances, 'taskId')
+      for (const parentInfo of parentList) {
+        AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id意外为空`)
+        AssertNotNullish(parentInfo.status, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务状态意外为空`)
+        const tempChildren = pidChildrenMap.get(parentInfo.id)
+        if (ArrayNotEmpty(tempChildren)) {
+          const tempInstList = tempChildren.map((tempChild) => {
+            const tempInst = pidChildrenInstMap[String(tempChild.id)]
+            if (NotNullish(tempInst)) {
+              return tempInst as TaskRunInstance
+            } else {
+              return new TaskStatus(tempChild.id as number, tempChild.status as TaskStatusEnum, false)
+            }
+          })
+          const parentInst = new ParentRunInstance(parentInfo.id, parentInfo.status, tempInstList)
+          this.inletParentTask(parentInst, parentInfo)
         }
-        parent.children.set(runInstance.taskId, runInstance)
-        parentWaitingRefreshSet.add(runInstance.parentId)
       }
     }
-    const parentWaitingRefresh = Array.from(parentWaitingRefreshSet)
-    this.refreshParentStatus(parentWaitingRefresh)
+    this.refreshParentStatus(notExistingPid)
   }
 
   /**
@@ -537,22 +559,35 @@ export class TaskQueue {
     for (const id of parentIds) {
       const parentRunInstance = this.parentMap.get(id)
       if (NotNullish(parentRunInstance)) {
-        const allChildren = await this.taskService.listChildrenTask(id)
-        allChildren.forEach((children) => {
-          if (!parentRunInstance.children.has(children.id as number)) {
-            const taskStatus = new TaskStatus(children.id as number, children.status as TaskStatusEnum, false)
-            parentRunInstance.children.set(children.id as number, taskStatus)
-          }
-        })
-
         const children = Array.from(parentRunInstance.children.values())
-        const processing = children.filter((child) => TaskStatusEnum.PROCESSING === child.status).length
-        const waiting = children.filter((child) => TaskStatusEnum.WAITING === child.status).length
-        const paused = children.filter((child) => TaskStatusEnum.PAUSE === child.status).length
-        const finished = children.filter((child) => TaskStatusEnum.FINISHED === child.status).length
-        const failed = children.filter((child) => TaskStatusEnum.FAILED === child.status).length
-
         let newStatus: TaskStatusEnum = parentRunInstance.status
+        let processing = 0
+        let waiting = 0
+        let paused = 0
+        let finished = 0
+        let failed = 0
+        for (const child of children) {
+          if (child.status === TaskStatusEnum.PROCESSING) {
+            processing++
+            break
+          }
+          if (child.status === TaskStatusEnum.WAITING) {
+            waiting++
+            continue
+          }
+          if (child.status === TaskStatusEnum.PAUSE) {
+            paused++
+            continue
+          }
+          if (child.status === TaskStatusEnum.FINISHED) {
+            finished++
+            continue
+          }
+          if (child.status === TaskStatusEnum.FAILED) {
+            failed++
+          }
+        }
+
         if (processing > 0) {
           newStatus = TaskStatusEnum.PROCESSING
         } else if (waiting > 0) {
@@ -631,20 +666,23 @@ export class TaskQueue {
 
   /**
    * 从子任务池中移除任务运行实例
-   * @param taskId 子任务id
+   * @param taskIds 子任务id
    * @private
    */
-  private removeTask(taskId: number) {
-    const runInstance = this.taskMap.get(taskId)
-    if (NotNullish(runInstance)) {
-      runInstance.clearTimeoutId = setTimeout(() => {
-        this.taskMap.delete(taskId)
-        // 任务状态推送到渲染进程
-        SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, [taskId])
-      }, 5000)
-    } else {
-      LogUtil.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
+  private removeTask(taskIds: number[]) {
+    for (let i = 0; i < taskIds.length; i++) {
+      const taskId = taskIds[i]
+      const runInstance = this.taskMap.get(taskId)
+      if (NotNullish(runInstance)) {
+        runInstance.clearTimeoutId = setTimeout(() => {
+          this.taskMap.delete(taskId)
+        }, 5000)
+      } else {
+        LogUtil.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
+      }
     }
+    // 任务状态推送到渲染进程
+    SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, taskIds)
   }
 
   /**
@@ -655,6 +693,9 @@ export class TaskQueue {
   private removeParentTask(taskId: number) {
     const runInstance = this.parentMap.get(taskId)
     if (NotNullish(runInstance)) {
+      if (ArrayNotEmpty(runInstance.children)) {
+        this.removeTask(runInstance.children.keys().toArray())
+      }
       runInstance.clearTimeoutId = setTimeout(() => {
         this.parentMap.delete(taskId)
         // 任务状态推送到渲染进程
@@ -883,9 +924,13 @@ class ParentRunInstance extends TaskStatus {
    */
   public children: Map<number, TaskRunInstance | TaskStatus>
 
-  constructor(taskId: number, status: TaskStatusEnum) {
+  constructor(taskId: number, status: TaskStatusEnum, children?: (TaskRunInstance | TaskStatus)[]) {
     super(taskId, status, true)
-    this.children = new Map<number, TaskRunInstance>()
+    if (ArrayIsEmpty(children)) {
+      this.children = new Map<number, TaskRunInstance | TaskStatus>()
+    } else {
+      this.children = new Map<number, TaskRunInstance | TaskStatus>(children.map((child) => [child.taskId, child]))
+    }
   }
 }
 
@@ -1030,7 +1075,7 @@ class TaskStatusChangeStream extends Transform {
    * 资源保存结果列表
    * @private
    */
-  private saveResultList: TaskRunInstance[]
+  private runInstances: TaskRunInstance[]
   /**
    * 是否正在循环写入
    * @private
@@ -1045,12 +1090,12 @@ class TaskStatusChangeStream extends Transform {
    * 批量更新的缓冲区
    * @private
    */
-  private readonly batchUpdateBuffer: Task[]
+  private readonly batchUpdateBuffer: TaskRunInstance[]
 
   constructor() {
     super({ objectMode: true, highWaterMark: 10 })
     this.taskService = new TaskService()
-    this.saveResultList = []
+    this.runInstances = []
     this.looping = false
     this.writeable = true
     this.batchUpdateBuffer = []
@@ -1062,17 +1107,15 @@ class TaskStatusChangeStream extends Transform {
 
   async _transform(chunk: TaskRunInstance[] | TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
     try {
-      let tempTasks: Task[]
-      if (chunk instanceof Array) {
-        tempTasks = chunk.map(this.generateTaskFromSaveResult)
+      if (Array.isArray(chunk)) {
+        this.batchUpdateBuffer.push(...chunk)
       } else {
-        tempTasks = [this.generateTaskFromSaveResult(chunk)]
+        this.batchUpdateBuffer.push(chunk)
       }
-      this.batchUpdateBuffer.push(...tempTasks)
-      if (this.batchUpdateBuffer.length >= 100 || ArrayIsEmpty(this.saveResultList)) {
-        const temp = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
-        this.taskService.updateBatchById(temp).catch((error) => LogUtil.error('TaskQueue', error))
-        this.push(temp)
+      if (this.batchUpdateBuffer.length >= 100 || ArrayIsEmpty(this.runInstances)) {
+        const aBatch = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
+        this.taskService.updateBatchById(aBatch.map(this.generateTaskFromRunInst)).catch((error) => LogUtil.error('TaskQueue', error))
+        this.push(aBatch)
       }
     } catch (error) {
       LogUtil.error('TaskQueue', error)
@@ -1082,11 +1125,11 @@ class TaskStatusChangeStream extends Transform {
   }
 
   /**
-   * 添加处理结果
+   * 添加运行实例
    * @param tasks
    */
   public addTask(tasks: TaskRunInstance[]) {
-    this.saveResultList.push(...tasks)
+    this.runInstances.push(...tasks)
     this.loopSaveResult()
   }
 
@@ -1110,8 +1153,8 @@ class TaskStatusChangeStream extends Transform {
    * @private
    */
   private processNext(): boolean {
-    const deleteCount = Math.min(100, this.saveResultList.length)
-    const next = this.saveResultList.splice(0, deleteCount)
+    const deleteCount = Math.min(100, this.runInstances.length)
+    const next = this.runInstances.splice(0, deleteCount)
     if (ArrayNotEmpty(next)) {
       return this.write(next)
     } else {
@@ -1120,14 +1163,14 @@ class TaskStatusChangeStream extends Transform {
   }
 
   /**
-   * 根据保存结果生成更新用的任务信息
-   * @param saveResult 保存结果
+   * 根据运行实例生成更新用的任务信息
+   * @param runInstance 运行实例
    * @private
    */
-  private generateTaskFromSaveResult(saveResult: TaskRunInstance) {
+  private generateTaskFromRunInst(runInstance: TaskRunInstance) {
     const tempTask = new Task()
-    tempTask.id = saveResult.taskId
-    tempTask.status = saveResult.status
+    tempTask.id = runInstance.taskId
+    tempTask.status = runInstance.status
     if (TaskStatusEnum.FINISHED === tempTask.status) {
       tempTask.localWorksId = null
       tempTask.pendingDownloadPath = null
