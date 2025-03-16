@@ -84,6 +84,12 @@ export class TaskQueue {
    */
   private closed: boolean
 
+  /**
+   * 准备关闭
+   * @private
+   */
+  private readonly readyToClose: Promise<void>
+
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
@@ -96,66 +102,84 @@ export class TaskQueue {
     this.taskInfoStream = new TaskInfoStream()
     this.taskResourceStream = new TaskResourceStream()
     this.taskStatusChangeStream = new TaskStatusChangeStream()
-    this.initializeStream()
-  }
 
-  /**
-   * 初始化任务处理流
-   * @private
-   */
-  private initializeStream() {
-    const handleError = (error: Error, taskRunInstance: TaskRunInstance) => {
-      LogUtil.error('TaskQueue', `处理任务失败，taskId: ${taskRunInstance.taskId}，error: ${error.message}`)
-      taskRunInstance.failed()
-      this.taskStatusChangeStream.addTask([taskRunInstance])
-      this.refreshParentStatus([taskRunInstance.parentId])
-    }
-    // 信息保存流
-    this.taskInfoStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
-      this.inletStream.unpipe(this.taskInfoStream)
-      this.inletStream.pipe(this.taskInfoStream)
-      handleError(error, taskRunInstance)
-    })
-    // 资源保存流
-    this.taskResourceStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
-      this.taskInfoStream.unpipe(this.taskResourceStream)
-      this.taskInfoStream.pipe(this.taskResourceStream)
-      handleError(error, taskRunInstance)
-    })
-    this.taskResourceStream.on('data', (taskRunInstance: TaskRunInstance) => {
-      if (taskRunInstance.status === TaskStatusEnum.FINISHED) {
-        LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}完成`)
-      } else if (taskRunInstance.status === TaskStatusEnum.FAILED) {
-        LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}失败`)
+    // 初始化流
+    this.readyToClose = new Promise<void>((resolve, reject) => {
+      const handleError = (error: Error, taskRunInstance: TaskRunInstance) => {
+        LogUtil.error('TaskQueue', `处理任务失败，taskId: ${taskRunInstance.taskId}，error: ${error.message}`)
+        taskRunInstance.failed()
+        this.taskStatusChangeStream.addTask([taskRunInstance])
+        this.refreshParentStatus([taskRunInstance.parentId])
       }
-      this.refreshParentStatus([taskRunInstance.parentId])
-    })
-    this.taskResourceStream.on('saveStart', (taskRunInstance: TaskRunInstance) => {
-      this.taskStatusChangeStream.addTask([taskRunInstance])
-      this.refreshParentStatus([taskRunInstance.parentId])
-    })
-    this.taskResourceStream.on('saveFailed', handleError)
-    this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
-    // 保存结果处理流
-    this.taskStatusChangeStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
-      this.taskResourceStream.unpipe(this.taskStatusChangeStream)
-      this.taskResourceStream.pipe(this.taskStatusChangeStream)
-      handleError(error, taskRunInstance)
-    })
-    this.taskStatusChangeStream.on('data', (runInstances: TaskRunInstance[]) => {
-      runInstances.forEach((runInst) => {
-        runInst.saveHadStarted = false
-        // TODO 需要处理重复执行同一任务的情况
-        if (runInst.status === TaskStatusEnum.FINISHED) {
-          runInst.infoSaved = false
-        }
+      // 信息保存流
+      this.taskInfoStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
+        this.inletStream.unpipe(this.taskInfoStream)
+        this.inletStream.pipe(this.taskInfoStream)
+        handleError(error, taskRunInstance)
       })
-    })
+      const taskInfoStreamDestroyed = new Promise<void>((resolve) =>
+        this.taskInfoStream.once('end', () => {
+          this.taskInfoStream.destroy()
+          resolve()
+        })
+      )
+      // 资源保存流
+      this.taskResourceStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
+        this.taskInfoStream.unpipe(this.taskResourceStream)
+        this.taskInfoStream.pipe(this.taskResourceStream)
+        handleError(error, taskRunInstance)
+      })
+      this.taskResourceStream.on('data', (taskRunInstance: TaskRunInstance) => {
+        if (taskRunInstance.status === TaskStatusEnum.FINISHED) {
+          LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}完成`)
+        } else if (taskRunInstance.status === TaskStatusEnum.FAILED) {
+          LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}失败`)
+        }
+        this.refreshParentStatus([taskRunInstance.parentId])
+      })
+      this.taskResourceStream.on('saveStart', (taskRunInstance: TaskRunInstance) => {
+        this.taskStatusChangeStream.addTask([taskRunInstance])
+        this.refreshParentStatus([taskRunInstance.parentId])
+      })
+      this.taskResourceStream.on('saveFailed', handleError)
+      this.taskResourceStream.on('finish', () => LogUtil.info('TaskQueue', '任务队列完成'))
+      const taskResourceStreamDestroyed = new Promise<void>((resolve) =>
+        this.taskResourceStream.once('end', () => {
+          this.taskResourceStream.destroy()
+          resolve()
+        })
+      )
+      // 保存结果处理流
+      this.taskStatusChangeStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
+        this.taskResourceStream.unpipe(this.taskStatusChangeStream)
+        this.taskResourceStream.pipe(this.taskStatusChangeStream)
+        handleError(error, taskRunInstance)
+      })
+      this.taskStatusChangeStream.on('data', (runInstances: TaskRunInstance[]) => {
+        runInstances.forEach((runInst) => {
+          runInst.saveHadStarted = false
+          // TODO 需要处理重复执行同一任务的情况
+          if (runInst.status === TaskStatusEnum.FINISHED) {
+            runInst.infoSaved = false
+          }
+        })
+      })
+      const taskStatusChangeStreamDestroyed = new Promise<void>((resolve) =>
+        this.taskStatusChangeStream.once('end', () => {
+          this.taskStatusChangeStream.destroy()
+          resolve()
+        })
+      )
 
-    // 建立管道
-    this.inletStream.pipe(this.taskInfoStream)
-    this.taskInfoStream.pipe(this.taskResourceStream)
-    this.taskResourceStream.pipe(this.taskStatusChangeStream)
+      // 建立管道
+      this.inletStream.pipe(this.taskInfoStream)
+      this.taskInfoStream.pipe(this.taskResourceStream)
+      this.taskResourceStream.pipe(this.taskStatusChangeStream)
+
+      Promise.all([taskInfoStreamDestroyed, taskResourceStreamDestroyed, taskStatusChangeStreamDestroyed])
+        .then(() => resolve())
+        .catch((error) => reject(error))
+    })
   }
 
   /**
@@ -171,7 +195,7 @@ export class TaskQueue {
     if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
       this.processTask(tasks)
     } else if (taskOperation === TaskOperation.PAUSE) {
-      this.pauseTask(tasks)
+      this.pauseTask(tasks.map((task) => task.id as number))
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     } else if (taskOperation === TaskOperation.STOP) {
@@ -287,6 +311,9 @@ export class TaskQueue {
           return undefined
         })
         .filter(NotNullish)
+      if (this.closed) {
+        break
+      }
       SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
@@ -321,6 +348,9 @@ export class TaskQueue {
             finished: finished
           })
         })
+      if (this.closed) {
+        break
+      }
       SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
@@ -378,18 +408,19 @@ export class TaskQueue {
   /**
    * 暂停所有任务
    */
-  public async shutdown() {
+  public async shutdown(): Promise<void> {
     this.closed = true
-    const runInstList = this.taskMap.values()
-    for (const runInst of runInstList) {
-      try {
-        await runInst.pause()
-      } catch (error) {
-        runInst.failed()
-        LogUtil.error(this.constructor.name, error)
-      }
-    }
-    this.taskStatusChangeStream.addTask(runInstList.toArray())
+    const runInstList = this.taskMap.values().toArray()
+    const ids = runInstList
+      .filter((runInst) => TaskStatusEnum.WAITING === runInst.status || TaskStatusEnum.PROCESSING === runInst.status)
+      .map((runInst) => runInst.taskId)
+    const parentIds = runInstList.map((runInst) => runInst.parentId)
+    this.pauseTask(ids)
+    await this.inletStream.preDestroy()
+    this.inletStream.destroy()
+    await this.readyToClose
+    await this.refreshParentStatus(parentIds)
+    LogUtil.info(this.constructor.name, '任务队列已关闭')
   }
 
   /**
@@ -446,24 +477,20 @@ export class TaskQueue {
 
   /**
    * 暂停任务
-   * @param tasks 要停暂停的任务
+   * @param taskIds 要停暂停的任务
    * @private
    */
-  private async pauseTask(tasks: Task[]) {
+  private pauseTask(taskIds: number[]): Promise<boolean[]> {
     const taskSaveResultList: TaskRunInstance[] = []
-    for (const task of tasks) {
-      if (IsNullish(task.id)) {
-        LogUtil.error('TaskQueue', `暂停任务失败，任务id不能为空`)
-        continue
-      }
-      const taskId = task.id
+    const result: Promise<boolean>[] = []
+    for (const taskId of taskIds) {
       const taskRunInstance = this.taskMap.get(taskId)
       if (IsNullish(taskRunInstance)) {
         LogUtil.error('TaskQueue', `无法暂停任务${taskId}，队列中没有这个任务`)
         continue
       }
       try {
-        taskRunInstance.pause()
+        result.push(taskRunInstance.pause())
         if (!taskRunInstance.over()) {
           taskSaveResultList.push(taskRunInstance)
         }
@@ -472,6 +499,7 @@ export class TaskQueue {
       }
     }
     this.taskStatusChangeStream.addTask(taskSaveResultList)
+    return Promise.all(result)
   }
 
   /**
@@ -1210,14 +1238,36 @@ class ReadableTaskRunInstance extends Readable {
   // 添加一个新的数组到流中
   public addArray(array: TaskRunInstance[]) {
     this.allInstLists.push(array)
-    this.processNext()
+    const next = this.getNext()
+    if (NotNullish(next)) {
+      this.push(next)
+    }
   }
 
   _read() {
-    this.processNext()
+    const next = this.getNext()
+    if (NotNullish(next)) {
+      this.push(next)
+    } else {
+      this.emit('waiting')
+    }
   }
 
-  private processNext() {
+  public preDestroy(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (this.hasNext()) {
+        this.once('waiting', () => {
+          this.push(null)
+          resolve()
+        })
+      } else {
+        this.push(null)
+        resolve()
+      }
+    })
+  }
+
+  private getNext(): TaskRunInstance | undefined {
     // 如果没有更多的数组或当前数组已经处理完毕，尝试切换到下一个数组
     while (ArrayNotEmpty(this.allInstLists)) {
       if (this.currentIndex >= this.allInstLists[0].length) {
@@ -1228,13 +1278,28 @@ class ReadableTaskRunInstance extends Readable {
       }
     }
 
-    // 如果所有数组都已经处理完毕，推送 null 表示结束
+    // 如果所有数组都已经处理完毕，等待新数据推入数据源
     if (ArrayIsEmpty(this.allInstLists)) {
       return
     }
 
-    // 从当前数组中读取一个元素并推送
-    const chunk = this.allInstLists[0][this.currentIndex++]
-    this.push(chunk)
+    // 从当前数组中读取一个元素返回
+    return this.allInstLists[0][this.currentIndex++]
+  }
+
+  /**
+   * 是否还有下一个数据
+   * @private
+   */
+  private hasNext(): boolean {
+    let tempCurrentIndex = this.currentIndex
+    for (let i = 0; i < this.allInstLists.length; i++) {
+      if (tempCurrentIndex >= this.allInstLists[i].length) {
+        tempCurrentIndex = 0
+      } else {
+        return true
+      }
+    }
+    return false
   }
 }

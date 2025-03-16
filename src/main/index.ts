@@ -187,8 +187,9 @@ Electron.app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-Electron.app.on('window-all-closed', () => {
+Electron.app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
+    await GlobalVar.get(GlobalVars.TASK_QUEUE).shutdown()
     Electron.app.quit()
   }
 })

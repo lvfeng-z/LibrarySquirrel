@@ -1,4 +1,5 @@
 import { GlobalVar, GlobalVars } from './GlobalVar.js'
+import LogUtil from '../util/LogUtil.js'
 
 export enum RenderEvent {
   TASK_STATUS_SET_TASK = 'taskStatus-setTask',
@@ -18,5 +19,9 @@ export enum RenderEvent {
  */
 export function SendMsgToRender(channel: RenderEvent, ...args: unknown[]) {
   const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
-  mainWindow.webContents.send(channel, args)
+  try {
+    mainWindow.webContents.send(channel, args)
+  } catch (ignoredError) {
+    LogUtil.error('SendMsgToRender', ignoredError)
+  }
 }
