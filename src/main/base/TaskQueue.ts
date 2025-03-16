@@ -142,10 +142,13 @@ export class TaskQueue {
       this.taskResourceStream.pipe(this.taskStatusChangeStream)
       handleError(error, taskRunInstance)
     })
-    this.taskStatusChangeStream.on('data', (tasks: TaskRunInstance[]) => {
-      tasks.forEach((task) => {
-        task.saveHadStarted = false
-        task.infoSaved = false
+    this.taskStatusChangeStream.on('data', (runInstances: TaskRunInstance[]) => {
+      runInstances.forEach((runInst) => {
+        runInst.saveHadStarted = false
+        // TODO 需要处理重复执行同一任务的情况
+        if (runInst.status === TaskStatusEnum.FINISHED) {
+          runInst.infoSaved = false
+        }
       })
     })
 
@@ -682,7 +685,9 @@ export class TaskQueue {
       }
     }
     // 任务状态推送到渲染进程
-    SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, taskIds)
+    setTimeout(() => {
+      SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, taskIds)
+    }, 5000)
   }
 
   /**
@@ -693,8 +698,9 @@ export class TaskQueue {
   private removeParentTask(taskId: number) {
     const runInstance = this.parentMap.get(taskId)
     if (NotNullish(runInstance)) {
-      if (ArrayNotEmpty(runInstance.children)) {
-        this.removeTask(runInstance.children.keys().toArray())
+      const childrenIds = runInstance.children.keys().toArray()
+      if (ArrayNotEmpty(childrenIds)) {
+        this.removeTask(childrenIds)
       }
       runInstance.clearTimeoutId = setTimeout(() => {
         this.parentMap.delete(taskId)
