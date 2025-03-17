@@ -39,6 +39,7 @@ import Works from '../model/entity/Works.js'
 import ObjectUtil from '../util/ObjectUtil.js'
 import SiteService from './SiteService.js'
 import Site from '../model/entity/Site.js'
+import CreateTaskWritable from '../model/util/CreateTaskWritable.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -105,7 +106,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         // 分别处理数组类型和流类型的响应值
         if (pluginResponse instanceof Readable) {
-          const addedQuantity = await this.handleCreateTaskStream(pluginResponse, url, taskPlugin, parentTask, 100, 200)
+          const addedQuantity = await this.handleCreateTaskStream(pluginResponse, taskPlugin, parentTask, 100)
           return new TaskCreateResponse({
             succeed: true,
             addedQuantity: addedQuantity,
@@ -213,141 +214,29 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 处理任务创建流
    * @param createTaskStream 创建任务流
-   * @param url 传给插件的url
    * @param taskPlugin 插件信息
    * @param parentTask 任务集
    * @param batchSize 每次保存任务的数量
-   * @param queueMax 任务队列最大长度
    */
   async handleCreateTaskStream(
     createTaskStream: Readable,
-    url: string,
     taskPlugin: Plugin,
     parentTask: TaskCreateDTO,
-    batchSize: number,
-    queueMax: number
+    batchSize: number
   ): Promise<number> {
     // 最终用于返回的Promise
-    return new Promise<number>((resolve) => {
-      // error事件处理函数
+    return new Promise<number>((resolve, reject) => {
+      const writable = new CreateTaskWritable(parentTask, this, new SiteService(), taskPlugin, batchSize)
       createTaskStream.on('error', (error) => {
-        LogUtil.error(this.constructor.name, '插件报错: ', error)
+        LogUtil.error(this.constructor.name, '创建任务失败，ReadableError: ', error)
+        reject(error)
       })
-
-      // 用于查询和缓存站点id
-      const siteService = new SiteService()
-      const siteCache = new Map<string, Promise<number>>()
-      // data事件处理函数
-      createTaskStream.on('data', async (chunk: TaskCreateDTO) => {
-        const task = new TaskCreateDTO(chunk)
-        // 校验
-        if (StringUtil.isBlank(task.siteDomain)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点domain')
-          return
-        }
-        itemCount++
-        // 如果父任务尚未保存且任务数大于1，则先保存父任务
-        if (parentTaskProcess === undefined && itemCount > 1) {
-          parentTaskProcess = parentTaskProcessing()
-          parentTask.id = await parentTaskProcess
-          // 更新pid
-          taskQueue.forEach((task) => (task.pid = parentTask.id as number))
-        }
-
-        // 等待父任务完成
-        await parentTaskProcess
-        // 创建任务对象
-        task.pluginAuthor = taskPlugin.author
-        task.pluginName = taskPlugin.name
-        task.pluginVersion = taskPlugin.version
-        task.status = TaskStatusEnum.CREATED
-        task.isCollection = false
-        task.pid = parentTask.id as number
-        let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
-        if (IsNullish(siteId)) {
-          const tempSite = siteService.getByDomain(task.siteDomain)
-          siteId = tempSite.then((site) => site?.id)
-        }
-        task.siteId = await siteId
-        if (IsNullish(siteId)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，找不到插件返回的域名')
-          return
-        }
-
-        // 将任务添加到队列
-        taskQueue.push(new Task(task))
-
-        // 如果队列中的任务数量超过上限，则暂停流
-        if (taskQueue.length >= queueMax && !isPaused) {
-          LogUtil.info(this.constructor.name, `任务队列超过${queueMax}个，暂停任务流，已经收到${itemCount}个任务`)
-          createTaskStream.pause()
-          isPaused = true
-        }
-
-        // 每batchSize个任务处理一次
-        if (taskQueue.length % batchSize === 0) {
-          await saveTasks()
-        }
+      writable.on('error', (error) => {
+        LogUtil.error(this.constructor.name, '创建任务失败，WritableError: ', error)
+        reject(error)
       })
-
-      // end事件处理函数
-      createTaskStream.on('end', async () => {
-        try {
-          // 所有数据读取完毕
-          if (itemCount === 0) {
-            LogUtil.warn(this.constructor.name, `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
-          } else if (itemCount === 1) {
-            await super.save(taskQueue[0])
-          } else if (taskQueue.length > 0) {
-            await saveTasks()
-          }
-          resolve(itemCount)
-        } catch (error) {
-          LogUtil.error(this.constructor.name, '处理任务流结束事件失败，error:', error)
-        } finally {
-          LogUtil.info(this.constructor.name, `任务流结束，创建了${itemCount}个任务`)
-        }
-      })
-
-      // 查询插件信息，用于输出日志
-      const pluginInfo = JSON.stringify(taskPlugin)
-      // 任务计数
-      let itemCount = 0
-      // 父任务存储过程
-      let parentTaskProcess: Promise<number>
-      // 任务队列
-      const taskQueue: Task[] = []
-      // 标记流是否已暂停
-      let isPaused = false
-
-      // 保存任务集的过程
-      const parentTaskProcessing = (): Promise<number> => {
-        const tempTask = new Task(parentTask)
-        const pid = super.save(tempTask) as Promise<number>
-        parentTask.saved = true
-        return pid
-      }
-
-      // 保存任务队列的函数
-      const saveTasks = async (): Promise<void> => {
-        const taskBuffer: Task[] = []
-        // 从队列中取出最多batchSize个任务
-        while (taskQueue.length > 0 && taskBuffer.length < batchSize) {
-          taskBuffer.push(taskQueue.shift()!)
-        }
-
-        // 检查队列是否小于上限，如果是，则恢复流
-        if (taskQueue.length < queueMax && isPaused) {
-          LogUtil.info(this.constructor.name, `任务队列减至${taskQueue.length}个，恢复任务流`)
-          createTaskStream.resume()
-          isPaused = false
-        }
-
-        // 如果缓冲区中有任务，则保存
-        if (taskBuffer.length > 0) {
-          super.saveBatch(taskBuffer).then()
-        }
-      }
+      writable.on('finish', () => resolve(writable.taskCount))
+      createTaskStream.pipe(writable)
     })
   }
 
