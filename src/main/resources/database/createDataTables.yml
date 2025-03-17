@@ -90,6 +90,12 @@ tables:
         create_time     integer,
         update_time     integer
       );
+      create index re_works_author_local_author_id_index
+      on re_works_author (local_author_id desc);
+      create index re_works_author_site_author_id_index
+      on re_works_author (site_author_id desc);
+      create index re_works_author_works_id_index
+      on re_works_author (works_id desc);
 
   - name: re_works_tag
     sql: |
