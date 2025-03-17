@@ -239,6 +239,34 @@ tables:
         update_time integer
       );
 
+  - name: resource
+    sql: |
+      create table resource (
+        id                 integer not null
+        constraint resource_pk
+        primary key,
+        works_id           integer not null
+        constraint resource_works_id_fk
+        references works
+        on delete cascade,
+        task_id            integer not null
+        constraint resource_task_id_fk
+        references task
+        on delete set null,
+        file_path          text    not null,
+        file_name          text    not null,
+        filename_extension text    not null,
+        workdir            text,
+        resource_complete  integer not null,
+        import_method      integer not null,
+        create_time        integer,
+        update_time        integer
+      );
+      create index resource_task_id_index
+      on resource (task_id desc);
+      create index resource_works_id_index
+      on resource (works_id desc);
+
   - name: works
     sql: |
       create table if not exists works (
