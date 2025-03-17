@@ -997,28 +997,13 @@ class TaskInfoStream extends Transform {
       }
       callback()
     } catch (error) {
-      this.handleError(chunk, callback, error as Error, task)
+      const msg = `保存任务${chunk.taskId}的作品信息失败`
+      const newError = new Error()
+      newError.message = msg + '，' + (error as { message: string }).message
+      LogUtil.error('TaskQueue', error)
+      this.emit('error', error, chunk)
+      callback()
     }
-  }
-
-  /**
-   * 处理_transform的错误
-   * @param taskRunInstance
-   * @param callback
-   * @param error
-   * @param task
-   * @private
-   */
-  private handleError(taskRunInstance: TaskRunInstance, callback: () => void, error?: Error, task?: Task) {
-    const msg = `保存任务${taskRunInstance.taskId}的作品信息失败`
-    if (IsNullish(error)) {
-      error = new Error(msg)
-    } else {
-      error.message = msg + '，' + error.message
-    }
-    LogUtil.error('TaskQueue', error)
-    this.emit('error', error, task, taskRunInstance)
-    callback()
   }
 }
 
