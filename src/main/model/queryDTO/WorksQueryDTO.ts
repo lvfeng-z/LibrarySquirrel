@@ -1,44 +1,11 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 /**
  * QueryDTO
  * 作品
  */
 export default class WorksQueryDTO extends BaseQueryDTO {
-  /**
-   * 包含本地标签
-   */
-  includeLocalTagIds: (string | number)[]
-  /**
-   * 排除本地标签
-   */
-  excludeLocalTagIds: (string | number)[]
-  /**
-   * 包含站点标签
-   */
-  includeSiteTagIds: (string | number)[]
-  /**
-   * 排除站点标签
-   */
-  excludeSiteTagIds: (string | number)[]
-  /**
-   * 包含本地作者
-   */
-  includeLocalAuthorIds: (string | number)[]
-  /**
-   * 排除本地作者
-   */
-  excludeLocalAuthorIds: (string | number)[]
-  /**
-   * 包含站点作者
-   */
-  includeSiteAuthorIds: (string | number)[]
-  /**
-   * 排除站点作者
-   */
-  excludeSiteAuthorIds: (string | number)[]
-
   /**
    * 文件存储路径（文件相对于工作目录的相对路径）
    */
@@ -105,42 +72,8 @@ export default class WorksQueryDTO extends BaseQueryDTO {
   resourceComplete: boolean | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
-    if (IsNullish(worksQueryDTO)) {
-      super()
-      this.includeLocalTagIds = []
-      this.excludeLocalTagIds = []
-      this.includeSiteTagIds = []
-      this.excludeSiteTagIds = []
-      this.includeLocalAuthorIds = []
-      this.excludeLocalAuthorIds = []
-      this.includeSiteAuthorIds = []
-      this.excludeSiteAuthorIds = []
-      this.filePath = undefined
-      this.fileName = undefined
-      this.filenameExtension = undefined
-      this.siteId = undefined
-      this.siteWorksId = undefined
-      this.siteWorksName = undefined
-      this.siteAuthorId = undefined
-      this.siteWorkDescription = undefined
-      this.siteUploadTime = undefined
-      this.siteUpdateTime = undefined
-      this.nickName = undefined
-      this.suggestedName = undefined
-      this.importMethod = undefined
-      this.taskId = undefined
-      this.lastView = undefined
-      this.resourceComplete = undefined
-    } else {
-      super(worksQueryDTO)
-      this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
-      this.excludeLocalTagIds = worksQueryDTO.excludeLocalTagIds
-      this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
-      this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
-      this.includeLocalAuthorIds = worksQueryDTO.includeLocalAuthorIds
-      this.excludeLocalAuthorIds = worksQueryDTO.excludeLocalAuthorIds
-      this.includeSiteAuthorIds = worksQueryDTO.includeSiteAuthorIds
-      this.excludeSiteAuthorIds = worksQueryDTO.excludeSiteAuthorIds
+    super(worksQueryDTO)
+    if (NotNullish(worksQueryDTO)) {
       this.filePath = worksQueryDTO.filePath
       this.fileName = worksQueryDTO.fileName
       this.filenameExtension = worksQueryDTO.filenameExtension

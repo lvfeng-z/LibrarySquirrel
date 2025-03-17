@@ -1,28 +1,11 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
-import { IsNullish } from '../../../utils/CommonUtil'
+import { NotNullish } from '../../../utils/CommonUtil'
 
 /**
  * QueryDTO
  * 作品
  */
 export default class WorksQueryDTO extends BaseQueryDTO {
-  /**
-   * 包含本地标签
-   */
-  includeLocalTagIds: string[] | number[] | null | undefined
-  /**
-   * 排除本地标签
-   */
-  excludeLocalTagIds: string[] | number[] | null | undefined
-  /**
-   * 包含站点标签
-   */
-  includeSiteTagIds: string[] | number[] | null | undefined
-  /**
-   * 排除站点标签
-   */
-  excludeSiteTagIds: string[] | number[] | null | undefined
-
   /**
    * 文件存储路径（文件相对于工作目录的相对路径）
    */
@@ -83,35 +66,14 @@ export default class WorksQueryDTO extends BaseQueryDTO {
    * 最后一次查看的时间
    */
   lastView: number | undefined | null
+  /**
+   * 资源保存完成
+   */
+  resourceComplete: boolean | undefined | null
 
   constructor(worksQueryDTO?: WorksQueryDTO) {
-    if (IsNullish(worksQueryDTO)) {
-      super()
-      this.includeLocalTagIds = undefined
-      this.excludeLocalTagIds = undefined
-      this.includeSiteTagIds = undefined
-      this.includeSiteTagIds = undefined
-      this.filePath = undefined
-      this.fileName = undefined
-      this.filenameExtension = undefined
-      this.siteId = undefined
-      this.siteWorksId = undefined
-      this.siteWorksName = undefined
-      this.siteAuthorId = undefined
-      this.siteWorkDescription = undefined
-      this.siteUploadTime = undefined
-      this.siteUpdateTime = undefined
-      this.nickName = undefined
-      this.suggestedName = undefined
-      this.importMethod = undefined
-      this.taskId = undefined
-      this.lastView = undefined
-    } else {
-      super(worksQueryDTO)
-      this.includeLocalTagIds = worksQueryDTO.includeLocalTagIds
-      this.excludeLocalTagIds = worksQueryDTO.excludeLocalTagIds
-      this.includeSiteTagIds = worksQueryDTO.includeSiteTagIds
-      this.excludeSiteTagIds = worksQueryDTO.excludeSiteTagIds
+    super(worksQueryDTO)
+    if (NotNullish(worksQueryDTO)) {
       this.filePath = worksQueryDTO.filePath
       this.fileName = worksQueryDTO.fileName
       this.filenameExtension = worksQueryDTO.filenameExtension
@@ -127,6 +89,7 @@ export default class WorksQueryDTO extends BaseQueryDTO {
       this.importMethod = worksQueryDTO.importMethod
       this.taskId = worksQueryDTO.taskId
       this.lastView = worksQueryDTO.lastView
+      this.resourceComplete = worksQueryDTO.resourceComplete
     }
   }
 }

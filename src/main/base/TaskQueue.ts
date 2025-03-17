@@ -450,7 +450,9 @@ export class TaskQueue {
         // 判断这个作品是否已经保存过
         if (NotNullish(task.siteId) && NotNullish(task.siteWorksId)) {
           const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksId(task.siteId, task.siteWorksId)
-          LogUtil.info('TaskQueue', existsWorksList)
+          if (ArrayNotEmpty(existsWorksList)) {
+            LogUtil.info('TaskQueue', existsWorksList)
+          }
         }
         taskRunInstance = new TaskRunInstance(
           task.id,

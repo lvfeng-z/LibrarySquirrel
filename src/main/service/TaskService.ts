@@ -162,7 +162,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 给任务赋值的函数
     const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
       // 校验
-      AssertNotBlank(task.siteDomain, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点domain')
+      AssertNotBlank(task.siteDomain, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
+      AssertNotBlank(task.siteWorksId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorksId')
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
@@ -251,7 +252,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 加载插件
     const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '保存作品信息失败')
     AssertNotNullish(plugin, this.constructor.name, `保存作品信息失败，创建任务的插件不可用`)
-    AssertNotNullish(plugin.id, this.constructor.name, `保存作品信息失败，创建任务的插件id意外为空`)
+    AssertNotNullish(plugin.id, this.constructor.name, `保存作品信息失败，创建任务的插件id不能为空`)
     task.pluginAuthor = plugin.author
     task.pluginName = plugin.name
     task.pluginVersion = plugin.version

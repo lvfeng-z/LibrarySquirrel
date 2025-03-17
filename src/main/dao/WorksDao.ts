@@ -1,5 +1,6 @@
 import BaseDao from '../base/BaseDao.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
+import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
 import Works from '../model/entity/Works.ts'
 import Page from '../model/util/Page.ts'
 import WorksDTO from '../model/dto/WorksDTO.ts'
@@ -21,7 +22,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    * 综合查询作品
    * @param page 查询参数（本地标签、站点标签、作者...）
    */
-  public async synthesisQueryPage(page: Page<WorksQueryDTO, WorksDTO>): Promise<Page<WorksQueryDTO, WorksDTO>> {
+  public async synthesisQueryPage(page: Page<WorksCommonQueryDTO, WorksDTO>): Promise<Page<WorksQueryDTO, WorksDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     let statement: string

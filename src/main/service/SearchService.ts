@@ -16,6 +16,7 @@ import LocalTagService from './LocalTagService.js'
 import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
+import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
 
 /**
  * 作品查询服务类
@@ -47,7 +48,15 @@ export default class SearchService {
     const worksPage = page.copy<WorksQueryDTO, WorksDTO>()
     const worksService = new WorksService()
 
-    const worksQueryDTO = new WorksQueryDTO()
+    const worksQueryDTO = new WorksCommonQueryDTO()
+    worksQueryDTO.includeLocalTagIds = []
+    worksQueryDTO.excludeLocalTagIds = []
+    worksQueryDTO.includeSiteTagIds = []
+    worksQueryDTO.excludeSiteTagIds = []
+    worksQueryDTO.includeLocalAuthorIds = []
+    worksQueryDTO.excludeLocalAuthorIds = []
+    worksQueryDTO.includeSiteAuthorIds = []
+    worksQueryDTO.excludeSiteAuthorIds = []
     worksQueryDTO.operators = {}
     const usedLocalTag: number[] = []
     const usedSiteTag: number[] = []

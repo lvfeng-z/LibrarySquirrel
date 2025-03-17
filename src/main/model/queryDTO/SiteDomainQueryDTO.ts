@@ -13,7 +13,7 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
   /**
    * 域名
    */
-  domain?: string | undefined | null
+  domain?: string | string[] | undefined | null
 
   /**
    * 主页

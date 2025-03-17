@@ -60,7 +60,7 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
    */
   public async listByDomains(domains: string[]): Promise<SiteDomain[]> {
     const query = new SiteDomainQueryDTO()
-    query.domain = domains.join(',')
+    query.domain = domains
     query.operators = { domain: Operator.IN }
     return super.list(query)
   }

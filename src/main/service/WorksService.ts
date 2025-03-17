@@ -50,11 +50,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     // 读取设置中的工作目录信息
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
     if (StringUtil.isBlank(workdir)) {
-      const msg = `保存资源失败，工作目录意外为空，taskId: ${result.taskId}`
+      const msg = `保存资源失败，工作目录不能为空，taskId: ${result.taskId}`
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
     try {
+      // 校验
+      AssertNotNullish(worksPluginDTO.siteWorksId, '生成作品信息失败，siteWorksId不能为空')
+
       // 处理作者信息
       if (NotNullish(worksPluginDTO.siteAuthors)) {
         result.siteAuthors = await SiteAuthorService.createSaveInfos(worksPluginDTO.siteAuthors)
@@ -63,6 +66,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const authorName = tempName === undefined ? 'unknownAuthor' : tempName
       // 作品信息
       const siteWorksName = result.siteWorksName === undefined ? 'unknownWorksName' : result.siteWorksName
+      result.siteWorksId = worksPluginDTO.siteWorksId
       // 资源状态
       result.resourceComplete = false
 
