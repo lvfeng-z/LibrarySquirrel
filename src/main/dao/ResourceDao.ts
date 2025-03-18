@@ -7,7 +7,7 @@ import DB from '../database/DB.js'
  * 资源Dao
  */
 export default class ResourceDao extends BaseDao<ResourceQueryDTO, Resource> {
-  constructor(db?: DB) {
-    super('resource', Resource, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('resource', Resource, db, injectedDB)
   }
 }

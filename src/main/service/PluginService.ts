@@ -154,68 +154,77 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     await CreateDirIfNotExists(installPath)
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
-    const db = new DB(this.constructor.name)
-    return db.transaction(async () => {
-      const tempPlugin = new Plugin(pluginInstallDTO)
-      const pluginService = new PluginService(db)
-      const pluginId = await pluginService.save(tempPlugin)
+    return this.db
+      .transaction(async (transactionDB) => {
+        const tempPlugin = new Plugin(pluginInstallDTO)
+        const pluginService = new PluginService(transactionDB)
+        const pluginId = await pluginService.save(tempPlugin)
 
-      // 任务创建监听器
-      const listeners: string[] = pluginInstallDTO.listeners
-      if (ArrayNotEmpty(listeners)) {
-        const taskPluginListenerService = new TaskPluginListenerService(db)
-        const taskPluginListeners: TaskPluginListener[] = []
-        let taskPluginListener: TaskPluginListener
-        for (const listener of listeners) {
-          taskPluginListener = new TaskPluginListener()
-          taskPluginListener.pluginId = pluginId
-          taskPluginListener.listener = listener
-          taskPluginListeners.push(taskPluginListener)
+        // 任务创建监听器
+        const listeners: string[] = pluginInstallDTO.listeners
+        if (ArrayNotEmpty(listeners)) {
+          const taskPluginListenerService = new TaskPluginListenerService(transactionDB)
+          const taskPluginListeners: TaskPluginListener[] = []
+          let taskPluginListener: TaskPluginListener
+          for (const listener of listeners) {
+            taskPluginListener = new TaskPluginListener()
+            taskPluginListener.pluginId = pluginId
+            taskPluginListener.listener = listener
+            taskPluginListeners.push(taskPluginListener)
+          }
+          await taskPluginListenerService.saveBatch(taskPluginListeners)
         }
-        await taskPluginListenerService.saveBatch(taskPluginListeners)
-      }
-      // 域名
-      const domainConfigs = pluginInstallDTO.domains
-      if (ArrayNotEmpty(domainConfigs)) {
-        const siteDomainService = new SiteDomainService(db)
-        const siteDomains: SiteDomain[] = domainConfigs.map((domain) => {
-          const tempSiteDomain = new SiteDomain()
-          tempSiteDomain.domain = domain.domain
-          tempSiteDomain.homepage = domain.homepage
-          return tempSiteDomain
-        })
-        await siteDomainService.saveBatch(siteDomains, true)
+        // 域名
+        const domainConfigs = pluginInstallDTO.domains
+        if (ArrayNotEmpty(domainConfigs)) {
+          const siteDomainService = new SiteDomainService(transactionDB)
+          const siteDomains: SiteDomain[] = domainConfigs.map((domain) => {
+            const tempSiteDomain = new SiteDomain()
+            tempSiteDomain.domain = domain.domain
+            tempSiteDomain.homepage = domain.homepage
+            return tempSiteDomain
+          })
+          await siteDomainService.saveBatch(siteDomains, true)
 
-        // 插件的域名关联到站点上
-        const bindableConfig = domainConfigs.filter((domain) => NotNullish(domain.site))
-        if (ArrayNotEmpty(bindableConfig)) {
-          const bindableDomain = bindableConfig.map((domain) => domain.domain)
-          const newDomains = await siteDomainService.listByDomains(bindableDomain)
-          if (ArrayNotEmpty(newDomains)) {
-            const notBindDomains = newDomains.filter((newDomain) => IsNullish(newDomain.siteId))
-            if (ArrayNotEmpty(notBindDomains)) {
-              const siteNames = bindableConfig.map((domain) => domain.site).filter(NotNullish)
-              const siteService = new SiteService(db)
-              const siteList = await siteService.listByNames(siteNames)
-              const domainConfigMap = lodash.keyBy(bindableConfig, 'domain')
-              const nameSiteMap = lodash.keyBy(siteList, 'siteName')
-              notBindDomains.forEach((siteDomain) => {
-                if (NotNullish(siteDomain.domain)) {
-                  const tempConfig = domainConfigMap[siteDomain.domain]
-                  if (NotNullish(tempConfig.site)) {
-                    const targetSite = nameSiteMap[tempConfig.site]
-                    siteDomain.siteId = targetSite?.id
+          // 插件的域名关联到站点上
+          const bindableConfig = domainConfigs.filter((domain) => NotNullish(domain.site))
+          if (ArrayNotEmpty(bindableConfig)) {
+            const bindableDomain = bindableConfig.map((domain) => domain.domain)
+            const newDomains = await siteDomainService.listByDomains(bindableDomain)
+            if (ArrayNotEmpty(newDomains)) {
+              const notBindDomains = newDomains.filter((newDomain) => IsNullish(newDomain.siteId))
+              if (ArrayNotEmpty(notBindDomains)) {
+                const siteNames = bindableConfig.map((domain) => domain.site).filter(NotNullish)
+                const siteService = new SiteService(transactionDB)
+                const siteList = await siteService.listByNames(siteNames)
+                const domainConfigMap = lodash.keyBy(bindableConfig, 'domain')
+                const nameSiteMap = lodash.keyBy(siteList, 'siteName')
+                notBindDomains.forEach((siteDomain) => {
+                  if (NotNullish(siteDomain.domain)) {
+                    const tempConfig = domainConfigMap[siteDomain.domain]
+                    if (NotNullish(tempConfig.site)) {
+                      const targetSite = nameSiteMap[tempConfig.site]
+                      siteDomain.siteId = targetSite?.id
+                    }
                   }
-                }
-              })
-              await siteDomainService.updateBatchById(notBindDomains)
+                })
+                await siteDomainService.updateBatchById(notBindDomains)
+              }
             }
           }
         }
-      }
-      LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
-      return new PluginInstallResultDTO(tempPlugin, domainConfigs, listeners)
-    }, '保存插件、监听器和域名')
+        LogUtil.info(
+          this.constructor.name,
+          `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`
+        )
+        return new PluginInstallResultDTO(tempPlugin, domainConfigs, listeners)
+      }, '保存插件、监听器和域名')
+      .finally(() => {
+        if (!this.injectedDB) {
+          this.db.release()
+        }
+      })
+      .then()
   }
 
   /**

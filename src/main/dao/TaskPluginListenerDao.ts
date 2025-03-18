@@ -5,8 +5,8 @@ import Plugin from '../model/entity/Plugin.ts'
 import DB from '../database/DB.ts'
 
 export default class TaskPluginListenerDao extends BaseDao<TaskPluginListenerQueryDTO, TaskPluginListener> {
-  constructor(db?: DB) {
-    super('task_plugin_listener', TaskPluginListener, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('task_plugin_listener', TaskPluginListener, db, injectedDB)
   }
 
   /**

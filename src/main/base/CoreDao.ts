@@ -21,13 +21,9 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(db?: DB) {
-    if (NotNullish(db)) {
-      this.db = db
-      this.injectedDB = true
-    } else {
-      this.injectedDB = false
-    }
+  protected constructor(db: DB, injectedDB: boolean) {
+    this.db = db
+    this.injectedDB = injectedDB
   }
 
   /**

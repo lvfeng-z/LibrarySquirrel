@@ -11,8 +11,8 @@ import { BuildTree } from '../util/TreeUtil.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
-  constructor(db?: DB) {
-    super('task', Task, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('task', Task, db, injectedDB)
   }
 
   /**

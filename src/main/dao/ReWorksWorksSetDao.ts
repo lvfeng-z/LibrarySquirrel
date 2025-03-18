@@ -4,7 +4,7 @@ import ReWorksWorksSet from '../model/entity/ReWorksWorksSet.ts'
 import DB from '../database/DB.ts'
 
 export default class ReWorksWorksSetDao extends BaseDao<ReWorksWorksSetQueryDTO, ReWorksWorksSet> {
-  constructor(db?: DB) {
-    super('re_works_works_set', ReWorksWorksSet, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('re_works_works_set', ReWorksWorksSet, db, injectedDB)
   }
 }

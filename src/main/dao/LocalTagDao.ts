@@ -11,8 +11,8 @@ import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
-  constructor(db?: DB) {
-    super('local_tag', LocalTag, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('local_tag', LocalTag, db, injectedDB)
   }
 
   public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {

@@ -7,8 +7,8 @@ import { NotNullish } from '../util/CommonUtil.ts'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
-  constructor(db?: DB) {
-    super('works_set', WorksSet, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('works_set', WorksSet, db, injectedDB)
   }
 
   /**

@@ -16,8 +16,8 @@ import Site from '../model/entity/Site.js'
  * 作品查询Dao
  */
 export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
-  constructor(db?: DB) {
-    super(db)
+  constructor(db: DB, injectedDB: boolean) {
+    super(db, injectedDB)
   }
 
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {

@@ -20,7 +20,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * 封装数据库链接实例
    * @private
    */
-  protected db: DB | undefined
+  protected db: DB
 
   /**
    * 是否为注入的链接实例
@@ -28,15 +28,15 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(dao: new (db?: DB) => Dao, db?: DB) {
-    this.dao = new dao(db)
+  protected constructor(dao: new (db: DB, injectedDB: boolean) => Dao, db?: DB) {
     if (IsNullish(db)) {
-      this.db = undefined
+      this.db = new DB(this.constructor.name)
       this.injectedDB = false
     } else {
       this.db = db
       this.injectedDB = true
     }
+    this.dao = new dao(this.db, this.injectedDB)
   }
 
   /**

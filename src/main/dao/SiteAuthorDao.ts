@@ -14,8 +14,8 @@ import { ToPlainParams } from '../base/BaseQueryDTO.js'
  * 站点作者Dao
  */
 export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAuthor> {
-  constructor(db?: DB) {
-    super('site_author', SiteAuthor, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('site_author', SiteAuthor, db, injectedDB)
   }
 
   /**

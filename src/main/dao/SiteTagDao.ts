@@ -14,8 +14,8 @@ import { ToPlainParams } from '../base/BaseQueryDTO.js'
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
-  constructor(db?: DB) {
-    super('site_tag', SiteTag, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('site_tag', SiteTag, db, injectedDB)
   }
 
   /**

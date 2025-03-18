@@ -14,8 +14,8 @@ import { OriginType } from '../constant/OriginType.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
-  constructor(db?: DB) {
-    super('works', Works, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('works', Works, db, injectedDB)
   }
 
   /**

@@ -5,8 +5,8 @@ import DB from '../database/DB.ts'
 import { IsNullish } from '../util/CommonUtil.js'
 
 export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
-  constructor(db?: DB) {
-    super('plugin', Plugin, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('plugin', Plugin, db, injectedDB)
   }
 
   public async checkInstalled(type: string, author: string, name: string, version: string) {

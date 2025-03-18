@@ -8,8 +8,8 @@ import { OriginType } from '../constant/OriginType.js'
  * 作品与作者关联Dao
  */
 export default class ReWorksAuthorDao extends BaseDao<ReWorksAuthorQueryDTO, ReWorksAuthor> {
-  constructor(db?: DB) {
-    super('re_works_author', ReWorksAuthor, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('re_works_author', ReWorksAuthor, db, injectedDB)
   }
 
   /**

@@ -8,8 +8,8 @@ import { OriginType } from '../constant/OriginType.js'
  * 作品与标签关联Dao
  */
 export class ReWorksTagDao extends BaseDao<ReWorksTagQueryDTO, ReWorksTag> {
-  constructor(db?: DB) {
-    super('re_works_tag', ReWorksTag, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('re_works_tag', ReWorksTag, db, injectedDB)
   }
 
   /**

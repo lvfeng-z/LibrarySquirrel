@@ -8,8 +8,8 @@ import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.ts'
  * 本地作者Dao
  */
 export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAuthor> {
-  constructor(db?: DB) {
-    super('local_author', LocalAuthor, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('local_author', LocalAuthor, db, injectedDB)
   }
 
   /**

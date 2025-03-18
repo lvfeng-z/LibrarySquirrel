@@ -29,8 +29,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected entityConstr: new (src?: Model) => Model
 
-  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model, db?: DB) {
-    super(db)
+  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model, db: DB, injectedDB: boolean) {
+    super(db, injectedDB)
     this.entityConstr = entityConstr
     this.tableName = tableName
   }

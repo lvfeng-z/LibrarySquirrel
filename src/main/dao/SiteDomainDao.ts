@@ -9,8 +9,8 @@ import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
 import { ArrayNotEmpty } from '../util/CommonUtil.js'
 
 export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomain> {
-  constructor(db?: DB) {
-    super('site_domain', SiteDomain, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('site_domain', SiteDomain, db, injectedDB)
   }
 
   /**

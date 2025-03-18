@@ -9,7 +9,7 @@ import WorksDTO from '../model/dto/WorksDTO.js'
 import WorksService from './WorksService.js'
 import Works from '../model/entity/Works.js'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.js'
-import { ArrayNotEmpty } from '../util/CommonUtil.js'
+import { ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import LocalTagService from './LocalTagService.js'
@@ -17,15 +17,39 @@ import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
 import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
+import DB from '../database/DB.js'
 
 /**
  * 作品查询服务类
  */
 export default class SearchService {
+  /**
+   * 封装数据库链接实例
+   * @private
+   */
+  protected db: DB
+
+  /**
+   * Dao
+   * @private
+   */
   private dao: SearchDao
 
-  constructor() {
-    this.dao = new SearchDao()
+  /**
+   * 是否为注入的链接实例
+   * @private
+   */
+  protected readonly injectedDB: boolean
+
+  constructor(db?: DB) {
+    if (IsNullish(db)) {
+      this.db = new DB(this.constructor.name)
+      this.injectedDB = false
+    } else {
+      this.db = db
+      this.injectedDB = true
+    }
+    this.dao = new SearchDao(this.db, this.injectedDB)
   }
 
   /**

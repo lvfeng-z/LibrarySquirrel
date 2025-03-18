@@ -12,8 +12,8 @@ import { IsNullish } from '../util/CommonUtil.js'
  * 自动解释路径含义Dao
  */
 export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO, AutoExplainPath> {
-  constructor(db?: DB) {
-    super('auto_explain_path', AutoExplainPath, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('auto_explain_path', AutoExplainPath, db, injectedDB)
   }
 
   /**

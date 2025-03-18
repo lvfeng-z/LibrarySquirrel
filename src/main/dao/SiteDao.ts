@@ -8,8 +8,8 @@ import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
-  constructor(db?: DB) {
-    super('site', Site, db)
+  constructor(db: DB, injectedDB: boolean) {
+    super('site', Site, db, injectedDB)
   }
 
   /**
