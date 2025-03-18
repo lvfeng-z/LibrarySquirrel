@@ -65,6 +65,14 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   }
 
   /**
+   * 删除
+   * @param query
+   */
+  public async delete(query: Query): Promise<number> {
+    return this.dao.delete(query)
+  }
+
+  /**
    * 批量删除
    * @param ids id列表
    */
@@ -105,6 +113,14 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   public async getById(id: number | string): Promise<Model | undefined> {
     return this.dao.getById(id)
+  }
+
+  /**
+   * 查询
+   * @param query
+   */
+  public async get(query: Query): Promise<Model | undefined> {
+    return this.dao.get(query)
   }
 
   /**

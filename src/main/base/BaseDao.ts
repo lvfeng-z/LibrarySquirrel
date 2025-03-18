@@ -50,10 +50,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const keys = Object.keys(plainObject).map((key) => StringUtil.camelToSnakeCase(key))
     const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
-    const sql = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
+    const statement = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
     const db = this.acquire()
     return db
-      .run(sql, plainObject)
+      .run(statement, plainObject)
       .then((runResult) => runResult.lastInsertRowid as number)
       .finally(() => {
         if (!this.injectedDB) {
@@ -133,10 +133,52 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param id
    */
   public async deleteById(id: PrimaryKey): Promise<number> {
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" = ${id}`
+    const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" = ${id}`
     const db = this.acquire()
     return db
-      .run(sql)
+      .run(statement)
+      .then((runResult) => runResult.changes)
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 删除
+   * @param query
+   */
+  public async delete(query: Query): Promise<number> {
+    let statement = `DELETE FROM "${this.tableName}"`
+    // 生成where字句
+    let modifiedQuery = lodash.cloneDeep(query)
+    if (modifiedQuery !== undefined) {
+      const whereClauseAndQuery = this.getWhereClause(modifiedQuery)
+      const whereClause = whereClauseAndQuery.whereClause
+      modifiedQuery = whereClauseAndQuery.query
+
+      // 拼接查询语句
+      if (whereClause !== undefined) {
+        statement = statement.concat(' ', whereClause)
+      }
+
+      // 拼接排序字句
+      if (modifiedQuery !== undefined) {
+        statement = this.sorter(statement, modifiedQuery.sort)
+      }
+    }
+
+    // 查询
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedQuery)) {
+      plainParams = ToPlainParams(modifiedQuery)
+    }
+    // 查询
+    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
+    const db = this.acquire()
+    return db
+      .run(statement, nonUndefinedValue)
       .then((runResult) => runResult.changes)
       .finally(() => {
         if (!this.injectedDB) {
@@ -153,10 +195,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     AssertArrayNotEmpty(ids, this.constructor.name, '批量删除失败，id列表不能为空')
 
     const idsStr = ids.join(',')
-    const sql = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
+    const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
     const db = this.acquire()
     return db
-      .run(sql)
+      .run(statement)
       .then((runResult) => runResult.changes)
       .finally(() => {
         if (!this.injectedDB) {
@@ -338,6 +380,53 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         } else {
           return undefined
         }
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 查询列表
+   * @param query
+   */
+  public async get(query?: Query): Promise<Model | undefined> {
+    let statement = `SELECT * FROM "${this.tableName}"`
+    // 生成where字句
+    let modifiedQuery = lodash.cloneDeep(query)
+    if (modifiedQuery !== undefined) {
+      const whereClauseAndQuery = this.getWhereClause(modifiedQuery)
+      const whereClause = whereClauseAndQuery.whereClause
+      modifiedQuery = whereClauseAndQuery.query
+
+      // 拼接查询语句
+      if (whereClause !== undefined) {
+        statement = statement.concat(' ', whereClause)
+      }
+
+      // 拼接排序字句
+      if (modifiedQuery !== undefined) {
+        statement = this.sorter(statement, modifiedQuery.sort)
+      }
+    }
+
+    // 查询
+    let plainParams: Record<string, unknown> | undefined = undefined
+    if (NotNullish(modifiedQuery)) {
+      plainParams = ToPlainParams(modifiedQuery)
+    }
+    // 查询
+    const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
+    const db = this.acquire()
+    return db
+      .get<unknown[], Record<string, unknown>>(statement, nonUndefinedValue)
+      .then((row) => {
+        if (IsNullish(row)) {
+          return undefined
+        }
+        this.toResultTypeData<Model>(row)
       })
       .finally(() => {
         if (!this.injectedDB) {
