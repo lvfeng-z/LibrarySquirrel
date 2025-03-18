@@ -1,20 +1,13 @@
-import { IsNullish } from '../../util/CommonUtil.ts'
 import WorksDTO from './WorksDTO.js'
-import lodash from 'lodash'
 
 /**
- * 保存作品信息和资源的DTO
+ * 用于保存作品信息的DTO
  */
 export default class WorksSaveDTO extends WorksDTO {
-  /**
-   * 保存路径
-   */
-  fullSavePath: string | undefined | null
+  taskId: number
 
-  constructor(worksSaveDTO?: WorksDTO) {
-    super(worksSaveDTO)
-    if (IsNullish(worksSaveDTO)) {
-      lodash.assign(this, lodash.pick(worksSaveDTO, ['fullSavePath']))
-    }
+  constructor(taskId: number, worksDTO?: WorksDTO) {
+    super(worksDTO)
+    this.taskId = taskId
   }
 }

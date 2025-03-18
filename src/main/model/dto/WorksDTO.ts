@@ -5,13 +5,23 @@ import LocalAuthorDTO from './LocalAuthorDTO.ts'
 import SiteAuthorDTO from './SiteAuthorDTO.ts'
 import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
-import { Readable } from 'node:stream'
+import Resource from '../entity/Resource.js'
 import lodash from 'lodash'
 
 /**
  * 作品
  */
 export default class WorksDTO extends Works {
+  /**
+   * 资源
+   */
+  resource: Resource | undefined | null
+
+  /**
+   * 不活跃的资源
+   */
+  inactiveResource: Resource[] | undefined | null
+
   /**
    * 站点
    */
@@ -42,21 +52,13 @@ export default class WorksDTO extends Works {
    */
   worksSets: WorksSet[] | undefined | null
 
-  /**
-   * 作品资源的数据流
-   */
-  resourceStream: Readable | undefined | null
-
-  /**
-   * 作品资源的文件大小，单位：字节（Bytes）
-   */
-  resourceSize: number | undefined | null
-
   constructor(works?: Works) {
     super(works)
     lodash.assign(
       this,
       lodash.pick(works, [
+        'resource',
+        'inactiveResource',
         'site',
         'localAuthors',
         'localTags',

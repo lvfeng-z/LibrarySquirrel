@@ -5,16 +5,18 @@ import LocalAuthorDTO from './LocalAuthorDTO.ts'
 import SiteAuthorPluginDTO from './SiteAuthorPluginDTO.js'
 import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
-import { Readable } from 'node:stream'
+import { NotNullish } from '../../util/CommonUtil.js'
+import ResourcePluginDTO from './ResourcePluginDTO.js'
 
 /**
  * 作品
  */
-export default class WorksPluginDTO extends Works {
+export default class PluginWorksResponseDTO {
   /**
-   * 主键
+   * 作品信息
    */
-  id: number | undefined | null
+  works: Works
+
   /**
    * 站点
    */
@@ -46,52 +48,28 @@ export default class WorksPluginDTO extends Works {
   worksSets: WorksSet[] | undefined | null
 
   /**
-   * 作品资源的数据流
-   */
-  resourceStream: Readable | undefined | null
-
-  /**
-   * 作品资源的文件大小，单位：字节（Bytes）
-   */
-  resourceSize: number
-
-  /**
-   * 资源是否支持续传
-   */
-  continuable: boolean | undefined | null
-
-  /**
    * 是否更新作品数据
    */
-  doUpdate: boolean
+  doUpdate: boolean | undefined | null
 
-  constructor(works?: WorksPluginDTO) {
-    if (works === undefined) {
-      super()
-      this.id = undefined
-      this.site = undefined
-      this.localAuthors = undefined
-      this.siteAuthors = undefined
-      this.localTags = undefined
-      this.siteTags = undefined
-      this.worksSets = undefined
-      this.resourceStream = undefined
-      this.resourceSize = 0
-      this.continuable = undefined
-      this.doUpdate = false
-    } else {
-      super(works)
-      this.id = works.id
+  /**
+   * 资源
+   */
+  resource: ResourcePluginDTO | undefined | null
+
+  constructor(works?: PluginWorksResponseDTO) {
+    if (NotNullish(works)) {
+      this.works = works.works
       this.site = works.site
       this.localAuthors = works.localAuthors
       this.localTags = works.localTags
       this.siteAuthors = works.siteAuthors
       this.siteTags = works.siteTags
       this.worksSets = works.worksSets
-      this.resourceStream = works.resourceStream
-      this.resourceSize = works.resourceSize
-      this.continuable = works.continuable
       this.doUpdate = works.doUpdate
+      this.resource = works.resource
+    } else {
+      this.works = new Works()
     }
   }
 }

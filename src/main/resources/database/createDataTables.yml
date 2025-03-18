@@ -257,6 +257,7 @@ tables:
         file_path          text    not null,
         file_name          text    not null,
         filename_extension text    not null,
+        suggest_name       text,
         workdir            text,
         resource_complete  integer not null,
         import_method      integer not null,

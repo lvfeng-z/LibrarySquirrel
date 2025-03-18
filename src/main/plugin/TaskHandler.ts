@@ -2,7 +2,7 @@ import Task from '../model/entity/Task.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
-import WorksPluginDTO from '../model/dto/WorksPluginDTO.ts'
+import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
 import PluginService from '../service/PluginService.js'
 import { BasePlugin } from '../base/BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
@@ -23,19 +23,19 @@ export interface TaskHandler extends BasePlugin {
    * 生成作品信息
    * @param task 需开始的任务
    */
-  createWorksInfo(task: Task): Promise<WorksPluginDTO>
+  createWorksInfo(task: Task): Promise<PluginWorksResponseDTO>
 
   /**
    * 获取用于开始任务的读取流
    * @param task 需开始的任务
    */
-  start(task: Task): Promise<WorksPluginDTO>
+  start(task: Task): Promise<PluginWorksResponseDTO>
 
   /**
    * 获取用于重试下载任务的读取流
    * @param task 需要重试的任务
    */
-  retry(task: Task): Promise<WorksPluginDTO>
+  retry(task: Task): Promise<PluginWorksResponseDTO>
 
   /**
    * 暂停下载任务
@@ -49,7 +49,7 @@ export interface TaskHandler extends BasePlugin {
    * @description 获取用于恢复已停止的下载任务的读取流，这个流必须是暂停状态，continuable表示提供的流是否可接续在已下载部分的末尾
    * @param task 需要暂停的任务
    */
-  resume(task: TaskPluginDTO): Promise<WorksPluginDTO>
+  resume(task: TaskPluginDTO): Promise<PluginWorksResponseDTO>
 }
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {

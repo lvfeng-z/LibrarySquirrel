@@ -1,30 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品
  */
 export default class Works extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-  /**
-   * 文件存储路径（文件相对于工作目录的相对路径）
-   */
-  filePath: string | undefined | null
-  /**
-   * 文件名称
-   */
-  fileName: string | undefined | null
-  /**
-   * 扩展名
-   */
-  filenameExtension: string | undefined | null
-  /**
-   * 文件所在工作目录（冗余）
-   */
-  workdir: string | undefined | null
   /**
    * 作品来源站点id
    */
@@ -58,54 +38,13 @@ export default class Works extends BaseEntity {
    */
   nickName: string | undefined | null
   /**
-   * 建议名称
-   */
-  suggestedName: string | undefined | null
-  /**
-   * 导入方式（0：本地导入，1：站点下载）
-   */
-  importMethod: number | undefined | null
-  /**
-   * 任务id
-   */
-  taskId: number | undefined | null
-  /**
    * 最后一次查看的时间
    */
   lastView: number | undefined | null
-  /**
-   * 资源保存完成
-   */
-  resourceComplete: boolean | undefined | null
 
   constructor(works?: Works) {
-    if (IsNullish(works)) {
-      super()
-      this.id = undefined
-      this.filePath = undefined
-      this.fileName = undefined
-      this.filenameExtension = undefined
-      this.workdir = undefined
-      this.siteId = undefined
-      this.siteWorksId = undefined
-      this.siteWorksName = undefined
-      this.siteAuthorId = undefined
-      this.siteWorkDescription = undefined
-      this.siteUploadTime = undefined
-      this.siteUpdateTime = undefined
-      this.nickName = undefined
-      this.suggestedName = undefined
-      this.importMethod = undefined
-      this.taskId = undefined
-      this.lastView = undefined
-      this.resourceComplete = undefined
-    } else {
-      super(works)
-      this.id = works.id
-      this.filePath = works.filePath
-      this.fileName = works.fileName
-      this.filenameExtension = works.filenameExtension
-      this.workdir = works.workdir
+    super(works)
+    if (NotNullish(works)) {
       this.siteId = works.siteId
       this.siteWorksId = works.siteWorksId
       this.siteWorksName = works.siteWorksName
@@ -114,11 +53,7 @@ export default class Works extends BaseEntity {
       this.siteUploadTime = works.siteUploadTime
       this.siteUpdateTime = works.siteUpdateTime
       this.nickName = works.nickName
-      this.suggestedName = works.suggestedName
-      this.importMethod = works.importMethod
-      this.taskId = works.taskId
       this.lastView = works.lastView
-      this.resourceComplete = works.resourceComplete
     }
   }
 }
