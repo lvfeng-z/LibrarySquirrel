@@ -343,10 +343,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       taskWriter.bytesSum = 0
     }
     // 生成用于保存资源的信息
-    // TODO 改成根据已经保存的作品信息创建resourceSaveDTO
-    const resourceSaveDTO = await ResourceService.createSaveInfo(resourceDTO)
+    oldWorks.resource = new Resource()
+    oldWorks.resource.worksId = worksId
+    oldWorks.resource.taskId = taskId
+    oldWorks.resource.filenameExtension = resourceDTO.resource.filenameExtension
+    oldWorks.resource.suggestedName = resourceDTO.resource.suggestedName
+    oldWorks.resource.importMethod = resourceDTO.resource.importMethod
+    const resourceSaveDTO = await ResourceService.createSaveInfo(oldWorks)
     resourceSaveDTO.worksId = worksId
     resourceSaveDTO.taskId = taskId
+    resourceSaveDTO.resourceStream = resourceDTO.resource.resourceStream
     const resService = new ResourceService()
     // 更新下载中的文件路径
     task.pendingDownloadPath = resourceSaveDTO.fullSavePath

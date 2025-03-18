@@ -5,21 +5,20 @@ import ResourceDao from '../dao/ResourceDao.js'
 import DB from '../database/DB.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { OnOff } from '../constant/OnOff.js'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
-import SiteAuthorService from './SiteAuthorService.js'
 import { CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
 import path from 'path'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
-import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.js'
 import { AuthorRole } from '../constant/AuthorRole.js'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
 import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
+import WorksDTO from '../model/dto/WorksDTO.js'
 
 /**
  * 资源服务
@@ -31,9 +30,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 创建用于保存资源的资源信息
-   * @param worksPluginDTO
+   * @param worksDTO
    */
-  public static async createSaveInfo(worksPluginDTO: PluginWorksResponseDTO): Promise<ResourceSaveDTO> {
+  public static async createSaveInfo(worksDTO: WorksDTO): Promise<ResourceSaveDTO> {
     const result = new ResourceSaveDTO()
     // 读取设置中的工作目录信息
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
@@ -42,20 +41,17 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
-    const resource = worksPluginDTO.resource
-    AssertNotNullish(resource, `保存资源失败，资源信息不能为空taskId: ${result.taskId}`)
+    const resource = worksDTO.resource
+    AssertNotNullish(resource, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
 
     // 作者信息
-    const localAuthors: LocalAuthorDTO[] = ArrayIsEmpty(worksPluginDTO.localAuthors) ? [] : worksPluginDTO.localAuthors
-    let siteAuthors: SiteAuthorDTO[] = []
-    if (NotNullish(worksPluginDTO.siteAuthors)) {
-      siteAuthors = await SiteAuthorService.createSaveInfos(worksPluginDTO.siteAuthors)
-    }
+    const localAuthors: LocalAuthorDTO[] = ArrayIsEmpty(worksDTO.localAuthors) ? [] : worksDTO.localAuthors
+    const siteAuthors: SiteAuthorDTO[] = ArrayIsEmpty(worksDTO.siteAuthors) ? [] : worksDTO.siteAuthors
     const tempName = ResourceService.getAuthorName(siteAuthors, localAuthors)
     const authorName = tempName === undefined ? 'unknownAuthor' : tempName
     // 作品信息
-    const siteWorksName = worksPluginDTO.works?.siteWorksName === undefined ? 'unknownWorksName' : worksPluginDTO.works.siteWorksName
-    result.filenameExtension = worksPluginDTO.resource?.filenameExtension
+    const siteWorksName = worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
+    result.filenameExtension = worksDTO.resource?.filenameExtension
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
@@ -68,7 +64,6 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const relativeSavePath = path.join('/includeDir', finalAuthorName)
 
     // 资源
-    result.resourceStream = resource.resourceStream
     result.fileName = finalFileName
     result.fullSavePath = path.join(workdir, relativeSavePath, finalFileName)
     result.filePath = path.join(relativeSavePath, fileName)
