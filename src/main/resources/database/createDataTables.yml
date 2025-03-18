@@ -253,6 +253,7 @@ tables:
         constraint resource_task_id_fk
         references task
         on delete set null,
+        state              integer not null,
         file_path          text    not null,
         file_name          text    not null,
         filename_extension text    not null,

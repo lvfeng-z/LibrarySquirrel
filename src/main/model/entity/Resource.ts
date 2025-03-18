@@ -12,6 +12,11 @@ export default class Resource extends BaseEntity {
   taskId: number | undefined | null
 
   /**
+   * 状态（0：停用，1：启用）
+   */
+  state: number | undefined | null
+
+  /**
    * 文件路径
    */
   filePath: string | undefined | null
