@@ -321,7 +321,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 按照第一个对象的属性设置insert子句的value部分
     const columns = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     const insertClause = `INSERT INTO "${this.tableName}" (${columns})`
-    const excludedClause = columns.filter((column) => BaseEntity.PK !== column).map((column) => `${column} = EXCLUDED.${column}`)
+    const excludedClause = columns
+      .filter((column) => BaseEntity.PK !== column && BaseEntity.CREATE_TIME !== column)
+      .map((column) => `${column} = EXCLUDED.${column}`)
     const upsertClause = `ON CONFLICT(id) DO UPDATE SET ${excludedClause.join(',')}`
     const valuesClauses: string[] = []
 

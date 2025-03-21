@@ -21,6 +21,8 @@ export default class BaseEntity {
    * 主键名称
    */
   public static readonly PK = 'id'
+  public static readonly CREATE_TIME = 'create_time'
+  public static readonly UPDATE_TIME = 'update_time'
 
   constructor(baseEntity?: BaseEntity) {
     if (baseEntity === undefined) {
