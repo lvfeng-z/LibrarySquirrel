@@ -246,7 +246,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param task
    * @param pluginLoader
    */
-  public async saveWorksInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<boolean> {
+  public async saveWorksInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<number> {
     AssertNotNullish(task.id, this.constructor.name, `保存作品信息失败，任务id意外为空`)
     const taskId = task.id
     // 加载插件
@@ -264,7 +264,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       worksPluginDTO = await taskHandler.createWorksInfo(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件获取作品信息时失败`, error)
-      return false
+      throw error
     }
     worksPluginDTO.works.siteId = task.siteId
 
@@ -285,9 +285,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const sourceTask = new Task()
       sourceTask.id = taskId
       sourceTask.localWorksId = worksId
-      // 作为数据源的task也要赋值，供后续下载时取值，免去从数据库查询
-      task.localWorksId = taskId
-      return this.updateById(sourceTask).then((runResult) => runResult > 0)
+      return this.updateById(sourceTask).then(() => worksId)
     })
   }
 

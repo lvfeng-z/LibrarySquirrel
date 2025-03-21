@@ -12,7 +12,6 @@ import DB from '../database/DB.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { AuthorRole } from '../constant/AuthorRole.ts'
-import TaskService from './TaskService.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
@@ -29,6 +28,7 @@ import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
 import SiteTagDTO from '../model/dto/SiteTagDTO.js'
 import ResourceService from './ResourceService.js'
 import { OnOff } from '../constant/OnOff.js'
+import ReWorksWorksSetService from './ReWorksWorksSetService.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -57,70 +57,74 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   /**
-   * 保存作品信息
+   * 保存作品信息并关联作品集、作者、标签
    * @param worksDTO
    */
   public async saveWorksInfo(worksDTO: WorksSaveDTO): Promise<number> {
+    await this.saveSurroundingData(worksDTO.worksSets, worksDTO.siteAuthors, worksDTO.siteTags)
+
+    if (ArrayNotEmpty(worksDTO.worksSets)) {
+      const worksSetService = new WorksSetService()
+      const tempParam = worksDTO.worksSets
+        .map((worksSet) => {
+          if (IsNullish(worksSet.siteWorksSetId) || IsNullish(worksSet.siteId)) {
+            return
+          }
+          return {
+            siteWorksSetId: worksSet.siteWorksSetId,
+            siteId: worksSet.siteId
+          }
+        })
+        .filter(NotNullish)
+      worksDTO.worksSets = await worksSetService.listBySiteWorksSet(tempParam)
+    }
+    if (ArrayNotEmpty(worksDTO.siteAuthors)) {
+      const siteAuthorService = new SiteAuthorService()
+      const tempParam = worksDTO.siteAuthors
+        .map((siteAuthor) => {
+          if (IsNullish(siteAuthor.siteAuthorId) || IsNullish(siteAuthor.siteId)) {
+            return
+          }
+          return {
+            siteAuthorId: siteAuthor.siteAuthorId,
+            siteId: siteAuthor.siteId
+          }
+        })
+        .filter(NotNullish)
+      worksDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map((siteAuthor) => new SiteAuthorDTO(siteAuthor))
+    }
+    if (ArrayNotEmpty(worksDTO.siteTags)) {
+      const siteTagService = new SiteTagService()
+      const tempParam = worksDTO.siteTags
+        .map((siteTag) => {
+          if (IsNullish(siteTag.siteTagId) || IsNullish(siteTag.siteId)) {
+            return
+          }
+          return {
+            siteTagId: siteTag.siteTagId,
+            siteId: siteTag.siteId
+          }
+        })
+        .filter(NotNullish)
+      worksDTO.siteTags = (await siteTagService.listBySiteTag(tempParam)).map((siteTag) => new SiteTagDTO(siteTag))
+    }
+    return this.saveAndLink(worksDTO)
+  }
+
+  /**
+   * 保存作品信息并关联作品集、作者、标签
+   * @param worksDTO
+   */
+  public async saveAndLink(worksDTO: WorksSaveDTO): Promise<number> {
     const worksSets = worksDTO.worksSets
-    let siteAuthors = worksDTO.siteAuthors
-    let siteTags = worksDTO.siteTags
+    const siteAuthors = worksDTO.siteAuthors
+    const siteTags = worksDTO.siteTags
     const localAuthors = worksDTO.localAuthors
     const localTags = worksDTO.localTags
 
     // 开启事务
     return this.db
       .transaction(async (transactionDB): Promise<number> => {
-        // 如果worksSets不为空，则此作品是作品集中的作品
-        const worksSetIds: number[] = []
-        if (ArrayNotEmpty(worksSets)) {
-          // 遍历处理作品集数组
-          // TODO 作品集逻辑有问题
-          for (const worksSet of worksSets) {
-            const taskService = new TaskService(transactionDB)
-            const includeTask = await taskService.getById(worksDTO.taskId)
-            AssertNotNullish(includeTask, this.constructor.name, '修改作品集失败，任务id不能为空')
-            const rootTaskId = includeTask.pid
-            const siteWorksSetId = worksSet.siteWorksSetId
-
-            if (NotNullish(siteWorksSetId) && NotNullish(rootTaskId)) {
-              const worksSetService = new WorksSetService(transactionDB)
-              const oldWorksSet = await worksSetService.getBySiteWorksSetIdAndTaskId(siteWorksSetId, rootTaskId)
-              if (IsNullish(oldWorksSet)) {
-                const tempWorksSet = new WorksSet(worksSet)
-                worksSetIds.push(await worksSetService.save(tempWorksSet))
-              } else if (NotNullish(oldWorksSet?.id)) {
-                worksSetIds.push(oldWorksSet.id)
-              }
-            } else {
-              LogUtil.warn(this.constructor.name, `保存作品失败，所属作品集的信息不可用，siteWorksName: ${worksDTO.siteWorksName}`)
-            }
-          }
-        }
-        // 保存站点作者
-        if (ArrayNotEmpty(siteAuthors)) {
-          const siteAuthorService = new SiteAuthorService(transactionDB)
-          await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
-          // 查询站点作者，获取其id，供后面绑定使用
-          const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId).filter(NotNullish)
-          const siteId = siteAuthors[0].siteId as number
-          const tempSiteAuthors = await siteAuthorService.listBySiteAuthor(siteAuthorIds, siteId)
-          if (ArrayNotEmpty(tempSiteAuthors)) {
-            siteAuthors = tempSiteAuthors.map((tempSiteAuthor) => new SiteAuthorDTO(tempSiteAuthor))
-          }
-        }
-        // 保存站点标签
-        if (ArrayNotEmpty(siteTags)) {
-          const siteTagService = new SiteTagService(transactionDB)
-          await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
-          // 查询站点标签，获取其id，供后面绑定使用
-          const siteTagIds = siteTags.map((siteTag) => siteTag.siteTagId).filter(NotNullish)
-          const siteId = siteTags[0].siteId as number
-          const tempSiteTags = await siteTagService.listBySiteTag(siteTagIds, siteId)
-          if (ArrayNotEmpty(tempSiteTags)) {
-            siteTags = tempSiteTags.map((tempSiteAuthor) => new SiteTagDTO(tempSiteAuthor))
-          }
-        }
-
         // 保存作品
         const works = new Works(worksDTO)
         const worksService = new WorksService(transactionDB)
@@ -128,11 +132,13 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
 
         // 关联作品和作品集
         if (ArrayNotEmpty(worksSets)) {
-          const worksSetService = new WorksSetService(transactionDB)
+          const reWorksWorksSetService = new ReWorksWorksSetService(transactionDB)
+          const worksSetIds = worksSets.map((worksSet) => worksSet.id).filter(NotNullish)
           for (const workSetId of worksSetIds) {
-            await worksSetService.link([worksDTO], workSetId)
+            await reWorksWorksSetService.link([worksDTO], workSetId)
           }
         }
+        // 作者
         if (ArrayNotEmpty(localAuthors) || ArrayNotEmpty(siteAuthors)) {
           const reWorksAuthorService = new ReWorksAuthorService(transactionDB)
           // 关联作品和本地作者
@@ -163,6 +169,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
             await reWorksAuthorService.link(OriginType.SITE, siteAuthorIds, worksDTO.id)
           }
         }
+        // 标签
         if (ArrayNotEmpty(localTags) || ArrayNotEmpty(siteTags)) {
           const reWorksTagService = new ReWorksTagService(transactionDB)
           // 关联作品和本地标签
@@ -189,6 +196,34 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         }
       })
       .then()
+  }
+
+  /**
+   * 保存作者、标签、作品集
+   * @param worksSets
+   * @param siteAuthors
+   * @param siteTags
+   */
+  public async saveSurroundingData(
+    worksSets: WorksSet[] | undefined | null,
+    siteAuthors: SiteAuthorDTO[] | undefined | null,
+    siteTags: SiteTagDTO[] | undefined | null
+  ): Promise<void> {
+    // 保存作品集
+    if (ArrayNotEmpty(worksSets)) {
+      const worksSetService = new WorksSetService()
+      await worksSetService.saveOrUpdateBatchBySiteWorksSetId(worksSets)
+    }
+    // 保存站点作者
+    if (ArrayNotEmpty(siteAuthors)) {
+      const siteAuthorService = new SiteAuthorService()
+      await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
+    }
+    // 保存站点标签
+    if (ArrayNotEmpty(siteTags)) {
+      const siteTagService = new SiteTagService()
+      await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
+    }
   }
 
   /**

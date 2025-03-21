@@ -3,7 +3,7 @@ import { AuthorRole } from '../../constant/AuthorRole.ts'
 
 export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   /**
-   * 类型(true: 本地作者，false: 站点作者)
+   * 类型(0: 本地作者，1: 站点作者)
    */
   type: number | undefined | null
 

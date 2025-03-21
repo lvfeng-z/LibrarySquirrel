@@ -167,10 +167,9 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
 
   /**
    * 根据标签在站点的id及站点id查询
-   * @param siteTagIds 标签在站点的id
-   * @param siteId 站点id
+   * @param siteTag 站点标签
    */
-  public async listBySiteTag(siteTagIds: string[], siteId: number): Promise<SiteTag[]> {
-    return this.dao.listBySiteTag(siteTagIds, siteId)
+  public async listBySiteTag(siteTag: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
+    return this.dao.listBySiteTag(siteTag)
   }
 }

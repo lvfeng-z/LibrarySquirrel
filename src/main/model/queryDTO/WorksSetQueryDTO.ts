@@ -13,7 +13,7 @@ export default class WorksSetQueryDTO extends BaseQueryDTO {
   /**
    * 集合在站点的id
    */
-  siteWorksSetId: string | undefined | null
+  siteWorksSetId: string | string[] | undefined | null
   /**
    * 集合在站点的名称
    */

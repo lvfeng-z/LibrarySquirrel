@@ -50,4 +50,22 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
         }
       })
   }
+
+  public async listBySiteWorksSet(siteWorksSets: { siteWorksSetId: string; siteId: number }[]): Promise<WorksSet[]> {
+    const whereClause = siteWorksSets
+      .map((siteWorksSet) => `(site_works_set_id = ${siteWorksSet.siteWorksSetId} AND site_id = ${siteWorksSet.siteId})`)
+      .join(' OR ')
+    const statement = `SELECT *
+                       FROM works_set
+                       WHERE ${whereClause}`
+    const db = this.acquire()
+    try {
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
+      return this.toResultTypeDataList<WorksSet>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
 }

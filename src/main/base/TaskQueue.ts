@@ -158,10 +158,6 @@ export class TaskQueue {
       this.taskStatusChangeStream.on('data', (runInstances: TaskRunInstance[]) => {
         runInstances.forEach((runInst) => {
           runInst.saveHadStarted = false
-          // TODO 需要处理重复执行同一任务的情况
-          if (runInst.status === TaskStatusEnum.FINISHED) {
-            runInst.infoSaved = false
-          }
         })
       })
       const taskStatusChangeStreamDestroyed = new Promise<void>((resolve) =>
@@ -448,19 +444,20 @@ export class TaskQueue {
       } else {
         // TODO 判断是否已经保存过这个作品，如果已经保存过则提示用户
         // 判断这个作品是否已经保存过
+        let infoSaved = false
         if (NotNullish(task.siteId) && NotNullish(task.siteWorksId)) {
           const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksId(task.siteId, task.siteWorksId)
-          if (ArrayNotEmpty(existsWorksList)) {
-            LogUtil.info('TaskQueue', existsWorksList)
-          }
+          infoSaved = ArrayNotEmpty(existsWorksList)
         }
         taskRunInstance = new TaskRunInstance(
           task.id,
           TaskStatusEnum.WAITING,
           new TaskWriter(),
+          task,
           this.taskService,
           this.pluginLoader,
-          task.pid
+          task.pid,
+          infoSaved
         )
         task.status = TaskStatusEnum.WAITING
         taskRunInstance.inStream = true
@@ -847,6 +844,11 @@ class TaskRunInstance extends TaskStatus {
    */
   private taskService: TaskService
   /**
+   * 作品信息
+   * @private
+   */
+  private taskInfo: Task
+  /**
    * 插件加载器
    * @private
    */
@@ -856,6 +858,7 @@ class TaskRunInstance extends TaskStatus {
     taskId: number,
     status: TaskStatusEnum,
     taskWriter: TaskWriter,
+    taskInfo: Task,
     taskService: TaskService,
     pluginLoader: PluginLoader<TaskHandler>,
     parentId?: number | null | undefined,
@@ -865,6 +868,7 @@ class TaskRunInstance extends TaskStatus {
   ) {
     super(taskId, status, false)
     this.taskWriter = taskWriter
+    this.taskInfo = taskInfo
     this.taskService = taskService
     this.pluginLoader = pluginLoader
     this.parentId = IsNullish(parentId) ? 0 : parentId
@@ -878,10 +882,10 @@ class TaskRunInstance extends TaskStatus {
     super.changeStatus(status, false)
   }
 
-  public async saveInfo() {
+  public async saveInfo(): Promise<number> {
     const task = await this.taskService.getById(this.taskId)
     AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
-    return await this.taskService.saveWorksInfo(task, this.pluginLoader)
+    return this.taskService.saveWorksInfo(task, this.pluginLoader).then((worksId) => (this.taskInfo.localWorksId = worksId))
   }
 
   public preStart() {
@@ -930,12 +934,11 @@ class TaskRunInstance extends TaskStatus {
   public async process(): Promise<TaskStatusEnum> {
     if (this.status === TaskStatusEnum.WAITING) {
       this.changeStatus(TaskStatusEnum.PROCESSING)
-      const task = await this.taskService.getById(this.taskId)
 
-      AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
+      AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
       const result = this.saveHadStarted
-        ? this.taskService.resumeTask(task, this.pluginLoader, this.taskWriter)
-        : this.taskService.startTask(task, this.pluginLoader, this.taskWriter)
+        ? this.taskService.resumeTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+        : this.taskService.startTask(this.taskInfo, this.pluginLoader, this.taskWriter)
       this.saveHadStarted = true
       return result.then((saveResult) => {
         this.changeStatus(saveResult)

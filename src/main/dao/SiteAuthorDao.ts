@@ -185,18 +185,22 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
   /**
    * 根据作者在站点的id及站点id查询
-   * @param siteAuthorIds 作者在站点的id
-   * @param siteId 站点id
+   * @param siteAuthors 站点作者
    */
-  public async listBySiteAuthor(siteAuthorIds: string[], siteId: number): Promise<SiteAuthor[]> {
-    const siteAuthorIdsStr = siteAuthorIds.join(',')
-    const statement = `SELECT * FROM site_author WHERE site_author_id IN (@siteAuthorIds) AND site_id = @siteId`
+  public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
+    const whereClause = siteAuthors
+      .map((siteAuthor) => `(site_author_id = ${siteAuthor.siteAuthorId} AND site_id = ${siteAuthor.siteId})`)
+      .join(' OR ')
+    const statement = `SELECT * FROM site_author WHERE ${whereClause}`
     const db = this.acquire()
-    return db.all<unknown[], SiteAuthor>(statement, { siteAuthorIds: siteAuthorIdsStr, siteId: siteId }).finally(() => {
+    try {
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
+      return this.toResultTypeDataList<SiteAuthor>(rows)
+    } finally {
       if (!this.injectedDB) {
         db.release()
       }
-    })
+    }
   }
 
   /**

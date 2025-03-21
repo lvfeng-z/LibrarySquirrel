@@ -223,18 +223,22 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   }
 
   /**
-   * 根据标签在站点的id及站点id查询
-   * @param siteTagIds 作者在站点的id
-   * @param siteId 站点id
+   * 根据站点标签查询
+   * @param siteTag 站点
    */
-  public async listBySiteTag(siteTagIds: string[], siteId: number): Promise<SiteTag[]> {
-    const siteTagIdsStr = siteTagIds.join(',')
-    const statement = `SELECT * FROM site_tag WHERE site_tag_id IN (@siteTagIds) AND site_id = @siteId`
+  public async listBySiteTag(siteTag: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
+    const whereClause = siteTag
+      .map((siteAuthor) => `(site_tag_id = ${siteAuthor.siteTagId} AND site_id = ${siteAuthor.siteId})`)
+      .join(' OR ')
+    const statement = `SELECT * FROM site_tag WHERE ${whereClause}`
     const db = this.acquire()
-    return db.all<unknown[], SiteTag>(statement, { siteTagIds: siteTagIdsStr, siteId: siteId }).finally(() => {
+    try {
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
+      return this.toResultTypeDataList<SiteTag>(rows)
+    } finally {
       if (!this.injectedDB) {
         db.release()
       }
-    })
+    }
   }
 }

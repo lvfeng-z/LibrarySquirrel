@@ -275,11 +275,6 @@ tables:
         id                    integer not null
         constraint works_pk
         primary key autoincrement,
-        file_path             text,
-        file_name             text,
-        filename_extension    text,
-        workdir               text,
-        set_id                integer,
         site_id               integer,
         site_works_id         text,
         site_works_name       text,
@@ -288,12 +283,9 @@ tables:
         site_upload_time      integer,
         site_update_time      integer,
         nick_name             text,
-        suggested_name        text,
         local_author_id       integer,
         import_method         integer,
-        task_id               integer,
         last_view             integer,
-        resource_complete     integer(1),
         create_time           integer,
         update_time           integer
       );
