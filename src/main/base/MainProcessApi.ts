@@ -672,7 +672,7 @@ function exposeService() {
   Electron.ipcMain.handle('works-saveWorks', async (_event, args): Promise<ApiUtil> => {
     const worksService = new WorksService()
     try {
-      const result = await worksService.saveWorksInfo(args)
+      const result = await worksService.saveOrUpdateWorksInfos(args)
       return ApiUtil.response(result)
     } catch (error) {
       return returnError(error)

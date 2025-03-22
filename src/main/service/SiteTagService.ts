@@ -8,9 +8,11 @@ import Page from '../model/util/Page.ts'
 import BaseService from '../base/BaseService.ts'
 import DB from '../database/DB.ts'
 import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
-import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { ArrayIsEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
+import SiteService from './SiteService.js'
+import SiteTagPluginDTO from '../model/dto/SiteTagPluginDTO.js'
 
 /**
  * 站点标签Service
@@ -25,24 +27,30 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param siteTags
    */
   async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagDTO[]) {
-    // TODO 根据dto里存的域名查询站点id
-    // 校验
-    const target = siteTags.find(
-      (siteTag) =>
-        siteTag.siteId === undefined || siteTag.siteId === null || siteTag.siteTagId === undefined || siteTag.siteTagId === null
-    )
-    if (target !== undefined) {
-      let msg: string
-      if (IsNullish(target.siteId)) {
-        msg = `批量新增或更新站点标签失败，站点id为空，tagName: ${target.siteTagName}`
-      } else {
-        msg = `批量新增或更新站点标签失败，站点中标签的id为空，tagName: ${target.siteTagName}`
-      }
-      LogUtil.error('SiteTagService', msg)
-      throw new Error()
-    }
+    const tempParam = siteTags
+      .map((siteTag) => {
+        if (IsNullish(siteTag.siteTagId) || IsNullish(siteTag.siteId)) {
+          return
+        }
+        return { siteTagId: siteTag.siteTagId, siteId: siteTag.siteId }
+      })
+      .filter(NotNullish)
+    const oldSiteTags = await this.listBySiteTag(tempParam)
+    const newSiteTags = siteTags.map((siteTag) => {
+      AssertNotNullish(siteTag.siteTagId, this.constructor.name, '保存站点标签失败，站点标签的id意外为空')
+      AssertNotNullish(siteTag.siteId, this.constructor.name, '保存站点标签失败，站点标签的站点id意外为空')
+      const oldSiteTag = oldSiteTags.find((oldSiteTag) => oldSiteTag.siteTagId === siteTag.siteTagId)
+      const newSiteTag = new SiteTag(siteTag)
 
-    return super.saveOrUpdateBatchById(siteTags)
+      if (oldSiteTag !== undefined) {
+        // 调整新数据
+        newSiteTag.id = oldSiteTag.id
+        newSiteTag.createTime = undefined
+        newSiteTag.updateTime = undefined
+      }
+      return newSiteTag
+    })
+    return super.saveOrUpdateBatchById(newSiteTags)
   }
 
   /**
@@ -87,6 +95,22 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     const resultPage = tempPage.transform<SelectItem>()
     resultPage.data = selectItems
     return resultPage
+  }
+
+  /**
+   * 查询作品的站点标签
+   * @param worksId
+   */
+  public async listByWorksId(worksId: number): Promise<SiteTag[]> {
+    return await this.dao.listByWorksId(worksId)
+  }
+
+  /**
+   * 查询作品的站点标签DTO
+   * @param worksId
+   */
+  async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
+    return await this.dao.listDTOByWorksId(worksId)
   }
 
   /**
@@ -167,9 +191,42 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
 
   /**
    * 根据标签在站点的id及站点id查询
-   * @param siteTag 站点标签
+   * @param siteTags 站点标签
    */
-  public async listBySiteTag(siteTag: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
-    return this.dao.listBySiteTag(siteTag)
+  public async listBySiteTag(siteTags: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
+    if (ArrayIsEmpty(siteTags)) {
+      return []
+    }
+    return this.dao.listBySiteTag(siteTags)
+  }
+
+  /**
+   * 生成用于保存的站点标签信息
+   */
+  public static async createSaveInfos(siteTags: SiteTagPluginDTO[]): Promise<SiteTagDTO[]> {
+    const result: SiteTagDTO[] = []
+    const siteService = new SiteService()
+    // 用于查询和缓存站点id
+    const siteCache = new Map<string, Promise<number>>()
+    for (const siteTag of siteTags) {
+      if (IsNullish(siteTag.siteDomain)) {
+        result.push(new SiteTagDTO(siteTag))
+        continue
+      }
+      let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteTag.siteDomain)
+      if (IsNullish(siteIdPromise)) {
+        const tempSite = siteService.getByDomain(siteTag.siteDomain)
+        siteIdPromise = tempSite.then((site) => site?.id)
+      }
+      const siteId = await siteIdPromise
+      if (IsNullish(siteId)) {
+        result.push(new SiteTagDTO(siteTag))
+        continue
+      }
+      const tempDTO = new SiteTagDTO(siteTag)
+      tempDTO.siteId = siteId
+      result.push(tempDTO)
+    }
+    return result
   }
 }

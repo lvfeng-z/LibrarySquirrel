@@ -9,6 +9,7 @@ import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SelectItem from '../model/util/SelectItem.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
+import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 
 /**
  * 站点作者Dao
@@ -188,6 +189,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param siteAuthors 站点作者
    */
   public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
+    AssertArrayNotEmpty(siteAuthors, this.constructor.name, '根据站点标签查询失败，参数不能为空')
     const whereClause = siteAuthors
       .map((siteAuthor) => `(site_author_id = ${siteAuthor.siteAuthorId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')
@@ -204,15 +206,14 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
   }
 
   /**
-   * 查询作品的站点标签
+   * 查询作品的站点作者
    * @param worksId 作品id
    */
   async listByWorksId(worksId: number): Promise<SiteAuthorDTO[]> {
     const statement = `SELECT t1.*, t2.author_role
                        FROM site_author t1
                               INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
-                              INNER JOIN works t3 ON t2.works_id = t3.id
-                       WHERE t3.id = ${worksId}`
+                       WHERE t2.works_id = ${worksId}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)

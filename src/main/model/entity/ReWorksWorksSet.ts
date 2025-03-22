@@ -1,13 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 作品-作品集关联表
  */
 export default class ReWorksWorksSet extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 作品id
    */
@@ -18,14 +15,8 @@ export default class ReWorksWorksSet extends BaseEntity {
   worksSetId: number | undefined | null
 
   constructor(reWorksWorksSet?: ReWorksWorksSet) {
-    if (reWorksWorksSet === undefined) {
-      super()
-      this.id = undefined
-      this.worksId = undefined
-      this.worksSetId = undefined
-    } else {
-      super(reWorksWorksSet)
-      this.id = reWorksWorksSet.id
+    super(reWorksWorksSet)
+    if (NotNullish(reWorksWorksSet)) {
       this.worksId = reWorksWorksSet.worksId
       this.worksSetId = reWorksWorksSet.worksSetId
     }

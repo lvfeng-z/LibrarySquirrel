@@ -109,8 +109,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const statement = `SELECT t1.*
                        FROM local_tag t1
                               INNER JOIN re_works_tag t2 ON t1.id = t2.local_tag_id
-                              INNER JOIN works t3 ON t2.works_id = t3.id
-                       WHERE t3.id = ${worksId}`
+                       WHERE t2.works_id = ${worksId}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)

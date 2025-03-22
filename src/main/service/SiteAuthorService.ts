@@ -6,7 +6,7 @@ import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
-import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { ArrayIsEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import { Operator } from '../constant/CrudConstant.js'
@@ -67,8 +67,15 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthors
    */
   public async saveOrUpdateBatchBySiteAuthorId(siteAuthors: SiteAuthor[]): Promise<number> {
-    const siteAuthorIds = siteAuthors.map((siteAuthor) => siteAuthor.siteAuthorId) as string[]
-    const oldSiteAuthors = await this.dao.listBySiteAuthorIds(siteAuthorIds)
+    const tempParam = siteAuthors
+      .map((siteTag) => {
+        if (IsNullish(siteTag.siteAuthorId) || IsNullish(siteTag.siteId)) {
+          return
+        }
+        return { siteAuthorId: siteTag.siteAuthorId, siteId: siteTag.siteId }
+      })
+      .filter(NotNullish)
+    const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
     const newSiteAuthors = siteAuthors.map((siteAuthor) => {
       AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id意外为空')
       AssertNotNullish(siteAuthor.siteId, this.constructor.name, '保存站点作者失败，站点作者的站点id意外为空')
@@ -200,6 +207,9 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthors 站点作者
    */
   public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
+    if (ArrayIsEmpty(siteAuthors)) {
+      return []
+    }
     return this.dao.listBySiteAuthor(siteAuthors)
   }
 

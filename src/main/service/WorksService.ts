@@ -20,8 +20,6 @@ import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
-import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.js'
-import SiteTag from '../model/entity/SiteTag.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
@@ -29,6 +27,7 @@ import SiteTagDTO from '../model/dto/SiteTagDTO.js'
 import ResourceService from './ResourceService.js'
 import { OnOff } from '../constant/OnOff.js'
 import ReWorksWorksSetService from './ReWorksWorksSetService.js'
+import WorksFullInfoDTO from '../model/dto/WorksFullInfoDTO.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -51,7 +50,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     if (ArrayNotEmpty(worksPluginDTO.siteAuthors)) {
       result.siteAuthors = await SiteAuthorService.createSaveInfos(worksPluginDTO.siteAuthors)
     }
-    result.siteTags = worksPluginDTO.siteTags
+    if (ArrayNotEmpty(worksPluginDTO.siteTags)) {
+      result.siteTags = await SiteTagService.createSaveInfos(worksPluginDTO.siteTags)
+    }
     result.worksSets = worksPluginDTO.worksSets
     return result
   }
@@ -59,8 +60,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   /**
    * 保存作品信息并关联作品集、作者、标签
    * @param worksDTO
+   * @param update
    */
-  public async saveWorksInfo(worksDTO: WorksSaveDTO): Promise<number> {
+  public async saveOrUpdateWorksInfos(worksDTO: WorksSaveDTO, update: boolean): Promise<number> {
     await this.saveSurroundingData(worksDTO.worksSets, worksDTO.siteAuthors, worksDTO.siteTags)
 
     if (ArrayNotEmpty(worksDTO.worksSets)) {
@@ -108,14 +110,15 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         .filter(NotNullish)
       worksDTO.siteTags = (await siteTagService.listBySiteTag(tempParam)).map((siteTag) => new SiteTagDTO(siteTag))
     }
-    return this.saveAndLink(worksDTO)
+    return this.saveOrUpdateAndLink(worksDTO, update)
   }
 
   /**
    * 保存作品信息并关联作品集、作者、标签
    * @param worksDTO
+   * @param update
    */
-  public async saveAndLink(worksDTO: WorksSaveDTO): Promise<number> {
+  public async saveOrUpdateAndLink(worksDTO: WorksSaveDTO, update: boolean): Promise<number> {
     const worksSets = worksDTO.worksSets
     const siteAuthors = worksDTO.siteAuthors
     const siteTags = worksDTO.siteTags
@@ -126,17 +129,20 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     return this.db
       .transaction(async (transactionDB): Promise<number> => {
         // 保存作品
-        const works = new Works(worksDTO)
-        const worksService = new WorksService(transactionDB)
-        worksDTO.id = (await worksService.save(works)) as number
+        if (update) {
+          const worksService = new WorksService(transactionDB)
+          await worksService.updateById(worksDTO)
+        } else {
+          const worksService = new WorksService(transactionDB)
+          worksDTO.id = await worksService.save(worksDTO)
+        }
+        AssertNotNullish(worksDTO.id, '保存作品的周边信息失败，作品id不能为空')
 
         // 关联作品和作品集
         if (ArrayNotEmpty(worksSets)) {
           const reWorksWorksSetService = new ReWorksWorksSetService(transactionDB)
           const worksSetIds = worksSets.map((worksSet) => worksSet.id).filter(NotNullish)
-          for (const workSetId of worksSetIds) {
-            await reWorksWorksSetService.link([worksDTO], workSetId)
-          }
+          await reWorksWorksSetService.updateLinks(worksDTO.id, worksSetIds)
         }
         // 作者
         if (ArrayNotEmpty(localAuthors) || ArrayNotEmpty(siteAuthors)) {
@@ -154,7 +160,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                 }
               })
               .filter(NotNullish)
-            await reWorksAuthorService.link(OriginType.LOCAL, localAuthorIds, worksDTO.id)
+            await reWorksAuthorService.updateLinks(OriginType.LOCAL, localAuthorIds, worksDTO.id)
           }
           // 关联作品和站点作者
           if (ArrayNotEmpty(siteAuthors)) {
@@ -166,7 +172,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                 return { authorId: siteAuthor.id, role: IsNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole }
               })
               .filter(NotNullish)
-            await reWorksAuthorService.link(OriginType.SITE, siteAuthorIds, worksDTO.id)
+            await reWorksAuthorService.updateLinks(OriginType.SITE, siteAuthorIds, worksDTO.id)
           }
         }
         // 标签
@@ -175,12 +181,12 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           // 关联作品和本地标签
           if (ArrayNotEmpty(localTags)) {
             const localTagIds = localTags.map((localTag) => localTag.id).filter(NotNullish)
-            await reWorksTagService.link(OriginType.LOCAL, localTagIds, worksDTO.id)
+            await reWorksTagService.updateLinks(OriginType.LOCAL, localTagIds, worksDTO.id)
           }
           // 关联作品和站点标签
           if (ArrayNotEmpty(siteTags)) {
             const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter(NotNullish)
-            await reWorksTagService.link(OriginType.SITE, siteTagIds, worksDTO.id)
+            await reWorksTagService.updateLinks(OriginType.SITE, siteTagIds, worksDTO.id)
           }
         }
 
@@ -306,51 +312,44 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 查询作品的完整信息
    * @param worksId 作品id
    */
-  public async getFullWorksInfoById(worksId: number): Promise<WorksDTO | undefined> {
+  public async getFullWorksInfoById(worksId: number): Promise<WorksFullInfoDTO | undefined> {
     const baseWorksInfo = await super.getById(worksId)
-    const worksDTO = new WorksDTO(baseWorksInfo)
+    const fullInfo = new WorksFullInfoDTO(baseWorksInfo)
     // 资源
     const resService = new ResourceService()
     const resourceList = await resService.listByWorksId(worksId)
-    worksDTO.inactiveResource = []
+    fullInfo.inactiveResource = []
     for (const resource of resourceList) {
       if (resource.state === OnOff.ON) {
-        worksDTO.resource = resource
+        fullInfo.resource = resource
       } else {
-        worksDTO.inactiveResource.push(resource)
+        fullInfo.inactiveResource.push(resource)
       }
     }
 
     // 本地作者
     const localAuthorService = new LocalAuthorService()
-    worksDTO.localAuthors = await localAuthorService.listByWorksId(worksId)
+    fullInfo.localAuthors = await localAuthorService.listDTOByWorksId(worksId)
 
     // 本地标签
     const localTagService = new LocalTagService()
-    worksDTO.localTags = await localTagService.listByWorksId(worksId)
+    fullInfo.localTags = await localTagService.listByWorksId(worksId)
 
     // 站点作者
     const siteAuthorService = new SiteAuthorService()
-    worksDTO.siteAuthors = await siteAuthorService.listByWorksId(worksId)
+    fullInfo.siteAuthors = await siteAuthorService.listByWorksId(worksId)
 
     // 站点标签
     const siteTagService = new SiteTagService()
-    const siteTagPage = new Page<SiteTagQueryDTO, SiteTag>()
-    siteTagPage.pageSize = 100
-    const siteTagQuery = new SiteTagQueryDTO()
-    siteTagQuery.worksId = worksId
-    siteTagQuery.boundOnWorksId = true
-    siteTagPage.query = siteTagQuery
-    const resultSiteTagPage = await siteTagService.queryPageByWorksId(siteTagPage)
-    worksDTO.siteTags = resultSiteTagPage.data
+    fullInfo.siteTags = await siteTagService.listDTOByWorksId(worksId)
 
     // 站点信息
     const siteService = new SiteService()
-    if (NotNullish(worksDTO.siteId)) {
-      worksDTO.site = await siteService.getById(worksDTO.siteId)
+    if (NotNullish(fullInfo.siteId)) {
+      fullInfo.site = await siteService.getById(fullInfo.siteId)
     }
 
-    return worksDTO
+    return fullInfo
   }
 
   /**

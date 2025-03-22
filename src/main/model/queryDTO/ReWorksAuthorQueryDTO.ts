@@ -5,7 +5,7 @@ export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 类型(0: 本地作者，1: 站点作者)
    */
-  type: number | undefined | null
+  authorType: number | undefined | null
 
   /**
    * 作品id
@@ -30,14 +30,14 @@ export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   constructor(reWorksAuthorQueryDTO?: ReWorksAuthorQueryDTO) {
     if (reWorksAuthorQueryDTO === undefined) {
       super()
-      this.type = undefined
+      this.authorType = undefined
       this.worksId = undefined
       this.localAuthorId = undefined
       this.siteAuthorId = undefined
       this.authorRole = undefined
     } else {
       super(reWorksAuthorQueryDTO)
-      this.type = reWorksAuthorQueryDTO.type
+      this.authorType = reWorksAuthorQueryDTO.authorType
       this.worksId = reWorksAuthorQueryDTO.worksId
       this.localAuthorId = reWorksAuthorQueryDTO.localAuthorId
       this.siteAuthorId = reWorksAuthorQueryDTO.siteAuthorId

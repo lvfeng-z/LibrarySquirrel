@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import WorksDTO from '../../model/main/dto/WorksDTO'
+import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
 import StringUtil from '../../utils/StringUtil'
 
 // props
 const props = defineProps<{
-  works: WorksDTO
+  works: WorksFullInfoDTO
 }>()
 
 // 方法

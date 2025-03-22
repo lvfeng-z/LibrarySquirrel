@@ -52,7 +52,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
    * 查询作品的本地标签
    * @param worksId 作品id
    */
-  async listByWorksId(worksId: number): Promise<LocalAuthorDTO[]> {
+  async listDTOByWorksId(worksId: number): Promise<LocalAuthorDTO[]> {
     const statement = `SELECT t1.*, t2.author_role
                        FROM local_author t1
                               INNER JOIN re_works_author t2 ON t1.id = t2.local_author_id

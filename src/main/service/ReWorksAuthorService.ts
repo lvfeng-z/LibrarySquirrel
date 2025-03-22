@@ -84,7 +84,7 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
   public async listByWorksId(worksId: number, type: OriginType): Promise<ReWorksAuthor[]> {
     const query = new ReWorksAuthorQueryDTO()
     query.worksId = worksId
-    query.type = type
+    query.authorType = type
     return this.list(query)
   }
 }

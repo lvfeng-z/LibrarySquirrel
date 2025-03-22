@@ -10,6 +10,7 @@ import DB from '../database/DB.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
+import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -224,10 +225,11 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
   /**
    * 根据站点标签查询
-   * @param siteTag 站点
+   * @param siteTags 站点
    */
-  public async listBySiteTag(siteTag: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
-    const whereClause = siteTag
+  public async listBySiteTag(siteTags: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
+    AssertArrayNotEmpty(siteTags, this.constructor.name, '根据站点标签查询失败，参数不能为空')
+    const whereClause = siteTags
       .map((siteAuthor) => `(site_tag_id = ${siteAuthor.siteTagId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')
     const statement = `SELECT * FROM site_tag WHERE ${whereClause}`
@@ -235,6 +237,48 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)
       return this.toResultTypeDataList<SiteTag>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 查询作品的站点标签
+   * @param worksId 作品id
+   */
+  async listByWorksId(worksId: number): Promise<SiteTag[]> {
+    const statement = `SELECT t1.*
+                       FROM site_tag t1
+                              INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
+                       WHERE t2.works_id = ${worksId}`
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((runResult) => super.toResultTypeDataList<SiteTag>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 查询作品的站点标签DTO
+   * @param worksId
+   */
+  async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
+    const statement = `SELECT t1.*, JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) AS localTag
+                       FROM site_tag t1
+                              INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
+                              INNER JOIN local_tag t3 ON t1.local_tag_id = t3.id
+                       WHERE t2.works_id = ${worksId}`
+    const db = this.acquire()
+    try {
+      const runResult = await db.all<unknown[], Record<string, unknown>>(statement)
+      const originalList = super.toResultTypeDataList<SiteTagDTO>(runResult)
+      return originalList.map((original) => new SiteTagDTO(original))
     } finally {
       if (!this.injectedDB) {
         db.release()

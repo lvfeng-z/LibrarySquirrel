@@ -11,7 +11,6 @@ import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
-import WorksDTO from './model/main/dto/WorksDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
@@ -33,6 +32,7 @@ import Test from '@renderer/components/subpage/Test.vue'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
 import BackgroundList from '@renderer/components/common/BackgroundList.vue'
+import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -70,7 +70,7 @@ const pageState = reactive({
 })
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
-const worksList: Ref<UnwrapRef<WorksDTO[]>> = ref([]) // 需展示的作品列表
+const worksList: Ref<UnwrapRef<WorksFullInfoDTO[]>> = ref([]) // 需展示的作品列表
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
@@ -79,7 +79,7 @@ const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
 const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workdir: false })
 // 作品分页
-const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksDTO>>> = ref(new Page<SearchCondition[], WorksDTO>())
+const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullInfoDTO>>> = ref(new Page<SearchCondition[], WorksFullInfoDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
 //
@@ -153,7 +153,7 @@ function closeSubpage() {
   pageState.mainPage = true
 }
 // 请求作品接口
-async function searchWorks(page: Page<SearchCondition[], WorksDTO>): Promise<Page<WorksQueryDTO, WorksDTO>> {
+async function searchWorks(page: Page<SearchCondition[], WorksFullInfoDTO>): Promise<Page<WorksQueryDTO, WorksFullInfoDTO>> {
   // 处理搜索框的标签
   page.query = selectedTagList.value
     .map((searchCondition) => {
@@ -182,7 +182,7 @@ async function searchWorks(page: Page<SearchCondition[], WorksDTO>): Promise<Pag
 
   return apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      return ApiUtil.data<Page<WorksQueryDTO, WorksDTO>>(response)
+      return ApiUtil.data<Page<WorksQueryDTO, WorksFullInfoDTO>>(response)
     } else {
       return page
     }
@@ -192,7 +192,7 @@ async function searchWorks(page: Page<SearchCondition[], WorksDTO>): Promise<Pag
 async function queryWorksPage(next: boolean) {
   // 新查询重置查询条件
   if (!next) {
-    worksPage.value = new Page<SearchCondition[], WorksDTO>()
+    worksPage.value = new Page<SearchCondition[], WorksFullInfoDTO>()
     worksPage.value.pageSize = 10
     worksList.value.length = 0
   }
