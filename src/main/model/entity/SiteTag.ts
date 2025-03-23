@@ -1,14 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 站点标签
  */
 export default class SiteTag extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 标签来源站点id
    */
@@ -39,19 +35,8 @@ export default class SiteTag extends BaseEntity {
   lastUse: number | null | undefined
 
   constructor(siteTag?: SiteTag) {
-    if (IsNullish(siteTag)) {
-      super()
-      this.id = undefined
-      this.siteId = undefined
-      this.siteTagId = undefined
-      this.siteTagName = undefined
-      this.baseSiteTagId = undefined
-      this.description = undefined
-      this.localTagId = undefined
-      this.lastUse = undefined
-    } else {
-      super(siteTag)
-      this.id = siteTag.id
+    super(siteTag)
+    if (NotNullish(siteTag)) {
       this.siteId = siteTag.siteId
       this.siteTagId = siteTag.siteTagId
       this.siteTagName = siteTag.siteTagName

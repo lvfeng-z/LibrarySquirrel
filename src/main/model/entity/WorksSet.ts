@@ -1,14 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品集合
  */
 export default class WorksSet extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 集合来源站点id
    */
@@ -43,20 +39,8 @@ export default class WorksSet extends BaseEntity {
   lastView: number | undefined | null
 
   constructor(worksSet?: WorksSet) {
-    if (IsNullish(worksSet)) {
-      super()
-      this.id = undefined
-      this.siteId = undefined
-      this.siteWorksSetId = undefined
-      this.siteWorksSetName = undefined
-      this.siteAuthorId = undefined
-      this.siteUploadTime = undefined
-      this.siteUpdateTime = undefined
-      this.nickName = undefined
-      this.lastView = undefined
-    } else {
-      super(worksSet)
-      this.id = worksSet.id
+    super(worksSet)
+    if (NotNullish(worksSet)) {
       this.siteId = worksSet.siteId
       this.siteWorksSetId = worksSet.siteWorksSetId
       this.siteWorksSetName = worksSet.siteWorksSetName

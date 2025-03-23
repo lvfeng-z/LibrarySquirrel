@@ -208,8 +208,8 @@ async function requestWorksSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>,
 }
 // 处理图片点击事件
 function handlePictureClicked() {
-  if (NotNullish(props.works[0].resource?.filePath)) {
-    apis.appLauncherOpenImage(props.works[0].resource.filePath)
+  if (NotNullish(worksFullInfo.value.resource?.filePath)) {
+    apis.appLauncherOpenImage(worksFullInfo.value.resource.filePath)
   } else {
     ElMessage({
       type: 'error',
@@ -244,7 +244,7 @@ function handleDrawerOpen() {
       <el-image
         class="works-dialog-image"
         fit="contain"
-        :src="`resource://workdir/${props.works[0].resource?.filePath}`"
+        :src="`resource://workdir/${worksFullInfo.resource?.filePath}`"
         @click="handlePictureClicked"
       >
       </el-image>

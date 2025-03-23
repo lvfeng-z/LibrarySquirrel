@@ -7,6 +7,8 @@ import SiteTagDTO from './SiteTagDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import Resource from '../entity/Resource.js'
 import lodash from 'lodash'
+import { NotNullish } from '../../util/CommonUtil.js'
+import { ParsePropertyFromJson } from '../../util/ObjectUtil.js'
 
 /**
  * 作品
@@ -54,20 +56,32 @@ export default class WorksFullInfoDTO extends Works {
 
   constructor(works?: Works) {
     super(works)
-    lodash.assign(
-      this,
-      lodash.pick(works, [
-        'resource',
-        'inactiveResource',
-        'site',
-        'localAuthors',
-        'localTags',
-        'siteAuthors',
-        'siteTags',
-        'worksSets',
-        'resourceStream',
-        'resourceSize'
+    if (NotNullish(works)) {
+      ParsePropertyFromJson(works, [
+        {
+          property: 'resource',
+          constructor: Resource
+        },
+        {
+          property: 'site',
+          constructor: Site
+        }
       ])
-    )
+      lodash.assign(
+        this,
+        lodash.pick(works, [
+          'resource',
+          'inactiveResource',
+          'site',
+          'localAuthors',
+          'localTags',
+          'siteAuthors',
+          'siteTags',
+          'worksSets',
+          'resourceStream',
+          'resourceSize'
+        ])
+      )
+    }
   }
 }

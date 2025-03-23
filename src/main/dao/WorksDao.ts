@@ -12,6 +12,8 @@ import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
+import WorksFullInfoDTO from '../model/dto/WorksFullInfoDTO.js'
+import { OnOff } from '../constant/OnOff.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db: DB, injectedDB: boolean) {
@@ -22,12 +24,45 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    * 综合查询作品
    * @param page 查询参数（本地标签、站点标签、作者...）
    */
-  public async synthesisQueryPage(page: Page<WorksCommonQueryDTO, WorksDTO>): Promise<Page<WorksQueryDTO, WorksDTO>> {
+  public async synthesisQueryPage(page: Page<WorksCommonQueryDTO, WorksFullInfoDTO>): Promise<Page<WorksQueryDTO, WorksFullInfoDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     let statement: string
-    const selectClause = `SELECT t1.*`
-    const fromClause = `FROM works t1`
+    const selectClause = `
+        SELECT t1.*,
+           CASE
+             WHEN t2.id IS NULL THEN NULL
+             ELSE JSON_OBJECT('id', t2.id, 'worksId', t2.works_id, 'taskId', t2.task_id, 'state', t2.state, 'filePath', t2.file_path, 'fileName', t2.file_name, 'filenameExtension', t2.filename_extension,
+                              'suggestedName', t2.suggest_name, 'workdir', t2.workdir, 'resourceComplete', t2.resource_complete, 'importMethod', t2.import_method) END AS resource,
+           CASE
+               WHEN t4.id IS NULL THEN NULL
+               ELSE JSON_OBJECT('id', t4.id, 'localTagName', t4.local_tag_name, 'baseLocalTagId', t4.base_local_tag_id, 'lastUse', t4.last_use) END AS localTag,
+           CASE
+               WHEN t5.id IS NULL THEN NULL
+               ELSE JSON_OBJECT('id', t5.id, 'siteId', t5.site_id, 'siteTagId', t5.site_tag_id, 'siteTagName', t5.site_tag_name, 'baseSiteTagId', t5.base_site_tag_id,
+                                'description', t5.description, 'localTagId', t5.local_tag_id, 'lastUse', t5.last_use) END AS siteTag,
+           CASE
+               WHEN t7.id IS NULL THEN NULL
+               ELSE JSON_OBJECT('id', t7.id, 'localAuthorName', t7.local_author_name, 'lastUse', t7.last_use, 'authorRole', t6.author_role) END AS localAuthor,
+           CASE
+               WHEN t8.id IS NULL THEN NULL
+               ELSE JSON_OBJECT('id', t8.id, 'siteId', t8.site_id, 'siteAuthorId', t8.site_author_id, 'siteAuthorName', t8.site_author_name, 'siteAuthorNameBefore', t8.site_author_name_before,
+                                'introduce', t8.introduce, 'localAuthorId', t8.local_author_id, 'lastUse', t8.last_use, 'authorRole', t6.author_role) END AS siteAuthor,
+           CASE
+               WHEN t10.id IS NULL THEN NULL
+               ELSE JSON_OBJECT('id', t10.id, 'siteId', t10.site_id, 'siteWorksSetId', t10.site_works_set_id, 'siteWorksSetName', t10.site_works_set_name, 'siteAuthorId', t10.site_author_id,
+                                'siteUploadTime', t10.site_upload_time, 'siteUpdateTime', t10.site_update_time, 'nickName', t10.nick_name, 'lastView', t10.last_view) END AS worksSet`
+    const fromClause = `
+        FROM works t1
+          LEFT JOIN resource t2 ON t1.id = t2.works_id AND t2.state = ${OnOff.ON}
+          LEFT JOIN re_works_tag t3 ON t1.id = t3.works_id
+          LEFT JOIN local_tag t4 ON t3.local_tag_id = t4.id
+          LEFT JOIN site_tag t5 ON t3.site_tag_id = t5.id
+          LEFT JOIN re_works_author t6 ON t1.id = t6.works_id
+          LEFT JOIN local_author t7 ON t6.local_author_id = t7.id
+          LEFT JOIN site_author t8 ON t6.site_author_id = t8.id
+          LEFT JOIN re_works_works_set t9 ON t1.id = t9.works_id
+          LEFT JOIN works_set t10 ON t9.works_set_id = t10.id`
     let whereClause: string | undefined
     if (modifiedPage.query !== undefined && page.query !== undefined) {
       const baseProperties = lodash.cloneDeep(modifiedPage.query)
@@ -122,6 +157,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       statement = selectClause.concat(' ', fromClause)
     }
 
+    // 分组
+    statement = statement + ' GROUP BY t1.id'
+
     // 排序和分页子句
     const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
@@ -135,9 +173,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     return db
       .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
       .then((rows) => {
-        const result = this.toResultTypeDataList<WorksDTO>(rows)
+        const result = this.toResultTypeDataList<WorksFullInfoDTO>(rows)
         // 利用构造函数处理JSON字符串
-        modifiedPage.data = result.map((worksDTO) => new WorksDTO(worksDTO))
+        modifiedPage.data = result.map((raw) => new WorksFullInfoDTO(raw))
 
         return modifiedPage
       })
