@@ -66,7 +66,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     // 资源
     result.fileName = finalFileName
     result.fullSavePath = path.join(workdir, relativeSavePath, finalFileName)
-    result.filePath = path.join(relativeSavePath, fileName)
+    result.filePath = path.join(relativeSavePath, finalFileName)
     result.workdir = workdir
     result.importMethod = resource.importMethod
     result.suggestedName = resource.suggestedName
