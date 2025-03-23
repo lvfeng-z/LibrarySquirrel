@@ -52,7 +52,7 @@ export class ReWorksTagService extends BaseService<ReWorksTagQueryDTO, ReWorksTa
    * @param worksId
    */
   public async updateLinks(type: OriginType, tagIds: number[], worksId: number) {
-    if (ArrayIsEmpty(tagIds.length)) {
+    if (ArrayIsEmpty(tagIds)) {
       return 0
     }
 
