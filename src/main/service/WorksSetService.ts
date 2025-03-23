@@ -41,8 +41,8 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
     const siteWorksSetIds = worksSets.map((worksSet) => worksSet.siteWorksSetId) as string[]
     const oldWorksSets = await this.listBySiteWorksSetIds(siteWorksSetIds)
     const newWorksSets = worksSets.map((worksSet) => {
-      AssertNotNullish(worksSet.siteAuthorId, this.constructor.name, '根据作品集在站点的id保存或更新失败，站点作者的id意外为空')
-      AssertNotNullish(worksSet.siteId, this.constructor.name, '根据作品集在站点的id保存或更新失败，站点作者的站点id意外为空')
+      AssertNotNullish(worksSet.siteAuthorId, this.constructor.name, '根据作品集在站点的id保存或更新失败，站点作者的id不能为空')
+      AssertNotNullish(worksSet.siteId, this.constructor.name, '根据作品集在站点的id保存或更新失败，站点作者的站点id不能为空')
       const oldWorksSet = oldWorksSets.find((oldWorksSet) => oldWorksSet.siteWorksSetId === worksSet.siteWorksSetId)
       const newWorksSet = new WorksSet(worksSet)
 

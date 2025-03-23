@@ -130,12 +130,12 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                 default:
                   LogUtil.error(
                     this.constructor.name,
-                    `解析查询配置项${selectItem.label}的额外数据失败，出现了意外的类型，type: ${extra.type}`
+                    `解析查询配置项${selectItem.label}的额外数据失败，出现了不支持的类型，type: ${extra.type}`
                   )
               }
               selectItem.subLabels = subLabels
             } else {
-              LogUtil.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据意外为空`)
+              LogUtil.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据不能为空`)
             }
           }
         })

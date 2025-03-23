@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import WorksDTO from '../../model/main/dto/WorksDTO'
+import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
 import { computed, onMounted, Ref, ref, UnwrapRef } from 'vue'
-import { IsNullish } from '../../utils/CommonUtil'
+import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
@@ -18,10 +18,11 @@ import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import lodash from 'lodash'
+import { ElMessage } from 'element-plus'
 
 // props
 const props = defineProps<{
-  works: WorksDTO[]
+  works: WorksFullInfoDTO[]
 }>()
 
 // onMounted
@@ -59,7 +60,7 @@ const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件
 const siteTagExchangeBox = ref()
 // 作品信息
-const worksFullInfo: Ref<UnwrapRef<WorksDTO>> = ref(new WorksDTO())
+const worksFullInfo: Ref<WorksFullInfoDTO> = ref(new WorksFullInfoDTO())
 // 本地作者
 const localAuthor: Ref<UnwrapRef<string>> = computed(() => {
   const names = worksFullInfo.value.localAuthors?.map((localAuthor) => localAuthor.localAuthorName)
@@ -118,7 +119,15 @@ const siteTagExchangeMainInput: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 async function getWorksInfo() {
   const response = await apis.worksGetFullWorksInfoById(props.works[0].id)
   if (ApiUtil.check(response)) {
-    worksFullInfo.value = ApiUtil.data(response) as WorksDTO
+    const temp = ApiUtil.data<WorksFullInfoDTO>(response)
+    if (NotNullish(temp)) {
+      worksFullInfo.value = temp
+    } else {
+      ElMessage({
+        type: 'error',
+        message: '获取作品信息失败'
+      })
+    }
   }
 }
 // 处理本地标签exchangeBox确认交换事件
@@ -199,7 +208,14 @@ async function requestWorksSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>,
 }
 // 处理图片点击事件
 function handlePictureClicked() {
-  apis.appLauncherOpenImage(props.works[0].filePath)
+  if (NotNullish(props.works[0].resource?.filePath)) {
+    apis.appLauncherOpenImage(props.works[0].resource.filePath)
+  } else {
+    ElMessage({
+      type: 'error',
+      message: '无法打开图片，获取资源路径失败'
+    })
+  }
 }
 // 打开本地标签和站点标签的抽屉面板
 function openDrawer(isLocal: boolean) {
@@ -228,7 +244,7 @@ function handleDrawerOpen() {
       <el-image
         class="works-dialog-image"
         fit="contain"
-        :src="`resource://workdir/${props.works[0].filePath}`"
+        :src="`resource://workdir/${props.works[0].resource?.filePath}`"
         @click="handlePictureClicked"
       >
       </el-image>

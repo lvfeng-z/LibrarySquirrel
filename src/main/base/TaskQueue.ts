@@ -442,12 +442,15 @@ export class TaskQueue {
           LogUtil.error(this.constructor.name, error)
         }
       } else {
-        // TODO 判断是否已经保存过这个作品，如果已经保存过则提示用户
         // 判断这个作品是否已经保存过
         let infoSaved = false
         if (NotNullish(task.siteId) && NotNullish(task.siteWorksId)) {
           const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksId(task.siteId, task.siteWorksId)
           infoSaved = ArrayNotEmpty(existsWorksList)
+          if (infoSaved && IsNullish(task.localWorksId)) {
+            LogUtil.info(this.constructor.name, `任务${task.id}对应的作品已经保存过`)
+            task.localWorksId = existsWorksList[0].id
+          }
         }
         taskRunInstance = new TaskRunInstance(
           task.id,
@@ -560,8 +563,8 @@ export class TaskQueue {
       const pidChildrenMap: Map<number, Task[]> = Map.groupBy(allChildren, (child) => child.pid as number)
       const pidChildrenInstMap: object = lodash.keyBy(runInstances, 'taskId')
       for (const parentInfo of parentList) {
-        AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id意外为空`)
-        AssertNotNullish(parentInfo.status, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务状态意外为空`)
+        AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id不能为空`)
+        AssertNotNullish(parentInfo.status, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
         const tempChildren = pidChildrenMap.get(parentInfo.id)
         if (ArrayNotEmpty(tempChildren)) {
           const tempInstList = tempChildren.map((tempChild) => {
@@ -1196,7 +1199,6 @@ class TaskStatusChangeStream extends Transform {
     tempTask.id = runInstance.taskId
     tempTask.status = runInstance.status
     if (TaskStatusEnum.FINISHED === tempTask.status) {
-      tempTask.localWorksId = null
       tempTask.pendingDownloadPath = null
     }
     return tempTask

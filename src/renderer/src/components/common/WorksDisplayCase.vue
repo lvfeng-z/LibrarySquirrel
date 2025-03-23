@@ -4,6 +4,7 @@ import AuthorInfo from './AuthorInfo.vue'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
 import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ElMessage } from 'element-plus'
 
 // props
 const props = defineProps<{
@@ -51,7 +52,14 @@ function handleImageClicked() {
 // 处理图片双击事件
 function handlePictureClicked() {
   clearTimeout(clickTimeout)
-  apis.appLauncherOpenImage(props.works.filePath)
+  if (NotNullish(props.works.resource?.filePath)) {
+    apis.appLauncherOpenImage(props.works.resource.filePath)
+  } else {
+    ElMessage({
+      type: 'error',
+      message: '无法打开图片，获取资源路径失败'
+    })
+  }
 }
 </script>
 <template>
@@ -59,7 +67,7 @@ function handlePictureClicked() {
     <el-image
       :fit="imageFit"
       class="works-display-case-image"
-      :src="`resource://workdir${props.works.filePath}${srcParamStr}`"
+      :src="`resource://workdir${props.works.resource?.filePath}${srcParamStr}`"
       @load="handleElImageFit"
       @click="handleImageClicked"
       @dblclick="handlePictureClicked"

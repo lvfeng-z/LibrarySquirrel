@@ -37,8 +37,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       .filter(NotNullish)
     const oldSiteTags = await this.listBySiteTag(tempParam)
     const newSiteTags = siteTags.map((siteTag) => {
-      AssertNotNullish(siteTag.siteTagId, this.constructor.name, '保存站点标签失败，站点标签的id意外为空')
-      AssertNotNullish(siteTag.siteId, this.constructor.name, '保存站点标签失败，站点标签的站点id意外为空')
+      AssertNotNullish(siteTag.siteTagId, this.constructor.name, '保存站点标签失败，站点标签的id不能为空')
+      AssertNotNullish(siteTag.siteId, this.constructor.name, '保存站点标签失败，站点标签的站点id不能为空')
       const oldSiteTag = oldSiteTags.find((oldSiteTag) => oldSiteTag.siteTagId === siteTag.siteTagId)
       const newSiteTag = new SiteTag(siteTag)
 
@@ -66,7 +66,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         return true
       }
     } else {
-      LogUtil.error('SiteTagService', '站点标签绑定在本地标签上失败，localTagId意外为undefined')
+      LogUtil.error('SiteTagService', '站点标签绑定在本地标签上失败，localTagId不能为空')
       return false
     }
   }

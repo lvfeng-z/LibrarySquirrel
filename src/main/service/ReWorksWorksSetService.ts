@@ -21,12 +21,12 @@ export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQ
     // 校验
     const legalWorksList = works.filter((works) => {
       if (IsNullish(works)) {
-        LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品信息意外为空`)
+        LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品信息不能为空`)
         return false
       }
       if (IsNullish(!Object.hasOwn(works, 'id') || works.id)) {
         const siteWorksName = Object.hasOwn(works, 'siteWorksName') ? works.siteWorksName : 'unknown'
-        LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品id意外为空，siteWorksName: ${siteWorksName}`)
+        LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品id不能为空，siteWorksName: ${siteWorksName}`)
         return false
       }
       return true

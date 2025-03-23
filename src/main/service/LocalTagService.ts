@@ -55,7 +55,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           // 查询要修改的标签原本的数据
           const old = await this.dao.getById(localTag.id)
           if (IsNullish(old)) {
-            const msg = '修改本地标签失败，原标签信息意外为空'
+            const msg = '修改本地标签失败，原标签信息不能为空'
             LogUtil.error('LocalTagService', msg)
             throw new Error(msg)
           }
@@ -69,7 +69,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       }
       return await this.dao.updateById(localTag)
     } else {
-      const msg = '更新本地标签失败，id意外为空'
+      const msg = '更新本地标签失败，id不能为空'
       LogUtil.error('LocalTagService', msg)
       throw new Error(msg)
     }

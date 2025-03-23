@@ -29,12 +29,12 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async saveOrUpdateBySiteAuthorId(siteAuthor: SiteAuthor): Promise<number> {
     if (IsNullish(siteAuthor.siteId)) {
-      const msg = '保存作品失败，作品的站点id意外为空'
+      const msg = '保存作品失败，作品的站点id不能为空'
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
     } else if (IsNullish(siteAuthor.siteAuthorId)) {
-      const msg = '保存作品失败，站点作者的id意外为空'
-      LogUtil.error('SiteAuthorService', '保存作品失败，站点作者的id意外为空')
+      const msg = '保存作品失败，站点作者的id不能为空'
+      LogUtil.error('SiteAuthorService', '保存作品失败，站点作者的id不能为空')
       throw new Error(msg)
     } else {
       const oldSiteAuthor = await this.getBySiteAuthorId(siteAuthor.siteAuthorId, siteAuthor.siteId)
@@ -77,8 +77,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       .filter(NotNullish)
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
     const newSiteAuthors = siteAuthors.map((siteAuthor) => {
-      AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id意外为空')
-      AssertNotNullish(siteAuthor.siteId, this.constructor.name, '保存站点作者失败，站点作者的站点id意外为空')
+      AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id不能为空')
+      AssertNotNullish(siteAuthor.siteId, this.constructor.name, '保存站点作者失败，站点作者的站点id不能为空')
       const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
       const newSiteAuthor = new SiteAuthor(siteAuthor)
 
@@ -115,7 +115,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return true
       }
     } else {
-      LogUtil.error('SiteAuthorService', '站点作者绑定在本地作者上失败，localAuthorId意外为undefined')
+      LogUtil.error('SiteAuthorService', '站点作者绑定在本地作者上失败，localAuthorId不能为空')
       return false
     }
   }
@@ -181,7 +181,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       }
       return undefined
     } else {
-      const msg = '根据站点作者id查询站点作者时站点作者id意外为空'
+      const msg = '根据站点作者id查询站点作者时站点作者id不能为空'
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
     }

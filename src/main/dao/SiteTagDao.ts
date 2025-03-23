@@ -269,10 +269,13 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * @param worksId
    */
   async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
-    const statement = `SELECT t1.*, JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) AS localTag
+    const statement = `SELECT t1.*,
+                              JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) AS localTag,
+                              JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) AS site
                        FROM site_tag t1
                               INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
-                              INNER JOIN local_tag t3 ON t1.local_tag_id = t3.id
+                              LEFT JOIN local_tag t3 ON t1.local_tag_id = t3.id
+                              LEFT JOIN site t4 ON t1.site_id = t4.id
                        WHERE t2.works_id = ${worksId}`
     const db = this.acquire()
     try {
