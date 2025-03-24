@@ -4,7 +4,7 @@ import Resource from '../model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
 import DB from '../database/DB.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
-import { OnOff } from '../constant/OnOff.js'
+import { BOOL } from '../constant/BOOL.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import StringUtil from '../util/StringUtil.js'
@@ -71,7 +71,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     result.importMethod = resource.importMethod
     result.suggestedName = resource.suggestedName
     // 资源状态
-    result.resourceComplete = 0
+    result.resourceComplete = BOOL.FALSE
 
     return result
   }
@@ -130,10 +130,10 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public async saveActive(resource: Resource): Promise<number> {
     AssertNotNullish(resource.worksId, `资源设置为启用失败，worksId不能为空`)
-    resource.state = OnOff.ON
+    resource.state = BOOL.TRUE
     const allRes = await this.listByWorksId(resource.worksId)
     if (ArrayNotEmpty(allRes)) {
-      allRes.forEach((res) => (res.state = OnOff.OFF))
+      allRes.forEach((res) => (res.state = BOOL.FALSE))
       allRes.push(resource)
       return this.saveOrUpdateBatchById(allRes)
     } else {
@@ -158,9 +158,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     }
     allRes.forEach((res) => {
       if (res.id === id) {
-        res.state = OnOff.ON
+        res.state = BOOL.TRUE
       } else {
-        res.state = OnOff.OFF
+        res.state = BOOL.FALSE
       }
     })
     return this.updateBatchById(allRes)
@@ -173,7 +173,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public clearInactiveByWorksId(worksId: number): Promise<number> {
     const query = new ResourceQueryDTO()
     query.worksId = worksId
-    query.state = OnOff.OFF
+    query.state = BOOL.FALSE
     return this.delete(query)
   }
 
@@ -184,7 +184,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public async resourceFinished(id: number): Promise<number> {
     const resource = new Resource()
     resource.id = id
-    resource.resourceComplete = 1
+    resource.resourceComplete = BOOL.TRUE
     return this.updateById(resource)
   }
 
@@ -195,7 +195,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public getActiveByWorksId(worksId: number): Promise<Resource | undefined> {
     const query = new ResourceQueryDTO()
     query.worksId = worksId
-    query.state = OnOff.ON
+    query.state = BOOL.TRUE
     return this.get(query)
   }
 

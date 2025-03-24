@@ -13,7 +13,7 @@ import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 import WorksFullInfoDTO from '../model/dto/WorksFullInfoDTO.js'
-import { OnOff } from '../constant/OnOff.js'
+import { BOOL } from '../constant/BOOL.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db: DB, injectedDB: boolean) {
@@ -58,8 +58,8 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
                                 'siteUploadTime', t11.site_upload_time, 'siteUpdateTime', t11.site_update_time, 'nickName', t11.nick_name, 'lastView', t11.last_view)) END AS worksSets`
     const fromClause = `
         FROM works t1
-          LEFT JOIN resource t2 ON t1.id = t2.works_id AND t2.state = ${OnOff.ON}
-          LEFT JOIN resource t3 ON t1.id = t3.works_id AND t3.state = ${OnOff.OFF}
+          LEFT JOIN resource t2 ON t1.id = t2.works_id AND t2.state = ${BOOL.TRUE}
+          LEFT JOIN resource t3 ON t1.id = t3.works_id AND t3.state = ${BOOL.FALSE}
           LEFT JOIN re_works_tag t4 ON t1.id = t4.works_id
           LEFT JOIN local_tag t5 ON t4.local_tag_id = t5.id
           LEFT JOIN site_tag t6 ON t4.site_tag_id = t6.id

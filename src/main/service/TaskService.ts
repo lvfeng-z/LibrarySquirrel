@@ -40,6 +40,7 @@ import Site from '../model/entity/Site.js'
 import CreateTaskWritable from '../model/util/CreateTaskWritable.js'
 import ResourceService from './ResourceService.js'
 import Resource from '../model/entity/Resource.js'
+import { BOOL } from '../constant/BOOL.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -576,7 +577,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       if (FileSaveResult.FINISH === saveResult) {
         const tempResource = new Resource()
         tempResource.worksId = worksId
-        tempResource.resourceComplete = 1
+        tempResource.resourceComplete = BOOL.TRUE
         if (resumeResponse.doUpdate) {
           // TODO 文件的也需要迁移到对应路径下
           tempResource.filePath = finalFilePath

@@ -25,7 +25,7 @@ import { OriginType } from '../constant/OriginType.js'
 import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
 import SiteTagDTO from '../model/dto/SiteTagDTO.js'
 import ResourceService from './ResourceService.js'
-import { OnOff } from '../constant/OnOff.js'
+import { BOOL } from '../constant/BOOL.js'
 import ReWorksWorksSetService from './ReWorksWorksSetService.js'
 import WorksFullInfoDTO from '../model/dto/WorksFullInfoDTO.js'
 
@@ -320,7 +320,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     const resourceList = await resService.listByWorksId(worksId)
     fullInfo.inactiveResource = []
     for (const resource of resourceList) {
-      if (resource.state === OnOff.ON) {
+      if (resource.state === BOOL.TRUE) {
         fullInfo.resource = resource
       } else {
         fullInfo.inactiveResource.push(resource)
