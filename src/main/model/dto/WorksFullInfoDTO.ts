@@ -60,11 +60,31 @@ export default class WorksFullInfoDTO extends Works {
       ParsePropertyFromJson(works, [
         {
           property: 'resource',
-          constructor: Resource
+          builder: (src) => new Resource(src)
         },
         {
           property: 'site',
-          constructor: Site
+          builder: (src) => new Site(src)
+        },
+        {
+          property: 'localAuthors',
+          builder: (raw: []) => raw.forEach((rawLocalAuthor) => new LocalAuthorDTO(rawLocalAuthor))
+        },
+        {
+          property: 'localTags',
+          builder: (raw: []) => raw.forEach((rawLocalTag) => new LocalTag(rawLocalTag))
+        },
+        {
+          property: 'siteAuthors',
+          builder: (raw: []) => raw.forEach((rawSiteAuthor) => new SiteAuthorDTO(rawSiteAuthor))
+        },
+        {
+          property: 'siteTags',
+          builder: (raw: []) => raw.forEach((rawSiteTag) => new SiteTagDTO(rawSiteTag))
+        },
+        {
+          property: 'worksSets',
+          builder: (raw: []) => raw.forEach((rawWorksSet) => new WorksSet(rawWorksSet))
         }
       ])
       lodash.assign(

@@ -93,12 +93,12 @@ function MergeObjects<T>(obj1: object, obj2: object, constr: (src) => T): T {
  * @param properties
  * @constructor
  */
-export function ParsePropertyFromJson(source: object, properties: { property: string; constructor: new (arg) => unknown }[]) {
+export function ParsePropertyFromJson(source: object, properties: { property: string; builder: (arg) => unknown }[]) {
   for (const property of properties) {
     if (typeof source[property.property] === 'string') {
       try {
         const tempObj = JSON.parse(source[property.property])
-        source[property.property] = new property.constructor(tempObj)
+        source[property.property] = property.builder(tempObj)
       } catch (error) {
         LogUtil.error('ObjectUtil', error)
       }

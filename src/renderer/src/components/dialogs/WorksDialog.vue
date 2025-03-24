@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
-import { computed, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { computed, onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
@@ -26,7 +26,7 @@ const props = defineProps<{
 }>()
 
 // onMounted
-onMounted(() => {
+onBeforeMount(() => {
   getWorksInfo()
   // nextTick(() => {
   //   const baseDialogHeader =
@@ -60,7 +60,7 @@ const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件
 const siteTagExchangeBox = ref()
 // 作品信息
-const worksFullInfo: Ref<WorksFullInfoDTO> = ref(new WorksFullInfoDTO())
+const worksFullInfo: Ref<WorksFullInfoDTO> = ref(new WorksFullInfoDTO(props.works[0]))
 // 本地作者
 const localAuthor: Ref<UnwrapRef<string>> = computed(() => {
   const names = worksFullInfo.value.localAuthors?.map((localAuthor) => localAuthor.localAuthorName)

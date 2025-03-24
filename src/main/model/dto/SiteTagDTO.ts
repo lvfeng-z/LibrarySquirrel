@@ -23,11 +23,11 @@ export default class SiteTagDTO extends SiteTag {
       const properties = [
         {
           property: 'localTag',
-          constructor: LocalTag
+          builder: (src) => new LocalTag(src)
         },
         {
           property: 'site',
-          constructor: Site
+          builder: (src) => new Site(src)
         }
       ]
       ParsePropertyFromJson(this, properties)

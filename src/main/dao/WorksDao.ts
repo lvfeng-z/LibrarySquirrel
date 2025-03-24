@@ -35,34 +35,39 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
              ELSE JSON_OBJECT('id', t2.id, 'worksId', t2.works_id, 'taskId', t2.task_id, 'state', t2.state, 'filePath', t2.file_path, 'fileName', t2.file_name, 'filenameExtension', t2.filename_extension,
                               'suggestedName', t2.suggest_name, 'workdir', t2.workdir, 'resourceComplete', t2.resource_complete, 'importMethod', t2.import_method) END AS resource,
            CASE
-               WHEN t4.id IS NULL THEN NULL
-               ELSE JSON_OBJECT('id', t4.id, 'localTagName', t4.local_tag_name, 'baseLocalTagId', t4.base_local_tag_id, 'lastUse', t4.last_use) END AS localTag,
+             WHEN t3.id IS NULL THEN NULL
+             ELSE JSON_GROUP_ARRAY(JSON_OBJECT('id', t3.id, 'worksId', t3.works_id, 'taskId', t3.task_id, 'state', t3.state, 'filePath', t3.file_path, 'fileName', t3.file_name, 'filenameExtension', t3.filename_extension,
+                              'suggestedName', t3.suggest_name, 'workdir', t3.workdir, 'resourceComplete', t3.resource_complete, 'importMethod', t3.import_method)) END AS inactiveResource,
            CASE
                WHEN t5.id IS NULL THEN NULL
-               ELSE JSON_OBJECT('id', t5.id, 'siteId', t5.site_id, 'siteTagId', t5.site_tag_id, 'siteTagName', t5.site_tag_name, 'baseSiteTagId', t5.base_site_tag_id,
-                                'description', t5.description, 'localTagId', t5.local_tag_id, 'lastUse', t5.last_use) END AS siteTag,
+               ELSE JSON_GROUP_ARRAY(JSON_OBJECT('id', t5.id, 'localTagName', t5.local_tag_name, 'baseLocalTagId', t5.base_local_tag_id, 'lastUse', t5.last_use)) END AS localTags,
            CASE
-               WHEN t7.id IS NULL THEN NULL
-               ELSE JSON_OBJECT('id', t7.id, 'localAuthorName', t7.local_author_name, 'lastUse', t7.last_use, 'authorRole', t6.author_role) END AS localAuthor,
+               WHEN t6.id IS NULL THEN NULL
+               ELSE JSON_GROUP_ARRAY(JSON_OBJECT('id', t6.id, 'siteId', t6.site_id, 'siteTagId', t6.site_tag_id, 'siteTagName', t6.site_tag_name, 'baseSiteTagId', t6.base_site_tag_id,
+                                'description', t6.description, 'localTagId', t6.local_tag_id, 'lastUse', t6.last_use)) END AS siteTags,
            CASE
                WHEN t8.id IS NULL THEN NULL
-               ELSE JSON_OBJECT('id', t8.id, 'siteId', t8.site_id, 'siteAuthorId', t8.site_author_id, 'siteAuthorName', t8.site_author_name, 'siteAuthorNameBefore', t8.site_author_name_before,
-                                'introduce', t8.introduce, 'localAuthorId', t8.local_author_id, 'lastUse', t8.last_use, 'authorRole', t6.author_role) END AS siteAuthor,
+               ELSE JSON_GROUP_ARRAY(JSON_OBJECT('id', t8.id, 'localAuthorName', t8.local_author_name, 'lastUse', t8.last_use, 'authorRole', t7.author_role)) END AS localAuthors,
            CASE
-               WHEN t10.id IS NULL THEN NULL
-               ELSE JSON_OBJECT('id', t10.id, 'siteId', t10.site_id, 'siteWorksSetId', t10.site_works_set_id, 'siteWorksSetName', t10.site_works_set_name, 'siteAuthorId', t10.site_author_id,
-                                'siteUploadTime', t10.site_upload_time, 'siteUpdateTime', t10.site_update_time, 'nickName', t10.nick_name, 'lastView', t10.last_view) END AS worksSet`
+               WHEN t9.id IS NULL THEN NULL
+               ELSE JSON_GROUP_ARRAY(JSON_OBJECT('id', t9.id, 'siteId', t9.site_id, 'siteAuthorId', t9.site_author_id, 'siteAuthorName', t9.site_author_name, 'siteAuthorNameBefore', t9.site_author_name_before,
+                                'introduce', t9.introduce, 'localAuthorId', t9.local_author_id, 'lastUse', t9.last_use, 'authorRole', t7.author_role)) END AS siteAuthors,
+           CASE
+               WHEN t11.id IS NULL THEN NULL
+               ELSE JSON_GROUP_ARRAY(JSON_OBJECT('id', t11.id, 'siteId', t11.site_id, 'siteWorksSetId', t11.site_works_set_id, 'siteWorksSetName', t11.site_works_set_name, 'siteAuthorId', t11.site_author_id,
+                                'siteUploadTime', t11.site_upload_time, 'siteUpdateTime', t11.site_update_time, 'nickName', t11.nick_name, 'lastView', t11.last_view)) END AS worksSets`
     const fromClause = `
         FROM works t1
           LEFT JOIN resource t2 ON t1.id = t2.works_id AND t2.state = ${OnOff.ON}
-          LEFT JOIN re_works_tag t3 ON t1.id = t3.works_id
-          LEFT JOIN local_tag t4 ON t3.local_tag_id = t4.id
-          LEFT JOIN site_tag t5 ON t3.site_tag_id = t5.id
-          LEFT JOIN re_works_author t6 ON t1.id = t6.works_id
-          LEFT JOIN local_author t7 ON t6.local_author_id = t7.id
-          LEFT JOIN site_author t8 ON t6.site_author_id = t8.id
-          LEFT JOIN re_works_works_set t9 ON t1.id = t9.works_id
-          LEFT JOIN works_set t10 ON t9.works_set_id = t10.id`
+          LEFT JOIN resource t3 ON t1.id = t3.works_id AND t3.state = ${OnOff.OFF}
+          LEFT JOIN re_works_tag t4 ON t1.id = t4.works_id
+          LEFT JOIN local_tag t5 ON t4.local_tag_id = t5.id
+          LEFT JOIN site_tag t6 ON t4.site_tag_id = t6.id
+          LEFT JOIN re_works_author t7 ON t1.id = t7.works_id
+          LEFT JOIN local_author t8 ON t7.local_author_id = t8.id
+          LEFT JOIN site_author t9 ON t7.site_author_id = t9.id
+          LEFT JOIN re_works_works_set t10 ON t1.id = t10.works_id
+          LEFT JOIN works_set t11 ON t10.works_set_id = t11.id`
     let whereClause: string | undefined
     if (modifiedPage.query !== undefined && page.query !== undefined) {
       const baseProperties = lodash.cloneDeep(modifiedPage.query)

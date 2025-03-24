@@ -17,7 +17,7 @@ export default class SiteDomainDTO extends SiteDomain {
       const property = [
         {
           property: 'site',
-          constructor: Site
+          builder: (src) => new Site(src)
         }
       ]
       ParsePropertyFromJson(this, property)
