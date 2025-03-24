@@ -576,6 +576,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return ResourceService.resumeSaveResource(taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         const tempResource = new Resource()
+        tempResource.id = taskWriter.resourceId
         tempResource.worksId = worksId
         tempResource.resourceComplete = BOOL.TRUE
         if (resumeResponse.doUpdate) {

@@ -96,7 +96,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
     try {
       const resService = new ResourceService()
-      await resService.saveActive(resourceSaveDTO)
+      const resId = await resService.saveActive(resourceSaveDTO)
       // 创建保存目录
       await CreateDirIfNotExists(path.dirname(resourceSaveDTO.fullSavePath))
       // 创建写入流
@@ -105,6 +105,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // 创建写入Promise
       fileWriter.readable = resourceSaveDTO.resourceStream
       fileWriter.writable = writeStream
+      fileWriter.resourceId = resId
       return fileWriter.doWrite()
     } catch (error) {
       const msg = `保存作品失败，taskId: ${resourceSaveDTO.taskId}`

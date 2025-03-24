@@ -131,8 +131,10 @@ export class TaskQueue {
       })
       this.taskResourceStream.on('data', (taskRunInstance: TaskRunInstance) => {
         if (taskRunInstance.status === TaskStatusEnum.FINISHED) {
+          taskRunInstance.saveHadStarted = false
           LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}完成`)
         } else if (taskRunInstance.status === TaskStatusEnum.FAILED) {
+          taskRunInstance.saveHadStarted = false
           LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}失败`)
         }
         this.refreshParentStatus([taskRunInstance.parentId])
@@ -155,11 +157,7 @@ export class TaskQueue {
         this.taskResourceStream.pipe(this.taskStatusChangeStream)
         handleError(error, taskRunInstance)
       })
-      this.taskStatusChangeStream.on('data', (runInstances: TaskRunInstance[]) => {
-        runInstances.forEach((runInst) => {
-          runInst.saveHadStarted = false
-        })
-      })
+      this.taskStatusChangeStream.on('data', () => {})
       const taskStatusChangeStreamDestroyed = new Promise<void>((resolve) =>
         this.taskStatusChangeStream.once('end', () => {
           this.taskStatusChangeStream.destroy()
@@ -1092,6 +1090,7 @@ class TaskResourceStream extends Transform {
 /**
  * 任务状态改变流
  */
+// TODO 改成Writable
 class TaskStatusChangeStream extends Transform {
   /**
    * 任务服务

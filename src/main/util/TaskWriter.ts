@@ -32,6 +32,10 @@ export default class TaskWriter {
    * @private
    */
   private readableFinished: boolean
+  /**
+   * 资源id
+   */
+  public resourceId: number
 
   constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
@@ -40,6 +44,7 @@ export default class TaskWriter {
     this.bytesWritten = 0
     this.paused = false
     this.readableFinished = false
+    this.resourceId = -1
   }
 
   /**
