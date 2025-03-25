@@ -360,7 +360,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return resService.saveResource(resourceSaveDTO, taskWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         const resourceService = new ResourceService()
-        resourceService.resourceFinished(worksId)
+        resourceService.resourceFinished(taskWriter.resourceId)
         return TaskStatusEnum.FINISHED
       } else if (FileSaveResult.PAUSE === saveResult) {
         return TaskStatusEnum.PAUSE

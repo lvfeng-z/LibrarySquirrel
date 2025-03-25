@@ -132,14 +132,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public async saveActive(resource: Resource): Promise<number> {
     AssertNotNullish(resource.worksId, `资源设置为启用失败，worksId不能为空`)
     resource.state = BOOL.TRUE
-    const allRes = await this.listByWorksId(resource.worksId)
-    if (ArrayNotEmpty(allRes)) {
-      allRes.forEach((res) => (res.state = BOOL.FALSE))
-      allRes.push(resource)
-      return this.saveOrUpdateBatchById(allRes)
-    } else {
-      return this.save(resource)
+    const oldRes = await this.listByWorksId(resource.worksId)
+    if (ArrayNotEmpty(oldRes)) {
+      oldRes.forEach((res) => (res.state = BOOL.FALSE))
+      await this.updateBatchById(oldRes)
     }
+    return this.save(resource)
   }
 
   /**
@@ -180,7 +178,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 资源状态改为已完成
-   * @param id 作品id
+   * @param id 资源id
    */
   public async resourceFinished(id: number): Promise<number> {
     const resource = new Resource()
