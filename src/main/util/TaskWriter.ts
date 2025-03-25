@@ -7,6 +7,10 @@ import fs from 'fs'
 
 export default class TaskWriter {
   /**
+   * 资源id
+   */
+  public resourceId: number
+  /**
    * 读取流
    */
   public readable: Readable | undefined
@@ -33,9 +37,42 @@ export default class TaskWriter {
    */
   private readableFinished: boolean
   /**
-   * 资源id
+   * 是否错误
    */
-  public resourceId: number
+  private errorOccurred: boolean
+  /**
+   * doWrite方法返回的Promise的reject方法
+   * @private
+   */
+  private rejectFunc: ((arg?: unknown) => void) | undefined
+
+  /**
+   * 可读流的error事件回调
+   * @param err
+   * @private
+   */
+  private readableErrorHandler(err: Error) {
+    this.errorOccurred = true
+    LogUtil.error('TaskWriter', `readable出错${err}`)
+    if (NotNullish(this.rejectFunc)) {
+      this.rejectFunc(err)
+    }
+  }
+
+  /**
+   * 可读流的end事件回调
+   * @private
+   */
+  private readableEndHandler() {
+    this.readableFinished = true
+    if (!this.errorOccurred) {
+      this.writable?.end()
+    } else {
+      if (NotNullish(this.rejectFunc)) {
+        this.rejectFunc()
+      }
+    }
+  }
 
   constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
@@ -45,6 +82,7 @@ export default class TaskWriter {
     this.paused = false
     this.readableFinished = false
     this.resourceId = -1
+    this.errorOccurred = false
   }
 
   /**
@@ -60,33 +98,20 @@ export default class TaskWriter {
       AssertNotNullish(this.writable, 'TaskWriter', '写入任务资源失败，writable为空')
       const readable = this.readable
       const writable = this.writable
-      let errorOccurred = false
-      const readableErrorHandler = (err: Error) => {
-        errorOccurred = true
-        LogUtil.error('TaskWriter', `readable出错${err}`)
-        reject(err)
-      }
-      if (!readable.listeners('error').includes(readableErrorHandler)) {
-        readable.once('error', readableErrorHandler)
+      this.errorOccurred = false
+      if (!readable.listeners('error').includes(this.readableErrorHandler)) {
+        readable.once('error', this.readableErrorHandler)
       }
       writable.once('error', (err) => {
-        errorOccurred = true
+        this.errorOccurred = true
         LogUtil.error('TaskWriter', `writable出错，${err}`)
         reject(err)
       })
-      const readableEndHandler = () => {
-        this.readableFinished = true
-        if (!errorOccurred) {
-          writable.end()
-        } else {
-          reject()
-        }
-      }
-      if (!readable.listeners('end').includes(readableEndHandler)) {
-        readable.once('end', readableEndHandler)
+      if (!readable.listeners('end').includes(this.readableEndHandler)) {
+        readable.once('end', this.readableEndHandler)
       }
       writable.once('finish', () => {
-        if (!errorOccurred) {
+        if (!this.errorOccurred) {
           return this.paused ? resolve(FileSaveResult.PAUSE) : resolve(FileSaveResult.FINISH)
         } else {
           reject()
