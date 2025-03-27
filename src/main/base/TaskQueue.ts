@@ -90,6 +90,18 @@ export class TaskQueue {
    */
   private readonly readyToClose: Promise<void>
 
+  /**
+   * 是否正在推送任务进度
+   * @private
+   */
+  private taskSchedulePushing: boolean
+
+  /**
+   * 是否正在推送父任务进度
+   * @private
+   */
+  private parentSchedulePushing: boolean
+
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
@@ -97,6 +109,8 @@ export class TaskQueue {
     this.worksService = new WorksService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
     this.closed = false
+    this.taskSchedulePushing = false
+    this.parentSchedulePushing = false
 
     this.inletStream = new ReadableTaskRunInstance()
     this.taskInfoStream = new TaskInfoStream()
@@ -187,13 +201,13 @@ export class TaskQueue {
       return
     }
     if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
-      this.processTask(tasks)
+      await this.processTask(tasks)
     } else if (taskOperation === TaskOperation.PAUSE) {
-      this.pauseTask(tasks.map((task) => task.id as number))
+      await this.pauseTask(tasks.map((task) => task.id as number))
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     } else if (taskOperation === TaskOperation.STOP) {
-      this.stopTask(tasks)
+      await this.stopTask(tasks)
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     }
@@ -273,7 +287,11 @@ export class TaskQueue {
    * 循环推送子任务的进度
    */
   public async pushTaskSchedule(): Promise<void> {
+    if (this.taskSchedulePushing) {
+      return
+    }
     while (NotNullish(this.taskMap) && this.taskMap.size > 0) {
+      this.taskSchedulePushing = true
       const taskScheduleList = this.taskMap
         .values()
         .toArray()
@@ -311,13 +329,18 @@ export class TaskQueue {
       SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
+    this.taskSchedulePushing = false
   }
 
   /**
    * 循环推送父任务的进度
    */
   public async pushParentTaskSchedule(): Promise<void> {
+    if (this.parentSchedulePushing) {
+      return
+    }
     while (NotNullish(this.parentMap) && this.parentMap.size > 0) {
+      this.parentSchedulePushing = true
       const taskScheduleList = this.parentMap
         .values()
         .toArray()
@@ -348,6 +371,7 @@ export class TaskQueue {
       SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
+    this.parentSchedulePushing = false
   }
 
   /**
@@ -470,7 +494,8 @@ export class TaskQueue {
     // 所有任务设置为等待中
     this.taskStatusChangeStream.addTask(needChangeStatusList)
     // 刷新父任务状态
-    this.fillChildren(runInstances)
+    await this.fillChildren(runInstances)
+    this.refreshParentStatus(runInstances.map((runInstance) => runInstance.parentId))
 
     this.inletStream.addArray(runInstances)
   }
@@ -578,7 +603,6 @@ export class TaskQueue {
         }
       }
     }
-    this.refreshParentStatus(notExistingPid)
   }
 
   /**
@@ -707,15 +731,13 @@ export class TaskQueue {
       if (NotNullish(runInstance)) {
         runInstance.clearTimeoutId = setTimeout(() => {
           this.taskMap.delete(taskId)
+          // 任务状态推送到渲染进程
+          SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, [taskId])
         }, 5000)
       } else {
         LogUtil.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
       }
     }
-    // 任务状态推送到渲染进程
-    setTimeout(() => {
-      SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, taskIds)
-    }, 5000)
   }
 
   /**

@@ -55,7 +55,21 @@ const load = (node, resolve) => {
     <div>
       <template v-for="item in parentTaskStatus.values()" :key="item.id">
         <span style="white-space: nowrap">
-          {{ 'id: ' + item.id + ', ' + 'taskName: ' + item.taskName + ', ' + 'pid:' + item.pid + ', ' + 'status: ' + item.status }}
+          {{
+            'id: ' +
+            item.id +
+            ', ' +
+            'taskName: ' +
+            item.taskName +
+            ', ' +
+            'pid:' +
+            item.pid +
+            ', ' +
+            'status: ' +
+            item.status +
+            'p: ' +
+            item.schedule
+          }}
         </span>
         <br />
       </template>
@@ -63,7 +77,21 @@ const load = (node, resolve) => {
     <div>
       <template v-for="item in taskStatus.values()" :key="item.id">
         <span style="white-space: nowrap">
-          {{ 'id: ' + item.id + ', ' + 'taskName: ' + item.taskName + ', ' + 'pid:' + item.pid + ', ' + 'status: ' + item.status }}
+          {{
+            'id: ' +
+            item.id +
+            ', ' +
+            'taskName: ' +
+            item.taskName +
+            ', ' +
+            'pid:' +
+            item.pid +
+            ', ' +
+            'status: ' +
+            item.status +
+            'p: ' +
+            item.schedule
+          }}
         </span>
         <br />
       </template>

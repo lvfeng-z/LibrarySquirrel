@@ -669,15 +669,6 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('works-saveWorks', async (_event, args): Promise<ApiUtil> => {
-    const worksService = new WorksService()
-    try {
-      const result = await worksService.saveOrUpdateWorksInfos(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
   Electron.ipcMain.handle('works-getFullWorksInfoById', async (_event, args): Promise<ApiUtil> => {
     const worksService = new WorksService()
     try {

@@ -248,9 +248,6 @@ const api = {
   worksMultipleConditionQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('works-multipleConditionQueryPage', args)
   },
-  worksSaveWorks: (args) => {
-    return Electron.ipcRenderer.invoke('works-saveWorks', args)
-  },
   worksGetFullWorksInfoById: (args) => {
     return Electron.ipcRenderer.invoke('works-getFullWorksInfoById', args)
   },

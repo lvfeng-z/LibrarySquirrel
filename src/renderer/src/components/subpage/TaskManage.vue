@@ -444,7 +444,11 @@ async function refreshTask() {
         const task = GetNode<TaskTreeDTO>(tempRoot, id)
         return (
           NotNullish(task) &&
-          (task.status === TaskStatusEnum.WAITING || task.status === TaskStatusEnum.PROCESSING || task.status === TaskStatusEnum.PAUSE)
+          (task.status === TaskStatusEnum.WAITING ||
+            task.status === TaskStatusEnum.PROCESSING ||
+            task.status === TaskStatusEnum.PAUSE ||
+            parentTaskStatusStore.has(task.id as number) ||
+            taskStatusStore.has(task.id as number))
         )
       })
     }
