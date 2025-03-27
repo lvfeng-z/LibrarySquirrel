@@ -249,10 +249,7 @@ tables:
         constraint resource_works_id_fk
         references works
         on delete cascade,
-        task_id            integer not null
-        constraint resource_task_id_fk
-        references task
-        on delete set null,
+        task_id            integer not null,
         state              integer not null,
         file_path          text    not null,
         file_name          text    not null,
