@@ -26,11 +26,6 @@ export default class Task extends BaseEntity {
   siteId: number | undefined | null
 
   /**
-   * 本地作品id/本地作品集id
-   */
-  localWorksId: number | undefined | null
-
-  /**
    * 站点作品id
    */
   siteWorksId: string | undefined | null
@@ -46,9 +41,14 @@ export default class Task extends BaseEntity {
   status: number | undefined | null
 
   /**
-   * 下载中的文件路径
+   * 保存中的资源id
    */
-  pendingDownloadPath: string | undefined | null
+  pendingResourceId: number | undefined | null
+
+  /**
+   * 保存中的文件路径
+   */
+  pendingSavePath: string | undefined | null
 
   /**
    * 资源是否支持续传
@@ -88,11 +88,11 @@ export default class Task extends BaseEntity {
       this.pid = task.pid
       this.taskName = task.taskName
       this.siteId = task.siteId
-      this.localWorksId = task.localWorksId
+      this.pendingResourceId = task.pendingResourceId
       this.siteWorksId = task.siteWorksId
       this.url = task.url
       this.status = task.status
-      this.pendingDownloadPath = task.pendingDownloadPath
+      this.pendingSavePath = task.pendingSavePath
       this.continuable = task.continuable
       this.pluginAuthor = task.pluginAuthor
       this.pluginName = task.pluginName
@@ -116,7 +116,7 @@ export default class Task extends BaseEntity {
     this.isCollection = undefined
     this.pid = undefined
     this.siteId = undefined
-    this.localWorksId = undefined
+    this.pendingResourceId = undefined
     this.status = undefined
     this.pluginAuthor = undefined
     this.pluginName = undefined

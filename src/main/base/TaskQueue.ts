@@ -145,10 +145,10 @@ export class TaskQueue {
       })
       this.taskResourceStream.on('data', (taskRunInstance: TaskRunInstance) => {
         if (taskRunInstance.status === TaskStatusEnum.FINISHED) {
-          taskRunInstance.saveHadStarted = false
+          taskRunInstance.resSaveSuspended = false
           LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}完成`)
         } else if (taskRunInstance.status === TaskStatusEnum.FAILED) {
-          taskRunInstance.saveHadStarted = false
+          taskRunInstance.resSaveSuspended = false
           LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}失败`)
         }
         this.refreshParentStatus([taskRunInstance.parentId])
@@ -466,12 +466,14 @@ export class TaskQueue {
       } else {
         // 判断这个作品是否已经保存过
         let infoSaved = false
+        let localWorksId: number | undefined
+        const resSaveSuspended = NotNullish(task.pendingResourceId)
         if (NotNullish(task.siteId) && NotNullish(task.siteWorksId)) {
           const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksId(task.siteId, task.siteWorksId)
           infoSaved = ArrayNotEmpty(existsWorksList)
-          if (infoSaved && IsNullish(task.localWorksId)) {
-            LogUtil.info(this.constructor.name, `任务${task.id}对应的作品已经保存过`)
-            task.localWorksId = existsWorksList[0].id
+          if (infoSaved) {
+            AssertNotNullish(existsWorksList[0].id)
+            localWorksId = existsWorksList[0].id
           }
         }
         taskRunInstance = new TaskRunInstance(
@@ -482,7 +484,9 @@ export class TaskQueue {
           this.taskService,
           this.pluginLoader,
           task.pid,
-          infoSaved
+          infoSaved,
+          resSaveSuspended,
+          localWorksId
         )
         task.status = TaskStatusEnum.WAITING
         taskRunInstance.inStream = true
@@ -842,10 +846,6 @@ class TaskRunInstance extends TaskStatus {
    */
   public taskWriter: TaskWriter
   /**
-   * 操作
-   */
-  public operation: TaskOperation | undefined
-  /**
    * 父任务id（为0时表示没有父任务）
    */
   public parentId: number
@@ -854,9 +854,9 @@ class TaskRunInstance extends TaskStatus {
    */
   public infoSaved: boolean
   /**
-   * 作品资源是否开始保存过
+   * 资源保存是否中断
    */
-  public saveHadStarted: boolean
+  public resSaveSuspended: boolean
   /**
    * 是否正在流中
    */
@@ -867,10 +867,15 @@ class TaskRunInstance extends TaskStatus {
    */
   private taskService: TaskService
   /**
-   * 作品信息
+   * 任务信息
    * @private
    */
   private taskInfo: Task
+  /**
+   * 作品id
+   * @private
+   */
+  public worksId: number | undefined
   /**
    * 插件加载器
    * @private
@@ -884,10 +889,10 @@ class TaskRunInstance extends TaskStatus {
     taskInfo: Task,
     taskService: TaskService,
     pluginLoader: PluginLoader<TaskHandler>,
-    parentId?: number | null | undefined,
-    worksInfoSaved?: boolean,
-    resourceHadStarted?: boolean,
-    operation?: TaskOperation
+    parentId: number | null | undefined,
+    worksInfoSaved: boolean,
+    resSaveSuspended: boolean,
+    localWorksId?: number
   ) {
     super(taskId, status, false)
     this.taskWriter = taskWriter
@@ -896,19 +901,19 @@ class TaskRunInstance extends TaskStatus {
     this.pluginLoader = pluginLoader
     this.parentId = IsNullish(parentId) ? 0 : parentId
     this.infoSaved = IsNullish(worksInfoSaved) ? false : worksInfoSaved
-    this.saveHadStarted = IsNullish(resourceHadStarted) ? false : resourceHadStarted
-    this.operation = operation
+    this.resSaveSuspended = IsNullish(resSaveSuspended) ? false : resSaveSuspended
     this.inStream = false
+    this.worksId = localWorksId
   }
 
   public changeStatus(status: TaskStatusEnum): void {
     super.changeStatus(status, false)
   }
 
-  public async saveInfo(): Promise<number> {
+  public async saveInfo(): Promise<void> {
     const task = await this.taskService.getById(this.taskId)
     AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
-    return this.taskService.saveWorksInfo(task, this.pluginLoader).then((worksId) => (this.taskInfo.localWorksId = worksId))
+    this.worksId = await this.taskService.saveWorksInfo(task, this.pluginLoader)
   }
 
   public preStart() {
@@ -959,10 +964,11 @@ class TaskRunInstance extends TaskStatus {
       this.changeStatus(TaskStatusEnum.PROCESSING)
 
       AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
-      const result = this.saveHadStarted
-        ? this.taskService.resumeTask(this.taskInfo, this.pluginLoader, this.taskWriter)
-        : this.taskService.startTask(this.taskInfo, this.pluginLoader, this.taskWriter)
-      this.saveHadStarted = true
+      AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
+      const result = this.resSaveSuspended
+        ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
+        : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
+      this.resSaveSuspended = true
       return result.then((saveResult) => {
         this.changeStatus(saveResult)
         return saveResult
@@ -1220,7 +1226,8 @@ class TaskStatusChangeStream extends Transform {
     tempTask.id = runInstance.taskId
     tempTask.status = runInstance.status
     if (TaskStatusEnum.FINISHED === tempTask.status) {
-      tempTask.pendingDownloadPath = null
+      tempTask.pendingResourceId = null
+      tempTask.pendingSavePath = null
     }
     return tempTask
   }

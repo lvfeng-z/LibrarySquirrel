@@ -93,10 +93,10 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       this.constructor.name,
       `保存作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.id}`
     )
+    const resId = resourceSaveDTO.id
+    AssertNotNullish(resId, this.constructor.name, `保存作品资源失败，资源id不能为空`)
 
     try {
-      const resService = new ResourceService()
-      const resId = await resService.saveActive(resourceSaveDTO)
       // 创建保存目录
       await CreateDirIfNotExists(path.dirname(resourceSaveDTO.fullSavePath))
       // 创建写入流

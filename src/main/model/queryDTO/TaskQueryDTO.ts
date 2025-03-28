@@ -22,11 +22,6 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   siteId: string | undefined | null
 
   /**
-   * 本地作品id/本地作品集id
-   */
-  localWorksId: number | undefined | null
-
-  /**
    * 站点作品id
    */
   siteWorksId: number | undefined | null
@@ -42,9 +37,14 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   status: number | undefined | null
 
   /**
-   * 下载中的文件路径
+   * 保存中的资源id
    */
-  pendingDownloadPath: string | undefined | null
+  pendingResourceId: number | undefined | null
+
+  /**
+   * 保存中的文件路径
+   */
+  pendingSavePath: string | undefined | null
 
   /**
    * 资源是否支持续传
@@ -78,11 +78,11 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.pid = undefined
       this.taskName = undefined
       this.siteId = undefined
-      this.localWorksId = undefined
       this.siteWorksId = undefined
       this.url = undefined
       this.status = undefined
-      this.pendingDownloadPath = undefined
+      this.pendingResourceId = undefined
+      this.pendingSavePath = undefined
       this.continuable = undefined
       this.pluginId = undefined
       this.pluginInfo = undefined
@@ -93,11 +93,11 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.pid = task.pid
       this.taskName = task.taskName
       this.siteId = task.siteId
-      this.localWorksId = task.localWorksId
       this.siteWorksId = task.siteWorksId
       this.url = task.url
       this.status = task.status
-      this.pendingDownloadPath = task.pendingDownloadPath
+      this.pendingResourceId = task.pendingResourceId
+      this.pendingSavePath = task.pendingSavePath
       this.continuable = task.continuable
       this.pluginId = task.pluginId
       this.pluginInfo = task.pluginInfo
