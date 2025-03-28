@@ -174,36 +174,38 @@ function getOptions(str: string, reg: string) {
           <el-button type="success" icon="circlePlus" @click="addInputRow"></el-button>
         </el-row>
         <el-scrollbar class="explain-path-dialog-context-scrollbar">
-          <template v-for="(meaningOfPath, index) in meaningOfPaths" :key="index">
-            <el-row>
-              <el-col :span="5">
-                <el-select v-model="meaningOfPath.type" @change="resetInputData(meaningOfPath)">
-                  <el-option v-for="item in meaningTypes" :key="item.value" :value="item.value" :label="item.label"> </el-option>
-                </el-select>
-              </el-col>
-              <el-col :span="17">
-                <el-input v-if="getInputRowType(meaningOfPath.type) === 'input'" v-model="meaningOfPath.name"></el-input>
-                <auto-load-select
-                  v-if="getInputRowType(meaningOfPath.type) === 'select'"
-                  v-model="meaningOfPath.id"
-                  remote
-                  filterable
-                  :load="(page: IPage<unknown, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
-                >
-                  <template #default="{ list }">
-                    <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
-                  </template>
-                </auto-load-select>
-                <el-date-picker
-                  v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
-                  v-model="meaningOfPath.name"
-                ></el-date-picker>
-              </el-col>
-              <el-col :span="2">
-                <el-button type="warning" icon="Remove" @click="removeInputRow(index)"></el-button>
-              </el-col>
-            </el-row>
-          </template>
+          <div>
+            <template v-for="(meaningOfPath, index) in meaningOfPaths" :key="index">
+              <el-row>
+                <el-col :span="5">
+                  <el-select v-model="meaningOfPath.type" @change="resetInputData(meaningOfPath)">
+                    <el-option v-for="item in meaningTypes" :key="item.value" :value="item.value" :label="item.label"> </el-option>
+                  </el-select>
+                </el-col>
+                <el-col :span="16">
+                  <el-input v-if="getInputRowType(meaningOfPath.type) === 'input'" v-model="meaningOfPath.name"></el-input>
+                  <auto-load-select
+                    v-if="getInputRowType(meaningOfPath.type) === 'select'"
+                    v-model="meaningOfPath.id"
+                    remote
+                    filterable
+                    :load="(page: IPage<unknown, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
+                  >
+                    <template #default="{ list }">
+                      <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                    </template>
+                  </auto-load-select>
+                  <el-date-picker
+                    v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
+                    v-model="meaningOfPath.name"
+                  ></el-date-picker>
+                </el-col>
+                <el-col :span="2">
+                  <el-button icon="Remove" @click="removeInputRow(index)"></el-button>
+                </el-col>
+              </el-row>
+            </template>
+          </div>
         </el-scrollbar>
       </div>
       <div class="explain-path-dialog-automatic">

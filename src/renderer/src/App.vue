@@ -232,11 +232,11 @@ window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => 
 
 // test
 const showTestDialog = ref(false)
-// async function handleTest() {
-//   // apis.testMainWindowMsgTest()
-//   showExplainPath.value = true
-//   // showTestDialog.value = true
-// }
+async function handleTest() {
+  // apis.testMainWindowMsgTest()
+  showExplainPath.value = true
+  // showTestDialog.value = true
+}
 </script>
 
 <template>
@@ -326,7 +326,7 @@ const showTestDialog = ref(false)
                   />
                   <collapse-panel v-model:state="searchBarPanelState" border-radios="10px">
                     <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
-                      <el-button> test </el-button>
+                      <el-button @click="handleTest"> test </el-button>
                     </div>
                   </collapse-panel>
                 </div>

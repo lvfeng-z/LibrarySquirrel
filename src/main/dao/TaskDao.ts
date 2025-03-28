@@ -66,10 +66,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
       const whereClauseAndQuery = super.getWhereClauses(modifiedPage.query, 't1', ['siteId'])
       const whereClauses = whereClauseAndQuery.whereClauses
       modifiedPage.query = whereClauseAndQuery.query
-      whereClauseList = whereClauses
-        .values()
-        .toArray()
-        .map(([, value]) => value)
+      whereClauseList = whereClauses.values().toArray()
     }
     modifiedPage.query.siteId = page.query?.siteId
 
