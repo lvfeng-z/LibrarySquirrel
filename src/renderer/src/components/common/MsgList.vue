@@ -45,14 +45,22 @@ const backgroundItem = useBackgroundItemStore().$state
   padding: 5px;
 }
 .background-list-item-title {
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 1;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--el-text-color-primary);
   font-size: var(--el-font-size-medium);
 }
 .background-list-item-description {
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 1;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--el-text-color-regular);

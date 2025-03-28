@@ -31,7 +31,7 @@ import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
-import BackgroundList from '@renderer/components/common/BackgroundList.vue'
+import MsgList from '@renderer/components/common/MsgList.vue'
 import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
 
 // onMounted
@@ -357,7 +357,7 @@ async function handleTest() {
           <test v-if="pageState.showTest" @close-self="closeSubpage" />
         </div>
       </el-main>
-      <background-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
+      <msg-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
     </el-container>
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
     <transaction-test v-model="showTestDialog"></transaction-test>
