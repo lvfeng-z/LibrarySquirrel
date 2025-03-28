@@ -3,6 +3,7 @@ import { removeTask, setTask, updateTask, updateTaskSchedule } from '@renderer/s
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskProgressMapTreeDTO from '@renderer/model/main/dto/TaskProgressMapTreeDTO.ts'
 import { removeParentTask, setParentTask, updateParentTask, updateParentTaskSchedule } from '@renderer/store/UseParentTaskStore.ts'
+import { ElMessageBox } from 'element-plus'
 
 export function iniListener() {
   window.electron.ipcRenderer.on('taskStatus-setTask', (_event, [taskList]: [TaskProgressDTO[]]) => {
@@ -35,5 +36,15 @@ export function iniListener() {
 
   window.electron.ipcRenderer.on('parentTaskStatus-removeParentTask', (_event, [ids]: [number[]]) => {
     removeParentTask(ids)
+  })
+
+  window.electron.ipcRenderer.on('mainWindow-closeConfirm', () => {
+    ElMessageBox.confirm('有任务正在进行中', '是否关闭LibrarySquirrel', {
+      confirmButtonText: '关闭',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then((r) => {
+      window.electron.ipcRenderer.send('mainWindow-closeConfirmed', r.action === 'confirm')
+    })
   })
 }

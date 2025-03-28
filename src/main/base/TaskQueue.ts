@@ -442,6 +442,17 @@ export class TaskQueue {
   }
 
   /**
+   * 任务队列是否空闲
+   */
+  public isIdle(): boolean {
+    const parentNotIdle = this.parentMap.values().some((parentInst) => parentInst.processing() || parentInst.waiting())
+    if (parentNotIdle) {
+      return false
+    }
+    return !this.taskMap.values().some((taskInst) => taskInst.processing() || taskInst.waiting())
+  }
+
+  /**
    * 开始处理任务
    * @param tasks 需要处理的任务
    * @private

@@ -47,6 +47,26 @@ function createWindow(): Electron.BrowserWindow {
     }
   })
 
+  mainWindow.on('close', async (event) => {
+    // 阻止默认关闭行为
+    event.preventDefault()
+
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    if (!taskQueue.isIdle()) {
+      mainWindow.webContents.send('mainWindow-closeConfirm')
+      await new Promise<boolean>((resolve) => {
+        Electron.ipcMain.once('mainWindow-closeConfirmed', (_event, confirmed: boolean) => {
+          resolve(confirmed)
+        })
+      })
+    }
+
+    // 关闭任务队列
+    await taskQueue.shutdown()
+    // 强制销毁窗口
+    mainWindow.destroy()
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     Electron.shell.openExternal(details.url)
     return { action: 'deny' }
@@ -187,9 +207,8 @@ Electron.app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-Electron.app.on('window-all-closed', async () => {
+Electron.app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    await GlobalVar.get(GlobalVars.TASK_QUEUE).shutdown()
     Electron.app.quit()
   }
 })
