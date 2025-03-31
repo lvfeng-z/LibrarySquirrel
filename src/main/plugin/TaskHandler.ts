@@ -71,7 +71,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现create方法，${pluginInfo}`)
 
     // createWorksInfo方法
-    isTaskHandler = 'createWorksInfo' in response && typeof response.start === 'function'
+    isTaskHandler = 'createWorksInfo' in response && typeof response.createWorksInfo === 'function'
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现createWorksInfo方法，${pluginInfo}`)
 
     // start方法
@@ -83,11 +83,11 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现retry方法，${pluginInfo}`)
 
     // pause方法
-    isTaskHandler = 'pause' in response && typeof response.retry === 'function'
+    isTaskHandler = 'pause' in response && typeof response.pause === 'function'
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现pause方法，${pluginInfo}`)
 
     // resume方法
-    isTaskHandler = 'resume' in response && typeof response.retry === 'function'
+    isTaskHandler = 'resume' in response && typeof response.resume === 'function'
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现resume方法，${pluginInfo}`)
 
     const taskHandler = response as TaskHandler
