@@ -71,7 +71,13 @@ function handlePictureClicked() {
       @load="handleElImageFit"
       @click="handleImageClicked"
       @dblclick="handlePictureClicked"
-    ></el-image>
+    >
+      <template #error>
+        <div class="works-display-case-error">
+          <el-icon class="works-display-case-error-icon"><Picture /></el-icon>
+        </div>
+      </template>
+    </el-image>
     <works-info class="works-display-case-works-info" :works="works" />
     <author-info class="works-display-case-author-info" :authors="props.works.localAuthors" />
   </div>
@@ -87,6 +93,18 @@ function handlePictureClicked() {
   cursor: pointer;
   max-height: calc(v-bind(caseHeight) - 100px);
   border-radius: 10px;
+}
+.works-display-case-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  width: 100%;
+}
+.works-display-case-error-icon {
+  color: var(--el-text-color-secondary);
+  scale: 2;
 }
 .works-display-case-works-info {
   width: 100%;
