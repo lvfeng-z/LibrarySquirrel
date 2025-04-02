@@ -2,6 +2,7 @@
 import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import LocalAuthorManage from '@renderer/components/subpage/LocalAuthorManage.vue'
 import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
+import SiteTagManage from '@renderer/components/subpage/SiteTagManage.vue'
 import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
@@ -59,7 +60,8 @@ const sideMenuRef = ref()
 const pageState = reactive({
   mainPage: true,
   subpage: false,
-  showTagManagePage: false,
+  showLocalTagManagePage: false,
+  showSiteTagManagePage: false,
   showLocalAuthorManagePage: false,
   showPluginManagePage: false,
   showTaskManagePage: false,
@@ -121,8 +123,11 @@ function showSubpage(pageName: SubPageEnum) {
   pageState.subpage = true
   pageState.mainPage = false
   switch (pageName) {
-    case SubPageEnum.TagManage:
-      pageState.showTagManagePage = true
+    case SubPageEnum.LocalTagManage:
+      pageState.showLocalTagManagePage = true
+      break
+    case SubPageEnum.SiteTagManage:
+      pageState.showSiteTagManagePage = true
       break
     case SubPageEnum.LocalAuthorManage:
       pageState.showLocalAuthorManagePage = true
@@ -251,8 +256,8 @@ async function handleTest() {
                 <el-icon><CollectionTag /></el-icon>
                 <span>标签</span>
               </template>
-              <el-menu-item index="1-1" @click="showSubpage(SubPageEnum.TagManage)">本地标签</el-menu-item>
-              <el-menu-item index="1-2" @click="showSubpage(SubPageEnum.Developing)">站点标签</el-menu-item>
+              <el-menu-item index="1-1" @click="showSubpage(SubPageEnum.LocalTagManage)">本地标签</el-menu-item>
+              <el-menu-item index="1-2" @click="showSubpage(SubPageEnum.SiteTagManage)">站点标签</el-menu-item>
             </el-sub-menu>
             <el-sub-menu index="2">
               <template #title>
@@ -343,7 +348,8 @@ async function handleTest() {
           </div>
         </div>
         <div v-if="pageState.subpage" class="subPage">
-          <local-tag-manage v-if="pageState.showTagManagePage" @close-self="closeSubpage" />
+          <local-tag-manage v-if="pageState.showLocalTagManagePage" @close-self="closeSubpage" />
+          <site-tag-manage v-if="pageState.showSiteTagManagePage" @close-self="closeSubpage" />
           <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
           <plugin-manage v-if="pageState.showPluginManagePage" @close-self="closeSubpage" />
           <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />

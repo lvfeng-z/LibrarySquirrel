@@ -494,11 +494,29 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('siteTag-deleteById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteTag-deleteById')
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.deleteById(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('siteTag-updateBindLocalTag', async (_event, localTagId: string | null, siteTagIds: string[]) => {
     LogUtil.info('MainProcessApi', 'siteTag-updateBindLocalTag')
     try {
       const siteTagService = new SiteTagService()
       return ApiUtil.response(await siteTagService.updateBindLocalTag(localTagId, siteTagIds))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+  Electron.ipcMain.handle('siteTag-queryPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-queryPage')
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.queryPage(page))
     } catch (error) {
       return returnError(error)
     }

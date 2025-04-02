@@ -82,8 +82,10 @@ declare global {
 
       // SiteTag
       siteTagSave: function
+      siteTagDeleteById: function
       siteTagUpdateById: function
       siteTagUpdateBindLocalTag: function
+      siteTagQueryPage: function
       siteTagQueryBoundOrUnboundToLocalTagPage: function
       siteTagQueryPageByWorksId: function
       siteTagQuerySelectItemPageByWorksId: function

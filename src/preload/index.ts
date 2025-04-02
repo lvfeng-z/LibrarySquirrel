@@ -187,9 +187,11 @@ const api = {
   siteTagUpdateById: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-updateById', args)
   },
+  siteTagDeleteById: (args) => Electron.ipcRenderer.invoke('siteTag-deleteById', args),
   siteTagUpdateBindLocalTag: (localTagId: string | null, siteTagIds: string[]) => {
     return Electron.ipcRenderer.invoke('siteTag-updateBindLocalTag', localTagId, siteTagIds)
   },
+  siteTagQueryPage: (args) => Electron.ipcRenderer.invoke('siteTag-queryPage', args),
   siteTagQueryBoundOrUnboundToLocalTagPage: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-queryBoundOrUnboundToLocalTagPage', args)
   },

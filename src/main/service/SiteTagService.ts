@@ -26,7 +26,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 批量新增或更新
    * @param siteTags
    */
-  async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagDTO[]) {
+  public async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagDTO[]) {
     const tempParam = siteTags
       .map((siteTag) => {
         if (IsNullish(siteTag.siteTagId) || IsNullish(siteTag.siteId)) {
@@ -58,7 +58,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param localTagId
    * @param siteTagIds
    */
-  async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
+  public async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
     if (localTagId !== undefined) {
       if (siteTagIds != undefined && siteTagIds.length > 0) {
         return (await this.dao.updateBindLocalTag(localTagId, siteTagIds)) > 0
@@ -75,7 +75,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 查询本地标签绑定或未绑定的站点标签
    * @param page
    */
-  async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
+  public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
     AssertNotNullish(page.query, this.constructor.name, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
@@ -109,8 +109,28 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 查询作品的站点标签DTO
    * @param worksId
    */
-  async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
+  public async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
     return await this.dao.listDTOByWorksId(worksId)
+  }
+
+  /**
+   * 分页查询
+   * @param page
+   */
+  public async queryPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTag>> {
+    try {
+      page = new Page(page)
+      if (NotNullish(page.query)) {
+        page.query.operators = {
+          ...{ siteTagName: Operator.LIKE },
+          ...page.query.operators
+        }
+      }
+      return super.queryPage(page)
+    } catch (error) {
+      LogUtil.error(this.constructor.name, error)
+      throw error
+    }
   }
 
   /**
