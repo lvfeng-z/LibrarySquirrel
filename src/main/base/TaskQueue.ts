@@ -945,7 +945,7 @@ class TaskRunInstance extends TaskStatus {
       let result: Promise<boolean> = Promise.resolve(true)
       // 对于已开始的任务，调用taskService的pauseTask进行暂停
       if (this.processing()) {
-        result = this.taskService.pauseTask(this.taskId, this.pluginLoader, this.taskWriter)
+        result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
       }
       this.changeStatus(TaskStatusEnum.PAUSE)
       LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
@@ -960,7 +960,7 @@ class TaskRunInstance extends TaskStatus {
       let result: Promise<boolean> = Promise.resolve(true)
       // 对于已开始的任务，调用taskService的pauseTask进行暂停
       if (this.processing()) {
-        result = this.taskService.pauseTask(this.taskId, this.pluginLoader, this.taskWriter)
+        result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
       }
       this.changeStatus(TaskStatusEnum.PAUSE)
       LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
@@ -1032,13 +1032,14 @@ class TaskInfoStream extends Transform {
     const task: Task | undefined = new Task()
     task.id = chunk.taskId
     try {
-      await chunk.saveInfo()
+      const saveInfoPromise = chunk.saveInfo()
+      callback()
+      await saveInfoPromise
       if (chunk.paused()) {
         chunk.inStream = false
       } else {
         this.push(chunk)
       }
-      callback()
     } catch (error) {
       const msg = `保存任务${chunk.taskId}的作品信息失败`
       const newError = new Error()
