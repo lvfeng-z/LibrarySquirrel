@@ -232,7 +232,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const whereClause = siteTags
       .map((siteAuthor) => `(site_tag_id = ${siteAuthor.siteTagId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')
-    const statement = `SELECT * FROM site_tag WHERE ${whereClause}`
+    const statement = `SELECT * FROM ${this.tableName} WHERE ${whereClause}`
     const db = this.acquire()
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)

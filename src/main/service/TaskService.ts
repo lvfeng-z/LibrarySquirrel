@@ -438,16 +438,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 暂停任务
-   * @param taskId 任务id
+   * @param task 任务
    * @param pluginLoader 插件加载器
    * @param taskWriter
    */
-  public async pauseTask(taskId: number, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<boolean> {
-    const task = await this.getById(taskId)
-    AssertNotNullish(task, this.constructor.name, `无法暂停任务${taskId}，任务id不可用`)
+  public async pauseTask(task: Task, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<boolean> {
     // 加载插件
     const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '暂停任务失败')
-    AssertNotNullish(plugin?.id, this.constructor.name, `暂停任务失败，创建任务的插件id不能为空，taskId: ${taskId}`)
+    AssertNotNullish(plugin?.id, this.constructor.name, `暂停任务失败，创建任务的插件id不能为空，taskId: ${task.id}`)
     const taskHandler = await pluginLoader.load(plugin.id)
 
     // 创建TaskPluginDTO对象
@@ -467,7 +465,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           taskWriter.readable.pause()
         }
       }
-      task.status = TaskStatusEnum.PAUSE
       return true
     } else {
       return false
@@ -514,7 +511,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskId = task.id
     AssertNotNullish(task.pendingSavePath, this.constructor.name, `恢复任务失败，任务的pendingSavePath不能为空，taskId: ${taskId}`)
     // 加载插件
-    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '暂停任务失败')
+    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '恢复任务失败')
     AssertNotNullish(plugin?.id, this.constructor.name, `暂停任务失败，创建任务的插件id不能为空，taskId: ${taskId}`)
     const taskHandler: TaskHandler = await pluginLoader.load(plugin.id)
 
