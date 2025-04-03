@@ -33,7 +33,7 @@ import Test from '@renderer/components/subpage/Test.vue'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
 import MsgList from '@renderer/components/common/MsgList.vue'
-import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
+import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -72,7 +72,7 @@ const pageState = reactive({
 })
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
-const worksList: Ref<UnwrapRef<WorksFullInfoDTO[]>> = ref([]) // 需展示的作品列表
+const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
 const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
@@ -81,7 +81,7 @@ const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
 // 设置页面向导配置
 const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workdir: false })
 // 作品分页
-const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullInfoDTO>>> = ref(new Page<SearchCondition[], WorksFullInfoDTO>())
+const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
 //
@@ -158,7 +158,7 @@ function closeSubpage() {
   pageState.mainPage = true
 }
 // 请求作品接口
-async function searchWorks(page: Page<SearchCondition[], WorksFullInfoDTO>): Promise<Page<WorksQueryDTO, WorksFullInfoDTO>> {
+async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise<Page<WorksQueryDTO, WorksFullDTO>> {
   // 处理搜索框的标签
   page.query = selectedTagList.value
     .map((searchCondition) => {
@@ -187,7 +187,7 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullInfoDTO>): Pro
 
   return apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      return ApiUtil.data<Page<WorksQueryDTO, WorksFullInfoDTO>>(response)
+      return ApiUtil.data<Page<WorksQueryDTO, WorksFullDTO>>(response)
     } else {
       return page
     }
@@ -197,7 +197,7 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullInfoDTO>): Pro
 async function queryWorksPage(next: boolean) {
   // 新查询重置查询条件
   if (!next) {
-    worksPage.value = new Page<SearchCondition[], WorksFullInfoDTO>()
+    worksPage.value = new Page<SearchCondition[], WorksFullDTO>()
     worksPage.value.pageSize = 10
     worksList.value.length = 0
   }

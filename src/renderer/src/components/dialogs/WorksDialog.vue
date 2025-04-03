@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
+import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { computed, onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
@@ -22,7 +22,7 @@ import { ElMessage } from 'element-plus'
 
 // props
 const props = defineProps<{
-  works: WorksFullInfoDTO[]
+  works: WorksFullDTO[]
 }>()
 
 // onMounted
@@ -60,7 +60,7 @@ const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件
 const siteTagExchangeBox = ref()
 // 作品信息
-const worksFullInfo: Ref<WorksFullInfoDTO> = ref(new WorksFullInfoDTO(props.works[0]))
+const worksFullInfo: Ref<WorksFullDTO> = ref(new WorksFullDTO(props.works[0]))
 // 本地作者
 const localAuthor: Ref<UnwrapRef<string>> = computed(() => {
   const names = worksFullInfo.value.localAuthors?.map((localAuthor) => localAuthor.localAuthorName)
@@ -119,7 +119,7 @@ const siteTagExchangeMainInput: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
 async function getWorksInfo() {
   const response = await apis.worksGetFullWorksInfoById(props.works[0].id)
   if (ApiUtil.check(response)) {
-    const temp = ApiUtil.data<WorksFullInfoDTO>(response)
+    const temp = ApiUtil.data<WorksFullDTO>(response)
     if (NotNullish(temp)) {
       worksFullInfo.value = temp
     } else {

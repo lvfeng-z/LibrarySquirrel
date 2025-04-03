@@ -8,6 +8,7 @@ import WorksSet from '../entity/WorksSet.ts'
 import Resource from '../entity/Resource.js'
 import lodash from 'lodash'
 import { NotNullish } from '../../util/CommonUtil.js'
+import { ParsePropertyFromJson } from '../../util/ObjectUtil.js'
 
 /**
  * 作品
@@ -56,6 +57,36 @@ export default class WorksFullDTO extends Works {
   constructor(works?: Works) {
     super(works)
     if (NotNullish(works)) {
+      ParsePropertyFromJson(works, [
+        {
+          property: 'resource',
+          builder: (src) => new Resource(src)
+        },
+        {
+          property: 'site',
+          builder: (src) => new Site(src)
+        },
+        {
+          property: 'localAuthors',
+          builder: (raw: []) => raw.forEach((rawLocalAuthor) => new LocalAuthorRoleDTO(rawLocalAuthor))
+        },
+        {
+          property: 'localTags',
+          builder: (raw: []) => raw.forEach((rawLocalTag) => new LocalTag(rawLocalTag))
+        },
+        {
+          property: 'siteAuthors',
+          builder: (raw: []) => raw.forEach((rawSiteAuthor) => new SiteAuthorRoleDTO(rawSiteAuthor))
+        },
+        {
+          property: 'siteTags',
+          builder: (raw: []) => raw.forEach((rawSiteTag) => new SiteTagFullDTO(rawSiteTag))
+        },
+        {
+          property: 'worksSets',
+          builder: (raw: []) => raw.forEach((rawWorksSet) => new WorksSet(rawWorksSet))
+        }
+      ])
       lodash.assign(
         this,
         lodash.pick(works, [

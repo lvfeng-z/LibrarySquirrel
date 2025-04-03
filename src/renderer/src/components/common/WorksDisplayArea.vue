@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
+import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksDisplayCase from './WorksDisplayCase.vue'
 import WorksDialog from '../dialogs/WorksDialog.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
 
 // props
 const props = defineProps<{
-  worksList: WorksFullInfoDTO[]
+  worksList: WorksFullDTO[]
 }>()
 
 // 变量
@@ -15,10 +15,10 @@ const container = ref()
 // worksDialog开关
 const worksDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // worksDialog的内容
-const worksDialogResources: Ref<WorksFullInfoDTO[]> = ref([])
+const worksDialogResources: Ref<WorksFullDTO[]> = ref([])
 
 // 方法
-function handleImageClicked(works: WorksFullInfoDTO) {
+function handleImageClicked(works: WorksFullDTO) {
   worksDialogState.value = true
   worksDialogResources.value[0] = works
 }

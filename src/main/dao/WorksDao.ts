@@ -3,7 +3,7 @@ import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
 import Works from '../model/entity/Works.ts'
 import Page from '../model/util/Page.ts'
-import WorksFullDTO from '../model/dto/WorksFullDTO.ts'
+import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
@@ -12,7 +12,6 @@ import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
-import WorksFullInfoDTO from '../model/dto/WorksFullInfoDTO.js'
 import { BOOL } from '../constant/BOOL.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
@@ -24,7 +23,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    * 综合查询作品
    * @param page 查询参数（本地标签、站点标签、作者...）
    */
-  public async synthesisQueryPage(page: Page<WorksCommonQueryDTO, WorksFullInfoDTO>): Promise<Page<WorksQueryDTO, WorksFullInfoDTO>> {
+  public async synthesisQueryPage(page: Page<WorksCommonQueryDTO, WorksFullDTO>): Promise<Page<WorksQueryDTO, WorksFullDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     let statement: string
@@ -178,9 +177,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     return db
       .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
       .then((rows) => {
-        const result = this.toResultTypeDataList<WorksFullInfoDTO>(rows)
+        const result = this.toResultTypeDataList<WorksFullDTO>(rows)
         // 利用构造函数处理JSON字符串
-        modifiedPage.data = result.map((raw) => new WorksFullInfoDTO(raw))
+        modifiedPage.data = result.map((raw) => new WorksFullDTO(raw))
 
         return modifiedPage
       })

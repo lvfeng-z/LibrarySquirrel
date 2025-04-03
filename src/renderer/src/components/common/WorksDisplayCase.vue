@@ -2,13 +2,13 @@
 import WorksInfo from './WorksInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import WorksFullInfoDTO from '@renderer/model/main/dto/WorksFullInfoDTO.ts'
+import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 
 // props
 const props = defineProps<{
-  works: WorksFullInfoDTO
+  works: WorksFullDTO
   maxHeight?: number
   maxWidth?: number
 }>()

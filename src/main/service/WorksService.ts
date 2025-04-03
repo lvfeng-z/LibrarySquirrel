@@ -1,7 +1,7 @@
 import Page from '../model/util/Page.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/entity/Works.ts'
-import WorksFullDTO from '../model/dto/WorksFullDTO.ts'
+import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import { WorksDao } from '../dao/WorksDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import BaseService from '../base/BaseService.ts'
@@ -27,7 +27,6 @@ import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
 import ReWorksWorksSetService from './ReWorksWorksSetService.js'
-import WorksFullInfoDTO from '../model/dto/WorksFullInfoDTO.js'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -314,9 +313,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 查询作品的完整信息
    * @param worksId 作品id
    */
-  public async getFullWorksInfoById(worksId: number): Promise<WorksFullInfoDTO | undefined> {
+  public async getFullWorksInfoById(worksId: number): Promise<WorksFullDTO | undefined> {
     const baseWorksInfo = await super.getById(worksId)
-    const fullInfo = new WorksFullInfoDTO(baseWorksInfo)
+    const fullInfo = new WorksFullDTO(baseWorksInfo)
     // 资源
     const resService = new ResourceService()
     const resourceList = await resService.listByWorksId(worksId)

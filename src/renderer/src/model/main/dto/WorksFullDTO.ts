@@ -1,13 +1,12 @@
 import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
-import LocalAuthorRoleDTO from '@renderer/model/main/dto/LocalAuthorRoleDTO.ts'
-import SiteAuthorRoleDTO from '@renderer/model/main/dto/SiteAuthorRoleDTO.ts'
-import SiteTagFullDTO from '@renderer/model/main/dto/SiteTagFullDTO.ts'
+import LocalAuthorRoleDTO from './LocalAuthorRoleDTO.ts'
+import SiteAuthorRoleDTO from './SiteAuthorRoleDTO.ts'
+import SiteTagFullDTO from './SiteTagFullDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
-import Resource from '@renderer/model/main/entity/Resource.ts'
+import Resource from '../entity/Resource.js'
 import lodash from 'lodash'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 作品
@@ -55,22 +54,20 @@ export default class WorksFullDTO extends Works {
 
   constructor(works?: Works) {
     super(works)
-    if (NotNullish(works)) {
-      lodash.assign(
-        this,
-        lodash.pick(works, [
-          'resource',
-          'inactiveResource',
-          'site',
-          'localAuthors',
-          'localTags',
-          'siteAuthors',
-          'siteTags',
-          'worksSets',
-          'resourceStream',
-          'resourceSize'
-        ])
-      )
-    }
+    lodash.assign(
+      this,
+      lodash.pick(works, [
+        'resource',
+        'inactiveResource',
+        'site',
+        'localAuthors',
+        'localTags',
+        'siteAuthors',
+        'siteTags',
+        'worksSets',
+        'resourceStream',
+        'resourceSize'
+      ])
+    )
   }
 }
