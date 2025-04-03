@@ -3,7 +3,7 @@ import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
 import Works from '../model/entity/Works.ts'
 import Page from '../model/util/Page.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
+import WorksFullDTO from '../model/dto/WorksFullDTO.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
@@ -197,9 +197,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
    * @param query
    */
   public async multipleConditionQueryPage(
-    page: Page<WorksQueryDTO, WorksDTO>,
+    page: Page<WorksQueryDTO, WorksFullDTO>,
     query: SearchCondition[]
-  ): Promise<Page<WorksQueryDTO, WorksDTO>> {
+  ): Promise<Page<WorksQueryDTO, WorksFullDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     const fromAndWhere = this.generateClause(query)
@@ -211,9 +211,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
-        const result = this.toResultTypeDataList<WorksDTO>(rows)
+        const result = this.toResultTypeDataList<WorksFullDTO>(rows)
         // 利用构造函数处理JSON字符串
-        modifiedPage.data = result.map((worksDTO) => new WorksDTO(worksDTO))
+        modifiedPage.data = result.map((worksDTO) => new WorksFullDTO(worksDTO))
 
         return modifiedPage
       })

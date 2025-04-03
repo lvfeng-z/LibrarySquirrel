@@ -6,7 +6,7 @@ import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
 import DB from '../database/DB.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
-import PluginDTO from '../model/dto/PluginDTO.ts'
+import PluginLoadDTO from '../model/dto/PluginLoadDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '../model/dto/PluginInstallDTO.js'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
@@ -66,18 +66,18 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 根据id获取插件加载路径
    */
-  public async getDTOById(id: number): Promise<PluginDTO> {
+  public async getDTOById(id: number): Promise<PluginLoadDTO> {
     const plugin = await this.dao.getById(id)
     AssertNotNullish(plugin, this.constructor.name, `加载插件失败，pluginId: ${id}不可用`)
-    const dto = new PluginDTO(plugin)
+    const loadDTO = new PluginLoadDTO(plugin)
     AssertNotNullish(plugin.author, `生成插件加载路径失败，插件的作者为空，pluginId: ${id}`)
     AssertNotNullish(plugin.name, `生成插件加载路径失败，插件的名称为空，pluginId: ${id}`)
     AssertNotNullish(plugin.version, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
     AssertNotNullish(plugin.fileName, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
-    dto.loadPath = pathToFileURL(
+    loadDTO.loadPath = pathToFileURL(
       path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.fileName)
     ).href
-    return dto
+    return loadDTO
   }
 
   /**

@@ -1,7 +1,7 @@
 import Page from '../model/util/Page.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import Works from '../model/entity/Works.ts'
-import WorksDTO from '../model/dto/WorksDTO.ts'
+import WorksFullDTO from '../model/dto/WorksFullDTO.ts'
 import { WorksDao } from '../dao/WorksDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import BaseService from '../base/BaseService.ts'
@@ -22,8 +22,8 @@ import { AssertNotNullish } from '../util/AssertUtil.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
-import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
-import SiteTagDTO from '../model/dto/SiteTagDTO.js'
+import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.js'
+import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
 import ReWorksWorksSetService from './ReWorksWorksSetService.js'
@@ -42,8 +42,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public static async createSaveInfo(worksPluginDTO: PluginWorksResponseDTO, taskId: number): Promise<WorksSaveDTO> {
     // 校验
     AssertNotNullish(worksPluginDTO.works.siteWorksId, '生成作品信息失败，siteWorksId不能为空')
-    const worksDTO = new WorksDTO(worksPluginDTO.works as Works)
-    const result = new WorksSaveDTO(taskId, worksDTO)
+    const worksFullDTO = new WorksFullDTO(worksPluginDTO.works as Works)
+    const result = new WorksSaveDTO(taskId, worksFullDTO)
     result.site = worksPluginDTO.site
     result.localAuthors = worksPluginDTO.localAuthors
     result.localTags = worksPluginDTO.localTags
@@ -93,7 +93,9 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           }
         })
         .filter(NotNullish)
-      worksDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map((siteAuthor) => new SiteAuthorDTO(siteAuthor))
+      worksDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map(
+        (siteAuthor) => new SiteAuthorRoleDTO(siteAuthor)
+      )
     }
     if (ArrayNotEmpty(worksDTO.siteTags)) {
       const siteTagService = new SiteTagService()
@@ -108,7 +110,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
           }
         })
         .filter(NotNullish)
-      worksDTO.siteTags = (await siteTagService.listBySiteTag(tempParam)).map((siteTag) => new SiteTagDTO(siteTag))
+      worksDTO.siteTags = (await siteTagService.listBySiteTag(tempParam)).map((siteTag) => new SiteTagFullDTO(siteTag))
     }
     return this.saveOrUpdateAndLink(worksDTO, update)
   }
@@ -212,8 +214,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    */
   public async saveSurroundingData(
     worksSets: WorksSet[] | undefined | null,
-    siteAuthors: SiteAuthorDTO[] | undefined | null,
-    siteTags: SiteTagDTO[] | undefined | null
+    siteAuthors: SiteAuthorRoleDTO[] | undefined | null,
+    siteTags: SiteTagFullDTO[] | undefined | null
   ): Promise<void> {
     // 保存作品集
     if (ArrayNotEmpty(worksSets)) {
@@ -236,7 +238,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 根据标签等信息分页查询作品
    * @param page 查询参数
    */
-  public async queryPage(page: Page<WorksQueryDTO, WorksDTO>): Promise<Page<WorksQueryDTO, Works>> {
+  public async queryPage(page: Page<WorksQueryDTO, WorksFullDTO>): Promise<Page<WorksQueryDTO, Works>> {
     page = new Page(page)
     try {
       // 查询作品信息
@@ -266,7 +268,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param query
    */
   public async multipleConditionQueryPage(
-    page: Page<WorksQueryDTO, WorksDTO>,
+    page: Page<WorksQueryDTO, WorksFullDTO>,
     query: SearchCondition[]
   ): Promise<Page<WorksQueryDTO, Works>> {
     page = new Page(page)
@@ -292,7 +294,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
   }
 
-  public async updateWithResById(works: WorksDTO): Promise<number> {
+  public async updateWithResById(worksFullDTO: WorksFullDTO): Promise<number> {
     let db: DB
     if (this.injectedDB) {
       db = this.db as DB
@@ -301,10 +303,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     }
     return db.transaction(async (transactionDB) => {
       const resService = new ResourceService(transactionDB)
-      if (NotNullish(works.resource)) {
-        await resService.updateById(works.resource)
+      if (NotNullish(worksFullDTO.resource)) {
+        await resService.updateById(worksFullDTO.resource)
       }
-      return this.updateById(works)
+      return this.updateById(worksFullDTO)
     }, '更新作品信息和资源信息')
   }
 

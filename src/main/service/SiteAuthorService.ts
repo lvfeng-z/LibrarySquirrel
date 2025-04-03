@@ -13,7 +13,7 @@ import { Operator } from '../constant/CrudConstant.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
 import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
-import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
+import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.js'
 
 /**
  * 站点作者Service
@@ -130,13 +130,13 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
 
     const tempPage = await this.dao.querySiteAuthorWithLocalAuthorPage(page)
     const selectItems = tempPage.data?.map(
-      (siteAuthorDTO) =>
+      (siteAuthorFullDTO) =>
         new SelectItem({
           extraData: undefined,
-          label: siteAuthorDTO.siteAuthorName,
+          label: siteAuthorFullDTO.siteAuthorName,
           rootId: undefined,
-          subLabels: [StringUtil.isNotBlank(siteAuthorDTO.site?.siteName) ? siteAuthorDTO.site?.siteName : '?'],
-          value: String(siteAuthorDTO.id)
+          subLabels: [StringUtil.isNotBlank(siteAuthorFullDTO.site?.siteName) ? siteAuthorFullDTO.site?.siteName : '?'],
+          value: String(siteAuthorFullDTO.id)
         })
     )
 
@@ -224,14 +224,14 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   /**
    * 生成用于保存的站点作者信息
    */
-  public static async createSaveInfos(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorDTO[]> {
-    const result: SiteAuthorDTO[] = []
+  public static async createSaveInfos(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorRoleDTO[]> {
+    const result: SiteAuthorRoleDTO[] = []
     // 用于查询和缓存站点id
     const siteService = new SiteService()
     const siteCache = new Map<string, Promise<number>>()
     for (const siteAuthor of siteAuthors) {
       if (IsNullish(siteAuthor.siteDomain)) {
-        result.push(new SiteAuthorDTO(siteAuthor))
+        result.push(new SiteAuthorRoleDTO(siteAuthor))
         continue
       }
       let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
@@ -241,10 +241,10 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       }
       const siteId = await siteIdPromise
       if (IsNullish(siteId)) {
-        result.push(new SiteAuthorDTO(siteAuthor))
+        result.push(new SiteAuthorRoleDTO(siteAuthor))
         continue
       }
-      const tempDTO = new SiteAuthorDTO(siteAuthor)
+      const tempDTO = new SiteAuthorRoleDTO(siteAuthor)
       tempDTO.siteId = siteId
       tempDTO.authorRole = siteAuthor.authorRole
       result.push(tempDTO)

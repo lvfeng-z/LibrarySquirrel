@@ -1,17 +1,18 @@
 import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
-import LocalAuthorDTO from './LocalAuthorDTO.ts'
-import SiteAuthorDTO from './SiteAuthorDTO.ts'
-import SiteTagDTO from './SiteTagDTO.ts'
+import LocalAuthorRoleDTO from './LocalAuthorRoleDTO.ts'
+import SiteAuthorRoleDTO from './SiteAuthorRoleDTO.ts'
+import SiteTagFullDTO from './SiteTagFullDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import Resource from '../entity/Resource.js'
 import lodash from 'lodash'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 作品
  */
-export default class WorksDTO extends Works {
+export default class WorksFullDTO extends Works {
   /**
    * 资源
    */
@@ -30,7 +31,7 @@ export default class WorksDTO extends Works {
   /**
    * 本地作者
    */
-  localAuthors: LocalAuthorDTO[] | undefined | null
+  localAuthors: LocalAuthorRoleDTO[] | undefined | null
 
   /**
    * 本地标签数组
@@ -40,12 +41,12 @@ export default class WorksDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthors: SiteAuthorDTO[] | undefined | null
+  siteAuthors: SiteAuthorRoleDTO[] | undefined | null
 
   /**
    * 站点标签数组
    */
-  siteTags: SiteTagDTO[] | undefined | null
+  siteTags: SiteTagFullDTO[] | undefined | null
 
   /**
    * 作品所属作品集
@@ -54,20 +55,22 @@ export default class WorksDTO extends Works {
 
   constructor(works?: Works) {
     super(works)
-    lodash.assign(
-      this,
-      lodash.pick(works, [
-        'resource',
-        'inactiveResource',
-        'site',
-        'localAuthors',
-        'localTags',
-        'siteAuthors',
-        'siteTags',
-        'worksSets',
-        'resourceStream',
-        'resourceSize'
-      ])
-    )
+    if (NotNullish(works)) {
+      lodash.assign(
+        this,
+        lodash.pick(works, [
+          'resource',
+          'inactiveResource',
+          'site',
+          'localAuthors',
+          'localTags',
+          'siteAuthors',
+          'siteTags',
+          'worksSets',
+          'resourceStream',
+          'resourceSize'
+        ])
+      )
+    }
   }
 }

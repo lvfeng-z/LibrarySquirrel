@@ -1,14 +1,10 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 站点
  */
 export default class Site extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-
   /**
    * 站点名称
    */
@@ -26,13 +22,7 @@ export default class Site extends BaseEntity {
 
   constructor(site?: Site) {
     super(site)
-    if (site === undefined) {
-      this.id = undefined
-      this.siteName = undefined
-      this.siteDescription = undefined
-      this.sortNum = undefined
-    } else {
-      this.id = site.id
+    if (NotNullish(site)) {
       this.siteName = site.siteName
       this.siteDescription = site.siteDescription
       this.sortNum = site.sortNum

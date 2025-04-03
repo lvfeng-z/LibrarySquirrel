@@ -13,12 +13,12 @@ import { CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
 import path from 'path'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import { AuthorRole } from '../constant/AuthorRole.js'
-import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.js'
-import LocalAuthorDTO from '../model/dto/LocalAuthorDTO.js'
+import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.js'
+import LocalAuthorRoleDTO from '../model/dto/LocalAuthorRoleDTO.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
-import WorksDTO from '../model/dto/WorksDTO.js'
+import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 
 /**
  * 资源服务
@@ -30,9 +30,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 创建用于保存资源的资源信息
-   * @param worksDTO
+   * @param worksFullDTO
    */
-  public static async createSaveInfo(worksDTO: WorksDTO): Promise<ResourceSaveDTO> {
+  public static async createSaveInfo(worksFullDTO: WorksFullDTO): Promise<ResourceSaveDTO> {
     const result = new ResourceSaveDTO()
     // 读取设置中的工作目录信息
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
@@ -41,17 +41,17 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       LogUtil.error('WorksService', msg)
       throw new Error(msg)
     }
-    const resource = worksDTO.resource
+    const resource = worksFullDTO.resource
     AssertNotNullish(resource, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
 
     // 作者信息
-    const localAuthors: LocalAuthorDTO[] = ArrayIsEmpty(worksDTO.localAuthors) ? [] : worksDTO.localAuthors
-    const siteAuthors: SiteAuthorDTO[] = ArrayIsEmpty(worksDTO.siteAuthors) ? [] : worksDTO.siteAuthors
+    const localAuthors: LocalAuthorRoleDTO[] = ArrayIsEmpty(worksFullDTO.localAuthors) ? [] : worksFullDTO.localAuthors
+    const siteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullDTO.siteAuthors) ? [] : worksFullDTO.siteAuthors
     const tempName = ResourceService.getAuthorName(siteAuthors, localAuthors)
     const authorName = tempName === undefined ? 'unknownAuthor' : tempName
     // 作品信息
-    const siteWorksName = worksDTO.siteWorksName === undefined ? 'unknownWorksName' : worksDTO.siteWorksName
-    result.filenameExtension = worksDTO.resource?.filenameExtension
+    const siteWorksName = worksFullDTO.siteWorksName === undefined ? 'unknownWorksName' : worksFullDTO.siteWorksName
+    result.filenameExtension = worksFullDTO.resource?.filenameExtension
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
@@ -214,7 +214,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @param localAuthors
    * @private
    */
-  private static getAuthorName(siteAuthors: SiteAuthorDTO[], localAuthors: LocalAuthorDTO[]): string | undefined {
+  private static getAuthorName(siteAuthors: SiteAuthorRoleDTO[], localAuthors: LocalAuthorRoleDTO[]): string | undefined {
     let authorName: string | undefined
     // 优先使用站点作者名称
     if (siteAuthors !== undefined && siteAuthors !== null && siteAuthors.length > 0) {

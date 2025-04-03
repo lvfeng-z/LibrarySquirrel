@@ -1,9 +1,9 @@
 import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
-import LocalAuthorDTO from './LocalAuthorDTO.ts'
-import SiteAuthorDTO from './SiteAuthorDTO.ts'
-import SiteTagDTO from './SiteTagDTO.ts'
+import LocalAuthorRoleDTO from './LocalAuthorRoleDTO.ts'
+import SiteAuthorRoleDTO from './SiteAuthorRoleDTO.ts'
+import SiteTagFullDTO from './SiteTagFullDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import Resource from '../entity/Resource.js'
 import lodash from 'lodash'
@@ -32,7 +32,7 @@ export default class WorksFullInfoDTO extends Works {
   /**
    * 本地作者
    */
-  localAuthors: LocalAuthorDTO[] | undefined | null
+  localAuthors: LocalAuthorRoleDTO[] | undefined | null
 
   /**
    * 本地标签数组
@@ -42,12 +42,12 @@ export default class WorksFullInfoDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthors: SiteAuthorDTO[] | undefined | null
+  siteAuthors: SiteAuthorRoleDTO[] | undefined | null
 
   /**
    * 站点标签数组
    */
-  siteTags: SiteTagDTO[] | undefined | null
+  siteTags: SiteTagFullDTO[] | undefined | null
 
   /**
    * 作品所属作品集
@@ -68,7 +68,7 @@ export default class WorksFullInfoDTO extends Works {
         },
         {
           property: 'localAuthors',
-          builder: (raw: []) => raw.forEach((rawLocalAuthor) => new LocalAuthorDTO(rawLocalAuthor))
+          builder: (raw: []) => raw.forEach((rawLocalAuthor) => new LocalAuthorRoleDTO(rawLocalAuthor))
         },
         {
           property: 'localTags',
@@ -76,11 +76,11 @@ export default class WorksFullInfoDTO extends Works {
         },
         {
           property: 'siteAuthors',
-          builder: (raw: []) => raw.forEach((rawSiteAuthor) => new SiteAuthorDTO(rawSiteAuthor))
+          builder: (raw: []) => raw.forEach((rawSiteAuthor) => new SiteAuthorRoleDTO(rawSiteAuthor))
         },
         {
           property: 'siteTags',
-          builder: (raw: []) => raw.forEach((rawSiteTag) => new SiteTagDTO(rawSiteTag))
+          builder: (raw: []) => raw.forEach((rawSiteTag) => new SiteTagFullDTO(rawSiteTag))
         },
         {
           property: 'worksSets',

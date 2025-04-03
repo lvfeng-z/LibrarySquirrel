@@ -3,7 +3,7 @@ import SiteTag from '../model/entity/SiteTag.ts'
 import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
-import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
+import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DB from '../database/DB.ts'
@@ -50,7 +50,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询站点标签（附带绑定的本地标签）
    * @param page
    */
-  public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
+  public async queryBoundOrUnboundToLocalTagPage(
+    page: Page<SiteTagQueryDTO, SiteTag>
+  ): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     // 没有查询参数，构建一个空的
@@ -97,11 +99,11 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     // 查询
     const db = super.acquire()
     return db
-      .all<unknown[], SiteTagDTO>(statement, ToPlainParams(modifiedQuery))
+      .all<unknown[], SiteTagFullDTO>(statement, ToPlainParams(modifiedQuery))
       .then((rows) => {
-        const resultPage = modifiedPage.transform<SiteTagDTO>()
+        const resultPage = modifiedPage.transform<SiteTagFullDTO>()
         // 利用构造方法反序列化本地标签和站点的json
-        resultPage.data = rows.map((result) => new SiteTagDTO(result))
+        resultPage.data = rows.map((result) => new SiteTagFullDTO(result))
         return resultPage
       })
       .finally(() => {
@@ -139,10 +141,10 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
     const db = this.acquire()
     return db
-      .all<unknown[], SiteTagDTO>(statement, query)
+      .all<unknown[], SiteTagFullDTO>(statement, query)
       .then((rows) => {
         const selectItems = rows.map((row) => {
-          const siteTagDTO = new SiteTagDTO(row)
+          const siteTagDTO = new SiteTagFullDTO(row)
           const selectItem = new SelectItem()
           selectItem.value = siteTagDTO.id
           selectItem.label = siteTagDTO.siteTagName
@@ -169,7 +171,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 分页查询作品的站点标签
    * @param page
    */
-  async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
+  async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     if (IsNullish(modifiedPage.query)) {
@@ -209,11 +211,11 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     statement = await super.sortAndPage(statement, modifiedPage, sort)
     const db = this.acquire()
     return db
-      .all<unknown[], SiteTagDTO>(statement, modifiedQuery)
+      .all<unknown[], SiteTagFullDTO>(statement, modifiedQuery)
       .then((rows) => {
-        const resultPage = modifiedPage.transform<SiteTagDTO>()
+        const resultPage = modifiedPage.transform<SiteTagFullDTO>()
         // 利用构造方法反序列化本地标签和站点的json
-        resultPage.data = rows.map((result) => new SiteTagDTO(result))
+        resultPage.data = rows.map((result) => new SiteTagFullDTO(result))
         return resultPage
       })
       .finally(() => {
@@ -268,7 +270,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 查询作品的站点标签DTO
    * @param worksId
    */
-  async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
+  async listDTOByWorksId(worksId: number): Promise<SiteTagFullDTO[]> {
     const statement = `SELECT t1.*,
                               JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) AS localTag,
                               JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) AS site
@@ -280,8 +282,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const db = this.acquire()
     try {
       const runResult = await db.all<unknown[], Record<string, unknown>>(statement)
-      const originalList = super.toResultTypeDataList<SiteTagDTO>(runResult)
-      return originalList.map((original) => new SiteTagDTO(original))
+      const originalList = super.toResultTypeDataList<SiteTagFullDTO>(runResult)
+      return originalList.map((original) => new SiteTagFullDTO(original))
     } finally {
       if (!this.injectedDB) {
         db.release()

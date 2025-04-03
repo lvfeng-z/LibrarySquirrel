@@ -2,7 +2,7 @@ import Site from '../model/entity/Site.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
 import DB from '../database/DB.ts'
-import SiteDTO from '../model/dto/SiteDTO.js'
+import SiteFullDTO from '../model/dto/SiteFullDTO.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
@@ -16,9 +16,9 @@ export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
    * 主键查询
    * @param id
    */
-  public async getById(id: number): Promise<SiteDTO> {
+  public async getById(id: number): Promise<SiteFullDTO> {
     const site = await super.getById(id)
-    const siteDTO = new SiteDTO(site)
+    const siteDTO = new SiteFullDTO(site)
     const statement = `SELECT * FROM site_domain WHERE site_id = ${id}`
     const db = this.acquire()
     return db

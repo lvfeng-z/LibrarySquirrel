@@ -2,9 +2,9 @@
 import { ref } from 'vue'
 import Site from '../model/main/entity/Site.ts'
 import LocalTag from '../model/main/entity/LocalTag.ts'
-import WorksDTO from '../model/main/dto/WorksDTO'
+import WorksFullDTO from '../model/main/dto/WorksFullDTO.ts'
 import lodash from 'lodash'
-import SiteAuthorDTO from '../model/main/dto/SiteAuthorDTO'
+import SiteAuthorRoleDTO from '../model/main/dto/SiteAuthorRoleDTO.ts'
 
 // 变量
 // 接口
@@ -13,18 +13,18 @@ const apis = {
   testTransactionTest: window.api.testTransactionTest
 }
 const site = ref(new Site())
-const siteAuthor = ref(new SiteAuthorDTO())
+const siteAuthor = ref(new SiteAuthorRoleDTO())
 const localTag = ref(new LocalTag())
 
 // 方法
 function saveWorks() {
-  const worksDTO = new WorksDTO()
-  worksDTO.site = lodash.cloneDeep(site.value)
-  const siteAuthors: SiteAuthorDTO[] = []
+  const worksFullDTO = new WorksFullDTO()
+  worksFullDTO.site = lodash.cloneDeep(site.value)
+  const siteAuthors: SiteAuthorRoleDTO[] = []
   siteAuthors.push(lodash.cloneDeep(siteAuthor.value))
-  worksDTO.siteAuthors = siteAuthors
-  worksDTO.localTags = lodash.cloneDeep([localTag.value])
-  apis.worksSaveWorks(worksDTO)
+  worksFullDTO.siteAuthors = siteAuthors
+  worksFullDTO.localTags = lodash.cloneDeep([localTag.value])
+  apis.worksSaveWorks(worksFullDTO)
   // apis.testTransactionTest()
 }
 </script>

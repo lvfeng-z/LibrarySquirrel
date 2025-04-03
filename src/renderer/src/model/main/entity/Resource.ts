@@ -1,4 +1,5 @@
 import BaseEntity from '../entity/BaseEntity.js'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export default class Resource extends BaseEntity {
   /**
@@ -32,6 +33,11 @@ export default class Resource extends BaseEntity {
   filenameExtension: string | undefined | null
 
   /**
+   * 建议名称
+   */
+  suggestedName: string | undefined | null
+
+  /**
    * 工作目录
    */
   workdir: string | undefined | null
@@ -45,4 +51,20 @@ export default class Resource extends BaseEntity {
    * 导入方式（0：本地导入，1：站点下载）
    */
   importMethod: number | undefined | null
+
+  constructor(resource?: Resource) {
+    super(resource)
+    if (NotNullish(resource)) {
+      this.worksId = resource.worksId
+      this.taskId = resource.taskId
+      this.state = resource.state
+      this.filePath = resource.filePath
+      this.fileName = resource.fileName
+      this.filenameExtension = resource.filenameExtension
+      this.suggestedName = resource.suggestedName
+      this.workdir = resource.workdir
+      this.resourceComplete = resource.resourceComplete
+      this.importMethod = resource.importMethod
+    }
+  }
 }

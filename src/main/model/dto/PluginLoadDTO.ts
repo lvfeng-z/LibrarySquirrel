@@ -1,17 +1,17 @@
 import Plugin from '../entity/Plugin.ts'
 import { IsNullish } from '../../util/CommonUtil.ts'
 
-export default class PluginDTO extends Plugin {
+export default class PluginLoadDTO extends Plugin {
   /**
    * 加载路径
    */
   loadPath: string | undefined | null
 
-  constructor(pluginDTO?: PluginDTO | Plugin) {
+  constructor(pluginDTO?: PluginLoadDTO | Plugin) {
     if (IsNullish(pluginDTO)) {
       super()
       this.loadPath = undefined
-    } else if (pluginDTO instanceof PluginDTO) {
+    } else if (pluginDTO instanceof PluginLoadDTO) {
       super(pluginDTO)
       this.loadPath = pluginDTO.loadPath
     } else {

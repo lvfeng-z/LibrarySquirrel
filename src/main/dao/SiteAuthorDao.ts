@@ -5,11 +5,12 @@ import DB from '../database/DB.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
-import SiteAuthorDTO from '../model/dto/SiteAuthorDTO.ts'
+import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SelectItem from '../model/util/SelectItem.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
+import SiteAuthorFullDTO from '../model/dto/SiteAuthorFullDTO.js'
 
 /**
  * 站点作者Dao
@@ -68,7 +69,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   public async querySiteAuthorWithLocalAuthorPage(
     page: Page<SiteAuthorQueryDTO, SiteAuthor>
-  ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorDTO>> {
+  ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorFullDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     // 没有查询参数，构建一个空的
@@ -116,11 +117,12 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     // 查询
     const db = super.acquire()
     return db
-      .all<unknown[], SiteAuthorDTO>(statement, IsNullish(query) ? {} : query)
+      .all<unknown[], Record<string, unknown>>(statement, IsNullish(query) ? {} : query)
       .then((rows) => {
-        const resultPage = modifiedPage.transform<SiteAuthorDTO>()
+        const rawList = super.toResultTypeDataList<SiteAuthorFullDTO>(rows)
+        const resultPage = modifiedPage.transform<SiteAuthorFullDTO>()
         // 利用构造方法反序列化本地作者和站点的json
-        resultPage.data = rows.map((result) => new SiteAuthorDTO(result))
+        resultPage.data = rawList.map((result) => new SiteAuthorFullDTO(result))
         return resultPage
       })
       .finally(() => {
@@ -158,10 +160,10 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     const db = this.acquire()
     return db
-      .all<unknown[], SiteAuthorDTO>(statement, query)
+      .all<unknown[], SiteAuthorRoleDTO>(statement, query)
       .then((rows) => {
         const selectItems = rows.map((row) => {
-          const siteAuthorDTO = new SiteAuthorDTO(row)
+          const siteAuthorDTO = new SiteAuthorFullDTO(row)
           const selectItem = new SelectItem()
           selectItem.value = siteAuthorDTO.id
           selectItem.label = siteAuthorDTO.siteAuthorName
@@ -209,7 +211,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 查询作品的站点作者
    * @param worksId 作品id
    */
-  async listByWorksId(worksId: number): Promise<SiteAuthorDTO[]> {
+  async listByWorksId(worksId: number): Promise<SiteAuthorRoleDTO[]> {
     const statement = `SELECT t1.*, t2.author_role
                        FROM site_author t1
                               INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
@@ -217,7 +219,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<SiteAuthorDTO>(runResult))
+      .then((runResult) => super.toResultTypeDataList<SiteAuthorRoleDTO>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

@@ -7,7 +7,7 @@ import StringUtil from '../util/StringUtil.ts'
 import Page from '../model/util/Page.ts'
 import BaseService from '../base/BaseService.ts'
 import DB from '../database/DB.ts'
-import SiteTagDTO from '../model/dto/SiteTagDTO.ts'
+import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
 import { ArrayIsEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
@@ -26,7 +26,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 批量新增或更新
    * @param siteTags
    */
-  public async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagDTO[]) {
+  public async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagFullDTO[]) {
     const tempParam = siteTags
       .map((siteTag) => {
         if (IsNullish(siteTag.siteTagId) || IsNullish(siteTag.siteId)) {
@@ -109,7 +109,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 查询作品的站点标签DTO
    * @param worksId
    */
-  public async listDTOByWorksId(worksId: number): Promise<SiteTagDTO[]> {
+  public async listDTOByWorksId(worksId: number): Promise<SiteTagFullDTO[]> {
     return await this.dao.listDTOByWorksId(worksId)
   }
 
@@ -137,7 +137,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 分页查询作品的站点标签
    * @param page
    */
-  public async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagDTO>> {
+  public async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
@@ -223,14 +223,14 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   /**
    * 生成用于保存的站点标签信息
    */
-  public static async createSaveInfos(siteTags: SiteTagPluginDTO[]): Promise<SiteTagDTO[]> {
-    const result: SiteTagDTO[] = []
+  public static async createSaveInfos(siteTags: SiteTagPluginDTO[]): Promise<SiteTagFullDTO[]> {
+    const result: SiteTagFullDTO[] = []
     const siteService = new SiteService()
     // 用于查询和缓存站点id
     const siteCache = new Map<string, Promise<number>>()
     for (const siteTag of siteTags) {
       if (IsNullish(siteTag.siteDomain)) {
-        result.push(new SiteTagDTO(siteTag))
+        result.push(new SiteTagFullDTO(siteTag))
         continue
       }
       let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteTag.siteDomain)
@@ -240,10 +240,10 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       }
       const siteId = await siteIdPromise
       if (IsNullish(siteId)) {
-        result.push(new SiteTagDTO(siteTag))
+        result.push(new SiteTagFullDTO(siteTag))
         continue
       }
-      const tempDTO = new SiteTagDTO(siteTag)
+      const tempDTO = new SiteTagFullDTO(siteTag)
       tempDTO.siteId = siteId
       result.push(tempDTO)
     }

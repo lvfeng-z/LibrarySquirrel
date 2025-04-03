@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import LocalAuthorDTO from '../../model/main/dto/LocalAuthorDTO.ts'
+import LocalAuthorRoleDTO from '../../model/main/dto/LocalAuthorRoleDTO.ts'
 import { NotNullish } from '../../utils/CommonUtil'
 
 // props
 const props = defineProps<{
-  authors: LocalAuthorDTO[] | undefined | null
+  authors: LocalAuthorRoleDTO[] | undefined | null
 }>()
 
 // 方法

@@ -1,11 +1,11 @@
 import SiteTag from '../entity/SiteTag.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import Site from '../entity/Site.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
-import { ParsePropertyFromJson } from '../../util/ObjectUtil.js'
 import lodash from 'lodash'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ParsePropertyFromJson } from '@renderer/utils/ObjectUtil.ts'
 
-export default class SiteTagDTO extends SiteTag {
+export default class SiteTagFullDTO extends SiteTag {
   /**
    * 绑定的本地标签的实例
    */

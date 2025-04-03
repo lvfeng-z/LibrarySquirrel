@@ -11,7 +11,7 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { OriginType } from '@renderer/constants/OriginType.ts'
-import SiteTagDTO from '@renderer/model/main/dto/SiteTagDTO.ts'
+import SiteTagFullDTO from '@renderer/model/main/dto/SiteTagFullDTO.ts'
 import Page from '@renderer/model/util/Page.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
@@ -170,7 +170,7 @@ async function updateWorksTags(type: OriginType) {
     tempSiteTagPage.query = tempSiteTagQuery
     const response = await apis.siteTagQueryPageByWorksId(tempSiteTagPage)
     if (ApiUtil.check(response)) {
-      const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagDTO>>(response)
+      const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagFullDTO>>(response)
       worksFullInfo.value.siteTags = IsNullish(tempResultPage?.data) ? [] : tempResultPage.data
     }
   }
