@@ -198,6 +198,7 @@ const api = {
   siteTagQueryPageByWorksId: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-queryPageByWorksId', args)
   },
+  siteTagQueryLocalRelateDTOPage: (args) => Electron.ipcRenderer.invoke('siteTag-queryLocalRelateDTOPage', args),
   siteTagQuerySelectItemPageByWorksId: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-querySelectItemPageByWorksId', args)
   },

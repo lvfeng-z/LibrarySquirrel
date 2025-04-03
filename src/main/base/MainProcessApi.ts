@@ -539,6 +539,15 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('siteTag-queryLocalRelateDTOPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-queryLocalRelateDTOPage')
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.queryLocalRelateDTOPage(page))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('siteTag-querySelectItemPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
     LogUtil.info('MainProcessApi', 'siteTag-querySelectItemPageByWorksId')
     try {

@@ -75,8 +75,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
-                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+                JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
+                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -181,8 +181,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const query = lodash.cloneDeep(modifiedPage.query)
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
-                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+                JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
+                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -226,7 +226,11 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
       })
   }
 
-  public async SiteTagLocalRelateDTO(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>> {
+  /**
+   * 分页查询SiteTagLocalRelateDTO
+   * @param page
+   */
+  public async queryLocalRelateDTOPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     if (IsNullish(modifiedPage.query)) {
@@ -234,12 +238,17 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
     const query = lodash.cloneDeep(modifiedPage.query)
 
-    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
-                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
-    const fromClause = `FROM site_tag t1
+    const selectClause = `
+      SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId,
+             t1.description, t1.local_tag_id AS localTagId, t1.update_time AS updateTime, t1.create_time AS createTime,
+             JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
+             JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site,
+             CASE WHEN t4.id IS NOT NULL THEN TRUE ELSE FALSE END AS hasSameNameLocalTag`
+    const fromClause = `
+      FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
-          LEFT JOIN site t3 ON t1.site_id = t3.id`
+          LEFT JOIN site t3 ON t1.site_id = t3.id
+          LEFT JOIN local_tag t4 ON t1.site_tag_name = t4.local_tag_name`
     const whereClauseAndQuery = super.getWhereClauses(query, 't1', SiteTagQueryDTO.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
@@ -247,21 +256,9 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     modifiedPage.query.worksId = query.worksId
     modifiedPage.query.boundOnWorksId = query.boundOnWorksId
 
-    if (
-      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'boundOnWorksId') &&
-      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'worksId')
-    ) {
-      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${modifiedPage.query.worksId} AND t1.id = re_works_tag.site_tag_id)`
-      if (modifiedPage.query.boundOnWorksId) {
-        whereClauses.set('worksId', existClause)
-      } else {
-        whereClauses.set('worksId', 'NOT ' + existClause)
-      }
-    }
-
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
-    let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause)
+    let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause) + ' GROUP BY t1.id'
     const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
     const db = this.acquire()

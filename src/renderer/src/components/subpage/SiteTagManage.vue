@@ -13,7 +13,7 @@ import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
-import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
+import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -32,31 +32,31 @@ onMounted(() => {
 const apis = {
   siteTagDeleteById: window.api.siteTagDeleteById,
   siteTagUpdateById: window.api.siteTagUpdateById,
-  siteTagQueryPage: window.api.siteTagQueryPage
+  siteTagQueryLocalRelateDTOPage: window.api.siteTagQueryLocalRelateDTOPage
 }
 // siteTagSearchTable的组件实例
 const siteTagSearchTable = ref()
 // siteTagExchangeBox的组件实例
 const siteTagExchangeBox = ref()
 // 被改变的数据行
-const changedRows: Ref<UnwrapRef<SiteTag[]>> = ref([])
+const changedRows: Ref<SiteTagLocalRelateDTO[]> = ref([])
 // 被选中的本地标签
-const localTagSelected: Ref<UnwrapRef<SiteTag>> = ref(new SiteTag())
+const localTagSelected: Ref<SiteTagLocalRelateDTO> = ref(new SiteTagLocalRelateDTO())
 // 本地标签SearchTable的operationButton
-const operationButton: OperationItem<SiteTag>[] = [
+const operationButton: OperationItem<SiteTagLocalRelateDTO>[] = [
   {
     label: '创建同名本地标签',
     icon: 'CirclePlusFilled',
     buttonType: 'primary',
     code: 'save',
-    rule: (row) => IsNullish(row.localTagId)
+    rule: (row) => !row.hasSameNameLocalTag
   },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 本地标签SearchTable的表头
-const siteTagThead: Ref<UnwrapRef<Thead[]>> = ref([
+const siteTagThead: Ref<Thead[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -96,7 +96,7 @@ const siteTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   })
 ])
 // 本地标签SearchTable的mainInputBoxes
-const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
+const mainInputBoxes: Ref<InputBox[]> = ref<InputBox[]>([
   new InputBox({
     name: 'localTagName',
     type: 'text',
@@ -105,7 +105,7 @@ const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   })
 ])
 // 本地标签SearchTable的dropDownInputBoxes
-const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
+const dropDownInputBoxes: Ref<InputBox[]> = ref([
   new InputBox({
     name: 'id',
     label: 'id',
@@ -114,29 +114,31 @@ const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
   })
 ])
 // 本地标签SearchTable的分页
-const page: Ref<UnwrapRef<Page<SiteTagQueryDTO, SiteTag>>> = ref(new Page<SiteTagQueryDTO, SiteTag>())
+const page: Ref<UnwrapRef<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>>> = ref(new Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>())
 // 本地标签弹窗的mode
-const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+const localTagDialogMode: Ref<DialogMode> = ref(DialogMode.EDIT)
 // 本地标签的对话框开关
-const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
+const dialogState: Ref<boolean> = ref(false)
 // 本地标签对话框的数据
-const dialogData: Ref<UnwrapRef<SiteTag>> = ref(new SiteTag())
+const dialogData: Ref<SiteTagLocalRelateDTO> = ref(new SiteTagLocalRelateDTO())
 // 是否禁用ExchangeBox的搜索按钮
 const disableExcSearchButton: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询本地标签的函数
-async function siteTagQueryPage(page: Page<SiteTagQueryDTO, object>): Promise<Page<SiteTagQueryDTO, object> | undefined> {
-  const response = await apis.siteTagQueryPage(page)
+async function siteTagQueryPage(
+  page: Page<SiteTagQueryDTO, object>
+): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO> | undefined> {
+  const response = await apis.siteTagQueryLocalRelateDTOPage(page)
   if (ApiUtil.check(response)) {
-    let responsePage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTag>>(response)
+    let responsePage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>>(response)
     if (IsNullish(responsePage)) {
       return undefined
     }
     responsePage = new Page(responsePage)
-    const voList = responsePage.data?.map((item: SiteTag) => new SiteTag(item))
-    const result = responsePage.transform<SiteTag>()
-    result.data = voList
+    const relateDTOList = responsePage.data?.map((item: SiteTagLocalRelateDTO) => new SiteTagLocalRelateDTO(item))
+    const result = responsePage.transform<SiteTagLocalRelateDTO>()
+    result.data = relateDTOList
     return result
   } else {
     ApiUtil.msg(response)
@@ -146,11 +148,11 @@ async function siteTagQueryPage(page: Page<SiteTagQueryDTO, object>): Promise<Pa
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
-  dialogData.value = new SiteTag()
+  dialogData.value = new SiteTagLocalRelateDTO()
   dialogState.value = true
 }
 // 处理本地标签数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse<SiteTag>) {
+function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagLocalRelateDTO>) {
   switch (op.code) {
     case 'save':
       saveRowEdit(op.data)
@@ -173,7 +175,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse<SiteTag>) {
   }
 }
 // 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: SiteTag[]) {
+async function handleLocalTagSelectionChange(selections: SiteTagLocalRelateDTO[]) {
   if (selections.length > 0) {
     disableExcSearchButton.value = false
     localTagSelected.value = selections[0]
@@ -185,7 +187,7 @@ function refreshTable() {
   siteTagSearchTable.value.doSearch()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData: SiteTag) {
+async function saveRowEdit(newData: SiteTagLocalRelateDTO) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.siteTagUpdateById(tempData)

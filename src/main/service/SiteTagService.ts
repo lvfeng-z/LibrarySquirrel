@@ -223,7 +223,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
           ...page.query.operators
         }
       }
-      return this.dao.SiteTagLocalRelateDTO(page)
+      return this.dao.queryLocalRelateDTOPage(page)
     } catch (error) {
       LogUtil.error(this.constructor.name, error)
       throw error

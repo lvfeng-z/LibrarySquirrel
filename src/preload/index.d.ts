@@ -88,6 +88,7 @@ declare global {
       siteTagQueryPage: function
       siteTagQueryBoundOrUnboundToLocalTagPage: function
       siteTagQueryPageByWorksId: function
+      siteTagQueryLocalRelateDTOPage: function
       siteTagQuerySelectItemPageByWorksId: function
       siteTagGetSelectList: function
 
