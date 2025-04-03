@@ -70,7 +70,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     let whereClause: string | undefined
     if (modifiedPage.query !== undefined && page.query !== undefined) {
       const baseProperties = lodash.cloneDeep(modifiedPage.query)
-      const whereClausesAndQuery = this.getWhereClauses(baseProperties, 't1', baseProperties.nonFieldProperties())
+      const whereClausesAndQuery = this.getWhereClauses(baseProperties, 't1', WorksCommonQueryDTO.nonFieldProperties())
 
       const whereClauses = whereClausesAndQuery.whereClauses
         .values()
