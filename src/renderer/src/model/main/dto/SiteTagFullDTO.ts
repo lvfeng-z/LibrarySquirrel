@@ -21,14 +21,8 @@ export default class SiteTagFullDTO extends SiteTag {
     if (NotNullish(siteTag)) {
       lodash.assign(this, lodash.assign(siteTag, ['localTag', 'site']))
       const properties = [
-        {
-          property: 'localTag',
-          builder: (src) => new LocalTag(src)
-        },
-        {
-          property: 'site',
-          builder: (src) => new Site(src)
-        }
+        { property: 'localTag', builder: (src) => new LocalTag(src) },
+        { property: 'site', builder: (src) => new Site(src) }
       ]
       ParsePropertyFromJson(this, properties)
     }
