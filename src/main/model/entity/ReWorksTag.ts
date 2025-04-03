@@ -1,4 +1,5 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 作品-标签关联表
@@ -22,14 +23,8 @@ export default class ReWorksTag extends BaseEntity {
   siteTagId: number | undefined | null
 
   constructor(reWorksTag?: ReWorksTag) {
-    if (reWorksTag === undefined) {
-      super()
-      this.worksId = undefined
-      this.tagType = undefined
-      this.localTagId = undefined
-      this.siteTagId = undefined
-    } else {
-      super(reWorksTag)
+    super(reWorksTag)
+    if (NotNullish(reWorksTag)) {
       this.worksId = reWorksTag.worksId
       this.tagType = reWorksTag.tagType
       this.localTagId = reWorksTag.localTagId

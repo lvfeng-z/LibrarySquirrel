@@ -1,4 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 export default class PluginQueryDTO extends BaseQueryDTO {
   /**
@@ -22,6 +23,16 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   version: string | undefined | null
 
   /**
+   * 描述
+   */
+  description: string | undefined | null
+
+  /**
+   * 更新日志
+   */
+  changelog: string | undefined | null
+
+  /**
    * 入口文件名
    */
   fileName: string | undefined | null
@@ -37,17 +48,8 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   sortNum: number | undefined | null
 
   constructor(plugin?: PluginQueryDTO) {
-    if (plugin === undefined) {
-      super()
-      this.type = undefined
-      this.author = undefined
-      this.name = undefined
-      this.version = undefined
-      this.fileName = undefined
-      this.packagePath = undefined
-      this.sortNum = undefined
-    } else {
-      super(plugin)
+    super(plugin)
+    if (NotNullish(plugin)) {
       this.type = plugin.type
       this.author = plugin.author
       this.name = plugin.name

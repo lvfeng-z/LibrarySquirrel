@@ -40,4 +40,8 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
       this.domains = siteDomainQueryDTO.domains
     }
   }
+
+  public nonFieldProperties(): string[] {
+    return [...super.nonFieldProperties(), 'boundOnSite', 'domains']
+  }
 }

@@ -1,4 +1,5 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 export default class TaskPluginListener extends BaseEntity {
   /**
@@ -12,10 +13,8 @@ export default class TaskPluginListener extends BaseEntity {
   listener: string | undefined | null
 
   constructor(taskPluginListener?: TaskPluginListener) {
-    if (taskPluginListener === undefined) {
-      super()
-    } else {
-      super(taskPluginListener)
+    super(taskPluginListener)
+    if (NotNullish(taskPluginListener)) {
       this.pluginId = taskPluginListener.pluginId
       this.listener = taskPluginListener.listener
     }

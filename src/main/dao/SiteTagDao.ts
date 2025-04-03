@@ -11,6 +11,7 @@ import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
+import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -79,7 +80,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', ['boundOnLocalTagId'])
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', modifiedPage.query.nonFieldProperties())
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query
@@ -185,7 +186,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClauseAndQuery = super.getWhereClauses(query, 't1', ['worksId', 'boundOnWorksId'])
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', query.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery
@@ -216,6 +217,61 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
         const resultPage = modifiedPage.transform<SiteTagFullDTO>()
         // 利用构造方法反序列化本地标签和站点的json
         resultPage.data = rows.map((result) => new SiteTagFullDTO(result))
+        return resultPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  public async SiteTagLocalRelateDTO(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>> {
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new Page(page)
+    if (IsNullish(modifiedPage.query)) {
+      modifiedPage.query = new SiteTagQueryDTO()
+    }
+    const query = lodash.cloneDeep(modifiedPage.query)
+
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
+                json_object('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
+                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+    const fromClause = `FROM site_tag t1
+          LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
+          LEFT JOIN site t3 ON t1.site_id = t3.id`
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', query.nonFieldProperties())
+    const whereClauses = whereClauseAndQuery.whereClauses
+    const modifiedQuery = whereClauseAndQuery.query
+    modifiedPage.query = modifiedQuery
+    modifiedPage.query.worksId = query.worksId
+    modifiedPage.query.boundOnWorksId = query.boundOnWorksId
+
+    if (
+      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'boundOnWorksId') &&
+      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'worksId')
+    ) {
+      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${modifiedPage.query.worksId} AND t1.id = re_works_tag.site_tag_id)`
+      if (modifiedPage.query.boundOnWorksId) {
+        whereClauses.set('worksId', existClause)
+      } else {
+        whereClauses.set('worksId', 'NOT ' + existClause)
+      }
+    }
+
+    const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
+
+    let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause)
+    const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
+    statement = await super.sortAndPage(statement, modifiedPage, sort)
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+      .then((rows) => {
+        const rawList = super.toResultTypeDataList<SiteTagLocalRelateDTO>(rows)
+        const resultPage = modifiedPage.transform<SiteTagLocalRelateDTO>()
+        // 利用构造方法反序列化本地标签和站点的json
+        resultPage.data = rawList.map((result) => new SiteTagLocalRelateDTO(result))
         return resultPage
       })
       .finally(() => {

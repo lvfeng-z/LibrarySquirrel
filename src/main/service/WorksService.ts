@@ -156,7 +156,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                   return
                 }
                 return {
-                  authorId: localAuthor.id,
+                  authorId: String(localAuthor.id),
                   role: IsNullish(localAuthor.authorRole) ? AuthorRole.MAIN : localAuthor.authorRole
                 }
               })
@@ -170,7 +170,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                 if (IsNullish(siteAuthor.id)) {
                   return
                 }
-                return { authorId: siteAuthor.id, role: IsNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole }
+                return {
+                  authorId: String(siteAuthor.id),
+                  role: IsNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole
+                }
               })
               .filter(NotNullish)
             await reWorksAuthorService.updateLinks(OriginType.SITE, siteAuthorIds, worksDTO.id)
@@ -294,13 +297,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   public async updateWithResById(worksFullDTO: WorksFullDTO): Promise<number> {
-    let db: DB
-    if (this.injectedDB) {
-      db = this.db as DB
-    } else {
-      db = new DB(this.constructor.name)
-    }
-    return db.transaction(async (transactionDB) => {
+    return this.db.transaction(async (transactionDB) => {
       const resService = new ResourceService(transactionDB)
       if (NotNullish(worksFullDTO.resource)) {
         await resService.updateById(worksFullDTO.resource)

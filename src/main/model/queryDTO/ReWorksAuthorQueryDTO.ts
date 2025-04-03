@@ -1,5 +1,6 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
 import { AuthorRole } from '../../constant/AuthorRole.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   /**
@@ -28,15 +29,8 @@ export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   authorRole: AuthorRole | undefined | null
 
   constructor(reWorksAuthorQueryDTO?: ReWorksAuthorQueryDTO) {
-    if (reWorksAuthorQueryDTO === undefined) {
-      super()
-      this.authorType = undefined
-      this.worksId = undefined
-      this.localAuthorId = undefined
-      this.siteAuthorId = undefined
-      this.authorRole = undefined
-    } else {
-      super(reWorksAuthorQueryDTO)
+    super(reWorksAuthorQueryDTO)
+    if (NotNullish(reWorksAuthorQueryDTO)) {
       this.authorType = reWorksAuthorQueryDTO.authorType
       this.worksId = reWorksAuthorQueryDTO.worksId
       this.localAuthorId = reWorksAuthorQueryDTO.localAuthorId

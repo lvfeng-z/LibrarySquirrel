@@ -1,16 +1,11 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
 import { PathTypeEnum } from '../../constant/PathTypeEnum.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 自动解释路径含义QueryDTO
  */
 export default class AutoExplainPathQueryDTO extends BaseQueryDTO {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
-
   /**
    * 名称
    */
@@ -32,18 +27,15 @@ export default class AutoExplainPathQueryDTO extends BaseQueryDTO {
   path: string | undefined | null
 
   constructor(autoExplainPathQueryDTO?: AutoExplainPathQueryDTO) {
-    if (IsNullish(autoExplainPathQueryDTO)) {
-      super()
-      this.id = undefined
-      this.name = undefined
-      this.type = undefined
-      this.regularExpression = undefined
-    } else {
-      super(autoExplainPathQueryDTO)
-      this.id = autoExplainPathQueryDTO.id
+    super(autoExplainPathQueryDTO)
+    if (NotNullish(autoExplainPathQueryDTO)) {
       this.name = autoExplainPathQueryDTO.name
       this.type = autoExplainPathQueryDTO.type
       this.regularExpression = autoExplainPathQueryDTO.regularExpression
     }
+  }
+
+  public nonFieldProperties(): string[] {
+    return [...super.nonFieldProperties(), 'path']
   }
 }

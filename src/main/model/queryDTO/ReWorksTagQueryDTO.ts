@@ -1,4 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 作品与标签关联查询DTO
@@ -22,14 +23,8 @@ export class ReWorksTagQueryDTO extends BaseQueryDTO {
   siteTagId: number | undefined | null
 
   constructor(reWorksTagQueryDTO?: ReWorksTagQueryDTO) {
-    if (reWorksTagQueryDTO === undefined) {
-      super()
-      this.worksId = undefined
-      this.tagType = undefined
-      this.localTagId = undefined
-      this.siteTagId = undefined
-    } else {
-      super(reWorksTagQueryDTO)
+    super(reWorksTagQueryDTO)
+    if (NotNullish(reWorksTagQueryDTO)) {
       this.worksId = reWorksTagQueryDTO.worksId
       this.tagType = reWorksTagQueryDTO.tagType
       this.localTagId = reWorksTagQueryDTO.localTagId

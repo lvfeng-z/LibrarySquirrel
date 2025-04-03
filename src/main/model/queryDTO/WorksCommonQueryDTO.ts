@@ -58,4 +58,18 @@ export default class WorksCommonQueryDTO extends WorksQueryDTO {
       )
     }
   }
+
+  public nonFieldProperties(): string[] {
+    return [
+      ...super.nonFieldProperties(),
+      'includeLocalTagIds',
+      'excludeLocalTagIds',
+      'includeSiteTagIds',
+      'excludeSiteTagIds',
+      'includeLocalAuthorIds',
+      'excludeLocalAuthorIds',
+      'includeSiteAuthorIds',
+      'excludeSiteAuthorIds'
+    ]
+  }
 }

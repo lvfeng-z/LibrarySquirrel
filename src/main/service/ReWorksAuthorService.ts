@@ -18,7 +18,7 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
    * @param authorIdRoles
    * @param worksId
    */
-  public async link(type: OriginType, authorIdRoles: { authorId: number; role: AuthorRole }[], worksId: number) {
+  public async link(type: OriginType, authorIdRoles: { authorId: string; role: AuthorRole }[], worksId: number) {
     if (authorIdRoles.length === 0) {
       return 0
     }
@@ -28,7 +28,7 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
       const reWorksAuthor = new ReWorksAuthor()
       if (OriginType.LOCAL === type) {
         reWorksAuthor.worksId = worksId
-        reWorksAuthor.localAuthorId = authorIdRole.authorId
+        reWorksAuthor.localAuthorId = Number(authorIdRole.authorId)
         reWorksAuthor.authorRole = authorIdRole.role
         reWorksAuthor.authorType = OriginType.LOCAL
       } else {
@@ -49,7 +49,7 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
    * @param authorIdRoles
    * @param worksId
    */
-  public async updateLinks(type: OriginType, authorIdRoles: { authorId: number; role: AuthorRole }[], worksId: number) {
+  public async updateLinks(type: OriginType, authorIdRoles: { authorId: string; role: AuthorRole }[], worksId: number) {
     if (authorIdRoles.length === 0) {
       return 0
     }
@@ -58,7 +58,14 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
 
     // 删除已经不存在的关联
     if (ArrayNotEmpty(oldReList)) {
-      const notExistingList = oldReList.filter((oldRe) => !authorIdRoles.some((authorRole) => authorRole.authorId === oldRe.id))
+      let notExistingList: ReWorksAuthor[]
+      if (type === OriginType.LOCAL) {
+        notExistingList = oldReList.filter(
+          (oldRe) => !authorIdRoles.some((authorRole) => authorRole.authorId === String(oldRe.localAuthorId))
+        )
+      } else {
+        notExistingList = oldReList.filter((oldRe) => !authorIdRoles.some((authorRole) => authorRole.authorId === oldRe.siteAuthorId))
+      }
       if (ArrayNotEmpty(notExistingList)) {
         await this.deleteBatchById(notExistingList.map((notExisting) => notExisting.id as number))
       }

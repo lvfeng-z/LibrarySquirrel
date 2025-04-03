@@ -1,5 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 /**
  * QueryDTO
@@ -17,6 +17,11 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
   baseLocalTagId: number | null | undefined
 
   /**
+   * 最后一次使用的时间
+   */
+  lastUse: number | null | undefined
+
+  /**
    * 作品id
    */
   worksId: number | null | undefined
@@ -28,16 +33,16 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
 
   constructor(localTagQueryDTO?: LocalTagQueryDTO) {
     super(localTagQueryDTO)
-    if (IsNullish(localTagQueryDTO)) {
-      this.localTagName = undefined
-      this.baseLocalTagId = undefined
-      this.worksId = undefined
-      this.boundOnWorksId = undefined
-    } else {
+    if (NotNullish(localTagQueryDTO)) {
       this.localTagName = localTagQueryDTO.localTagName
       this.baseLocalTagId = localTagQueryDTO.baseLocalTagId
+      this.lastUse = localTagQueryDTO.lastUse
       this.worksId = localTagQueryDTO.worksId
       this.boundOnWorksId = localTagQueryDTO.boundOnWorksId
     }
+  }
+
+  public nonFieldProperties(): string[] {
+    return [...super.nonFieldProperties(), 'worksId', 'boundOnWorksId']
   }
 }

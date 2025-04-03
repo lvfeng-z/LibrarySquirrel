@@ -1,4 +1,5 @@
 import BaseEntity from '../../base/BaseEntity.ts'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 站点作者
@@ -35,15 +36,7 @@ export default class SiteAuthor extends BaseEntity {
 
   constructor(siteAuthor?: SiteAuthor) {
     super(siteAuthor)
-    if (siteAuthor === undefined) {
-      this.siteId = undefined
-      this.siteAuthorId = undefined
-      this.siteAuthorName = undefined
-      this.siteAuthorNameBefore = undefined
-      this.introduce = undefined
-      this.localAuthorId = undefined
-      this.lastUse = undefined
-    } else {
+    if (NotNullish(siteAuthor)) {
       this.siteId = siteAuthor.siteId
       this.siteAuthorId = siteAuthor.siteAuthorId
       this.siteAuthorName = siteAuthor.siteAuthorName

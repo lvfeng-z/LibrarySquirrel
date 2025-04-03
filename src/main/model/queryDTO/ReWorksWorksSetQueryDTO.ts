@@ -1,13 +1,10 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 作品-作品集关联表QueryDTO
  */
 export default class ReWorksWorksSetQueryDTO extends BaseQueryDTO {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 作品id
    */
@@ -18,14 +15,8 @@ export default class ReWorksWorksSetQueryDTO extends BaseQueryDTO {
   worksSetId: number | undefined | null
 
   constructor(reWorksWorksSetQueryDTO?: ReWorksWorksSetQueryDTO) {
-    if (reWorksWorksSetQueryDTO === undefined) {
-      super()
-      this.id = undefined
-      this.worksId = undefined
-      this.worksSetId = undefined
-    } else {
-      super(reWorksWorksSetQueryDTO)
-      this.id = reWorksWorksSetQueryDTO.id
+    super(reWorksWorksSetQueryDTO)
+    if (NotNullish(reWorksWorksSetQueryDTO)) {
       this.worksId = reWorksWorksSetQueryDTO.worksId
       this.worksSetId = reWorksWorksSetQueryDTO.worksSetId
     }

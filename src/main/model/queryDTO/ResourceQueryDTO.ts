@@ -36,6 +36,11 @@ export default class ResourceQueryDTO extends BaseQueryDTO {
   filenameExtension?: string | undefined | null
 
   /**
+   * 建议名称
+   */
+  suggestedName?: string | undefined | null
+
+  /**
    * 工作目录
    */
   workdir?: string | undefined | null
@@ -59,6 +64,7 @@ export default class ResourceQueryDTO extends BaseQueryDTO {
       this.filePath = resourceQueryDTO.filePath
       this.fileName = resourceQueryDTO.fileName
       this.filenameExtension = resourceQueryDTO.filenameExtension
+      this.suggestedName = resourceQueryDTO.suggestedName
       this.workdir = resourceQueryDTO.workdir
       this.resourceComplete = resourceQueryDTO.resourceComplete
       this.importMethod = resourceQueryDTO.importMethod

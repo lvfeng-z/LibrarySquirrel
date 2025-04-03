@@ -3,7 +3,7 @@ import { AuthorRole } from '../../constant/AuthorRole.ts'
 
 export default class ReWorksAuthor extends BaseEntity {
   /**
-   * 作者类型（0：本地，1：站点）
+   * 类型(0: 本地作者，1: 站点作者)
    */
   authorType: number | undefined | null
 
@@ -20,7 +20,7 @@ export default class ReWorksAuthor extends BaseEntity {
   /**
    * 站点作者Id
    */
-  siteAuthorId: number | undefined | null
+  siteAuthorId: string | undefined | null
 
   /**
    * 作者类型

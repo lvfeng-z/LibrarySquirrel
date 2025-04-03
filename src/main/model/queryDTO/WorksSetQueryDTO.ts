@@ -1,11 +1,7 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { NotNullish } from '../../util/CommonUtil.ts'
 
 export default class WorksSetQueryDTO extends BaseQueryDTO {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 集合来源站点id
    */
@@ -40,19 +36,8 @@ export default class WorksSetQueryDTO extends BaseQueryDTO {
   lastView: number | undefined | null
 
   constructor(worksSetQueryDTO?: WorksSetQueryDTO) {
-    if (IsNullish(worksSetQueryDTO)) {
-      super()
-      this.id = undefined
-      this.siteId = undefined
-      this.siteWorksSetId = undefined
-      this.siteWorksSetName = undefined
-      this.siteAuthorId = undefined
-      this.siteUploadTime = undefined
-      this.siteUpdateTime = undefined
-      this.nickName = undefined
-      this.lastView = undefined
-    } else {
-      super(worksSetQueryDTO)
+    super(worksSetQueryDTO)
+    if (NotNullish(worksSetQueryDTO)) {
       this.id = worksSetQueryDTO.id
       this.siteId = worksSetQueryDTO.siteId
       this.siteWorksSetId = worksSetQueryDTO.siteWorksSetId

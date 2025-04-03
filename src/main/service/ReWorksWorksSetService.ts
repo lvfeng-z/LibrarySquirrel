@@ -95,7 +95,7 @@ export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQ
    * @param worksId
    */
   public async listByWorksId(worksId: number): Promise<ReWorksWorksSet[]> {
-    const query = new ReWorksWorksSet()
+    const query = new ReWorksWorksSetQueryDTO()
     query.worksId = worksId
     return this.list(query)
   }

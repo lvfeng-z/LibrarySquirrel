@@ -52,13 +52,20 @@ export class BaseQueryDTO {
       this.sort = baseQueryDTO.sort
     }
   }
+
+  /**
+   * 获取非字段属性的名称
+   */
+  public nonFieldProperties(): string[] {
+    return ['operators', 'sort']
+  }
 }
 
 /**
  * 获取仅包含查询参数的对象
  */
 export function ToPlainParams<T extends BaseQueryDTO>(queryDTO: T, ignore?: string[]) {
-  const fullIgnore = ['operators', 'sort']
+  const fullIgnore = queryDTO.nonFieldProperties()
   if (NotNullish(ignore)) {
     fullIgnore.push(...ignore)
   }

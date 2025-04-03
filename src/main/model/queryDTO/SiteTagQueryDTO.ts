@@ -1,4 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * QueryDTO
@@ -29,8 +30,11 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
    * 站点标签对应的本地标签id
    */
   localTagId?: number | undefined | null
+  /**
+   * 最后一次使用的时间
+   */
+  lastUse?: number | null | undefined
 
-  // 查询用字段
   /**
    * 标签来源站点id列表
    */
@@ -52,18 +56,8 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
   boundOnWorksId?: boolean | undefined | null
 
   constructor(siteTagQueryDTO?: SiteTagQueryDTO) {
-    if (siteTagQueryDTO === undefined) {
-      super()
-      this.siteId = undefined
-      this.siteTagId = undefined
-      this.siteTagName = undefined
-      this.baseSiteTagId = undefined
-      this.description = undefined
-      this.localTagId = undefined
-      this.sites = undefined
-      this.boundOnLocalTagId = undefined
-    } else {
-      super(siteTagQueryDTO)
+    super(siteTagQueryDTO)
+    if (NotNullish(siteTagQueryDTO)) {
       this.siteId = siteTagQueryDTO.siteId
       this.siteTagId = siteTagQueryDTO.siteTagId
       this.siteTagName = siteTagQueryDTO.siteTagName
@@ -73,5 +67,9 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
       this.sites = siteTagQueryDTO.sites
       this.boundOnLocalTagId = siteTagQueryDTO.boundOnLocalTagId
     }
+  }
+
+  public nonFieldProperties(): string[] {
+    return [...super.nonFieldProperties(), 'sites', 'boundOnLocalTagId', 'worksId', 'boundOnWorksId']
   }
 }

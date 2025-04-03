@@ -13,6 +13,7 @@ import { AssertNotNullish } from '../util/AssertUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import SiteService from './SiteService.js'
 import SiteTagPluginDTO from '../model/dto/SiteTagPluginDTO.js'
+import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
 
 /**
  * 站点标签Service
@@ -69,6 +70,20 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       LogUtil.error('SiteTagService', '站点标签绑定在本地标签上失败，localTagId不能为空')
       return false
     }
+  }
+
+  /**
+   * 更新最后使用的时间
+   * @param ids
+   */
+  public async updateLastUse(ids: number[]) {
+    const entities = ids.map((id) => {
+      const temp = new SiteTag()
+      temp.id = id
+      temp.lastUse = Date.now()
+      return temp
+    })
+    return this.dao.updateBatchById(entities)
   }
 
   /**
@@ -181,20 +196,6 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   /**
-   * 更新最后使用的时间
-   * @param ids
-   */
-  public async updateLastUse(ids: number[]) {
-    const entities = ids.map((id) => {
-      const temp = new SiteTag()
-      temp.id = id
-      temp.lastUse = Date.now()
-      return temp
-    })
-    return this.dao.updateBatchById(entities)
-  }
-
-  /**
    * 分页查询SelectItem
    * @param page 分页查询参数
    */
@@ -207,6 +208,26 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       }
     }
     return this.dao.querySelectItemPage(page)
+  }
+
+  /**
+   * 分页查询
+   * @param page
+   */
+  public async queryLocalRelateDTOPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>> {
+    try {
+      page = new Page(page)
+      if (NotNullish(page.query)) {
+        page.query.operators = {
+          ...{ siteTagName: Operator.LIKE },
+          ...page.query.operators
+        }
+      }
+      return this.dao.SiteTagLocalRelateDTO(page)
+    } catch (error) {
+      LogUtil.error(this.constructor.name, error)
+      throw error
+    }
   }
 
   /**

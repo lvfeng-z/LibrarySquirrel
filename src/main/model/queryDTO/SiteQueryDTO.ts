@@ -1,4 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * QueryDTO
@@ -7,24 +8,14 @@ import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
 
 export default class SiteQueryDTO extends BaseQueryDTO {
   /**
-   * 主键
-   */
-  id: number | undefined | null
-
-  /**
    * 站点名称
    */
   siteName: string | undefined | null
 
   /**
-   * 站点域名
+   * 站点描述
    */
-  siteDomain: string | undefined | null
-
-  /**
-   * 站点主页
-   */
-  siteHomepage: string | undefined | null
+  siteDescription: string | undefined | null
 
   /**
    * 排序号
@@ -32,19 +23,10 @@ export default class SiteQueryDTO extends BaseQueryDTO {
   sortNum: number | undefined | null
 
   constructor(siteQueryDTO?: SiteQueryDTO) {
-    if (siteQueryDTO === undefined) {
-      super()
-      this.id = undefined
-      this.siteName = undefined
-      this.siteDomain = undefined
-      this.siteHomepage = undefined
-      this.sortNum = undefined
-    } else {
-      super(siteQueryDTO)
+    super(siteQueryDTO)
+    if (NotNullish(siteQueryDTO)) {
       this.id = siteQueryDTO.id
       this.siteName = siteQueryDTO.siteName
-      this.siteDomain = siteQueryDTO.siteDomain
-      this.siteHomepage = siteQueryDTO.siteHomepage
       this.sortNum = siteQueryDTO.sortNum
     }
   }

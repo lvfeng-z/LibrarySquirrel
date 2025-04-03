@@ -1,4 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 export default class TaskPluginListenerQueryDTO extends BaseQueryDTO {
   /**
@@ -12,10 +13,8 @@ export default class TaskPluginListenerQueryDTO extends BaseQueryDTO {
   listener: string | undefined | null
 
   constructor(taskPluginListenerQueryDTO?: TaskPluginListenerQueryDTO) {
-    if (taskPluginListenerQueryDTO === undefined) {
-      super()
-    } else {
-      super(taskPluginListenerQueryDTO)
+    super(taskPluginListenerQueryDTO)
+    if (NotNullish(taskPluginListenerQueryDTO)) {
       this.pluginId = taskPluginListenerQueryDTO.pluginId
       this.listener = taskPluginListenerQueryDTO.listener
     }

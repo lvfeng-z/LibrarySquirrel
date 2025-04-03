@@ -1,4 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * QueryDTO
@@ -20,7 +21,7 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 站点中作者的曾用名
    */
-  siteAuthorNameBefore?: string[] | undefined | null
+  siteAuthorNameBefore?: string[] | string | undefined | null
   /**
    * 介绍
    */
@@ -29,39 +30,35 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
    * 站点作者在本地对应的作者id
    */
   localAuthorId?: number | undefined | null
-
-  // 查询用字段
+  /**
+   * 最后一次使用的时间
+   */
+  lastUse?: number | null | undefined
   /**
    * 标签来源站点id列表
    */
   sites?: string[] | undefined | null
-
   /**
    * 查询绑定在LocalAuthor上的，还是未绑定的（true：绑定的，false：未绑定的）
    */
   boundOnLocalAuthorId?: boolean | undefined | null
 
   constructor(siteAuthorQueryDTO?: SiteAuthorQueryDTO) {
-    if (siteAuthorQueryDTO === undefined) {
-      super()
-      this.siteId = undefined
-      this.siteAuthorId = undefined
-      this.siteAuthorName = undefined
-      this.siteAuthorNameBefore = undefined
-      this.introduce = undefined
-      this.localAuthorId = undefined
-      this.sites = undefined
-      this.boundOnLocalAuthorId = undefined
-    } else {
-      super(siteAuthorQueryDTO)
+    super(siteAuthorQueryDTO)
+    if (NotNullish(siteAuthorQueryDTO)) {
       this.siteId = siteAuthorQueryDTO.siteId
       this.siteAuthorId = siteAuthorQueryDTO.siteAuthorId
       this.siteAuthorName = siteAuthorQueryDTO.siteAuthorName
       this.siteAuthorNameBefore = siteAuthorQueryDTO.siteAuthorNameBefore
       this.introduce = siteAuthorQueryDTO.introduce
       this.localAuthorId = siteAuthorQueryDTO.localAuthorId
+      this.lastUse = siteAuthorQueryDTO.lastUse
       this.sites = siteAuthorQueryDTO.sites
       this.boundOnLocalAuthorId = siteAuthorQueryDTO.boundOnLocalAuthorId
     }
+  }
+
+  public nonFieldProperties(): string[] {
+    return [...super.nonFieldProperties(), 'sites', 'boundOnLocalAuthorId']
   }
 }
