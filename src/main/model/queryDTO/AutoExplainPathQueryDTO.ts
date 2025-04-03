@@ -35,7 +35,7 @@ export default class AutoExplainPathQueryDTO extends BaseQueryDTO {
     }
   }
 
-  public nonFieldProperties(): string[] {
-    return [...super.nonFieldProperties(), 'path']
+  public static nonFieldProperties(): string[] {
+    return [...BaseQueryDTO.nonFieldProperties(), 'path']
   }
 }

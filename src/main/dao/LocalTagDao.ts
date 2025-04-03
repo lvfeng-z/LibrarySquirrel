@@ -133,7 +133,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
     const selectClause = 'SELECT *'
     const fromClause = 'FROM local_tag t1'
-    const whereClauseAndQuery = super.getWhereClauses(query, 't1', query.nonFieldProperties())
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', LocalTagQueryDTO.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedQuery.worksId = page.query.worksId

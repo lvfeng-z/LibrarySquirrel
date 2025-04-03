@@ -58,7 +58,7 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
     }
   }
 
-  public nonFieldProperties(): string[] {
-    return [...super.nonFieldProperties(), 'sites', 'boundOnLocalAuthorId']
+  public static nonFieldProperties(): string[] {
+    return [...BaseQueryDTO.nonFieldProperties(), 'sites', 'boundOnLocalAuthorId']
   }
 }

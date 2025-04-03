@@ -96,7 +96,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', modifiedPage.query.nonFieldProperties())
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', SiteAuthorQueryDTO.nonFieldProperties())
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query

@@ -24,7 +24,7 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
           JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description, 'sortNum', t2.sort_num) as site
         FROM ${this.tableName} t1
           LEFT JOIN site t2 ON t1.site_id = t2.id`
-    const whereClauseAndQuery = super.getWhereClauses(modifiedPage.query, 't1', modifiedPage.query.nonFieldProperties())
+    const whereClauseAndQuery = super.getWhereClauses(modifiedPage.query, 't1', SiteDomainQueryDTO.nonFieldProperties())
     const whereClauseMap = whereClauseAndQuery.whereClauses
 
     const modifiedQuery = whereClauseAndQuery.query

@@ -41,7 +41,7 @@ export default class SiteDomainQueryDTO extends BaseQueryDTO {
     }
   }
 
-  public nonFieldProperties(): string[] {
-    return [...super.nonFieldProperties(), 'boundOnSite', 'domains']
+  public static nonFieldProperties(): string[] {
+    return [...BaseQueryDTO.nonFieldProperties(), 'boundOnSite', 'domains']
   }
 }

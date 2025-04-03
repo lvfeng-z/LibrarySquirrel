@@ -80,7 +80,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', modifiedPage.query.nonFieldProperties())
+    const whereClausesAndQuery = this.getWhereClauses(modifiedPage.query, 't1', SiteTagQueryDTO.nonFieldProperties())
 
     const whereClauses = whereClausesAndQuery.whereClauses
     const modifiedQuery = whereClausesAndQuery.query
@@ -186,7 +186,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClauseAndQuery = super.getWhereClauses(query, 't1', query.nonFieldProperties())
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', SiteTagQueryDTO.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery
@@ -240,7 +240,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
-    const whereClauseAndQuery = super.getWhereClauses(query, 't1', query.nonFieldProperties())
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', SiteTagQueryDTO.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery

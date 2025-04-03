@@ -42,7 +42,7 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
     }
   }
 
-  public nonFieldProperties(): string[] {
-    return [...super.nonFieldProperties(), 'worksId', 'boundOnWorksId']
+  public static nonFieldProperties(): string[] {
+    return [...BaseQueryDTO.nonFieldProperties(), 'worksId', 'boundOnWorksId']
   }
 }
