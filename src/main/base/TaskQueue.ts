@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
 import WorksService from '../service/WorksService.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import { Readable, Transform, TransformCallback } from 'node:stream'
+import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import TaskWriter from '../util/TaskWriter.js'
@@ -119,11 +119,13 @@ export class TaskQueue {
 
     // 初始化流
     this.readyToClose = new Promise<void>((resolve, reject) => {
-      const handleError = (error: Error, taskRunInstance: TaskRunInstance) => {
-        LogUtil.error('TaskQueue', `处理任务失败，taskId: ${taskRunInstance.taskId}，error: ${error.message}`)
-        taskRunInstance.failed()
-        this.taskStatusChangeStream.addTask([taskRunInstance])
-        this.refreshParentStatus([taskRunInstance.parentId])
+      const handleError = (error: Error, taskRunInstance?: TaskRunInstance) => {
+        LogUtil.error('TaskQueue', `处理任务失败，taskId: ${taskRunInstance?.taskId}，error: ${error.message}`)
+        if (NotNullish(taskRunInstance)) {
+          taskRunInstance.failed()
+          this.taskStatusChangeStream.addTask([taskRunInstance])
+          this.refreshParentStatus([taskRunInstance.parentId])
+        }
       }
       // 信息保存流
       this.taskInfoStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
@@ -134,6 +136,7 @@ export class TaskQueue {
       const taskInfoStreamDestroyed = new Promise<void>((resolve) =>
         this.taskInfoStream.once('end', () => {
           this.taskInfoStream.destroy()
+          LogUtil.info(this.constructor.name, '任务信息保存流已销毁')
           resolve()
         })
       )
@@ -162,6 +165,7 @@ export class TaskQueue {
       const taskResourceStreamDestroyed = new Promise<void>((resolve) =>
         this.taskResourceStream.once('end', () => {
           this.taskResourceStream.destroy()
+          LogUtil.info(this.constructor.name, '任务资源保存流已销毁')
           resolve()
         })
       )
@@ -173,8 +177,9 @@ export class TaskQueue {
       })
       this.taskStatusChangeStream.on('data', () => {})
       const taskStatusChangeStreamDestroyed = new Promise<void>((resolve) =>
-        this.taskStatusChangeStream.once('end', () => {
+        this.taskStatusChangeStream.once('close', () => {
           this.taskStatusChangeStream.destroy()
+          LogUtil.info(this.constructor.name, '任务结果保存流已销毁')
           resolve()
         })
       )
@@ -1031,9 +1036,11 @@ class TaskInfoStream extends Transform {
 
     const task: Task | undefined = new Task()
     task.id = chunk.taskId
+    let alreadyCallback = false
     try {
       const saveInfoPromise = chunk.saveInfo()
       callback()
+      alreadyCallback = true
       await saveInfoPromise
       if (chunk.paused()) {
         chunk.inStream = false
@@ -1046,7 +1053,9 @@ class TaskInfoStream extends Transform {
       newError.message = msg + '，' + (error as { message: string }).message
       LogUtil.error('TaskQueue', error)
       this.emit('error', error, chunk)
-      callback()
+      if (!alreadyCallback) {
+        callback()
+      }
     }
   }
 }
@@ -1130,8 +1139,7 @@ class TaskResourceStream extends Transform {
 /**
  * 任务状态改变流
  */
-// TODO 改成Writable
-class TaskStatusChangeStream extends Transform {
+class TaskStatusChangeStream extends Writable {
   /**
    * 任务服务
    * @private
@@ -1171,7 +1179,7 @@ class TaskStatusChangeStream extends Transform {
     })
   }
 
-  async _transform(chunk: TaskRunInstance[] | TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
+  async _write(chunk: TaskRunInstance[] | TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
     try {
       if (Array.isArray(chunk)) {
         this.batchUpdateBuffer.push(...chunk)
@@ -1181,7 +1189,6 @@ class TaskStatusChangeStream extends Transform {
       if (this.batchUpdateBuffer.length >= 100 || ArrayIsEmpty(this.runInstances)) {
         const aBatch = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
         this.taskService.updateBatchById(aBatch.map(this.generateTaskFromRunInst)).catch((error) => LogUtil.error('TaskQueue', error))
-        this.push(aBatch)
       }
     } catch (error) {
       LogUtil.error('TaskQueue', error)

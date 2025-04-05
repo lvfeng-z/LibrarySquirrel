@@ -6,7 +6,7 @@ export default {
       const scrollTop = domTarget.scrollTop
       const clientHeight = domTarget.clientHeight
       const scrollHeight = domTarget.scrollHeight
-      if (scrollHeight - scrollTop <= clientHeight) {
+      if (scrollHeight - scrollTop <= clientHeight + 1) {
         binding.value()
       }
     }
