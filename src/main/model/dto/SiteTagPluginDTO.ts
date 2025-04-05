@@ -11,7 +11,7 @@ export default class SiteTagPluginDTO extends SiteTag {
   constructor(siteTag?: SiteTag) {
     super(siteTag)
     if (NotNullish(siteTag)) {
-      lodash.assign(this, lodash.assign(siteTag, ['siteDomain']))
+      lodash.assign(this, lodash.pick(siteTag, ['siteDomain']))
     }
   }
 }

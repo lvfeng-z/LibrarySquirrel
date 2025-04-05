@@ -15,7 +15,7 @@ export default class SiteTagLocalRelateDTO extends SiteTagFullDTO {
   constructor(siteTag?: SiteTag) {
     super(siteTag)
     if (NotNullish(siteTag)) {
-      lodash.assign(this, lodash.assign(siteTag, ['hasSameNameLocalTag']))
+      lodash.assign(this, lodash.pick(siteTag, ['hasSameNameLocalTag']))
       this.hasSameNameLocalTag = Boolean(this.hasSameNameLocalTag)
     }
   }
