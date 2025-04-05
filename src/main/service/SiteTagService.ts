@@ -8,12 +8,15 @@ import Page from '../model/util/Page.ts'
 import BaseService from '../base/BaseService.ts'
 import DB from '../database/DB.ts'
 import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
-import { ArrayIsEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
 import SiteService from './SiteService.js'
 import SiteTagPluginDTO from '../model/dto/SiteTagPluginDTO.js'
 import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
+import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.js'
+import LocalTag from '../model/entity/LocalTag.js'
+import LocalTagService from './LocalTagService.js'
 
 /**
  * 站点标签Service
@@ -55,11 +58,40 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   /**
+   * 创建同名的本地标签
+   * @param siteTagName
+   */
+  public async createSameNameLocalTag(siteTagName: string): Promise<number> {
+    const localTagService = new LocalTagService(this.db)
+    const localTagQuery = new LocalTagQueryDTO()
+    localTagQuery.localTagName = siteTagName
+    const sameNameLocalTags = await localTagService.list(localTagQuery)
+    if (ArrayNotEmpty(sameNameLocalTags)) {
+      return sameNameLocalTags[0].id as number
+    }
+    const newLocalTag = new LocalTag()
+    newLocalTag.localTagName = siteTagName
+    return localTagService.save(newLocalTag)
+  }
+
+  /**
+   * 创建并绑定同名的本地标签
+   * @param siteTag
+   */
+  public async createAndBindSameNameLocalTag(siteTag: SiteTag): Promise<boolean> {
+    const siteTagName = siteTag.siteTagName
+    AssertNotNullish(siteTag.id, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
+    AssertNotBlank(siteTagName, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
+    const localTagId = await this.createSameNameLocalTag(siteTagName)
+    return this.updateBindLocalTag(localTagId, [siteTag.id])
+  }
+
+  /**
    * 站点标签绑定在本地标签上
    * @param localTagId
    * @param siteTagIds
    */
-  public async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]) {
+  public async updateBindLocalTag(localTagId: number, siteTagIds: number[]) {
     if (localTagId !== undefined) {
       if (siteTagIds != undefined && siteTagIds.length > 0) {
         return (await this.dao.updateBindLocalTag(localTagId, siteTagIds)) > 0

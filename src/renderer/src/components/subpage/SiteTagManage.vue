@@ -30,25 +30,22 @@ onMounted(() => {
 // 变量
 // 接口
 const apis = {
+  siteTagCreateAndBindSameNameLocalTag: window.api.siteTagCreateAndBindSameNameLocalTag,
   siteTagDeleteById: window.api.siteTagDeleteById,
   siteTagUpdateById: window.api.siteTagUpdateById,
   siteTagQueryLocalRelateDTOPage: window.api.siteTagQueryLocalRelateDTOPage
 }
 // siteTagSearchTable的组件实例
 const siteTagSearchTable = ref()
-// siteTagExchangeBox的组件实例
-const siteTagExchangeBox = ref()
 // 被改变的数据行
 const changedRows: Ref<SiteTagLocalRelateDTO[]> = ref([])
-// 被选中的本地标签
-const localTagSelected: Ref<SiteTagLocalRelateDTO> = ref(new SiteTagLocalRelateDTO())
 // 本地标签SearchTable的operationButton
 const operationButton: OperationItem<SiteTagLocalRelateDTO>[] = [
   {
     label: '创建同名本地标签',
     icon: 'CirclePlusFilled',
     buttonType: 'primary',
-    code: 'save',
+    code: 'create',
     rule: (row) => !row.hasSameNameLocalTag
   },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
@@ -121,8 +118,6 @@ const localTagDialogMode: Ref<DialogMode> = ref(DialogMode.EDIT)
 const dialogState: Ref<boolean> = ref(false)
 // 本地标签对话框的数据
 const dialogData: Ref<SiteTagLocalRelateDTO> = ref(new SiteTagLocalRelateDTO())
-// 是否禁用ExchangeBox的搜索按钮
-const disableExcSearchButton: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询本地标签的函数
@@ -154,8 +149,8 @@ async function handleCreateButtonClicked() {
 // 处理本地标签数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagLocalRelateDTO>) {
   switch (op.code) {
-    case 'save':
-      saveRowEdit(op.data)
+    case 'create':
+      apis.siteTagCreateAndBindSameNameLocalTag(lodash.cloneDeep(op.data)).then(() => siteTagSearchTable.value.doSearch())
       break
     case DialogMode.VIEW:
       localTagDialogMode.value = DialogMode.VIEW
@@ -174,29 +169,9 @@ function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagLocalRelat
       break
   }
 }
-// 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: SiteTagLocalRelateDTO[]) {
-  if (selections.length > 0) {
-    disableExcSearchButton.value = false
-    localTagSelected.value = selections[0]
-    siteTagExchangeBox.value.refreshData()
-  }
-}
 // 处理本地标签弹窗请求成功事件
 function refreshTable() {
   siteTagSearchTable.value.doSearch()
-}
-// 保存行数据编辑
-async function saveRowEdit(newData: SiteTagLocalRelateDTO) {
-  const tempData = lodash.cloneDeep(newData)
-
-  const response = await apis.siteTagUpdateById(tempData)
-  ApiUtil.msg(response)
-  if (ApiUtil.check(response)) {
-    const index = changedRows.value.indexOf(newData)
-    changedRows.value.splice(index, 1)
-    refreshTable()
-  }
 }
 // 删除本地标签
 async function deleteLocalTag(id: string) {
@@ -229,7 +204,6 @@ async function deleteLocalTag(id: string) {
           :page-sizes="[10, 20, 50, 100, 1000]"
           @create-button-clicked="handleCreateButtonClicked"
           @row-button-clicked="handleRowButtonClicked"
-          @selection-change="handleLocalTagSelectionChange"
         ></search-table>
       </div>
     </template>

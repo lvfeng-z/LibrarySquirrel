@@ -25,7 +25,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * @param localTagId 本地标签id
    * @param siteTagIds 站点标签id列表
    */
-  public async updateBindLocalTag(localTagId: string | null, siteTagIds: string[]): Promise<number> {
+  public async updateBindLocalTag(localTagId: number, siteTagIds: number[]): Promise<number> {
     if (siteTagIds.length > 0) {
       const setClause: string[] = []
       siteTagIds.forEach((siteTagId) => {

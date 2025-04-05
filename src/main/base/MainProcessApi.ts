@@ -485,6 +485,15 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('siteTag-createAndBindSameNameLocalTag', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteTag-createAndBindSameNameLocalTag')
+    try {
+      const siteTagService = new SiteTagService()
+      return ApiUtil.response(await siteTagService.createAndBindSameNameLocalTag(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('siteTag-updateById', async (_event, args) => {
     LogUtil.info('MainProcessApi', 'siteTag-updateById')
     try {
@@ -503,7 +512,7 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('siteTag-updateBindLocalTag', async (_event, localTagId: string | null, siteTagIds: string[]) => {
+  Electron.ipcMain.handle('siteTag-updateBindLocalTag', async (_event, localTagId: number, siteTagIds: number[]) => {
     LogUtil.info('MainProcessApi', 'siteTag-updateBindLocalTag')
     try {
       const siteTagService = new SiteTagService()

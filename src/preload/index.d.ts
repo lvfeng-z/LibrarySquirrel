@@ -82,6 +82,7 @@ declare global {
 
       // SiteTag
       siteTagSave: function
+      siteTagCreateAndBindSameNameLocalTag: function
       siteTagDeleteById: function
       siteTagUpdateById: function
       siteTagUpdateBindLocalTag: function

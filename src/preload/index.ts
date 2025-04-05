@@ -184,6 +184,7 @@ const api = {
   siteTagSave: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-save', args)
   },
+  siteTagCreateAndBindSameNameLocalTag: (args) => Electron.ipcRenderer.invoke('siteTag-createAndBindSameNameLocalTag', args),
   siteTagUpdateById: (args) => {
     return Electron.ipcRenderer.invoke('siteTag-updateById', args)
   },
