@@ -3,7 +3,12 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
+import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import IPage from '@renderer/model/util/IPage.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
+import Page from '@renderer/model/util/Page.ts'
+import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
 
 // props
 const props = withDefaults(
@@ -19,7 +24,7 @@ const props = withDefaults(
 
 // model
 // 表单数据
-const formData = defineModel<SiteTag>('formData', { required: true })
+const formData = defineModel<SiteTagLocalRelateDTO>('formData', { required: true })
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
@@ -29,6 +34,7 @@ const emits = defineEmits(['requestSuccess'])
 // 变量
 // 接口
 const apis = {
+  localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
   siteTagUpdateById: window.api.siteTagUpdateById
 }
 
@@ -47,24 +53,20 @@ async function handleSaveButtonClicked() {
     }
   }
 }
-// async function load(node, resolve) {
-//   if (node.isLeaf) {
-//     return resolve([])
-//   }
-//   const baseTagTreeResponse = await apis.localTagGetTree(node.data.id)
-//   if (ApiUtil.check(baseTagTreeResponse)) {
-//     const children = ApiUtil.data<TreeSelectNode[]>(baseTagTreeResponse)
-//     children?.forEach((child) => {
-//       child.isLeaf = Boolean(child.isLeaf)
-//       if (formData.value.id === child.id) {
-//         child.disabled = true
-//       }
-//     })
-//     resolve(children)
-//   } else {
-//     return resolve([])
-//   }
-// }
+// 请求本地标签选择项分页接口
+async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
+  page.query = { localTagName: input }
+  const response = await apis.localTagQuerySelectItemPage(page)
+
+  // 解析响应值
+  if (ApiUtil.check(response)) {
+    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
+    return IsNullish(nextPage) ? page : nextPage
+  } else {
+    ApiUtil.failedMsg(response)
+    return page
+  }
+}
 </script>
 
 <template>
@@ -79,8 +81,25 @@ async function handleSaveButtonClicked() {
       </el-row>
       <el-row>
         <el-col>
-          <el-form-item label="名称">
+          <el-form-item label="描述">
             <el-input v-model="formData.description" type="textarea"></el-input>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col>
+          <el-form-item label="本地标签">
+            <auto-load-select v-model="formData.localTagId" :load="localTagQuerySelectItemPage" remote filterable clearable>
+              <template #default="{ list }">
+                <el-option
+                  v-if="NotNullish(formData.localTag)"
+                  :hidden="true"
+                  :value="formData.localTag.id"
+                  :label="formData.localTag.localTagName"
+                ></el-option>
+                <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+              </template>
+            </auto-load-select>
           </el-form-item>
         </el-col>
       </el-row>
