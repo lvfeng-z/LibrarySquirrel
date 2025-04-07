@@ -10,8 +10,6 @@ const props = defineProps<{
 }>()
 
 // 变量
-// 最外部容器的实例
-const container = ref()
 // worksDialog开关
 const worksDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // worksDialog的内容
@@ -25,7 +23,7 @@ function handleImageClicked(works: WorksFullDTO) {
 </script>
 
 <template>
-  <div ref="container" class="works-display-area">
+  <div class="works-display-area">
     <template v-for="works in props.worksList" :key="works.id">
       <div class="works-display-area-container">
         <works-display-case
@@ -43,10 +41,9 @@ function handleImageClicked(works: WorksFullDTO) {
 
 <style scoped>
 .works-display-area {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  align-items: start;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
 }
 .works-display-area-container {
   flex: 1 0 calc(20% - 30px);
@@ -54,17 +51,14 @@ function handleImageClicked(works: WorksFullDTO) {
   align-content: center;
   box-sizing: border-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-  white-space: nowrap;
-  margin: 3px;
-  padding: 3px;
+  margin: 5px 5px 0;
+  padding: 2px;
   border-radius: 10px;
   background-color: rgb(166.2, 168.6, 173.4, 20%);
-  transition-duration: 0.4s;
+  transition-duration: 0.3s;
 }
 .works-display-area-container:hover {
-  background-color: rgb(166.2, 168.6, 173.4, 40%);
-  transform: scale(1.02);
+  background-color: rgb(166.2, 168.6, 173.4, 50%);
+  transform: scale(1.03);
 }
 </style>
