@@ -270,6 +270,7 @@ async function saveRowEdit(newData: SiteTagVO) {
           :multi-select="false"
           :selectable="true"
           :page-sizes="[10, 20, 50, 100, 1000]"
+          :operation-width="205"
           @create-button-clicked="handleCreateButtonClicked"
           @row-button-clicked="handleRowButtonClicked"
         ></search-table>

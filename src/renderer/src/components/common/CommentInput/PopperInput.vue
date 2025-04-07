@@ -103,7 +103,7 @@ const spanText = computed(() => {
     const node = GetNode(tempRoot, data.value as number)
     return IsNullish(node) ? '-' : node.label
   } else if (props.config.type === 'autoLoadSelect') {
-    if (cacheData.value.value === data.value) {
+    if (cacheData.value?.value === data.value) {
       return IsNullish(cacheData.value) ? '-' : cacheData.value.label
     }
     if (ArrayNotEmpty(selectList.value)) {
