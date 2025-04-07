@@ -8,7 +8,7 @@ import CommonInputDate from '@renderer/components/common/CommentInput/CommonInpu
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
-import { ArrayIsEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 
@@ -41,7 +41,7 @@ const cacheData = defineModel<SelectItem>('cacheData', { default: undefined, req
 const emits = defineEmits(['dataChanged'])
 
 // 变量
-const inputRef = ref()
+const inputRef = ref<HTMLElement>()
 const config: Ref<UnwrapRef<CommonInputConfig>> = ref(lodash.cloneDeep(props.config))
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
 const selectList: Ref<SelectItem[]> = ref([])
@@ -102,12 +102,14 @@ const spanText = computed(() => {
     const node = GetNode(tempRoot, data.value as number)
     return IsNullish(node) ? '-' : node.label
   } else if (props.config.type === 'autoLoadSelect') {
-    if (ArrayIsEmpty(selectList.value)) {
+    if (cacheData.value.value === data.value) {
       return IsNullish(cacheData.value) ? '-' : cacheData.value.label
-    } else {
+    }
+    if (ArrayNotEmpty(selectList.value)) {
       const target = selectList.value.find((selectData) => selectData.value === data.value)
       return IsNullish(target) ? '-' : target.label
     }
+    return '-'
   } else {
     return data.value
   }
