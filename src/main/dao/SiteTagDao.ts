@@ -285,7 +285,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   public async listBySiteTag(siteTags: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
     AssertArrayNotEmpty(siteTags, this.constructor.name, '根据站点标签查询失败，参数不能为空')
     const whereClause = siteTags
-      .map((siteAuthor) => `(site_tag_id = ${siteAuthor.siteTagId} AND site_id = ${siteAuthor.siteId})`)
+      .map((siteAuthor) => `(site_tag_id = '${siteAuthor.siteTagId}' AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')
     const statement = `SELECT * FROM ${this.tableName} WHERE ${whereClause}`
     const db = this.acquire()
