@@ -146,7 +146,7 @@ export default class SearchService {
       }
     }
     worksPage.query = worksQueryDTO
-    return worksService.queryPage(worksPage).then((result) => {
+    return worksService.synthesisQueryPage(worksPage).then((result) => {
       const used: Map<SearchType, number[]> = new Map<SearchType, number[]>()
       used.set(SearchType.LOCAL_TAG, usedLocalTag)
       used.set(SearchType.SITE_TAG, usedSiteTag)

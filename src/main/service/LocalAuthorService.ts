@@ -92,7 +92,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
    * 查询作品的本地作者
    * @param worksId 作品id
    */
-  async listDTOByWorksId(worksId: number): Promise<LocalAuthorRoleDTO[]> {
+  public async listDTOByWorksId(worksId: number): Promise<LocalAuthorRoleDTO[]> {
     return this.dao.listDTOByWorksId(worksId)
   }
 }

@@ -68,23 +68,23 @@ export default class WorksFullDTO extends Works {
         },
         {
           property: 'localAuthors',
-          builder: (raw: []) => raw.forEach((rawLocalAuthor) => new LocalAuthorRoleDTO(rawLocalAuthor))
+          builder: (raw: []) => raw.map((rawLocalAuthor) => new LocalAuthorRoleDTO(rawLocalAuthor))
         },
         {
           property: 'localTags',
-          builder: (raw: []) => raw.forEach((rawLocalTag) => new LocalTag(rawLocalTag))
+          builder: (raw: []) => raw.map((rawLocalTag) => new LocalTag(rawLocalTag))
         },
         {
           property: 'siteAuthors',
-          builder: (raw: []) => raw.forEach((rawSiteAuthor) => new SiteAuthorRoleDTO(rawSiteAuthor))
+          builder: (raw: []) => raw.map((rawSiteAuthor) => new SiteAuthorRoleDTO(rawSiteAuthor))
         },
         {
           property: 'siteTags',
-          builder: (raw: []) => raw.forEach((rawSiteTag) => new SiteTagFullDTO(rawSiteTag))
+          builder: (raw: []) => raw.map((rawSiteTag) => new SiteTagFullDTO(rawSiteTag))
         },
         {
           property: 'worksSets',
-          builder: (raw: []) => raw.forEach((rawWorksSet) => new WorksSet(rawWorksSet))
+          builder: (raw: []) => raw.map((rawWorksSet) => new WorksSet(rawWorksSet))
         }
       ])
       lodash.assign(

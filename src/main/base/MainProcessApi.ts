@@ -696,15 +696,6 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('works-multipleConditionQueryPage', async (_event, arg1, arg2): Promise<ApiUtil> => {
-    const worksService = new WorksService()
-    try {
-      const result = await worksService.multipleConditionQueryPage(arg1, arg2)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
   Electron.ipcMain.handle('works-getFullWorksInfoById', async (_event, args): Promise<ApiUtil> => {
     const worksService = new WorksService()
     try {

@@ -49,7 +49,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
   }
 
   /**
-   * 查询作品的本地标签
+   * 查询作品的本地作者
    * @param worksId 作品id
    */
   async listDTOByWorksId(worksId: number): Promise<LocalAuthorRoleDTO[]> {

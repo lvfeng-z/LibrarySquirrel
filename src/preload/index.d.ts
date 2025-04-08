@@ -110,7 +110,6 @@ declare global {
 
       // Works
       worksQueryPage: function
-      worksMultipleConditionQueryPage: function
       worksSaveWorks: function
       worksGetFullWorksInfoById: function
 
