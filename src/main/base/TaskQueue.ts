@@ -124,7 +124,13 @@ export class TaskQueue {
         if (NotNullish(taskRunInstance)) {
           taskRunInstance.failed()
           this.taskStatusChangeStream.addTask([taskRunInstance])
-          this.refreshParentStatus([taskRunInstance.parentId])
+          if (IsNullish(taskRunInstance.parentId)) {
+            // 单个的任务直接清除
+            this.removeTask([taskRunInstance.taskId])
+          } else {
+            // 有父任务的刷新父任务状态
+            this.refreshParentStatus([taskRunInstance.parentId])
+          }
         }
       }
       // 信息保存流
@@ -154,7 +160,13 @@ export class TaskQueue {
           taskRunInstance.resSaveSuspended = false
           LogUtil.info('TaskQueue', `任务${taskRunInstance.taskId}失败`)
         }
-        this.refreshParentStatus([taskRunInstance.parentId])
+        if (IsNullish(taskRunInstance.parentId)) {
+          // 单个的任务直接清除
+          this.removeTask([taskRunInstance.taskId])
+        } else {
+          // 有父任务的刷新父任务状态
+          this.refreshParentStatus([taskRunInstance.parentId])
+        }
       })
       this.taskResourceStream.on('saveStart', (taskRunInstance: TaskRunInstance) => {
         this.taskStatusChangeStream.addTask([taskRunInstance])
@@ -213,6 +225,10 @@ export class TaskQueue {
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     } else if (taskOperation === TaskOperation.STOP) {
       await this.stopTask(tasks)
+      // 清除单个的任务
+      const singleTasks = tasks.filter((task) => IsNullish(task.pid)).map((task) => task.id as number)
+      this.removeTask(singleTasks)
+      // 刷新父任务
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
     }
@@ -1048,6 +1064,8 @@ class TaskInfoStream extends Transform {
         this.push(chunk)
       }
     } catch (error) {
+      chunk.inStream = false
+      chunk.infoSaved = false
       const msg = `保存任务${chunk.taskId}的作品信息失败`
       const newError = new Error()
       newError.message = msg + '，' + (error as { message: string }).message
