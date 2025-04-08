@@ -19,6 +19,7 @@ import StringUtil from '@renderer/utils/StringUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import lodash from 'lodash'
 import { ElMessage } from 'element-plus'
+import AuthorInfo from '@renderer/components/common/AuthorInfo.vue'
 
 // props
 const props = defineProps<{
@@ -61,11 +62,6 @@ const localTagExchangeBox = ref()
 const siteTagExchangeBox = ref()
 // 作品信息
 const worksFullInfo: Ref<WorksFullDTO> = ref(new WorksFullDTO(props.works[0]))
-// 本地作者
-const localAuthor: Ref<UnwrapRef<string>> = computed(() => {
-  const names = worksFullInfo.value.localAuthors?.map((localAuthor) => localAuthor.localAuthorName)
-  return IsNullish(names) ? '' : names.join(',')
-})
 // 本地标签
 const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
   const result = worksFullInfo.value.localTags?.map(
@@ -254,7 +250,7 @@ function handleDrawerOpen() {
             {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
           </el-descriptions-item>
           <el-descriptions-item label="作者">
-            {{ localAuthor }}
+            <author-info :local-authors="worksFullInfo.localAuthors" :site-authors="worksFullInfo.siteAuthors" />
           </el-descriptions-item>
           <el-descriptions-item label="站点">
             {{ worksFullInfo.site?.siteName }}

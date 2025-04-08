@@ -63,38 +63,38 @@ function handlePictureClicked() {
 }
 </script>
 <template>
-  <div class="works-display-case">
+  <div class="works-case">
     <el-image
       :fit="imageFit"
-      class="works-display-case-image"
+      class="works-case-image"
       :src="`resource://workdir${props.works.resource?.filePath}${srcParamStr}`"
       @load="handleElImageFit"
       @click="handleImageClicked"
       @dblclick="handlePictureClicked"
     >
       <template #error>
-        <div class="works-display-case-error">
-          <el-icon class="works-display-case-error-icon"><Picture /></el-icon>
+        <div class="works-case-error">
+          <el-icon class="works-case-error-icon"><Picture /></el-icon>
         </div>
       </template>
     </el-image>
-    <works-info class="works-display-case-works-info" :works="works" />
-    <author-info class="works-display-case-author-info" :authors="props.works.localAuthors" />
+    <works-info class="works-case-works-info" :works="works" />
+    <author-info class="works-case-author-info" :local-authors="props.works.localAuthors" :site-authors="props.works.siteAuthors" />
   </div>
 </template>
 
 <style scoped>
-.works-display-case {
+.works-case {
   display: flex;
   flex-direction: column;
 }
-.works-display-case-image {
+.works-case-image {
   width: auto;
   cursor: pointer;
   max-height: calc(v-bind(caseHeight) - 100px);
   border-radius: 10px;
 }
-.works-display-case-error {
+.works-case-error {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -102,11 +102,11 @@ function handlePictureClicked() {
   height: 200px;
   width: 100%;
 }
-.works-display-case-error-icon {
+.works-case-error-icon {
   color: var(--el-text-color-secondary);
   scale: 2;
 }
-.works-display-case-works-info {
+.works-case-works-info {
   width: 100%;
   display: block;
   overflow: hidden;
@@ -114,7 +114,7 @@ function handlePictureClicked() {
   word-wrap: break-word;
   white-space: nowrap;
 }
-.works-display-case-author-info {
+.works-case-author-info {
   width: 100%;
   display: block;
   overflow: hidden;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
-import WorksDisplayCase from './WorksDisplayCase.vue'
+import WorksCase from './WorksCase.vue'
 import WorksDialog from '../dialogs/WorksDialog.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
 
@@ -23,11 +23,11 @@ function handleImageClicked(works: WorksFullDTO) {
 </script>
 
 <template>
-  <div class="works-display-area">
+  <div class="works-area">
     <template v-for="works in props.worksList" :key="works.id">
-      <div class="works-display-area-container">
-        <works-display-case
-          class="works-display-area-works-display-case"
+      <div class="works-area-container">
+        <works-case
+          class="works-area-works-case"
           :works="works"
           :max-height="500"
           :max-width="500"
@@ -40,12 +40,12 @@ function handleImageClicked(works: WorksFullDTO) {
 </template>
 
 <style scoped>
-.works-display-area {
+.works-area {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
 }
-.works-display-area-container {
+.works-area-container {
   flex: 1 0 calc(20% - 30px);
   width: 100%;
   align-content: center;
@@ -57,7 +57,7 @@ function handleImageClicked(works: WorksFullDTO) {
   background-color: rgb(166.2, 168.6, 173.4, 20%);
   transition-duration: 0.3s;
 }
-.works-display-area-container:hover {
+.works-area-container:hover {
   background-color: rgb(166.2, 168.6, 173.4, 50%);
   transform: scale(1.03);
 }

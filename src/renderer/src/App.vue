@@ -7,7 +7,7 @@ import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { CollectionTag, Coordinate, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
-import WorksDisplayArea from './components/common/WorksDisplayArea.vue'
+import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
@@ -51,8 +51,7 @@ const apis = {
   localTagListSelectItems: window.api.localTagListSelectItems,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   worksQueryPage: window.api.worksQueryPage,
-  searchQueryWorksPage: window.api.searchQueryWorksPage,
-  worksMultipleConditionQueryPage: window.api.worksMultipleConditionQueryPage
+  searchQueryWorksPage: window.api.searchQueryWorksPage
 }
 // sideMenu组件的实例
 const sideMenuRef = ref()
@@ -343,7 +342,7 @@ async function handleTest() {
           </div>
           <div class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-display-area style="margin-right: 8px" :works-list="worksList"></works-display-area>
+              <works-area style="margin-right: 8px" :works-list="worksList"></works-area>
             </el-scrollbar>
           </div>
         </div>

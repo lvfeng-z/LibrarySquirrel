@@ -63,6 +63,10 @@ export default class WorksFullDTO extends Works {
           builder: (src) => new Resource(src)
         },
         {
+          property: 'inactiveResource',
+          builder: (raw: []) => raw.map((rawResource) => new Resource(rawResource))
+        },
+        {
           property: 'site',
           builder: (src) => new Site(src)
         },

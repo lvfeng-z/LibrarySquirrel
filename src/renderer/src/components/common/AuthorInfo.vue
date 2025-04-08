@@ -1,25 +1,41 @@
 <script setup lang="ts">
-import LocalAuthorRoleDTO from '../../model/main/dto/LocalAuthorRoleDTO.ts'
-import { NotNullish } from '../../utils/CommonUtil'
+import { computed } from 'vue'
+import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import LocalAuthorRoleDTO from '@renderer/model/main/dto/LocalAuthorRoleDTO.ts'
+import SiteAuthorRoleDTO from '@renderer/model/main/dto/SiteAuthorRoleDTO.ts'
 
 // props
 const props = defineProps<{
-  authors: LocalAuthorRoleDTO[] | undefined | null
+  localAuthors: LocalAuthorRoleDTO[] | undefined | null
+  siteAuthors: SiteAuthorRoleDTO[] | undefined | null
 }>()
 
-// 方法
-function getAuthorNames() {
-  if (NotNullish(props.authors)) {
-    const nameList = props.authors.map((author) => author.localAuthorName)
+// 变量
+const authorNames = computed(() => {
+  let noLocalAuthorList: SiteAuthorRoleDTO[] = []
+  if (ArrayNotEmpty(props.siteAuthors)) {
+    const localAuthors = ArrayNotEmpty(props.localAuthors) ? props.localAuthors : []
+    noLocalAuthorList = props.siteAuthors.filter(
+      (siteAuthor) => !localAuthors.some((localAuthor) => siteAuthor.localAuthorId === localAuthor.id)
+    )
+  }
+  let nameList: string[] = []
+  if (ArrayNotEmpty(props.localAuthors)) {
+    nameList.push(...props.localAuthors.map((author) => author.localAuthorName).filter(NotNullish))
+  }
+  if (ArrayNotEmpty(noLocalAuthorList)) {
+    nameList.push(...noLocalAuthorList.map((author) => author.siteAuthorName).filter(NotNullish))
+  }
+  if (ArrayNotEmpty(nameList)) {
     return nameList.join('、')
   } else {
     return ''
   }
-}
+})
 </script>
 
 <template>
-  <el-text>{{ getAuthorNames() }}</el-text>
+  <el-text>{{ authorNames }}</el-text>
 </template>
 
 <style scoped></style>
