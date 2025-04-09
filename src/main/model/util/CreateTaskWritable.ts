@@ -8,6 +8,8 @@ import Task from '../entity/Task.js'
 import TaskService from '../../service/TaskService.js'
 import SiteService from '../../service/SiteService.js'
 import Plugin from '../entity/Plugin.js'
+import { OriginType } from '../../constant/OriginType.js'
+import PluginTaskResponseDTO from '../dto/PluginTaskResponseDTO.js'
 
 export default class CreateTaskWritable extends Writable {
   /**
@@ -74,8 +76,8 @@ export default class CreateTaskWritable extends Writable {
     this.siteCache = new Map<string, Promise<number>>()
   }
 
-  async _write(taskCreateDTO: TaskCreateDTO, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-    const task = new TaskCreateDTO(taskCreateDTO)
+  async _write(pluginTaskResponseDTO: PluginTaskResponseDTO, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+    const task = PluginTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
     // 校验
     if (StringUtil.isBlank(task.siteDomain)) {
       LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
@@ -87,7 +89,6 @@ export default class CreateTaskWritable extends Writable {
       callback()
       return
     }
-    this.taskCount++
 
     // 创建任务对象
     task.pluginAuthor = this.taskPlugin.author
@@ -96,19 +97,23 @@ export default class CreateTaskWritable extends Writable {
     task.status = TaskStatusEnum.CREATED
     task.isCollection = false
     task.pid = this.parentTask.id
-    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteDomain)
-    if (IsNullish(siteId)) {
-      const tempSite = this.siteService.getByDomain(task.siteDomain)
-      siteId = tempSite.then((site) => site?.id)
-    }
-    task.siteId = await siteId
-    if (IsNullish(siteId)) {
-      LogUtil.error(this.constructor.name, `创建任务失败，找不到插件返回的域名: ${task.siteDomain}`)
-      return
+    if (task.originType === OriginType.SITE) {
+      let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteDomain)
+      if (IsNullish(siteId)) {
+        const tempSite = this.siteService.getByDomain(task.siteDomain)
+        siteId = tempSite.then((site) => site?.id)
+      }
+      task.siteId = await siteId
+      if (IsNullish(task.siteId)) {
+        LogUtil.error(this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+        callback()
+        return
+      }
     }
 
     // 将任务添加到缓冲区
     this.taskBuffer.push(new Task(task))
+    this.taskCount++
 
     // 每batchSize个任务处理一次
     if (this.taskBuffer.length % this.batchSize === 0) {

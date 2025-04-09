@@ -105,21 +105,4 @@ export default class Task extends BaseEntity {
       this.errorMessage = task.errorMessage
     }
   }
-
-  /**
-   * 清除所有插件不应处理的属性值
-   */
-  legalize() {
-    this.id = undefined
-    this.createTime = undefined
-    this.updateTime = undefined
-    this.isCollection = undefined
-    this.pid = undefined
-    this.siteId = undefined
-    this.pendingResourceId = undefined
-    this.status = undefined
-    this.pluginAuthor = undefined
-    this.pluginName = undefined
-    this.pluginVersion = undefined
-  }
 }

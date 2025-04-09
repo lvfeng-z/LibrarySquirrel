@@ -41,6 +41,8 @@ import CreateTaskWritable from '../model/util/CreateTaskWritable.js'
 import ResourceService from './ResourceService.js'
 import Resource from '../model/entity/Resource.js'
 import { BOOL } from '../constant/BOOL.js'
+import { OriginType } from '../constant/OriginType.js'
+import PluginTaskResponseDTO from '../model/dto/PluginTaskResponseDTO.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -138,24 +140,25 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 处理插件返回的任务数组
-   * @param tasks 插件返回的任务数组
+   * @param pluginTaskResponseDTOS 插件返回的任务数组
    * @param url 传给插件的url
    * @param taskPlugin 插件信息
    * @param parentTask 任务集
    */
-  async handleCreateTaskArray(tasks: TaskCreateDTO[], url: string, taskPlugin: Plugin, parentTask: TaskCreateDTO): Promise<number> {
+  async handleCreateTaskArray(
+    pluginTaskResponseDTOS: PluginTaskResponseDTO[],
+    url: string,
+    taskPlugin: Plugin,
+    parentTask: TaskCreateDTO
+  ): Promise<number> {
     // 查询插件信息，用于输出日志
     const pluginInfo = JSON.stringify(taskPlugin)
 
     // 校验是否返回了空数据或非数组
-    AssertArrayNotEmpty(tasks, this.constructor.name, `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+    AssertArrayNotEmpty(pluginTaskResponseDTOS, this.constructor.name, `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
 
-    // 清除所有插件不应处理的属性值
-    const legalTasks = tasks.map((task) => {
-      const temp = new TaskCreateDTO(task)
-      temp.legalize()
-      return temp
-    })
+    // 转换为TaskCreateDTO
+    const taskCreateDTOS = pluginTaskResponseDTOS.map((task) => PluginTaskResponseDTO.toTaskCreateDTO(task))
 
     // 用于查询和缓存站点id
     const siteService = new SiteService()
@@ -164,20 +167,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
       // 校验
       AssertNotBlank(task.siteDomain, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
-      AssertNotBlank(task.siteWorksId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorksId')
+      AssertNotBlank(task.siteWorksId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点作品id')
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
       task.pluginAuthor = taskPlugin.author
       task.pluginName = taskPlugin.name
       task.pluginVersion = taskPlugin.version
-      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
-      if (IsNullish(siteId)) {
-        const tempSite = siteService.getByDomain(task.siteDomain)
-        siteId = tempSite.then((site) => site?.id)
+      if (task.originType !== OriginType.LOCAL) {
+        let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
+        if (IsNullish(siteId)) {
+          const tempSite = siteService.getByDomain(task.siteDomain)
+          siteId = tempSite.then((site) => site?.id)
+        }
+        task.siteId = await siteId
+        AssertNotNullish(task.siteId, this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
       }
-      task.siteId = await siteId
-      AssertNotNullish(task.siteId, this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -191,9 +196,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 根据插件返回的任务数组长度判断如何处理
-    if (legalTasks.length === 1) {
+    if (taskCreateDTOS.length === 1) {
       // 如果插件返回的的任务列表长度为1，则不需要创建子任务
-      const task = legalTasks[0]
+      const task = taskCreateDTOS[0]
       await assignTask(task)
       const singleTask = new Task(task)
       return super.save(singleTask).then(() => 1)
@@ -204,10 +209,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       parentTask.id = pid
       parentTask.saved = true
 
-      for (const task of legalTasks) {
+      for (const task of taskCreateDTOS) {
         await assignTask(task, pid)
       }
-      const childTasks = legalTasks.map((taskCreateDTO) => new Task(taskCreateDTO))
+      const childTasks = taskCreateDTOS.map((taskCreateDTO) => new Task(taskCreateDTO))
 
       return super.saveBatch(childTasks)
     }
