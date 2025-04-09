@@ -1,10 +1,10 @@
 tables:
   - name: auto_explain_path
     sql: |
-      create table auto_explain_path (
+      create table if not exists auto_explain_path (
         id                 integer not null
-        constraint auto_explain_path_pk
-        primary key,
+          constraint auto_explain_path_pk
+            primary key,
         name               text,
         type               integer,
         regular_expression text,
@@ -16,8 +16,8 @@ tables:
     sql: |
       create table if not exists local_author (
         id                integer not null
-        constraint local_author_pk
-        primary key autoincrement,
+          constraint local_author_pk
+            primary key autoincrement,
         local_author_name text,
         last_use          integer,
         create_time       integer,
@@ -28,9 +28,12 @@ tables:
     sql: |
       create table if not exists site_author (
         id                      integer not null
-        constraint site_author_pk
-        primary key autoincrement,
-        site_id                 integer,
+          constraint site_author_pk
+            primary key autoincrement,
+        site_id                 integer
+          constraint site_author_site_id_fk
+            references site
+            on update restrict on delete restrict,
         site_author_id          text,
         site_author_name        text,
         site_author_name_before text,
@@ -40,15 +43,15 @@ tables:
         create_time             integer,
         update_time             integer,
         constraint site_author_unique_site_id_site_author_id
-        unique (site_id, site_author_id)
+          unique (site_id, site_author_id)
       );
 
   - name: poi
     sql: |
       create table if not exists poi (
         id                integer not null
-        constraint poi_pk
-        primary key autoincrement,
+          constraint poi_pk
+            primary key autoincrement,
         poi_name text,
         create_time       integer,
         update_time       integer
@@ -58,8 +61,8 @@ tables:
     sql: |
       create table if not exists re_poi_target (
         id          integer not null
-        constraint poi_target_pk
-        primary key autoincrement,
+          constraint poi_target_pk
+            primary key autoincrement,
         poi_id      integer,
         target_id   integer,
         target_type text,
@@ -69,23 +72,23 @@ tables:
 
   - name: re_works_author
     sql: |
-      create table re_works_author (
+      create table if not exists re_works_author (
         id              integer not null
-        constraint re_works_author_pk
-        primary key autoincrement,
+          constraint re_works_author_pk
+            primary key autoincrement,
         author_type     integer,
         works_id        integer
-        constraint re_works_author_works_id_fk
-        references works
-        on update cascade on delete cascade,
+          constraint re_works_author_works_id_fk
+            references works
+            on update cascade on delete cascade,
         local_author_id integer
-        constraint re_works_author_local_author_id_fk
-        references local_author
-        on update cascade on delete cascade,
+          constraint re_works_author_local_author_id_fk
+            references local_author
+            on update cascade on delete cascade,
         site_author_id  integer
-        constraint re_works_author_site_author_id_fk
-        references site_author
-        on update cascade on delete cascade,
+          constraint re_works_author_site_author_id_fk
+            references site_author
+            on update cascade on delete cascade,
         author_role     integer,
         create_time     integer,
         update_time     integer
@@ -99,22 +102,23 @@ tables:
 
   - name: re_works_tag
     sql: |
-      create table re_works_tag (
+      create table if not exists re_works_tag (
         id           integer not null
-        constraint works_tag_pk
-        primary key autoincrement,
+          constraint works_tag_pk
+          primary key autoincrement,
         works_id     integer
-        constraint re_works_tag_works_id_fk
-        references works
-        on delete cascade,
+          constraint re_works_tag_works_id_fk
+            references works
+            on delete cascade,
         tag_type     integer,
         local_tag_id integer
-        constraint re_works_tag_local_tag_id_fk
-        references local_tag
-        on delete cascade,
+          constraint re_works_tag_local_tag_id_fk
+            references local_tag
+            on delete cascade,
         site_tag_id  integer
-        constraint re_works_tag_site_tag_id_fk
-        references site_tag,
+          constraint re_works_tag_site_tag_id_fk
+            references site_tag
+            on delete cascade,
         create_time  integer,
         update_time  integer,
         constraint re_works_tag_unique_local_tag_id
@@ -125,16 +129,16 @@ tables:
 
   - name: re_works_works_set
     sql: |
-      create table re_works_works_set (
+      create table if not exists re_works_works_set (
         id           integer not null
-        constraint re_works_works_set_pk
-        primary key,
+          constraint re_works_works_set_pk
+            primary key,
         works_id     integer
-        constraint re_works_works_set_works_id_fk
-        references works,
+          constraint re_works_works_set_works_id_fk
+            references works,
         works_set_id integer
-        constraint re_works_works_set_works_set_id_fk
-        references works_set,
+          constraint re_works_works_set_works_set_id_fk
+            references works_set,
         create_time  integer,
         update_time  integer
       );
@@ -143,22 +147,24 @@ tables:
     sql: |
       create table if not exists site (
         id               integer not null
-        constraint site_pk
-        primary key autoincrement,
+          constraint site_pk
+            primary key autoincrement,
         site_name        text,
         site_description text,
         create_time      integer,
-        update_time      integer,
-        sort_num         integer
+        update_time      integer
       );
 
   - name: site_domain
     sql: |
-      create table site_domain (
+      create table if not exists site_domain (
         id            integer not null
-        constraint site_domain_pk
-        primary key autoincrement,
-        site_id       integer,
+          constraint site_domain_pk
+            primary key autoincrement,
+        site_id       integer
+          constraint site_domain_site_id_fk
+            references site
+            on update restrict on delete restrict,
         domain        text,
         homepage      text,
         create_time   integer,
@@ -171,8 +177,8 @@ tables:
     sql: |
       create table if not exists local_tag (
         id                integer not null
-        constraint local_tag_pk
-        primary key autoincrement,
+          constraint local_tag_pk
+            primary key autoincrement,
         local_tag_name    text,
         base_local_tag_id integer,
         last_use          integer,
@@ -184,9 +190,12 @@ tables:
     sql: |
       create table if not exists site_tag (
         id               integer not null
-        constraint site_tag_pk
-        primary key autoincrement,
-        site_id          integer,
+          constraint site_tag_pk
+            primary key autoincrement,
+        site_id          integer
+          constraint site_tag_site_id_fk
+            references site
+            on update restrict on delete restrict,
         site_tag_id      text,
         site_tag_name    text,
         base_site_tag_id text,
@@ -196,15 +205,15 @@ tables:
         create_time      integer,
         update_time      integer,
         constraint site_tag_unique_site_id_site_tag_id
-        unique (site_id, site_tag_id)
+          unique (site_id, site_tag_id)
       );
 
   - name: task
     sql: |
       create table if not exists task (
         id                    integer not null
-        constraint task_pk
-        primary key autoincrement,
+          constraint task_pk
+            primary key autoincrement,
         is_collection         integer,
         pid                   integer,
         task_name             text,
@@ -226,14 +235,14 @@ tables:
 
   - name: task_plugin_listener
     sql: |
-      create table task_plugin_listener (
+      create table if not exists task_plugin_listener (
         id          integer not null
-        constraint task_plugin_listener_pk
+          constraint task_plugin_listener_pk
             primary key,
         plugin_id   integer
           constraint task_plugin_listener_plugin_id_fk
-          references plugin
-        on delete cascade,
+            references plugin
+            on delete cascade,
         listener    text,
         create_time integer,
         update_time integer
@@ -241,14 +250,14 @@ tables:
 
   - name: resource
     sql: |
-      create table resource (
+      create table if not exists resource (
         id                 integer not null
-        constraint resource_pk
-        primary key,
+          constraint resource_pk
+            primary key,
         works_id           integer not null
-        constraint resource_works_id_fk
-        references works
-        on delete cascade,
+          constraint resource_works_id_fk
+            references works
+            on delete cascade,
         task_id            integer not null,
         state              integer not null,
         file_path          text    not null,
@@ -270,9 +279,12 @@ tables:
     sql: |
       create table if not exists works (
         id                    integer not null
-        constraint works_pk
-        primary key autoincrement,
-        site_id               integer,
+          constraint works_pk
+            primary key autoincrement,
+        site_id               integer
+          constraint works_site_id_fk
+            references site
+            on update restrict on delete restrict,
         site_works_id         text,
         site_works_name       text,
         site_author_id        text,
@@ -291,9 +303,12 @@ tables:
     sql: |
       create table if not exists works_set (
         id                   integer not null
-        constraint works_pk
-        primary key autoincrement,
-        site_id              integer,
+          constraint works_pk
+            primary key autoincrement,
+        site_id              integer
+          constraint works_set_site_id_fk
+            references site
+            on update restrict on delete restrict,
         site_works_set_id    text,
         site_works_set_name  text,
         site_author_id       text,
@@ -307,11 +322,11 @@ tables:
 
   - name: plugin
     sql: |
-      create table plugin
+      create table if not exists plugin
       (
         id            integer not null
-        constraint plugin_pk
-        primary key autoincrement,
+          constraint plugin_pk
+            primary key autoincrement,
         type          text,
         author        text,
         name          text,

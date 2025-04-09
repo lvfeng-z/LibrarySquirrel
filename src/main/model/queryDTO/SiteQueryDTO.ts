@@ -10,24 +10,18 @@ export default class SiteQueryDTO extends BaseQueryDTO {
   /**
    * 站点名称
    */
-  siteName: string | undefined | null
+  siteName?: string | undefined | null
 
   /**
    * 站点描述
    */
-  siteDescription: string | undefined | null
-
-  /**
-   * 排序号
-   */
-  sortNum: number | undefined | null
+  siteDescription?: string | undefined | null
 
   constructor(siteQueryDTO?: SiteQueryDTO) {
     super(siteQueryDTO)
     if (NotNullish(siteQueryDTO)) {
       this.id = siteQueryDTO.id
       this.siteName = siteQueryDTO.siteName
-      this.sortNum = siteQueryDTO.sortNum
     }
   }
 }

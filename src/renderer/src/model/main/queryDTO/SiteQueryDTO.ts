@@ -1,4 +1,5 @@
 import BaseQueryDTO from './BaseQueryDTO.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * QueryDTO
@@ -6,45 +7,20 @@ import BaseQueryDTO from './BaseQueryDTO.ts'
  */
 export default class SiteQueryDTO extends BaseQueryDTO {
   /**
-   * 主键
-   */
-  id?: number | undefined | null
-
-  /**
    * 站点名称
    */
   siteName?: string | undefined | null
 
   /**
-   * 站点域名
+   * 站点描述
    */
-  siteDomain?: string | undefined | null
-
-  /**
-   * 站点主页
-   */
-  siteHomepage?: string | undefined | null
-
-  /**
-   * 排序号
-   */
-  sortNum?: number | undefined | null
+  siteDescription?: string | undefined | null
 
   constructor(siteQueryDTO?: SiteQueryDTO) {
-    if (siteQueryDTO === undefined) {
-      super()
-      this.id = undefined
-      this.siteName = undefined
-      this.siteDomain = undefined
-      this.siteHomepage = undefined
-      this.sortNum = undefined
-    } else {
-      super(siteQueryDTO)
+    super(siteQueryDTO)
+    if (NotNullish(siteQueryDTO)) {
       this.id = siteQueryDTO.id
       this.siteName = siteQueryDTO.siteName
-      this.siteDomain = siteQueryDTO.siteDomain
-      this.siteHomepage = siteQueryDTO.siteHomepage
-      this.sortNum = siteQueryDTO.sortNum
     }
   }
 }

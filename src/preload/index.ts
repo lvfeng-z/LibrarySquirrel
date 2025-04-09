@@ -136,9 +136,7 @@ const api = {
   },
 
   // Site
-  siteDeleteById: (args) => {
-    return Electron.ipcRenderer.invoke('site-deleteById', args)
-  },
+  siteDeleteById: (args) => Electron.ipcRenderer.invoke('site-deleteById', args),
   siteQueryPage: (args) => {
     return Electron.ipcRenderer.invoke('site-queryPage', args)
   },

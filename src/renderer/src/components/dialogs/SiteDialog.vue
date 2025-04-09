@@ -12,7 +12,6 @@ const props = withDefaults(
     submitEnabled?: boolean
   }>(),
   {
-    mode: DialogMode.EDIT,
     submitEnabled: true
   }
 )
