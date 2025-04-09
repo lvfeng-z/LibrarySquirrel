@@ -163,7 +163,7 @@ defineExpose({ scrollbar, newSearch })
 <template>
   <div class="tag-box-wrapper">
     <el-scrollbar ref="scrollbar" v-loading="loading" @scroll="handleDataScroll">
-      <div class="tag-box-item-container" ref="container">
+      <div ref="container" class="tag-box-item-container">
         <slot name="head" />
         <segmented-tag
           v-for="item in data"

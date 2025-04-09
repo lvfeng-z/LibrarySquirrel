@@ -39,6 +39,7 @@ import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 onMounted(() => {
   // const request = apis.worksQueryPage()
   // console.log(request)
+  resizeObserver.observe(worksAreaRef.value.$el)
 })
 
 // 变量
@@ -55,6 +56,10 @@ const apis = {
 }
 // sideMenu组件的实例
 const sideMenuRef = ref()
+// main-page-works-space的实例
+const worksSpace = ref()
+// worksArea组件的实例
+const worksAreaRef = ref()
 // 悬浮页面开关
 const pageState = reactive({
   mainPage: true,
@@ -89,6 +94,12 @@ const subpageProps: Ref<{ siteManageFocusOnSiteDomainId: string[] | undefined }>
 })
 // 后台任务列表开关
 const backgroundTaskState: Ref<boolean> = ref(false)
+// 加载更多按钮开关
+const loadMore: Ref<boolean> = ref(false)
+// 监听worksArea组件的高度变化
+const resizeObserver = new ResizeObserver((entries) => {
+  loadMore.value = entries[0].contentRect.height < worksSpace.value.clientHeight
+})
 
 // 方法
 // 查询标签选择列表
@@ -173,6 +184,7 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
       }
     })
     .filter(NotNullish)
+  // 处理搜索框输入的文本
   if (StringUtil.isNotBlank(autoLoadInput.value)) {
     const worksName = autoLoadInput.value
     if (IsNullish(page.query)) {
@@ -183,6 +195,8 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
     tempCondition = new SearchCondition({ type: SearchType.WORKS_NICKNAME, value: worksName, operator: CrudOperator.LIKE })
     page.query.push(tempCondition)
   }
+
+  page.pageSize = 16
 
   return apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
@@ -297,7 +311,7 @@ async function handleTest() {
         </side-menu>
       </el-aside>
       <el-main style="padding: 0">
-        <div v-show="pageState.mainPage" class="main-page margin-box">
+        <div v-show="pageState.mainPage" class="main-page">
           <div class="main-page-searchbar">
             <el-row>
               <el-col style="display: flex; justify-content: center; transition: width 1s ease" :span="3">
@@ -340,10 +354,21 @@ async function handleTest() {
               </el-col>
             </el-row>
           </div>
-          <div class="main-page-works-space">
+          <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-area style="margin-right: 8px" :works-list="worksList"></works-area>
+              <works-area ref="worksAreaRef" style="margin-right: 8px" :works-list="worksList"></works-area>
             </el-scrollbar>
+            <span
+              ref="loadMoreButton"
+              :class="{
+                'works-area-load-more': true,
+                'works-area-show-load-more': loadMore,
+                'works-area-hide-load-more': !loadMore
+              }"
+              @click="queryWorksPage(true)"
+            >
+              加载更多...
+            </span>
           </div>
         </div>
         <div v-if="pageState.subpage" class="subPage">
@@ -384,14 +409,46 @@ async function handleTest() {
 .main-page {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 .main-page-searchbar {
   height: 33px;
   width: 100%;
 }
 .main-page-works-space {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   height: calc(100% - 33px);
   margin-right: 8px;
+}
+.works-area-load-more {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  transition:
+    height 0.3s ease,
+    padding 0.3s ease,
+    background-color 0.3s ease;
+  overflow: hidden;
+  color: var(--el-color-info);
+  font-weight: bold;
+  border-radius: 5px;
+  background-color: var(--el-color-info-light-9);
+  text-align: center;
+  cursor: pointer;
+}
+.works-area-load-more:hover {
+  background-color: var(--el-color-info-light-7);
+}
+.works-area-show-load-more {
+  height: 26px;
+}
+.works-area-hide-load-more {
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .main-page-auto-load-tag-select {
   height: 33px;
