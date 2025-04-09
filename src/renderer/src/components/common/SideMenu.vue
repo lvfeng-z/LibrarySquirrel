@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
-import { ArrowLeftBold, ArrowRightBold, Expand, Fold } from '@element-plus/icons-vue'
+import { ArrowLeftBold, ArrowRightBold, Expand, Fold, Hide } from '@element-plus/icons-vue'
 // props
 const props = defineProps<{
   width: string
@@ -79,9 +79,14 @@ function handleClickOutSide() {
     }"
   >
     <el-menu :default-openeds="defaultActive" class="side-menu-main" :collapse="isCollapsed">
-      <el-menu-item v-if="!disappear" index="/top" @click="handleTopClicked">
-        <el-icon v-if="innerStates < 2"><Expand /></el-icon>
-        <el-icon v-if="innerStates === 2"><Fold /></el-icon>
+      <el-menu-item v-if="!disappear" style="cursor: default" index="/top" @click="handleTopClicked">
+        <div v-if="innerStates < 2" style="display: flex; justify-content: space-between; width: 100%">
+          <el-icon><Expand /></el-icon>
+        </div>
+        <div v-if="innerStates === 2" style="display: flex; justify-content: space-between; width: 100%">
+          <el-icon style="cursor: pointer"><Fold /></el-icon>
+          <el-icon style="cursor: pointer"><Hide /></el-icon>
+        </div>
       </el-menu-item>
       <slot v-if="!disappear" name="default"></slot>
       <li style="display: flex; flex-grow: 1">

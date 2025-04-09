@@ -259,6 +259,15 @@ async function handleTest() {
 
 <template>
   <div class="ui">
+    <el-button
+      v-show="false"
+      class="close-subpage-button z-layer-10"
+      circle
+      size="small"
+      icon="close"
+      color="#b54747"
+      @click="closeSubpage"
+    />
     <el-container>
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
@@ -356,7 +365,7 @@ async function handleTest() {
           </div>
           <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-area ref="worksAreaRef" style="margin-right: 8px" :works-list="worksList"></works-area>
+              <works-area ref="worksAreaRef" class="main-page-works-area" :works-list="worksList"></works-area>
             </el-scrollbar>
             <span
               ref="loadMoreButton"
@@ -372,19 +381,15 @@ async function handleTest() {
           </div>
         </div>
         <div v-if="pageState.subpage" class="subPage">
-          <local-tag-manage v-if="pageState.showLocalTagManagePage" @close-self="closeSubpage" />
-          <site-tag-manage v-if="pageState.showSiteTagManagePage" @close-self="closeSubpage" />
-          <local-author-manage v-if="pageState.showLocalAuthorManagePage" @close-self="closeSubpage" />
-          <plugin-manage v-if="pageState.showPluginManagePage" @close-self="closeSubpage" />
-          <task-manage v-if="pageState.showTaskManagePage" @close-self="closeSubpage" />
-          <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" @close-self="closeSubpage" />
-          <site-manage
-            v-if="pageState.showSiteManagePage"
-            :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId"
-            @close-self="closeSubpage"
-          />
-          <developing v-if="pageState.showDeveloping" @close-self="closeSubpage" />
-          <test v-if="pageState.showTest" @close-self="closeSubpage" />
+          <local-tag-manage v-if="pageState.showLocalTagManagePage" />
+          <site-tag-manage v-if="pageState.showSiteTagManagePage" />
+          <local-author-manage v-if="pageState.showLocalAuthorManagePage" />
+          <plugin-manage v-if="pageState.showPluginManagePage" />
+          <task-manage v-if="pageState.showTaskManagePage" />
+          <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" />
+          <site-manage v-if="pageState.showSiteManagePage" :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId" />
+          <developing v-if="pageState.showDeveloping" />
+          <test v-if="pageState.showTest" />
         </div>
       </el-main>
       <msg-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
@@ -395,6 +400,15 @@ async function handleTest() {
 </template>
 
 <style>
+.close-subpage-button {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  margin: 0;
+}
+.close-subpage-button:hover {
+  transform: scale(1.1);
+}
 .ui {
   display: flex;
   flex-direction: row;
@@ -409,8 +423,10 @@ async function handleTest() {
 .main-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
+  height: calc(100% - 3px);
+  width: calc(100% - 3px);
+  margin-left: 3px;
+  margin-top: 3px;
 }
 .main-page-searchbar {
   height: 33px;
@@ -422,6 +438,9 @@ async function handleTest() {
   flex-direction: column;
   height: calc(100% - 33px);
   margin-right: 8px;
+}
+.main-page-works-area {
+  margin-right: 19px;
 }
 .works-area-load-more {
   position: absolute;
