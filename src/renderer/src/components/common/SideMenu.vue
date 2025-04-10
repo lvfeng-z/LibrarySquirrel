@@ -53,7 +53,10 @@ function handleClickOutSide() {
   <div v-click-out-side="handleClickOutSide" class="side-menu-container">
     <div class="side-menu-main">
       <div class="side-menu-collapse-button">
-        <el-icon class="side-menu-collapse-button-collapse" @click="collapse"><Expand /></el-icon>
+        <el-icon class="side-menu-collapse-button-collapse" @click="collapse">
+          <Expand v-if="collapsed" />
+          <Fold v-if="!collapsed" />
+        </el-icon>
         <el-icon v-show="!collapsed" class="side-menu-collapse-button-lock" @click="lock">
           <Lock v-show="locked" />
           <Unlock v-show="!locked" />
@@ -95,8 +98,8 @@ function handleClickOutSide() {
   grid-area: 1 / 1;
   justify-self: center;
   align-self: center;
-  height: 28px;
-  width: 28px;
+  height: 48px;
+  width: 48px;
   cursor: pointer;
   border-radius: 5px;
   transition: background-color 0.2s;
@@ -109,8 +112,8 @@ function handleClickOutSide() {
   justify-self: end;
   align-self: center;
   margin-right: 10px;
-  height: 28px;
-  width: 28px;
+  height: 36px;
+  width: 36px;
   cursor: pointer;
   border-radius: 5px;
   transition: background-color 0.2s;
