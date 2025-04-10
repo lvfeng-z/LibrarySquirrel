@@ -152,7 +152,7 @@ async function askBeforeReset(): Promise<boolean> {
 
 <template>
   <base-subpage :before-close="checkChangeSaved">
-    <el-container style="height: 100%">
+    <el-container class="settings-container">
       <el-main style="display: flex; flex-direction: row; padding: 0">
         <el-anchor :container="containerRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
           <el-anchor-link href="#basicSettings" title="基本设置" />
@@ -213,6 +213,14 @@ async function askBeforeReset(): Promise<boolean> {
 
 <style scoped></style>
 <style>
+.settings-container {
+  border-radius: 6px;
+  display: flex;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 5px;
+  margin: 5px;
+}
 .el-popper.is-customized {
   background: var(--el-color-warning-light-7);
 }

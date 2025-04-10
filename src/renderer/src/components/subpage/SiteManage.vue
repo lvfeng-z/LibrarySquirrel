@@ -464,7 +464,7 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
 <template>
   <base-subpage>
     <template #default>
-      <div class="site-manage-container rounded-margin-box">
+      <div class="site-manage-container">
         <div class="site-manage-left">
           <search-table
             ref="siteSearchTable"
@@ -564,8 +564,12 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  background: #f4f4f4;
+  border-radius: 6px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 5px;
+  margin: 5px;
 }
 
 .site-manage-left {

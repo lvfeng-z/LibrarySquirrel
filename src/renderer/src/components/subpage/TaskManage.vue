@@ -514,12 +514,12 @@ async function deleteTask(ids: number[]) {
         </el-dropdown>
       </el-col>
       <el-col class="task-manage-site-import-button-col" :span="12">
-        <el-button v-model="siteDownloadState" size="large" type="primary" icon="Link" @click="handleSiteDownloadDialog"
-          >从站点下载
+        <el-button v-model="siteDownloadState" size="large" type="primary" icon="Link" @click="handleSiteDownloadDialog">
+          从站点下载
         </el-button>
       </el-col>
     </el-row>
-    <div class="task-manage-search-table-wrapper rounded-margin-box">
+    <div class="task-manage-search-table-wrapper">
       <search-table
         ref="taskManageSearchTable"
         v-model:data-list="dataList"
@@ -583,7 +583,12 @@ async function deleteTask(ids: number[]) {
   align-items: center;
 }
 .task-manage-search-table-wrapper {
-  height: calc(100% - 50px);
+  background: #f4f4f4;
+  border-radius: 6px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px - 50px);
+  padding: 5px;
+  margin: 5px;
 }
 .task-manage-search-table {
   height: 100%;

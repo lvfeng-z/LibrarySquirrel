@@ -302,7 +302,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
 <template>
   <base-subpage>
     <template #default>
-      <div class="local-author-manage-container rounded-margin-box">
+      <div class="local-author-manage-container">
         <div class="local-author-manage-left">
           <search-table
             ref="localAuthorSearchTable"
@@ -371,8 +371,12 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  background: #f4f4f4;
+  border-radius: 6px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 5px;
+  margin: 5px;
 }
 
 .local-author-manage-left {

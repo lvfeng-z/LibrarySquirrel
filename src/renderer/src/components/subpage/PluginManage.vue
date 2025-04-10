@@ -198,7 +198,7 @@ async function unInstall(pluginId: string) {
 <template>
   <base-subpage>
     <template #default>
-      <div class="plugin-manage-container rounded-margin-box">
+      <div class="plugin-manage-container">
         <search-table
           ref="pluginSearchTable"
           v-model:page="pluginPage"
@@ -234,8 +234,12 @@ async function unInstall(pluginId: string) {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  background: #f4f4f4;
+  border-radius: 6px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 5px;
+  margin: 5px;
 }
 .plugin-manage-left-search-table {
   height: 100%;

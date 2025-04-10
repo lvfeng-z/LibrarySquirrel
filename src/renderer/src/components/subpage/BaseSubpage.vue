@@ -24,9 +24,9 @@
   position: absolute;
 }
 .base-subpage-content {
-  height: calc(100% - 25px);
-  width: calc(100% - 30px);
+  height: 100%;
+  width: calc(100% - 15px);
   margin-left: 5px;
-  margin-right: 25px;
+  margin-right: 10px;
 }
 </style>

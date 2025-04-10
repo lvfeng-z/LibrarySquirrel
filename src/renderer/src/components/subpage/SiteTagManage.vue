@@ -254,7 +254,7 @@ async function saveRowEdit(newData: SiteTagVO) {
 <template>
   <base-subpage>
     <template #default>
-      <div class="tag-manage-container rounded-margin-box">
+      <div class="tag-manage-container">
         <search-table
           ref="siteTagSearchTable"
           v-model:page="page"
@@ -292,12 +292,16 @@ async function saveRowEdit(newData: SiteTagVO) {
 
 <style>
 .tag-manage-container {
+  background: #f4f4f4;
+  border-radius: 6px;
   display: flex;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 5px;
+  margin: 5px;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
 }
 .tag-manage-search-table {
   height: 100%;

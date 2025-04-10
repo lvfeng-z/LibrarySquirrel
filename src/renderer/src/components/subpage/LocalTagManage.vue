@@ -348,7 +348,7 @@ async function requestSiteTagSelectItemPage(
 <template>
   <base-subpage>
     <template #default>
-      <div class="tag-manage-container rounded-margin-box">
+      <div class="tag-manage-container">
         <div class="tag-manage-left">
           <search-table
             ref="localTagSearchTable"
@@ -418,8 +418,12 @@ async function requestSiteTagSelectItemPage(
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  background: #f4f4f4;
+  border-radius: 6px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 5px;
+  margin: 5px;
 }
 
 .tag-manage-left {
