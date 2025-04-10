@@ -1,119 +1,149 @@
 <script setup lang="ts">
-import { onBeforeMount, ref, Ref, UnwrapRef } from 'vue'
-import { ArrowLeftBold, ArrowRightBold, Expand, Fold } from '@element-plus/icons-vue'
+import { computed, ref, Ref } from 'vue'
+import { ArrowLeftBold, ArrowRightBold, Expand, Lock, Unlock } from '@element-plus/icons-vue'
 
 // props
 const props = defineProps<{
   width: string
   defaultActive: string[]
-  states?: number
 }>()
 
-// onBeforeMount
-onBeforeMount(() => {
-  if (props.states != undefined) {
-    innerStates.value = props.states
+// 变量
+const collapsed: Ref<boolean> = ref(true)
+const hidden: Ref<boolean> = ref(false)
+const locked: Ref<boolean> = ref(false)
+const containerWidth: Ref<string> = computed(() => {
+  if (hidden.value) {
+    return '0'
   }
+  if (locked.value) {
+    return 'auto'
+  }
+  return props.width
+})
+const mainWidth: Ref<string> = computed(() => {
+  if (hidden.value) {
+    return '0'
+  }
+  return 'auto'
+})
+const collapseButtonVisibility: Ref<string> = computed(() => {
+  return hidden.value ? 'hidden' : 'visible'
 })
 
-// 变量
-const isCollapsed: Ref<UnwrapRef<boolean>> = ref(true)
-const disappear: Ref<UnwrapRef<boolean>> = ref(false)
-const innerStates: Ref<UnwrapRef<number>> = ref(1)
-
 // 方法
-// 处理顶部按钮点击事件
-function handleTopClicked() {
-  if (innerStates.value < 2) {
-    innerStates.value++
-  } else if (innerStates.value === 2) {
-    innerStates.value--
-  }
-  handleStates()
+function collapse() {
+  collapsed.value = !collapsed.value
 }
-// 处理底部按钮点击事件
-function handleBottomClicked() {
-  if (innerStates.value > 0) {
-    innerStates.value--
-  } else {
-    innerStates.value++
-  }
-  handleStates()
-}
-// 处理状态改变
-function handleStates() {
-  switch (innerStates.value) {
-    case 0:
-      disappear.value = true
-      isCollapsed.value = true
-      break
-    case 1:
-      disappear.value = false
-      isCollapsed.value = true
-      break
-    case 2:
-      disappear.value = false
-      isCollapsed.value = false
-      break
-    default:
-      innerStates.value = 0
-      disappear.value = true
-      isCollapsed.value = true
-  }
+function lock() {
+  locked.value = !locked.value
+  // if (!locked.value) {
+  //   collapsed.value = true
+  // }
 }
 // 处理点击外部区域
 function handleClickOutSide() {
-  if (innerStates.value == 2) {
-    innerStates.value--
+  if (!locked.value) {
+    collapsed.value = true
   }
-  handleStates()
 }
 </script>
 
 <template>
-  <div
-    v-click-out-side="handleClickOutSide"
-    :class="{
-      'side-menu': true,
-      'side-menu-disappear': disappear,
-      'side-menu-show': !disappear
-    }"
-  >
-    <el-menu :default-openeds="defaultActive" class="side-menu-main" :collapse="isCollapsed">
-      <el-menu-item v-if="!disappear" index="/top" @click="handleTopClicked">
-        <el-icon v-if="innerStates < 2"><Expand /></el-icon>
-        <el-icon v-if="innerStates === 2"><Fold /></el-icon>
-      </el-menu-item>
-      <slot v-if="!disappear" name="default"></slot>
-      <li style="display: flex; flex-grow: 1">
-        <el-menu-item index="/shrink" style="align-self: flex-end; width: 100%" @click="handleBottomClicked">
-          <el-icon v-if="!disappear"><ArrowLeftBold /></el-icon>
-          <el-icon v-if="disappear"><ArrowRightBold /></el-icon>
-        </el-menu-item>
-      </li>
-    </el-menu>
+  <div v-click-out-side="handleClickOutSide" class="side-menu-container">
+    <div class="side-menu-main">
+      <div class="side-menu-collapse-button">
+        <el-icon class="side-menu-collapse-button-collapse" @click="collapse"><Expand /></el-icon>
+        <el-icon v-show="!collapsed" class="side-menu-collapse-button-lock" @click="lock">
+          <Lock v-show="locked" />
+          <Unlock v-show="!locked" />
+        </el-icon>
+      </div>
+      <el-scrollbar class="side-menu-scrollbar">
+        <el-menu :default-openeds="props.defaultActive" class="side-menu-main-menu" :collapse="collapsed">
+          <slot v-if="!hidden" name="default"></slot>
+        </el-menu>
+      </el-scrollbar>
+      <div class="side-menu-hide-button" @click="hidden = !hidden">
+        <el-icon v-show="!hidden"><ArrowLeftBold /></el-icon>
+        <el-icon v-show="hidden"><ArrowRightBold /></el-icon>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.side-menu {
-  height: 100%;
+.side-menu-container {
+  width: v-bind(containerWidth);
   transition: width 0.1s ease;
 }
 .side-menu-main {
-  width: 100%;
+  display: inline-block;
+  height: 100%;
+  width: v-bind(mainWidth);
+  overflow: visible;
+  background-color: var(--el-fill-color-blank);
+  border-right: solid 1px var(--el-border-color);
+  transition: width 0.2s ease;
+}
+.side-menu-collapse-button {
+  display: grid;
+  height: 56px;
+  visibility: v-bind(collapseButtonVisibility);
+}
+.side-menu-collapse-button-collapse {
+  grid-area: 1 / 1;
+  justify-self: center;
+  align-self: center;
+  height: 28px;
+  width: 28px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+.side-menu-collapse-button-collapse:hover {
+  background-color: var(--el-color-primary-light-9);
+}
+.side-menu-collapse-button-lock {
+  grid-area: 1 / 1;
+  justify-self: end;
+  align-self: center;
+  margin-right: 10px;
+  height: 28px;
+  width: 28px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+.side-menu-collapse-button-lock:hover {
+  background-color: var(--el-color-primary-light-9);
+}
+.side-menu-scrollbar {
+  border-top: solid 1px var(--el-border-color);
+  border-bottom: solid 1px var(--el-border-color);
+  height: calc(100% - 56px - 56px - 1px - 1px);
+}
+.side-menu-main-menu {
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-right: none;
 }
-.side-menu-disappear {
-  width: 0;
-}
-.side-menu-show {
-  width: v-bind(width);
-}
-.side-menu-main:not(.el-menu--collapse) {
-  width: 200px;
+.side-menu-main-menu:not(.el-menu--collapse) {
+  width: 180px;
   height: 100%;
+}
+.side-menu-hide-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 56px;
+  min-width: 30px;
+  cursor: pointer;
+}
+.side-menu-hide-button:hover {
+  background-color: rgb(197.7, 225.9, 255, 80%);
+  transition: background-color 0.3s;
+  border-radius: 5px;
 }
 </style>
