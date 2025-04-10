@@ -6,7 +6,7 @@ import SiteTagManage from '@renderer/components/subpage/SiteTagManage.vue'
 import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { CollectionTag, Coordinate, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
+import { Close, CollectionTag, Coordinate, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -259,15 +259,9 @@ async function handleTest() {
 
 <template>
   <div class="ui">
-    <el-button
-      v-show="false"
-      class="close-subpage-button z-layer-10"
-      circle
-      size="small"
-      icon="close"
-      color="#b54747"
-      @click="closeSubpage"
-    />
+    <div v-if="pageState.subpage" class="close-subpage-button z-layer-5" @click="closeSubpage">
+      <Close class="close-subpage-button-icon" style="width: 50%; height: 50%; color: #fafafa" />
+    </div>
     <el-container>
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
@@ -400,21 +394,29 @@ async function handleTest() {
 </template>
 
 <style>
-.close-subpage-button {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  margin: 0;
-}
-.close-subpage-button:hover {
-  transform: scale(1.1);
-}
 .ui {
   display: flex;
   flex-direction: row;
   width: 100%;
   height: 100%;
   background-color: #fafafa;
+}
+.close-subpage-button {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  background-color: #b54747;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.close-subpage-button:hover {
+  background-color: #b66464;
+  width: 55px;
+  height: 55px;
+}
+.close-subpage-button-icon {
+  color: #cdcdcd;
 }
 .main-background-task {
   align-self: center;
