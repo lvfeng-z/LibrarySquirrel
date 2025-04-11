@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, Ref } from 'vue'
-import { ArrowLeftBold, ArrowRightBold, Expand, Lock, Unlock } from '@element-plus/icons-vue'
+import { ArrowLeftBold, ArrowRightBold, Expand, Fold, Lock, Unlock } from '@element-plus/icons-vue'
 
 // props
 const props = defineProps<{
   width: string
+  foldWidth: string
   defaultActive: string[]
 }>()
 
 // 变量
-const collapsed: Ref<boolean> = ref(true)
+const folded: Ref<boolean> = ref(true)
 const hidden: Ref<boolean> = ref(false)
 const locked: Ref<boolean> = ref(false)
 const containerWidth: Ref<string> = computed(() => {
@@ -19,13 +20,17 @@ const containerWidth: Ref<string> = computed(() => {
   if (locked.value) {
     return 'auto'
   }
-  return props.width
+  return props.foldWidth
 })
 const mainWidth: Ref<string> = computed(() => {
   if (hidden.value) {
     return '0'
   }
-  return 'auto'
+  if (folded.value) {
+    return props.foldWidth
+  } else {
+    return props.width
+  }
 })
 const collapseButtonVisibility: Ref<string> = computed(() => {
   return hidden.value ? 'hidden' : 'visible'
@@ -33,7 +38,7 @@ const collapseButtonVisibility: Ref<string> = computed(() => {
 
 // 方法
 function collapse() {
-  collapsed.value = !collapsed.value
+  folded.value = !folded.value
 }
 function lock() {
   locked.value = !locked.value
@@ -44,7 +49,7 @@ function lock() {
 // 处理点击外部区域
 function handleClickOutSide() {
   if (!locked.value) {
-    collapsed.value = true
+    folded.value = true
   }
 }
 </script>
@@ -54,16 +59,16 @@ function handleClickOutSide() {
     <div class="side-menu-main">
       <div class="side-menu-collapse-button">
         <el-icon class="side-menu-collapse-button-collapse" @click="collapse">
-          <Expand v-if="collapsed" />
-          <Fold v-if="!collapsed" />
+          <Expand v-if="folded" />
+          <Fold v-if="!folded" />
         </el-icon>
-        <el-icon v-show="!collapsed" class="side-menu-collapse-button-lock" @click="lock">
+        <el-icon v-show="!folded" class="side-menu-collapse-button-lock" @click="lock">
           <Lock v-show="locked" />
           <Unlock v-show="!locked" />
         </el-icon>
       </div>
       <el-scrollbar class="side-menu-scrollbar">
-        <el-menu :default-openeds="props.defaultActive" class="side-menu-main-menu" :collapse="collapsed">
+        <el-menu :default-openeds="props.defaultActive" class="side-menu-main-menu" :collapse="folded">
           <slot v-if="!hidden" name="default"></slot>
         </el-menu>
       </el-scrollbar>
@@ -78,16 +83,15 @@ function handleClickOutSide() {
 <style scoped>
 .side-menu-container {
   width: v-bind(containerWidth);
-  transition: width 0.1s ease;
+  transition: width 0.3s ease;
 }
 .side-menu-main {
-  display: inline-block;
   height: 100%;
   width: v-bind(mainWidth);
   overflow: visible;
   background-color: var(--el-fill-color-blank);
   border-right: solid 1px var(--el-border-color);
-  transition: width 0.2s ease;
+  transition: width 0.3s ease;
 }
 .side-menu-collapse-button {
   display: grid;
@@ -133,7 +137,7 @@ function handleClickOutSide() {
   border-right: none;
 }
 .side-menu-main-menu:not(.el-menu--collapse) {
-  width: 180px;
+  width: v-bind(width);
   height: 100%;
 }
 .side-menu-hide-button {

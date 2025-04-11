@@ -265,7 +265,7 @@ async function handleTest() {
     <el-container>
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-        <side-menu ref="sideMenuRef" class="main-side-menu" width="63px" :default-active="['1-1']">
+        <side-menu ref="sideMenuRef" class="aside-side-menu" width="160px" fold-width="64px" :default-active="['1-1']">
           <template #default>
             <el-sub-menu index="1">
               <template #title>
@@ -422,7 +422,7 @@ async function handleTest() {
   align-self: center;
   height: 85%;
 }
-.main-side-menu {
+.aside-side-menu {
   height: 100%;
 }
 .main-page {
