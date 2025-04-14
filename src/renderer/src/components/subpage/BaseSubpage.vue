@@ -1,4 +1,28 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { Ref, watch } from 'vue'
+
+// props
+const props = defineProps<{
+  test: {
+    closeSignal: boolean
+  }
+  beforeClose?: () => Promise<boolean>
+}>()
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
+
+// watch
+watch(props.closeSignal, async () => {
+  if (NotNullish(props.beforeClose)) {
+    const closed = await props.beforeClose()
+    if (closed) {
+      state.value = false
+    }
+  }
+})
+</script>
 
 <template>
   <div class="base-subpage">

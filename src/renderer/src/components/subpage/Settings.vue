@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
 import { onBeforeMount, reactive, Ref, ref, UnwrapRef } from 'vue'
 import lodash from 'lodash'
@@ -7,6 +8,11 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
+import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
+import { EventEmitter } from 'node:events'
+
+//props
+const props = defineProps<{ closeEmitter: EventEmitter }>()
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -14,7 +20,8 @@ onBeforeMount(() => {
 })
 
 // model
-const tourStates: Ref<UnwrapRef<{ workdir: boolean }>> = defineModel('tourStates', { default: { workdir: false } })
+const tourStates: Ref<{ workdir: boolean }> = defineModel<{ workdir: boolean }>('tourStates', { default: { workdir: false } })
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 const apis = reactive({
@@ -27,9 +34,13 @@ const apis = reactive({
 const workdirInput = ref()
 // 工作目录输入组件实例
 const containerRef = ref()
+// 作品文件名称命名格式输入组件实例
+const worksSettingsFileNameFormatInput = ref()
 // 设置
-const settings: Ref<UnwrapRef<Settings>> = ref(emptySettings)
+const settings: Ref<Settings> = ref(emptySettings)
 let oldSettings: Settings = emptySettings // 原设置
+// 作品文件名称命名格式对话框开关
+const worksSettingsFileNameFormatDialogState: Ref<boolean> = ref(false)
 
 // 方法
 // 加载设置
@@ -110,9 +121,9 @@ async function selectDir() {
   }
 }
 // 在关闭前检查设置是否已经更改
-async function checkChangeSaved() {
+async function checkChangeSaved(): Promise<boolean> {
   if (!lodash.isEqual(settings.value, oldSettings)) {
-    return new Promise<void>((resolve) => {
+    return new Promise<boolean>((resolve) => {
       ElMessageBox.confirm('是否保存更改?', '更改未保存', {
         confirmButtonText: '是',
         cancelButtonText: '否',
@@ -120,13 +131,14 @@ async function checkChangeSaved() {
       })
         .then(() => {
           saveSettings()
-          resolve()
+          resolve(true)
         })
         .catch(() => {
-          resolve()
+          resolve(false)
         })
     })
   }
+  return true
 }
 // 重置前询问
 async function askBeforeReset(): Promise<boolean> {
@@ -148,66 +160,198 @@ async function askBeforeReset(): Promise<boolean> {
       })
   })
 }
+// 作品-添加命名元素
+function insertFormatElement(element: ResFileNameFormatEnum) {
+  const inputElement = worksSettingsFileNameFormatInput.value.input
+  if (inputElement) {
+    const startPos = inputElement.selectionStart // 光标起始位置
+    const endPos = inputElement.selectionEnd // 光标结束位置
+
+    // 插入字符串到光标位置
+    settings.value.worksSettings.fileNameFormat =
+      settings.value.worksSettings.fileNameFormat.slice(0, startPos) +
+      element.code +
+      settings.value.worksSettings.fileNameFormat.slice(endPos)
+
+    // 设置新的光标位置
+    const newCursorPos = startPos + element.code.length
+    inputElement.setSelectionRange(newCursorPos, newCursorPos)
+    inputElement.focus() // 确保输入框保持焦点
+  }
+}
 </script>
 
 <template>
-  <base-subpage :before-close="checkChangeSaved">
-    <el-container class="settings-container">
-      <el-main style="display: flex; flex-direction: row; padding: 0">
-        <el-anchor :container="containerRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
-          <el-anchor-link href="#basicSettings" title="基本设置" />
-          <el-anchor-link href="#downloadSettings" title="下载" />
-          <el-anchor-link href="#otherSettings" title="其他" />
-        </el-anchor>
-        <el-scrollbar style="margin-left: 30px; flex-grow: 1">
-          <div ref="containerRef" style="margin-right: 10px">
-            <div id="basicSettings">
-              <el-text class="mx-1" size="large">基本设置</el-text>
-              <el-divider content-position="left" border-style="dotted">工作目录</el-divider>
-              <el-tooltip
-                placement="top"
-                effect="customized"
-                content="LibrarySquirrel所管理的所有资源都会被保存到这个目录下，请确保这个目录有足够的空间，并且非必要的情况下不要更改此项"
-              >
-                <el-row>
-                  <el-col :span="22">
-                    <el-input ref="workdirInput" v-model="settings.workdir"></el-input>
-                  </el-col>
-                  <el-col :span="1">
-                    <el-button icon="FolderOpened" @click="selectDir"></el-button>
-                  </el-col>
-                  <el-col :span="1">
-                    <el-button type="danger" icon="RefreshLeft" @click="settings.workdir = oldSettings.workdir"></el-button>
-                  </el-col>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter" :before-close="checkChangeSaved">
+    <template #default>
+      <el-container class="settings-container">
+        <el-main style="display: flex; flex-direction: row; padding: 0">
+          <el-anchor :container="containerRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
+            <el-anchor-link href="#basicSettings" title="基本设置" />
+            <el-anchor-link href="#downloadSettings" title="下载" />
+            <el-anchor-link href="#worksSettings" title="作品" />
+            <el-anchor-link href="#otherSettings" title="其他" />
+          </el-anchor>
+          <el-scrollbar style="margin-left: 30px; flex-grow: 1">
+            <div ref="containerRef" style="margin-right: 10px">
+              <div id="basicSettings">
+                <el-text class="mx-1" size="large">基本设置</el-text>
+                <el-divider content-position="left" border-style="dotted"><el-text>工作目录</el-text></el-divider>
+                <el-tooltip
+                  placement="top"
+                  effect="customized"
+                  content="LibrarySquirrel所管理的所有资源都会被保存到这个目录下，请确保这个目录有足够的空间，并且非必要的情况下不要更改此项"
+                >
+                  <el-row>
+                    <el-col :span="22">
+                      <el-input ref="workdirInput" v-model="settings.workdir"></el-input>
+                    </el-col>
+                    <el-col :span="1">
+                      <el-button icon="FolderOpened" @click="selectDir"></el-button>
+                    </el-col>
+                    <el-col :span="1">
+                      <el-button type="danger" icon="RefreshLeft" @click="settings.workdir = oldSettings.workdir"></el-button>
+                    </el-col>
+                  </el-row>
+                </el-tooltip>
+                <el-divider />
+              </div>
+              <div id="downloadSettings">
+                <el-text class="mx-1" size="large">下载</el-text>
+                <el-divider content-position="left" border-style="dotted"><el-text>并行下载数</el-text></el-divider>
+                <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
+                <el-divider />
+              </div>
+              <div id="worksSettings">
+                <el-text size="large">作品</el-text>
+                <el-divider content-position="left" border-style="dotted"><el-text>作品的文件命名格式</el-text></el-divider>
+                <el-row class="works-settings-file-name-format-button">
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.AUTHOR)">
+                    {{ ResFileNameFormatEnum.AUTHOR.name }}
+                  </el-button>
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.SITE_AUTHOR_ID)">
+                    {{ ResFileNameFormatEnum.SITE_AUTHOR_ID.name }}
+                  </el-button>
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_NAME)">
+                    {{ ResFileNameFormatEnum.SITE_WORKS_NAME.name }}
+                  </el-button>
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_ID)">
+                    {{ ResFileNameFormatEnum.SITE_WORKS_ID.name }}
+                  </el-button>
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_YEAR)">
+                    {{ ResFileNameFormatEnum.UPLOAD_TIME_YEAR.name }}
+                  </el-button>
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_MONTH)">
+                    {{ ResFileNameFormatEnum.UPLOAD_TIME_MONTH.name }}
+                  </el-button>
+                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_DAY)">
+                    {{ ResFileNameFormatEnum.UPLOAD_TIME_DAY.name }}
+                  </el-button>
+                  <el-button @click="worksSettingsFileNameFormatDialogState = true">...</el-button>
                 </el-row>
-              </el-tooltip>
-              <el-divider />
+                <el-input ref="worksSettingsFileNameFormatInput" v-model="settings.worksSettings.fileNameFormat"></el-input>
+                <el-divider />
+              </div>
+              <div id="otherSettings">
+                <el-text class="mx-1" size="large">其他</el-text>
+                <el-divider />
+              </div>
             </div>
-            <div id="downloadSettings">
-              <el-text class="mx-1" size="large">下载</el-text>
-              <el-divider content-position="left" border-style="dotted">最大同时下载数量</el-divider>
-              <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
-              <el-divider />
-            </div>
-            <div id="otherSettings">
-              <el-text class="mx-1" size="large">其他</el-text>
-              <el-divider />
-            </div>
-          </div>
-        </el-scrollbar>
-      </el-main>
-      <el-footer height="32px">
-        <el-row>
-          <el-col :span="6">
-            <el-button type="primary" @click="saveSettings">保存</el-button>
-            <el-button type="danger" @click="resetSettings">默认设置</el-button>
-          </el-col>
-        </el-row>
-      </el-footer>
-    </el-container>
-    <el-tour v-model="tourStates.workdir" :scroll-into-view-options="true">
-      <el-tour-step :target="workdirInput?.$el" title="工作目录" description="在这里设置工作目录"></el-tour-step>
-    </el-tour>
+          </el-scrollbar>
+        </el-main>
+        <el-footer height="32px">
+          <el-row>
+            <el-col :span="6">
+              <el-button type="primary" @click="saveSettings">保存</el-button>
+              <el-button type="danger" @click="resetSettings">默认设置</el-button>
+            </el-col>
+          </el-row>
+        </el-footer>
+      </el-container>
+      <el-tour v-model="tourStates.workdir" :scroll-into-view-options="true">
+        <el-tour-step :target="workdirInput?.$el" title="工作目录" description="在这里设置工作目录"></el-tour-step>
+      </el-tour>
+    </template>
+    <template #dialog>
+      <el-dialog v-model="worksSettingsFileNameFormatDialogState">
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.AUTHOR)">
+          {{ ResFileNameFormatEnum.AUTHOR.name }}
+        </el-button>
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.SITE_AUTHOR_ID)">
+          {{ ResFileNameFormatEnum.SITE_AUTHOR_ID.name }}
+        </el-button>
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_NAME)">
+          {{ ResFileNameFormatEnum.SITE_WORKS_NAME.name }}
+        </el-button>
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_ID)">
+          {{ ResFileNameFormatEnum.SITE_WORKS_ID.name }}
+        </el-button>
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_YEAR)">
+          {{ ResFileNameFormatEnum.UPLOAD_TIME_YEAR.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_MONTH)"
+        >
+          {{ ResFileNameFormatEnum.UPLOAD_TIME_MONTH.name }}
+        </el-button>
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_DAY)">
+          {{ ResFileNameFormatEnum.UPLOAD_TIME_DAY.name }}
+        </el-button>
+        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_HOUR)">
+          {{ ResFileNameFormatEnum.UPLOAD_TIME_HOUR.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_MINUTE)"
+        >
+          {{ ResFileNameFormatEnum.UPLOAD_TIME_MINUTE.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_SECOND)"
+        >
+          {{ ResFileNameFormatEnum.UPLOAD_TIME_SECOND.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_YEAR)"
+        >
+          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_YEAR.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_MONTH)"
+        >
+          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_MONTH.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_DAY)"
+        >
+          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_HOUR)"
+        >
+          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_HOUR.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_MINUTE)"
+        >
+          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_MINUTE.name }}
+        </el-button>
+        <el-button
+          class="works-settings-file-name-format-button"
+          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND)"
+        >
+          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND.name }}
+        </el-button>
+        <el-input ref="worksSettingsFileNameFormatInput" v-model="settings.worksSettings.fileNameFormat"></el-input>
+      </el-dialog>
+    </template>
   </base-subpage>
 </template>
 
@@ -220,6 +364,9 @@ async function askBeforeReset(): Promise<boolean> {
   height: calc(100% - 20px);
   padding: 5px;
   margin: 5px;
+}
+.works-settings-file-name-format-button {
+  margin-bottom: 10px;
 }
 .el-popper.is-customized {
   background: var(--el-color-warning-light-7);

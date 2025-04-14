@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
+import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
 import LocalAuthorManage from '@renderer/components/subpage/LocalAuthorManage.vue'
 import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
 import SiteTagManage from '@renderer/components/subpage/SiteTagManage.vue'
 import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
+import Developing from '@renderer/components/subpage/Developing.vue'
+import SiteManage from '@renderer/components/subpage/SiteManage.vue'
+import PluginManage from '@renderer/components/subpage/PluginManage.vue'
+import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { Close, CollectionTag, Coordinate, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
@@ -26,14 +31,10 @@ import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import { ElMessageBox } from 'element-plus'
-import Developing from '@renderer/components/subpage/Developing.vue'
-import SiteManage from '@renderer/components/subpage/SiteManage.vue'
-import PluginManage from '@renderer/components/subpage/PluginManage.vue'
-import Test from '@renderer/components/subpage/Test.vue'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
-import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
 import MsgList from '@renderer/components/common/MsgList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
+import { EventEmitter } from 'node:events'
 
 // onMounted
 onMounted(() => {
@@ -88,7 +89,9 @@ const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workd
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
-//
+// 副页面的关闭事件发射器
+const subpageCloseEmitter: EventEmitter = new EventEmitter()
+// 副页面的参数
 const subpageProps: Ref<{ siteManageFocusOnSiteDomainId: string[] | undefined }> = ref({
   siteManageFocusOnSiteDomainId: undefined
 })
@@ -382,14 +385,44 @@ async function handleTest() {
           </div>
         </div>
         <div v-if="pageState.subpage" class="subPage">
-          <local-tag-manage v-if="pageState.showLocalTagManagePage" />
-          <site-tag-manage v-if="pageState.showSiteTagManagePage" />
-          <local-author-manage v-if="pageState.showLocalAuthorManagePage" />
-          <plugin-manage v-if="pageState.showPluginManagePage" />
-          <task-manage v-if="pageState.showTaskManagePage" />
-          <settings v-if="pageState.showSettingsPage" v-model:tour-states="settingsPageTourStates" />
-          <site-manage v-if="pageState.showSiteManagePage" :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId" />
-          <developing v-if="pageState.showDeveloping" />
+          <local-tag-manage
+            v-if="pageState.showLocalTagManagePage"
+            v-model:state="pageState.showLocalTagManagePage"
+            :close-emitter="subpageCloseEmitter"
+          />
+          <site-tag-manage
+            v-if="pageState.showSiteTagManagePage"
+            v-model:state="pageState.showSiteTagManagePage"
+            :close-emitter="subpageCloseEmitter"
+          />
+          <local-author-manage
+            v-if="pageState.showLocalAuthorManagePage"
+            v-model:state="pageState.showLocalAuthorManagePage"
+            :close-emitter="subpageCloseEmitter"
+          />
+          <plugin-manage
+            v-if="pageState.showPluginManagePage"
+            v-model:state="pageState.showPluginManagePage"
+            :close-emitter="subpageCloseEmitter"
+          />
+          <task-manage
+            v-if="pageState.showTaskManagePage"
+            v-model:state="pageState.showTaskManagePage"
+            :close-emitter="subpageCloseEmitter"
+          />
+          <settings
+            v-if="pageState.showSettingsPage"
+            v-model:state="pageState.showSettingsPage"
+            v-model:tour-states="settingsPageTourStates"
+            :close-emitter="subpageCloseEmitter"
+          />
+          <site-manage
+            v-if="pageState.showSiteManagePage"
+            v-model:state="pageState.showSiteManagePage"
+            :close-emitter="subpageCloseEmitter"
+            :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId"
+          />
+          <developing v-if="pageState.showDeveloping" v-model:state="pageState.showDeveloping" :close-emitter="subpageCloseEmitter" />
           <test v-if="pageState.showTest" />
         </div>
       </el-main>

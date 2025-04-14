@@ -25,6 +25,10 @@ import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
+import { EventEmitter } from 'node:events'
+
+// props
+const props = defineProps<{ closeEmitter: EventEmitter }>()
 
 // onMounted
 onMounted(() => {
@@ -37,6 +41,9 @@ onMounted(() => {
   ]
   localTagSearchTable.value.doSearch()
 })
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -346,7 +353,7 @@ async function requestSiteTagSelectItemPage(
 </script>
 
 <template>
-  <base-subpage>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
     <template #default>
       <div class="tag-manage-container">
         <div class="tag-manage-left">

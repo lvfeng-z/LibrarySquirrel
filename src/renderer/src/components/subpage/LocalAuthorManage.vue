@@ -24,6 +24,10 @@ import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
+import { EventEmitter } from 'node:events'
+
+// props
+const props = defineProps<{ closeEmitter: EventEmitter }>()
 
 onMounted(() => {
   if (IsNullish(page.value.query)) {
@@ -35,6 +39,9 @@ onMounted(() => {
   ]
   localAuthorSearchTable.value.doSearch()
 })
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -300,7 +307,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
 </script>
 
 <template>
-  <base-subpage>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
     <template #default>
       <div class="local-author-manage-container">
         <div class="local-author-manage-left">

@@ -31,11 +31,18 @@ import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
 import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
+import { EventEmitter } from 'node:events'
+
+// props
+const props = defineProps<{ closeEmitter: EventEmitter }>()
 
 // onMounted
 onMounted(() => {
   taskManageSearchTable.value.doSearch()
 })
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -501,7 +508,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <base-subpage>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
     <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>

@@ -17,6 +17,10 @@ import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDT
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
+import { EventEmitter } from 'node:events'
+
+// props
+const props = defineProps<{ closeEmitter: EventEmitter }>()
 
 // onMounted
 onMounted(() => {
@@ -29,6 +33,9 @@ onMounted(() => {
   ]
   siteTagSearchTable.value.doSearch()
 })
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -252,7 +259,7 @@ async function saveRowEdit(newData: SiteTagVO) {
 </script>
 
 <template>
-  <base-subpage>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
     <template #default>
       <div class="tag-manage-container">
         <search-table
@@ -267,7 +274,7 @@ async function saveRowEdit(newData: SiteTagVO) {
           :main-input-boxes="mainInputBoxes"
           :drop-down-input-boxes="dropDownInputBoxes"
           :search="siteTagQueryPage"
-          :multi-select="false"
+          :multi-select="true"
           :selectable="true"
           :page-sizes="[10, 20, 50, 100, 1000]"
           :operation-width="205"

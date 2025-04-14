@@ -18,8 +18,10 @@ import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO
 import SiteDomainDTO from '@renderer/model/main/dto/SiteDomainDTO.ts'
 import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
 import { ElMessage } from 'element-plus'
+import { EventEmitter } from 'node:events'
 
 const props = defineProps<{
+  closeEmitter: EventEmitter
   focusOnDomains?: string[] | undefined
 }>()
 
@@ -45,6 +47,9 @@ onMounted(() => {
     siteDomainSearchTable.value.doSearch()
   }
 })
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 const apis = {
@@ -462,7 +467,7 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
 }
 </script>
 <template>
-  <base-subpage>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
     <template #default>
       <div class="site-manage-container">
         <div class="site-manage-left">

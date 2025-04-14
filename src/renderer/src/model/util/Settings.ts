@@ -2,22 +2,22 @@ export interface Settings extends Record<string, unknown> {
   initialized: boolean
   programVersion: string
   workdir: string
+  worksSettings: {
+    fileNameFormat: string
+  }
   importSettings: {
     maxParallelImport: number
-  }
-  plugin: {
-    localImportPluginVersion: string
   }
 }
 
 export const emptySettings: Settings = {
-  initialized: true,
+  initialized: false,
   programVersion: '',
   workdir: '',
-  importSettings: {
-    maxParallelImport: 1
+  worksSettings: {
+    fileNameFormat: '[${author}]_[${siteWorksId}]_${siteWorksName}'
   },
-  plugin: {
-    localImportPluginVersion: ''
+  importSettings: {
+    maxParallelImport: 3
   }
 }

@@ -14,6 +14,10 @@ import Plugin from '@renderer/model/main/entity/Plugin.ts'
 import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
 import { ElMessage } from 'element-plus'
 import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
+import { EventEmitter } from 'node:events'
+
+// props
+const props = defineProps<{ closeEmitter: EventEmitter }>()
 
 // onMounted
 onMounted(() => {
@@ -26,6 +30,9 @@ onMounted(() => {
   ]
   pluginSearchTable.value.doSearch()
 })
+
+// model
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 const apis = {
@@ -196,7 +203,7 @@ async function unInstall(pluginId: string) {
 }
 </script>
 <template>
-  <base-subpage>
+  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
     <template #default>
       <div class="plugin-manage-container">
         <search-table
