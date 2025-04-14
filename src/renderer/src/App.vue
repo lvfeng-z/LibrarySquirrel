@@ -6,7 +6,7 @@ import SiteTagManage from '@renderer/components/subpage/SiteTagManage.vue'
 import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { Close, CollectionTag, Coordinate, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
+import { Close, CollectionTag, Coordinate, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -259,14 +259,21 @@ async function handleTest() {
 
 <template>
   <div class="ui">
-    <div v-if="pageState.subpage" class="close-subpage-button z-layer-5" @click="closeSubpage">
-      <Close class="close-subpage-button-icon" style="width: 50%; height: 50%; color: #fafafa" />
+    <div
+      :class="{ 'close-subpage-button': true, 'z-layer-5': true, 'close-subpage-button-hide': !pageState.subpage }"
+      @click="closeSubpage"
+    >
+      <Close class="close-subpage-button-icon" />
     </div>
     <el-container>
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-        <side-menu ref="sideMenuRef" class="aside-side-menu" width="160px" fold-width="64px" :default-active="['1-1']">
+        <side-menu ref="sideMenuRef" class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
           <template #default>
+            <el-menu-item index="0" @click="closeSubpage">
+              <template #title> 主页 </template>
+              <el-icon><House /></el-icon>
+            </el-menu-item>
             <el-sub-menu index="1">
               <template #title>
                 <el-icon><CollectionTag /></el-icon>
@@ -402,21 +409,33 @@ async function handleTest() {
   background-color: #fafafa;
 }
 .close-subpage-button {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  clip-path: polygon(0 0, 100% 0, 0 100%);
-  background-color: #b54747;
+  display: flex;
+  justify-content: end;
+  align-items: end;
+  background-color: var(--el-color-danger);
   cursor: pointer;
-  transition: 0.2s;
+  position: absolute;
+  left: -35px;
+  top: -35px;
+  width: 70px;
+  height: 70px;
+  pointer-events: visibleFill;
+  clip-path: circle(35px);
+  transition: 0.5s;
 }
 .close-subpage-button:hover {
-  background-color: #b66464;
-  width: 55px;
-  height: 55px;
+  background-color: var(--el-color-danger-light-3);
+}
+.close-subpage-button-hide {
+  left: -70px;
+  top: -70px;
 }
 .close-subpage-button-icon {
-  color: #cdcdcd;
+  width: 40%;
+  height: 40%;
+  color: #fafafa;
+  margin-right: 10%;
+  margin-bottom: 10%;
 }
 .main-background-task {
   align-self: center;
