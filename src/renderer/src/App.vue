@@ -415,27 +415,29 @@ async function handleTest() {
   background-color: var(--el-color-danger);
   cursor: pointer;
   position: absolute;
-  left: -35px;
-  top: -35px;
-  width: 70px;
-  height: 70px;
+  left: -65px;
+  top: -65px;
+  width: 100px;
+  height: 100px;
   pointer-events: visibleFill;
-  clip-path: circle(35px);
-  transition: 0.5s;
+  clip-path: circle(50px);
+  transition: 0.3s;
 }
 .close-subpage-button:hover {
+  left: -55px;
+  top: -55px;
   background-color: var(--el-color-danger-light-3);
 }
 .close-subpage-button-hide {
-  left: -70px;
-  top: -70px;
+  left: -100px;
+  top: -100px;
 }
 .close-subpage-button-icon {
-  width: 40%;
-  height: 40%;
+  width: 25%;
+  height: 25%;
   color: #fafafa;
-  margin-right: 10%;
-  margin-bottom: 10%;
+  margin-right: 12%;
+  margin-bottom: 12%;
 }
 .main-background-task {
   align-self: center;
