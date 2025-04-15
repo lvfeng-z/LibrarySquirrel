@@ -41,7 +41,7 @@ const apis = {
   taskPauseTaskTree: window.api.taskPauseTaskTree,
   taskResumeTaskTree: window.api.taskResumeTaskTree
 }
-// childTaskSearchTable组件
+// childTaskSearchTable组件的实例
 const childTaskSearchTable = ref()
 // baseDialog组件的实例
 const baseDialog = ref()

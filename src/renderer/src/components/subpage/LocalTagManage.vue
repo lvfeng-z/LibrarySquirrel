@@ -25,10 +25,9 @@ import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
-import { EventEmitter } from 'node:events'
 
 // props
-const props = defineProps<{ closeEmitter: EventEmitter }>()
+const props = defineProps<{ closeSignal: EventTarget }>()
 
 // onMounted
 onMounted(() => {
@@ -353,7 +352,7 @@ async function requestSiteTagSelectItemPage(
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
+  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
     <template #default>
       <div class="tag-manage-container">
         <div class="tag-manage-left">

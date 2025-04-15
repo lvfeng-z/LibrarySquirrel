@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
-import { onBeforeMount, reactive, Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '../../model/util/Settings'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
@@ -9,10 +9,9 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
-import { EventEmitter } from 'node:events'
 
-//props
-const props = defineProps<{ closeEmitter: EventEmitter }>()
+// props
+const props = defineProps<{ closeSignal: EventTarget }>()
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -21,6 +20,7 @@ onBeforeMount(() => {
 
 // model
 const tourStates: Ref<{ workdir: boolean }> = defineModel<{ workdir: boolean }>('tourStates', { default: { workdir: false } })
+
 const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
@@ -182,7 +182,7 @@ function insertFormatElement(element: ResFileNameFormatEnum) {
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter" :before-close="checkChangeSaved">
+  <base-subpage v-model:state="state" :before-close="checkChangeSaved" :close-signal="props.closeSignal">
     <template #default>
       <el-container class="settings-container">
         <el-main style="display: flex; flex-direction: row; padding: 0">

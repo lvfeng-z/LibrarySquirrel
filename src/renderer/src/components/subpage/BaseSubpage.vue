@@ -1,27 +1,29 @@
 <script setup lang="ts">
+import { onBeforeMount } from 'vue'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
-import { Ref, watch } from 'vue'
 
 // props
 const props = defineProps<{
-  test: {
-    closeSignal: boolean
-  }
+  closeSignal: EventTarget
   beforeClose?: () => Promise<boolean>
 }>()
 
-// model
-const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
-
-// watch
-watch(props.closeSignal, async () => {
-  if (NotNullish(props.beforeClose)) {
-    const closed = await props.beforeClose()
-    if (closed) {
-      state.value = false
+onBeforeMount(() => {
+  const handle = async () => {
+    if (NotNullish(props.beforeClose)) {
+      const closed = await props.beforeClose()
+      if (closed) {
+        emits('closed')
+      } else {
+        props.closeSignal.addEventListener('close', handle, { once: true })
+      }
     }
   }
+  props.closeSignal.addEventListener('close', handle, { once: true })
 })
+
+// 事件
+const emits = defineEmits(['closed'])
 </script>
 
 <template>

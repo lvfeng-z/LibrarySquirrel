@@ -31,10 +31,9 @@ import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
 import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
-import { EventEmitter } from 'node:events'
 
 // props
-const props = defineProps<{ closeEmitter: EventEmitter }>()
+const props = defineProps<{ closeSignal: EventTarget }>()
 
 // onMounted
 onMounted(() => {
@@ -508,7 +507,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
+  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
     <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>

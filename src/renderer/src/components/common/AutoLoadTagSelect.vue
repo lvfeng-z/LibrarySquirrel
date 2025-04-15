@@ -199,15 +199,15 @@ watch(input, () => {
       >
         <div class="auto-load-tag-select-selected-wrapper rounded-borders">
           <tag-box
-            class="auto-load-tag-select-selected"
             v-model:data="selectedData"
+            class="auto-load-tag-select-selected"
             tag-closeable
             @tag-close="handelTagClosed"
             @tag-clicked="(tag) => handelTagClicked(tag, false)"
             @click="inputElement.focus()"
           >
             <template #tail>
-              <input ref="inputElement" class="auto-load-tag-select-input" v-model="input" @input="newSearch" />
+              <input ref="inputElement" v-model="input" class="auto-load-tag-select-input" @input="newSearch" />
               <span ref="hiddenSpan" style="visibility: hidden">{{ input }}</span>
             </template>
           </tag-box>
@@ -222,12 +222,12 @@ watch(input, () => {
     <template #default>
       <tag-box
         ref="optionalTagBox"
-        class="auto-load-tag-select-optional"
         v-model:page="page"
         v-model:data="optionalData"
+        class="auto-load-tag-select-optional"
         :load="innerLoad"
         :tags-gap="tagsGap"
-        :maxHeight="maxHeight"
+        :max-height="maxHeight"
         @tag-clicked="(tag) => handelTagClicked(tag, true)"
       />
     </template>

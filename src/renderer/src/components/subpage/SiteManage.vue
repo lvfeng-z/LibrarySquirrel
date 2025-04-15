@@ -18,12 +18,8 @@ import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO
 import SiteDomainDTO from '@renderer/model/main/dto/SiteDomainDTO.ts'
 import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
 import { ElMessage } from 'element-plus'
-import { EventEmitter } from 'node:events'
 
-const props = defineProps<{
-  closeEmitter: EventEmitter
-  focusOnDomains?: string[] | undefined
-}>()
+const props = defineProps<{ focusOnDomains?: string[] | undefined; closeSignal: EventTarget }>()
 
 // onMounted
 onMounted(() => {
@@ -467,7 +463,7 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
 }
 </script>
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
+  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
     <template #default>
       <div class="site-manage-container">
         <div class="site-manage-left">

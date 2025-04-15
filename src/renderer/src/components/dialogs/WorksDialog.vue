@@ -56,9 +56,9 @@ const apis = {
 }
 // container元素实例
 const container = ref()
-// localTag的ExchangeBox组件
+// localTag的ExchangeBox组件的实例
 const localTagExchangeBox = ref()
-// siteTag的ExchangeBox组件
+// siteTag的ExchangeBox组件的实例
 const siteTagExchangeBox = ref()
 // 作品信息
 const worksFullInfo: Ref<WorksFullDTO> = ref(new WorksFullDTO(props.works[0]))

@@ -24,11 +24,11 @@ import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
-import { EventEmitter } from 'node:events'
 
 // props
-const props = defineProps<{ closeEmitter: EventEmitter }>()
+const props = defineProps<{ closeSignal: EventTarget }>()
 
+// onMounted
 onMounted(() => {
   if (IsNullish(page.value.query)) {
     page.value.query = new LocalAuthorQueryDTO()
@@ -307,7 +307,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
+  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
     <template #default>
       <div class="local-author-manage-container">
         <div class="local-author-manage-left">

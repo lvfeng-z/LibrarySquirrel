@@ -14,10 +14,9 @@ import Plugin from '@renderer/model/main/entity/Plugin.ts'
 import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
 import { ElMessage } from 'element-plus'
 import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
-import { EventEmitter } from 'node:events'
 
 // props
-const props = defineProps<{ closeEmitter: EventEmitter }>()
+const props = defineProps<{ closeSignal: EventTarget }>()
 
 // onMounted
 onMounted(() => {
@@ -203,7 +202,7 @@ async function unInstall(pluginId: string) {
 }
 </script>
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
+  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
     <template #default>
       <div class="plugin-manage-container">
         <search-table

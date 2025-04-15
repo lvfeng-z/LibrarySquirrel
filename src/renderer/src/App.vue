@@ -34,7 +34,6 @@ import { ElMessageBox } from 'element-plus'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import MsgList from '@renderer/components/common/MsgList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
-import { EventEmitter } from 'node:events'
 
 // onMounted
 onMounted(() => {
@@ -65,15 +64,15 @@ const worksAreaRef = ref()
 const pageState = reactive({
   mainPage: true,
   subpage: false,
-  showLocalTagManagePage: false,
-  showSiteTagManagePage: false,
-  showLocalAuthorManagePage: false,
-  showPluginManagePage: false,
-  showTaskManagePage: false,
-  showSiteManagePage: false,
-  showSettingsPage: false,
-  showDeveloping: false,
-  showTest: false
+  localTagManagePage: false,
+  siteTagManagePage: false,
+  localAuthorManagePage: false,
+  pluginManagePage: false,
+  taskManagePage: false,
+  siteManagePage: false,
+  settingsPage: false,
+  developing: false,
+  test: false
 })
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
@@ -89,8 +88,8 @@ const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workd
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
-// 副页面的关闭事件发射器
-const subpageCloseEmitter: EventEmitter = new EventEmitter()
+// 副页面的关闭控制器
+const subPageController: EventTarget = new EventTarget()
 // 副页面的参数
 const subpageProps: Ref<{ siteManageFocusOnSiteDomainId: string[] | undefined }> = ref({
   siteManageFocusOnSiteDomainId: undefined
@@ -137,37 +136,41 @@ function showSubpage(pageName: SubPageEnum) {
   pageState.mainPage = false
   switch (pageName) {
     case SubPageEnum.LocalTagManage:
-      pageState.showLocalTagManagePage = true
+      pageState.localTagManagePage = true
       break
     case SubPageEnum.SiteTagManage:
-      pageState.showSiteTagManagePage = true
+      pageState.siteTagManagePage = true
       break
     case SubPageEnum.LocalAuthorManage:
-      pageState.showLocalAuthorManagePage = true
+      pageState.localAuthorManagePage = true
       break
     case SubPageEnum.PluginManage:
-      pageState.showPluginManagePage = true
+      pageState.pluginManagePage = true
       break
     case SubPageEnum.TaskManage:
-      pageState.showTaskManagePage = true
+      pageState.taskManagePage = true
       break
     case SubPageEnum.Settings:
-      pageState.showSettingsPage = true
+      pageState.settingsPage = true
       break
     case SubPageEnum.SiteManage:
-      pageState.showSiteManagePage = true
+      pageState.siteManagePage = true
       break
     case SubPageEnum.Developing:
-      pageState.showDeveloping = true
+      pageState.developing = true
       break
     case SubPageEnum.Test:
-      pageState.showTest = true
+      pageState.test = true
       break
   }
 }
 // 关闭副页面
 function closeSubpage() {
+  subPageController.dispatchEvent(new Event('close'))
+}
+function subpageClosed() {
   Object.keys(pageState).forEach((key) => (pageState[key] = false))
+  pageState.subpage = false
   pageState.mainPage = true
 }
 // 请求作品接口
@@ -386,44 +389,56 @@ async function handleTest() {
         </div>
         <div v-if="pageState.subpage" class="subPage">
           <local-tag-manage
-            v-if="pageState.showLocalTagManagePage"
-            v-model:state="pageState.showLocalTagManagePage"
-            :close-emitter="subpageCloseEmitter"
+            v-if="pageState.localTagManagePage"
+            v-model:state="pageState.localTagManagePage"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
           <site-tag-manage
-            v-if="pageState.showSiteTagManagePage"
-            v-model:state="pageState.showSiteTagManagePage"
-            :close-emitter="subpageCloseEmitter"
+            v-if="pageState.siteTagManagePage"
+            v-model:state="pageState.siteTagManagePage"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
           <local-author-manage
-            v-if="pageState.showLocalAuthorManagePage"
-            v-model:state="pageState.showLocalAuthorManagePage"
-            :close-emitter="subpageCloseEmitter"
+            v-if="pageState.localAuthorManagePage"
+            v-model:state="pageState.localAuthorManagePage"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
           <plugin-manage
-            v-if="pageState.showPluginManagePage"
-            v-model:state="pageState.showPluginManagePage"
-            :close-emitter="subpageCloseEmitter"
+            v-if="pageState.pluginManagePage"
+            v-model:state="pageState.pluginManagePage"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
           <task-manage
-            v-if="pageState.showTaskManagePage"
-            v-model:state="pageState.showTaskManagePage"
-            :close-emitter="subpageCloseEmitter"
+            v-if="pageState.taskManagePage"
+            v-model:state="pageState.taskManagePage"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
           <settings
-            v-if="pageState.showSettingsPage"
-            v-model:state="pageState.showSettingsPage"
+            v-if="pageState.settingsPage"
+            v-model:state="pageState.settingsPage"
             v-model:tour-states="settingsPageTourStates"
-            :close-emitter="subpageCloseEmitter"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
           <site-manage
-            v-if="pageState.showSiteManagePage"
-            v-model:state="pageState.showSiteManagePage"
-            :close-emitter="subpageCloseEmitter"
+            v-if="pageState.siteManagePage"
+            v-model:state="pageState.siteManagePage"
             :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
           />
-          <developing v-if="pageState.showDeveloping" v-model:state="pageState.showDeveloping" :close-emitter="subpageCloseEmitter" />
-          <test v-if="pageState.showTest" />
+          <developing
+            v-if="pageState.developing"
+            v-model:state="pageState.developing"
+            :close-signal="subPageController"
+            @closed="subpageClosed"
+          />
+          <test v-if="pageState.test" />
         </div>
       </el-main>
       <msg-list class="main-background-task z-layer-3" :state="backgroundTaskState" />

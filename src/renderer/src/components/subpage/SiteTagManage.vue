@@ -17,10 +17,9 @@ import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDT
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
-import { EventEmitter } from 'node:events'
 
 // props
-const props = defineProps<{ closeEmitter: EventEmitter }>()
+const props = defineProps<{ closeSignal: EventTarget }>()
 
 // onMounted
 onMounted(() => {
@@ -259,7 +258,7 @@ async function saveRowEdit(newData: SiteTagVO) {
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-emitter="props.closeEmitter">
+  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
     <template #default>
       <div class="tag-manage-container">
         <search-table
