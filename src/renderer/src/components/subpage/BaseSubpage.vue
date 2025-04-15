@@ -17,6 +17,8 @@ onBeforeMount(() => {
       } else {
         props.closeSignal.addEventListener('close', handle, { once: true })
       }
+    } else {
+      emits('closed')
     }
   }
   props.closeSignal.addEventListener('close', handle, { once: true })

@@ -134,7 +134,7 @@ async function checkChangeSaved(): Promise<boolean> {
           resolve(true)
         })
         .catch(() => {
-          resolve(false)
+          resolve(true)
         })
     })
   }
