@@ -52,6 +52,9 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
       const runResult = this.statement.run(...params.filter(NotNullish))
       LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return runResult
+    } catch (error) {
+      LogUtil.error('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      throw error
     } finally {
       // 释放排他锁
       if (this.holdingWriteLock && !this.injectedLock) {
@@ -61,11 +64,21 @@ export default class AsyncStatement<BindParameters extends unknown[], Result = u
   }
   get(...params: BindParameters): undefined | Result {
     LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
-    return this.statement.get(...params.filter(NotNullish))
+    try {
+      return this.statement.get(...params.filter(NotNullish))
+    } catch (error) {
+      LogUtil.error('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      throw error
+    }
   }
   all(...params: BindParameters): Result[] {
     LogUtil.debug('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
-    return this.statement.all(...params.filter(NotNullish))
+    try {
+      return this.statement.all(...params.filter(NotNullish))
+    } catch (error) {
+      LogUtil.error('AsyncStatement', `[SQL] ${this.statement.source}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      throw error
+    }
   }
   iterate(...params: BindParameters): IterableIterator<Result> {
     return this.statement.iterate(...params.filter(NotNullish))
