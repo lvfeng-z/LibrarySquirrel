@@ -2,7 +2,6 @@ import BetterSqlite3 from 'better-sqlite3'
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
-import AsyncStatement from './AsyncStatement.ts'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 import { Connection, RequestWeight } from './ConnectionPool.ts'
 
@@ -50,7 +49,7 @@ export default class DB {
    * 是否持有排他锁
    * @private
    */
-  private holdingWriteLock: boolean
+  private holdingLock: boolean
 
   constructor(caller: string) {
     if (StringUtil.isNotBlank(caller)) {
@@ -58,12 +57,40 @@ export default class DB {
     } else {
       this.caller = 'unknown'
     }
-    this.holdingWriteLock = false
+    this.holdingLock = false
 
     // 封装类被回收时，释放链接
     const weakThis = new WeakRef(this)
     const fin = new FinalizationRegistry((callback: () => void) => callback())
     fin.register(this, this.beforeDestroy, weakThis)
+  }
+
+  /**
+   * 预处理语句
+   * @param statement 语句
+   * @param read 读还是写（true：读，false：写）
+   */
+  public async prepare<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    read: boolean
+  ): Promise<Database.Statement<BindParameters, Result>> {
+    // 为了在同一个DB对象中能够查看到事务未提交的更改，如果实例处于事务中，则无论读写，这次请求都作为写操作
+    let readOnly: boolean
+    if (read) {
+      readOnly = !this.inTransaction
+    } else {
+      readOnly = false
+    }
+    const connectionPromise = this.acquire(readOnly)
+    return connectionPromise
+      .then((connection) => {
+        LogUtil.debug(this.caller, `[PREPARE-SQL] ${statement}`)
+        return connection.prepare<BindParameters, Result>(statement)
+      })
+      .catch((error) => {
+        LogUtil.error(this.caller, `[PREPARE-SQL] ${statement}`, error)
+        throw error
+      })
   }
 
   /**
@@ -75,32 +102,48 @@ export default class DB {
     statement: string,
     ...params: BindParameters
   ): Promise<Database.RunResult> {
-    return await (await this.prepare<BindParameters, Result>(statement, false)).run(...params).catch((error) => {
-      LogUtil.error(this.caller, error)
+    const connectionPool = GlobalVar.get(GlobalVars.CONNECTION_POOL)
+    try {
+      // 获取排他锁
+      if (!this.holdingLock) {
+        await connectionPool.acquireLock(this.caller, statement)
+        this.holdingLock = true
+      }
+      const prepare = await this.prepare<BindParameters, Result>(statement, false)
+      LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      return prepare.run(...params)
+    } catch (error) {
+      LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
-    })
+    } finally {
+      if (this.holdingLock) {
+        connectionPool.releaseLock(this.caller)
+      }
+    }
   }
   public async get<BindParameters extends unknown[], Result = unknown>(
     statement: string,
     ...params: BindParameters
   ): Promise<Result | undefined> {
-    return this.prepare<BindParameters, Result>(statement, true)
-      .then((asyncStatement) => asyncStatement.get(...params))
-      .catch((error) => {
-        LogUtil.error(this.caller, error)
-        throw error
-      })
+    try {
+      const prepare = await this.prepare<BindParameters, Result>(statement, true)
+      return prepare.get(...params)
+    } catch (error) {
+      LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      throw error
+    }
   }
   public async all<BindParameters extends unknown[], Result = unknown>(
     statement: string,
     ...params: BindParameters
   ): Promise<Result[]> {
-    return this.prepare<BindParameters, Result>(statement, true)
-      .then((asyncStatement) => asyncStatement.all(...params))
-      .catch((error) => {
-        LogUtil.error(this.caller, error)
-        throw error
-      })
+    try {
+      const prepare = await this.prepare<BindParameters, Result>(statement, true)
+      return prepare.all(...params)
+    } catch (error) {
+      LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      throw error
+    }
   }
   public async iterate<BindParameters extends unknown[], Result = unknown>(
     statement: string,
@@ -166,35 +209,6 @@ export default class DB {
   }
 
   /**
-   * 预处理语句
-   * @param statement 语句
-   * @param read 读还是写（true：读，false：写）
-   */
-  public async prepare<BindParameters extends unknown[], Result = unknown>(
-    statement: string,
-    read: boolean
-  ): Promise<AsyncStatement<BindParameters, Result>> {
-    // 如果实例处于事务中，则无论读写，这次请求都作为写操作，这是为了在同一个DB对象中能够查看到事务未提交的更改
-    let readOnly: boolean
-    if (read) {
-      readOnly = !this.inTransaction
-    } else {
-      readOnly = false
-    }
-    const connectionPromise = this.acquire(readOnly)
-    return connectionPromise
-      .then((connection) => {
-        LogUtil.debug(this.caller, `[PREPARE-SQL] ${statement}`)
-        const stmt = connection.prepare<BindParameters, Result>(statement)
-        return new AsyncStatement<BindParameters, Result>(stmt, this.holdingWriteLock, this.caller)
-      })
-      .catch((error) => {
-        LogUtil.error(this.caller, `[PREPARE-SQL] ${statement}`, error)
-        throw error
-      })
-  }
-
-  /**
    * 释放连接
    */
   public release() {
@@ -230,9 +244,9 @@ export default class DB {
     // 创建一个当前层级的保存点
     const savepointName = `sp${this.savepointCounter++}`
     // 开启事务之前获取排他锁
-    if (!this.holdingWriteLock) {
+    if (!this.holdingLock) {
       await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, operation)
-      this.holdingWriteLock = true
+      this.holdingLock = true
     }
 
     try {
@@ -240,9 +254,9 @@ export default class DB {
       LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
     } catch (error) {
       // 释放排他锁
-      if (this.holdingWriteLock && isStartPoint) {
+      if (this.holdingLock && isStartPoint) {
         GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
-        this.holdingWriteLock = false
+        this.holdingLock = false
       }
       LogUtil.error(this.caller, `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`, error)
       throw error
@@ -273,7 +287,7 @@ export default class DB {
 
           // 释放排他锁
           GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
-          this.holdingWriteLock = false
+          this.holdingLock = false
         } else {
           // 事务代码出现异常的话回滚至此保存点
           connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
@@ -286,9 +300,9 @@ export default class DB {
       })
       .finally(() => {
         // 释放排他锁
-        if (this.holdingWriteLock && isStartPoint) {
+        if (this.holdingLock && isStartPoint) {
           GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
-          this.holdingWriteLock = false
+          this.holdingLock = false
         }
       })
   }
