@@ -99,7 +99,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       }
       return newSiteAuthor
     })
-    return super.saveOrUpdateBatchById(newSiteAuthors)
+    return super.saveOrUpdateBatchById(newSiteAuthors, [['site_id', 'site_author_id']])
   }
 
   /**

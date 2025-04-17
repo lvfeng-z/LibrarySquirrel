@@ -54,7 +54,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       }
       return newSiteTag
     })
-    return super.saveOrUpdateBatchById(newSiteTags)
+    return super.saveOrUpdateBatchById(newSiteTags, [['site_id', 'site_tag_id']])
   }
 
   /**

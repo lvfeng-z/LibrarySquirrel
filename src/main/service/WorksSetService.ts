@@ -51,7 +51,7 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
       }
       return newWorksSet
     })
-    return super.saveOrUpdateBatchById(newWorksSets)
+    return super.saveOrUpdateBatchById(newWorksSets, [['site_id', 'site_works_set_id']])
   }
 
   /**

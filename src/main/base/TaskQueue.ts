@@ -997,9 +997,10 @@ class TaskRunInstance extends TaskStatus {
 
       AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
       AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
-      const result = this.resSaveSuspended
-        ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
-        : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
+      const result =
+        this.resSaveSuspended && this.taskInfo.continuable
+          ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
+          : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
       this.resSaveSuspended = true
       return result.then((saveResult) => {
         this.changeStatus(saveResult)
