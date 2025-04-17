@@ -116,8 +116,9 @@ export default class DB {
       LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
     } finally {
-      if (this.holdingLock) {
+      if (this.holdingLock && !this.inTransaction) {
         connectionPool.releaseLock(this.caller)
+        this.holdingLock = false
       }
     }
   }
