@@ -304,8 +304,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
   /**
    * 批量新增或更新
    * @param entities
+   * @param conflicts
    */
-  public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
+  public async saveOrUpdateBatchById(entities: Model[], conflicts?: string[][]): Promise<number> {
     AssertArrayNotEmpty(entities, this.constructor.name, '批量保存失败，保存数据不能为空')
     const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
@@ -321,10 +322,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 按照第一个对象的属性设置insert子句的value部分
     const columns = Object.keys(plainObject[0]).map((key) => StringUtil.camelToSnakeCase(key))
     const insertClause = `INSERT INTO "${this.tableName}" (${columns})`
-    const excludedClause = columns
-      .filter((column) => BaseEntity.PK !== column && BaseEntity.CREATE_TIME !== column)
-      .map((column) => `${column} = EXCLUDED.${column}`)
-    const upsertClause = `ON CONFLICT(id) DO UPDATE SET ${excludedClause.join(',')}`
+    const finalConflicts: string[][] = [[BaseEntity.PK]]
+    if (ArrayNotEmpty(conflicts)) {
+      finalConflicts.push(...conflicts)
+    }
+    const excludedClauses = finalConflicts.map((conflict) => {
+      const excludedClause = columns
+        .filter((column) => BaseEntity.PK !== column && BaseEntity.CREATE_TIME !== column && !conflict?.includes(column))
+        .map((column) => `${column} = EXCLUDED.${column}`)
+      return `ON CONFLICT(${conflict.join()}) DO UPDATE SET ${excludedClause.join(',')}`
+    })
     const valuesClauses: string[] = []
 
     // 存储编号后的所有属性
@@ -352,7 +359,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const valuesClause = 'VALUES ' + valuesClauses.map((valuesClause) => `(${valuesClause})`).join()
 
-    const statement = insertClause + ' ' + valuesClause + ' ' + upsertClause
+    const statement = insertClause + ' ' + valuesClause + ' ' + excludedClauses.join(' ')
 
     const db = this.acquire()
     return db

@@ -102,9 +102,10 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   /**
    * 批量新增或更新
    * @param entities
+   * @param conflicts
    */
-  public async saveOrUpdateBatchById(entities: Model[]): Promise<number> {
-    return this.dao.saveOrUpdateBatchById(entities)
+  public async saveOrUpdateBatchById(entities: Model[], conflicts?: string[][]): Promise<number> {
+    return this.dao.saveOrUpdateBatchById(entities, conflicts)
   }
 
   /**
