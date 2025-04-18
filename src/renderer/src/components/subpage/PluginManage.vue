@@ -15,9 +15,6 @@ import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
 import { ElMessage } from 'element-plus'
 import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
 
-// props
-const props = defineProps<{ closeSignal: EventTarget }>()
-
 // onMounted
 onMounted(() => {
   if (IsNullish(pluginPage.value.query)) {
@@ -29,9 +26,6 @@ onMounted(() => {
   ]
   pluginSearchTable.value.doSearch()
 })
-
-// model
-const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 const apis = {
@@ -202,7 +196,7 @@ async function unInstall(pluginId: string) {
 }
 </script>
 <template>
-  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
+  <base-subpage>
     <template #default>
       <div class="plugin-manage-container">
         <search-table

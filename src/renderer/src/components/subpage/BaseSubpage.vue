@@ -1,33 +1,4 @@
-<script setup lang="ts">
-import { onBeforeMount } from 'vue'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
-
-// props
-const props = defineProps<{
-  closeSignal: EventTarget
-  beforeClose?: () => Promise<boolean>
-}>()
-
-onBeforeMount(() => {
-  const handle = async () => {
-    if (NotNullish(props.beforeClose)) {
-      const closed = await props.beforeClose()
-      if (closed) {
-        emits('closed')
-      } else {
-        props.closeSignal.addEventListener('close', handle, { once: true })
-      }
-    } else {
-      emits('closed')
-    }
-  }
-  props.closeSignal.addEventListener('close', handle, { once: true })
-})
-
-// 事件
-const emits = defineEmits(['closed'])
-</script>
-
+<script setup lang="ts"></script>
 <template>
   <div class="base-subpage">
     <div class="base-subpage-content">

@@ -26,9 +26,6 @@ import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
 
-// props
-const props = defineProps<{ closeSignal: EventTarget }>()
-
 // onMounted
 onMounted(() => {
   if (IsNullish(page.value.query)) {
@@ -40,9 +37,6 @@ onMounted(() => {
   ]
   localTagSearchTable.value.doSearch()
 })
-
-// model
-const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -352,7 +346,7 @@ async function requestSiteTagSelectItemPage(
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
+  <base-subpage>
     <template #default>
       <div class="tag-manage-container">
         <div class="tag-manage-left">

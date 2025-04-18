@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
-import { SubPageEnum } from '@renderer/constants/SubPageEnum.ts'
 import LocalAuthorManage from '@renderer/components/subpage/LocalAuthorManage.vue'
 import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
 import SiteTagManage from '@renderer/components/subpage/SiteTagManage.vue'
@@ -11,7 +10,7 @@ import SiteManage from '@renderer/components/subpage/SiteManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { Close, CollectionTag, Coordinate, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
+import { Close, CollectionTag, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -34,6 +33,7 @@ import { ElMessageBox } from 'element-plus'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import MsgList from '@renderer/components/common/MsgList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
+import { SubpageState, SubpageStates, SubPageEnum } from '@renderer/constants/Subpage.ts'
 
 // onMounted
 onMounted(() => {
@@ -74,6 +74,8 @@ const pageState = reactive({
   developing: false,
   test: false
 })
+const subpageStates: Ref<SubpageStates> = ref(new SubpageStates())
+let currentSubpageState: SubpageState | undefined = undefined
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
@@ -88,8 +90,6 @@ const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workd
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
-// 副页面的关闭控制器
-const subPageController: EventTarget = new EventTarget()
 // 副页面的参数
 const subpageProps: Ref<{ siteManageFocusOnSiteDomainId: string[] | undefined }> = ref({
   siteManageFocusOnSiteDomainId: undefined
@@ -130,48 +130,32 @@ async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?
   }
 }
 // 开启副页面
-function showSubpage(pageName: SubPageEnum) {
-  closeSubpage()
-  pageState.subpage = true
-  pageState.mainPage = false
-  switch (pageName) {
-    case SubPageEnum.LocalTagManage:
-      pageState.localTagManagePage = true
-      break
-    case SubPageEnum.SiteTagManage:
-      pageState.siteTagManagePage = true
-      break
-    case SubPageEnum.LocalAuthorManage:
-      pageState.localAuthorManagePage = true
-      break
-    case SubPageEnum.PluginManage:
-      pageState.pluginManagePage = true
-      break
-    case SubPageEnum.TaskManage:
-      pageState.taskManagePage = true
-      break
-    case SubPageEnum.Settings:
-      pageState.settingsPage = true
-      break
-    case SubPageEnum.SiteManage:
-      pageState.siteManagePage = true
-      break
-    case SubPageEnum.Developing:
-      pageState.developing = true
-      break
-    case SubPageEnum.Test:
-      pageState.test = true
-      break
+async function showSubpage(page: SubpageState) {
+  if (!pageState.subpage) {
+    page.state = true
+    pageState.subpage = true
+    pageState.mainPage = false
+    currentSubpageState = page
+  } else {
+    if (NotNullish(currentSubpageState)) {
+      const closed = await currentSubpageState.close()
+      if (closed) {
+        currentSubpageState = page
+        page.state = true
+      }
+    }
   }
 }
 // 关闭副页面
-function closeSubpage() {
-  subPageController.dispatchEvent(new Event('close'))
-}
-function subpageClosed() {
-  Object.keys(pageState).forEach((key) => (pageState[key] = false))
-  pageState.subpage = false
-  pageState.mainPage = true
+async function closeSubpage() {
+  if (NotNullish(currentSubpageState)) {
+    const closed = await currentSubpageState.close()
+    if (closed) {
+      currentSubpageState = undefined
+      pageState.subpage = false
+      pageState.mainPage = true
+    }
+  }
 }
 // 请求作品接口
 async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise<Page<WorksQueryDTO, WorksFullDTO>> {
@@ -244,11 +228,11 @@ window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => 
     switch (config.page) {
       case SubPageEnum.Settings:
         settingsPageTourStates.value.workdir = true
-        showSubpage(SubPageEnum.Settings)
+        showSubpage(subpageStates.value.settings)
         break
       case SubPageEnum.SiteManage:
         subpageProps.value.siteManageFocusOnSiteDomainId = config.extraData as string[]
-        showSubpage(SubPageEnum.SiteManage)
+        showSubpage(subpageStates.value.siteManage)
         break
     }
   })
@@ -285,22 +269,22 @@ async function handleTest() {
                 <el-icon><CollectionTag /></el-icon>
                 <span>标签</span>
               </template>
-              <el-menu-item index="1-1" @click="showSubpage(SubPageEnum.LocalTagManage)">本地标签</el-menu-item>
-              <el-menu-item index="1-2" @click="showSubpage(SubPageEnum.SiteTagManage)">站点标签</el-menu-item>
+              <el-menu-item index="1-1" @click="showSubpage(subpageStates.localAuthorManage)">本地标签</el-menu-item>
+              <el-menu-item index="1-2" @click="showSubpage(subpageStates.siteTagManage)">站点标签</el-menu-item>
             </el-sub-menu>
             <el-sub-menu index="2">
               <template #title>
                 <el-icon><User /></el-icon>
                 <span>作者</span>
               </template>
-              <el-menu-item index="2-1" @click="showSubpage(SubPageEnum.LocalAuthorManage)"> 本地作者 </el-menu-item>
-              <el-menu-item index="2-2" @click="showSubpage(SubPageEnum.Developing)">站点作者</el-menu-item>
+              <el-menu-item index="2-1" @click="showSubpage(subpageStates.localAuthorManage)"> 本地作者 </el-menu-item>
+              <el-menu-item index="2-2" @click="showSubpage(subpageStates.developing)">站点作者</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="3" @click="showSubpage(SubPageEnum.Developing)">
+            <el-menu-item index="3" @click="showSubpage(subpageStates.developing)">
               <template #title>收藏</template>
               <el-icon><Star /></el-icon>
             </el-menu-item>
-            <el-menu-item index="4" @click="showSubpage(SubPageEnum.SiteManage)">
+            <el-menu-item index="4" @click="showSubpage(subpageStates.siteManage)">
               <template #title>站点</template>
               <el-icon><Link /></el-icon>
             </el-menu-item>
@@ -309,20 +293,20 @@ async function handleTest() {
                 <el-icon><List /></el-icon>
                 <span>任务</span>
               </template>
-              <el-menu-item index="5-1" @click="showSubpage(SubPageEnum.TaskManage)">任务管理</el-menu-item>
+              <el-menu-item index="5-1" @click="showSubpage(subpageStates.taskManage)">任务管理</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="6" @click="showSubpage(SubPageEnum.PluginManage)">
+            <el-menu-item index="6" @click="showSubpage(subpageStates.pluginManage)">
               <template #title>插件</template>
               <el-icon><Ticket /></el-icon>
             </el-menu-item>
-            <el-menu-item index="7" @click="showSubpage(SubPageEnum.Settings)">
+            <el-menu-item index="7" @click="showSubpage(subpageStates.settings)">
               <template #title>设置</template>
               <el-icon><Setting /></el-icon>
             </el-menu-item>
-            <el-menu-item index="8" @click="showSubpage(SubPageEnum.Test)">
-              <template #title>测试按钮</template>
-              <el-icon><Coordinate /></el-icon>
-            </el-menu-item>
+            <!--            <el-menu-item index="8" @click="showSubpage(subpageStates.Test)">-->
+            <!--              <template #title>测试按钮</template>-->
+            <!--              <el-icon><Coordinate /></el-icon>-->
+            <!--            </el-menu-item>-->
           </template>
         </side-menu>
       </el-aside>
@@ -388,56 +372,14 @@ async function handleTest() {
           </div>
         </div>
         <div v-if="pageState.subpage" class="subPage">
-          <local-tag-manage
-            v-if="pageState.localTagManagePage"
-            v-model:state="pageState.localTagManagePage"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <site-tag-manage
-            v-if="pageState.siteTagManagePage"
-            v-model:state="pageState.siteTagManagePage"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <local-author-manage
-            v-if="pageState.localAuthorManagePage"
-            v-model:state="pageState.localAuthorManagePage"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <plugin-manage
-            v-if="pageState.pluginManagePage"
-            v-model:state="pageState.pluginManagePage"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <task-manage
-            v-if="pageState.taskManagePage"
-            v-model:state="pageState.taskManagePage"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <settings
-            v-if="pageState.settingsPage"
-            v-model:state="pageState.settingsPage"
-            v-model:tour-states="settingsPageTourStates"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <site-manage
-            v-if="pageState.siteManagePage"
-            v-model:state="pageState.siteManagePage"
-            :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
-          <developing
-            v-if="pageState.developing"
-            v-model:state="pageState.developing"
-            :close-signal="subPageController"
-            @closed="subpageClosed"
-          />
+          <local-tag-manage v-if="subpageStates.localTagManage.state" />
+          <site-tag-manage v-if="subpageStates.siteTagManage.state" />
+          <local-author-manage v-if="subpageStates.localAuthorManage.state" />
+          <plugin-manage v-if="subpageStates.pluginManage.state" />
+          <task-manage v-if="subpageStates.taskManage.state" />
+          <settings v-if="subpageStates.settings.state" v-model:tour-states="settingsPageTourStates" :state="subpageStates.settings" />
+          <site-manage v-if="subpageStates.siteManage.state" :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId" />
+          <developing v-if="subpageStates.developing.state" />
           <test v-if="pageState.test" />
         </div>
       </el-main>

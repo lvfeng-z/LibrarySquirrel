@@ -32,16 +32,10 @@ import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
 import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
 
-// props
-const props = defineProps<{ closeSignal: EventTarget }>()
-
 // onMounted
 onMounted(() => {
   taskManageSearchTable.value.doSearch()
 })
-
-// model
-const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -507,7 +501,7 @@ async function deleteTask(ids: number[]) {
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
+  <base-subpage>
     <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>

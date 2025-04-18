@@ -9,19 +9,19 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
+import { SubpageState } from '@renderer/constants/Subpage.ts'
 
 // props
-const props = defineProps<{ closeSignal: EventTarget }>()
+const props = defineProps<{ state: SubpageState }>()
 
 // onBeforeMount
 onBeforeMount(() => {
+  props.state.setBeforeClose(checkChangeSaved)
   loadSettings()
 })
 
 // model
 const tourStates: Ref<{ workdir: boolean }> = defineModel<{ workdir: boolean }>('tourStates', { default: { workdir: false } })
-
-const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 const apis = reactive({
@@ -182,7 +182,7 @@ function insertFormatElement(element: ResFileNameFormatEnum) {
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :before-close="checkChangeSaved" :close-signal="props.closeSignal">
+  <base-subpage>
     <template #default>
       <el-container class="settings-container">
         <el-main style="display: flex; flex-direction: row; padding: 0">

@@ -18,9 +18,6 @@ import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
 
-// props
-const props = defineProps<{ closeSignal: EventTarget }>()
-
 // onMounted
 onMounted(() => {
   if (IsNullish(page.value.query)) {
@@ -32,9 +29,6 @@ onMounted(() => {
   ]
   siteTagSearchTable.value.doSearch()
 })
-
-// model
-const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
 
 // 变量
 // 接口
@@ -258,7 +252,7 @@ async function saveRowEdit(newData: SiteTagVO) {
 </script>
 
 <template>
-  <base-subpage v-model:state="state" :close-signal="props.closeSignal">
+  <base-subpage>
     <template #default>
       <div class="tag-manage-container">
         <search-table
