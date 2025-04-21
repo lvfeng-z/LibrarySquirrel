@@ -269,7 +269,7 @@ async function handleTest() {
                 <el-icon><CollectionTag /></el-icon>
                 <span>标签</span>
               </template>
-              <el-menu-item index="1-1" @click="showSubpage(subpageStates.localAuthorManage)">本地标签</el-menu-item>
+              <el-menu-item index="1-1" @click="showSubpage(subpageStates.localTagManage)">本地标签</el-menu-item>
               <el-menu-item index="1-2" @click="showSubpage(subpageStates.siteTagManage)">站点标签</el-menu-item>
             </el-sub-menu>
             <el-sub-menu index="2">
