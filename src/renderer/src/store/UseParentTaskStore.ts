@@ -42,7 +42,6 @@ export function updateParentTaskSchedule(scheduleDTOList: TaskScheduleDTO[]): vo
     const task = taskStatus.get(scheduleDTO.id)
     if (NotNullish(task)) {
       task.status = scheduleDTO.status
-      task.schedule = scheduleDTO.schedule
       task.total = scheduleDTO.total
       task.finished = scheduleDTO.finished
     }

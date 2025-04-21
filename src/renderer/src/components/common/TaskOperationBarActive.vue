@@ -67,8 +67,11 @@ const taskStatusMapping: {
     processing: false
   }
 }
+// 任务进度信息Store
 const taskStatus = useTaskStore().$state
+// 父任务进度信息Store
 const parentTaskStatus = useParentTaskStore().$state
+// 任务状态
 const status: Ref<number | undefined | null> = computed(() => {
   let tempStatus: number | undefined | null
   if (props.row.hasChildren) {
@@ -78,14 +81,42 @@ const status: Ref<number | undefined | null> = computed(() => {
   }
   return IsNullish(tempStatus) ? props.row.status : tempStatus
 })
+// 进度（百分比）
 const schedule: Ref<number> = computed(() => {
-  let tempSchedule: number | undefined | null
-  if (props.row.hasChildren) {
-    tempSchedule = parentTaskStatus.get(props.row.id as number)?.schedule
+  const tempStatus = props.row.hasChildren ? parentTaskStatus.get(props.row.id as number) : taskStatus.get(props.row.id as number)
+  if (NotNullish(tempStatus)) {
+    const finished = tempStatus.finished
+    const total = tempStatus.total
+    if (IsNullish(finished) || IsNullish(total) || total === 0) {
+      return 0
+    }
+    return Math.round((finished / total) * 100)
   } else {
-    tempSchedule = taskStatus.get(props.row.id as number)?.schedule
+    return 0
   }
-  return IsNullish(tempSchedule) ? 0 : Math.round(tempSchedule * 100) / 100
+})
+// 进度（数据量）
+const scheduleByte: Ref<string> = computed(() => {
+  const tempStatus = taskStatus.get(props.row.id as number)
+  if (NotNullish(tempStatus)) {
+    const finishedBytes = tempStatus.finished
+    let finished: string | undefined
+    if (NotNullish(finishedBytes)) {
+      finished = formatBytes(finishedBytes)
+    }
+    const totalBytes = tempStatus.total
+    let total: string | undefined
+    if (NotNullish(totalBytes)) {
+      total = formatBytes(totalBytes)
+    }
+    if (IsNullish(total)) {
+      return IsNullish(finished) ? '...' : finished
+    } else {
+      return finished + ' / ' + total
+    }
+  } else {
+    return '...'
+  }
 })
 const fractions: Ref<string> = computed(() => {
   if (props.row.hasChildren) {
@@ -111,6 +142,21 @@ function mapToButtonStatus(): {
   } else {
     return taskStatusMapping['0']
   }
+}
+// 字节数转换为可读的数据量数值
+function formatBytes(bytes: number) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'] // 单位数组
+  let size = bytes
+  let unitIndex = 0
+
+  // 将字节数逐步除以 1024，直到找到合适的单位
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+
+  // 返回格式化的字符串，保留两位小数
+  return `${size.toFixed(2)} ${units[unitIndex]}`
 }
 </script>
 
@@ -174,8 +220,8 @@ function mapToButtonStatus(): {
       :duration="5"
       @click="buttonClicked(row, mapToButtonStatus().operation)"
     >
-      <template #default="{ percentage }">
-        <span style="font-size: 15px">{{ percentage }}%</span>
+      <template #default>
+        <span style="font-size: 15px">{{ scheduleByte }}</span>
       </template>
     </el-progress>
   </div>

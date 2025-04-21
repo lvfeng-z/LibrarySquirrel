@@ -19,11 +19,6 @@ export default class TaskScheduleDTO {
   status: TaskStatusEnum | undefined | null
 
   /**
-   * 进度
-   */
-  schedule: number | undefined | null
-
-  /**
    * 总量（父任务的子任务总量）
    */
   total: number | undefined | null
@@ -35,7 +30,7 @@ export default class TaskScheduleDTO {
 
   constructor(taskScheduleDTO?: TaskScheduleDTO) {
     if (NotNullish(taskScheduleDTO)) {
-      lodash.assign(this, lodash.pick(taskScheduleDTO, ['id', 'pid', 'status', 'schedule', 'total', 'finished']))
+      lodash.assign(this, lodash.pick(taskScheduleDTO, ['id', 'pid', 'status', 'total', 'finished']))
     }
   }
 }

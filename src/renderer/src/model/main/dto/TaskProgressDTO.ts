@@ -4,11 +4,6 @@ import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export default class TaskProgressDTO extends Task {
   /**
-   * 进度
-   */
-  schedule: number | undefined | null
-
-  /**
    * 总量
    */
   total: number | undefined | null
@@ -26,7 +21,7 @@ export default class TaskProgressDTO extends Task {
   constructor(taskProcessingDTO?: Task) {
     super(taskProcessingDTO)
     if (NotNullish(taskProcessingDTO)) {
-      lodash.assign(this, lodash.pick(taskProcessingDTO, ['schedule', 'total', 'finished', 'siteName']))
+      lodash.assign(this, lodash.pick(taskProcessingDTO, ['total', 'finished', 'siteName']))
     }
   }
 }

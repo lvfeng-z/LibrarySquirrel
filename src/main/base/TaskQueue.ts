@@ -40,7 +40,7 @@ export class TaskQueue {
    * 任务服务
    * @private
    */
-  private taskService: TaskService
+  private readonly taskService: TaskService
 
   /**
    * 任务服务
@@ -243,7 +243,6 @@ export class TaskQueue {
     // 父任务的进度
     const parentRunInstance = this.parentMap.get(taskId)
     if (NotNullish(parentRunInstance)) {
-      const childrenNum = parentRunInstance.children.size
       let finished = 0
       parentRunInstance.children.forEach((child) => {
         if (child.status === TaskStatusEnum.FINISHED) {
@@ -251,13 +250,10 @@ export class TaskQueue {
         }
       })
 
-      const schedule = (finished / childrenNum) * 100
-
       return new TaskScheduleDTO({
         id: taskId,
         pid: undefined,
         status: parentRunInstance.status,
-        schedule: schedule,
         total: parentRunInstance.children.size,
         finished: finished
       })
@@ -273,33 +269,18 @@ export class TaskQueue {
         id: taskId,
         pid: taskRunInstance.parentId,
         status: TaskStatusEnum.FINISHED,
-        schedule: 100,
-        total: undefined,
-        finished: undefined
+        total: taskRunInstance.taskWriter.bytesSum,
+        finished: IsNullish(taskRunInstance.taskWriter.writable) ? 0 : taskRunInstance.taskWriter.writable.bytesWritten
       })
     }
-    const writer = taskRunInstance.taskWriter
     if (TaskStatusEnum.PROCESSING === taskRunInstance.status || TaskStatusEnum.PAUSE === taskRunInstance.status) {
-      if (writer.bytesSum === 0) {
-        return new TaskScheduleDTO({
-          id: taskId,
-          pid: taskRunInstance.parentId,
-          status: taskRunInstance.status,
-          schedule: 0,
-          total: undefined,
-          finished: undefined
-        })
-      } else if (NotNullish(writer.writable)) {
-        const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
-        return new TaskScheduleDTO({
-          id: taskId,
-          pid: taskRunInstance.parentId,
-          status: taskRunInstance.status,
-          schedule: schedule,
-          total: undefined,
-          finished: undefined
-        })
-      }
+      return new TaskScheduleDTO({
+        id: taskId,
+        pid: taskRunInstance.parentId,
+        status: taskRunInstance.status,
+        total: taskRunInstance.taskWriter.bytesSum,
+        finished: IsNullish(taskRunInstance.taskWriter.writable) ? 0 : taskRunInstance.taskWriter.writable.bytesWritten
+      })
     }
     return undefined
   }
@@ -318,28 +299,14 @@ export class TaskQueue {
         .toArray()
         .map((taskRunInstance) => {
           const taskId = taskRunInstance.taskId
-          const writer = taskRunInstance.taskWriter
           if (TaskStatusEnum.PROCESSING === taskRunInstance.status) {
-            if (writer.bytesSum === 0) {
-              return new TaskScheduleDTO({
-                id: taskId,
-                pid: taskRunInstance.parentId,
-                status: taskRunInstance.status,
-                schedule: 0,
-                total: undefined,
-                finished: undefined
-              })
-            } else if (NotNullish(writer.writable)) {
-              const schedule = (writer.writable.bytesWritten / writer.bytesSum) * 100
-              return new TaskScheduleDTO({
-                id: taskId,
-                pid: taskRunInstance.parentId,
-                status: taskRunInstance.status,
-                schedule: schedule,
-                total: undefined,
-                finished: undefined
-              })
-            }
+            return new TaskScheduleDTO({
+              id: taskId,
+              pid: taskRunInstance.parentId,
+              status: taskRunInstance.status,
+              total: taskRunInstance.taskWriter.bytesSum,
+              finished: IsNullish(taskRunInstance.taskWriter.writable) ? 0 : taskRunInstance.taskWriter.writable.bytesWritten
+            })
           }
           return undefined
         })
@@ -367,7 +334,6 @@ export class TaskQueue {
         .toArray()
         .map((parentRunInstance) => {
           const taskId = parentRunInstance.taskId
-          const childrenNum = parentRunInstance.children.size
           let finished = 0
           parentRunInstance.children.forEach((child) => {
             if (child.status === TaskStatusEnum.FINISHED) {
@@ -375,13 +341,10 @@ export class TaskQueue {
             }
           })
 
-          const schedule = (finished / childrenNum) * 100
-
           return new TaskScheduleDTO({
             id: taskId,
             pid: undefined,
             status: parentRunInstance.status,
-            schedule: schedule,
             total: parentRunInstance.children.size,
             finished: finished
           })
