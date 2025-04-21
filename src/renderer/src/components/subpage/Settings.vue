@@ -160,8 +160,8 @@ async function askBeforeReset(): Promise<boolean> {
       })
   })
 }
-// 作品-添加命名元素
-function insertFormatElement(element: ResFileNameFormatEnum) {
+// 作品-添加命名标识符
+function insertFormatToken(element: ResFileNameFormatEnum) {
   const inputElement = worksSettingsFileNameFormatInput.value.input
   if (inputElement) {
     const startPos = inputElement.selectionStart // 光标起始位置
@@ -170,11 +170,11 @@ function insertFormatElement(element: ResFileNameFormatEnum) {
     // 插入字符串到光标位置
     settings.value.worksSettings.fileNameFormat =
       settings.value.worksSettings.fileNameFormat.slice(0, startPos) +
-      element.code +
+      element.token +
       settings.value.worksSettings.fileNameFormat.slice(endPos)
 
     // 设置新的光标位置
-    const newCursorPos = startPos + element.code.length
+    const newCursorPos = startPos + element.token.length
     inputElement.setSelectionRange(newCursorPos, newCursorPos)
     inputElement.focus() // 确保输入框保持焦点
   }
@@ -226,28 +226,31 @@ function insertFormatElement(element: ResFileNameFormatEnum) {
                 <el-text size="large">作品</el-text>
                 <el-divider content-position="left" border-style="dotted"><el-text>作品的文件命名格式</el-text></el-divider>
                 <el-row class="works-settings-file-name-format-button">
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.AUTHOR)">
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.AUTHOR)">
                     {{ ResFileNameFormatEnum.AUTHOR.name }}
                   </el-button>
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.SITE_AUTHOR_ID)">
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.LOCAL_AUTHOR_NAME)">
+                    {{ ResFileNameFormatEnum.LOCAL_AUTHOR_NAME.name }}
+                  </el-button>
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.SITE_AUTHOR_NAME)">
+                    {{ ResFileNameFormatEnum.SITE_AUTHOR_NAME.name }}
+                  </el-button>
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.SITE_AUTHOR_ID)">
                     {{ ResFileNameFormatEnum.SITE_AUTHOR_ID.name }}
                   </el-button>
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_NAME)">
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.SITE_WORKS_NAME)">
                     {{ ResFileNameFormatEnum.SITE_WORKS_NAME.name }}
                   </el-button>
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_ID)">
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.SITE_WORKS_ID)">
                     {{ ResFileNameFormatEnum.SITE_WORKS_ID.name }}
                   </el-button>
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_YEAR)">
-                    {{ ResFileNameFormatEnum.UPLOAD_TIME_YEAR.name }}
+                  <el-button @click="insertFormatToken(ResFileNameFormatEnum.DESCRIPTION)">
+                    {{ ResFileNameFormatEnum.DESCRIPTION.name }}
                   </el-button>
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_MONTH)">
-                    {{ ResFileNameFormatEnum.UPLOAD_TIME_MONTH.name }}
-                  </el-button>
-                  <el-button @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_DAY)">
-                    {{ ResFileNameFormatEnum.UPLOAD_TIME_DAY.name }}
-                  </el-button>
-                  <el-button @click="worksSettingsFileNameFormatDialogState = true">...</el-button>
+                  <el-tooltip :show-after="850">
+                    <template #content>查看更多选项</template>
+                    <el-button @click="worksSettingsFileNameFormatDialogState = true">...</el-button>
+                  </el-tooltip>
                 </el-row>
                 <el-input ref="worksSettingsFileNameFormatInput" v-model="settings.worksSettings.fileNameFormat"></el-input>
                 <el-divider />
@@ -274,81 +277,95 @@ function insertFormatElement(element: ResFileNameFormatEnum) {
     </template>
     <template #dialog>
       <el-dialog v-model="worksSettingsFileNameFormatDialogState">
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.AUTHOR)">
-          {{ ResFileNameFormatEnum.AUTHOR.name }}
-        </el-button>
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.SITE_AUTHOR_ID)">
-          {{ ResFileNameFormatEnum.SITE_AUTHOR_ID.name }}
-        </el-button>
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_NAME)">
-          {{ ResFileNameFormatEnum.SITE_WORKS_NAME.name }}
-        </el-button>
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.SITE_WORKS_ID)">
-          {{ ResFileNameFormatEnum.SITE_WORKS_ID.name }}
-        </el-button>
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_YEAR)">
-          {{ ResFileNameFormatEnum.UPLOAD_TIME_YEAR.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_MONTH)"
-        >
-          {{ ResFileNameFormatEnum.UPLOAD_TIME_MONTH.name }}
-        </el-button>
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_DAY)">
-          {{ ResFileNameFormatEnum.UPLOAD_TIME_DAY.name }}
-        </el-button>
-        <el-button class="works-settings-file-name-format-button" @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_HOUR)">
-          {{ ResFileNameFormatEnum.UPLOAD_TIME_HOUR.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_MINUTE)"
-        >
-          {{ ResFileNameFormatEnum.UPLOAD_TIME_MINUTE.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.UPLOAD_TIME_SECOND)"
-        >
-          {{ ResFileNameFormatEnum.UPLOAD_TIME_SECOND.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_YEAR)"
-        >
-          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_YEAR.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_MONTH)"
-        >
-          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_MONTH.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_DAY)"
-        >
-          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_HOUR)"
-        >
-          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_HOUR.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_MINUTE)"
-        >
-          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_MINUTE.name }}
-        </el-button>
-        <el-button
-          class="works-settings-file-name-format-button"
-          @click="insertFormatElement(ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND)"
-        >
-          {{ ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND.name }}
-        </el-button>
+        <div>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.AUTHOR)">
+            {{ ResFileNameFormatEnum.AUTHOR.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.LOCAL_AUTHOR_NAME)"
+          >
+            {{ ResFileNameFormatEnum.LOCAL_AUTHOR_NAME.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.SITE_AUTHOR_NAME)">
+            {{ ResFileNameFormatEnum.SITE_AUTHOR_NAME.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.SITE_AUTHOR_ID)">
+            {{ ResFileNameFormatEnum.SITE_AUTHOR_ID.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.SITE_WORKS_NAME)">
+            {{ ResFileNameFormatEnum.SITE_WORKS_NAME.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.SITE_WORKS_ID)">
+            {{ ResFileNameFormatEnum.SITE_WORKS_ID.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.DESCRIPTION)">
+            {{ ResFileNameFormatEnum.DESCRIPTION.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.UPLOAD_TIME_YEAR)">
+            {{ ResFileNameFormatEnum.UPLOAD_TIME_YEAR.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.UPLOAD_TIME_MONTH)"
+          >
+            {{ ResFileNameFormatEnum.UPLOAD_TIME_MONTH.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.UPLOAD_TIME_DAY)">
+            {{ ResFileNameFormatEnum.UPLOAD_TIME_DAY.name }}
+          </el-button>
+          <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.UPLOAD_TIME_HOUR)">
+            {{ ResFileNameFormatEnum.UPLOAD_TIME_HOUR.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.UPLOAD_TIME_MINUTE)"
+          >
+            {{ ResFileNameFormatEnum.UPLOAD_TIME_MINUTE.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.UPLOAD_TIME_SECOND)"
+          >
+            {{ ResFileNameFormatEnum.UPLOAD_TIME_SECOND.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.DOWNLOAD_TIME_YEAR)"
+          >
+            {{ ResFileNameFormatEnum.DOWNLOAD_TIME_YEAR.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.DOWNLOAD_TIME_MONTH)"
+          >
+            {{ ResFileNameFormatEnum.DOWNLOAD_TIME_MONTH.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.DOWNLOAD_TIME_DAY)"
+          >
+            {{ ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.DOWNLOAD_TIME_HOUR)"
+          >
+            {{ ResFileNameFormatEnum.DOWNLOAD_TIME_HOUR.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.DOWNLOAD_TIME_MINUTE)"
+          >
+            {{ ResFileNameFormatEnum.DOWNLOAD_TIME_MINUTE.name }}
+          </el-button>
+          <el-button
+            class="works-settings-file-name-format-button"
+            @click="insertFormatToken(ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND)"
+          >
+            {{ ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND.name }}
+          </el-button>
+        </div>
         <el-input ref="worksSettingsFileNameFormatInput" v-model="settings.worksSettings.fileNameFormat"></el-input>
       </el-dialog>
     </template>

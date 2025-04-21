@@ -19,6 +19,7 @@ import TaskWriter from '../util/TaskWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
+import ResFileNameFormatEnum from '../constant/ResFileNameFormatEnum.js'
 
 /**
  * 资源服务
@@ -49,17 +50,15 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const siteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullDTO.siteAuthors) ? [] : worksFullDTO.siteAuthors
     const tempName = ResourceService.getAuthorName(siteAuthors, localAuthors)
     const authorName = tempName === undefined ? 'unknownAuthor' : tempName
-    // 作品信息
-    const siteWorksName = worksFullDTO.siteWorksName === undefined ? 'unknownWorksName' : worksFullDTO.siteWorksName
-    result.filenameExtension = worksFullDTO.resource?.filenameExtension
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
     const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
+    const filenameExtension = worksFullDTO.resource?.filenameExtension
 
-    const fileName = `${finalAuthorName}_${siteWorksName}_${Math.random()}${result.filenameExtension}`
+    const fileName = this.createFileName(worksFullDTO)
     const standardFileName = SanitizeFileName(fileName)
-    const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : standardFileName
+    const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : `${standardFileName}${filenameExtension}`
 
     const relativeSavePath = path.join('/includeDir', finalAuthorName)
 
@@ -70,6 +69,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     result.workdir = workdir
     result.importMethod = resource.importMethod
     result.suggestedName = resource.suggestedName
+    result.filenameExtension = filenameExtension
     // 资源状态
     result.resourceComplete = BOOL.FALSE
 
@@ -253,5 +253,74 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       }
     }
     return authorName
+  }
+
+  public static createFileName(worksFullInfo: WorksFullDTO): string {
+    // TODO 还有一部分类型没有进行处理；对ResFileNameFormatEnum.AUTHOR的处理逻辑还有问题；作者角色的处理也有问题
+    const fileNameFormat = (
+      GlobalVar.get(GlobalVars.SETTINGS).get('worksSettings') as {
+        fileNameFormat: string
+      }
+    ).fileNameFormat
+    const getReplacement = (token: string): string => {
+      switch (token) {
+        case ResFileNameFormatEnum.AUTHOR.token: {
+          const localAuthorName = this.getLocalAuthorName(worksFullInfo)
+          if (StringUtil.isNotBlank(localAuthorName)) {
+            return localAuthorName
+          } else {
+            return this.getSiteAuthorName(worksFullInfo)
+          }
+        }
+        case ResFileNameFormatEnum.LOCAL_AUTHOR_NAME.token:
+          return this.getLocalAuthorName(worksFullInfo)
+        case ResFileNameFormatEnum.SITE_AUTHOR_NAME.token:
+          return this.getSiteAuthorName(worksFullInfo)
+        case ResFileNameFormatEnum.SITE_AUTHOR_ID.token:
+          return this.getSiteAuthorId(worksFullInfo)
+        case ResFileNameFormatEnum.SITE_WORKS_ID.token:
+          return IsNullish(worksFullInfo.siteWorksId) ? 'invalidSiteWorksId' : worksFullInfo.siteWorksId
+        case ResFileNameFormatEnum.SITE_WORKS_NAME.token:
+          return IsNullish(worksFullInfo.siteWorksName) ? 'invalidSiteWorksName' : worksFullInfo.siteWorksName
+        case ResFileNameFormatEnum.DESCRIPTION.token:
+          return IsNullish(worksFullInfo.siteWorkDescription) ? '' : worksFullInfo.siteWorkDescription
+        case ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.token:
+          return Date.now().toString()
+        default:
+          return token
+      }
+    }
+    return fileNameFormat.replace(/(\$\{[A-z]+})/g, getReplacement)
+  }
+
+  private static getLocalAuthorName(worksFullInfo: WorksFullDTO): string {
+    const mainLocalAuthors: LocalAuthorRoleDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+      ? []
+      : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRole === AuthorRole.MAIN)
+    return ArrayIsEmpty(mainLocalAuthors)
+      ? 'invalidAuthorName'
+      : StringUtil.isBlank(mainLocalAuthors[0].localAuthorName)
+        ? ''
+        : mainLocalAuthors[0].localAuthorName
+  }
+  private static getSiteAuthorName(worksFullInfo: WorksFullDTO): string {
+    const mainSiteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+      ? []
+      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN)
+    return ArrayIsEmpty(mainSiteAuthors)
+      ? 'invalidAuthorName'
+      : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorName)
+        ? ''
+        : mainSiteAuthors[0].siteAuthorName
+  }
+  private static getSiteAuthorId(worksFullInfo: WorksFullDTO): string {
+    const mainSiteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+      ? []
+      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN)
+    return ArrayIsEmpty(mainSiteAuthors)
+      ? 'invalidAuthorId'
+      : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorId)
+        ? ''
+        : mainSiteAuthors[0].siteAuthorId
   }
 }

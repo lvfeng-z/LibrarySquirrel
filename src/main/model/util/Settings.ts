@@ -1,4 +1,4 @@
-export interface Settings extends Record<string, unknown> {
+export interface Settings {
   initialized: boolean
   programVersion: string
   workdir: string

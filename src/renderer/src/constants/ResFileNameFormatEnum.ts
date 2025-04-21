@@ -1,18 +1,21 @@
 export default class ResFileNameFormatEnum {
-  code: string
+  token: string
   name: string
   description: string
 
   constructor(code: string, name: string, description: string) {
-    this.code = code
+    this.token = code
     this.name = name
     this.description = description
   }
 
   static AUTHOR = new ResFileNameFormatEnum('${author}', '作者', '作者名称')
+  static LOCAL_AUTHOR_NAME = new ResFileNameFormatEnum('${localAuthorName}', '本地作者名称', '本地作者名称')
+  static SITE_AUTHOR_NAME = new ResFileNameFormatEnum('${siteAuthorName}', '站点作者名称', '站点作者名称')
   static SITE_AUTHOR_ID = new ResFileNameFormatEnum('${siteAuthorId}', '站点作者id', '站点作者id')
   static SITE_WORKS_ID = new ResFileNameFormatEnum('${siteWorksId}', '站点作品id', '站点作品id')
   static SITE_WORKS_NAME = new ResFileNameFormatEnum('${siteWorksName}', '站点作品名称', '站点作品名称')
+  static DESCRIPTION = new ResFileNameFormatEnum('${description}', '作品描述', '作品描述')
   static UPLOAD_TIME_YEAR = new ResFileNameFormatEnum('${uploadTimeYear}', '上传时间-年', '上传时间-年')
   static UPLOAD_TIME_MONTH = new ResFileNameFormatEnum('${uploadTimeMonth}', '上传时间-月', '上传时间-月')
   static UPLOAD_TIME_DAY = new ResFileNameFormatEnum('${uploadTimeDay}', '上传时间-日', '上传时间-日')

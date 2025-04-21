@@ -124,7 +124,7 @@ export class GlobalVar {
    * 创建设置
    */
   private static createSettings() {
-    const settings = new Store<Record<string, unknown>>()
+    const settings = new Store<Settings>()
     global[GlobalVars.SETTINGS] = settings
     if (!settings.get('initialized', false)) {
       DefaultSettings()
