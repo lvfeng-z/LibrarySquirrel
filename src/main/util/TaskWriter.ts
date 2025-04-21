@@ -91,6 +91,7 @@ export default class TaskWriter {
   public doWrite(newWritable?: fs.WriteStream): Promise<FileSaveResult> {
     this.paused = false
     return new Promise((resolve, reject) => {
+      this.rejectFunc = reject
       if (NotNullish(newWritable)) {
         this.writable = newWritable
       }
