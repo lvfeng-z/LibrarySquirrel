@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, Ref, ref, UnwrapRef } from 'vue'
 import LocalAuthorManage from '@renderer/components/subpage/LocalAuthorManage.vue'
 import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
 import SiteTagManage from '@renderer/components/subpage/SiteTagManage.vue'
@@ -40,6 +40,11 @@ onMounted(() => {
   // const request = apis.worksQueryPage()
   // console.log(request)
   resizeObserver.observe(worksAreaRef.value.$el)
+  window.addEventListener('keyup', handleKeyUp)
+})
+// onBeforeUnmount
+onBeforeUnmount(() => {
+  window.removeEventListener('keyup', handleKeyUp)
 })
 
 // 变量
@@ -155,6 +160,12 @@ async function closeSubpage() {
       pageState.subpage = false
       pageState.mainPage = true
     }
+  }
+}
+// 监听esc键
+function handleKeyUp(event) {
+  if (event.key === 'Escape') {
+    closeSubpage()
   }
 }
 // 请求作品接口
