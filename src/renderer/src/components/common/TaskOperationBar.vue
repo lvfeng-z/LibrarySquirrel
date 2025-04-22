@@ -4,6 +4,7 @@ import TaskTreeDTO from '@renderer/model/main/dto/TaskTreeDTO.ts'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import TaskProgressTreeDTO from '@renderer/model/main/dto/TaskProgressTreeDTO.ts'
+import { computed, Ref } from 'vue'
 
 // props
 const props = defineProps<{
@@ -64,6 +65,33 @@ const taskStatusMapping: {
     processing: false
   }
 }
+// 进度（百分比）
+const schedule: Ref<number> = computed(() => {
+  const finished = props.row.finished
+  const total = props.row.total
+  if (IsNullish(finished) || IsNullish(total) || total === 0) {
+    return 0
+  }
+  return Math.round((finished / total) * 100)
+})
+// 进度（数据量）
+const scheduleByte: Ref<string> = computed(() => {
+  const finishedBytes = props.row.finished
+  let finished: string | undefined
+  if (NotNullish(finishedBytes)) {
+    finished = formatBytes(finishedBytes)
+  }
+  const totalBytes = props.row.total
+  let total: string | undefined
+  if (NotNullish(totalBytes)) {
+    total = formatBytes(totalBytes)
+  }
+  if (IsNullish(total)) {
+    return IsNullish(finished) ? '...' : finished
+  } else {
+    return finished + ' / ' + total
+  }
+})
 
 // 方法
 // 任务状态映射为按钮状态
@@ -78,6 +106,21 @@ function mapToButtonStatus(row: TaskTreeDTO): {
   } else {
     return taskStatusMapping['0']
   }
+}
+// 字节数转换为可读的数据量数值
+function formatBytes(bytes: number) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'] // 单位数组
+  let size = bytes
+  let unitIndex = 0
+
+  // 将字节数逐步除以 1024，直到找到合适的单位
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+
+  // 返回格式化的字符串，保留两位小数
+  return `${size.toFixed(2)} ${units[unitIndex]}`
 }
 </script>
 
@@ -115,15 +158,7 @@ function mapToButtonStatus(row: TaskTreeDTO): {
           row.hasChildren
         "
       >
-        <el-progress
-          style="width: 100%"
-          :percentage="IsNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
-          text-inside
-          :stroke-width="15"
-          striped
-          striped-flow
-          :duration="5"
-        >
+        <el-progress style="width: 100%" :percentage="schedule" text-inside :stroke-width="15" striped striped-flow :duration="5">
           <template #default="{ percentage }">
             <span style="font-size: 14px">
               {{ percentage + '% ' + row.finished + ' / ' + row.total }}
@@ -138,7 +173,7 @@ function mapToButtonStatus(row: TaskTreeDTO): {
         !row.hasChildren
       "
       style="width: 100%"
-      :percentage="IsNullish(row.schedule) ? 0 : Math.round(row.schedule * 100) / 100"
+      :percentage="schedule"
       text-inside
       :stroke-width="24"
       striped
@@ -146,8 +181,8 @@ function mapToButtonStatus(row: TaskTreeDTO): {
       :duration="5"
       @click="buttonClicked(row, mapToButtonStatus(row).operation)"
     >
-      <template #default="{ percentage }">
-        <span style="font-size: 15px">{{ percentage }}%</span>
+      <template #default>
+        <span style="font-size: 15px">{{ scheduleByte }}</span>
       </template>
     </el-progress>
   </div>
