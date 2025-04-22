@@ -1,5 +1,5 @@
 import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
-import { AuthorRole } from '../../constant/AuthorRole.ts'
+import { AuthorRank } from '../../constant/AuthorRank.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
 
 export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
@@ -26,7 +26,7 @@ export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 作者类型
    */
-  authorRole: AuthorRole | undefined | null
+  authorRank: AuthorRank | undefined | null
 
   constructor(reWorksAuthorQueryDTO?: ReWorksAuthorQueryDTO) {
     super(reWorksAuthorQueryDTO)
@@ -35,7 +35,7 @@ export default class ReWorksAuthorQueryDTO extends BaseQueryDTO {
       this.worksId = reWorksAuthorQueryDTO.worksId
       this.localAuthorId = reWorksAuthorQueryDTO.localAuthorId
       this.siteAuthorId = reWorksAuthorQueryDTO.siteAuthorId
-      this.authorRole = reWorksAuthorQueryDTO.authorRole
+      this.authorRank = reWorksAuthorQueryDTO.authorRank
     }
   }
 }

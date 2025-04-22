@@ -1,5 +1,5 @@
 import BaseEntity from '../../base/BaseEntity.ts'
-import { AuthorRole } from '../../constant/AuthorRole.ts'
+import { AuthorRank } from '../../constant/AuthorRank.ts'
 
 export default class ReWorksAuthor extends BaseEntity {
   /**
@@ -25,7 +25,7 @@ export default class ReWorksAuthor extends BaseEntity {
   /**
    * 作者类型
    */
-  authorRole: AuthorRole | undefined | null
+  authorRank: AuthorRank | undefined | null
 
   constructor(reWorksAuthor?: ReWorksAuthor) {
     if (reWorksAuthor === undefined) {
@@ -34,14 +34,14 @@ export default class ReWorksAuthor extends BaseEntity {
       this.worksId = undefined
       this.localAuthorId = undefined
       this.siteAuthorId = undefined
-      this.authorRole = undefined
+      this.authorRank = undefined
     } else {
       super(reWorksAuthor)
       this.authorType = reWorksAuthor.authorType
       this.worksId = reWorksAuthor.worksId
       this.localAuthorId = reWorksAuthor.localAuthorId
       this.siteAuthorId = reWorksAuthor.siteAuthorId
-      this.authorRole = reWorksAuthor.authorRole
+      this.authorRank = reWorksAuthor.authorRank
     }
   }
 }

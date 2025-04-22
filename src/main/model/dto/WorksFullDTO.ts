@@ -1,8 +1,8 @@
 import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
-import LocalAuthorRoleDTO from './LocalAuthorRoleDTO.ts'
-import SiteAuthorRoleDTO from './SiteAuthorRoleDTO.ts'
+import LocalAuthorRankDTO from './LocalAuthorRankDTO.ts'
+import SiteAuthorRankDTO from './SiteAuthorRankDTO.ts'
 import SiteTagFullDTO from './SiteTagFullDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import Resource from '../entity/Resource.js'
@@ -32,7 +32,7 @@ export default class WorksFullDTO extends Works {
   /**
    * 本地作者
    */
-  localAuthors: LocalAuthorRoleDTO[] | undefined | null
+  localAuthors: LocalAuthorRankDTO[] | undefined | null
 
   /**
    * 本地标签数组
@@ -42,7 +42,7 @@ export default class WorksFullDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthors: SiteAuthorRoleDTO[] | undefined | null
+  siteAuthors: SiteAuthorRankDTO[] | undefined | null
 
   /**
    * 站点标签数组
@@ -72,7 +72,7 @@ export default class WorksFullDTO extends Works {
         },
         {
           property: 'localAuthors',
-          builder: (raw: []) => raw.map((rawLocalAuthor) => new LocalAuthorRoleDTO(rawLocalAuthor))
+          builder: (raw: []) => raw.map((rawLocalAuthor) => new LocalAuthorRankDTO(rawLocalAuthor))
         },
         {
           property: 'localTags',
@@ -80,7 +80,7 @@ export default class WorksFullDTO extends Works {
         },
         {
           property: 'siteAuthors',
-          builder: (raw: []) => raw.map((rawSiteAuthor) => new SiteAuthorRoleDTO(rawSiteAuthor))
+          builder: (raw: []) => raw.map((rawSiteAuthor) => new SiteAuthorRankDTO(rawSiteAuthor))
         },
         {
           property: 'siteTags',

@@ -11,7 +11,7 @@ import LocalTagService from './LocalTagService.ts'
 import DB from '../database/DB.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
-import { AuthorRole } from '../constant/AuthorRole.ts'
+import { AuthorRank } from '../constant/AuthorRank.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import WorksSetService from './WorksSetService.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
@@ -22,7 +22,7 @@ import { AssertNotNullish } from '../util/AssertUtil.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
-import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.js'
+import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
 import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
@@ -93,7 +93,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         })
         .filter(NotNullish)
       worksDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map(
-        (siteAuthor) => new SiteAuthorRoleDTO(siteAuthor)
+        (siteAuthor) => new SiteAuthorRankDTO(siteAuthor)
       )
     }
     if (ArrayNotEmpty(worksDTO.siteTags)) {
@@ -157,7 +157,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                 }
                 return {
                   authorId: String(localAuthor.id),
-                  role: IsNullish(localAuthor.authorRole) ? AuthorRole.MAIN : localAuthor.authorRole
+                  rank: IsNullish(localAuthor.authorRank) ? AuthorRank.RANK_0 : localAuthor.authorRank
                 }
               })
               .filter(NotNullish)
@@ -172,7 +172,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
                 }
                 return {
                   authorId: String(siteAuthor.id),
-                  role: IsNullish(siteAuthor.authorRole) ? AuthorRole.MAIN : siteAuthor.authorRole
+                  rank: IsNullish(siteAuthor.authorRank) ? AuthorRank.RANK_0 : siteAuthor.authorRank
                 }
               })
               .filter(NotNullish)
@@ -216,7 +216,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    */
   public async saveSurroundingData(
     worksSets: WorksSet[] | undefined | null,
-    siteAuthors: SiteAuthorRoleDTO[] | undefined | null,
+    siteAuthors: SiteAuthorRankDTO[] | undefined | null,
     siteTags: SiteTagFullDTO[] | undefined | null
   ): Promise<void> {
     // 保存作品集

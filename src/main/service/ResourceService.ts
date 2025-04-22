@@ -12,9 +12,9 @@ import LogUtil from '../util/LogUtil.js'
 import { CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
 import path from 'path'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
-import { AuthorRole } from '../constant/AuthorRole.js'
-import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.js'
-import LocalAuthorRoleDTO from '../model/dto/LocalAuthorRoleDTO.js'
+import { AuthorRank } from '../constant/AuthorRank.js'
+import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
+import LocalAuthorRankDTO from '../model/dto/LocalAuthorRankDTO.js'
 import TaskWriter from '../util/TaskWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
@@ -294,9 +294,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   }
 
   private static getLocalAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainLocalAuthors: LocalAuthorRoleDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+    const mainLocalAuthors: LocalAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
       ? []
-      : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRole === AuthorRole.MAIN)
+      : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainLocalAuthors)
       ? 'invalidAuthorName'
       : StringUtil.isBlank(mainLocalAuthors[0].localAuthorName)
@@ -304,9 +304,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         : mainLocalAuthors[0].localAuthorName
   }
   private static getSiteAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainSiteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+    const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
-      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN)
+      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorName'
       : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorName)
@@ -314,9 +314,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         : mainSiteAuthors[0].siteAuthorName
   }
   private static getSiteAuthorId(worksFullInfo: WorksFullDTO): string {
-    const mainSiteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+    const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
-      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN)
+      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorId'
       : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorId)

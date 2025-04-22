@@ -7,7 +7,7 @@ import LogUtil from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import Page from '../model/util/Page.ts'
 import DB from '../database/DB.ts'
-import LocalAuthorRoleDTO from '../model/dto/LocalAuthorRoleDTO.ts'
+import LocalAuthorRankDTO from '../model/dto/LocalAuthorRankDTO.ts'
 import { NotNullish } from '../util/CommonUtil.ts'
 
 /**
@@ -84,7 +84,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
    * 批量获取作品与作者的关联
    * @param worksIds
    */
-  public async listReWorksAuthor(worksIds: number[]): Promise<Map<number, LocalAuthorRoleDTO[]>> {
+  public async listReWorksAuthor(worksIds: number[]): Promise<Map<number, LocalAuthorRankDTO[]>> {
     return this.dao.listReWorksAuthor(worksIds)
   }
 
@@ -92,7 +92,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
    * 查询作品的本地作者
    * @param worksId 作品id
    */
-  public async listDTOByWorksId(worksId: number): Promise<LocalAuthorRoleDTO[]> {
+  public async listDTOByWorksId(worksId: number): Promise<LocalAuthorRankDTO[]> {
     return this.dao.listDTOByWorksId(worksId)
   }
 }

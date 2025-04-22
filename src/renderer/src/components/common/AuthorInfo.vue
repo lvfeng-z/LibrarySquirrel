@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
-import LocalAuthorRoleDTO from '@renderer/model/main/dto/LocalAuthorRoleDTO.ts'
-import SiteAuthorRoleDTO from '@renderer/model/main/dto/SiteAuthorRoleDTO.ts'
+import LocalAuthorRankDTO from '@renderer/model/main/dto/LocalAuthorRankDTO.ts'
+import SiteAuthorRankDTO from '@renderer/model/main/dto/SiteAuthorRankDTO.ts'
 
 // props
 const props = defineProps<{
-  localAuthors: LocalAuthorRoleDTO[] | undefined | null
-  siteAuthors: SiteAuthorRoleDTO[] | undefined | null
+  localAuthors: LocalAuthorRankDTO[] | undefined | null
+  siteAuthors: SiteAuthorRankDTO[] | undefined | null
 }>()
 
 // 变量
 const authorNames = computed(() => {
-  let noLocalAuthorList: SiteAuthorRoleDTO[] = []
+  let noLocalAuthorList: SiteAuthorRankDTO[] = []
   if (ArrayNotEmpty(props.siteAuthors)) {
     const localAuthors = ArrayNotEmpty(props.localAuthors) ? props.localAuthors : []
     noLocalAuthorList = props.siteAuthors.filter(

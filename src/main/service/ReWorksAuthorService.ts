@@ -4,7 +4,7 @@ import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
 import DB from '../database/DB.ts'
 import ReWorksAuthorDao from '../dao/ReWorksAuthorDao.ts'
 import { OriginType } from '../constant/OriginType.js'
-import { AuthorRole } from '../constant/AuthorRole.js'
+import { AuthorRank } from '../constant/AuthorRank.js'
 import { ArrayNotEmpty } from '../util/CommonUtil.js'
 
 export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQueryDTO, ReWorksAuthor, ReWorksAuthorDao> {
@@ -15,26 +15,26 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
   /**
    * 关联作品和标签
    * @param type 标签的类型
-   * @param authorIdRoles
+   * @param authorIdRanks
    * @param worksId
    */
-  public async link(type: OriginType, authorIdRoles: { authorId: string; role: AuthorRole }[], worksId: number) {
-    if (authorIdRoles.length === 0) {
+  public async link(type: OriginType, authorIdRanks: { authorId: string; rank: AuthorRank }[], worksId: number) {
+    if (authorIdRanks.length === 0) {
       return 0
     }
 
     // 创建关联对象
-    const links = authorIdRoles.map((authorIdRole) => {
+    const links = authorIdRanks.map((authorIdRank) => {
       const reWorksAuthor = new ReWorksAuthor()
       if (OriginType.LOCAL === type) {
         reWorksAuthor.worksId = worksId
-        reWorksAuthor.localAuthorId = Number(authorIdRole.authorId)
-        reWorksAuthor.authorRole = authorIdRole.role
+        reWorksAuthor.localAuthorId = Number(authorIdRank.authorId)
+        reWorksAuthor.authorRank = authorIdRank.rank
         reWorksAuthor.authorType = OriginType.LOCAL
       } else {
         reWorksAuthor.worksId = worksId
-        reWorksAuthor.siteAuthorId = authorIdRole.authorId
-        reWorksAuthor.authorRole = authorIdRole.role
+        reWorksAuthor.siteAuthorId = authorIdRank.authorId
+        reWorksAuthor.authorRank = authorIdRank.rank
         reWorksAuthor.authorType = OriginType.SITE
       }
       return reWorksAuthor
@@ -46,11 +46,11 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
   /**
    * 更新作品和标签的关联（全量更新）
    * @param type 标签的类型
-   * @param authorIdRoles
+   * @param authorIdRanks
    * @param worksId
    */
-  public async updateLinks(type: OriginType, authorIdRoles: { authorId: string; role: AuthorRole }[], worksId: number) {
-    if (authorIdRoles.length === 0) {
+  public async updateLinks(type: OriginType, authorIdRanks: { authorId: string; rank: AuthorRank }[], worksId: number) {
+    if (authorIdRanks.length === 0) {
       return 0
     }
 
@@ -61,16 +61,16 @@ export default class ReWorksAuthorService extends BaseService<ReWorksAuthorQuery
       let notExistingList: ReWorksAuthor[]
       if (type === OriginType.LOCAL) {
         notExistingList = oldReList.filter(
-          (oldRe) => !authorIdRoles.some((authorRole) => authorRole.authorId === String(oldRe.localAuthorId))
+          (oldRe) => !authorIdRanks.some((authorRank) => authorRank.authorId === String(oldRe.localAuthorId))
         )
       } else {
-        notExistingList = oldReList.filter((oldRe) => !authorIdRoles.some((authorRole) => authorRole.authorId === oldRe.siteAuthorId))
+        notExistingList = oldReList.filter((oldRe) => !authorIdRanks.some((authorRank) => authorRank.authorId === oldRe.siteAuthorId))
       }
       if (ArrayNotEmpty(notExistingList)) {
         await this.deleteBatchById(notExistingList.map((notExisting) => notExisting.id as number))
       }
     }
-    return this.link(type, authorIdRoles, worksId)
+    return this.link(type, authorIdRanks, worksId)
   }
 
   /**

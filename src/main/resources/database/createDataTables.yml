@@ -89,7 +89,7 @@ tables:
           constraint re_works_author_site_author_id_fk
             references site_author
             on update cascade on delete cascade,
-        author_role     integer,
+        author_rank     integer,
         create_time     integer,
         update_time     integer
       );

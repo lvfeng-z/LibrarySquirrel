@@ -1,7 +1,7 @@
 import SiteAuthor from '../entity/SiteAuthor.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
 import lodash from 'lodash'
-import { AuthorRole } from '../../constant/AuthorRole.js'
+import { AuthorRank } from '../../constant/AuthorRank.js'
 
 /**
  * 站点作者DTO
@@ -13,14 +13,14 @@ export default class SiteAuthorPluginDTO extends SiteAuthor {
   siteDomain: string | undefined | null
 
   /**
-   * 作者角色
+   * 作者级别
    */
-  authorRole: AuthorRole | undefined | null
+  authorRank: AuthorRank | undefined | null
 
   constructor(siteAuthor?: SiteAuthor) {
     super(siteAuthor)
     if (NotNullish(siteAuthor)) {
-      lodash.assign(this, lodash.pick(siteAuthor, ['siteDomain']))
+      lodash.assign(this, lodash.pick(siteAuthor, ['siteDomain', 'authorRank']))
     }
   }
 }

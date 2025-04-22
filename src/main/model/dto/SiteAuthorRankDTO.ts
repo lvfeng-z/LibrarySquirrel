@@ -1,20 +1,20 @@
 import SiteAuthor from '../entity/SiteAuthor.js'
-import { AuthorRole } from '../../constant/AuthorRole.js'
+import { AuthorRank } from '../../constant/AuthorRank.js'
 import { NotNullish } from '../../util/CommonUtil.js'
 
 /**
  * 站点作者DTO
  */
-export default class SiteAuthorRoleDTO extends SiteAuthor {
+export default class SiteAuthorRankDTO extends SiteAuthor {
   /**
-   * 作者角色
+   * 作者级别
    */
-  authorRole: AuthorRole | undefined | null
+  authorRank: AuthorRank | undefined | null
 
   constructor(siteAuthorDTO?: SiteAuthor) {
     super(siteAuthorDTO)
     if (NotNullish(siteAuthorDTO)) {
-      this.authorRole = siteAuthorDTO['authorRole']
+      this.authorRank = siteAuthorDTO['authorRank']
     }
   }
 }

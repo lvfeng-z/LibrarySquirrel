@@ -1,7 +1,7 @@
 import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
-import LocalAuthorRoleDTO from './LocalAuthorRoleDTO.ts'
+import LocalAuthorRankDTO from './LocalAuthorRankDTO.ts'
 import SiteAuthorPluginDTO from './SiteAuthorPluginDTO.js'
 import WorksSet from '../entity/WorksSet.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
@@ -25,7 +25,7 @@ export default class PluginWorksResponseDTO {
   /**
    * 本地作者
    */
-  localAuthors: LocalAuthorRoleDTO[] | undefined | null
+  localAuthors: LocalAuthorRankDTO[] | undefined | null
 
   /**
    * 本地标签数组

@@ -13,7 +13,7 @@ import { Operator } from '../constant/CrudConstant.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
 import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
-import SiteAuthorRoleDTO from '../model/dto/SiteAuthorRoleDTO.js'
+import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
 
 /**
  * 站点作者Service
@@ -224,14 +224,14 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   /**
    * 生成用于保存的站点作者信息
    */
-  public static async createSaveInfos(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorRoleDTO[]> {
-    const result: SiteAuthorRoleDTO[] = []
+  public static async createSaveInfos(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorRankDTO[]> {
+    const result: SiteAuthorRankDTO[] = []
     // 用于查询和缓存站点id
     const siteService = new SiteService()
     const siteCache = new Map<string, Promise<number>>()
     for (const siteAuthor of siteAuthors) {
       if (IsNullish(siteAuthor.siteDomain)) {
-        result.push(new SiteAuthorRoleDTO(siteAuthor))
+        result.push(new SiteAuthorRankDTO(siteAuthor))
         continue
       }
       let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
@@ -241,12 +241,12 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       }
       const siteId = await siteIdPromise
       if (IsNullish(siteId)) {
-        result.push(new SiteAuthorRoleDTO(siteAuthor))
+        result.push(new SiteAuthorRankDTO(siteAuthor))
         continue
       }
-      const tempDTO = new SiteAuthorRoleDTO(siteAuthor)
+      const tempDTO = new SiteAuthorRankDTO(siteAuthor)
       tempDTO.siteId = siteId
-      tempDTO.authorRole = siteAuthor.authorRole
+      tempDTO.authorRank = siteAuthor.authorRank
       result.push(tempDTO)
     }
     return result
