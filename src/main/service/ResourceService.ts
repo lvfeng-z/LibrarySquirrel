@@ -5,7 +5,7 @@ import ResourceDao from '../dao/ResourceDao.js'
 import DB from '../database/DB.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { BOOL } from '../constant/BOOL.js'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
@@ -46,10 +46,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(resource, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
 
     // 作者信息
-    const localAuthors: LocalAuthorRoleDTO[] = ArrayIsEmpty(worksFullDTO.localAuthors) ? [] : worksFullDTO.localAuthors
-    const siteAuthors: SiteAuthorRoleDTO[] = ArrayIsEmpty(worksFullDTO.siteAuthors) ? [] : worksFullDTO.siteAuthors
-    const tempName = ResourceService.getAuthorName(siteAuthors, localAuthors)
-    const authorName = tempName === undefined ? 'unknownAuthor' : tempName
+    const authorName = ResourceService.getAuthorName(worksFullDTO)
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
@@ -209,54 +206,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   }
 
   /**
-   * 从作品信息中提取用于文件名的作者名称
-   * @param siteAuthors
-   * @param localAuthors
-   * @private
+   * 创建资源文件名
+   * @description 根据setting.worksSettings.fileNameFormat给出的格式化字符串创建文件名
+   * @param worksFullInfo
    */
-  private static getAuthorName(siteAuthors: SiteAuthorRoleDTO[], localAuthors: LocalAuthorRoleDTO[]): string | undefined {
-    let authorName: string | undefined
-    // 优先使用站点作者名称
-    if (siteAuthors !== undefined && siteAuthors !== null && siteAuthors.length > 0) {
-      const mainAuthor = siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.MAIN)
-      // 先查找主作者，没有主作者就查找平级作者
-      if (mainAuthor.length > 0) {
-        if (mainAuthor.length > 1) {
-          LogUtil.warn('WorksService', `保存作品失败，作品包含了多个主要作者`)
-        } else {
-          authorName = mainAuthor[0].siteAuthorName as string
-        }
-      } else {
-        const equalAuthor = siteAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL)
-        if (equalAuthor.length > 0) {
-          authorName = equalAuthor[0].siteAuthorName as string
-        } else {
-          LogUtil.warn('WorksService', `保存作品失败，作者名称为空`)
-        }
-      }
-    } else if (localAuthors !== undefined && localAuthors !== null && localAuthors.length > 0) {
-      const mainAuthor = localAuthors.filter((localAuthor) => localAuthor.authorRole === AuthorRole.MAIN)
-      // 先查找主作者，没有主作者就查找平级作者
-      if (mainAuthor.length > 0) {
-        if (mainAuthor.length > 1) {
-          LogUtil.warn('WorksService', `保存作品失败，作品包含了多个主要作者`)
-        } else {
-          authorName = mainAuthor[0].localAuthorName as string
-        }
-      } else {
-        const equalAuthor = localAuthors.filter((siteAuthor) => siteAuthor.authorRole === AuthorRole.EQUAL)
-        if (equalAuthor.length > 0) {
-          authorName = equalAuthor[0].localAuthorName as string
-        } else {
-          LogUtil.warn('WorksService', `保存作品失败，作者名称为空`)
-        }
-      }
-    }
-    return authorName
-  }
-
   public static createFileName(worksFullInfo: WorksFullDTO): string {
-    // TODO 还有一部分类型没有进行处理；对ResFileNameFormatEnum.AUTHOR的处理逻辑还有问题；作者角色的处理也有问题
+    // TODO 还有一部分类型没有进行处理；对ResFileNameFormatEnum.AUTHOR的处理逻辑还有问题；作者级别的处理也有问题
     const fileNameFormat = (
       GlobalVar.get(GlobalVars.SETTINGS).get('worksSettings') as {
         fileNameFormat: string
@@ -264,14 +219,8 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     ).fileNameFormat
     const getReplacement = (token: string): string => {
       switch (token) {
-        case ResFileNameFormatEnum.AUTHOR.token: {
-          const localAuthorName = this.getLocalAuthorName(worksFullInfo)
-          if (StringUtil.isNotBlank(localAuthorName)) {
-            return localAuthorName
-          } else {
-            return this.getSiteAuthorName(worksFullInfo)
-          }
-        }
+        case ResFileNameFormatEnum.AUTHOR.token:
+          return this.getAuthorName(worksFullInfo)
         case ResFileNameFormatEnum.LOCAL_AUTHOR_NAME.token:
           return this.getLocalAuthorName(worksFullInfo)
         case ResFileNameFormatEnum.SITE_AUTHOR_NAME.token:
@@ -293,6 +242,42 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     return fileNameFormat.replace(/(\$\{[A-z]+})/g, getReplacement)
   }
 
+  /**
+   * 获取作者名称
+   * @param worksFullInfo
+   * @private
+   */
+  private static getAuthorName(worksFullInfo: WorksFullDTO): string {
+    const mainLocalAuthors: LocalAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+      ? []
+      : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
+    const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+      ? []
+      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
+    const localAuthorName = ArrayIsEmpty(mainLocalAuthors)
+      ? undefined
+      : StringUtil.isBlank(mainLocalAuthors[0].localAuthorName)
+        ? undefined
+        : mainLocalAuthors[0].localAuthorName
+    const siteAuthorName = ArrayIsEmpty(mainSiteAuthors)
+      ? undefined
+      : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorName)
+        ? undefined
+        : mainSiteAuthors[0].siteAuthorName
+    if (NotNullish(localAuthorName)) {
+      return localAuthorName
+    }
+    if (NotNullish(siteAuthorName)) {
+      return siteAuthorName
+    }
+    return 'invalidAuthorName'
+  }
+
+  /**
+   * 获取本地作者名称
+   * @param worksFullInfo
+   * @private
+   */
   private static getLocalAuthorName(worksFullInfo: WorksFullDTO): string {
     const mainLocalAuthors: LocalAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
       ? []
@@ -303,6 +288,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         ? ''
         : mainLocalAuthors[0].localAuthorName
   }
+
+  /**
+   * 获取站点作者名称
+   * @param worksFullInfo
+   * @private
+   */
   private static getSiteAuthorName(worksFullInfo: WorksFullDTO): string {
     const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
@@ -313,6 +304,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         ? ''
         : mainSiteAuthors[0].siteAuthorName
   }
+
+  /**
+   * 获取站点作者id
+   * @param worksFullInfo
+   * @private
+   */
   private static getSiteAuthorId(worksFullInfo: WorksFullDTO): string {
     const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
