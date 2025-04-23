@@ -259,15 +259,20 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
 
   public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
     const selectClause = 'SELECT * FROM works'
-    const whereClause =
-      'WHERE ' +
-      siteIdAndSiteWorksIds
-        .map(
-          (siteIdAndSiteWorksId) =>
-            `(site_id = ${siteIdAndSiteWorksId.siteId} AND site_works_id = '${siteIdAndSiteWorksId.siteWorksId}')`
-        )
-        .join(' OR ')
-    const statement = selectClause + ' ' + whereClause
+    const whereClauses: string[] = []
+    while (siteIdAndSiteWorksIds.length > 0) {
+      const batch = siteIdAndSiteWorksIds.splice(0, 998)
+      const whereClause =
+        'WHERE ' +
+        batch
+          .map(
+            (siteIdAndSiteWorksId) =>
+              `(site_id = ${siteIdAndSiteWorksId.siteId} AND site_works_id = '${siteIdAndSiteWorksId.siteWorksId}')`
+          )
+          .join(' OR ')
+      whereClauses.push(whereClause)
+    }
+    const statement = whereClauses.map((whereClause) => selectClause + ' ' + whereClause).join(' UNION ALL ')
     const db = this.acquire()
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)
