@@ -725,10 +725,6 @@ export class TaskQueue {
             `刷新父任务状态失败，processing: ${processing} waiting: ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
           )
         }
-        LogUtil.warn(
-          'test----',
-          `刷新父任务状态失败，processing: ${processing} waiting: ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
-        )
 
         if (parentRunInstance.status !== newStatus) {
           parentRunInstance.changeStatus(newStatus, true)
@@ -1003,6 +999,10 @@ class TaskRunInstance extends TaskStatus {
       if (this.processing()) {
         result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
       }
+      // 判断是否已经在数据库中创建资源信息
+      if (NotNullish(this.taskInfo.pendingResourceId)) {
+        this.resSaveSuspended = true
+      }
       this.changeStatus(TaskStatusEnum.PAUSE)
       LogUtil.info('TaskQueue', `任务${this.taskId}暂停`)
       return result
@@ -1038,7 +1038,6 @@ class TaskRunInstance extends TaskStatus {
         this.resSaveSuspended && this.taskInfo.continuable
           ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
           : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
-      this.resSaveSuspended = true
       return result.then((saveResult) => {
         this.changeStatus(saveResult)
         return saveResult

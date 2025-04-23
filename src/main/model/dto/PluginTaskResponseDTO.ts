@@ -31,6 +31,11 @@ export default class PluginTaskResponseDTO {
   siteDomain: string | undefined | null
 
   /**
+   * 资源是否支持续传
+   */
+  continuable: boolean | undefined | null
+
+  /**
    * 来源类型
    */
   originType: OriginType | undefined | null
@@ -42,6 +47,7 @@ export default class PluginTaskResponseDTO {
     result.url = pluginTaskResponseDTO.url
     result.pluginData = pluginTaskResponseDTO.pluginData
     result.siteDomain = pluginTaskResponseDTO.siteDomain
+    result.continuable = pluginTaskResponseDTO.continuable
     result.originType = pluginTaskResponseDTO.originType
     return result
   }

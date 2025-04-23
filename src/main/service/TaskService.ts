@@ -275,10 +275,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     worksPluginDTO.works.siteId = task.siteId
 
     // 保存远程资源是否可接续
-    task.continuable = worksPluginDTO.resource?.continuable
+    task.continuable = IsNullish(worksPluginDTO.resource?.continuable) ? false : worksPluginDTO.resource.continuable
     const updateContinuableTask = new Task()
     updateContinuableTask.id = taskId
-    updateContinuableTask.continuable = worksPluginDTO.resource?.continuable
+    updateContinuableTask.continuable = task.continuable
     await this.updateById(updateContinuableTask)
 
     // 生成作品保存用的信息

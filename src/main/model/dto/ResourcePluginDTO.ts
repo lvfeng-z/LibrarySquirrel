@@ -22,7 +22,7 @@ export default class ResourcePluginDTO {
   resourceSize: number | undefined | null
 
   /**
-   * 资源是否支持续传
+   * 资源是否支持续传（只在恢复任务时生效，开始任务时没有作用）
    */
   continuable: boolean | undefined | null
 
