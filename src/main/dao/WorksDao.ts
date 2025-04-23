@@ -256,4 +256,26 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
       return { from: fromAndWhere.from.join(' '), where: fromAndWhere.where.join(' ') }
     }
   }
+
+  public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
+    const selectClause = 'SELECT * FROM works'
+    const whereClause =
+      'WHERE ' +
+      siteIdAndSiteWorksIds
+        .map(
+          (siteIdAndSiteWorksId) =>
+            `(site_id = ${siteIdAndSiteWorksId.siteId} AND site_works_id = '${siteIdAndSiteWorksId.siteWorksId}')`
+        )
+        .join(' OR ')
+    const statement = selectClause + ' ' + whereClause
+    const db = this.acquire()
+    try {
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
+      return super.toResultTypeDataList<Works>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
 }

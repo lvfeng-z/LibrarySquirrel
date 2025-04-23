@@ -3,6 +3,9 @@ import TaskProgressDTO from '@renderer/model/main/dto/TaskProgressDTO.ts'
 import { CopyIgnoreUndefined } from '@renderer/utils/ObjectUtil.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
+import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
+import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
+import { h } from 'vue'
 
 export const useTaskStore = defineStore('task', {
   state: (): Map<number, TaskProgressDTO> => {
@@ -12,11 +15,17 @@ export const useTaskStore = defineStore('task', {
 
 export function setTask(taskList: TaskProgressDTO[]): void {
   const taskStatus = useTaskStore().$state
+  const backgroundItemStore = useBackgroundItemStore()
   taskList.forEach((task) => {
     if (IsNullish(task.id)) {
       throw new Error('UseTaskStatusStore: 赋值任务失败，任务id为空')
     }
     taskStatus.set(task.id, task)
+
+    const backgroundItem = new BackgroundItem()
+    backgroundItem.title = task.taskName as string
+    backgroundItem.render = () => h('div', {}, () => task.finished)
+    backgroundItemStore.add(backgroundItem)
   })
 }
 

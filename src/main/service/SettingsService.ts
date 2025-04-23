@@ -16,6 +16,11 @@ function getSettings(): Settings {
 function saveSettings(settings: { path: string; value: unknown }[]): boolean {
   try {
     for (const setting of settings) {
+      if (setting.path === 'importSettings.maxParallelImport') {
+        // 读取设置中的最大并行数
+        const maxParallelImport = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
+        GlobalVar.get(GlobalVars.TASK_QUEUE).updateMaxParallel(maxParallelImport)
+      }
       GlobalVar.get(GlobalVars.SETTINGS).set(setting.path, setting.value)
     }
     return true

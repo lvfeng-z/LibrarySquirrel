@@ -17,6 +17,7 @@ import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
 import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
 import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
 import lodash from 'lodash'
+import { queue, QueueObject } from 'async'
 
 /**
  * 任务队列
@@ -114,7 +115,9 @@ export class TaskQueue {
 
     this.inletStream = new ReadableTaskRunInstance()
     this.taskInfoStream = new TaskInfoStream()
-    this.taskResourceStream = new TaskResourceStream()
+    // 读取设置中的最大并行数
+    const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
+    this.taskResourceStream = new TaskResourceStream(maxParallelImportInSettings)
     this.taskStatusChangeStream = new TaskStatusChangeStream()
 
     // 初始化流
@@ -437,61 +440,89 @@ export class TaskQueue {
   }
 
   /**
+   * 更新最大并行数
+   * @param newNum
+   */
+  public updateMaxParallel(newNum: number) {
+    this.taskResourceStream.updateMaxParallel(newNum)
+  }
+
+  /**
    * 开始处理任务
    * @param tasks 需要处理的任务
    * @private
    */
   private async processTask(tasks: Task[]) {
-    const needChangeStatusList: TaskRunInstance[] = [] // 用于更新数据库中任务的数据
+    const changeStatusNeededList: TaskRunInstance[] = [] // 用于更新数据库中任务的数据
     const runInstances: TaskRunInstance[] = [] // 需要处理的运行实例
-    for (const task of tasks) {
-      AssertNotNullish(task.id)
-      let taskRunInstance = this.taskMap.get(task.id)
+    const existsTasks: TaskRunInstance[] = []
+    const notExistsTasks: Task[] = []
+    tasks.forEach((task) => {
+      const taskRunInstance = this.taskMap.get(task.id as number)
       if (NotNullish(taskRunInstance)) {
-        clearTimeout(taskRunInstance.clearTimeoutId)
-        if (!taskRunInstance.inStream) {
-          taskRunInstance.inStream = true
-          runInstances.push(taskRunInstance)
-        }
-        try {
-          taskRunInstance.preStart()
-        } catch (error) {
-          LogUtil.error(this.constructor.name, error)
-        }
+        existsTasks.push(taskRunInstance)
       } else {
+        notExistsTasks.push(task)
+      }
+    })
+
+    for (const taskRunInstance of existsTasks) {
+      clearTimeout(taskRunInstance.clearTimeoutId)
+      if (!taskRunInstance.inStream) {
+        taskRunInstance.inStream = true
+        runInstances.push(taskRunInstance)
+      }
+      try {
+        taskRunInstance.preStart()
+      } catch (error) {
+        LogUtil.error(this.constructor.name, error)
+      }
+    }
+
+    if (ArrayNotEmpty(notExistsTasks)) {
+      // 查询已经下载过的作品列表
+      const siteIdAndSiteWorksIds = notExistsTasks.map((notExistsTask) => {
+        return {
+          siteId: notExistsTask.siteId as number,
+          siteWorksId: notExistsTask.siteWorksId as string
+        }
+      })
+      const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
+      for (const task of notExistsTasks) {
         // 判断这个作品是否已经保存过
         let infoSaved = false
         let localWorksId: number | undefined
         const resSaveSuspended = NotNullish(task.pendingResourceId)
-        if (NotNullish(task.siteId) && NotNullish(task.siteWorksId)) {
-          const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksId(task.siteId, task.siteWorksId)
-          infoSaved = ArrayNotEmpty(existsWorksList)
-          if (infoSaved) {
-            AssertNotNullish(existsWorksList[0].id)
-            localWorksId = existsWorksList[0].id
-          }
+        infoSaved = Array.prototype.some(
+          (existsTask) => task.siteId === existsTask.siteId && task.siteWorksId === existsTask.siteWorksId,
+          existsWorksList
+        )
+        if (infoSaved) {
+          AssertNotNullish(existsWorksList[0].id)
+          localWorksId = existsWorksList[0].id
         }
-        taskRunInstance = new TaskRunInstance(
-          task.id,
-          TaskStatusEnum.WAITING,
-          new TaskWriter(),
-          task,
-          this.taskService,
-          this.pluginLoader,
+        const taskRunInstance = new TaskRunInstance(
+          task.id as number,
           task.pid,
+          TaskStatusEnum.WAITING,
+          task,
           infoSaved,
           resSaveSuspended,
+          this.taskService,
+          this.pluginLoader,
+          new TaskWriter(),
           localWorksId
         )
         task.status = TaskStatusEnum.WAITING
         taskRunInstance.inStream = true
         runInstances.push(taskRunInstance)
         this.inletTask(taskRunInstance, task)
-        needChangeStatusList.push(taskRunInstance)
+        changeStatusNeededList.push(taskRunInstance)
       }
     }
+
     // 所有任务设置为等待中
-    this.taskStatusChangeStream.addTask(needChangeStatusList)
+    this.taskStatusChangeStream.addTask(changeStatusNeededList)
     // 刷新父任务状态
     await this.fillChildren(runInstances)
     this.refreshParentStatus(runInstances.map((runInstance) => runInstance.parentId))
@@ -584,6 +615,14 @@ export class TaskQueue {
       const allChildren = await this.taskService.listChildrenByParentsTask(notExistingPid)
       const pidChildrenMap: Map<number, Task[]> = Map.groupBy(allChildren, (child) => child.pid as number)
       const pidChildrenInstMap: object = lodash.keyBy(runInstances, 'taskId')
+      // 查询已经下载过的作品列表
+      const siteIdAndSiteWorksIds = allChildren.map((notExistsTask) => {
+        return {
+          siteId: notExistsTask.siteId as number,
+          siteWorksId: notExistsTask.siteWorksId as string
+        }
+      })
+      const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
       for (const parentInfo of parentList) {
         AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id不能为空`)
         AssertNotNullish(parentInfo.status, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
@@ -592,9 +631,35 @@ export class TaskQueue {
           const tempInstList = tempChildren.map((tempChild) => {
             const tempInst = pidChildrenInstMap[String(tempChild.id)]
             if (NotNullish(tempInst)) {
+              // 处理已经添加到taskMap的
               return tempInst as TaskRunInstance
             } else {
-              return new TaskStatus(tempChild.id as number, tempChild.status as TaskStatusEnum, false)
+              // 处理没有添加到taskMap的
+              // 判断这个作品是否已经保存过
+              const resSaveSuspended = NotNullish(tempChild.pendingResourceId)
+              const infoSaved = Array.prototype.some(
+                (existsTask) => tempChild.siteId === existsTask.siteId && tempChild.siteWorksId === existsTask.siteWorksId,
+                existsWorksList
+              )
+              let localWorksId: number | undefined
+              if (infoSaved) {
+                AssertNotNullish(existsWorksList[0].id)
+                localWorksId = existsWorksList[0].id
+              }
+              const tempRunInstance = new TaskRunInstance(
+                tempChild.id as number,
+                tempChild.pid,
+                tempChild.status as TaskStatusEnum,
+                tempChild,
+                infoSaved,
+                resSaveSuspended,
+                this.taskService,
+                this.pluginLoader,
+                new TaskWriter(),
+                localWorksId
+              )
+              this.inletTask(tempRunInstance, tempChild)
+              return tempRunInstance
             }
           })
           const parentInst = new ParentRunInstance(parentInfo.id, parentInfo.status, tempInstList)
@@ -660,6 +725,10 @@ export class TaskQueue {
             `刷新父任务状态失败，processing: ${processing} waiting: ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
           )
         }
+        LogUtil.warn(
+          'test----',
+          `刷新父任务状态失败，processing: ${processing} waiting: ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
+        )
 
         if (parentRunInstance.status !== newStatus) {
           parentRunInstance.changeStatus(newStatus, true)
@@ -879,14 +948,14 @@ class TaskRunInstance extends TaskStatus {
 
   constructor(
     taskId: number,
-    status: TaskStatusEnum,
-    taskWriter: TaskWriter,
-    taskInfo: Task,
-    taskService: TaskService,
-    pluginLoader: PluginLoader<TaskHandler>,
     parentId: number | null | undefined,
+    status: TaskStatusEnum,
+    taskInfo: Task,
     worksInfoSaved: boolean,
     resSaveSuspended: boolean,
+    taskService: TaskService,
+    pluginLoader: PluginLoader<TaskHandler>,
+    taskWriter: TaskWriter,
     localWorksId?: number
   ) {
     super(taskId, status, false)
@@ -919,6 +988,9 @@ class TaskRunInstance extends TaskStatus {
       this.status === TaskStatusEnum.PAUSE
     ) {
       this.changeStatus(TaskStatusEnum.WAITING)
+      if (this.status !== TaskStatusEnum.PAUSE) {
+        this.taskWriter = new TaskWriter()
+      }
     } else {
       throw new Error(`无法预启动任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
     }
@@ -958,12 +1030,14 @@ class TaskRunInstance extends TaskStatus {
     if (this.status === TaskStatusEnum.WAITING) {
       this.changeStatus(TaskStatusEnum.PROCESSING)
 
+      const taskWriter = IsNullish(this.taskWriter) ? new TaskWriter() : this.taskWriter
+
       AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
       AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
       const result =
         this.resSaveSuspended && this.taskInfo.continuable
-          ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
-          : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, this.taskWriter)
+          ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
+          : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
       this.resSaveSuspended = true
       return result.then((saveResult) => {
         this.changeStatus(saveResult)
@@ -1046,75 +1120,45 @@ class TaskInfoStream extends Transform {
  * 任务资源保存流
  */
 class TaskResourceStream extends Transform {
-  /**
-   * 最大并行下载量
-   * @private
-   */
-  private maxParallel: number
-  /**
-   * 正在进行的下载数量
-   * @private
-   */
-  private processing: number
-  /**
-   * 是否被限制
-   * @private
-   */
-  private limited: boolean
+  private processQueue: QueueObject<TaskRunInstance>
 
-  constructor() {
+  constructor(maxParallel: number) {
     super({ objectMode: true, highWaterMark: 64, autoDestroy: false }) // 设置为对象模式
-    // 读取设置中的最大并行数
-    const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
-    this.maxParallel = maxParallelImportInSettings >= 1 ? maxParallelImportInSettings : 1
-    this.processing = 0
-    this.limited = false
+    const finalMaxParallel = maxParallel >= 1 ? maxParallel : 1
+    this.processQueue = queue(async (chunk: TaskRunInstance) => this.processTask(chunk), finalMaxParallel)
   }
 
-  async _transform(chunk: TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
+  public updateMaxParallel(newNum: number): void {
+    this.processQueue.concurrency = newNum
+  }
+
+  private async processTask(chunk: TaskRunInstance): Promise<void> {
     // 开始之前检查当前的状态
     if (chunk.paused()) {
       chunk.inStream = false
-      callback()
       return
     }
     // 发出任务开始保存的事件
     this.emit('saveStart', chunk)
 
-    this.processing++
-    // 如果并行量达到限制，limited设为true
-    this.limited = this.processing >= this.maxParallel
-
     // 开始任务
-    chunk
+    return chunk
       .process()
       .then((saveResult: TaskStatusEnum) => {
         chunk.inStream = false
         if (TaskStatusEnum.PAUSE !== saveResult) {
           this.push(chunk)
         }
-        this.processing--
-        // 如果处于限制状态，则在此次下载完成之后解开限制
-        if (this.limited) {
-          this.limited = false
-          callback()
-        }
       })
       .catch((err) => {
         chunk.inStream = false
         this.emit('saveFailed', err, chunk)
-        this.processing--
-        // 如果处于限制状态，则在此次下载失败之后解开限制
-        if (this.limited) {
-          this.limited = false
-          callback()
-        }
       })
+  }
 
-    // 如果处于限制状态，则不调用callback进行下一个处理
-    if (!this.limited) {
-      callback()
-    }
+  async _transform(chunk: TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
+    this.processQueue.push(chunk)
+    callback()
   }
 }
 

@@ -18,7 +18,7 @@ import WorksSet from '../model/entity/WorksSet.ts'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.ts'
 import { ReWorksTagService } from './ReWorksTagService.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty, AssertNotNullish } from '../util/AssertUtil.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
@@ -340,5 +340,14 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     query.siteId = siteId
     query.siteWorksId = siteWorksId
     return this.dao.list(query)
+  }
+
+  /**
+   * 根据站点id和作品在站点的id查询作品列表
+   * @param siteIdAndSiteWorksIds
+   */
+  public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
+    AssertArrayNotEmpty(siteIdAndSiteWorksIds, this.constructor.name, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
+    return this.dao.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
   }
 }

@@ -113,7 +113,12 @@ export default class TaskWriter {
       }
       writable.once('finish', () => {
         if (!this.errorOccurred) {
-          return this.paused ? resolve(FileSaveResult.PAUSE) : resolve(FileSaveResult.FINISH)
+          if (this.paused) {
+            resolve(FileSaveResult.PAUSE)
+          } else {
+            resolve(FileSaveResult.FINISH)
+            writable.destroy()
+          }
         } else {
           reject()
         }
