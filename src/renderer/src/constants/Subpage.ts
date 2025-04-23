@@ -38,6 +38,7 @@ export class SubpageStates {
   siteManage = new SubpageState(SubPageEnum.SiteManage, false)
   siteTagManage = new SubpageState(SubPageEnum.SiteTagManage, false)
   taskManage = new SubpageState(SubPageEnum.TaskManage, false)
+  test = new SubpageState(SubPageEnum.Test, false)
 }
 
 export enum SubPageEnum {

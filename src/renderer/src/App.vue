@@ -10,7 +10,7 @@ import SiteManage from '@renderer/components/subpage/SiteManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { Close, CollectionTag, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
+import { Close, CollectionTag, Coordinate, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -68,16 +68,7 @@ const worksAreaRef = ref()
 // 悬浮页面开关
 const pageState = reactive({
   mainPage: true,
-  subpage: false,
-  localTagManagePage: false,
-  siteTagManagePage: false,
-  localAuthorManagePage: false,
-  pluginManagePage: false,
-  taskManagePage: false,
-  siteManagePage: false,
-  settingsPage: false,
-  developing: false,
-  test: false
+  subpage: false
 })
 const subpageStates: Ref<SubpageStates> = ref(new SubpageStates())
 let currentSubpageState: SubpageState | undefined = undefined
@@ -105,7 +96,8 @@ const backgroundTaskState: Ref<boolean> = ref(false)
 const loadMore: Ref<boolean> = ref(false)
 // 监听worksArea组件的高度变化
 const resizeObserver = new ResizeObserver((entries) => {
-  loadMore.value = entries[0].contentRect.height < worksSpace.value.clientHeight
+  loadMore.value =
+    entries[0].contentRect.height < worksSpace.value.clientHeight && worksPage.value.pageNumber < worksPage.value.pageCount
 })
 
 // 方法
@@ -314,10 +306,10 @@ async function handleTest() {
               <template #title>设置</template>
               <el-icon><Setting /></el-icon>
             </el-menu-item>
-            <!--            <el-menu-item index="8" @click="showSubpage(subpageStates.Test)">-->
-            <!--              <template #title>测试按钮</template>-->
-            <!--              <el-icon><Coordinate /></el-icon>-->
-            <!--            </el-menu-item>-->
+            <el-menu-item index="8" @click="showSubpage(subpageStates.test)">
+              <template #title>测试按钮</template>
+              <el-icon><Coordinate /></el-icon>
+            </el-menu-item>
           </template>
         </side-menu>
       </el-aside>
@@ -391,7 +383,7 @@ async function handleTest() {
           <settings v-if="subpageStates.settings.state" v-model:tour-states="settingsPageTourStates" :state="subpageStates.settings" />
           <site-manage v-if="subpageStates.siteManage.state" :focus-on-domains="subpageProps.siteManageFocusOnSiteDomainId" />
           <developing v-if="subpageStates.developing.state" />
-          <test v-if="pageState.test" />
+          <test v-if="subpageStates.test.state" />
         </div>
       </el-main>
       <msg-list class="main-background-task z-layer-3" :state="backgroundTaskState" />

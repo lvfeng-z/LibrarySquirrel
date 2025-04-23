@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { ElTreeSelect } from 'element-plus'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
+import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
 
 const value = ref()
 const value2 = ref(5)
@@ -44,7 +45,7 @@ const load = (node, resolve) => {
 </script>
 
 <template>
-  <div>
+  <base-subpage>
     <button class="button">hover me</button>
     <div class="wrapper">
       <div class="content"></div>
@@ -69,7 +70,7 @@ const load = (node, resolve) => {
       </template>
     </div>
     <el-button @click="console.log(taskStatus)">test</el-button>
-  </div>
+  </base-subpage>
 </template>
 
 <style scoped>
