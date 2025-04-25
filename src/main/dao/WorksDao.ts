@@ -260,14 +260,16 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
     const selectClause = 'SELECT * FROM works'
     const whereClauses: string[] = []
-    while (siteIdAndSiteWorksIds.length > 0) {
-      const batch = siteIdAndSiteWorksIds.splice(0, 998)
+    let currentIndex: number = 0
+    while (siteIdAndSiteWorksIds.length > currentIndex + 1) {
+      const batch = siteIdAndSiteWorksIds.slice(currentIndex, currentIndex + 998)
+      currentIndex += 998
       const whereClause =
         'WHERE ' +
         batch
           .map(
             (siteIdAndSiteWorksId) =>
-              `(site_id = ${siteIdAndSiteWorksId.siteId} AND site_works_id = '${siteIdAndSiteWorksId.siteWorksId}')`
+              `(site_id ${IsNullish(siteIdAndSiteWorksId.siteId) ? 'IS NULL' : `= ${siteIdAndSiteWorksId.siteId}`} AND site_works_id = '${siteIdAndSiteWorksId.siteWorksId}')`
           )
           .join(' OR ')
       whereClauses.push(whereClause)
