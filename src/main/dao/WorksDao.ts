@@ -57,7 +57,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
                             rt2.site_author_name_before, 'introduce', rt2.introduce, 'localAuthorId', rt2.local_author_id, 'lastUse', rt2.last_use, 'authorRank', rt1.author_rank))
                 FROM re_works_author rt1
                          INNER JOIN site_author rt2 ON rt1.site_author_id = rt2.id
-                WHERE 1 = rt1.works_id) AS siteAuthors,
+                WHERE t1.id = rt1.works_id) AS siteAuthors,
                (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
                             'id', rt2.id, 'siteId', rt2.site_id, 'siteWorksSetId', rt2.site_works_set_id, 'siteWorksSetName', rt2.site_works_set_name, 'siteAuthorId', rt2.site_author_id,
                             'siteUploadTime', rt2.site_upload_time, 'siteUpdateTime', rt2.site_update_time, 'nickName', rt2.nick_name, 'lastView', rt2.last_view))
