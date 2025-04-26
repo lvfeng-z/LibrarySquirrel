@@ -259,11 +259,11 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
 
   public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
     const selectClause = 'SELECT * FROM works'
-    const whereClauses: string[] = []
+    const clauses: string[] = []
     let currentIndex: number = 0
-    while (siteIdAndSiteWorksIds.length > currentIndex + 1) {
+    while (siteIdAndSiteWorksIds.length >= currentIndex) {
       const batch = siteIdAndSiteWorksIds.slice(currentIndex, currentIndex + 998)
-      currentIndex += 998
+      currentIndex += 999
       const whereClause =
         'WHERE ' +
         batch
@@ -272,9 +272,9 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
               `(site_id ${IsNullish(siteIdAndSiteWorksId.siteId) ? 'IS NULL' : `= ${siteIdAndSiteWorksId.siteId}`} AND site_works_id = '${siteIdAndSiteWorksId.siteWorksId}')`
           )
           .join(' OR ')
-      whereClauses.push(whereClause)
+      clauses.push(whereClause)
     }
-    const statement = whereClauses.map((whereClause) => selectClause + ' ' + whereClause).join(' UNION ALL ')
+    const statement = clauses.map((whereClause) => selectClause + ' ' + whereClause).join(' UNION ALL ')
     const db = this.acquire()
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)

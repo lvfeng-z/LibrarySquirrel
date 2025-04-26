@@ -211,7 +211,9 @@ export class TaskQueue {
             .filter((task) => !task.dbStored)
             .toArray()
           notPersistedTasks.forEach((notPersistedTask) => clearTimeout(notPersistedTask.clearTimeoutId))
-          await this.taskService.updateBatchById(notPersistedTasks.map((notPersistedTask) => notPersistedTask.getTaskInfo()))
+          if (ArrayNotEmpty(notPersistedTasks)) {
+            await this.taskService.updateBatchById(notPersistedTasks.map((notPersistedTask) => notPersistedTask.getTaskInfo()))
+          }
           resolve()
         })
         .catch((error) => reject(error))
