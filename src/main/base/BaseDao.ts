@@ -265,14 +265,14 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 存储编号后的所有属性
     const numberedProperties = {}
 
-    let index = 0
     keys.forEach((key) => {
       if (BaseEntity.PK !== key) {
         const whenThenClauses: string[] = []
         const column = StringUtil.camelToSnakeCase(key)
-        const numberedProperty = key + index
+        let index = 0
         plainObject.forEach((obj) => {
           const value = obj[key]
+          const numberedProperty = key + index
           if (undefined === value) {
             whenThenClauses.push(`WHEN ${BaseEntity.PK} = ${obj.id} THEN ${column}`)
           } else if (null === value) {
@@ -281,11 +281,11 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
             whenThenClauses.push(`WHEN ${BaseEntity.PK} = ${obj.id} THEN @${numberedProperty}`)
             numberedProperties[numberedProperty] = value
           }
+          index++
         })
         if (ArrayNotEmpty(whenThenClauses)) {
           setClauses.push(column + ' = CASE ' + whenThenClauses.join(' ') + ' END')
         }
-        index++
       }
     })
 
