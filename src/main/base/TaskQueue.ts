@@ -503,12 +503,13 @@ export class TaskQueue {
         let infoSaved = false
         let localWorksId: number | undefined
         const resSaveSuspended = NotNullish(task.pendingResourceId)
-        infoSaved = existsWorksList.some(
+        const existsWorks = existsWorksList.find(
           (existsTask) => task.siteId === existsTask.siteId && task.siteWorksId === existsTask.siteWorksId
         )
-        if (infoSaved) {
-          AssertNotNullish(existsWorksList[0].id)
-          localWorksId = existsWorksList[0].id
+        infoSaved = NotNullish(existsWorks)
+        if (NotNullish(existsWorks)) {
+          AssertNotNullish(existsWorks.id)
+          localWorksId = existsWorks.id
         }
         const taskRunInstance = new TaskRunInstance(
           task.id as number,

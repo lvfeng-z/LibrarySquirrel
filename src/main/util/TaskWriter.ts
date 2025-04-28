@@ -106,6 +106,7 @@ export default class TaskWriter {
       writable.once('error', (err) => {
         this.errorOccurred = true
         LogUtil.error('TaskWriter', `writable出错，${err}`)
+        writable.destroy()
         reject(err)
       })
       if (!readable.listeners('end').includes(this.readableEndHandler)) {
@@ -117,7 +118,6 @@ export default class TaskWriter {
             resolve(FileSaveResult.PAUSE)
           } else {
             resolve(FileSaveResult.FINISH)
-            writable.destroy()
           }
         } else {
           reject()

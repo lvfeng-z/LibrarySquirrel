@@ -219,7 +219,12 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
               <div id="downloadSettings">
                 <el-text class="mx-1" size="large">下载</el-text>
                 <el-divider content-position="left" border-style="dotted"><el-text>并行下载数</el-text></el-divider>
-                <el-input-number v-model="settings.importSettings.maxParallelImport"></el-input-number>
+                <el-input-number
+                  v-model="settings.importSettings.maxParallelImport"
+                  max="20"
+                  min="1"
+                  controls-position="right"
+                ></el-input-number>
                 <el-divider />
               </div>
               <div id="worksSettings">
