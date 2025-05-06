@@ -411,7 +411,7 @@ function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeE
 }
 // 选择目录
 async function selectDir(openFile: boolean) {
-  const response = await apis.dirSelect(openFile)
+  const response = await apis.dirSelect(openFile, true)
   if (ApiUtil.check(response)) {
     const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
     if (!dirSelectResult.canceled) {

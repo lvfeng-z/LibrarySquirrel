@@ -707,8 +707,8 @@ function exposeService() {
   })
 
   // FileSysUtil
-  Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, args): Promise<ApiUtil> => {
-    const result = await DirSelect(args)
+  Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, openFile, isModal): Promise<ApiUtil> => {
+    const result = await DirSelect(openFile, isModal)
     return ApiUtil.response(result)
   })
 }

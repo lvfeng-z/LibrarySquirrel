@@ -252,8 +252,8 @@ const api = {
   },
 
   // FileSysUtil
-  dirSelect: (args) => {
-    return Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', args)
+  dirSelect: (arg1, arg2) => {
+    return Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)
   }
 }
 

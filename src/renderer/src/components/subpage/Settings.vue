@@ -112,7 +112,7 @@ function getChangedProperties(newVal: object, oldVal: object, root?: string) {
 }
 // 选择目录
 async function selectDir() {
-  const response = await apis.dirSelect(false)
+  const response = await apis.dirSelect(false, true)
   if (ApiUtil.check(response)) {
     const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
     if (!dirSelectResult.canceled && ArrayNotEmpty(dirSelectResult.filePaths) && NotNullish(settings.value)) {
@@ -221,8 +221,8 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
                 <el-divider content-position="left" border-style="dotted"><el-text>并行下载数</el-text></el-divider>
                 <el-input-number
                   v-model="settings.importSettings.maxParallelImport"
-                  max="20"
-                  min="1"
+                  :max="20"
+                  :min="1"
                   controls-position="right"
                 ></el-input-number>
                 <el-divider />

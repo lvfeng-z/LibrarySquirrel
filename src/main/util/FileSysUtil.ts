@@ -58,7 +58,7 @@ export function RootDir(): string {
 /**
  * 打开一个文件/路径选择弹窗
  */
-export async function DirSelect(openFile: boolean): Promise<Electron.OpenDialogReturnValue> {
+export async function DirSelect(openFile: boolean, isModal?: boolean): Promise<Electron.OpenDialogReturnValue> {
   const defaultPath = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
   const properties: Array<'openFile' | 'openDirectory' | 'multiSelections'> = ['multiSelections']
   if (openFile) {
@@ -66,10 +66,17 @@ export async function DirSelect(openFile: boolean): Promise<Electron.OpenDialogR
   } else {
     properties.push('openDirectory')
   }
-  return dialog.showOpenDialog({
-    defaultPath: defaultPath,
-    properties: properties
-  })
+  if (isModal) {
+    return dialog.showOpenDialog(GlobalVar.get(GlobalVars.MAIN_WINDOW), {
+      defaultPath: defaultPath,
+      properties: properties
+    })
+  } else {
+    return dialog.showOpenDialog({
+      defaultPath: defaultPath,
+      properties: properties
+    })
+  }
 }
 
 /**
