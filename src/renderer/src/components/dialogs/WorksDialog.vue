@@ -56,6 +56,8 @@ const apis = {
 }
 // container元素实例
 const container = ref()
+// 主要容器的实例
+const infosRef = ref()
 // localTag的ExchangeBox组件的实例
 const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件的实例
@@ -245,26 +247,39 @@ function handleDrawerOpen() {
       >
       </el-image>
       <el-scrollbar>
-        <el-descriptions class="works-dialog-info" direction="horizontal" :column="1">
+        <el-descriptions ref="infosRef" class="works-dialog-info" direction="horizontal" :column="1">
           <el-descriptions-item>
-            {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
+            <span id="worksName">
+              {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
+            </span>
           </el-descriptions-item>
           <el-descriptions-item label="作者">
-            <author-info :local-authors="worksFullInfo.localAuthors" :site-authors="worksFullInfo.siteAuthors" />
+            <author-info id="author" :local-authors="worksFullInfo.localAuthors" :site-authors="worksFullInfo.siteAuthors" />
           </el-descriptions-item>
           <el-descriptions-item label="站点">
-            {{ worksFullInfo.site?.siteName }}
+            <span id="site">{{ worksFullInfo.site?.siteName }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="本地标签">
-            <el-button @click="openDrawer(true)"> 编辑 </el-button>
-            <tag-box v-model:data="localTags" />
+            <div id="localTag">
+              <el-button @click="openDrawer(true)"> 编辑 </el-button>
+              <tag-box v-model:data="localTags" />
+            </div>
           </el-descriptions-item>
           <el-descriptions-item label="站点标签">
-            <el-button @click="openDrawer(false)"> 编辑 </el-button>
-            <tag-box v-model:data="siteTags" />
+            <div id="siteTag">
+              <el-button @click="openDrawer(false)"> 编辑 </el-button>
+              <tag-box v-model:data="siteTags" />
+            </div>
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
+      <el-anchor :container="infosRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
+        <el-anchor-link href="#worksName" title="名称" />
+        <el-anchor-link href="#author" title="作者" />
+        <el-anchor-link href="#site" title="站点" />
+        <el-anchor-link href="#localTag" title="本地标签" />
+        <el-anchor-link href="#siteTag" title="站点标签" />
+      </el-anchor>
       <el-drawer v-model="drawerState" size="45%" :with-header="false" :open-delay="1" @open="handleDrawerOpen">
         <exchange-box
           v-if="localTagEdit"

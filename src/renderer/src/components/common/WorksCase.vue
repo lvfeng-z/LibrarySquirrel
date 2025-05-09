@@ -5,6 +5,7 @@ import { computed, Ref, ref, UnwrapRef } from 'vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
+import { Picture } from '@element-plus/icons-vue'
 
 // props
 const props = defineProps<{
@@ -107,19 +108,36 @@ function handlePictureClicked() {
   scale: 2;
 }
 .works-case-works-info {
-  width: 100%;
-  display: block;
+  width: calc(100% - 10px);
   overflow: hidden;
   text-overflow: ellipsis;
   word-wrap: break-word;
   white-space: nowrap;
+  border-radius: 5px;
+  margin-left: 3px;
+  margin-right: 3px;
+  margin-top: 3px;
+  padding-left: 4px;
+  transition: background-color 0.3s;
+}
+.works-case-works-info:hover {
+  background-color: var(--el-fill-color);
 }
 .works-case-author-info {
-  width: 100%;
-  display: block;
+  width: calc(100% - 10px);
+  display: flex;
   overflow: hidden;
   text-overflow: ellipsis;
   word-wrap: break-word;
   white-space: nowrap;
+  border-radius: 5px;
+  margin-left: 3px;
+  margin-right: 3px;
+  margin-top: 3px;
+  padding-left: 4px;
+  transition: background-color 0.3s;
+}
+.works-case-author-info:hover {
+  background-color: var(--el-fill-color);
 }
 </style>

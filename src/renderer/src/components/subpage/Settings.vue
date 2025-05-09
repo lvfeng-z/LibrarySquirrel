@@ -32,7 +32,7 @@ const apis = reactive({
 }) // 接口
 // 工作目录输入组件实例
 const workdirInput = ref()
-// 工作目录输入组件实例
+// 主要容器的实例
 const containerRef = ref()
 // 作品文件名称命名格式输入组件实例
 const worksSettingsFileNameFormatInput = ref()
