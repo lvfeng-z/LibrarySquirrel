@@ -62,10 +62,15 @@ function handleClickOutSide() {
           <Expand v-if="folded" />
           <Fold v-if="!folded" />
         </el-icon>
-        <el-icon v-show="!folded" class="side-menu-collapse-button-lock" @click="lock">
-          <Lock v-show="locked" />
-          <Unlock v-show="!locked" />
-        </el-icon>
+        <el-tooltip placement="right" :show-after="650" :auto-close="2150">
+          <template #default>
+            <el-icon v-show="!folded" class="side-menu-collapse-button-lock" @click="lock">
+              <Lock v-show="locked" />
+              <Unlock v-show="!locked" />
+            </el-icon>
+          </template>
+          <template #content> {{ locked ? '解锁侧边栏' : '锁定侧边栏' }} </template>
+        </el-tooltip>
       </div>
       <el-scrollbar class="side-menu-scrollbar">
         <el-menu :default-openeds="props.defaultActive" class="side-menu-main-menu" :collapse="folded">
