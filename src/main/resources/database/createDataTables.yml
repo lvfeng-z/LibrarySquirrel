@@ -19,6 +19,7 @@ tables:
           constraint local_author_pk
             primary key autoincrement,
         local_author_name text,
+        introduce         text,
         last_use          integer,
         create_time       integer,
         update_time       integer

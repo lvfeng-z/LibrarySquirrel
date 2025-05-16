@@ -85,6 +85,18 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   }),
   new Thead({
+    type: 'text',
+    defaultDisabled: true,
+    dblclickToEdit: true,
+    key: 'introduce',
+    title: '介绍',
+    hide: false,
+    width: 150,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    overHide: true
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     key: 'updateTime',

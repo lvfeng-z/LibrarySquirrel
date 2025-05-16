@@ -1,4 +1,4 @@
-import { IsNullish } from '../../../utils/CommonUtil.ts'
+import { NotNullish } from '../../../utils/CommonUtil.ts'
 import BaseEntity from './BaseEntity.ts'
 
 /**
@@ -6,24 +6,24 @@ import BaseEntity from './BaseEntity.ts'
  */
 export default class LocalAuthor extends BaseEntity {
   /**
-   * 主键
-   */
-  id: number | undefined | null
-
-  /**
    * 作者名称
    */
   localAuthorName: string | undefined | null
+  /**
+   * 介绍
+   */
+  introduce: string | undefined | null
+  /**
+   * 最后一次使用的时间
+   */
+  lastUse: number | null | undefined
 
   constructor(localAuthor?: LocalAuthor) {
-    if (IsNullish(localAuthor)) {
-      super()
-      this.id = undefined
-      this.localAuthorName = undefined
-    } else {
-      super(localAuthor)
-      this.id = localAuthor.id
+    super(localAuthor)
+    if (NotNullish(localAuthor)) {
       this.localAuthorName = localAuthor.localAuthorName
+      this.introduce = localAuthor.introduce
+      this.lastUse = localAuthor.lastUse
     }
   }
 }

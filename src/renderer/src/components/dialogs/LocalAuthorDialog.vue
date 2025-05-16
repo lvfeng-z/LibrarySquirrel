@@ -12,7 +12,6 @@ const props = withDefaults(
     submitEnabled?: boolean
   }>(),
   {
-    mode: undefined,
     submitEnabled: true
   }
 )
@@ -67,6 +66,13 @@ async function handleSaveButtonClicked() {
         <el-col>
           <el-form-item label="名称">
             <el-input v-model="formData.localAuthorName"></el-input>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col>
+          <el-form-item label="介绍">
+            <el-input v-model="formData.introduce" type="textarea"></el-input>
           </el-form-item>
         </el-col>
       </el-row>

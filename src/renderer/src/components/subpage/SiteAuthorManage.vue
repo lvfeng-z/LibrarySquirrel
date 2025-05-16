@@ -16,6 +16,7 @@ import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRe
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteAuthorVO from '@renderer/model/main/vo/SiteAuthorVO.ts'
+import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
 
 // onMounted
 onMounted(() => {
@@ -42,7 +43,7 @@ const apis = {
 const siteAuthorSearchTable = ref()
 // 被改变的数据行
 const changedRows: Ref<SiteAuthorLocalRelateDTO[]> = ref([])
-// 站点标签SearchTable的operationButton
+// 站点作者SearchTable的operationButton
 const operationButton: OperationItem<SiteAuthorLocalRelateDTO>[] = [
   {
     label: '保存',
@@ -52,7 +53,7 @@ const operationButton: OperationItem<SiteAuthorLocalRelateDTO>[] = [
     rule: (row) => changedRows.value.includes(row)
   },
   {
-    label: '创建同名本地标签',
+    label: '创建同名本地作者',
     icon: 'CirclePlusFilled',
     buttonType: 'primary',
     code: 'create',
@@ -62,7 +63,7 @@ const operationButton: OperationItem<SiteAuthorLocalRelateDTO>[] = [
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
-// 站点标签SearchTable的表头
+// 站点作者SearchTable的表头
 const siteAuthorThead: Ref<Thead[]> = ref([
   new Thead({
     type: 'text',
@@ -120,16 +121,16 @@ const siteAuthorThead: Ref<Thead[]> = ref([
     overHide: true
   })
 ])
-// 站点标签SearchTable的mainInputBoxes
+// 站点作者SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<InputBox[]> = ref<InputBox[]>([
   new InputBox({
     name: 'siteAuthorName',
     type: 'text',
-    placeholder: '输入站点标签的名称',
+    placeholder: '输入站点作者的名称',
     inputSpan: 10
   })
 ])
-// 站点标签SearchTable的dropDownInputBoxes
+// 站点作者SearchTable的dropDownInputBoxes
 const dropDownInputBoxes: Ref<InputBox[]> = ref([
   new InputBox({
     name: 'id',
@@ -138,19 +139,19 @@ const dropDownInputBoxes: Ref<InputBox[]> = ref([
     placeholder: '内部id'
   })
 ])
-// 站点标签SearchTable的分页
+// 站点作者SearchTable的分页
 const page: Ref<UnwrapRef<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>>> = ref(
   new Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>()
 )
-// 站点标签弹窗的mode
+// 站点作者弹窗的mode
 const siteAuthorDialogMode: Ref<DialogMode> = ref(DialogMode.EDIT)
-// 站点标签的对话框开关
+// 站点作者的对话框开关
 const dialogState: Ref<boolean> = ref(false)
-// 站点标签对话框的数据
+// 站点作者对话框的数据
 const dialogData: Ref<SiteAuthorLocalRelateDTO> = ref(new SiteAuthorLocalRelateDTO())
 
 // 方法
-// 分页查询站点标签的函数
+// 分页查询站点作者的函数
 async function siteAuthorQueryPage(
   page: Page<SiteAuthorQueryDTO, object>
 ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorVO> | undefined> {
@@ -182,13 +183,13 @@ async function siteAuthorQueryPage(
     return undefined
   }
 }
-// 处理站点标签新增按钮点击事件
+// 处理站点作者新增按钮点击事件
 async function handleCreateButtonClicked() {
   siteAuthorDialogMode.value = DialogMode.NEW
   dialogData.value = new SiteAuthorLocalRelateDTO()
   dialogState.value = true
 }
-// 处理站点标签数据行按钮点击事件
+// 处理站点作者数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse<SiteAuthorVO>) {
   switch (op.code) {
     case 'create':
@@ -214,11 +215,11 @@ function handleRowButtonClicked(op: DataTableOperationResponse<SiteAuthorVO>) {
       break
   }
 }
-// 处理站点标签弹窗请求成功事件
+// 处理站点作者弹窗请求成功事件
 function refreshTable() {
   siteAuthorSearchTable.value.doSearch()
 }
-// 删除站点标签
+// 删除站点作者
 async function deleteSiteAuthor(id: string) {
   const response = await apis.siteAuthorDeleteById(id)
   ApiUtil.msg(response)
@@ -226,7 +227,7 @@ async function deleteSiteAuthor(id: string) {
     await siteAuthorSearchTable.value.doSearch()
   }
 }
-// 请求标签选择项分页接口
+// 请求作者选择项分页接口
 async function localAuthorQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
   page.query = { localAuthorName: input }
   const response = await apis.localAuthorQuerySelectItemPage(page)
@@ -281,7 +282,7 @@ async function saveRowEdit(newData: SiteAuthorVO) {
       </div>
     </template>
     <template #dialog>
-      <site-tag-dialog
+      <site-author-dialog
         v-model:form-data="dialogData"
         v-model:state="dialogState"
         align-center

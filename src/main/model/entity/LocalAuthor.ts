@@ -10,6 +10,10 @@ export default class LocalAuthor extends BaseEntity {
    */
   localAuthorName: string | undefined | null
   /**
+   * 介绍
+   */
+  introduce: string | undefined | null
+  /**
    * 最后一次使用的时间
    */
   lastUse: number | null | undefined
@@ -18,6 +22,7 @@ export default class LocalAuthor extends BaseEntity {
     super(localAuthor)
     if (NotNullish(localAuthor)) {
       this.localAuthorName = localAuthor.localAuthorName
+      this.introduce = localAuthor.introduce
       this.lastUse = localAuthor.lastUse
     }
   }

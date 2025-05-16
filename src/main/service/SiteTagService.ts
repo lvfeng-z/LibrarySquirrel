@@ -63,12 +63,14 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async createSameNameLocalTag(siteTagName: string): Promise<number> {
     const localTagService = new LocalTagService(this.db)
+    // 查询是否已有同名标签
     const localTagQuery = new LocalTagQueryDTO()
     localTagQuery.localTagName = siteTagName
     const sameNameLocalTags = await localTagService.list(localTagQuery)
     if (ArrayNotEmpty(sameNameLocalTags)) {
       return sameNameLocalTags[0].id as number
     }
+    // 新增同名标签
     const newLocalTag = new LocalTag()
     newLocalTag.localTagName = siteTagName
     return localTagService.save(newLocalTag)

@@ -125,31 +125,34 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   }
 
   /**
-   * 创建同名的本地标签
-   * @param siteAuthorName
+   * 创建同名的本地作者
+   * @param siteAuthor
    */
-  public async createSameNameLocalAuthor(siteAuthorName: string): Promise<number> {
+  public async createSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<number> {
     const localAuthorService = new LocalAuthorService(this.db)
+    // 查询是否已有同名作者
     const localAuthorQuery = new LocalAuthorQueryDTO()
-    localAuthorQuery.localAuthorName = siteAuthorName
+    localAuthorQuery.localAuthorName = siteAuthor.siteAuthorName
     const sameNameLocalAuthors = await localAuthorService.list(localAuthorQuery)
     if (ArrayNotEmpty(sameNameLocalAuthors)) {
       return sameNameLocalAuthors[0].id as number
     }
+    // 新增同名作者
     const newLocalAuthor = new LocalAuthor()
-    newLocalAuthor.localAuthorName = siteAuthorName
+    newLocalAuthor.localAuthorName = siteAuthor.siteAuthorName
+    newLocalAuthor.introduce = siteAuthor.introduce
     return localAuthorService.save(newLocalAuthor)
   }
 
   /**
-   * 创建并绑定同名的本地标签
+   * 创建并绑定同名的本地作者
    * @param siteAuthor
    */
   public async createAndBindSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<boolean> {
     const siteAuthorName = siteAuthor.siteAuthorName
-    AssertNotNullish(siteAuthor.id, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
-    AssertNotBlank(siteAuthorName, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
-    const localAuthorId = await this.createSameNameLocalAuthor(siteAuthorName)
+    AssertNotNullish(siteAuthor.id, this.constructor.name, '创建同名本地作者失败，作者名称不能为空')
+    AssertNotBlank(siteAuthorName, this.constructor.name, '创建同名本地作者失败，作者名称不能为空')
+    const localAuthorId = await this.createSameNameLocalAuthor(siteAuthor)
     return this.updateBindLocalAuthor(localAuthorId, [siteAuthor.id])
   }
 
