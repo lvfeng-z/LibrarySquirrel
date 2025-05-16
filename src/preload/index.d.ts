@@ -78,7 +78,11 @@ declare global {
 
       // SiteAuthor
       siteAuthorUpdateBindLocalAuthor: function
+      siteAuthorCreateAndBindSameNameLocalAuthor: function
+      siteAuthorDeleteById: function
+      siteAuthorUpdateById: function
       siteAuthorQueryBoundOrUnboundInLocalAuthorPage: function
+      siteAuthorQueryLocalRelateDTOPage: function
 
       // SiteTag
       siteTagSave: function

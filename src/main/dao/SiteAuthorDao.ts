@@ -11,6 +11,8 @@ import SelectItem from '../model/util/SelectItem.js'
 import { ToPlainParams } from '../base/BaseQueryDTO.js'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 import SiteAuthorFullDTO from '../model/dto/SiteAuthorFullDTO.js'
+import lodash from 'lodash'
+import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
 
 /**
  * 站点作者Dao
@@ -42,7 +44,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param localAuthorId 本地作者id
    * @param siteAuthorIds 站点作者id列表
    */
-  public async updateBindLocalAuthor(localAuthorId: string | null, siteAuthorIds: string[]): Promise<number> {
+  public async updateBindLocalAuthor(localAuthorId: number | null, siteAuthorIds: number[]): Promise<number> {
     if (siteAuthorIds.length > 0) {
       const setClause: string[] = []
       siteAuthorIds.forEach((siteAuthorId) => {
@@ -220,6 +222,60 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((runResult) => super.toResultTypeDataList<SiteAuthorRankDTO>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 分页查询SiteAuthorLocalRelateDTO
+   * @param page
+   */
+  public async queryLocalRelateDTOPage(
+    page: Page<SiteAuthorQueryDTO, SiteAuthor>
+  ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>> {
+    // 创建一个新的PageModel实例存储修改过的查询条件
+    const modifiedPage = new Page(page)
+    if (IsNullish(modifiedPage.query)) {
+      modifiedPage.query = new SiteAuthorQueryDTO()
+    }
+    const query = lodash.cloneDeep(modifiedPage.query)
+
+    const selectClause = `
+      SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.site_author_name_before AS siteAuthorNameBefore,
+             t1.introduce, t1.local_author_id AS localAuthorId, t1.last_use AS lastUse, t1.update_time AS updateTime, t1.create_time AS createTime,
+             JSON_OBJECT('id', t2.id, 'localAuthorName', t2.local_author_name, 'lastUse', t2.last_use) AS localAuthor,
+             JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site,
+             CASE WHEN t4.id IS NOT NULL THEN TRUE ELSE FALSE END AS hasSameNameLocalAuthor`
+    const fromClause = `
+      FROM site_author t1
+          LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
+          LEFT JOIN site t3 ON t1.site_id = t3.id
+          LEFT JOIN local_author t4 ON t1.site_author_name = t4.local_author_name`
+    const whereClauseAndQuery = super.getWhereClauses(query, 't1', SiteAuthorQueryDTO.nonFieldProperties())
+    const whereClauses = whereClauseAndQuery.whereClauses
+    const modifiedQuery = whereClauseAndQuery.query
+    modifiedPage.query = modifiedQuery
+    modifiedPage.query.worksId = query.worksId
+    modifiedPage.query.boundOnWorksId = query.boundOnWorksId
+
+    const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
+
+    let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause) + ' GROUP BY t1.id'
+    const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
+    statement = await super.sortAndPage(statement, modifiedPage, sort)
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+      .then((rows) => {
+        const rawList = super.toResultTypeDataList<SiteAuthorLocalRelateDTO>(rows)
+        const resultPage = modifiedPage.transform<SiteAuthorLocalRelateDTO>()
+        // 利用构造方法反序列化本地标签和站点的json
+        resultPage.data = rawList.map((result) => new SiteAuthorLocalRelateDTO(result))
+        return resultPage
+      })
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

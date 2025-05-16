@@ -19,7 +19,7 @@ export default class SiteAuthorFullDTO extends SiteAuthor {
    */
   site: Site | undefined | null
 
-  constructor(siteAuthorDTO?: SiteAuthorFullDTO) {
+  constructor(siteAuthorDTO?: SiteAuthor) {
     super(siteAuthorDTO)
     if (NotNullish(siteAuthorDTO)) {
       lodash.assign(this, lodash.pick(siteAuthorDTO, ['localAuthor', 'site']))

@@ -456,6 +456,24 @@ function exposeService() {
   })
 
   // SiteAuthorService
+  Electron.ipcMain.handle('siteAuthor-deleteById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-deleteById')
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.deleteById(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+  Electron.ipcMain.handle('siteAuthor-updateById', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-updateById')
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.updateById(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('siteAuthor-updateBindLocalAuthor', async (_event, arg1, arg2) => {
     LogUtil.info('MainProcessApi', 'siteAuthor-updateBindLocalAuthor')
     const siteAuthorService = new SiteAuthorService()
@@ -465,11 +483,29 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('siteAuthor-createAndBindSameNameLocalAuthor', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-createAndBindSameNameLocalAuthor')
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.createAndBindSameNameLocalAuthor(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', async (_event, args) => {
     LogUtil.info('MainProcessApi', 'siteAuthor-queryBoundOrUnboundInLocalAuthorPage')
     const siteAuthorService = new SiteAuthorService()
     try {
       return ApiUtil.response(await siteAuthorService.queryBoundOrUnboundInLocalAuthorPage(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+  Electron.ipcMain.handle('siteAuthor-queryLocalRelateDTOPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-queryLocalRelateDTOPage')
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.queryLocalRelateDTOPage(args))
     } catch (error) {
       return returnError(error)
     }

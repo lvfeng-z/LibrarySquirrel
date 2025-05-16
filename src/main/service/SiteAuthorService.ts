@@ -6,14 +6,18 @@ import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
 import DB from '../database/DB.ts'
-import { ArrayIsEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
 import { Operator } from '../constant/CrudConstant.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
 import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
 import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
+import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
+import LocalAuthorService from './LocalAuthorService.js'
+import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.js'
+import LocalAuthor from '../model/entity/LocalAuthor.js'
 
 /**
  * 站点作者Service
@@ -68,11 +72,11 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async saveOrUpdateBatchBySiteAuthorId(siteAuthors: SiteAuthor[]): Promise<number> {
     const tempParam = siteAuthors
-      .map((siteTag) => {
-        if (IsNullish(siteTag.siteAuthorId) || IsNullish(siteTag.siteId)) {
+      .map((siteAuthor) => {
+        if (IsNullish(siteAuthor.siteAuthorId) || IsNullish(siteAuthor.siteId)) {
           return
         }
-        return { siteAuthorId: siteTag.siteAuthorId, siteId: siteTag.siteId }
+        return { siteAuthorId: siteAuthor.siteAuthorId, siteId: siteAuthor.siteId }
       })
       .filter(NotNullish)
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
@@ -107,7 +111,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param localAuthorId
    * @param siteAuthorIds
    */
-  async updateBindLocalAuthor(localAuthorId: string | null, siteAuthorIds: string[]) {
+  async updateBindLocalAuthor(localAuthorId: number | null, siteAuthorIds: number[]) {
     if (localAuthorId !== undefined) {
       if (siteAuthorIds != undefined && siteAuthorIds.length > 0) {
         return (await this.dao.updateBindLocalAuthor(localAuthorId, siteAuthorIds)) > 0
@@ -118,6 +122,35 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       LogUtil.error('SiteAuthorService', '站点作者绑定在本地作者上失败，localAuthorId不能为空')
       return false
     }
+  }
+
+  /**
+   * 创建同名的本地标签
+   * @param siteAuthorName
+   */
+  public async createSameNameLocalAuthor(siteAuthorName: string): Promise<number> {
+    const localAuthorService = new LocalAuthorService(this.db)
+    const localAuthorQuery = new LocalAuthorQueryDTO()
+    localAuthorQuery.localAuthorName = siteAuthorName
+    const sameNameLocalAuthors = await localAuthorService.list(localAuthorQuery)
+    if (ArrayNotEmpty(sameNameLocalAuthors)) {
+      return sameNameLocalAuthors[0].id as number
+    }
+    const newLocalAuthor = new LocalAuthor()
+    newLocalAuthor.localAuthorName = siteAuthorName
+    return localAuthorService.save(newLocalAuthor)
+  }
+
+  /**
+   * 创建并绑定同名的本地标签
+   * @param siteAuthor
+   */
+  public async createAndBindSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<boolean> {
+    const siteAuthorName = siteAuthor.siteAuthorName
+    AssertNotNullish(siteAuthor.id, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
+    AssertNotBlank(siteAuthorName, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
+    const localAuthorId = await this.createSameNameLocalAuthor(siteAuthorName)
+    return this.updateBindLocalAuthor(localAuthorId, [siteAuthor.id])
   }
 
   /**
@@ -250,5 +283,27 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       result.push(tempDTO)
     }
     return result
+  }
+
+  /**
+   * 分页查询
+   * @param page
+   */
+  public async queryLocalRelateDTOPage(
+    page: Page<SiteAuthorQueryDTO, SiteAuthor>
+  ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>> {
+    try {
+      page = new Page(page)
+      if (NotNullish(page.query)) {
+        page.query.operators = {
+          ...{ siteAuthorName: Operator.LIKE },
+          ...page.query.operators
+        }
+      }
+      return this.dao.queryLocalRelateDTOPage(page)
+    } catch (error) {
+      LogUtil.error(this.constructor.name, error)
+      throw error
+    }
   }
 }

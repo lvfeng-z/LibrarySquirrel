@@ -34,6 +34,7 @@ import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import MsgList from '@renderer/components/common/MsgList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { SubpageState, SubpageStates, SubPageEnum } from '@renderer/constants/Subpage.ts'
+import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 
 // onMounted
 onMounted(() => {
@@ -281,7 +282,7 @@ async function handleTest() {
                 <span>作者</span>
               </template>
               <el-menu-item index="2-1" @click="showSubpage(subpageStates.localAuthorManage)"> 本地作者 </el-menu-item>
-              <el-menu-item index="2-2" @click="showSubpage(subpageStates.developing)">站点作者</el-menu-item>
+              <el-menu-item index="2-2" @click="showSubpage(subpageStates.siteAuthorManage)">站点作者</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="3" @click="showSubpage(subpageStates.developing)">
               <template #title>收藏</template>
@@ -378,6 +379,7 @@ async function handleTest() {
           <local-tag-manage v-if="subpageStates.localTagManage.state" />
           <site-tag-manage v-if="subpageStates.siteTagManage.state" />
           <local-author-manage v-if="subpageStates.localAuthorManage.state" />
+          <site-author-manage v-if="subpageStates.siteAuthorManage.state" />
           <plugin-manage v-if="subpageStates.pluginManage.state" />
           <task-manage v-if="subpageStates.taskManage.state" />
           <settings v-if="subpageStates.settings.state" v-model:tour-states="settingsPageTourStates" :state="subpageStates.settings" />

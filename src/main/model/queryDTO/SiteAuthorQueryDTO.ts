@@ -43,6 +43,16 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
    */
   boundOnLocalAuthorId?: boolean | undefined | null
 
+  /**
+   * 作品id
+   */
+  worksId?: number | null | undefined
+
+  /**
+   * 查询绑定在worksId上的，还是未绑定的（true：绑定的，false：未绑定的）
+   */
+  boundOnWorksId?: boolean | undefined | null
+
   constructor(siteAuthorQueryDTO?: SiteAuthorQueryDTO) {
     super(siteAuthorQueryDTO)
     if (NotNullish(siteAuthorQueryDTO)) {
@@ -55,10 +65,12 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
       this.lastUse = siteAuthorQueryDTO.lastUse
       this.sites = siteAuthorQueryDTO.sites
       this.boundOnLocalAuthorId = siteAuthorQueryDTO.boundOnLocalAuthorId
+      this.worksId = siteAuthorQueryDTO.worksId
+      this.boundOnWorksId = siteAuthorQueryDTO.boundOnWorksId
     }
   }
 
   public static nonFieldProperties(): string[] {
-    return [...BaseQueryDTO.nonFieldProperties(), 'sites', 'boundOnLocalAuthorId']
+    return [...BaseQueryDTO.nonFieldProperties(), 'sites', 'boundOnLocalAuthorId', 'worksId', 'boundOnWorksId']
   }
 }

@@ -5,7 +5,7 @@ import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export default class SiteTagLocalRelateDTO extends SiteTagFullDTO {
   /**
-   * 绑定的本地标签的实例
+   * 是否有同名本地标签
    */
   hasSameNameLocalTag: boolean | undefined | null
 
