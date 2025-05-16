@@ -37,7 +37,7 @@ const authors = computed(() => {
   }
   return authorList
 })
-// 作者名称
+// 作者名称列表
 const authorNames = computed(() => {
   let noLocalAuthorList: SiteAuthorRankDTO[] = []
   if (ArrayNotEmpty(props.siteAuthors)) {
@@ -53,11 +53,7 @@ const authorNames = computed(() => {
   if (ArrayNotEmpty(noLocalAuthorList)) {
     nameList.push(...noLocalAuthorList.map((author) => author.siteAuthorName).filter(NotNullish))
   }
-  if (ArrayNotEmpty(nameList)) {
-    return nameList.join('、')
-  } else {
-    return ''
-  }
+  return nameList
 })
 // cursor参数
 const cursorParam: Ref<string> = ref(props.useHandCursor ? 'pointer' : 'default')
@@ -65,11 +61,12 @@ const cursorParam: Ref<string> = ref(props.useHandCursor ? 'pointer' : 'default'
 
 <template>
   <div class="author-info-container">
-    <el-popover :trigger="popoverTrigger" :title="authorNames">
+    <el-popover :trigger="popoverTrigger" :title="authorNames.join('、')">
       <template #reference>
-        <el-text class="author-info-text">{{ authorNames }}</el-text>
+        <el-text class="author-info-text">{{ authorNames.join('、') }}</el-text>
       </template>
       <template #default>
+        <el-segmented :options="authorNames" />
         <el-descriptions>
           <el-descriptions-item>
             {{ authors }}
