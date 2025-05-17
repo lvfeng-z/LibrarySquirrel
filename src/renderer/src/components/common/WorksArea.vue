@@ -43,22 +43,23 @@ function handleImageClicked(works: WorksFullDTO) {
 .works-area {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: 6px;
 }
 .works-area-container {
-  flex: 1 0 calc(20% - 30px);
   width: 100%;
-  align-content: center;
   box-sizing: border-box;
   overflow: hidden;
   margin: 5px 5px 0;
-  padding: 2px;
+  padding: 4px;
   border-radius: 10px;
-  background-color: rgb(166.2, 168.6, 173.4, 20%);
+  background-color: rgb(166.2, 168.6, 173.4, 10%);
   transition-duration: 0.3s;
 }
 .works-area-container:hover {
-  background-color: rgb(166.2, 168.6, 173.4, 50%);
-  transform: scale(1.03);
+  background-color: rgb(166.2, 168.6, 173.4, 30%);
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
+}
+.works-area-works-case {
+  height: 100%;
 }
 </style>

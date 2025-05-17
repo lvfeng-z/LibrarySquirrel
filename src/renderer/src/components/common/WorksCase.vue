@@ -91,6 +91,8 @@ function handlePictureClicked() {
 }
 .works-case-image {
   width: auto;
+  margin-top: auto;
+  margin-bottom: auto;
   cursor: pointer;
   max-height: calc(v-bind(caseHeight) - 100px);
   border-radius: 10px;
