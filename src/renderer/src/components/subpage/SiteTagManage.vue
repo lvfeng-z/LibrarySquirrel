@@ -17,6 +17,7 @@ import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDT
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
+import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 
 // onMounted
 onMounted(() => {
@@ -186,10 +187,11 @@ async function handleCreateButtonClicked() {
   dialogState.value = true
 }
 // 处理站点标签数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagVO>) {
+async function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagVO>) {
   switch (op.code) {
     case 'create':
-      apis.siteTagCreateAndBindSameNameLocalTag(lodash.cloneDeep(op.data)).then(() => siteTagSearchTable.value.doSearch())
+      await creatSameNameLocalTagAndBind(lodash.cloneDeep(op.data))
+      siteTagSearchTable.value.doSearch()
       break
     case 'save':
       saveRowEdit(op.data)
@@ -247,6 +249,13 @@ async function saveRowEdit(newData: SiteTagVO) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
     refreshTable()
+  }
+}
+// 创建同名本地标签并绑定
+async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
+  const response = await apis.siteTagCreateAndBindSameNameLocalTag(siteTag)
+  if (!ApiUtil.check(response)) {
+    ApiUtil.msg(response)
   }
 }
 </script>

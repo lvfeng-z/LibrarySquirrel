@@ -17,6 +17,7 @@ import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteAuthorVO from '@renderer/model/main/vo/SiteAuthorVO.ts'
 import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
+import SiteAuthor from '@renderer/model/main/entity/SiteAuthor.ts'
 
 // onMounted
 onMounted(() => {
@@ -190,10 +191,11 @@ async function handleCreateButtonClicked() {
   dialogState.value = true
 }
 // 处理站点作者数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse<SiteAuthorVO>) {
+async function handleRowButtonClicked(op: DataTableOperationResponse<SiteAuthorVO>) {
   switch (op.code) {
     case 'create':
-      apis.siteAuthorCreateAndBindSameNameLocalAuthor(lodash.cloneDeep(op.data)).then(() => siteAuthorSearchTable.value.doSearch())
+      await creatSameNameLocalAuthorAndBind(lodash.cloneDeep(op.data))
+      siteAuthorSearchTable.value.doSearch()
       break
     case 'save':
       saveRowEdit(op.data)
@@ -251,6 +253,13 @@ async function saveRowEdit(newData: SiteAuthorVO) {
     const index = changedRows.value.indexOf(newData)
     changedRows.value.splice(index, 1)
     refreshTable()
+  }
+}
+// 创建同名本地作者并绑定
+async function creatSameNameLocalAuthorAndBind(siteAuthor: SiteAuthor) {
+  const response = await apis.siteAuthorCreateAndBindSameNameLocalAuthor(siteAuthor)
+  if (!ApiUtil.check(response)) {
+    ApiUtil.msg(response)
   }
 }
 </script>
