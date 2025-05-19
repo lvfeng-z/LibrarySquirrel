@@ -52,7 +52,7 @@ function saveWorks() {
         </el-col>
         <el-col>
           <el-form-item label="站点作者名称">
-            <el-input v-model="siteAuthor.siteAuthorName"></el-input>
+            <el-input v-model="siteAuthor.authorName"></el-input>
           </el-form-item>
         </el-col>
         <el-col>

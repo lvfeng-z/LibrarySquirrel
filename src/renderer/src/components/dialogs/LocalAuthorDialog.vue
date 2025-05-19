@@ -65,7 +65,7 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="名称">
-            <el-input v-model="formData.localAuthorName"></el-input>
+            <el-input v-model="formData.authorName"></el-input>
           </el-form-item>
         </el-col>
       </el-row>

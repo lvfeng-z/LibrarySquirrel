@@ -169,7 +169,7 @@ async function siteAuthorQueryPage(
       finalList = relateDTOList.map((dto) => {
         const tempVO = new SiteAuthorVO(dto)
         const tempId = dto.localAuthor?.id
-        const tempName = dto.localAuthor?.localAuthorName
+        const tempName = dto.localAuthor?.authorName
         if (NotNullish(tempId)) {
           tempVO.localAuthorSelectItem = new SelectItem({ value: tempId, label: IsNullish(tempName) ? '' : tempName })
         }
