@@ -48,12 +48,12 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
                 FROM re_works_tag rt1
                          INNER JOIN site_tag rt2 ON rt1.site_tag_id = rt2.id
                 WHERE t1.id = rt1.works_id) AS siteTags,
-               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT('id', rt2.id, 'localAuthorName', rt2.local_author_name, 'lastUse', rt2.last_use, 'authorRank', rt1.author_rank))
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT('id', rt2.id, 'authorName', rt2.author_name, 'lastUse', rt2.last_use, 'authorRank', rt1.author_rank))
                 FROM re_works_author rt1
                          INNER JOIN local_author rt2 ON rt1.local_author_id = rt2.id
                 WHERE t1.id = rt1.works_id) AS localAuthors,
                (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
-                            'id', rt2.id, 'siteId', rt2.site_id, 'siteAuthorId', rt2.site_author_id, 'siteAuthorName', rt2.site_author_name, 'siteAuthorNameBefore',
+                            'id', rt2.id, 'siteId', rt2.site_id, 'siteAuthorId', rt2.site_author_id, 'authorName', rt2.author_name, 'siteAuthorNameBefore',
                             rt2.site_author_name_before, 'introduce', rt2.introduce, 'localAuthorId', rt2.local_author_id, 'lastUse', rt2.last_use, 'authorRank', rt1.author_rank))
                 FROM re_works_author rt1
                          INNER JOIN site_author rt2 ON rt1.site_author_id = rt2.id

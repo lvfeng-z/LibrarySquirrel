@@ -256,14 +256,14 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     const localAuthorName = ArrayIsEmpty(mainLocalAuthors)
       ? undefined
-      : StringUtil.isBlank(mainLocalAuthors[0].localAuthorName)
+      : StringUtil.isBlank(mainLocalAuthors[0].authorName)
         ? undefined
-        : mainLocalAuthors[0].localAuthorName
+        : mainLocalAuthors[0].authorName
     const siteAuthorName = ArrayIsEmpty(mainSiteAuthors)
       ? undefined
-      : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorName)
+      : StringUtil.isBlank(mainSiteAuthors[0].authorName)
         ? undefined
-        : mainSiteAuthors[0].siteAuthorName
+        : mainSiteAuthors[0].authorName
     if (NotNullish(localAuthorName)) {
       return localAuthorName
     }
@@ -284,9 +284,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainLocalAuthors)
       ? 'invalidAuthorName'
-      : StringUtil.isBlank(mainLocalAuthors[0].localAuthorName)
+      : StringUtil.isBlank(mainLocalAuthors[0].authorName)
         ? ''
-        : mainLocalAuthors[0].localAuthorName
+        : mainLocalAuthors[0].authorName
   }
 
   /**
@@ -300,9 +300,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorName'
-      : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorName)
+      : StringUtil.isBlank(mainSiteAuthors[0].authorName)
         ? ''
-        : mainSiteAuthors[0].siteAuthorName
+        : mainSiteAuthors[0].authorName
   }
 
   /**

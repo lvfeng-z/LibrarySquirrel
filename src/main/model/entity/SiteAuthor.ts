@@ -1,10 +1,11 @@
 import BaseEntity from '../../base/BaseEntity.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
+import BaseAuthor from '../interface/BaseAuthor.js'
 
 /**
  * 站点作者
  */
-export default class SiteAuthor extends BaseEntity {
+export default class SiteAuthor extends BaseEntity implements BaseAuthor {
   /**
    * 作者来源站点id
    */
@@ -16,7 +17,7 @@ export default class SiteAuthor extends BaseEntity {
   /**
    * 站点中作者的名称
    */
-  siteAuthorName: string | undefined | null
+  authorName: string | undefined | null
   /**
    * 站点中作者的曾用名
    */
@@ -39,7 +40,7 @@ export default class SiteAuthor extends BaseEntity {
     if (NotNullish(siteAuthor)) {
       this.siteId = siteAuthor.siteId
       this.siteAuthorId = siteAuthor.siteAuthorId
-      this.siteAuthorName = siteAuthor.siteAuthorName
+      this.authorName = siteAuthor.authorName
       if (typeof siteAuthor.siteAuthorNameBefore === 'string') {
         this.siteAuthorNameBefore = siteAuthor.siteAuthorNameBefore.split(',')
       } else {

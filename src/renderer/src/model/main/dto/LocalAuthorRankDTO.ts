@@ -1,8 +1,9 @@
 import LocalAuthor from '../entity/LocalAuthor.ts'
 import { IsNullish } from '../../../utils/CommonUtil'
 import { AuthorRank } from '../../../constants/AuthorRank.ts'
+import RankAuthor from '@renderer/model/main/interface/RankAuthor.ts'
 
-export default class LocalAuthorRankDTO extends LocalAuthor {
+export default class LocalAuthorRankDTO extends LocalAuthor implements RankAuthor {
   /**
    * 作者级别
    */

@@ -1,14 +1,15 @@
 import BaseEntity from '../../base/BaseEntity.ts'
 import { NotNullish } from '../../util/CommonUtil.ts'
+import BaseAuthor from '../interface/BaseAuthor.js'
 
 /**
  * 本地作者
  */
-export default class LocalAuthor extends BaseEntity {
+export default class LocalAuthor extends BaseEntity implements BaseAuthor {
   /**
    * 作者名称
    */
-  localAuthorName: string | undefined | null
+  authorName: string | undefined | null
   /**
    * 介绍
    */
@@ -21,7 +22,7 @@ export default class LocalAuthor extends BaseEntity {
   constructor(localAuthor?: LocalAuthor) {
     super(localAuthor)
     if (NotNullish(localAuthor)) {
-      this.localAuthorName = localAuthor.localAuthorName
+      this.authorName = localAuthor.authorName
       this.introduce = localAuthor.introduce
       this.lastUse = localAuthor.lastUse
     }

@@ -52,11 +52,11 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         newSiteAuthor.updateTime = undefined
         // 如果站点作者的名称变更，对原本的名称写入到siteAuthorNameBefore
         if (
-          newSiteAuthor.siteAuthorName !== oldSiteAuthor.siteAuthorName &&
-          oldSiteAuthor.siteAuthorName !== undefined &&
-          oldSiteAuthor.siteAuthorName !== null
+          newSiteAuthor.authorName !== oldSiteAuthor.authorName &&
+          oldSiteAuthor.authorName !== undefined &&
+          oldSiteAuthor.authorName !== null
         ) {
-          ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.siteAuthorName)
+          ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.authorName)
         }
         return await this.updateById(newSiteAuthor)
       } else {
@@ -94,11 +94,11 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         newSiteAuthor.updateTime = undefined
         // 如果站点作者的名称变更，对原本的名称写入到siteAuthorNameBefore
         if (
-          newSiteAuthor.siteAuthorName !== oldSiteAuthor.siteAuthorName &&
-          oldSiteAuthor.siteAuthorName !== undefined &&
-          oldSiteAuthor.siteAuthorName !== null
+          newSiteAuthor.authorName !== oldSiteAuthor.authorName &&
+          oldSiteAuthor.authorName !== undefined &&
+          oldSiteAuthor.authorName !== null
         ) {
-          ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.siteAuthorName)
+          ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.authorName)
         }
       }
       return newSiteAuthor
@@ -132,14 +132,14 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     const localAuthorService = new LocalAuthorService(this.db)
     // 查询是否已有同名作者
     const localAuthorQuery = new LocalAuthorQueryDTO()
-    localAuthorQuery.localAuthorName = siteAuthor.siteAuthorName
+    localAuthorQuery.authorName = siteAuthor.authorName
     const sameNameLocalAuthors = await localAuthorService.list(localAuthorQuery)
     if (ArrayNotEmpty(sameNameLocalAuthors)) {
       return sameNameLocalAuthors[0].id as number
     }
     // 新增同名作者
     const newLocalAuthor = new LocalAuthor()
-    newLocalAuthor.localAuthorName = siteAuthor.siteAuthorName
+    newLocalAuthor.authorName = siteAuthor.authorName
     newLocalAuthor.introduce = siteAuthor.introduce
     return localAuthorService.save(newLocalAuthor)
   }
@@ -149,7 +149,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthor
    */
   public async createAndBindSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<boolean> {
-    const siteAuthorName = siteAuthor.siteAuthorName
+    const siteAuthorName = siteAuthor.authorName
     AssertNotNullish(siteAuthor.id, this.constructor.name, '创建同名本地作者失败，作者名称不能为空')
     AssertNotBlank(siteAuthorName, this.constructor.name, '创建同名本地作者失败，作者名称不能为空')
     const localAuthorId = await this.createSameNameLocalAuthor(siteAuthor)
@@ -169,7 +169,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       (siteAuthorFullDTO) =>
         new SelectItem({
           extraData: undefined,
-          label: siteAuthorFullDTO.siteAuthorName,
+          label: siteAuthorFullDTO.authorName,
           rootId: undefined,
           subLabels: [StringUtil.isNotBlank(siteAuthorFullDTO.site?.siteName) ? siteAuthorFullDTO.site?.siteName : '?'],
           value: String(siteAuthorFullDTO.id)
@@ -231,7 +231,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
-        ...{ siteAuthorName: Operator.LIKE },
+        ...{ authorName: Operator.LIKE },
         ...page.query.operators
       }
     }
@@ -299,7 +299,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       page = new Page(page)
       if (NotNullish(page.query)) {
         page.query.operators = {
-          ...{ siteAuthorName: Operator.LIKE },
+          ...{ authorName: Operator.LIKE },
           ...page.query.operators
         }
       }

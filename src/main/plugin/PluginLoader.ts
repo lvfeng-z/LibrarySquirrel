@@ -77,7 +77,7 @@ export default class PluginLoader<T extends BasePlugin> {
                 LogUtil.error('PluginLoader', msg)
                 throw new Error(msg)
               }
-              meaningOfPath.name = localAuthor.localAuthorName
+              meaningOfPath.name = localAuthor.authorName
               meaningOfPath.details = localAuthor
             }
           }

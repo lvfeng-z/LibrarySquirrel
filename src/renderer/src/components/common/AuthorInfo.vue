@@ -3,6 +3,7 @@ import { computed, Ref, ref } from 'vue'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalAuthorRankDTO from '@renderer/model/main/dto/LocalAuthorRankDTO.ts'
 import SiteAuthorRankDTO from '@renderer/model/main/dto/SiteAuthorRankDTO.ts'
+import RankAuthor from '@renderer/model/main/interface/RankAuthor.ts'
 
 // props
 const props = withDefaults(
@@ -48,28 +49,34 @@ const authorNames = computed(() => {
   }
   let nameList: string[] = []
   if (ArrayNotEmpty(props.localAuthors)) {
-    nameList.push(...props.localAuthors.map((author) => author.localAuthorName).filter(NotNullish))
+    nameList.push(...props.localAuthors.map((author) => author.authorName).filter(NotNullish))
   }
   if (ArrayNotEmpty(noLocalAuthorList)) {
-    nameList.push(...noLocalAuthorList.map((author) => author.siteAuthorName).filter(NotNullish))
+    nameList.push(...noLocalAuthorList.map((author) => author.authorName).filter(NotNullish))
   }
   return nameList
 })
+// 当前查看的作者
+const currentAuthor: Ref<RankAuthor | undefined> = computed(() => {
+  return authors.value.find((tempAuthor) => tempAuthor.authorName === currentAuthorName.value)
+})
+// 当前选中的作者名称
+const currentAuthorName: Ref<string> = ref(authorNames.value[0])
 // cursor参数
 const cursorParam: Ref<string> = ref(props.useHandCursor ? 'pointer' : 'default')
 </script>
 
 <template>
   <div class="author-info-container">
-    <el-popover :trigger="popoverTrigger" :title="authorNames.join('、')">
+    <el-popover :trigger="popoverTrigger">
       <template #reference>
         <el-text class="author-info-text">{{ authorNames.join('、') }}</el-text>
       </template>
       <template #default>
-        <el-segmented :options="authorNames" />
+        <el-segmented v-model="currentAuthorName" :options="authorNames" />
         <el-descriptions>
           <el-descriptions-item>
-            {{ authors }}
+            {{ currentAuthor?.introduce }}
           </el-descriptions-item>
         </el-descriptions>
       </template>

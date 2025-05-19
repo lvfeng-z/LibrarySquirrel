@@ -8,7 +8,7 @@ export default class LocalAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 作者名称
    */
-  localAuthorName: string | undefined | null
+  authorName: string | undefined | null
   /**
    * 最后一次使用的时间
    */
@@ -17,7 +17,7 @@ export default class LocalAuthorQueryDTO extends BaseQueryDTO {
   constructor(localAuthorQueryDTO?: LocalAuthorQueryDTO) {
     super(localAuthorQueryDTO)
     if (NotNullish(localAuthorQueryDTO)) {
-      this.localAuthorName = localAuthorQueryDTO.localAuthorName
+      this.authorName = localAuthorQueryDTO.authorName
       this.lastUse = localAuthorQueryDTO.lastUse
     }
   }

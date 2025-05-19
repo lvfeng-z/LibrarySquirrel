@@ -17,7 +17,7 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 站点中作者的名称
    */
-  siteAuthorName?: string | undefined | null
+  authorName?: string | undefined | null
   /**
    * 站点中作者的曾用名
    */
@@ -58,7 +58,7 @@ export default class SiteAuthorQueryDTO extends BaseQueryDTO {
     if (NotNullish(siteAuthorQueryDTO)) {
       this.siteId = siteAuthorQueryDTO.siteId
       this.siteAuthorId = siteAuthorQueryDTO.siteAuthorId
-      this.siteAuthorName = siteAuthorQueryDTO.siteAuthorName
+      this.authorName = siteAuthorQueryDTO.authorName
       this.siteAuthorNameBefore = siteAuthorQueryDTO.siteAuthorNameBefore
       this.introduce = siteAuthorQueryDTO.introduce
       this.localAuthorId = siteAuthorQueryDTO.localAuthorId

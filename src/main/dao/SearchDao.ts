@@ -60,26 +60,26 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     if (ArrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
-          ? `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author WHERE local_author_name LIKE @keyword`
-          : `SELECT id || 'localAuthor' AS value, local_author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author`
+          ? `SELECT id || 'localAuthor' AS value, author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author WHERE author_name LIKE @keyword`
+          : `SELECT id || 'localAuthor' AS value, author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author`
       )
     }
 
     // 站点作者
     if (ArrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_AUTHOR)) {
       const statement =
-        `SELECT t1.id || 'siteAuthor' AS value, t1.site_author_name AS label, t1.last_use,
+        `SELECT t1.id || 'siteAuthor' AS value, t1.author_name AS label, t1.last_use,
                   JSON_OBJECT(
                     'type', ${SearchType.SITE_AUTHOR},
                     'id', t1.id,
                     'siteAuthor',
-                    JSON_OBJECT('id', t2.id, 'siteAuthorName', t2.local_author_name),
+                    JSON_OBJECT('id', t2.id, 'authorName', t2.author_name),
                     'site',
                     JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description)
                   ) AS extraData
         FROM site_author t1
                LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
-               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE site_author_name LIKE @keyword` : '')
+               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE author_name LIKE @keyword` : '')
       statements.push(statement)
     }
 

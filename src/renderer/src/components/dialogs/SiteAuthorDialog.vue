@@ -75,7 +75,7 @@ async function localAuthorQuerySelectItemPage(page: IPage<unknown, SelectItem>, 
       <el-row>
         <el-col>
           <el-form-item label="名称">
-            <el-input v-model="formData.siteAuthorName"></el-input>
+            <el-input v-model="formData.authorName"></el-input>
           </el-form-item>
         </el-col>
       </el-row>
@@ -95,7 +95,7 @@ async function localAuthorQuerySelectItemPage(page: IPage<unknown, SelectItem>, 
                   v-if="NotNullish(formData.localAuthor)"
                   :hidden="true"
                   :value="formData.localAuthor.id"
-                  :label="formData.localAuthor.localAuthorName"
+                  :label="formData.localAuthor.authorName"
                 ></el-option>
                 <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
               </template>

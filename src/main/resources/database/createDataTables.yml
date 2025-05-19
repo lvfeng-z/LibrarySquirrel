@@ -18,7 +18,7 @@ tables:
         id                integer not null
           constraint local_author_pk
             primary key autoincrement,
-        local_author_name text,
+        author_name text,
         introduce         text,
         last_use          integer,
         create_time       integer,
@@ -36,7 +36,7 @@ tables:
             references site
             on update restrict on delete restrict,
         site_author_id          text,
-        site_author_name        text,
+        author_name        text,
         site_author_name_before text,
         introduce               text,
         local_author_id         integer,

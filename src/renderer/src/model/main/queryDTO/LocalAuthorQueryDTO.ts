@@ -1,5 +1,5 @@
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 /**
  * 本地作者
@@ -8,15 +8,17 @@ export default class LocalAuthorQueryDTO extends BaseQueryDTO {
   /**
    * 作者名称
    */
-  localAuthorName: string | undefined | null
+  authorName: string | undefined | null
+  /**
+   * 最后一次使用的时间
+   */
+  lastUse: number | null | undefined
 
   constructor(localAuthorQueryDTO?: LocalAuthorQueryDTO) {
-    if (IsNullish(localAuthorQueryDTO)) {
-      super()
-      this.localAuthorName = undefined
-    } else {
-      super(localAuthorQueryDTO)
-      this.localAuthorName = localAuthorQueryDTO.localAuthorName
+    super(localAuthorQueryDTO)
+    if (NotNullish(localAuthorQueryDTO)) {
+      this.authorName = localAuthorQueryDTO.authorName
+      this.lastUse = localAuthorQueryDTO.lastUse
     }
   }
 }

@@ -76,7 +76,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickToEdit: true,
-    key: 'localAuthorName',
+    key: 'authorName',
     title: '名称',
     hide: false,
     width: 150,
@@ -124,7 +124,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
 // 本地作者SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
-    name: 'localAuthorName',
+    name: 'authorName',
     type: 'text',
     placeholder: '输入本地作者的名称',
     inputSpan: 18
@@ -148,7 +148,7 @@ const dialogData: Ref<UnwrapRef<LocalAuthor>> = ref(new LocalAuthor())
 // 站点作者ExchangeBox的mainInputBoxes
 const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
   new InputBox({
-    name: 'siteAuthorName',
+    name: 'authorName',
     type: 'text',
     placeholder: '输入站点作者名称',
     inputSpan: 12

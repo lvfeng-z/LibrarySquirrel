@@ -70,7 +70,7 @@ const siteAuthorThead: Ref<Thead[]> = ref([
     type: 'text',
     defaultDisabled: true,
     dblclickToEdit: true,
-    key: 'siteAuthorName',
+    key: 'authorName',
     title: '名称',
     hide: false,
     width: 250,
@@ -125,7 +125,7 @@ const siteAuthorThead: Ref<Thead[]> = ref([
 // 站点作者SearchTable的mainInputBoxes
 const mainInputBoxes: Ref<InputBox[]> = ref<InputBox[]>([
   new InputBox({
-    name: 'siteAuthorName',
+    name: 'authorName',
     type: 'text',
     placeholder: '输入站点作者的名称',
     inputSpan: 10

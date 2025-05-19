@@ -83,17 +83,17 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     if (modifiedPage.query.boundOnLocalAuthorId) {
       modifiedPage.query.operators = {
         ...modifiedPage.query.operators,
-        ...{ localAuthorId: Operator.EQUAL, siteAuthorName: Operator.LIKE }
+        ...{ localAuthorId: Operator.EQUAL, authorName: Operator.LIKE }
       }
     } else {
       modifiedPage.query.operators = {
         ...modifiedPage.query.operators,
-        ...{ localAuthorId: Operator.NOT_EQUAL, siteAuthorName: Operator.LIKE }
+        ...{ localAuthorId: Operator.NOT_EQUAL, authorName: Operator.LIKE }
       }
     }
 
-    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.local_author_id AS localAuthorId,
-                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) AS localAuthor,
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.local_author_id AS localAuthorId,
+                json_object('id', t2.id, 'authorName', t2.author_name) AS localAuthor,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
@@ -140,8 +140,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    */
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
     // 以json字符串的形式返回本地作者和站点信息
-    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.local_author_id AS localAuthorId,
-                json_object('id', t2.id, 'localAuthorName', t2.local_author_name) AS localAuthor,
+    const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.local_author_id AS localAuthorId,
+                json_object('id', t2.id, 'authorName', t2.author_name) AS localAuthor,
                 json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
@@ -168,7 +168,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           const siteAuthorDTO = new SiteAuthorFullDTO(row)
           const selectItem = new SelectItem()
           selectItem.value = siteAuthorDTO.id
-          selectItem.label = siteAuthorDTO.siteAuthorName
+          selectItem.label = siteAuthorDTO.authorName
           // 站点名称列入副标题中
           if (NotNullish(siteAuthorDTO.site?.siteName)) {
             selectItem.subLabels = [siteAuthorDTO.site?.siteName]
@@ -244,16 +244,16 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const query = lodash.cloneDeep(modifiedPage.query)
 
     const selectClause = `
-      SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.site_author_name AS siteAuthorName, t1.site_author_name_before AS siteAuthorNameBefore,
+      SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.site_author_name_before AS siteAuthorNameBefore,
              t1.introduce, t1.local_author_id AS localAuthorId, t1.last_use AS lastUse, t1.update_time AS updateTime, t1.create_time AS createTime,
-             JSON_OBJECT('id', t2.id, 'localAuthorName', t2.local_author_name, 'lastUse', t2.last_use) AS localAuthor,
+             JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) AS localAuthor,
              JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site,
              CASE WHEN t4.id IS NOT NULL THEN TRUE ELSE FALSE END AS hasSameNameLocalAuthor`
     const fromClause = `
       FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id
-          LEFT JOIN local_author t4 ON t1.site_author_name = t4.local_author_name`
+          LEFT JOIN local_author t4 ON t1.author_name = t4.author_name`
     const whereClauseAndQuery = super.getWhereClauses(query, 't1', SiteAuthorQueryDTO.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query

@@ -40,7 +40,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
     try {
       if (NotNullish(page.query)) {
         page.query.operators = {
-          ...{ localAuthorName: Operator.LIKE },
+          ...{ authorName: Operator.LIKE },
           ...page.query.operators
         }
       }
@@ -57,8 +57,8 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
   public listSelectItems(query: LocalAuthorQueryDTO): Promise<SelectItem[]> {
     try {
       query = new LocalAuthorQueryDTO(query)
-      query.operators = { localAuthorName: Operator.LIKE }
-      return this.dao.baseListSelectItems(query, 'id', 'localAuthorName')
+      query.operators = { authorName: Operator.LIKE }
+      return this.dao.baseListSelectItems(query, 'id', 'authorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error
@@ -72,8 +72,8 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
     try {
       page = new Page(page)
       page.query = new LocalAuthorQueryDTO(page.query)
-      page.query.operators = { localAuthorName: Operator.LIKE }
-      return this.dao.querySelectItemPage(page, 'id', 'localAuthorName')
+      page.query.operators = { authorName: Operator.LIKE }
+      return this.dao.querySelectItemPage(page, 'id', 'authorName')
     } catch (error) {
       LogUtil.error('LocalAuthorService', error)
       throw error
