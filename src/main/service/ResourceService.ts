@@ -88,7 +88,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(
       resourceSaveDTO.fullSavePath,
       this.constructor.name,
-      `保存作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.id}`
+      `保存作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
     const resId = resourceSaveDTO.id
     AssertNotNullish(resId, this.constructor.name, `保存作品资源失败，资源id不能为空`)
@@ -105,7 +105,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       fileWriter.resourceId = resId
       return fileWriter.doWrite()
     } catch (error) {
-      const msg = `保存作品失败，taskId: ${resourceSaveDTO.taskId}`
+      const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
       LogUtil.error('WorksService', msg, error)
       throw error
     }
@@ -135,6 +135,45 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       await this.updateBatchById(oldRes)
     }
     return this.save(resource)
+  }
+
+  /**
+   * 替换资源
+   * @param resourceSaveDTO
+   * @param fileWriter
+   */
+  public async replaceResource(resourceSaveDTO: ResourceSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
+    LogUtil.info('test----', `替换资源${resourceSaveDTO.id}`)
+    const resourceId = resourceSaveDTO.id
+    AssertNotNullish(resourceId, this.constructor.name, `替换资源失败，资源id不能为空`)
+    AssertNotNullish(
+      resourceSaveDTO.resourceStream,
+      this.constructor.name,
+      `保存作品资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
+    )
+    const oldResource = await this.getById(resourceId)
+    AssertNotNullish(oldResource, this.constructor.name, `替换资源失败，资源不存在`)
+    AssertNotNullish(
+      resourceSaveDTO.fullSavePath,
+      this.constructor.name,
+      `保存作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.worksId}`
+    )
+    // TODO 创建备份
+
+    try {
+      // 创建写入流
+      const writeStream = fs.createWriteStream(resourceSaveDTO.fullSavePath)
+
+      // 创建写入Promise
+      fileWriter.readable = resourceSaveDTO.resourceStream
+      fileWriter.writable = writeStream
+      fileWriter.resourceId = resourceId
+      return fileWriter.doWrite()
+    } catch (error) {
+      const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}`
+      LogUtil.error('WorksService', msg, error)
+      throw error
+    }
   }
 
   /**

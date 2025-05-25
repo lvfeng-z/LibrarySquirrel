@@ -53,7 +53,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 根据传入的url创建任务
    * @param url 作品/作品集所在url
    */
-  async createTask(url: string): Promise<TaskCreateResponse> {
+  public async createTask(url: string): Promise<TaskCreateResponse> {
     // 查询监听此url的插件
     const taskPluginListenerService = new TaskPluginListenerService()
     const taskPlugins = await taskPluginListenerService.listListener(url)
@@ -145,7 +145,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskPlugin 插件信息
    * @param parentTask 任务集
    */
-  async handleCreateTaskArray(
+  public async handleCreateTaskArray(
     pluginTaskResponseDTOS: PluginTaskResponseDTO[],
     url: string,
     taskPlugin: Plugin,
@@ -225,7 +225,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param parentTask 任务集
    * @param batchSize 每次保存任务的数量
    */
-  async handleCreateTaskStream(
+  public async handleCreateTaskStream(
     createTaskStream: Readable,
     taskPlugin: Plugin,
     parentTask: TaskCreateDTO,
@@ -343,6 +343,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       LogUtil.warn(this.constructor.name, `插件没有返回任务${taskId}的资源的大小`)
       taskWriter.bytesSum = 0
     }
+    // 查询作品已经存在的可用资源
+    const resService = new ResourceService()
+    const activeRes = await resService.getActiveByWorksId(worksId)
     // 生成用于保存资源的信息
     oldWorks.resource = new Resource()
     oldWorks.resource.worksId = worksId
@@ -354,15 +357,21 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     resourceSaveDTO.worksId = worksId
     resourceSaveDTO.taskId = taskId
     resourceSaveDTO.resourceStream = resourceDTO.resource.resourceStream
-    const resService = new ResourceService()
+    if (IsNullish(activeRes)) {
+      resourceSaveDTO.id = await resService.saveActive(resourceSaveDTO)
+    } else {
+      resourceSaveDTO.id = activeRes.id
+    }
     // 更新下载中的文件路径
-    resourceSaveDTO.id = await resService.saveActive(resourceSaveDTO)
     task.pendingResourceId = resourceSaveDTO.id
     task.pendingSavePath = resourceSaveDTO.fullSavePath
     this.updateById(task)
 
     LogUtil.info(this.constructor.name, `任务${taskId}开始下载`)
-    return resService.saveResource(resourceSaveDTO, taskWriter).then(async (saveResult) => {
+    const resSavePromise: Promise<FileSaveResult> = IsNullish(activeRes)
+      ? resService.saveResource(resourceSaveDTO, taskWriter)
+      : resService.replaceResource(resourceSaveDTO, taskWriter)
+    return resSavePromise.then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         const resourceService = new ResourceService()
         resourceService.resourceFinished(taskWriter.resourceId)
