@@ -435,7 +435,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
         if (IsNullish(row)) {
           return undefined
         }
-        this.toResultTypeData<Model>(row)
+        return this.toResultTypeData<Model>(row)
       })
       .finally(() => {
         if (!this.injectedDB) {
