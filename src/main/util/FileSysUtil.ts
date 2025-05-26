@@ -1,5 +1,6 @@
 import Electron, { dialog } from 'electron'
-import fs from 'fs/promises'
+import fs from 'fs'
+import fsPromise from 'fs/promises'
 import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
@@ -12,11 +13,11 @@ import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
  */
 export async function CreateDirIfNotExists(dirPath: string): Promise<void> {
   try {
-    await fs.access(dirPath, fs.constants.F_OK | fs.constants.W_OK)
+    await fsPromise.access(dirPath, fsPromise.constants.F_OK | fsPromise.constants.W_OK)
   } catch (error) {
     // 如果访问目录时出现错误（如目录不存在），则创建目录
     if ((error as { code: string }).code === 'ENOENT') {
-      await fs.mkdir(dirPath, { recursive: true })
+      await fsPromise.mkdir(dirPath, { recursive: true })
       LogUtil.info('FileSysUtil', '已创建目录：' + dirPath)
     } else {
       LogUtil.error('FileSysUtil', error)
@@ -92,41 +93,46 @@ export async function GetWorksResource(
   visualHeight?: number,
   visualWidth?: number
 ): Promise<Buffer> {
-  const resource = sharp(fullPath)
-  if (IsNullish(height) && NotNullish(width)) {
-    return resource.resize({ width: width, fit: 'contain' }).toBuffer()
-  } else if (NotNullish(height) && IsNullish(width)) {
-    return resource.resize({ height: height, fit: 'contain' }).toBuffer()
-  } else if (NotNullish(height) && NotNullish(width)) {
-    return resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer()
-  } else if (NotNullish(visualHeight) && NotNullish(visualWidth)) {
-    const metadata = await resource.metadata()
-    const imageHeight = metadata.height
-    const imageWidth = metadata.width
-    if (NotNullish(imageHeight) && NotNullish(imageWidth)) {
-      if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
-        return resource.toBuffer()
-      } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {
-        return resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer()
-      } else if (imageHeight <= visualHeight && imageWidth > visualWidth) {
-        return resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer()
-      } else if (imageHeight > visualHeight && imageWidth > visualWidth) {
-        if (imageHeight - visualHeight >= imageWidth - visualWidth) {
-          return resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer()
+  return new Promise((resolve, reject) =>
+    fs.readFile(fullPath, async (err, data) => {
+      if (err) throw err
+      const resource = sharp(data)
+      if (IsNullish(height) && NotNullish(width)) {
+        resolve(resource.resize({ width: width, fit: 'contain' }).toBuffer())
+      } else if (NotNullish(height) && IsNullish(width)) {
+        resolve(resource.resize({ height: height, fit: 'contain' }).toBuffer())
+      } else if (NotNullish(height) && NotNullish(width)) {
+        resolve(resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer())
+      } else if (NotNullish(visualHeight) && NotNullish(visualWidth)) {
+        const metadata = await resource.metadata()
+        const imageHeight = metadata.height
+        const imageWidth = metadata.width
+        if (NotNullish(imageHeight) && NotNullish(imageWidth)) {
+          if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
+            resolve(resource.toBuffer())
+          } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {
+            resolve(resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer())
+          } else if (imageHeight <= visualHeight && imageWidth > visualWidth) {
+            resolve(resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer())
+          } else if (imageHeight > visualHeight && imageWidth > visualWidth) {
+            if (imageHeight - visualHeight >= imageWidth - visualWidth) {
+              resolve(resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer())
+            } else {
+              resolve(resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer())
+            }
+          } else {
+            resolve(resource.toBuffer())
+          }
         } else {
-          return resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer()
+          const msg = `无法获取图片的高度或宽度！path: ${fullPath}`
+          LogUtil.error(msg)
+          reject(new Error(msg))
         }
       } else {
-        return resource.toBuffer()
+        resolve(resource.toBuffer())
       }
-    } else {
-      const msg = `无法获取图片的高度或宽度！path: ${fullPath}`
-      LogUtil.error(msg)
-      throw new Error(msg)
-    }
-  } else {
-    return resource.toBuffer()
-  }
+    })
+  )
 }
 
 export function SanitizeFileName(fileName: string): string {
