@@ -236,7 +236,7 @@ export default class DB {
    * @param fn 事务代码
    * @param operation 操作说明
    */
-  public async transaction<F extends (db: DB) => Promise<R>, R>(fn: F, operation: string): Promise<R> {
+  public async transaction<F extends (db?: DB) => Promise<R>, R>(fn: F, operation: string): Promise<R> {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0

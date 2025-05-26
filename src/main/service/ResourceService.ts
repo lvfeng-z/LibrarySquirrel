@@ -3,7 +3,7 @@ import ResourceQueryDTO from '../model/queryDTO/ResourceQueryDTO.js'
 import Resource from '../model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
 import DB from '../database/DB.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import { BOOL } from '../constant/BOOL.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
@@ -20,6 +20,8 @@ import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import ResFileNameFormatEnum from '../constant/ResFileNameFormatEnum.js'
+import BackupService from './BackupService.js'
+import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 
 /**
  * 资源服务
@@ -143,22 +145,32 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @param fileWriter
    */
   public async replaceResource(resourceSaveDTO: ResourceSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
-    LogUtil.info('test----', `替换资源${resourceSaveDTO.id}`)
     const resourceId = resourceSaveDTO.id
     AssertNotNullish(resourceId, this.constructor.name, `替换资源失败，资源id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
       this.constructor.name,
-      `保存作品资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
+      `替换作品资源失败，资源不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
-    const oldResource = await this.getById(resourceId)
-    AssertNotNullish(oldResource, this.constructor.name, `替换资源失败，资源不存在`)
     AssertNotNullish(
       resourceSaveDTO.fullSavePath,
       this.constructor.name,
-      `保存作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `替换作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
-    // TODO 创建备份
+    const oldResource = await this.getById(resourceId)
+    AssertNotNullish(oldResource, this.constructor.name, `替换资源失败，资源不存在`)
+    AssertNotBlank(
+      oldResource.filePath,
+      this.constructor.name,
+      `替换作品资源失败，原作品资源的filePath不能为空，worksId: ${resourceSaveDTO.worksId}`
+    )
+
+    // 创建备份
+    const settings = GlobalVar.get(GlobalVars.SETTINGS)
+    const workdir = settings.get('workdir')
+    const oldResAbsolutePath = path.join(workdir, oldResource.filePath)
+    const backupService = new BackupService()
+    await backupService.createBackup(BackupSourceTypeEnum.WORKS, resourceId, oldResAbsolutePath)
 
     try {
       // 创建写入流

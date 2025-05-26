@@ -4,8 +4,6 @@ import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
 import { IsNullish, NotNullish } from './CommonUtil.js'
-import { Readable, Writable } from 'node:stream'
-import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 
 /**
@@ -131,48 +129,6 @@ export async function GetWorksResource(
   }
 }
 
-export function PipelineReadWrite(readable: Readable, writable: Writable): Promise<FileSaveResult> {
-  return new Promise((resolve, reject) => {
-    let errorOccurred = false
-    let paused = false
-    const readableErrorHandler = (err: Error) => {
-      errorOccurred = true
-      LogUtil.error('WorksService', `readable出错${err}`)
-      reject(err)
-    }
-    const readableEndHandler = () => {
-      if (!errorOccurred) {
-        writable.end()
-      } else {
-        reject()
-      }
-    }
-    readable.once('error', readableErrorHandler)
-    writable.once('error', (err) => {
-      errorOccurred = true
-      LogUtil.error('WorksService', `writable出错${err}`)
-      reject(err)
-    })
-    readable.once('end', readableEndHandler)
-    readable.once('pause', () => {
-      paused = true
-      readable.removeListener('error', readableErrorHandler)
-      readable.removeListener('end', readableEndHandler)
-    })
-    readable.once('resume', () => {
-      paused = false
-    })
-    writable.once('finish', () => {
-      if (!errorOccurred) {
-        return paused ? resolve(FileSaveResult.PAUSE) : resolve(FileSaveResult.FINISH)
-      } else {
-        reject()
-      }
-    })
-    readable.pipe(writable)
-  })
-}
-
 export function SanitizeFileName(fileName: string): string {
   // 定义非法字符及其对应的全角字符
   const illegalReplacements = {
@@ -195,4 +151,20 @@ export function SanitizeFileName(fileName: string): string {
   }
 
   return sanitized
+}
+
+/**
+ * 给文件名添加后缀
+ * @param filename
+ * @param suffix
+ * @constructor
+ */
+export function AddSuffix(filename: string, suffix: string) {
+  const parsed = path.parse(filename)
+  // 在文件名后添加后缀，保留扩展名
+  return path.format({
+    ...parsed,
+    name: parsed.name + suffix,
+    base: undefined // 确保使用 name + ext 而不是 base
+  })
 }
