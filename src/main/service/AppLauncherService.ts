@@ -24,18 +24,9 @@ export default class AppLauncherService {
 
   private microsoftPhotos() {
     return (imagePath: string) => {
-      Electron.shell
-        .openPath(imagePath)
-        .then((success) => {
-          if (!success) {
-            console.error('无法打开图片')
-          } else {
-            console.log('成功打开图片')
-          }
-        })
-        .catch((err) => {
-          console.error('打开图片失败:', err)
-        })
+      Electron.shell.openPath(imagePath).catch((err) => {
+        console.error('打开图片失败:', err)
+      })
     }
   }
 
