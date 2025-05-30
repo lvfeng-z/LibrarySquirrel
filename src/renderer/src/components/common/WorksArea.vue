@@ -31,6 +31,7 @@ function handleImageClicked(works: WorksFullDTO) {
           :works="works"
           :max-height="500"
           :max-width="500"
+          author-info-popper-width="380px"
           @image-clicked="handleImageClicked"
         />
       </div>

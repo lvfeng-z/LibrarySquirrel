@@ -12,10 +12,12 @@ const props = withDefaults(
     siteAuthors: SiteAuthorRankDTO[] | undefined | null
     popoverTrigger?: 'click' | 'hover' | 'focus' | 'contextmenu'
     useHandCursor?: boolean
+    width?: string
   }>(),
   {
     popoverTrigger: 'click',
-    useHandCursor: true
+    useHandCursor: true,
+    width: 'auto'
   }
 )
 
@@ -68,7 +70,7 @@ const cursorParam: Ref<string> = ref(props.useHandCursor ? 'pointer' : 'default'
 
 <template>
   <div class="author-info-container">
-    <el-popover :trigger="popoverTrigger">
+    <el-popover :trigger="popoverTrigger" :width="width">
       <template #reference>
         <el-text class="author-info-text">{{ authorNames.join('、') }}</el-text>
       </template>

@@ -12,6 +12,7 @@ const props = defineProps<{
   works: WorksFullDTO
   maxHeight?: number
   maxWidth?: number
+  authorInfoPopperWidth?: string
 }>()
 
 // 事件
@@ -80,7 +81,12 @@ function handlePictureClicked() {
       </template>
     </el-image>
     <works-info class="works-case-works-info" :works="works" />
-    <author-info class="works-case-author-info" :local-authors="props.works.localAuthors" :site-authors="props.works.siteAuthors" />
+    <author-info
+      class="works-case-author-info"
+      :local-authors="props.works.localAuthors"
+      :site-authors="props.works.siteAuthors"
+      :width="authorInfoPopperWidth"
+    />
   </div>
 </template>
 
