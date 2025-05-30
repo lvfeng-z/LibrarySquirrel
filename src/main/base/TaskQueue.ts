@@ -1039,7 +1039,7 @@ class TaskRunInstance extends TaskStatus {
       let result: Promise<boolean> = Promise.resolve(true)
       // 对于已开始的任务，调用taskService的pauseTask进行暂停
       if (this.processing()) {
-        result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+        result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.taskWriter)
       }
       this.changeStatus(TaskStatusEnum.PAUSE)
       LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)

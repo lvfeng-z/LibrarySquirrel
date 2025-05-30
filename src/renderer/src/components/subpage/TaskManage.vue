@@ -49,6 +49,7 @@ const apis = {
   taskQueryParentPage: window.api.taskQueryParentPage,
   taskQueryChildrenTaskPage: window.api.taskQueryChildrenTaskPage,
   taskPauseTaskTree: window.api.taskPauseTaskTree,
+  taskStopTaskTree: window.api.taskStopTaskTree,
   taskResumeTaskTree: window.api.taskResumeTaskTree,
   dirSelect: window.api.dirSelect
 }
@@ -401,6 +402,7 @@ function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeE
       refreshTask()
       break
     case TaskOperationCodeEnum.CANCEL:
+      apis.taskStopTaskTree([row.id])
       break
     case TaskOperationCodeEnum.DELETE:
       deleteTask([row.id as number])

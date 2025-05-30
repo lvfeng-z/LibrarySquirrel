@@ -703,6 +703,15 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('task-stopTaskTree', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'task-stopTaskTree')
+    try {
+      const taskService = new TaskService()
+      return ApiUtil.response(await taskService.stopTaskTree(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('task-pauseTaskTree', async (_event, args) => {
     LogUtil.info('MainProcessApi', 'task-pauseTaskTree')
     try {

@@ -110,6 +110,7 @@ declare global {
       taskListStatus: function
       taskListSchedule: function
       taskPauseTaskTree: function
+      taskStopTaskTree: function
       taskResumeTaskTree: function
 
       // Works

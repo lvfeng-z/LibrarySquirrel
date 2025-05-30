@@ -110,6 +110,7 @@ const api = {
   taskListStatus: (args) => Electron.ipcRenderer.invoke('task-listStatus', args),
   taskListSchedule: (args) => Electron.ipcRenderer.invoke('task-listSchedule', args),
   taskPauseTaskTree: (args) => Electron.ipcRenderer.invoke('task-pauseTaskTree', args),
+  taskStopTaskTree: (args) => Electron.ipcRenderer.invoke('task-stopTaskTree', args),
   taskResumeTaskTree: (args) => Electron.ipcRenderer.invoke('task-resumeTaskTree', args),
 
   // Works

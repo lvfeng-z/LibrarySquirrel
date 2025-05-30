@@ -415,7 +415,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           continue
         }
 
-        GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.START)
+        taskQueue.pushBatch(children, TaskOperation.START)
       } catch (error) {
         LogUtil.error(this.constructor.name, error)
         this.taskFailed(parent.id, String(error))
@@ -504,7 +504,65 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         continue
       }
 
-      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.PAUSE)
+      taskQueue.pushBatch(children, TaskOperation.PAUSE)
+    }
+  }
+
+  /**
+   * 停止任务
+   * @param task 任务
+   * @param pluginLoader 插件加载器
+   * @param taskWriter
+   */
+  public async stopTask(task: Task, pluginLoader: PluginLoader<TaskHandler>, taskWriter: TaskWriter): Promise<boolean> {
+    // 加载插件
+    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '停止任务失败')
+    AssertNotNullish(plugin?.id, this.constructor.name, `停止任务失败，创建任务的插件id不能为空，taskId: ${task.id}`)
+    const taskHandler = await pluginLoader.load(plugin.id)
+
+    // 创建TaskPluginDTO对象
+    const taskPluginDTO = new TaskPluginDTO(task)
+    taskPluginDTO.resourceStream = taskWriter.readable
+
+    // 暂停写入
+    const finished = taskWriter.pause()
+
+    if (!finished) {
+      // 调用插件的pause方法
+      try {
+        await taskHandler.stop(taskPluginDTO)
+      } catch (error) {
+        LogUtil.error(this.constructor.name, '调用插件的stop方法出错: ', error)
+        if (NotNullish(taskWriter.readable)) {
+          taskWriter.readable.destroy()
+        }
+      }
+      return true
+    } else {
+      return false
+    }
+  }
+
+  /**
+   * 停止任务树
+   * @param ids id列表
+   */
+  public async stopTaskTree(ids: number[]): Promise<void> {
+    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskTree = await taskQueue.listTaskTree(ids, [TaskStatusEnum.PROCESSING, TaskStatusEnum.WAITING])
+
+    for (const parent of taskTree) {
+      // 获取要处理的任务
+      let children: TaskTreeDTO[]
+      if (parent.isCollection && ArrayNotEmpty(parent.children)) {
+        children = parent.children
+      } else if (!parent.isCollection) {
+        children = [parent]
+      } else {
+        continue
+      }
+
+      taskQueue.pushBatch(children, TaskOperation.STOP)
     }
   }
 
@@ -627,7 +685,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         continue
       }
 
-      GlobalVar.get(GlobalVars.TASK_QUEUE).pushBatch(children, TaskOperation.RESUME)
+      taskQueue.pushBatch(children, TaskOperation.RESUME)
     }
   }
 

@@ -178,7 +178,7 @@ function formatBytes(bytes: number) {
           :icon="mapToButtonStatus().icon"
           :loading="mapToButtonStatus().processing && !row.continuable && !row.isCollection"
           @click="buttonClicked(row, mapToButtonStatus().operation)"
-        ></el-button>
+        />
       </el-tooltip>
       <el-tooltip content="取消" :enterable="false" :show-after="650" :hide-after="0">
         <el-button size="small" icon="CircleClose" @click="buttonClicked(row, TaskOperationCodeEnum.CANCEL)" />

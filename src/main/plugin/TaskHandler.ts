@@ -45,6 +45,12 @@ export interface TaskHandler extends BasePlugin {
   pause(task: TaskPluginDTO): Promise<void>
 
   /**
+   * 停止下载任务
+   * @param task 需要暂停的任务
+   */
+  stop(task: TaskPluginDTO): Promise<void>
+
+  /**
    * 恢复下载任务
    * @description 获取用于恢复已停止的下载任务的读取流，这个流必须是暂停状态，continuable表示提供的流是否可接续在已下载部分的末尾
    * @param task 需要暂停的任务
@@ -85,6 +91,10 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     // pause方法
     isTaskHandler = 'pause' in response && typeof response.pause === 'function'
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现pause方法，${pluginInfo}`)
+
+    // stop方法
+    isTaskHandler = 'stop' in response && typeof response.stop === 'function'
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现stop方法，${pluginInfo}`)
 
     // resume方法
     isTaskHandler = 'resume' in response && typeof response.resume === 'function'
