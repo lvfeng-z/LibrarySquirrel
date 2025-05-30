@@ -723,7 +723,7 @@ export class TaskQueue {
           newStatus = TaskStatusEnum.WAITING
         } else if (paused > 0) {
           newStatus = TaskStatusEnum.PAUSE
-        } else if (finished > 0 && failed > 0) {
+        } else if (finished > 0 && finished < children.length) {
           newStatus = TaskStatusEnum.PARTLY_FINISHED
         } else if (finished > 0) {
           newStatus = TaskStatusEnum.FINISHED
