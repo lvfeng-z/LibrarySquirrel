@@ -93,46 +93,48 @@ export async function GetWorksResource(
   visualHeight?: number,
   visualWidth?: number
 ): Promise<Buffer> {
-  return new Promise((resolve, reject) =>
+  return new Promise<NonSharedBuffer>((resolve, reject) =>
     fs.readFile(fullPath, async (err, data) => {
-      if (err) throw err
-      const resource = sharp(data)
-      if (IsNullish(height) && NotNullish(width)) {
-        resolve(resource.resize({ width: width, fit: 'contain' }).toBuffer())
-      } else if (NotNullish(height) && IsNullish(width)) {
-        resolve(resource.resize({ height: height, fit: 'contain' }).toBuffer())
-      } else if (NotNullish(height) && NotNullish(width)) {
-        resolve(resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer())
-      } else if (NotNullish(visualHeight) && NotNullish(visualWidth)) {
-        const metadata = await resource.metadata()
-        const imageHeight = metadata.height
-        const imageWidth = metadata.width
-        if (NotNullish(imageHeight) && NotNullish(imageWidth)) {
-          if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
-            resolve(resource.toBuffer())
-          } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {
-            resolve(resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer())
-          } else if (imageHeight <= visualHeight && imageWidth > visualWidth) {
-            resolve(resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer())
-          } else if (imageHeight > visualHeight && imageWidth > visualWidth) {
-            if (imageHeight - visualHeight >= imageWidth - visualWidth) {
-              resolve(resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer())
-            } else {
-              resolve(resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer())
-            }
+      if (err) reject(err)
+      resolve(data)
+    })
+  ).then(async (data) => {
+    const resource = sharp(data)
+    if (IsNullish(height) && NotNullish(width)) {
+      return resource.resize({ width: width, fit: 'contain' }).toBuffer()
+    } else if (NotNullish(height) && IsNullish(width)) {
+      return resource.resize({ height: height, fit: 'contain' }).toBuffer()
+    } else if (NotNullish(height) && NotNullish(width)) {
+      return resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer()
+    } else if (NotNullish(visualHeight) && NotNullish(visualWidth)) {
+      const metadata = await resource.metadata()
+      const imageHeight = metadata.height
+      const imageWidth = metadata.width
+      if (NotNullish(imageHeight) && NotNullish(imageWidth)) {
+        if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
+          return resource.toBuffer()
+        } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {
+          return resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer()
+        } else if (imageHeight <= visualHeight && imageWidth > visualWidth) {
+          return resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer()
+        } else if (imageHeight > visualHeight && imageWidth > visualWidth) {
+          if (imageHeight - visualHeight >= imageWidth - visualWidth) {
+            return resource.resize({ height: visualHeight, fit: 'contain' }).toBuffer()
           } else {
-            resolve(resource.toBuffer())
+            return resource.resize({ width: visualWidth, fit: 'contain' }).toBuffer()
           }
         } else {
-          const msg = `无法获取图片的高度或宽度！path: ${fullPath}`
-          LogUtil.error(msg)
-          reject(new Error(msg))
+          return resource.toBuffer()
         }
       } else {
-        resolve(resource.toBuffer())
+        const msg = `无法获取图片的高度或宽度！path: ${fullPath}`
+        LogUtil.error(msg)
+        throw Error(msg)
       }
-    })
-  )
+    } else {
+      return resource.toBuffer()
+    }
+  })
 }
 
 export function SanitizeFileName(fileName: string): string {

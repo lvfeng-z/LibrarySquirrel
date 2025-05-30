@@ -152,7 +152,7 @@ Electron.app.whenReady().then(() => {
   LogUtil.initializeLogSetting()
 
   // 如何响应前面的resource自定义协议的请求
-  Electron.protocol.handle('resource', async (request) => {
+  Electron.protocol.handle('resource', async (request): Promise<Response> => {
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).get('workdir') as string
 
     // 使用正则表达式测试URL是否符合预期格式
@@ -178,7 +178,7 @@ Electron.app.whenReady().then(() => {
       const data = await GetWorksResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
       return new Response(data) // 返回文件
     } catch (error) {
-      LogUtil.error('Error handling protocol request:', String(error))
+      LogUtil.error('scheme-resource', 'Error handling protocol request:', String(error))
       return new Response('Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
     }
   })
