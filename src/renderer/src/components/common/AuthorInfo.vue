@@ -70,17 +70,15 @@ const cursorParam: Ref<string> = ref(props.useHandCursor ? 'pointer' : 'default'
 
 <template>
   <div class="author-info-container">
-    <el-popover :trigger="popoverTrigger" :width="width">
+    <el-popover :trigger="popoverTrigger" :width="width" popper-class="author-info-popper">
       <template #reference>
         <el-text class="author-info-text">{{ authorNames.join('、') }}</el-text>
       </template>
       <template #default>
         <el-segmented v-model="currentAuthorName" :options="authorNames" />
-        <el-descriptions>
-          <el-descriptions-item>
-            {{ currentAuthor?.introduce }}
-          </el-descriptions-item>
-        </el-descriptions>
+        <div class="author-info-introduce">
+          {{ currentAuthor?.introduce }}
+        </div>
       </template>
     </el-popover>
   </div>
@@ -92,5 +90,10 @@ const cursorParam: Ref<string> = ref(props.useHandCursor ? 'pointer' : 'default'
 }
 .author-info-text {
   width: 100%;
+}
+.author-info-introduce {
+  max-height: 300px;
+  overflow-y: scroll;
+  text-overflow: ellipsis;
 }
 </style>
