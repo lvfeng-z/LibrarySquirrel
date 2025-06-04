@@ -379,7 +379,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       } else if (FileSaveResult.PAUSE === saveResult) {
         return TaskStatusEnum.PAUSE
       } else {
-        return TaskStatusEnum.FAILED
+        throw new Error(`保存资源未返回预期的值，saveResult: ${saveResult}`)
       }
     })
   }
@@ -415,10 +415,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           continue
         }
 
-        taskQueue.pushBatch(children, TaskOperation.START)
+        await taskQueue.pushBatch(children, TaskOperation.START)
       } catch (error) {
         LogUtil.error(this.constructor.name, error)
-        this.taskFailed(parent.id, String(error))
+        await this.taskFailed(parent.id, String(error))
       }
     }
   }
@@ -660,7 +660,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       } else if (FileSaveResult.PAUSE === saveResult) {
         return TaskStatusEnum.PAUSE
       } else {
-        return TaskStatusEnum.FAILED
+        throw new Error(`保存资源未返回预期的值，saveResult: ${saveResult}`)
       }
     })
   }

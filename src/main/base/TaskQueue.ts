@@ -172,7 +172,7 @@ export class TaskQueue {
         }
       })
       this.resourceSaveStream.on('saveStart', (taskRunInstance: TaskRunInstance) => {
-        this.taskPersistStream.addTask([taskRunInstance])
+        // this.taskPersistStream.addTask([taskRunInstance])
         this.refreshParentStatus([taskRunInstance.parentId])
       })
       this.resourceSaveStream.on('saveFailed', handleError)
@@ -940,6 +940,15 @@ class TaskRunInstance extends TaskStatus {
    */
   public inStream: boolean
   /**
+   * 任务信息的修改是否已经保存到数据库
+   */
+  public dbStored: boolean
+  /**
+   * 作品id
+   * @private
+   */
+  public worksId: number | undefined
+  /**
    * Task服务
    * @private
    */
@@ -950,19 +959,15 @@ class TaskRunInstance extends TaskStatus {
    */
   private taskInfo: Task
   /**
-   * 任务信息的修改是否已经保存到数据库
-   */
-  public dbStored: boolean
-  /**
-   * 作品id
-   * @private
-   */
-  public worksId: number | undefined
-  /**
    * 插件加载器
    * @private
    */
   private readonly pluginLoader: PluginLoader<TaskHandler>
+  /**
+   * 是否出现错误
+   * @private
+   */
+  private errorOccurred: boolean
 
   constructor(
     taskId: number,
@@ -987,6 +992,11 @@ class TaskRunInstance extends TaskStatus {
     this.resSaveSuspended = IsNullish(resSaveSuspended) ? false : resSaveSuspended
     this.inStream = false
     this.worksId = localWorksId
+    this.errorOccurred = false
+  }
+
+  public isErrorOccurred(): boolean {
+    return this.errorOccurred
   }
 
   public changeStatus(status: TaskStatusEnum): void {
@@ -994,84 +1004,124 @@ class TaskRunInstance extends TaskStatus {
   }
 
   public async saveInfo(): Promise<void> {
-    const task = await this.taskService.getById(this.taskId)
-    AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
-    this.worksId = await this.taskService.saveWorksInfo(task, this.pluginLoader)
+    try {
+      const task = await this.taskService.getById(this.taskId)
+      AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
+      this.worksId = await this.taskService.saveWorksInfo(task, this.pluginLoader)
+    } catch (error) {
+      this.errorOccurred = true
+      throw error
+    }
   }
 
   public preStart() {
-    if (
-      this.status === TaskStatusEnum.CREATED ||
-      this.status === TaskStatusEnum.FINISHED ||
-      this.status === TaskStatusEnum.FAILED ||
-      this.status === TaskStatusEnum.PAUSE
-    ) {
-      this.changeStatus(TaskStatusEnum.WAITING)
-      if (this.status !== TaskStatusEnum.PAUSE) {
-        this.taskWriter = new TaskWriter()
+    try {
+      if (
+        this.status === TaskStatusEnum.CREATED ||
+        this.status === TaskStatusEnum.FINISHED ||
+        this.status === TaskStatusEnum.FAILED ||
+        this.status === TaskStatusEnum.PAUSE
+      ) {
+        this.changeStatus(TaskStatusEnum.WAITING)
+        if (this.status !== TaskStatusEnum.PAUSE) {
+          this.taskWriter = new TaskWriter()
+        }
+      } else {
+        throw new Error(`无法预启动任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
       }
-    } else {
-      throw new Error(`无法预启动任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+    } catch (error) {
+      this.errorOccurred = true
+      throw error
     }
   }
 
   public pause(): Promise<boolean> {
-    if (this.status === TaskStatusEnum.PROCESSING || this.status === TaskStatusEnum.WAITING) {
-      let result: Promise<boolean> = Promise.resolve(true)
-      // 对于已开始的任务，调用taskService的pauseTask进行暂停
-      if (this.processing()) {
-        result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+    try {
+      if (this.status === TaskStatusEnum.PROCESSING || this.status === TaskStatusEnum.WAITING) {
+        let result: Promise<boolean> = Promise.resolve(true)
+        // 对于已开始的任务，调用taskService的pauseTask进行暂停
+        if (this.processing()) {
+          result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+        }
+        // 判断是否已经在数据库中创建资源信息
+        if (NotNullish(this.taskInfo.pendingResourceId)) {
+          this.resSaveSuspended = true
+        }
+        this.changeStatus(TaskStatusEnum.PAUSE)
+        LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
+        return result
+      } else {
+        throw new Error(`无法暂停任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
       }
-      // 判断是否已经在数据库中创建资源信息
-      if (NotNullish(this.taskInfo.pendingResourceId)) {
-        this.resSaveSuspended = true
-      }
-      this.changeStatus(TaskStatusEnum.PAUSE)
-      LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
-      return result
-    } else {
-      throw new Error(`无法暂停任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+    } catch (error) {
+      this.errorOccurred = true
+      throw error
     }
   }
 
   public stop() {
-    if (this.status === TaskStatusEnum.PROCESSING || this.status === TaskStatusEnum.WAITING || this.status === TaskStatusEnum.PAUSE) {
-      let result: Promise<boolean> = Promise.resolve(true)
-      // 对于已开始的任务，调用taskService的pauseTask进行暂停
-      if (this.processing()) {
-        result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+    try {
+      if (
+        this.status === TaskStatusEnum.PROCESSING ||
+        this.status === TaskStatusEnum.WAITING ||
+        this.status === TaskStatusEnum.PAUSE
+      ) {
+        let result: Promise<boolean> = Promise.resolve(true)
+        // 对于已开始的任务，调用taskService的pauseTask进行暂停
+        if (this.processing()) {
+          result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+        }
+        this.changeStatus(TaskStatusEnum.PAUSE)
+        LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
+        return result
+      } else {
+        throw new Error(`无法停止任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
       }
-      this.changeStatus(TaskStatusEnum.PAUSE)
-      LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
-      return result
-    } else {
-      throw new Error(`无法停止任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+    } catch (error) {
+      this.errorOccurred = true
+      throw error
     }
   }
 
   public async process(): Promise<TaskStatusEnum> {
-    if (this.status === TaskStatusEnum.WAITING) {
-      this.changeStatus(TaskStatusEnum.PROCESSING)
+    try {
+      if (this.status === TaskStatusEnum.WAITING) {
+        this.changeStatus(TaskStatusEnum.PROCESSING)
 
-      const taskWriter = IsNullish(this.taskWriter) ? new TaskWriter() : this.taskWriter
+        const taskWriter = IsNullish(this.taskWriter) ? new TaskWriter() : this.taskWriter
 
-      AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
-      AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
-      const result =
-        this.resSaveSuspended && this.taskInfo.continuable
-          ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
-          : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
-      return result.then((saveResult) => {
-        this.changeStatus(saveResult)
-        return saveResult
-      })
-    } else {
-      throw new Error(`无法开始任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+        AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
+        AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
+        const result =
+          this.resSaveSuspended && this.taskInfo.continuable
+            ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
+            : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
+        return result
+          .then((saveResult) => {
+            this.changeStatus(saveResult)
+            return saveResult
+          })
+          .catch((error) => {
+            this.errorOccurred = true
+            this.changeStatus(TaskStatusEnum.FAILED)
+            throw error
+          })
+      } else {
+        throw new Error(`无法开始任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      }
+    } catch (error) {
+      this.errorOccurred = true
+      throw error
     }
   }
 
   public failed() {
-    this.changeStatus(TaskStatusEnum.FAILED)
+    try {
+      this.changeStatus(TaskStatusEnum.FAILED)
+    } catch (error) {
+      this.errorOccurred = true
+      throw error
+    }
   }
 
   public getTaskInfo(): Task {
@@ -1300,7 +1350,10 @@ class TaskPersistStream extends Writable {
   private createTaskFromRunInst(runInstance: TaskRunInstance) {
     const tempTask = new Task(runInstance.getTaskInfo())
     tempTask.id = runInstance.taskId
-    tempTask.status = runInstance.status
+    // 如果出现异常并且是失败之外的状态，忽略这次对状态的修改
+    if (!(runInstance.isErrorOccurred() && runInstance.status !== TaskStatusEnum.FAILED)) {
+      tempTask.status = runInstance.status
+    }
     if (TaskStatusEnum.FINISHED === tempTask.status) {
       tempTask.pendingResourceId = null
       tempTask.pendingSavePath = null
