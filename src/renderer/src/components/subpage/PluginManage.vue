@@ -9,11 +9,13 @@ import { Thead } from '@renderer/model/util/Thead.ts'
 import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import Plugin from '@renderer/model/main/entity/Plugin.ts'
 import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
+import Electron from 'electron'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 
 // onMounted
 onMounted(() => {
@@ -29,8 +31,11 @@ onMounted(() => {
 
 // 变量
 const apis = {
+  dirSelect: window.api.dirSelect,
   pluginQueryPage: window.api.pluginQueryPage,
+  pluginInstall: window.api.pluginInstall,
   pluginReInstall: window.api.pluginReInstall,
+  pluginReInstallFromPackage: window.api.pluginReInstallFromPackage,
   pluginUnInstall: window.api.pluginUnInstall
 }
 // 插件数据表组件的实例
@@ -146,7 +151,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
       dialogState.value = true
       break
     case 'reinstall':
-      reInstall(op.id)
+      beforeReInstall(op.id)
       break
     case 'uninstall':
       unInstall(op.id)
@@ -162,6 +167,21 @@ async function handleSelectionChange(selections: Plugin[]) {
   }
   pluginDomainSearchTable.value.doSearch()
 }
+// 重新安装前询问安装来源
+async function beforeReInstall(pluginId: string) {
+  ElMessageBox.confirm('请选择修复方式', '', {
+    confirmButtonText: '自动修复',
+    cancelButtonText: '选择安装包修复',
+    type: 'warning'
+  })
+    .then(() => reInstall(pluginId))
+    .catch(async () => {
+      const packagePath = await selectPackage()
+      if (StringUtil.isNotBlank(packagePath)) {
+        installFromPath(packagePath)
+      }
+    })
+}
 // 重新安装
 async function reInstall(pluginId: string) {
   const response = await apis.pluginReInstall(pluginId)
@@ -174,7 +194,7 @@ async function reInstall(pluginId: string) {
   } else {
     ElMessage({
       type: 'error',
-      message: `修复失败，${response.message}`
+      message: `修复失败，${response.msg}`
     })
   }
 }
@@ -192,6 +212,31 @@ async function unInstall(pluginId: string) {
       type: 'error',
       message: `卸载失败，${response.message}`
     })
+  }
+}
+// 选择安装包
+async function selectPackage(): Promise<string | undefined> {
+  const response = await apis.dirSelect(true, true)
+  if (ApiUtil.check(response)) {
+    const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
+    if (!dirSelectResult.canceled && ArrayNotEmpty(dirSelectResult.filePaths)) {
+      return dirSelectResult.filePaths[0]
+    }
+  }
+  return undefined
+}
+// 通过安装包路径安装插件
+async function installFromPath(packagePath: string) {
+  const result = await apis.pluginInstall(packagePath)
+  if (ApiUtil.check(result)) {
+    ApiUtil.msg(result)
+  }
+}
+// 通过安装包路径安装插件
+async function reInstallFromPath(pluginId: number, packagePath: string) {
+  const result = await apis.pluginReInstallFromPackage(pluginId, packagePath)
+  if (ApiUtil.check(result)) {
+    ApiUtil.msg(result)
   }
 }
 </script>

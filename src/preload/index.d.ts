@@ -45,7 +45,9 @@ declare global {
 
       // Plugin
       pluginQueryPage: function
+      pluginInstall: function
       pluginReInstall: function
+      pluginReInstallFromPackage: function
       pluginUnInstall: function
 
       // ReWorksTag

@@ -264,8 +264,29 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         throw error
       }
     }
-    AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，插件安装包路径不可用，pluginId: ${pluginId}`)
     return this.install(plugin.packagePath)
+  }
+
+  /**
+   * 重新安装插件
+   */
+  public async reInstallFromPackage(pluginId: number, packagePath: string) {
+    const plugin = await this.getById(pluginId)
+    AssertNotBlank(
+      packagePath,
+      this.constructor.name,
+      `重新安装插件失败，给定的安装包路径不可用，pluginId: ${pluginId}，packagePath: ${packagePath}`
+    )
+    AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    try {
+      await this.unInstall(pluginId)
+    } catch (error) {
+      if ((error as { code: string }).code !== 'ENOENT') {
+        throw error
+      }
+    }
+    return this.install(packagePath)
   }
 
   /**
