@@ -274,11 +274,11 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('plugin-install', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-install')
+  Electron.ipcMain.handle('plugin-installFromPath', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-installFromPath')
     const pluginService = new PluginService()
     try {
-      return ApiUtil.response(await pluginService.install(args))
+      return ApiUtil.response(await pluginService.installFromPath(args))
     } catch (error) {
       return returnError(error)
     }
@@ -292,11 +292,11 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('plugin-reInstallFromPackage', async (_event, arg1, arg2) => {
-    LogUtil.info('MainProcessApi', 'plugin-reInstallFromPackage')
+  Electron.ipcMain.handle('plugin-reInstallFromPath', async (_event, arg1, arg2) => {
+    LogUtil.info('MainProcessApi', 'plugin-reInstallFromPath')
     const pluginService = new PluginService()
     try {
-      return ApiUtil.response(await pluginService.reInstallFromPackage(arg1, arg2))
+      return ApiUtil.response(await pluginService.reInstallFromPath(arg1, arg2))
     } catch (error) {
       return returnError(error)
     }

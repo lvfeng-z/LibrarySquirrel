@@ -54,7 +54,7 @@ export async function Initialize() {
         installPath = defaultPlugin.packagePath
       }
       try {
-        await pluginService.install(installPath)
+        await pluginService.installFromPath(installPath)
       } catch (error) {
         LogUtil.error('Initialize', '安装插件失败', error)
       }

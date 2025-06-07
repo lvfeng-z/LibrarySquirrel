@@ -33,9 +33,9 @@ onMounted(() => {
 const apis = {
   dirSelect: window.api.dirSelect,
   pluginQueryPage: window.api.pluginQueryPage,
-  pluginInstall: window.api.pluginInstall,
+  pluginInstallFromPath: window.api.pluginInstallFromPath,
   pluginReInstall: window.api.pluginReInstall,
-  pluginReInstallFromPackage: window.api.pluginReInstallFromPackage,
+  pluginReInstallFromPath: window.api.pluginReInstallFromPath,
   pluginUnInstall: window.api.pluginUnInstall
 }
 // 插件数据表组件的实例
@@ -151,10 +151,10 @@ function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
       dialogState.value = true
       break
     case 'reinstall':
-      beforeReInstall(op.id)
+      beforeReInstall(Number(op.id))
       break
     case 'uninstall':
-      unInstall(op.id)
+      unInstall(Number(op.id))
       break
     default:
       break
@@ -168,7 +168,7 @@ async function handleSelectionChange(selections: Plugin[]) {
   pluginDomainSearchTable.value.doSearch()
 }
 // 重新安装前询问安装来源
-async function beforeReInstall(pluginId: string) {
+async function beforeReInstall(pluginId: number) {
   ElMessageBox.confirm('请选择修复方式', '', {
     confirmButtonText: '自动修复',
     cancelButtonText: '选择安装包修复',
@@ -178,12 +178,12 @@ async function beforeReInstall(pluginId: string) {
     .catch(async () => {
       const packagePath = await selectPackage()
       if (StringUtil.isNotBlank(packagePath)) {
-        installFromPath(packagePath)
+        reInstallFromPath(pluginId, packagePath)
       }
     })
 }
 // 重新安装
-async function reInstall(pluginId: string) {
+async function reInstall(pluginId: number) {
   const response = await apis.pluginReInstall(pluginId)
   pluginSearchTable.value.doSearch()
   if (ApiUtil.check(response)) {
@@ -199,7 +199,7 @@ async function reInstall(pluginId: string) {
   }
 }
 // 卸载
-async function unInstall(pluginId: string) {
+async function unInstall(pluginId: number) {
   const response = await apis.pluginUnInstall(pluginId)
   pluginSearchTable.value.doSearch()
   if (ApiUtil.check(response)) {
@@ -227,17 +227,15 @@ async function selectPackage(): Promise<string | undefined> {
 }
 // 通过安装包路径安装插件
 async function installFromPath(packagePath: string) {
-  const result = await apis.pluginInstall(packagePath)
+  const result = await apis.pluginInstallFromPath(packagePath)
   if (ApiUtil.check(result)) {
     ApiUtil.msg(result)
   }
 }
-// 通过安装包路径安装插件
+// 通过安装包路径重新安装插件
 async function reInstallFromPath(pluginId: number, packagePath: string) {
-  const result = await apis.pluginReInstallFromPackage(pluginId, packagePath)
-  if (ApiUtil.check(result)) {
-    ApiUtil.msg(result)
-  }
+  const result = await apis.pluginReInstallFromPath(pluginId, packagePath)
+  ApiUtil.msg(result)
 }
 </script>
 <template>

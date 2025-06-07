@@ -9,7 +9,7 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import PluginLoadDTO from '../model/dto/PluginLoadDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '../model/dto/PluginInstallDTO.js'
-import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
@@ -81,6 +81,23 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   }
 
   /**
+   * 根据插件作者、名称、版本查询·
+   * @param author
+   * @param name
+   * @param version
+   */
+  public async listByAuthorNameVersion(author: string, name: string, version: string): Promise<Plugin[]> {
+    AssertNotNullish(author, this.constructor.name, '查询插件失败，作者不能为空')
+    AssertNotNullish(name, this.constructor.name, '查询插件失败，插件名称不能为空')
+    AssertNotNullish(version, this.constructor.name, '查询插件失败，插件版本不能为空')
+    const query = new PluginQueryDTO()
+    query.author = author
+    query.name = name
+    query.version = version
+    return this.list(query)
+  }
+
+  /**
    * 读取插件安装包
    * @param packagePath
    */
@@ -115,21 +132,20 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   }
 
   /**
-   * 从插件包安装插件
-   * @param packagePath
+   * 安装插件
+   * @param pluginInstallDTO
    */
-  public async install(packagePath: string): Promise<PluginInstallResultDTO> {
-    AssertNotNullish(packagePath, this.constructor.name, `插件包路径不能为空`)
-    try {
-      await fs.promises.access(packagePath, fs.constants.F_OK)
-    } catch (error) {
-      LogUtil.error(this.constructor.name, `安装插件失败，找不到插件包"${packagePath}"`)
-      throw error
+  public async install(pluginInstallDTO: PluginInstallDTO): Promise<PluginInstallResultDTO> {
+    // 校验是否已安装
+    const existingList = await this.listByAuthorNameVersion(pluginInstallDTO.author, pluginInstallDTO.name, pluginInstallDTO.version)
+    if (ArrayNotEmpty(existingList)) {
+      const msg = `安装插件失败，已存在该插件author: ${pluginInstallDTO.author} name: ${pluginInstallDTO.name} version: ${pluginInstallDTO.version}`
+      LogUtil.error(this.constructor.name, msg)
+      throw new Error(msg)
     }
 
-    const pluginInstallDTO = this.loadPluginPackage(packagePath)
-
     // 复制安装包
+    const packagePath = pluginInstallDTO.packagePath
     const packageFileName = path.basename(packagePath)
     const backupPath: string = path.join(
       RootDir(),
@@ -231,8 +247,23 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 从插件包安装插件
    * @param packagePath
    */
+  public async installFromPath(packagePath: string): Promise<PluginInstallResultDTO> {
+    AssertNotNullish(packagePath, this.constructor.name, `插件包路径不能为空`)
+    try {
+      await fs.promises.access(packagePath, fs.constants.F_OK)
+    } catch (error) {
+      LogUtil.error(this.constructor.name, `安装插件失败，找不到插件包"${packagePath}"`)
+      throw error
+    }
+    return this.install(this.loadPluginPackage(packagePath))
+  }
+
+  /**
+   * 从插件包安装插件
+   * @param packagePath
+   */
   public async installAndNotice(packagePath: string) {
-    this.install(packagePath).then((installResult) => {
+    this.installFromPath(packagePath).then((installResult) => {
       const tempDomains = installResult.domains.map((siteDomain) => siteDomain.domain)
       const gotoPageConfig: GotoPageConfig = {
         page: SubPageEnum.SiteManage,
@@ -257,36 +288,32 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   public async reInstall(pluginId: number) {
     const plugin = await this.getById(pluginId)
     AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    try {
+    return this.db.transaction(async () => {
       await this.unInstall(pluginId)
-    } catch (error) {
-      if ((error as { code: string }).code !== 'ENOENT') {
-        throw error
-      }
-    }
-    AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，插件安装包路径不可用，pluginId: ${pluginId}`)
-    return this.install(plugin.packagePath)
+      AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，插件安装包路径不可用，pluginId: ${pluginId}`)
+      const installDTO = this.loadPluginPackage(plugin.packagePath)
+      this.assertSamePlugin(plugin, installDTO)
+      return this.install(installDTO)
+    }, '重新安装插件')
   }
 
   /**
    * 重新安装插件
    */
-  public async reInstallFromPackage(pluginId: number, packagePath: string) {
-    const plugin = await this.getById(pluginId)
+  public async reInstallFromPath(pluginId: number, packagePath: string) {
     AssertNotBlank(
       packagePath,
       this.constructor.name,
       `重新安装插件失败，给定的安装包路径不可用，pluginId: ${pluginId}，packagePath: ${packagePath}`
     )
+    const plugin = await this.getById(pluginId)
     AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    try {
+    return this.db.transaction(async () => {
       await this.unInstall(pluginId)
-    } catch (error) {
-      if ((error as { code: string }).code !== 'ENOENT') {
-        throw error
-      }
-    }
-    return this.install(packagePath)
+      const installDTO = this.loadPluginPackage(packagePath)
+      this.assertSamePlugin(plugin, installDTO)
+      return this.install(installDTO)
+    }, '重新安装插件')
   }
 
   /**
@@ -303,8 +330,18 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       await fs.promises.rm(pluginPath, { recursive: true })
     } catch (error) {
       LogUtil.error(this.constructor.name, `卸载插件失败，plugin: ${plugin.author}-${plugin.name}-${plugin.version},`, error)
-      throw error
+      if ((error as { code: string }).code !== 'ENOENT') {
+        throw error
+      }
     }
     return this.deleteById(pluginId)
+  }
+
+  private assertSamePlugin(plugin1: Plugin, plugin2: Plugin): void {
+    AssertTrue(
+      plugin1.author === plugin2.author && plugin1.name === plugin2.name && plugin2.version === plugin2.version,
+      this.constructor.name,
+      `重新安装插件失败，插件[${plugin1.author}-${plugin1.name}-${plugin1.version}]与插件[${plugin2.author}-${plugin2.name}-${plugin2.version}]不符`
+    )
   }
 }

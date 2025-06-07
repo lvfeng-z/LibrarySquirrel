@@ -73,7 +73,7 @@ async function installPluginTest() {
     } else {
       installPath = path.join(RootDir(), '/resources/app.asar.unpacked/initialization/localTaskHandler.zip')
     }
-    pluginService.install(installPath)
+    pluginService.installFromPath(installPath)
   }
 }
 
