@@ -84,8 +84,8 @@ export default class DB {
     const connectionPromise = this.acquire(readOnly)
     return connectionPromise
       .then((connection) => {
-        LogUtil.debug(this.caller, `[PREPARE-SQL] ${statement}`)
-        return connection.prepare<BindParameters, Result>(statement)
+        LogUtil.debug(this.caller, `${(connection.readonly ? 'R-' : 'W-') + connection.index} [PREPARE-SQL] ${statement}`)
+        return connection.connection.prepare<BindParameters, Result>(statement)
       })
       .catch((error) => {
         LogUtil.error(this.caller, `[PREPARE-SQL] ${statement}`, error)
@@ -128,6 +128,7 @@ export default class DB {
   ): Promise<Result | undefined> {
     try {
       const prepare = await this.prepare<BindParameters, Result>(statement, true)
+      LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return prepare.get(...params)
     } catch (error) {
       LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
@@ -140,6 +141,7 @@ export default class DB {
   ): Promise<Result[]> {
     try {
       const prepare = await this.prepare<BindParameters, Result>(statement, true)
+      LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return prepare.all(...params)
     } catch (error) {
       LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
@@ -228,7 +230,7 @@ export default class DB {
    */
   public async exec(statement: string): Promise<BetterSqlite3.Database> {
     const connectionPromise = this.acquire(false)
-    return connectionPromise.then((connection) => connection.exec(statement))
+    return connectionPromise.then((connection) => connection.connection.exec(statement))
   }
 
   /**
@@ -251,7 +253,7 @@ export default class DB {
     }
 
     try {
-      connection.exec(`SAVEPOINT ${savepointName}`)
+      connection.connection.exec(`SAVEPOINT ${savepointName}`)
       LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
     } catch (error) {
       // 释放排他锁
@@ -266,7 +268,7 @@ export default class DB {
     return fn(this)
       .then((result) => {
         // 事务代码顺利执行的话释放此保存点
-        connection.exec(`RELEASE ${savepointName}`)
+        connection.connection.exec(`RELEASE ${savepointName}`)
         this.savepointCounter--
         LogUtil.debug(this.caller, `${operation}，RELEASE ${savepointName}，result: ${result}`)
 
@@ -280,7 +282,7 @@ export default class DB {
       .catch((error) => {
         // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排他锁一直无法释放
         if (isStartPoint) {
-          connection.exec(`ROLLBACK`)
+          connection.connection.exec(`ROLLBACK`)
           LogUtil.debug(this.caller, `${operation}，ROLLBACK`)
 
           // 标记当前DB实例已经不处于事务中
@@ -291,7 +293,7 @@ export default class DB {
           this.holdingLock = false
         } else {
           // 事务代码出现异常的话回滚至此保存点
-          connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
+          connection.connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
           LogUtil.debug(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
         }
 
@@ -313,10 +315,10 @@ export default class DB {
    * @param readOnly 读还是写（true：读，false：写）
    * @private
    */
-  private async acquire(readOnly: boolean): Promise<BetterSqlite3.Database> {
+  private async acquire(readOnly: boolean): Promise<Connection> {
     if (readOnly) {
       if (this.readingConnection != undefined) {
-        return this.readingConnection.connection
+        return this.readingConnection
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
@@ -330,10 +332,10 @@ export default class DB {
           return this.readingConnection
         })()
       }
-      return this.readingAcquirePromise.then((connection) => connection.connection)
+      return this.readingAcquirePromise
     } else {
       if (this.writingConnection != undefined) {
-        return this.writingConnection.connection
+        return this.writingConnection
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
@@ -347,7 +349,7 @@ export default class DB {
           return this.writingConnection
         })()
       }
-      return this.writingAcquirePromise.then((connection) => connection.connection)
+      return this.writingAcquirePromise
     }
   }
 
