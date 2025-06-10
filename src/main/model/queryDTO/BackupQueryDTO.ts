@@ -1,5 +1,5 @@
 import { BackupSourceTypeEnum } from '../../constant/BackupSourceTypeEnum.js'
-import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 import { NotNullish } from '../../util/CommonUtil.js'
 import lodash from 'lodash'
 

@@ -1,7 +1,7 @@
 import { NotNullish } from '../../util/CommonUtil.ts'
 import WorksQueryDTO from './WorksQueryDTO.js'
 import lodash from 'lodash'
-import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 
 /**
  * QueryDTO

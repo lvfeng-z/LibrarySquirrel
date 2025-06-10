@@ -1,7 +1,7 @@
 import lodash from 'lodash'
 import StringUtil from '../util/StringUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
-import { BaseQueryDTO, ToPlainParams } from './BaseQueryDTO.js'
+import BaseQueryDTO from './BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import { QuerySortOption } from '../constant/QuerySortOption.js'
@@ -73,7 +73,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     query: Query
   } {
     const whereClauses: Map<string, string> = new Map<string, string>()
-    const modifiedQuery = ToPlainParams(lodash.cloneDeep(queryConditions), ignore)
+    const modifiedQuery = BaseQueryDTO.toPlainParams(lodash.cloneDeep(queryConditions), ignore)
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
     Object.entries(modifiedQuery)
@@ -217,7 +217,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
       // 查询数据总量，计算页码数量
       let notNullishValue: Record<string, unknown> | undefined = undefined
       if (NotNullish(page.query)) {
-        notNullishValue = ToPlainParams(page.query)
+        notNullishValue = BaseQueryDTO.toPlainParams(page.query)
       }
       const countSql = `SELECT COUNT(*) AS total FROM (${statement})`
       const countResult = (await db.get(countSql, notNullishValue)) as { total: number }

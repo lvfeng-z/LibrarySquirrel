@@ -1,4 +1,4 @@
-import { BaseQueryDTO, ToPlainParams } from '../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import BaseEntity from '../base/BaseEntity.js'
 import DB from '../database/DB.js'
 import CoreDao from '../base/CoreDao.js'
@@ -89,7 +89,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
 
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(query)) {
-      plainParams = ToPlainParams(query, ['types'])
+      plainParams = BaseQueryDTO.toPlainParams(query, ['types'])
     }
 
     const db = this.acquire()

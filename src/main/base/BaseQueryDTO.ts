@@ -4,7 +4,7 @@ import { QuerySortOption } from '../constant/QuerySortOption.ts'
 import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import { NotNullish } from '../util/CommonUtil.js'
 
-export class BaseQueryDTO {
+export default class BaseQueryDTO {
   /**
    * 主键
    */
@@ -57,17 +57,17 @@ export class BaseQueryDTO {
    * 获取非字段属性的名称
    */
   public static nonFieldProperties(): string[] {
-    return ['operators', 'sort']
+    return ['operators', 'sort', 'keyword']
   }
-}
 
-/**
- * 获取仅包含查询参数的对象
- */
-export function ToPlainParams<T extends BaseQueryDTO>(queryDTO: T, ignore?: string[]) {
-  const fullIgnore = BaseQueryDTO.nonFieldProperties()
-  if (NotNullish(ignore)) {
-    fullIgnore.push(...ignore)
+  /**
+   * 获取仅包含查询参数的对象
+   */
+  public static toPlainParams<T extends BaseQueryDTO>(queryDTO: T, ignore?: string[]) {
+    const fullIgnore = BaseQueryDTO.nonFieldProperties()
+    if (NotNullish(ignore)) {
+      fullIgnore.push(...ignore)
+    }
+    return ToObjAcceptedBySqlite3(queryDTO, fullIgnore)
   }
-  return ToObjAcceptedBySqlite3(queryDTO, fullIgnore)
 }

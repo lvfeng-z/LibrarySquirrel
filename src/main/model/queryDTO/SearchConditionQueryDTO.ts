@@ -1,5 +1,5 @@
 import { SearchType } from '../util/SearchCondition.js'
-import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 
 export default class SearchConditionQueryDTO extends BaseQueryDTO {
   /**

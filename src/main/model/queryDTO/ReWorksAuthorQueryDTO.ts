@@ -1,4 +1,4 @@
-import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 import { AuthorRank } from '../../constant/AuthorRank.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
 

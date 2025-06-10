@@ -8,7 +8,7 @@ import Page from '../model/util/Page.js'
 import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import LocalTagDTO from '../model/dto/LocalTagDTO.js'
-import { ToPlainParams } from '../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../base/BaseQueryDTO.js'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db: DB, injectedDB: boolean) {
@@ -208,7 +208,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      plainParams = ToPlainParams(modifiedPage.query)
+      plainParams = BaseQueryDTO.toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()
     try {

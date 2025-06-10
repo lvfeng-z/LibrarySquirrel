@@ -1,7 +1,7 @@
 import StringUtil from '../util/StringUtil.ts'
 import DB from '../database/DB.ts'
 import BaseEntity, { Id } from './BaseEntity.ts'
-import { BaseQueryDTO, ToPlainParams } from './BaseQueryDTO.ts'
+import BaseQueryDTO from './BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
 import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
 import SelectItem from '../model/util/SelectItem.ts'
@@ -172,7 +172,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedQuery)) {
-      plainParams = ToPlainParams(modifiedQuery)
+      plainParams = BaseQueryDTO.toPlainParams(modifiedQuery)
     }
     // 查询
     const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
@@ -424,7 +424,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedQuery)) {
-      plainParams = ToPlainParams(modifiedQuery)
+      plainParams = BaseQueryDTO.toPlainParams(modifiedQuery)
     }
     // 查询
     const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
@@ -453,7 +453,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     let whereClause: string | undefined
     const modifiedPage = new Page(page)
     if (page.query) {
-      const whereClauseAndQuery = this.getWhereClause(page.query)
+      const whereClauseAndQuery = this.getWhereClause(page.query, undefined, BaseQueryDTO.nonFieldProperties())
       whereClause = whereClauseAndQuery.whereClause
 
       // 修改过的查询条件
@@ -476,7 +476,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      plainParams = ToPlainParams(modifiedPage.query)
+      plainParams = BaseQueryDTO.toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()
     return db
@@ -520,7 +520,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedQuery)) {
-      plainParams = ToPlainParams(modifiedQuery)
+      plainParams = BaseQueryDTO.toPlainParams(modifiedQuery)
     }
     // 查询
     const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
@@ -589,7 +589,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const queryObj = ToPlainParams(modifiedQuery)
+    const queryObj = BaseQueryDTO.toPlainParams(modifiedQuery)
     return db
       .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
       .then((rows) => rows.map((row) => new SelectItem(row)))
@@ -656,7 +656,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      plainParams = ToPlainParams(modifiedPage.query)
+      plainParams = BaseQueryDTO.toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()
     return db

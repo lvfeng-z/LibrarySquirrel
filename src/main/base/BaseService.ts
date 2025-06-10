@@ -1,4 +1,4 @@
-import { BaseQueryDTO } from './BaseQueryDTO.ts'
+import BaseQueryDTO from './BaseQueryDTO.ts'
 import BaseEntity from './BaseEntity.ts'
 import Page from '../model/util/Page.ts'
 import BaseDao from './BaseDao.ts'

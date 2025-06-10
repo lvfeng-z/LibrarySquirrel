@@ -1,4 +1,4 @@
-import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 import { PathTypeEnum } from '../../constant/PathTypeEnum.ts'
 import { NotNullish } from '../../util/CommonUtil.ts'
 

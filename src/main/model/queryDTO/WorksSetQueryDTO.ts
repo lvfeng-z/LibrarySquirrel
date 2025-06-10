@@ -1,4 +1,4 @@
-import { BaseQueryDTO } from '../../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 import { NotNullish } from '../../util/CommonUtil.ts'
 
 export default class WorksSetQueryDTO extends BaseQueryDTO {

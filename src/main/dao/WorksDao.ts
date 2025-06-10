@@ -11,7 +11,7 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/Comm
 import StringUtil from '../util/StringUtil.js'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
-import { ToPlainParams } from '../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import { BOOL } from '../constant/BOOL.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
@@ -161,7 +161,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
 
     let query: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      query = ToPlainParams(modifiedPage.query)
+      query = BaseQueryDTO.toPlainParams(modifiedPage.query)
     }
 
     const db = this.acquire()

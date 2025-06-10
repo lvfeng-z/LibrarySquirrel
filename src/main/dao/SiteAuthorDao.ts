@@ -8,7 +8,7 @@ import StringUtil from '../util/StringUtil.ts'
 import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SelectItem from '../model/util/SelectItem.js'
-import { ToPlainParams } from '../base/BaseQueryDTO.js'
+import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 import SiteAuthorFullDTO from '../model/dto/SiteAuthorFullDTO.js'
 import lodash from 'lodash'
@@ -115,7 +115,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
-    const query = ToPlainParams(modifiedQuery)
+    const query = BaseQueryDTO.toPlainParams(modifiedQuery)
     // 查询
     const db = super.acquire()
     return db
