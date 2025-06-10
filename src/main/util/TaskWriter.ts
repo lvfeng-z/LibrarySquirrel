@@ -138,7 +138,7 @@ export default class TaskWriter {
         this.readable.unpipe(this.writable)
       }
       if (NotNullish(this.writable)) {
-        this.writable.once('drain', () => this.writable?.end())
+        this.writable?.end()
         this.bytesWritten = IsNullish(this.writable) ? 0 : this.writable.bytesWritten
       }
       return false

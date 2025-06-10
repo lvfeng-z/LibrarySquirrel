@@ -523,7 +523,6 @@ export class TaskQueue {
           localWorksId
         )
         task.status = TaskStatusEnum.WAITING
-        // taskRunInstance.changeInStream(true)
         runInstances.push(taskRunInstance)
         this.inletTask(taskRunInstance, task)
         changeStatusNeededList.push(taskRunInstance)
@@ -1181,13 +1180,10 @@ class WorksInfoSaveStream extends Transform {
       callback()
       alreadyCallback = true
       await saveInfoPromise
-      if (chunk.paused()) {
-        // chunk.changeInStream(false)
-      } else {
+      if (!chunk.paused()) {
         this.push(chunk)
       }
     } catch (error) {
-      // chunk.changeInStream(false)
       chunk.infoSaved = false
       const msg = `保存任务${chunk.taskId}的作品信息失败`
       const newError = new Error()
@@ -1220,7 +1216,6 @@ class ResourceSaveStream extends Transform {
   private async processTask(chunk: TaskRunInstance): Promise<void> {
     // 开始之前检查当前的状态
     if (chunk.paused()) {
-      // chunk.changeInStream(false)
       return
     }
     // 发出任务开始保存的事件
@@ -1230,14 +1225,11 @@ class ResourceSaveStream extends Transform {
     return chunk
       .process()
       .then((saveResult: TaskStatusEnum) => {
-        // chunk.changeInStream(false)
-        LogUtil.info('test----', `${chunk.taskId}->${saveResult}`)
         if (TaskStatusEnum.PAUSE !== saveResult) {
           this.push(chunk)
         }
       })
       .catch((err) => {
-        // chunk.changeInStream(false)
         this.emit('saveFailed', err, chunk)
       })
   }
