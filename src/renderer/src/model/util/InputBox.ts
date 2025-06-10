@@ -13,7 +13,6 @@ export class InputBox extends CommonInputConfig {
   constructor(inputBox: IInputBox) {
     super(inputBox)
     this.name = inputBox.name
-    this.label = inputBox.label
     this.placeholder = inputBox.placeholder
     this.show = inputBox.show
     this.inputSpan = inputBox.inputSpan

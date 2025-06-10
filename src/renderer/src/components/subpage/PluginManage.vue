@@ -6,7 +6,6 @@ import Page from '@renderer/model/util/Page.ts'
 import OperationItem from '@renderer/model/util/OperationItem.ts'
 import DialogMode from '@renderer/model/util/DialogMode.ts'
 import { Thead } from '@renderer/model/util/Thead.ts'
-import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
@@ -105,20 +104,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
   })
 ])
 // 插件的查询参数
-const pluginMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'keyword',
-    type: 'text',
-    placeholder: '输入插件名称、作者查询',
-    inputSpan: 18
-  })
-])
-// 插件弹窗的模式
-const pluginDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
-// 插件对话框开关
-const pluginDialogState: Ref<boolean> = ref(false)
-// 插件对话框的数据
-const pluginDialogData: Ref<UnwrapRef<Plugin>> = ref(new Plugin())
+const pluginSearchParams: Ref<PluginQueryDTO> = ref<PluginQueryDTO>(new PluginQueryDTO())
 // 被选中的插件
 const pluginSelected: Ref<UnwrapRef<Plugin>> = ref(new Plugin())
 // 对话框开关
@@ -136,12 +122,6 @@ async function pluginQueryPage(page: Page<PluginQueryDTO, Plugin>): Promise<Page
     ApiUtil.msg(response)
     return undefined
   }
-}
-// 处理插件新增按钮点击事件
-async function handleCreateButtonClicked() {
-  pluginDialogMode.value = DialogMode.NEW
-  pluginDialogData.value = new Plugin()
-  pluginDialogState.value = true
 }
 // 处理插件数据行按钮点击事件
 function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
@@ -226,15 +206,17 @@ async function selectPackage(): Promise<string | undefined> {
   return undefined
 }
 // 通过安装包路径安装插件
-async function installFromPath(packagePath: string) {
-  const result = await apis.pluginInstallFromPath(packagePath)
-  if (ApiUtil.check(result)) {
-    ApiUtil.msg(result)
-  }
-}
+// async function installFromPath(packagePath: string) {
+//   const result = await apis.pluginInstallFromPath(packagePath)
+//   pluginSearchTable.value.doSearch()
+//   if (ApiUtil.check(result)) {
+//     ApiUtil.msg(result)
+//   }
+// }
 // 通过安装包路径重新安装插件
 async function reInstallFromPath(pluginId: number, packagePath: string) {
   const result = await apis.pluginReInstallFromPath(pluginId, packagePath)
+  pluginSearchTable.value.doSearch()
   ApiUtil.msg(result)
 }
 </script>
@@ -245,23 +227,27 @@ async function reInstallFromPath(pluginId: number, packagePath: string) {
         <search-table
           ref="pluginSearchTable"
           v-model:page="pluginPage"
+          v-model:search-params="pluginSearchParams"
           v-model:changed-rows="pluginChangedRows"
           class="plugin-manage-left-search-table"
-          key-of-data="id"
-          :create-button="true"
+          data-key="id"
           :operation-button="pluginOperationButton"
           :thead="pluginThead"
-          :main-input-boxes="pluginMainInputBoxes"
-          :drop-down-input-boxes="[]"
           :search="pluginQueryPage"
           :multi-select="false"
           :selectable="true"
           :page-sizes="[10, 20, 50, 100]"
           :operation-width="150"
-          @create-button-clicked="handleCreateButtonClicked"
           @row-button-clicked="handleRowButtonClicked"
           @selection-change="handleSelectionChange"
         >
+          <template #toolbarMain>
+            <el-button type="primary"> 安装 </el-button>
+            <el-input v-model="pluginSearchParams.keyword" placeholder="输入名称" clearable />
+          </template>
+          <template #toolbarDropdown>
+            <el-button></el-button>
+          </template>
         </search-table>
       </div>
     </template>

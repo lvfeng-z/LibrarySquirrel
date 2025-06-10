@@ -19,8 +19,8 @@ const props = withDefaults(
 )
 
 // model
-const formData = defineModel<object>('formData', { default: {}, required: true }) //
-const state: Ref<UnwrapRef<boolean>> = defineModel('state', { required: true }) // 开关状态
+const formData = defineModel<object>('formData', { required: true }) //
+const state: Ref<boolean> = defineModel<boolean>('state', { required: true }) // 开关状态
 
 // onBeforeMount
 onBeforeMount(() => {
@@ -71,7 +71,7 @@ function calculateSpan() {
 </script>
 
 <template>
-  <collapse-panel v-model:state="state" :position="props.position" :maxLength="props.maxLength">
+  <collapse-panel v-model:state="state" :position="props.position" :max-length="props.maxLength">
     <el-scrollbar class="dropdown-table-rows">
       <el-form v-model="formData">
         <template v-for="(boxRow, boxRowindex) in inputBoxInRow" :key="boxRowindex">

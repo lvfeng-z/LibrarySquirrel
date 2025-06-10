@@ -7,7 +7,6 @@ import lodash from 'lodash'
 import ApiUtil from '../../utils/ApiUtil'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
@@ -18,6 +17,8 @@ import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -109,6 +110,24 @@ const siteTagThead: Ref<Thead[]> = ref([
     cacheDataKey: 'localTagSelectItem'
   }),
   new Thead({
+    type: 'autoLoadSelect',
+    editMethod: 'replace',
+    defaultDisabled: true,
+    dblclickToEdit: true,
+    key: 'siteId',
+    title: '站点',
+    hide: false,
+    width: 150,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center',
+    overHide: true,
+    remote: true,
+    remotePaging: true,
+    remotePageMethod: siteQuerySelectItemPage,
+    cacheDataKey: 'siteSelectItem'
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     dblclickToEdit: true,
@@ -122,24 +141,8 @@ const siteTagThead: Ref<Thead[]> = ref([
     overHide: true
   })
 ])
-// 站点标签SearchTable的mainInputBoxes
-const mainInputBoxes: Ref<InputBox[]> = ref<InputBox[]>([
-  new InputBox({
-    name: 'siteTagName',
-    type: 'text',
-    placeholder: '输入站点标签的名称',
-    inputSpan: 10
-  })
-])
-// 站点标签SearchTable的dropDownInputBoxes
-const dropDownInputBoxes: Ref<InputBox[]> = ref([
-  new InputBox({
-    name: 'id',
-    label: 'id',
-    type: 'text',
-    placeholder: '内部id'
-  })
-])
+// 站点标签SearchTable的查询参数
+const siteTagSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQueryDTO())
 // 站点标签SearchTable的分页
 const page: Ref<UnwrapRef<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>>> = ref(new Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>())
 // 站点标签弹窗的mode
@@ -267,22 +270,42 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
         <search-table
           ref="siteTagSearchTable"
           v-model:page="page"
+          v-model:search-params="siteTagSearchParams"
           v-model:changed-rows="changedRows"
           class="tag-manage-search-table"
-          key-of-data="id"
-          :create-button="true"
+          data-key="id"
           :operation-button="operationButton"
           :thead="siteTagThead"
-          :main-input-boxes="mainInputBoxes"
-          :drop-down-input-boxes="dropDownInputBoxes"
           :search="siteTagQueryPage"
           :multi-select="true"
           :selectable="true"
           :page-sizes="[10, 20, 50, 100, 1000]"
           :operation-width="205"
-          @create-button-clicked="handleCreateButtonClicked"
           @row-button-clicked="handleRowButtonClicked"
-        ></search-table>
+        >
+          <template #toolbarMain>
+            <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+            <el-row class="site-tag-manage-search-bar">
+              <el-col :span="20">
+                <el-input v-model="siteTagSearchParams.siteTagName" placeholder="输入标签名称" clearable />
+              </el-col>
+              <el-col :span="4">
+                <auto-load-select
+                  v-model="siteTagSearchParams.siteId"
+                  :load="siteQuerySelectItemPage"
+                  placeholder="选择站点"
+                  remote
+                  filterable
+                  clearable
+                >
+                  <template #default="{ list }">
+                    <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                  </template>
+                </auto-load-select>
+              </el-col>
+            </el-row>
+          </template>
+        </search-table>
         <el-drawer> </el-drawer>
       </div>
     </template>
@@ -315,5 +338,8 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
 .tag-manage-search-table {
   height: 100%;
   width: 100%;
+}
+.site-tag-manage-search-bar {
+  flex-grow: 1;
 }
 </style>

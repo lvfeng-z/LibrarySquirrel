@@ -9,21 +9,18 @@ import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import LocalAuthor from '../../model/main/entity/LocalAuthor.ts'
 import Page from '@renderer/model/util/Page.ts'
-import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
-import Site from '@renderer/model/main/entity/Site.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
-import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import LocalAuthorQueryDTO from '@renderer/model/main/queryDTO/LocalAuthorQueryDTO.ts'
 import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -121,57 +118,18 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   })
 ])
-// 本地作者SearchTable的mainInputBoxes
-const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'authorName',
-    type: 'text',
-    placeholder: '输入本地作者的名称',
-    inputSpan: 18
-  })
-])
-// 本地作者SearchTable的dropDownInputBoxes
-const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  new InputBox({
-    name: 'id',
-    label: 'id',
-    type: 'text',
-    placeholder: '内部id'
-  })
-])
+// 本地作者SearchTable的查询参数
+const localAuthorSearchParams: Ref<LocalAuthorQueryDTO> = ref(new LocalAuthorQueryDTO())
 // 本地作者弹窗的mode
 const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
-// 本地标签的对话框开关
+// 本地作者的对话框开关
 const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
-// 本地标签对话框的数据
+// 本地作者对话框的数据
 const dialogData: Ref<UnwrapRef<LocalAuthor>> = ref(new LocalAuthor())
-// 站点作者ExchangeBox的mainInputBoxes
-const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'authorName',
-    type: 'text',
-    placeholder: '输入站点作者名称',
-    inputSpan: 12
-  }),
-  new InputBox({
-    name: 'siteId',
-    type: 'select',
-    placeholder: '选择站点',
-    remote: true,
-    remoteMethod: requestSiteQuerySelectItemPage,
-    inputSpan: 9
-  })
-])
-// 站点作者ExchangeBox的DropDownInputBoxes
-const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'id',
-    type: 'text',
-    placeholder: '输入id',
-    label: 'id',
-    inputSpan: 22
-  })
-])
+// 站点作者ExchangeBox的upper的查询参数
+const exchangeBoxUpperSearchParams: Ref<SiteAuthorQueryDTO> = ref(new SiteAuthorQueryDTO())
+// 站点作者ExchangeBox的lower的查询参数
+const exchangeBoxLowerSearchParams: Ref<SiteAuthorQueryDTO> = ref(new SiteAuthorQueryDTO())
 // 是否禁用ExchangeBox的搜索按钮
 const disableExcSearchButton: Ref<boolean> = ref(false)
 
@@ -184,20 +142,6 @@ async function localAuthorQueryPage(page: Page<LocalAuthorQueryDTO, object>): Pr
   } else {
     ApiUtil.msg(response)
     return undefined
-  }
-}
-// 请求站点分页列表的函数
-async function requestSiteQuerySelectItemPage(query: string) {
-  const sitePage: Page<SiteQueryDTO, Site> = new Page()
-  if (StringUtil.isNotBlank(query)) {
-    sitePage.query = { siteName: query }
-  }
-  const response = await apis.siteQuerySelectItemPage(sitePage)
-  if (ApiUtil.check(response)) {
-    const page = ApiUtil.data(response) as Page<LocalAuthorQueryDTO, object>
-    return page.data as TreeSelectNode[]
-  } else {
-    return []
   }
 }
 // 处理本地作者新增按钮点击事件
@@ -320,30 +264,30 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
           <search-table
             ref="localAuthorSearchTable"
             v-model:page="page"
+            v-model:search-params="localAuthorSearchParams"
             v-model:changed-rows="changedRows"
             class="local-author-manage-left-search-table"
-            key-of-data="id"
-            :create-button="true"
+            data-key="id"
             :operation-button="operationButton"
             :thead="localAuthorThead"
-            :main-input-boxes="mainInputBoxes"
-            :drop-down-input-boxes="dropDownInputBoxes"
             :search="localAuthorQueryPage"
             :multi-select="false"
             :selectable="true"
-            @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
             @selection-change="handleLocalAuthorSelectionChange"
-          ></search-table>
+          >
+            <template #toolbarMain>
+              <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+              <el-input v-model="localAuthorSearchParams.authorName" placeholder="输入作者名称" clearable />
+            </template>
+          </search-table>
         </div>
         <div class="local-author-manage-right">
           <exchange-box
             ref="siteAuthorExchangeBox"
-            :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-            :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+            v-model:upper-search-params="exchangeBoxUpperSearchParams"
+            v-model:lower-search-params="exchangeBoxLowerSearchParams"
             :upper-load="(_page) => requestSiteAuthorSelectItemPage(_page, true)"
-            :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-            :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page) => requestSiteAuthorSelectItemPage(_page, false)"
             :search-button-disabled="disableExcSearchButton"
             tags-gap="10px"
@@ -351,6 +295,48 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
             @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
             @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"
           >
+            <template #upperToolbarMain>
+              <el-row class="local-author-manage-search-bar">
+                <el-col :span="18">
+                  <el-input v-model="exchangeBoxUpperSearchParams.authorName" placeholder="输入站点作者名称" clearable />
+                </el-col>
+                <el-col :span="6">
+                  <auto-load-select
+                    v-model="exchangeBoxUpperSearchParams.siteId"
+                    :load="siteQuerySelectItemPage"
+                    placeholder="选择站点"
+                    remote
+                    filterable
+                    clearable
+                  >
+                    <template #default="{ list }">
+                      <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                    </template>
+                  </auto-load-select>
+                </el-col>
+              </el-row>
+            </template>
+            <template #lowerToolbarMain>
+              <el-row class="local-author-manage-search-bar">
+                <el-col :span="18">
+                  <el-input v-model="exchangeBoxLowerSearchParams.authorName" placeholder="输入站点作者名称" clearable />
+                </el-col>
+                <el-col :span="6">
+                  <auto-load-select
+                    v-model="exchangeBoxLowerSearchParams.siteId"
+                    :load="siteQuerySelectItemPage"
+                    placeholder="选择站点"
+                    remote
+                    filterable
+                    clearable
+                  >
+                    <template #default="{ list }">
+                      <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                    </template>
+                  </auto-load-select>
+                </el-col>
+              </el-row>
+            </template>
             <template #upperTitle>
               <div class="local-author-manage-site-author-title">
                 <span class="local-author-manage-site-author-title-text">已绑定站点作者</span>
@@ -419,5 +405,8 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
   text-align: center;
   writing-mode: vertical-lr;
   color: var(--el-text-color-regular);
+}
+.local-author-manage-search-bar {
+  flex-grow: 1;
 }
 </style>

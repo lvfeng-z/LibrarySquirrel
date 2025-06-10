@@ -9,22 +9,19 @@ import ApiUtil from '../../utils/ApiUtil'
 import ApiResponse from '../../model/util/ApiResponse'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
 import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
-import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
-import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
-import Site from '@renderer/model/main/entity/Site.ts'
 import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -119,33 +116,8 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     overHide: true
   })
 ])
-// 本地标签SearchTable的mainInputBoxes
-const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'localTagName',
-    type: 'text',
-    placeholder: '输入本地标签的名称',
-    inputSpan: 10
-  }),
-  new InputBox({
-    name: 'baseLocalTagId',
-    type: 'autoLoadSelect',
-    placeholder: '选择上级标签',
-    inputSpan: 8,
-    remote: true,
-    remotePaging: true,
-    remotePageMethod: localTagQuerySelectItemPage
-  })
-])
-// 本地标签SearchTable的dropDownInputBoxes
-const dropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  new InputBox({
-    name: 'id',
-    label: 'id',
-    type: 'text',
-    placeholder: '内部id'
-  })
-])
+// 本地标签SearchTable的查询参数
+const localTagSearchParams: Ref<LocalTagQueryDTO> = ref(new LocalTagQueryDTO())
 // 本地标签SearchTable的分页
 const page: Ref<UnwrapRef<Page<LocalTagQueryDTO, LocalTagDTO>>> = ref(new Page<LocalTagQueryDTO, LocalTagDTO>())
 // 本地标签弹窗的mode
@@ -154,33 +126,10 @@ const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
 // 本地标签对话框的数据
 const dialogData: Ref<UnwrapRef<LocalTagVO>> = ref(new LocalTagVO())
-// 站点标签ExchangeBox的mainInputBoxes
-const exchangeBoxMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'siteTagName',
-    type: 'text',
-    placeholder: '输入站点标签名称',
-    inputSpan: 12
-  }),
-  new InputBox({
-    name: 'siteId',
-    type: 'select',
-    placeholder: '选择站点',
-    remote: true,
-    remoteMethod: requestSiteQuerySelectItemPage,
-    inputSpan: 9
-  })
-])
-// 站点标签ExchangeBox的DropDownInputBoxes
-const exchangeBoxDropDownInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'id',
-    type: 'text',
-    placeholder: '输入id',
-    label: 'id',
-    inputSpan: 22
-  })
-])
+// 站点标签ExchangeBox的upper的查询参数
+const exchangeBoxUpperSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQueryDTO())
+// 站点标签ExchangeBox的lower的查询参数
+const exchangeBoxLowerSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQueryDTO())
 // 是否禁用ExchangeBox的搜索按钮
 const disableExcSearchButton: Ref<boolean> = ref(false)
 
@@ -215,20 +164,6 @@ async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, inp
   } else {
     ApiUtil.failedMsg(response)
     return page
-  }
-}
-// 请求站点分页列表的函数
-async function requestSiteQuerySelectItemPage(query: string) {
-  const sitePage: Page<SiteQueryDTO, Site> = new Page()
-  if (StringUtil.isNotBlank(query)) {
-    sitePage.query = { siteName: query }
-  }
-  const response = await apis.siteQuerySelectItemPage(sitePage)
-  if (ApiUtil.check(response)) {
-    const newSitePage = ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
-    return newSitePage.data as TreeSelectNode[]
-  } else {
-    return []
   }
 }
 // 处理本地标签新增按钮点击事件
@@ -353,31 +288,49 @@ async function requestSiteTagSelectItemPage(
           <search-table
             ref="localTagSearchTable"
             v-model:page="page"
+            v-model:search-params="localTagSearchParams"
             v-model:changed-rows="changedRows"
             class="tag-manage-left-search-table"
-            key-of-data="id"
-            :create-button="true"
+            data-key="id"
             :operation-button="operationButton"
             :thead="localTagThead"
-            :main-input-boxes="mainInputBoxes"
-            :drop-down-input-boxes="dropDownInputBoxes"
             :search="localTagQueryPage"
             :multi-select="false"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100, 1000]"
-            @create-button-clicked="handleCreateButtonClicked"
             @row-button-clicked="handleRowButtonClicked"
             @selection-change="handleLocalTagSelectionChange"
-          ></search-table>
+          >
+            <template #toolbarMain>
+              <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+              <el-row class="local-tag-manage-search-bar">
+                <el-col :span="16">
+                  <el-input v-model="localTagSearchParams.localTagName" placeholder="输入标签名称" clearable />
+                </el-col>
+                <el-col :span="8">
+                  <auto-load-select
+                    v-model="localTagSearchParams.baseLocalTagId"
+                    :load="localTagQuerySelectItemPage"
+                    placeholder="选择上级标签"
+                    remote
+                    filterable
+                    clearable
+                  >
+                    <template #default="{ list }">
+                      <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                    </template>
+                  </auto-load-select>
+                </el-col>
+              </el-row>
+            </template>
+          </search-table>
         </div>
         <div class="tag-manage-right">
           <exchange-box
             ref="siteTagExchangeBox"
-            :upper-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-            :upper-main-input-boxes="exchangeBoxMainInputBoxes"
+            v-model:upper-search-params="exchangeBoxUpperSearchParams"
+            v-model:lower-search-params="exchangeBoxLowerSearchParams"
             :upper-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, true)"
-            :lower-drop-down-input-boxes="exchangeBoxDropDownInputBoxes"
-            :lower-main-input-boxes="exchangeBoxMainInputBoxes"
             :lower-load="(_page: IPage<SiteTagQueryDTO, SelectItem>) => requestSiteTagSelectItemPage(_page, false)"
             :search-button-disabled="disableExcSearchButton"
             tags-gap="10px"
@@ -385,6 +338,48 @@ async function requestSiteTagSelectItemPage(
             @lower-confirm="(upper, lower) => handleExchangeBoxConfirm(false, upper, lower)"
             @all-confirm="(upper, lower) => handleExchangeBoxConfirm(undefined, upper, lower)"
           >
+            <template #upperToolbarMain>
+              <el-row class="local-tag-manage-search-bar">
+                <el-col :span="18">
+                  <el-input v-model="exchangeBoxUpperSearchParams.siteTagName" placeholder="输入站点标签名称" clearable />
+                </el-col>
+                <el-col :span="6">
+                  <auto-load-select
+                    v-model="exchangeBoxUpperSearchParams.siteId"
+                    :load="siteQuerySelectItemPage"
+                    placeholder="选择站点"
+                    remote
+                    filterable
+                    clearable
+                  >
+                    <template #default="{ list }">
+                      <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                    </template>
+                  </auto-load-select>
+                </el-col>
+              </el-row>
+            </template>
+            <template #lowerToolbarMain>
+              <el-row class="local-tag-manage-search-bar">
+                <el-col :span="18">
+                  <el-input v-model="exchangeBoxLowerSearchParams.siteTagName" placeholder="输入站点标签名称" clearable />
+                </el-col>
+                <el-col :span="6">
+                  <auto-load-select
+                    v-model="exchangeBoxLowerSearchParams.siteId"
+                    :load="siteQuerySelectItemPage"
+                    placeholder="选择站点"
+                    remote
+                    filterable
+                    clearable
+                  >
+                    <template #default="{ list }">
+                      <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                    </template>
+                  </auto-load-select>
+                </el-col>
+              </el-row>
+            </template>
             <template #upperTitle>
               <div class="local-tag-manage-site-author-title">
                 <span class="local-tag-manage-site-author-title-text">已绑定站点标签</span>
@@ -453,5 +448,8 @@ async function requestSiteTagSelectItemPage(
   text-align: center;
   writing-mode: vertical-lr;
   color: var(--el-text-color-regular);
+}
+.local-tag-manage-search-bar {
+  flex-grow: 1;
 }
 </style>

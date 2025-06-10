@@ -6,7 +6,6 @@ import lodash from 'lodash'
 import ApiUtil from '../../utils/ApiUtil'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
@@ -18,6 +17,8 @@ import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteAuthorVO from '@renderer/model/main/vo/SiteAuthorVO.ts'
 import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
 import SiteAuthor from '@renderer/model/main/entity/SiteAuthor.ts'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 
 // onMounted
 onMounted(() => {
@@ -109,6 +110,24 @@ const siteAuthorThead: Ref<Thead[]> = ref([
     cacheDataKey: 'localAuthorSelectItem'
   }),
   new Thead({
+    type: 'autoLoadSelect',
+    editMethod: 'replace',
+    defaultDisabled: true,
+    dblclickToEdit: true,
+    key: 'siteId',
+    title: '站点',
+    hide: false,
+    width: 150,
+    headerAlign: 'center',
+    headerTagType: 'success',
+    dataAlign: 'center',
+    overHide: true,
+    remote: true,
+    remotePaging: true,
+    remotePageMethod: siteQuerySelectItemPage,
+    cacheDataKey: 'siteSelectItem'
+  }),
+  new Thead({
     type: 'datetime',
     defaultDisabled: true,
     dblclickToEdit: true,
@@ -122,24 +141,8 @@ const siteAuthorThead: Ref<Thead[]> = ref([
     overHide: true
   })
 ])
-// 站点作者SearchTable的mainInputBoxes
-const mainInputBoxes: Ref<InputBox[]> = ref<InputBox[]>([
-  new InputBox({
-    name: 'authorName',
-    type: 'text',
-    placeholder: '输入站点作者的名称',
-    inputSpan: 10
-  })
-])
-// 站点作者SearchTable的dropDownInputBoxes
-const dropDownInputBoxes: Ref<InputBox[]> = ref([
-  new InputBox({
-    name: 'id',
-    label: 'id',
-    type: 'text',
-    placeholder: '内部id'
-  })
-])
+// 站点作者SearchTable的查询参数
+const siteAuthorSearchParams: Ref<SiteAuthorQueryDTO> = ref(new SiteAuthorQueryDTO())
 // 站点作者SearchTable的分页
 const page: Ref<UnwrapRef<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>>> = ref(
   new Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>()
@@ -271,22 +274,42 @@ async function creatSameNameLocalAuthorAndBind(siteAuthor: SiteAuthor) {
         <search-table
           ref="siteAuthorSearchTable"
           v-model:page="page"
+          v-model:search-params="siteAuthorSearchParams"
           v-model:changed-rows="changedRows"
           class="tag-manage-search-table"
-          key-of-data="id"
-          :create-button="true"
+          data-key="id"
           :operation-button="operationButton"
           :thead="siteAuthorThead"
-          :main-input-boxes="mainInputBoxes"
-          :drop-down-input-boxes="dropDownInputBoxes"
           :search="siteAuthorQueryPage"
           :multi-select="true"
           :selectable="true"
           :page-sizes="[10, 20, 50, 100, 1000]"
           :operation-width="205"
-          @create-button-clicked="handleCreateButtonClicked"
           @row-button-clicked="handleRowButtonClicked"
-        ></search-table>
+        >
+          <template #toolbarMain>
+            <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>
+            <el-row class="site-author-manage-search-bar">
+              <el-col :span="20">
+                <el-input v-model="siteAuthorSearchParams.authorName" placeholder="输入作者名称" clearable />
+              </el-col>
+              <el-col :span="4">
+                <auto-load-select
+                  v-model="siteAuthorSearchParams.siteId"
+                  :load="siteQuerySelectItemPage"
+                  placeholder="选择站点"
+                  remote
+                  filterable
+                  clearable
+                >
+                  <template #default="{ list }">
+                    <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                  </template>
+                </auto-load-select>
+              </el-col>
+            </el-row>
+          </template>
+        </search-table>
         <el-drawer> </el-drawer>
       </div>
     </template>
@@ -319,5 +342,8 @@ async function creatSameNameLocalAuthorAndBind(siteAuthor: SiteAuthor) {
 .tag-manage-search-table {
   height: 100%;
   width: 100%;
+}
+.site-author-manage-search-bar {
+  flex-grow: 1;
 }
 </style>

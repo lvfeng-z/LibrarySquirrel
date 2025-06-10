@@ -7,9 +7,15 @@ import SelectItem from '../../model/util/SelectItem'
 import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
-const props = defineProps<{
-  load: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>>
-}>()
+const props = withDefaults(
+  defineProps<{
+    load: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>>
+    pageSize?: number
+  }>(),
+  {
+    pageSize: 10
+  }
+)
 
 // model
 const data = defineModel<string | number>('data')
@@ -32,6 +38,7 @@ async function handleScroll(newQuery: boolean, input?: string) {
   //查询
   const tempPage = lodash.cloneDeep(page.value)
   tempPage.data = undefined
+  tempPage.pageSize = props.pageSize
   const nextPage = await props.load(tempPage, input)
 
   // 没有新数据时，不再增加页码

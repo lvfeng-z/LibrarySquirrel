@@ -5,7 +5,6 @@ import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
-import { InputBox } from '../../model/util/InputBox'
 import DialogMode from '../../model/util/DialogMode'
 import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import { ElTag } from 'element-plus'
@@ -22,15 +21,12 @@ import TaskOperationBarActive from '@renderer/components/common/TaskOperationBar
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
 import Task from '@renderer/model/main/entity/Task.ts'
-import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
-import Site from '@renderer/model/main/entity/Site.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
-import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
-import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
 import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 
 // onMounted
 onMounted(() => {
@@ -157,59 +153,8 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
 ])
 // 任务SearchTable的分页
 const page: Ref<UnwrapRef<Page<TaskQueryDTO, Task>>> = ref(new Page<TaskQueryDTO, Task>())
-// 主搜索栏的inputBox
-const mainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref([
-  new InputBox({
-    name: 'taskName',
-    type: 'text',
-    placeholder: '输入任务的名称',
-    inputSpan: 13
-  }),
-  new InputBox({
-    name: 'siteId',
-    type: 'select',
-    placeholder: '选择站点',
-    remote: true,
-    remoteMethod: requestSiteQuerySelectItemPage,
-    inputSpan: 4
-  }),
-  new InputBox({
-    name: 'status',
-    type: 'select',
-    placeholder: '选择状态',
-    inputSpan: 4,
-    selectList: [
-      {
-        value: TaskStatusEnum.CREATED,
-        label: '已创建'
-      },
-      {
-        value: TaskStatusEnum.PROCESSING,
-        label: '进行中'
-      },
-      {
-        value: TaskStatusEnum.WAITING,
-        label: '等待中'
-      },
-      {
-        value: TaskStatusEnum.PAUSE,
-        label: '暂停'
-      },
-      {
-        value: TaskStatusEnum.FINISHED,
-        label: '已完成'
-      },
-      {
-        value: TaskStatusEnum.FAILED,
-        label: '失败'
-      },
-      {
-        value: TaskStatusEnum.PARTLY_FINISHED,
-        label: '部分完成'
-      }
-    ]
-  })
-])
+// 任务查询的参数
+const taskSearchParams: Ref<TaskQueryDTO> = ref(new TaskQueryDTO())
 // 改变的行数据
 const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 // 是否正在刷新数据
@@ -224,20 +169,6 @@ const taskDialogState: Ref<UnwrapRef<boolean>> = ref(false)
 const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点资源的url
 const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
-// 请求站点分页列表的函数
-async function requestSiteQuerySelectItemPage(query: string) {
-  const sitePage: Page<SiteQueryDTO, Site> = new Page()
-  if (StringUtil.isNotBlank(query)) {
-    sitePage.query = { siteName: query }
-  }
-  const response = await apis.siteQuerySelectItemPage(sitePage)
-  if (ApiUtil.check(response)) {
-    const newSitePage = ApiUtil.data(response) as Page<LocalTagQueryDTO, object>
-    return newSitePage.data as TreeSelectNode[]
-  } else {
-    return []
-  }
-}
 const taskStatusStore = useTaskStore().$state
 const parentTaskStatusStore = useParentTaskStore().$state
 
@@ -526,6 +457,7 @@ async function deleteTask(ids: number[]) {
         ref="taskManageSearchTable"
         v-model:data-list="dataList"
         v-model:page="page"
+        v-model:search-params="taskSearchParams"
         v-model:changed-rows="changedRows"
         class="task-manage-search-table"
         :selectable="true"
@@ -533,9 +465,7 @@ async function deleteTask(ids: number[]) {
         :search="taskQueryParentPage"
         :update-load="updateLoad"
         :update-properties="['status']"
-        :main-input-boxes="mainInputBoxes"
-        :drop-down-input-boxes="[]"
-        key-of-data="id"
+        data-key="id"
         :table-row-class-name="tableRowClassName"
         :tree-lazy="true"
         :tree-load="load"
@@ -545,6 +475,38 @@ async function deleteTask(ids: number[]) {
         :tree-data="true"
         @scroll="handleScroll"
       >
+        <template #toolbarMain>
+          <el-row class="task-manage-search-bar">
+            <el-col :span="14">
+              <el-input v-model="taskSearchParams.taskName" placeholder="输入任务名称" clearable />
+            </el-col>
+            <el-col :span="6">
+              <auto-load-select
+                v-model="taskSearchParams.siteId"
+                :load="siteQuerySelectItemPage"
+                placeholder="选择站点"
+                remote
+                filterable
+                clearable
+              >
+                <template #default="{ list }">
+                  <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                </template>
+              </auto-load-select>
+            </el-col>
+            <el-col :span="4">
+              <el-select v-model="taskSearchParams.status" placeholder="选择状态" clearable>
+                <el-option :value="TaskStatusEnum.CREATED" label="已创建"></el-option>
+                <el-option :value="TaskStatusEnum.WAITING" label="等待中"></el-option>
+                <el-option :value="TaskStatusEnum.PROCESSING" label="进行中"></el-option>
+                <el-option :value="TaskStatusEnum.PAUSE" label="暂停"></el-option>
+                <el-option :value="TaskStatusEnum.FINISHED" label="完成"></el-option>
+                <el-option :value="TaskStatusEnum.PARTLY_FINISHED" label="部分完成"></el-option>
+                <el-option :value="TaskStatusEnum.FAILED" label="失败"></el-option>
+              </el-select>
+            </el-col>
+          </el-row>
+        </template>
         <template #customOperations="{ row }">
           <task-operation-bar-active :row="row" :button-clicked="handleOperationButtonClicked" />
         </template>
@@ -601,5 +563,8 @@ async function deleteTask(ids: number[]) {
 }
 :deep(.el-table .task-manage-search-table-child-row > :nth-child(3) > .cell :nth-child(1)) {
   transform: translateX(7px);
+}
+.task-manage-search-bar {
+  flex-grow: 1;
 }
 </style>

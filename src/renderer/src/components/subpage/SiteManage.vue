@@ -7,7 +7,6 @@ import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import OperationItem from '@renderer/model/util/OperationItem.ts'
 import DialogMode from '@renderer/model/util/DialogMode.ts'
 import { Thead } from '@renderer/model/util/Thead.ts'
-import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import lodash from 'lodash'
@@ -134,14 +133,7 @@ const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
   })
 ])
 // 站点的查询参数
-const siteMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'siteName',
-    type: 'text',
-    placeholder: '输入站点的名称',
-    inputSpan: 18
-  })
-])
+const siteSearchParams: Ref<SiteQueryDTO> = ref(new SiteQueryDTO())
 // 站点弹窗的模式
 const siteDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点对话框开关
@@ -236,14 +228,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
   })
 ])
 // 站点域名的查询参数
-const siteDomainMainInputBoxes: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'domain',
-    type: 'text',
-    placeholder: '输入域名',
-    inputSpan: 18
-  })
-])
+const siteDomainSearchParams: Ref<SiteDomainQueryDTO> = ref(new SiteDomainQueryDTO())
 // 站点弹窗的模式
 const siteDomainDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点对话框开关
@@ -467,44 +452,46 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
           <search-table
             ref="siteSearchTable"
             v-model:page="sitePage"
+            v-model:search-params="siteSearchParams"
             v-model:changed-rows="siteChangedRows"
             class="site-manage-left-search-table"
-            key-of-data="id"
-            :create-button="true"
+            data-key="id"
             :operation-button="siteOperationButton"
             :operation-width="140"
             :thead="siteThead"
-            :main-input-boxes="siteMainInputBoxes"
-            :drop-down-input-boxes="[]"
             :search="siteQueryPage"
             :multi-select="false"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100]"
-            @create-button-clicked="handleSiteCreateButtonClicked"
             @row-button-clicked="handleSiteRowButtonClicked"
             @selection-change="handleSiteSelectionChange"
           >
+            <template #toolbarMain>
+              <el-button type="primary" @click="handleSiteCreateButtonClicked">新增</el-button>
+              <el-input v-model="siteSearchParams.siteName" placeholder="输入站点名称" clearable />
+            </template>
           </search-table>
         </div>
         <div class="site-manage-right">
           <search-table
             ref="siteDomainSearchTable"
             v-model:page="siteDomainPage"
+            v-model:search-params="siteDomainSearchParams"
             v-model:changed-rows="siteDomainChangedRows"
             class="site-manage-left-search-table"
-            key-of-data="id"
-            :create-button="true"
+            data-key="id"
             :operation-button="siteDomainOperationButton"
             :thead="siteDomainThead"
-            :main-input-boxes="siteDomainMainInputBoxes"
-            :drop-down-input-boxes="[]"
             :search="siteDomainQueryPage"
             :multi-select="true"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100, 1000]"
-            @create-button-clicked="handleSiteDomainCreateButtonClicked"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
           >
+            <template #toolbarMain>
+              <el-button type="primary" @click="handleSiteDomainCreateButtonClicked">新增</el-button>
+              <el-input v-model="siteDomainSearchParams.domain" placeholder="输入站点域名" clearable />
+            </template>
           </search-table>
         </div>
         <el-drawer
@@ -519,16 +506,13 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
             v-model:page="siteDomainPage"
             v-model:changed-rows="siteDomainChangedRows"
             class="site-manage-left-search-table"
-            key-of-data="id"
+            data-key="id"
             :operation-button="siteDomainDrawerOperationButton"
             :thead="siteDomainThead"
-            :main-input-boxes="siteDomainMainInputBoxes"
-            :drop-down-input-boxes="[]"
             :search="siteDomainQueryPageBySite"
             :multi-select="false"
             :selectable="false"
             :page-sizes="[10, 20, 50, 100, 1000]"
-            @create-button-clicked="handleSiteDomainCreateButtonClicked"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
             @selection-change="handleSiteSelectionChange"
           />

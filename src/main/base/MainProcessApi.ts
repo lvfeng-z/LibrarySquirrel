@@ -296,7 +296,7 @@ function exposeService() {
     LogUtil.info('MainProcessApi', 'plugin-reInstallFromPath')
     const pluginService = new PluginService()
     try {
-      return ApiUtil.response(await pluginService.reInstallFromPath(arg1, arg2))
+      return ApiUtil.response(await pluginService.reInstallFromPath(arg1, arg2), '安装成功')
     } catch (error) {
       return returnError(error)
     }

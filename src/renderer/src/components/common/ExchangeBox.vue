@@ -1,6 +1,5 @@
 <script setup lang="ts" generic="Query extends object">
-import SearchToolbar from './SearchToolbar.vue'
-import { InputBox } from '../../model/util/InputBox'
+import SearchToolbarV1 from '@renderer/components/common/SearchToolbarV1.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from './TagBox.vue'
@@ -12,15 +11,15 @@ import { Check, Close } from '@element-plus/icons-vue'
 
 // props
 const props = defineProps<{
-  upperMainInputBoxes?: InputBox[] // upper的SearchToolbar的主菜单参数
-  upperDropDownInputBoxes?: InputBox[] // upper的SearchToolbar的下拉菜单参数
-  lowerMainInputBoxes?: InputBox[] // lower的SearchToolbar的主菜单参数
-  lowerDropDownInputBoxes?: InputBox[] // lower的SearchToolbar的下拉菜单参数
   upperLoad: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>> // upper的加载函数
   lowerLoad: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>> // lower的加载函数
   searchButtonDisabled: boolean
   tagsGap?: string
 }>()
+
+// model
+const upperSearchParams = defineModel<object>('upperSearchParams', { required: false, default: {} }) // upper搜索栏参数
+const lowerSearchParams = defineModel<object>('lowerSearchParams', { required: false, default: {} }) // lower搜索栏参数
 
 // 事件
 const emits = defineEmits(['upperConfirm', 'lowerConfirm', 'allConfirm'])
@@ -31,8 +30,6 @@ defineExpose({
 })
 
 // 变量
-const upperSearchToolbarParams = ref({}) // upper搜索栏参数
-const lowerSearchToolbarParams = ref({}) // lower搜索栏参数
 const upperPage = new Page<Query, SelectItem>() // upper的分页
 const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
 const lowerPage = new Page<Query, SelectItem>() // lower的分页
@@ -143,10 +140,10 @@ async function requestNextPage(page: IPage<Query, SelectItem>, isUpper: boolean)
   // 请求接口
   let newPagePromise: Promise<IPage<Query, SelectItem>>
   if (isUpper) {
-    page.query = upperSearchToolbarParams.value as Query
+    page.query = upperSearchParams.value as Query
     newPagePromise = props.upperLoad(page)
   } else {
-    page.query = lowerSearchToolbarParams.value as Query
+    page.query = lowerSearchParams.value as Query
     newPagePromise = props.lowerLoad(page)
   }
 
@@ -220,15 +217,14 @@ function handleBufferToggle() {
     <div class="exchange-box-main">
       <div class="exchange-box-upper-container">
         <div class="exchange-box-upper-toolbar z-layer-1">
-          <search-toolbar
-            :create-button="false"
-            :drop-down-input-boxes="upperDropDownInputBoxes"
-            :main-input-boxes="upperMainInputBoxes"
-            :search-button-disabled="searchButtonDisabled"
-            :params="upperSearchToolbarParams"
-            @search-button-clicked="doSearch(true)"
-          >
-          </search-toolbar>
+          <search-toolbar-v1 :search-button-disabled="searchButtonDisabled" @search-button-clicked="doSearch(true)">
+            <template #main>
+              <slot name="upperToolbarMain" />
+            </template>
+            <template #dropdown>
+              <slot name="upperToolbarDropdown" />
+            </template>
+          </search-toolbar-v1>
         </div>
         <div class="exchange-box-upper-main">
           <tag-box
@@ -313,16 +309,14 @@ function handleBufferToggle() {
           </collapse-panel>
         </div>
         <div class="exchange-box-lower-toolbar z-layer-1">
-          <search-toolbar
-            :create-button="false"
-            :drop-down-input-boxes="lowerDropDownInputBoxes"
-            :main-input-boxes="lowerMainInputBoxes"
-            :reverse="true"
-            :search-button-disabled="searchButtonDisabled"
-            :params="lowerSearchToolbarParams"
-            @search-button-clicked="doSearch(false)"
-          >
-          </search-toolbar>
+          <search-toolbar-v1 :reverse="true" :search-button-disabled="searchButtonDisabled" @search-button-clicked="doSearch(false)">
+            <template #main>
+              <slot name="lowerToolbarMain" />
+            </template>
+            <template #dropdown>
+              <slot name="lowerToolbarDropdown" />
+            </template>
+          </search-toolbar-v1>
         </div>
       </div>
     </div>
@@ -425,6 +419,8 @@ function handleBufferToggle() {
 .exchange-box-upper-toolbar {
   width: 100%;
   height: 32px;
+  background-color: var(--el-fill-color-blank);
+  border-top-left-radius: 4px;
 }
 .exchange-box-upper-tag-box {
   order: 2;
@@ -508,6 +504,8 @@ function handleBufferToggle() {
 .exchange-box-lower-toolbar {
   width: 100%;
   height: 32px;
+  background-color: var(--el-fill-color-blank);
+  border-bottom-left-radius: 4px;
 }
 .exchange-box-lower-tag-box {
   order: 2;

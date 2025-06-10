@@ -6,7 +6,6 @@ import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
 import ExchangeBox from '@renderer/components/common/ExchangeBox.vue'
-import { InputBox } from '@renderer/model/util/InputBox.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 import IPage from '@renderer/model/util/IPage.ts'
@@ -20,6 +19,8 @@ import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import lodash from 'lodash'
 import { ElMessage } from 'element-plus'
 import AuthorInfo from '@renderer/components/common/AuthorInfo.vue'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 
 // props
 const props = defineProps<{
@@ -93,24 +94,14 @@ const drawerState: Ref<boolean> = ref(false)
 const localTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
 // 本地标签编辑开关
 const siteTagEdit: Ref<UnwrapRef<boolean>> = ref(false)
-// 本地标签ExchangeBox的mainInputBoxes
-const localTagExchangeMainInput: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'localTagName',
-    type: 'text',
-    placeholder: '搜索标签名称',
-    inputSpan: 21
-  })
-])
-// 站点标签ExchangeBox的mainInputBoxes
-const siteTagExchangeMainInput: Ref<UnwrapRef<InputBox[]>> = ref<InputBox[]>([
-  new InputBox({
-    name: 'siteTagName',
-    type: 'text',
-    placeholder: '搜索标签名称',
-    inputSpan: 21
-  })
-])
+// 本地标签的查询参数
+const localTagExchangeUpperSearchParams: Ref<LocalTagQueryDTO> = ref(new LocalTagQueryDTO())
+// 本地标签的查询参数
+const localTagExchangeLowerSearchParams: Ref<LocalTagQueryDTO> = ref(new LocalTagQueryDTO())
+// 站点标签的查询参数
+const siteTagExchangeUpperSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQueryDTO())
+// 站点标签的查询参数
+const siteTagExchangeLowerSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQueryDTO())
 
 // 方法
 // 查询作品信息
@@ -284,9 +275,9 @@ function handleDrawerOpen() {
         <exchange-box
           v-if="localTagEdit"
           ref="localTagExchangeBox"
+          v-model:upper-search-params="localTagExchangeUpperSearchParams"
+          v-model:lower-search-params="localTagExchangeLowerSearchParams"
           class="works-dialog-tag-exchange-box"
-          :upper-main-input-boxes="localTagExchangeMainInput"
-          :lower-main-input-boxes="localTagExchangeMainInput"
           :upper-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, true)"
           :lower-load="(_page: IPage<LocalTagQueryDTO, SelectItem>) => requestWorksLocalTagPage(_page, false)"
           :search-button-disabled="false"
@@ -297,6 +288,12 @@ function handleDrawerOpen() {
           "
           @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
         >
+          <template #upperToolbarMain>
+            <el-input v-model="localTagExchangeUpperSearchParams.localTagName" placeholder="输入本地标签名称" clearable />
+          </template>
+          <template #lowerToolbarMain>
+            <el-input v-model="localTagExchangeLowerSearchParams.localTagName" placeholder="输入本地标签名称" clearable />
+          </template>
           <template #upperTitle>
             <div class="works-dialog-tag-exchange-box-title">
               <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
@@ -311,9 +308,9 @@ function handleDrawerOpen() {
         <exchange-box
           v-if="siteTagEdit"
           ref="siteTagExchangeBox"
+          v-model:upper-search-params="siteTagExchangeUpperSearchParams"
+          v-model:lower-search-params="siteTagExchangeLowerSearchParams"
           class="works-dialog-tag-exchange-box"
-          :upper-main-input-boxes="siteTagExchangeMainInput"
-          :lower-main-input-boxes="siteTagExchangeMainInput"
           :upper-load="(_page) => requestWorksSiteTagPage(_page, true)"
           :lower-load="(_page) => requestWorksSiteTagPage(_page, false)"
           :search-button-disabled="false"
@@ -322,6 +319,48 @@ function handleDrawerOpen() {
           @lower-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.SITE, upper, lower)"
           @all-confirm="(upper: SelectItem[], lower: SelectItem[]) => handleTagExchangeConfirm(OriginType.LOCAL, upper, lower)"
         >
+          <template #upperToolbarMain>
+            <el-row class="works-dialog-search-bar">
+              <el-col :span="18">
+                <el-input v-model="siteTagExchangeUpperSearchParams.siteTagName" placeholder="输入站点标签名称" clearable />
+              </el-col>
+              <el-col :span="6">
+                <auto-load-select
+                  v-model="siteTagExchangeUpperSearchParams.siteId"
+                  :load="siteQuerySelectItemPage"
+                  placeholder="选择站点"
+                  remote
+                  filterable
+                  clearable
+                >
+                  <template #default="{ list }">
+                    <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                  </template>
+                </auto-load-select>
+              </el-col>
+            </el-row>
+          </template>
+          <template #lowerToolbarMain>
+            <el-row class="works-dialog-search-bar">
+              <el-col :span="18">
+                <el-input v-model="siteTagExchangeLowerSearchParams.siteTagName" placeholder="输入站点标签名称" clearable />
+              </el-col>
+              <el-col :span="6">
+                <auto-load-select
+                  v-model="siteTagExchangeLowerSearchParams.siteId"
+                  :load="siteQuerySelectItemPage"
+                  placeholder="选择站点"
+                  remote
+                  filterable
+                  clearable
+                >
+                  <template #default="{ list }">
+                    <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+                  </template>
+                </auto-load-select>
+              </el-col>
+            </el-row>
+          </template>
           <template #upperTitle>
             <div class="works-dialog-tag-exchange-box-title">
               <span class="works-dialog-tag-exchange-box-title-text">已绑定</span>
@@ -369,5 +408,8 @@ function handleDrawerOpen() {
   text-align: center;
   writing-mode: vertical-lr;
   color: var(--el-text-color-regular);
+}
+.works-dialog-search-bar {
+  flex-grow: 1;
 }
 </style>

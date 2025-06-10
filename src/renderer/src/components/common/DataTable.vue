@@ -17,7 +17,7 @@ const props = withDefaults(
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
     thead: Thead[] // 表头信息
-    keyOfData: string // 数据的唯一标识
+    dataKey: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     operationButton?: OperationItem<OpParam>[] // 操作列按钮的文本、图标和代号
     operationWidth?: number // 操作栏宽度
@@ -75,12 +75,12 @@ function handleRowButtonClicked(operation: { row: Data; operationItem: Operation
     if (props.multiSelect) {
       dataTable.value.toggleRowSelection(operation.row, true)
     } else {
-      selectedDataKey.value = operation.row[props.keyOfData]
+      selectedDataKey.value = operation.row[props.dataKey]
     }
     handleSelectionChange([operation.row])
   }
   const operationResponse: DataTableOperationResponse<Data> = {
-    id: operation.row[props.keyOfData],
+    id: operation.row[props.dataKey],
     code: operation.operationItem.code,
     data: operation.row
   }
@@ -161,7 +161,7 @@ function setCacheData(scope, item, newData) {
     :lazy="props.treeLazy"
     :load="props.treeLoad"
     :data="data"
-    :row-key="keyOfData"
+    :row-key="dataKey"
     :row-class-name="tableRowClassName"
     :selectable="props.selectable"
     @selection-change="handleSelectionChange"
@@ -169,7 +169,7 @@ function setCacheData(scope, item, newData) {
     <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />
     <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
       <template #default="{ row }">
-        <el-radio v-model="selectedDataKey" :value="row[props.keyOfData]" @change="handleSelectionChange([row])" />
+        <el-radio v-model="selectedDataKey" :value="row[props.dataKey]" @change="handleSelectionChange([row])" />
       </template>
     </el-table-column>
     <el-table-column v-if="props.treeData" width="25" />
@@ -239,7 +239,7 @@ function setCacheData(scope, item, newData) {
     </el-table-column>
     <el-table-column :hidden="true" :width="1">
       <template #default="scope">
-        <div :row-key="scope.row[keyOfData]" class="row-key-col" style="width: 0; height: 0; position: absolute" />
+        <div :row-key="scope.row[dataKey]" class="row-key-col" style="width: 0; height: 0; position: absolute" />
       </template>
     </el-table-column>
   </el-table>

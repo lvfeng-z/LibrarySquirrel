@@ -1,7 +1,6 @@
 <script setup lang="ts" generic="Query extends BaseQueryDTO, Data, OpParam">
-import SearchToolbar from './SearchToolbar.vue'
+import SearchToolbarV1 from '@renderer/components/common/SearchToolbarV1.vue'
 import { ref } from 'vue'
-import { InputBox } from '../../model/util/InputBox'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
@@ -17,11 +16,9 @@ import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 // props
 const props = withDefaults(
   defineProps<{
-    mainInputBoxes: InputBox[] // 主搜索框的inputBox
-    dropDownInputBoxes: InputBox[] // 下拉搜索栏的inputBox
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
-    keyOfData: string // 数据的唯一标识
+    dataKey: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     thead: Thead[] // 表头
     operationButton?: OperationItem<OpParam>[] // 数据行的操作按钮
@@ -46,6 +43,8 @@ const props = withDefaults(
 // model
 // DataTable的数据
 const dataList = defineModel<Data[]>('dataList', { default: [], required: false })
+// 查询参数
+const searchToolbarParams = defineModel<object>('searchParams', { default: {}, required: false })
 // 分页查询配置
 const page = defineModel<Page<Query, Data>>('page', {
   default: new Page<Query, Data>(),
@@ -68,7 +67,6 @@ const emits = defineEmits([
 // 变量
 // 数据栏
 const dataTableRef = ref() // DataTable的的组件实例
-const searchToolbarParams = ref({}) // 搜索栏参数
 // 分页栏
 // 2024-05-07 jumper会导致警告：ElementPlusError: [el-input] [API] label is about to be deprecated in version 2.8.0, please use aria-label instead.
 const layout = ref('sizes, prev, pager, next') // 分页栏组件
@@ -82,7 +80,7 @@ const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknow
 const wrappedLoad = IsNullish(props.treeLoad)
   ? undefined
   : async (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => {
-      const rowId = Number(lodash.pick(row, props.keyOfData))
+      const rowId = Number(lodash.pick(row, props.dataKey))
       if (!treeRefreshMap.has(rowId)) {
         treeRefreshMap.set(rowId, { treeNode: treeNode, resolve: resolve })
       }
@@ -94,10 +92,6 @@ const wrappedLoad = IsNullish(props.treeLoad)
 
 // 方法
 // 数据栏
-// 处理新增按钮点击事件
-function handleCreateButtonClicked() {
-  emits('createButtonClicked')
-}
 // 搜索页面并刷新数据
 async function doSearch() {
   dataTableRef.value.cancelAllSelection()
@@ -116,7 +110,7 @@ async function doSearch() {
   if (NotNullish(props.treeLoad) && NotNullish(wrappedLoad)) {
     if (NotNullish(dataList.value)) {
       dataList.value.forEach((row) => {
-        const treeInitItem = treeRefreshMap.get(row[props.keyOfData])
+        const treeInitItem = treeRefreshMap.get(row[props.dataKey])
         if (NotNullish(treeInitItem)) {
           wrappedLoad(row, treeInitItem.treeNode, treeInitItem.resolve)
         }
@@ -147,7 +141,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
 
   // 根级节点列入待刷新数组
   let waitingUpdateList: Data[]
-  waitingUpdateList = dataList.value.filter((data) => idsStr.includes(String(data[props.keyOfData])))
+  waitingUpdateList = dataList.value.filter((data) => idsStr.includes(String(data[props.dataKey])))
 
   // 根据treeData确认是否包含哪些下级数据
   if (props.treeData && updateChildren) {
@@ -172,7 +166,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
   } else if (props.treeData) {
     // 只更waitingUpdateIds包含的下级数据
     // 根级节点id列表
-    const waitingUpdateRootIds = waitingUpdateList.map((waitingUpdate) => waitingUpdate[props.keyOfData])
+    const waitingUpdateRootIds = waitingUpdateList.map((waitingUpdate) => waitingUpdate[props.dataKey])
     // 叶子节点id列表
     const waitingUpdateChildIds = waitingUpdateIds.filter((id) => !waitingUpdateRootIds.includes(id))
 
@@ -185,14 +179,14 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
       }
     }
   }
-  const originalIds = waitingUpdateList.map((data) => data[props.keyOfData])
+  const originalIds = waitingUpdateList.map((data) => data[props.dataKey])
 
   // 请求更新接口
   const newDataList = await props.updateLoad(originalIds)
   if (ArrayNotEmpty(newDataList)) {
     // 更新updateParamName指定的属性
     for (const newData of newDataList) {
-      const waitingUpdate = waitingUpdateList.find((waitingUpdate) => newData[props.keyOfData] === waitingUpdate[props.keyOfData])
+      const waitingUpdate = waitingUpdateList.find((waitingUpdate) => newData[props.dataKey] === waitingUpdate[props.dataKey])
       if (NotNullish(waitingUpdate)) {
         props.updateProperties.forEach((paramName) => {
           waitingUpdate[paramName] = newData[paramName]
@@ -230,15 +224,14 @@ defineExpose({
 <template>
   <div class="search-table">
     <!-- 为了不被el-table内置的2层z轴以及固定列的2+1增z轴遮挡，此处为3层z轴 -->
-    <search-toolbar
-      v-model:params="searchToolbarParams"
-      class="search-table-toolbar z-layer-3"
-      :create-button="createButton"
-      :drop-down-input-boxes="dropDownInputBoxes"
-      :main-input-boxes="mainInputBoxes"
-      @create-button-clicked="handleCreateButtonClicked"
-      @search-button-clicked="doSearch"
-    />
+    <search-toolbar-v1 class="search-table-toolbar z-layer-3" @search-button-clicked="doSearch">
+      <template #main>
+        <slot name="toolbarMain" />
+      </template>
+      <template #dropdown>
+        <slot name="toolbarDropdown" />
+      </template>
+    </search-toolbar-v1>
     <div class="search-table-data">
       <data-table
         ref="dataTableRef"
@@ -247,7 +240,7 @@ defineExpose({
         :thead="thead"
         :selectable="selectable"
         :multi-select="multiSelect"
-        :key-of-data="keyOfData"
+        :data-key="dataKey"
         :table-row-class-name="tableRowClassName"
         :operation-button="operationButton"
         :operation-width="operationWidth"
@@ -296,6 +289,9 @@ defineExpose({
 .search-table-toolbar {
   height: 32px;
   width: 100%;
+  background-color: var(--el-fill-color-blank);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
 }
 .search-table-data {
   display: flex;
