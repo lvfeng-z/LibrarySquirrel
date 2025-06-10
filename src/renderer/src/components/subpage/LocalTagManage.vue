@@ -22,6 +22,7 @@ import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -150,20 +151,6 @@ async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<
   } else {
     ApiUtil.msg(response)
     return undefined
-  }
-}
-// 请求标签选择项分页接口
-async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localTagName: input }
-  const response = await apis.localTagQuerySelectItemPage(page)
-
-  // 解析响应值
-  if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
-    return IsNullish(nextPage) ? page : nextPage
-  } else {
-    ApiUtil.failedMsg(response)
-    return page
   }
 }
 // 处理本地标签新增按钮点击事件

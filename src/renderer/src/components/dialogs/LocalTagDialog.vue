@@ -3,17 +3,15 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import IPage from '@renderer/model/util/IPage.ts'
-import SelectItem from '@renderer/model/util/SelectItem.ts'
-import Page from '@renderer/model/util/Page.ts'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
+import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
-    mode: DialogMode
+    mode?: DialogMode
     submitEnabled?: boolean
   }>(),
   {
@@ -83,20 +81,6 @@ async function handleSaveButtonClicked() {
 //     return resolve([])
 //   }
 // }
-// 请求标签选择项分页接口
-async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localTagName: input }
-  const response = await apis.localTagQuerySelectItemPage(page)
-
-  // 解析响应值
-  if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
-    return IsNullish(nextPage) ? page : nextPage
-  } else {
-    ApiUtil.failedMsg(response)
-    return page
-  }
-}
 </script>
 
 <template>

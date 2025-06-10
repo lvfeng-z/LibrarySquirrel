@@ -13,12 +13,12 @@ import Page from '@renderer/model/util/Page.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
-import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -226,20 +226,6 @@ async function deleteSiteTag(id: string) {
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
     await siteTagSearchTable.value.doSearch()
-  }
-}
-// 请求标签选择项分页接口
-async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localTagName: input }
-  const response = await apis.localTagQuerySelectItemPage(page)
-
-  // 解析响应值
-  if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
-    return IsNullish(nextPage) ? page : nextPage
-  } else {
-    ApiUtil.failedMsg(response)
-    return page
   }
 }
 // 保存行数据编辑

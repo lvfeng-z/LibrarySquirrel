@@ -12,13 +12,13 @@ import Page from '@renderer/model/util/Page.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRelateDTO.ts'
-import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteAuthorVO from '@renderer/model/main/vo/SiteAuthorVO.ts'
 import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
 import SiteAuthor from '@renderer/model/main/entity/SiteAuthor.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import { localAuthorQuerySelectItemPage } from '@renderer/apis/SiteAuthorApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -230,20 +230,6 @@ async function deleteSiteAuthor(id: string) {
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
     await siteAuthorSearchTable.value.doSearch()
-  }
-}
-// 请求作者选择项分页接口
-async function localAuthorQuerySelectItemPage(page: IPage<unknown, SelectItem>, input?: string): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localAuthorName: input }
-  const response = await apis.localAuthorQuerySelectItemPage(page)
-
-  // 解析响应值
-  if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
-    return IsNullish(nextPage) ? page : nextPage
-  } else {
-    ApiUtil.failedMsg(response)
-    return page
   }
 }
 // 保存行数据编辑
