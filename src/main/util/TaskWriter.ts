@@ -129,6 +129,7 @@ export default class TaskWriter {
 
   /**
    * 暂停下载
+   * @return 资源是否已经完成写入
    */
   public pause(): boolean {
     if (!this.readableFinished) {
@@ -140,9 +141,9 @@ export default class TaskWriter {
         this.writable.once('drain', () => this.writable?.end())
         this.bytesWritten = IsNullish(this.writable) ? 0 : this.writable.bytesWritten
       }
-      return true
-    } else {
       return false
+    } else {
+      return true
     }
   }
 }

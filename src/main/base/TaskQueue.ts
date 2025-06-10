@@ -470,6 +470,7 @@ export class TaskQueue {
     tasks.forEach((task) => {
       const taskRunInstance = this.taskMap.get(task.id as number)
       if (NotNullish(taskRunInstance)) {
+        clearTimeout(taskRunInstance.clearTimeoutId)
         existsTasks.push(taskRunInstance)
       } else {
         notExistsTasks.push(task)
@@ -477,9 +478,7 @@ export class TaskQueue {
     })
 
     for (const taskRunInstance of existsTasks) {
-      clearTimeout(taskRunInstance.clearTimeoutId)
-      if (!taskRunInstance.inStream) {
-        taskRunInstance.inStream = true
+      if (!taskRunInstance.isInStream()) {
         runInstances.push(taskRunInstance)
       }
       try {
@@ -524,7 +523,7 @@ export class TaskQueue {
           localWorksId
         )
         task.status = TaskStatusEnum.WAITING
-        taskRunInstance.inStream = true
+        // taskRunInstance.changeInStream(true)
         runInstances.push(taskRunInstance)
         this.inletTask(taskRunInstance, task)
         changeStatusNeededList.push(taskRunInstance)
@@ -936,10 +935,6 @@ class TaskRunInstance extends TaskStatus {
    */
   public resSaveSuspended: boolean
   /**
-   * 是否正在流中
-   */
-  public inStream: boolean
-  /**
    * 任务信息的修改是否已经保存到数据库
    */
   public dbStored: boolean
@@ -968,6 +963,11 @@ class TaskRunInstance extends TaskStatus {
    * @private
    */
   private errorOccurred: boolean
+  /**
+   * 是否正在流中
+   * @private
+   */
+  private inStream: boolean
 
   constructor(
     taskId: number,
@@ -999,6 +999,10 @@ class TaskRunInstance extends TaskStatus {
     return this.errorOccurred
   }
 
+  public isInStream(): boolean {
+    return this.inStream
+  }
+
   public changeStatus(status: TaskStatusEnum): void {
     super.changeStatus(status, false)
   }
@@ -1023,6 +1027,7 @@ class TaskRunInstance extends TaskStatus {
         this.status === TaskStatusEnum.PAUSE
       ) {
         this.changeStatus(TaskStatusEnum.WAITING)
+        this.inStream = true
         if (this.status !== TaskStatusEnum.PAUSE) {
           this.taskWriter = new TaskWriter()
         }
@@ -1048,6 +1053,7 @@ class TaskRunInstance extends TaskStatus {
           this.resSaveSuspended = true
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
+        this.inStream = false
         LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
         return result
       } else {
@@ -1072,6 +1078,7 @@ class TaskRunInstance extends TaskStatus {
           result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.taskWriter)
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
+        this.inStream = false
         LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
         return result
       } else {
@@ -1118,6 +1125,7 @@ class TaskRunInstance extends TaskStatus {
   public failed() {
     try {
       this.changeStatus(TaskStatusEnum.FAILED)
+      this.inStream = false
     } catch (error) {
       this.errorOccurred = true
       throw error
@@ -1174,12 +1182,12 @@ class WorksInfoSaveStream extends Transform {
       alreadyCallback = true
       await saveInfoPromise
       if (chunk.paused()) {
-        chunk.inStream = false
+        // chunk.changeInStream(false)
       } else {
         this.push(chunk)
       }
     } catch (error) {
-      chunk.inStream = false
+      // chunk.changeInStream(false)
       chunk.infoSaved = false
       const msg = `保存任务${chunk.taskId}的作品信息失败`
       const newError = new Error()
@@ -1212,7 +1220,7 @@ class ResourceSaveStream extends Transform {
   private async processTask(chunk: TaskRunInstance): Promise<void> {
     // 开始之前检查当前的状态
     if (chunk.paused()) {
-      chunk.inStream = false
+      // chunk.changeInStream(false)
       return
     }
     // 发出任务开始保存的事件
@@ -1222,13 +1230,14 @@ class ResourceSaveStream extends Transform {
     return chunk
       .process()
       .then((saveResult: TaskStatusEnum) => {
-        chunk.inStream = false
+        // chunk.changeInStream(false)
+        LogUtil.info('test----', `${chunk.taskId}->${saveResult}`)
         if (TaskStatusEnum.PAUSE !== saveResult) {
           this.push(chunk)
         }
       })
       .catch((err) => {
-        chunk.inStream = false
+        // chunk.changeInStream(false)
         this.emit('saveFailed', err, chunk)
       })
   }
@@ -1252,7 +1261,7 @@ class TaskPersistStream extends Writable {
    * 资源保存结果列表
    * @private
    */
-  private runInstances: TaskRunInstance[]
+  private readonly runInstances: TaskRunInstance[]
   /**
    * 是否正在循环写入
    * @private
