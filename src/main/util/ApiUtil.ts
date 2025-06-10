@@ -1,3 +1,5 @@
+import StringUtil from './StringUtil.js'
+
 export default class ApiUtil {
   /**
    * 是否成功
@@ -20,10 +22,10 @@ export default class ApiUtil {
     this.data = undefined
   }
 
-  public static response(data?: unknown) {
+  public static response(data?: unknown, msg?: string) {
     const response = new ApiUtil()
     response.success = true
-    response.msg = '操作成功'
+    response.msg = StringUtil.isBlank(msg) ? '操作成功' : msg
     response.data = data
     return response
   }
