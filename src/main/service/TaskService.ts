@@ -1047,6 +1047,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 创建资源保存DTO
     let resourceSaveDTO: ResourceSaveDTO | undefined
     if (pluginResponse.doUpdate) {
+      newWorksSaveInfo.resource = new Resource()
+      newWorksSaveInfo.resource.worksId = worksId
+      newWorksSaveInfo.resource.taskId = taskId
+      newWorksSaveInfo.resource.filenameExtension = pluginResponse.resource?.filenameExtension
+      newWorksSaveInfo.resource.suggestedName = pluginResponse.resource?.suggestedName
+      newWorksSaveInfo.resource.importMethod = pluginResponse.resource?.importMethod
+      newWorksSaveInfo.resource.resourceSize = pluginResponse.resource?.resourceSize
       resourceSaveDTO = await ResourceService.createSaveInfo(newWorksSaveInfo)
     } else {
       const temp = new WorksFullDTO(oldWorksFullDTO)
@@ -1058,7 +1065,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       temp.resource.importMethod = pluginResponse.resource?.importMethod
       temp.resource.resourceSize = pluginResponse.resource?.resourceSize
       resourceSaveDTO = await ResourceService.createSaveInfo(temp)
-      resourceSaveDTO.resourceSize = pluginResponse.resource?.resourceSize
     }
     resourceSaveDTO.worksId = worksId
     resourceSaveDTO.taskId = taskId
