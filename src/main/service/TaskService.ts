@@ -336,7 +336,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
     // 获取任务资源
     AssertNotNullish(resourceDTO.resource?.resourceStream, 'WorksService', `插件没有返回任务${taskId}的资源`)
-    taskWriter.readable = resourceDTO.resource.resourceStream
     if (NotNullish(resourceDTO.resource.resourceSize)) {
       taskWriter.bytesSum = resourceDTO.resource.resourceSize
     } else {
@@ -595,7 +594,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     try {
       taskPluginDTO.bytesWritten = await fs.promises.stat(task.pendingSavePath).then((stats) => stats.size)
     } catch (error) {
-      LogUtil.info('TasService', `恢复任务${taskId}失败，先前下载的文件已经不存在 `, error)
+      LogUtil.info(this.constructor.name, `恢复任务${taskId}失败，先前下载的文件已经不存在 `, error)
       await CreateDirIfNotExists(path.dirname(task.pendingSavePath))
       taskPluginDTO.bytesWritten = 0
     }

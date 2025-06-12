@@ -312,7 +312,7 @@ export class TaskQueue {
         .toArray()
         .map((taskRunInstance) => {
           const taskId = taskRunInstance.taskId
-          if (TaskStatusEnum.PROCESSING === taskRunInstance.status) {
+          if (TaskStatusEnum.PROCESSING === taskRunInstance.status && NotNullish(taskRunInstance.taskWriter.writable)) {
             return new TaskScheduleDTO({
               id: taskId,
               pid: taskRunInstance.parentId,
