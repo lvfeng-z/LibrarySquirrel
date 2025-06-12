@@ -117,6 +117,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // 创建写入Promise
       return resourceWriter.doWrite().then((saveResult) => {
         this.resourceFinished(resourceId)
+        // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
         return saveResult
       })
     } catch (error) {
@@ -176,6 +177,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
           await rename(oldAbsolutePath, newFullSavePath)
         }
         this.resourceFinished(resourceId)
+        // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
         return saveResult
       })
     } catch (error) {

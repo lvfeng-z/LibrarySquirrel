@@ -332,7 +332,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 用已经保存在数据库里的作品信息补全插件返回的作品信息
     pluginResponse.works = ObjectUtil.mergeObjects<Works>(pluginResponse.works, new Works(oldWorks), (src) => new Works(src))
     // 创建资源保存DTO
-    const temp = await this.refreshResourceSaveData(oldWorks, pluginResponse, taskId, worksId)
+    const temp = await this.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
     const resourceSaveDTO = temp.resourceSaveDTO
     // 判断是否需要更新作品数据
     if (pluginResponse.doUpdate) {
@@ -343,26 +343,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 查询作品已经存在的可用资源
     const resService = new ResourceService()
     const activeRes = await resService.getActiveByWorksId(worksId)
-    // // 创建资源保存DTO
-    // let resourceSaveDTO: ResourceSaveDTO | undefined
-    // if (NotNullish(newWorksSaveInfo)) {
-    //   resourceSaveDTO = await ResourceService.createSaveInfo(newWorksSaveInfo)
-    //   resourceSaveDTO.worksId = worksId
-    //   resourceSaveDTO.taskId = taskId
-    //   resourceSaveDTO.resourceStream = pluginResponse.resource.resourceStream
-    // } else {
-    //   oldWorks.resource = new Resource()
-    //   oldWorks.resource.worksId = worksId
-    //   oldWorks.resource.taskId = taskId
-    //   oldWorks.resource.filenameExtension = pluginResponse.resource.filenameExtension
-    //   oldWorks.resource.suggestedName = pluginResponse.resource.suggestedName
-    //   oldWorks.resource.importMethod = pluginResponse.resource.importMethod
-    //   oldWorks.resource.resourceSize = pluginResponse.resource.resourceSize
-    //   resourceSaveDTO = await ResourceService.createSaveInfo(oldWorks)
-    // }
-    // resourceSaveDTO.worksId = worksId
-    // resourceSaveDTO.taskId = taskId
-    // resourceSaveDTO.resourceStream = pluginResponse.resource.resourceStream
     if (IsNullish(activeRes)) {
       resourceSaveDTO.id = await resService.saveActive(resourceSaveDTO)
     } else {
@@ -625,7 +605,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       (src) => new PluginWorksResponseDTO(src)
     )
     // 创建资源保存DTO
-    const temp = await this.refreshResourceSaveData(oldWorks, pluginResponse, taskId, worksId)
+    const temp = await this.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
     const resourceSaveDTO = temp.resourceSaveDTO
     resourceSaveDTO.id = task.pendingResourceId
     // 判断是否需要更新作品数据
@@ -1042,7 +1022,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return pluginService.getByInfo(author, name, version)
   }
 
-  private async refreshResourceSaveData(
+  /**
+   * 创建资源保存DTO和作品信息保存DTO
+   * @param oldWorksFullDTO 调用插件前保存的作品信息
+   * @param pluginResponse 插件返回的数据
+   * @param taskId 任务id
+   * @param worksId 作品id
+   * @private
+   */
+  private async createResAndWorksSaveData(
     oldWorksFullDTO: WorksFullDTO,
     pluginResponse: PluginWorksResponseDTO,
     taskId: number,
