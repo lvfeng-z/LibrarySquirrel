@@ -38,6 +38,11 @@ export default class Resource extends BaseEntity {
   suggestedName: string | undefined | null
 
   /**
+   * 资源大小，单位：字节（Byte）
+   */
+  resourceSize: number | undefined | null
+
+  /**
    * 工作目录
    */
   workdir: string | undefined | null

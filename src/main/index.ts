@@ -153,7 +153,7 @@ Electron.app.whenReady().then(() => {
 
   // 如何响应前面的resource自定义协议的请求
   Electron.protocol.handle('resource', async (request): Promise<Response> => {
-    const workdir = GlobalVar.get(GlobalVars.SETTINGS).get('workdir') as string
+    const workdir: string = GlobalVar.get(GlobalVars.SETTINGS).get('workdir')
 
     // 使用正则表达式测试URL是否符合预期格式
     if (!/^resource:\/\/workdir\//i.test(request.url)) {

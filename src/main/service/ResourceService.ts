@@ -15,13 +15,14 @@ import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import { AuthorRank } from '../constant/AuthorRank.js'
 import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
 import LocalAuthorRankDTO from '../model/dto/LocalAuthorRankDTO.js'
-import TaskWriter from '../util/TaskWriter.js'
+import ResourceWriter from '../util/ResourceWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import ResFileNameFormatEnum from '../constant/ResFileNameFormatEnum.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
+import { rename } from 'node:fs/promises'
 
 /**
  * 资源服务
@@ -41,7 +42,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
     if (StringUtil.isBlank(workdir)) {
       const msg = `保存资源失败，工作目录不能为空，taskId: ${result.taskId}`
-      LogUtil.error('WorksService', msg)
+      LogUtil.error(this.constructor.name, msg)
       throw new Error(msg)
     }
     const resource = worksFullDTO.resource
@@ -69,7 +70,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     result.importMethod = resource.importMethod
     result.suggestedName = resource.suggestedName
     result.filenameExtension = filenameExtension
-    // 资源状态
+    result.resourceSize = worksFullDTO.resource?.resourceSize
     result.resourceComplete = BOOL.FALSE
 
     return result
@@ -78,9 +79,11 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   /**
    * 保存资源
    * @param resourceSaveDTO
-   * @param fileWriter
+   * @param resourceWriter
    */
-  public async saveResource(resourceSaveDTO: ResourceSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
+  public async saveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
+    const resourceId = resourceSaveDTO.id
+    AssertNotNullish(resourceId, this.constructor.name, `保存作品资源失败，资源id不能为空`)
     AssertNotNullish(resourceSaveDTO.taskId, this.constructor.name, `保存作品资源失败，任务id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
@@ -90,10 +93,15 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(
       resourceSaveDTO.fullSavePath,
       this.constructor.name,
-      `保存作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `保存作品资源失败，资源的保存路径不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
-    const resId = resourceSaveDTO.id
-    AssertNotNullish(resId, this.constructor.name, `保存作品资源失败，资源id不能为空`)
+
+    if (NotNullish(resourceSaveDTO.resourceSize)) {
+      resourceWriter.resourceSize = resourceSaveDTO.resourceSize
+    } else {
+      LogUtil.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
+      resourceWriter.resourceSize = 0
+    }
 
     try {
       // 创建保存目录
@@ -101,27 +109,80 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // 创建写入流
       const writeStream = fs.createWriteStream(resourceSaveDTO.fullSavePath)
 
+      // 配置resourceWriter
+      resourceWriter.readable = resourceSaveDTO.resourceStream
+      resourceWriter.writable = writeStream
+      resourceWriter.resourceId = resourceId
+
       // 创建写入Promise
-      fileWriter.readable = resourceSaveDTO.resourceStream
-      fileWriter.writable = writeStream
-      fileWriter.resourceId = resId
-      return fileWriter.doWrite()
+      return resourceWriter.doWrite().then((saveResult) => {
+        this.resourceFinished(resourceId)
+        return saveResult
+      })
     } catch (error) {
       const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
-      LogUtil.error('WorksService', msg, error)
+      LogUtil.error(this.constructor.name, msg, error)
       throw error
     }
   }
 
   /**
    * 恢复保存资源
-   * @param fileWriter 任务writer
+   * @param resourceSaveDTO
+   * @param resourceWriter resourceWriter
+   * @param bytesWritten
    */
-  public static async resumeSaveResource(fileWriter: TaskWriter): Promise<FileSaveResult> {
-    AssertNotNullish(fileWriter.readable, 'WorksService', `恢复资源下载时资源流不能为空`)
-    AssertNotNullish(fileWriter.writable, 'WorksService', `恢复资源下载时写入流不能为空`)
+  public async resumeSaveResource(
+    resourceSaveDTO: ResourceSaveDTO,
+    resourceWriter: ResourceWriter,
+    bytesWritten: number
+  ): Promise<FileSaveResult> {
+    AssertNotNullish(resourceSaveDTO.taskId, this.constructor.name, `恢复保存资源失败，任务id不能为空`)
+    AssertNotNullish(
+      resourceSaveDTO.resourceStream,
+      this.constructor.name,
+      `恢复保存资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
+    )
 
-    return fileWriter.doWrite()
+    const resourceId = resourceSaveDTO.id
+    AssertNotNullish(resourceId, this.constructor.name, `恢复保存资源失败，资源id不能为空`)
+
+    const oldRes = await this.getById(resourceId)
+    AssertNotNullish(oldRes, this.constructor.name, `恢复保存资源失败，资源信息不可用`)
+    AssertNotNullish(oldRes.filePath, this.constructor.name, `恢复保存资源失败，原有资源路径不能为空`)
+
+    const workdir = GlobalVar.get(GlobalVars.SETTINGS).get('workdir')
+    const oldAbsolutePath = path.join(workdir, oldRes.filePath)
+
+    const newFullSavePath = StringUtil.isBlank(resourceSaveDTO.fullSavePath) ? oldAbsolutePath : resourceSaveDTO.fullSavePath
+
+    try {
+      // 创建保存目录
+      await CreateDirIfNotExists(path.dirname(oldAbsolutePath))
+      // 创建写入流
+      const writeable: fs.WriteStream = fs.createWriteStream(oldAbsolutePath, { flags: 'a' })
+      writeable.bytesWritten = bytesWritten
+
+      // 配置resourceWriter
+      resourceWriter.resourceSize = IsNullish(resourceSaveDTO.resourceSize) ? -1 : resourceSaveDTO.resourceSize
+      resourceWriter.readable = resourceSaveDTO.resourceStream
+      resourceWriter.writable = writeable
+      resourceWriter.resourceId = resourceId
+
+      // 创建写入Promise
+      return resourceWriter.doWrite().then(async (saveResult) => {
+        // 如果保存路径发生改变，移动到新路径
+        if (oldAbsolutePath !== resourceSaveDTO.fullSavePath) {
+          await rename(oldAbsolutePath, newFullSavePath)
+        }
+        this.resourceFinished(resourceId)
+        return saveResult
+      })
+    } catch (error) {
+      const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
+      LogUtil.error(this.constructor.name, msg, error)
+      throw error
+    }
   }
 
   /**
@@ -142,9 +203,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   /**
    * 替换资源
    * @param resourceSaveDTO
-   * @param fileWriter
+   * @param resourceWriter
    */
-  public async replaceResource(resourceSaveDTO: ResourceSaveDTO, fileWriter: TaskWriter): Promise<FileSaveResult> {
+  public async replaceResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
     AssertNotNullish(resourceId, this.constructor.name, `替换资源失败，资源id不能为空`)
     AssertNotNullish(
@@ -155,15 +216,22 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(
       resourceSaveDTO.fullSavePath,
       this.constructor.name,
-      `替换作品资源失败，作品的fullSaveDir不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `替换作品资源失败，资源的保存路径不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
     const oldResource = await this.getById(resourceId)
     AssertNotNullish(oldResource, this.constructor.name, `替换资源失败，资源不存在`)
     AssertNotBlank(
       oldResource.filePath,
       this.constructor.name,
-      `替换作品资源失败，原作品资源的filePath不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `替换作品资源失败，原作品资源的路径不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
+
+    if (NotNullish(resourceSaveDTO.resourceSize)) {
+      resourceWriter.resourceSize = resourceSaveDTO.resourceSize
+    } else {
+      LogUtil.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
+      resourceWriter.resourceSize = 0
+    }
 
     // 创建备份
     const settings = GlobalVar.get(GlobalVars.SETTINGS)
@@ -176,14 +244,19 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // 创建写入流
       const writeStream = fs.createWriteStream(resourceSaveDTO.fullSavePath)
 
+      // 配置resourceWriter
+      resourceWriter.readable = resourceSaveDTO.resourceStream
+      resourceWriter.writable = writeStream
+      resourceWriter.resourceId = resourceId
+
       // 创建写入Promise
-      fileWriter.readable = resourceSaveDTO.resourceStream
-      fileWriter.writable = writeStream
-      fileWriter.resourceId = resourceId
-      return fileWriter.doWrite()
+      return resourceWriter.doWrite().then((saveResult) => {
+        this.resourceFinished(resourceId)
+        return saveResult
+      })
     } catch (error) {
       const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}`
-      LogUtil.error('WorksService', msg, error)
+      LogUtil.error(this.constructor.name, msg, error)
       throw error
     }
   }

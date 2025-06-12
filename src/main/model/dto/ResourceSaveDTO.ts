@@ -14,11 +14,6 @@ export default class ResourceSaveDTO extends Resource {
    */
   resourceStream: Readable | undefined | null
 
-  /**
-   * 作品资源的文件大小，单位：字节（Bytes）
-   */
-  resourceSize: number | undefined | null
-
   constructor(resource?: Resource) {
     super(resource)
     if (NotNullish(resource)) {

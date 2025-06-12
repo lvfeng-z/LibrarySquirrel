@@ -38,7 +38,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksPluginDTO 插件返回的作品DTO
    * @param taskId
    */
-  public static async createSaveInfo(worksPluginDTO: PluginWorksResponseDTO, taskId: number): Promise<WorksSaveDTO> {
+  public static async createSaveInfoFromPlugin(worksPluginDTO: PluginWorksResponseDTO, taskId: number): Promise<WorksSaveDTO> {
     // 校验
     AssertNotNullish(worksPluginDTO.works.siteWorksId, '生成作品信息失败，siteWorksId不能为空')
     const worksFullDTO = new WorksFullDTO(worksPluginDTO.works as Works)
@@ -47,10 +47,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     result.localAuthors = worksPluginDTO.localAuthors
     result.localTags = worksPluginDTO.localTags
     if (ArrayNotEmpty(worksPluginDTO.siteAuthors)) {
-      result.siteAuthors = await SiteAuthorService.createSaveInfos(worksPluginDTO.siteAuthors)
+      result.siteAuthors = await SiteAuthorService.createSaveInfosFromPlugin(worksPluginDTO.siteAuthors)
     }
     if (ArrayNotEmpty(worksPluginDTO.siteTags)) {
-      result.siteTags = await SiteTagService.createSaveInfos(worksPluginDTO.siteTags)
+      result.siteTags = await SiteTagService.createSaveInfosFromPlugin(worksPluginDTO.siteTags)
     }
     result.worksSets = worksPluginDTO.worksSets
     return result

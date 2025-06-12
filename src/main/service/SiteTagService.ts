@@ -278,7 +278,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   /**
    * 生成用于保存的站点标签信息
    */
-  public static async createSaveInfos(siteTags: SiteTagPluginDTO[]): Promise<SiteTagFullDTO[]> {
+  public static async createSaveInfosFromPlugin(siteTags: SiteTagPluginDTO[]): Promise<SiteTagFullDTO[]> {
     const result: SiteTagFullDTO[] = []
     const siteService = new SiteService()
     // 用于查询和缓存站点id

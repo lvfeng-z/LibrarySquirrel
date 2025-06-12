@@ -5,7 +5,7 @@ import { AssertNotNullish } from './AssertUtil.js'
 import { IsNullish, NotNullish } from './CommonUtil.js'
 import fs from 'fs'
 
-export default class TaskWriter {
+export default class ResourceWriter {
   /**
    * 资源id
    */
@@ -19,9 +19,9 @@ export default class TaskWriter {
    */
   public writable: fs.WriteStream | undefined
   /**
-   * 资源大小
+   * 资源大小，单位：字节（Byte）
    */
-  public bytesSum: number
+  public resourceSize: number
   /**
    * 已写入的数据量（只在任务暂停时更新，用于解决恢复任务时首次查询到的进度为0的问题）
    */
@@ -53,7 +53,7 @@ export default class TaskWriter {
    */
   private readableErrorHandler(err: Error) {
     this.errorOccurred = true
-    LogUtil.error('TaskWriter', `readable出错${err}`)
+    LogUtil.error(this.constructor.name, `readable出错${err}`)
     if (NotNullish(this.rejectFunc)) {
       this.rejectFunc(err)
     }
@@ -77,7 +77,7 @@ export default class TaskWriter {
   constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
     this.writable = writeable
-    this.bytesSum = 0
+    this.resourceSize = 0
     this.bytesWritten = 0
     this.paused = false
     this.readableFinished = false
@@ -95,8 +95,8 @@ export default class TaskWriter {
       if (NotNullish(newWritable)) {
         this.writable = newWritable
       }
-      AssertNotNullish(this.readable, 'TaskWriter', '写入任务资源失败，readable为空')
-      AssertNotNullish(this.writable, 'TaskWriter', '写入任务资源失败，writable为空')
+      AssertNotNullish(this.readable, this.constructor.name, '写入任务资源失败，readable为空')
+      AssertNotNullish(this.writable, this.constructor.name, '写入任务资源失败，writable为空')
       const readable = this.readable
       const writable = this.writable
       this.errorOccurred = false
@@ -105,7 +105,7 @@ export default class TaskWriter {
       }
       writable.once('error', (err) => {
         this.errorOccurred = true
-        LogUtil.error('TaskWriter', `writable出错，${err}`)
+        LogUtil.error(this.constructor.name, `writable出错，${err}`)
         writable.destroy()
         reject(err)
       })

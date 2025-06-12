@@ -7,7 +7,7 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/Comm
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
-import TaskWriter from '../util/TaskWriter.js'
+import ResourceWriter from '../util/ResourceWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 import Task from '../model/entity/Task.js'
 import { GlobalVar, GlobalVars } from './GlobalVar.js'
@@ -282,8 +282,8 @@ export class TaskQueue {
         id: taskId,
         pid: taskRunInstance.parentId,
         status: TaskStatusEnum.FINISHED,
-        total: taskRunInstance.taskWriter.bytesSum,
-        finished: IsNullish(taskRunInstance.taskWriter.writable) ? 0 : taskRunInstance.taskWriter.writable.bytesWritten
+        total: taskRunInstance.resourceWriter.resourceSize,
+        finished: IsNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
       })
     }
     if (TaskStatusEnum.PROCESSING === taskRunInstance.status || TaskStatusEnum.PAUSE === taskRunInstance.status) {
@@ -291,8 +291,8 @@ export class TaskQueue {
         id: taskId,
         pid: taskRunInstance.parentId,
         status: taskRunInstance.status,
-        total: taskRunInstance.taskWriter.bytesSum,
-        finished: IsNullish(taskRunInstance.taskWriter.writable) ? 0 : taskRunInstance.taskWriter.writable.bytesWritten
+        total: taskRunInstance.resourceWriter.resourceSize,
+        finished: IsNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
       })
     }
     return undefined
@@ -312,13 +312,13 @@ export class TaskQueue {
         .toArray()
         .map((taskRunInstance) => {
           const taskId = taskRunInstance.taskId
-          if (TaskStatusEnum.PROCESSING === taskRunInstance.status && NotNullish(taskRunInstance.taskWriter.writable)) {
+          if (TaskStatusEnum.PROCESSING === taskRunInstance.status && NotNullish(taskRunInstance.resourceWriter.writable)) {
             return new TaskScheduleDTO({
               id: taskId,
               pid: taskRunInstance.parentId,
               status: taskRunInstance.status,
-              total: taskRunInstance.taskWriter.bytesSum,
-              finished: IsNullish(taskRunInstance.taskWriter.writable) ? 0 : taskRunInstance.taskWriter.writable.bytesWritten
+              total: taskRunInstance.resourceWriter.resourceSize,
+              finished: IsNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
             })
           }
           return undefined
@@ -520,7 +520,7 @@ export class TaskQueue {
           resSaveSuspended,
           this.taskService,
           this.pluginLoader,
-          new TaskWriter(),
+          new ResourceWriter(),
           localWorksId
         )
         task.status = TaskStatusEnum.WAITING
@@ -665,7 +665,7 @@ export class TaskQueue {
                 resSaveSuspended,
                 this.taskService,
                 this.pluginLoader,
-                new TaskWriter(),
+                new ResourceWriter(),
                 localWorksId
               )
               this.inletTask(tempRunInstance, tempChild)
@@ -922,7 +922,7 @@ class TaskRunInstance extends TaskStatus {
   /**
    * 写入器
    */
-  public taskWriter: TaskWriter
+  public resourceWriter: ResourceWriter
   /**
    * 父任务id（为0时表示没有父任务）
    */
@@ -978,11 +978,11 @@ class TaskRunInstance extends TaskStatus {
     resSaveSuspended: boolean,
     taskService: TaskService,
     pluginLoader: PluginLoader<TaskHandler>,
-    taskWriter: TaskWriter,
+    resourceWriter: ResourceWriter,
     localWorksId?: number
   ) {
     super(taskId, status, false)
-    this.taskWriter = taskWriter
+    this.resourceWriter = resourceWriter
     this.taskInfo = taskInfo
     this.dbStored = true
     this.taskService = taskService
@@ -1024,7 +1024,7 @@ class TaskRunInstance extends TaskStatus {
       ) {
         this.changeStatus(TaskStatusEnum.WAITING)
         if (this.status !== TaskStatusEnum.PAUSE) {
-          this.taskWriter = new TaskWriter()
+          this.resourceWriter = new ResourceWriter()
         }
       } else {
         throw new Error(`无法预启动任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
@@ -1041,7 +1041,7 @@ class TaskRunInstance extends TaskStatus {
         let result: Promise<boolean> = Promise.resolve(true)
         // 对于已开始的任务，调用taskService的pauseTask进行暂停
         if (this.processing()) {
-          result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+          result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.resourceWriter)
         }
         // 判断是否已经在数据库中创建资源信息
         if (NotNullish(this.taskInfo.pendingResourceId)) {
@@ -1069,7 +1069,7 @@ class TaskRunInstance extends TaskStatus {
         let result: Promise<boolean> = Promise.resolve(true)
         // 对于已开始的任务，调用taskService的pauseTask进行暂停
         if (this.processing()) {
-          result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.taskWriter)
+          result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.resourceWriter)
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
         LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
@@ -1088,14 +1088,14 @@ class TaskRunInstance extends TaskStatus {
       if (this.status === TaskStatusEnum.WAITING) {
         this.changeStatus(TaskStatusEnum.PROCESSING)
 
-        const taskWriter = IsNullish(this.taskWriter) ? new TaskWriter() : this.taskWriter
+        const resourceWriter = IsNullish(this.resourceWriter) ? new ResourceWriter() : this.resourceWriter
 
         AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
         AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
         const result =
           this.resSaveSuspended && this.taskInfo.continuable
-            ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
-            : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, taskWriter)
+            ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
+            : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
         return result
           .then((saveResult) => {
             this.changeStatus(saveResult)

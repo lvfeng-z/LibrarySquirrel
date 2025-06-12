@@ -52,7 +52,7 @@ export interface TaskHandler extends BasePlugin {
 
   /**
    * 恢复下载任务
-   * @description 获取用于恢复已停止的下载任务的读取流，这个流必须是暂停状态，continuable表示提供的流是否可接续在已下载部分的末尾
+   * @description 获取用于恢复已停止的下载任务的数据，continuable表示提供的流是否可接续在已下载部分的末尾
    * @param task 需要暂停的任务
    */
   resume(task: TaskPluginDTO): Promise<PluginWorksResponseDTO>

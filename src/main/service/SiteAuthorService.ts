@@ -260,7 +260,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   /**
    * 生成用于保存的站点作者信息
    */
-  public static async createSaveInfos(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorRankDTO[]> {
+  public static async createSaveInfosFromPlugin(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorRankDTO[]> {
     const result: SiteAuthorRankDTO[] = []
     // 用于查询和缓存站点id
     const siteService = new SiteService()
