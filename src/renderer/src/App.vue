@@ -105,7 +105,7 @@ const resizeObserver = new ResizeObserver((entries) => {
 // 查询标签选择列表
 async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
   const query = new SearchConditionQueryDTO()
-  query.keyword = input
+  query.nonFieldKeyword = input
   query.types = lodash.cloneDeep(searchConditionType.value)
   page.query = query
   let response: ApiResponse

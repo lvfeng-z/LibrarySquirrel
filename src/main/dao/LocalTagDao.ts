@@ -21,9 +21,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const columns: string[] = []
     const values: string[] = []
 
-    if (queryDTO.keyword != undefined && StringUtil.isNotBlank(queryDTO.keyword)) {
+    if (queryDTO.nonFieldKeyword != undefined && StringUtil.isNotBlank(queryDTO.nonFieldKeyword)) {
       columns.push('local_tag_name LIKE ?')
-      values.push('%' + queryDTO.keyword + '%')
+      values.push('%' + queryDTO.nonFieldKeyword + '%')
     }
 
     if (columns.length == 1) {

@@ -21,7 +21,7 @@ export default class BaseQueryDTO {
   /**
    * 关键字
    */
-  keyword?: string | undefined | null
+  nonFieldKeyword?: string | undefined | null
 
   /**
    * 指定比较符
@@ -38,14 +38,14 @@ export default class BaseQueryDTO {
       this.id = undefined
       this.createTime = undefined
       this.updateTime = undefined
-      this.keyword = undefined
+      this.nonFieldKeyword = undefined
       this.operators = undefined
       this.sort = undefined
     } else {
       this.id = baseQueryDTO.id
       this.createTime = baseQueryDTO.createTime
       this.updateTime = baseQueryDTO.updateTime
-      this.keyword = baseQueryDTO.keyword
+      this.nonFieldKeyword = baseQueryDTO.nonFieldKeyword
       this.operators = baseQueryDTO.operators
       this.sort = baseQueryDTO.sort
     }

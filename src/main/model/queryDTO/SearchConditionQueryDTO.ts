@@ -7,6 +7,8 @@ export default class SearchConditionQueryDTO extends BaseQueryDTO {
    */
   types?: SearchType[]
 
+  keyword?: string
+
   constructor(types?: SearchType[]) {
     super()
     this.types = types

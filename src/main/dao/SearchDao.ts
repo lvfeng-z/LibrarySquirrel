@@ -23,8 +23,8 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
     const query = page.query
     const statements: string[] = []
-    const hasKeyword = StringUtil.isNotBlank(query?.keyword)
-    const keyword = hasKeyword ? '%' + query?.keyword + '%' : undefined
+    const hasKeyword = StringUtil.isNotBlank(query?.nonFieldKeyword)
+    const keyword = hasKeyword ? '%' + query?.nonFieldKeyword + '%' : undefined
     if (hasKeyword && NotNullish(query)) {
       query.keyword = keyword
     }
@@ -79,7 +79,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                   ) AS extraData
         FROM site_author t1
                LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
-               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE author_name LIKE @keyword` : '')
+               LEFT JOIN site t3 ON t1.site_id = t3.id` + (hasKeyword ? ` WHERE t1.author_name LIKE @keyword` : '')
       statements.push(statement)
     }
 

@@ -243,7 +243,7 @@ async function reInstallFromPath(pluginId: number, packagePath: string) {
         >
           <template #toolbarMain>
             <el-button type="primary"> 安装 </el-button>
-            <el-input v-model="pluginSearchParams.keyword" placeholder="输入名称" clearable />
+            <el-input v-model="pluginSearchParams.nonFieldKeyword" placeholder="输入名称" clearable />
           </template>
           <template #toolbarDropdown>
             <el-button></el-button>
