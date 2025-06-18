@@ -127,7 +127,7 @@ export class TaskQueue {
         if (NotNullish(taskRunInstance)) {
           taskRunInstance.failed()
           this.taskPersistStream.addTask([taskRunInstance])
-          if (IsNullish(taskRunInstance.parentId)) {
+          if (IsNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
             // 单个的任务直接清除
             this.removeTask([taskRunInstance.taskId])
           } else {
@@ -163,7 +163,7 @@ export class TaskQueue {
           taskRunInstance.resSaveSuspended = false
           LogUtil.info(this.constructor.name, `任务${taskRunInstance.taskId}失败`)
         }
-        if (IsNullish(taskRunInstance.parentId)) {
+        if (IsNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
           // 单个的任务直接清除
           this.removeTask([taskRunInstance.taskId])
         } else {
@@ -190,7 +190,6 @@ export class TaskQueue {
         this.resourceSaveStream.pipe(this.taskPersistStream)
         handleError(error, taskRunInstance)
       })
-      this.taskPersistStream.on('data', () => {})
       const taskPersistStreamDestroyed = new Promise<void>((resolve) =>
         this.taskPersistStream.once('close', () => {
           this.taskPersistStream.destroy()
