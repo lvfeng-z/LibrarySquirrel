@@ -338,11 +338,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public static createFileName(worksFullInfo: WorksFullDTO): string {
     // TODO 还有一部分类型没有进行处理；对ResFileNameFormatEnum.AUTHOR的处理逻辑还有问题；作者级别的处理也有问题
-    const fileNameFormat = (
-      GlobalVar.get(GlobalVars.SETTINGS).get('worksSettings') as {
-        fileNameFormat: string
-      }
-    ).fileNameFormat
+    const fileNameFormat = GlobalVar.get(GlobalVars.SETTINGS).get('worksSettings').fileNameFormat
     const getReplacement = (token: string): string => {
       switch (token) {
         case ResFileNameFormatEnum.AUTHOR.token:
