@@ -4,12 +4,13 @@ import LogUtil from './LogUtil.js'
 import { AssertNotNullish } from './AssertUtil.js'
 import { IsNullish, NotNullish } from './CommonUtil.js'
 import fs from 'fs'
+import Resource from '../model/entity/Resource.js'
 
 export default class ResourceWriter {
   /**
-   * 资源id
+   * 资源实例
    */
-  public resourceId: number
+  public resource: Resource | undefined
   /**
    * 读取流
    */
@@ -81,7 +82,7 @@ export default class ResourceWriter {
     this.bytesWritten = 0
     this.paused = false
     this.readableFinished = false
-    this.resourceId = -1
+    this.resource = undefined
     this.errorOccurred = false
   }
 

@@ -1,7 +1,7 @@
 import Task from '../model/entity/Task.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
-import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
+import { PluginTaskResParam } from './PluginTaskResParam.ts'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
 import PluginService from '../service/PluginService.js'
 import { BasePlugin } from '../base/BasePlugin.js'
@@ -40,22 +40,22 @@ export interface TaskHandler extends BasePlugin {
   /**
    * 暂停下载任务
    * @description 暂停读取流
-   * @param task 需要暂停的任务
+   * @param taskResParam 需要暂停的任务和资源数据
    */
-  pause(task: TaskPluginDTO): Promise<void>
+  pause(taskResParam: PluginTaskResParam): Promise<void>
 
   /**
    * 停止下载任务
-   * @param task 需要暂停的任务
+   * @param taskResParam 需要停止的任务和资源数据
    */
-  stop(task: TaskPluginDTO): Promise<void>
+  stop(taskResParam: PluginTaskResParam): Promise<void>
 
   /**
    * 恢复下载任务
    * @description 获取用于恢复已停止的下载任务的数据，continuable表示提供的流是否可接续在已下载部分的末尾
-   * @param task 需要暂停的任务
+   * @param taskResParam 需要恢复下载的任务和资源数据
    */
-  resume(task: TaskPluginDTO): Promise<PluginWorksResponseDTO>
+  resume(taskResParam: PluginTaskResParam): Promise<PluginWorksResponseDTO>
 }
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {

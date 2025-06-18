@@ -112,7 +112,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // 配置resourceWriter
       resourceWriter.readable = resourceSaveDTO.resourceStream
       resourceWriter.writable = writeStream
-      resourceWriter.resourceId = resourceId
+      resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 创建写入Promise
       return resourceWriter.doWrite().then((saveResult) => {
@@ -168,7 +168,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       resourceWriter.resourceSize = IsNullish(resourceSaveDTO.resourceSize) ? -1 : resourceSaveDTO.resourceSize
       resourceWriter.readable = resourceSaveDTO.resourceStream
       resourceWriter.writable = writeable
-      resourceWriter.resourceId = resourceId
+      resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 创建写入Promise
       return resourceWriter.doWrite().then(async (saveResult) => {
@@ -249,7 +249,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // 配置resourceWriter
       resourceWriter.readable = resourceSaveDTO.resourceStream
       resourceWriter.writable = writeStream
-      resourceWriter.resourceId = resourceId
+      resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 创建写入Promise
       return resourceWriter.doWrite().then((saveResult) => {

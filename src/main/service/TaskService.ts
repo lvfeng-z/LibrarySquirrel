@@ -19,7 +19,7 @@ import TaskTreeDTO from '../model/dto/TaskTreeDTO.ts'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
-import { TaskPluginDTO } from '../model/dto/TaskPluginDTO.ts'
+import { PluginTaskResParam } from '../plugin/PluginTaskResParam.ts'
 import fs from 'fs'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
@@ -45,6 +45,7 @@ import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import Resource from '../model/entity/Resource.js'
+import ResourcePluginDTO from '../model/dto/ResourcePluginDTO.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -447,8 +448,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskHandler = await pluginLoader.load(plugin.id)
 
     // 创建TaskPluginDTO对象
-    const taskPluginDTO = new TaskPluginDTO(task)
-    taskPluginDTO.resourceStream = resourceWriter.readable
+    const taskPluginDTO = new PluginTaskResParam(task)
+    taskPluginDTO.resourcePluginDTO = new ResourcePluginDTO()
+    taskPluginDTO.resourcePluginDTO.resourceSize = resourceWriter.resourceSize
+    taskPluginDTO.resourcePluginDTO.resourceStream = resourceWriter.readable
+    taskPluginDTO.resourcePluginDTO.filenameExtension = resourceWriter.resource?.filenameExtension
 
     // 暂停写入
     const finished = resourceWriter.pause()
@@ -505,8 +509,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskHandler = await pluginLoader.load(plugin.id)
 
     // 创建TaskPluginDTO对象
-    const taskPluginDTO = new TaskPluginDTO(task)
-    taskPluginDTO.resourceStream = resourceWriter.readable
+    const taskPluginDTO = new PluginTaskResParam(task)
+    taskPluginDTO.resourcePluginDTO = new ResourcePluginDTO()
+    taskPluginDTO.resourcePluginDTO.resourceSize = resourceWriter.resourceSize
+    taskPluginDTO.resourcePluginDTO.resourceStream = resourceWriter.readable
+    taskPluginDTO.resourcePluginDTO.filenameExtension = resourceWriter.resource?.filenameExtension
 
     // 暂停写入
     const finished = resourceWriter.pause()
@@ -572,9 +579,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskHandler: TaskHandler = await pluginLoader.load(plugin.id)
 
     // 插件用于恢复下载的任务信息
-    const taskPluginDTO = new TaskPluginDTO(task)
-    // 获取任务writer中的读取流
-    taskPluginDTO.resourceStream = resourceWriter.readable
+    const taskPluginDTO = new PluginTaskResParam(task)
+    // 获取任务writer中的资源信息
+    taskPluginDTO.resourcePluginDTO = new ResourcePluginDTO()
+    taskPluginDTO.resourcePluginDTO.resourceSize = resourceWriter.resourceSize
+    taskPluginDTO.resourcePluginDTO.resourceStream = resourceWriter.readable
+    taskPluginDTO.resourcePluginDTO.filenameExtension = resourceWriter.resource?.filenameExtension
     // 读取已下载文件信息，获取已经下载的数据量
     let bytesWritten: number = 0
     try {
