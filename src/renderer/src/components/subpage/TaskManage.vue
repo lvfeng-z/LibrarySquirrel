@@ -23,8 +23,8 @@ import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
 import Task from '@renderer/model/main/entity/Task.ts'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
-import BackgroundItem from '@renderer/model/util/BackgroundItem.ts'
-import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
+import NotificationItem from '@renderer/model/util/NotificationItem.ts'
+import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 
@@ -171,14 +171,14 @@ const taskDialogSearchTableState: Ref<boolean> = ref(false)
 const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点资源的url
 const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
-const taskStatusStore = useTaskStore().$state
-const parentTaskStatusStore = useParentTaskStore().$state
+const taskStore = useTaskStore()
+const parentTaskStore = useParentTaskStore()
 
 // 方法
 // 从本地路径导入
 async function importFromDir(dir: string) {
   const responsePromise = apis.taskCreateTask('file://'.concat(dir))
-  const backgroundItem = new BackgroundItem()
+  const backgroundItem = new NotificationItem()
   backgroundItem.title = `正在从【${dir}】创建任务`
   backgroundItem.removeOnSettle = responsePromise.then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
@@ -192,8 +192,7 @@ async function importFromDir(dir: string) {
       return '创建失败'
     }
   })
-  backgroundItem.noticeOnRemove = true
-  const backgroundItemStore = useBackgroundItemStore()
+  const backgroundItemStore = useNotificationStore()
   backgroundItemStore.add(backgroundItem)
   // 刷新一次列表
   responsePromise.then(() => taskManageSearchTable.value.doSearch())
@@ -202,22 +201,25 @@ async function importFromDir(dir: string) {
 async function importFromSite() {
   const responsePromise = apis.taskCreateTask(siteSourceUrl.value)
   siteDownloadState.value = false
-  const backgroundItem = new BackgroundItem()
+  const backgroundItem = new NotificationItem()
   backgroundItem.title = `正在从【${siteSourceUrl.value}】创建任务`
   backgroundItem.removeOnSettle = responsePromise.then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
       const data = ApiUtil.data<TaskCreateResponse>(response)
       if (NotNullish(data)) {
-        return `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+        if (data.succeed) {
+          return `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+        } else {
+          return '创建失败' + data.msg
+        }
       } else {
-        return '创建成功'
+        return '创建失败'
       }
     } else {
       return '创建失败'
     }
   })
-  backgroundItem.noticeOnRemove = true
-  const backgroundItemStore = useBackgroundItemStore()
+  const backgroundItemStore = useNotificationStore()
   backgroundItemStore.add(backgroundItem)
   // 刷新一次列表
   responsePromise.then(() => taskManageSearchTable.value.doSearch())
@@ -279,12 +281,12 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   const scheduleList: TaskScheduleDTO[] = []
   const notFoundList: (number | string)[] = []
   for (const id of ids) {
-    let tempStatus = parentTaskStatusStore.get(Number(id))
+    let tempStatus = parentTaskStore.getTask(Number(id))
     if (NotNullish(tempStatus)) {
       scheduleList.push(tempStatus)
       continue
     }
-    tempStatus = taskStatusStore.get(Number(id))
+    tempStatus = taskStore.getTask(Number(id))
     if (NotNullish(tempStatus)) {
       scheduleList.push(tempStatus)
       continue
@@ -316,7 +318,7 @@ function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeE
   switch (code) {
     case TaskOperationCodeEnum.VIEW:
       dialogData.value = row
-      taskDialogSearchTableState.value = NotNullish(row.isCollection) && row.isCollection
+      taskDialogSearchTableState.value = NotNullish(row.isCollection) && Boolean(row.isCollection)
       taskDialogState.value = true
       break
     case TaskOperationCodeEnum.START:
@@ -383,8 +385,8 @@ async function refreshTask() {
           (task.status === TaskStatusEnum.WAITING ||
             task.status === TaskStatusEnum.PROCESSING ||
             task.status === TaskStatusEnum.PAUSE ||
-            parentTaskStatusStore.has(task.id as number) ||
-            taskStatusStore.has(task.id as number))
+            parentTaskStore.hasTask(task.id as number) ||
+            taskStore.hasTask(task.id as number))
         )
       })
     }

@@ -62,21 +62,21 @@ const load = (node, resolve) => {
       </template>
     </div>
     <div>
-      <template v-for="item in taskStatus.values()" :key="item.id">
+      <template v-for="item in taskStatus.values()" :key="item.task.id">
         <span style="white-space: nowrap">
           {{
             'id: ' +
-            item.id +
+            item.task.id +
             ', taskName: ' +
-            item.taskName +
+            item.task.taskName +
             ', pid:' +
-            item.pid +
+            item.task.pid +
             ', status: ' +
-            item.status +
+            item.task.status +
             ', finished: ' +
-            item.finished +
+            item.task.finished +
             ', total: ' +
-            item.total
+            item.task.total
           }}
         </span>
         <br />

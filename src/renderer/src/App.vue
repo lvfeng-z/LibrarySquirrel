@@ -31,7 +31,7 @@ import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import { ElMessageBox } from 'element-plus'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
-import MsgList from '@renderer/components/common/MsgList.vue'
+import NotificationList from '@renderer/components/common/NotificationList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { SubpageState, SubpageStates, SubPageEnum } from '@renderer/constants/Subpage.ts'
 import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
@@ -388,7 +388,7 @@ async function handleTest() {
           <test v-if="subpageStates.test.state" />
         </div>
       </el-main>
-      <msg-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
+      <notification-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
     </el-container>
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
     <transaction-test v-model="showTestDialog"></transaction-test>

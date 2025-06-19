@@ -68,22 +68,24 @@ const taskStatusMapping: {
   }
 }
 // 任务进度信息Store
-const taskStatus = useTaskStore().$state
+const taskStore = useTaskStore()
 // 父任务进度信息Store
-const parentTaskStatus = useParentTaskStore().$state
+const parentTaskStore = useParentTaskStore()
 // 任务状态
 const status: Ref<number | undefined | null> = computed(() => {
   let tempStatus: number | undefined | null
   if (props.row.hasChildren) {
-    tempStatus = parentTaskStatus.get(props.row.id as number)?.status
+    tempStatus = parentTaskStore.getTask(props.row.id as number)?.status
   } else {
-    tempStatus = taskStatus.get(props.row.id as number)?.status
+    tempStatus = taskStore.getTask(props.row.id as number)?.status
   }
   return IsNullish(tempStatus) ? props.row.status : tempStatus
 })
 // 进度（百分比）
 const schedule: Ref<number> = computed(() => {
-  const tempStatus = props.row.hasChildren ? parentTaskStatus.get(props.row.id as number) : taskStatus.get(props.row.id as number)
+  const tempStatus = props.row.hasChildren
+    ? parentTaskStore.getTask(props.row.id as number)
+    : taskStore.getTask(props.row.id as number)
   if (NotNullish(tempStatus)) {
     const finished = tempStatus.finished
     const total = tempStatus.total
@@ -97,7 +99,7 @@ const schedule: Ref<number> = computed(() => {
 })
 // 进度（数据量）
 const scheduleByte: Ref<string> = computed(() => {
-  const tempStatus = taskStatus.get(props.row.id as number)
+  const tempStatus = taskStore.getTask(props.row.id as number)
   if (NotNullish(tempStatus)) {
     const finishedBytes = tempStatus.finished
     let finished: string | undefined
@@ -120,7 +122,7 @@ const scheduleByte: Ref<string> = computed(() => {
 })
 const fractions: Ref<string> = computed(() => {
   if (props.row.hasChildren) {
-    const parentTask = parentTaskStatus.get(props.row.id as number)
+    const parentTask = parentTaskStore.getTask(props.row.id as number)
     if (IsNullish(parentTask?.total)) {
       return ''
     }
@@ -230,7 +232,7 @@ function formatBytes(bytes: number) {
   transition: height 0.3s ease;
 }
 .task-operation-bar-parent-progress-disappear {
-  transition-delay: 1s;
+  transition-delay: 1.4s;
   height: 0;
 }
 </style>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import StringUtil from '@renderer/utils/StringUtil.ts'
-import { useBackgroundItemStore } from '@renderer/store/UseBackgroundItemStore.ts'
+import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // model
 // 开关状态
 const state = defineModel<boolean>('state', { required: true })
-const backgroundItem = useBackgroundItemStore().$state
+const backgroundItem = useNotificationStore().$state
 </script>
 
 <template>

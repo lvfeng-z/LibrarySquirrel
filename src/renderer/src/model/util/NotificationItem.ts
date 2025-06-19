@@ -1,6 +1,6 @@
 import { VNode } from 'vue'
 
-export default class BackgroundItem {
+export default class NotificationItem {
   /**
    * 唯一标识
    */
@@ -22,14 +22,9 @@ export default class BackgroundItem {
   render: (() => VNode) | undefined
 
   /**
-   * 结束时触发移除操作
+   * 此Promise解决时会从通知Store中移除对象，如果返回了字符串则会将其作为文本在右上角进行通知
    */
-  removeOnSettle: Promise<string> | undefined
-
-  /**
-   * 移除时是否发出提醒
-   */
-  noticeOnRemove: boolean
+  removeOnSettle: Promise<string | undefined> | undefined
 
   /**
    * 通知组件的关闭延时
@@ -41,7 +36,6 @@ export default class BackgroundItem {
     this.title = ''
     this.description = ''
     this.render = undefined
-    this.noticeOnRemove = false
     this.noticeDuration = 3000
   }
 }

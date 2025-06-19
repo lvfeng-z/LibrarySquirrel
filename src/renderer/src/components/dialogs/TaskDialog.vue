@@ -10,7 +10,7 @@ import ApiUtil from '../../utils/ApiUtil'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import { GetNode } from '@renderer/utils/TreeUtil.ts'
 import { throttle } from 'lodash'
-import TaskOperationBar from '@renderer/components/common/TaskOperationBar.vue'
+import TaskOperationBarActive from '@renderer/components/common/TaskOperationBarActive.vue'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import Page from '@renderer/model/util/Page.ts'
@@ -159,7 +159,9 @@ function handleOpen() {
     const baseDialogFooter = baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
     heightForSearchTable.value = parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
 
-    childTaskSearchTable.value.doSearch()
+    if (NotNullish(childTaskSearchTable.value)) {
+      childTaskSearchTable.value.doSearch()
+    }
   })
 }
 // 刷新任务进度和状态
@@ -383,7 +385,7 @@ async function deleteTask(ids: number[]) {
           </el-row>
         </template>
         <template #customOperations="{ row }">
-          <task-operation-bar :row="row" :button-clicked="handleOperationButtonClicked" />
+          <task-operation-bar-active :row="row" :button-clicked="handleOperationButtonClicked" />
         </template>
       </search-table>
     </template>

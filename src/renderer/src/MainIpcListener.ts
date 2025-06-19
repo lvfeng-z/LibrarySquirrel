@@ -1,41 +1,41 @@
 import TaskProgressDTO from '@renderer/model/main/dto/TaskProgressDTO.ts'
-import { removeTask, setTask, updateTask, updateTaskSchedule } from '@renderer/store/UseTaskStore.ts'
+import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskProgressMapTreeDTO from '@renderer/model/main/dto/TaskProgressMapTreeDTO.ts'
-import { removeParentTask, setParentTask, updateParentTask, updateParentTaskSchedule } from '@renderer/store/UseParentTaskStore.ts'
 import { ElMessageBox } from 'element-plus'
+import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 
 export function iniListener() {
   window.electron.ipcRenderer.on('taskStatus-setTask', (_event, [taskList]: [TaskProgressDTO[]]) => {
-    setTask(taskList)
+    useTaskStore().setTask(taskList)
   })
 
   window.electron.ipcRenderer.on('taskStatus-updateTask', (_event, [taskList]: [TaskProgressDTO[]]) => {
-    updateTask(taskList)
+    useTaskStore().updateTask(taskList)
   })
 
   window.electron.ipcRenderer.on('taskStatus-updateSchedule', (_event, [scheduleDTOList]: [TaskScheduleDTO[]]) => {
-    updateTaskSchedule(scheduleDTOList)
+    useTaskStore().updateTaskSchedule(scheduleDTOList)
   })
 
   window.electron.ipcRenderer.on('taskStatus-removeTask', (_event, [ids]: [number[]]) => {
-    removeTask(ids)
+    useTaskStore().removeTask(ids)
   })
 
   window.electron.ipcRenderer.on('parentTaskStatus-setParentTask', (_event, [taskList]: [TaskProgressMapTreeDTO[]]) => {
-    setParentTask(taskList)
+    useParentTaskStore().setParentTask(taskList)
   })
 
   window.electron.ipcRenderer.on('parentTaskStatus-updateParentTask', (_event, [taskList]: [TaskProgressMapTreeDTO[]]) => {
-    updateParentTask(taskList)
+    useParentTaskStore().updateParentTask(taskList)
   })
 
   window.electron.ipcRenderer.on('parentTaskStatus-updateSchedule', (_event, [taskList]: [TaskScheduleDTO[]]) => {
-    updateParentTaskSchedule(taskList)
+    useParentTaskStore().updateParentTaskSchedule(taskList)
   })
 
   window.electron.ipcRenderer.on('parentTaskStatus-removeParentTask', (_event, [ids]: [number[]]) => {
-    removeParentTask(ids)
+    useParentTaskStore().removeParentTask(ids)
   })
 
   window.electron.ipcRenderer.on('mainWindow-closeConfirm', () => {
