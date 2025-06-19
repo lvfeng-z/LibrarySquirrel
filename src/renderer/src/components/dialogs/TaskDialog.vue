@@ -23,6 +23,7 @@ import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 // props
 const props = defineProps<{
   mode: DialogMode
+  showSearchTable: boolean
 }>()
 
 // model
@@ -299,7 +300,7 @@ async function deleteTask(ids: number[]) {
           </el-row>
           <el-row>
             <el-col>
-              <el-form-item label="url">
+              <el-form-item label="来源">
                 <el-input v-model="formData.url"></el-input>
               </el-form-item>
             </el-col>
@@ -331,6 +332,7 @@ async function deleteTask(ids: number[]) {
     </template>
     <template #afterForm>
       <search-table
+        v-if="showSearchTable"
         ref="childTaskSearchTable"
         v-model:page="page"
         v-model:search-params="taskSearchParams"

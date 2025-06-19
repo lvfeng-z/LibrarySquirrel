@@ -10,7 +10,7 @@ import SiteManage from '@renderer/components/subpage/SiteManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { Close, CollectionTag, Coordinate, House, Link, List, Setting, Star, Ticket, User } from '@element-plus/icons-vue'
+import { Close, Coordinate, House, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -270,7 +270,7 @@ async function handleTest() {
             </el-menu-item>
             <el-sub-menu index="1">
               <template #title>
-                <el-icon><CollectionTag /></el-icon>
+                <el-icon><PriceTag /></el-icon>
                 <span>标签</span>
               </template>
               <el-menu-item index="1-1" @click="showSubpage(subpageStates.localTagManage)">本地标签</el-menu-item>
@@ -301,7 +301,7 @@ async function handleTest() {
             </el-sub-menu>
             <el-menu-item index="6" @click="showSubpage(subpageStates.pluginManage)">
               <template #title>插件</template>
-              <el-icon><Ticket /></el-icon>
+              <el-icon><Box /></el-icon>
             </el-menu-item>
             <el-menu-item index="7" @click="showSubpage(subpageStates.settings)">
               <template #title>设置</template>

@@ -169,7 +169,7 @@ function formatBytes(bytes: number) {
       "
       style="margin-left: auto; margin-right: auto; flex-shrink: 0"
     >
-      <el-tooltip v-if="props.row.isCollection" :enterable="false" :show-after="650" :hide-after="0" content="详情">
+      <el-tooltip :enterable="false" :show-after="650" :hide-after="0" content="详情">
         <el-button size="small" icon="View" @click="buttonClicked(row, TaskOperationCodeEnum.VIEW)" />
       </el-tooltip>
       <el-tooltip :content="mapToButtonStatus().tooltip" :enterable="false" :show-after="650" :hide-after="0">
@@ -187,25 +187,25 @@ function formatBytes(bytes: number) {
         <el-button size="small" icon="Delete" @click="buttonClicked(row, TaskOperationCodeEnum.DELETE)" />
       </el-tooltip>
     </el-button-group>
-    <transition name="task-operation-bar-el-progress-fade">
-      <div
-        v-if="
-          (status === TaskStatusEnum.PROCESSING || status === TaskStatusEnum.WAITING || status === TaskStatusEnum.PAUSE) &&
-          row.hasChildren
-        "
-      >
-        <el-progress style="width: 100%" :percentage="schedule" text-inside :stroke-width="15" striped striped-flow :duration="5">
-          <template #default="{ percentage }">
-            <span style="font-size: 14px; width: 100px">
-              {{ percentage + '% ' }}
-            </span>
-            <span>
-              {{ fractions }}
-            </span>
-          </template>
-        </el-progress>
-      </div>
-    </transition>
+    <div
+      :class="{
+        'task-operation-bar-parent-progress': true,
+        'task-operation-bar-parent-progress-disappear':
+          !(status === TaskStatusEnum.PROCESSING || status === TaskStatusEnum.WAITING || status === TaskStatusEnum.PAUSE) ||
+          !row.hasChildren
+      }"
+    >
+      <el-progress style="width: 100%" :percentage="schedule" text-inside :stroke-width="15">
+        <template #default="{ percentage }">
+          <span style="font-size: 14px; width: 100px">
+            {{ percentage + '% ' }}
+          </span>
+          <span>
+            {{ fractions }}
+          </span>
+        </template>
+      </el-progress>
+    </div>
     <el-progress
       v-show="
         (status === TaskStatusEnum.PROCESSING || status === TaskStatusEnum.WAITING || status === TaskStatusEnum.PAUSE) &&
@@ -215,9 +215,6 @@ function formatBytes(bytes: number) {
       :percentage="schedule"
       text-inside
       :stroke-width="24"
-      striped
-      striped-flow
-      :duration="5"
       @click="buttonClicked(row, mapToButtonStatus().operation)"
     >
       <template #default>
@@ -228,12 +225,11 @@ function formatBytes(bytes: number) {
 </template>
 
 <style scoped>
-.task-operation-bar-el-progress-fade-enter-active,
-.task-operation-bar-el-progress-fade-leave-active {
-  transition: opacity 1.5s;
+.task-operation-bar-parent-progress {
+  transition: height 0.3s ease;
 }
-.task-operation-bar-el-progress-fade-enter,
-.task-operation-bar-el-progress-fade-leave-to {
-  opacity: 0;
+.task-operation-bar-parent-progress-disappear {
+  transition-delay: 1s;
+  height: 0;
 }
 </style>
