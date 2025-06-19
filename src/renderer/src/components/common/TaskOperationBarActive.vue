@@ -226,6 +226,7 @@ function formatBytes(bytes: number) {
 
 <style scoped>
 .task-operation-bar-parent-progress {
+  overflow: hidden;
   transition: height 0.3s ease;
 }
 .task-operation-bar-parent-progress-disappear {
