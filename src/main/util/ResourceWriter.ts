@@ -41,39 +41,6 @@ export default class ResourceWriter {
    * 是否错误
    */
   private errorOccurred: boolean
-  /**
-   * doWrite方法返回的Promise的reject方法
-   * @private
-   */
-  private rejectFunc: ((arg?: unknown) => void) | undefined
-
-  /**
-   * 可读流的error事件回调
-   * @param err
-   * @private
-   */
-  private readableErrorHandler(err: Error) {
-    this.errorOccurred = true
-    LogUtil.error(this.constructor.name, `readable出错${err}`)
-    if (NotNullish(this.rejectFunc)) {
-      this.rejectFunc(err)
-    }
-  }
-
-  /**
-   * 可读流的end事件回调
-   * @private
-   */
-  private readableEndHandler() {
-    this.readableFinished = true
-    if (!this.errorOccurred) {
-      this.writable?.end()
-    } else {
-      if (NotNullish(this.rejectFunc)) {
-        this.rejectFunc()
-      }
-    }
-  }
 
   constructor(readable?: Readable, writeable?: fs.WriteStream) {
     this.readable = readable
@@ -91,8 +58,24 @@ export default class ResourceWriter {
    */
   public doWrite(newWritable?: fs.WriteStream): Promise<FileSaveResult> {
     this.paused = false
+
     return new Promise((resolve, reject) => {
-      this.rejectFunc = reject
+      // 可读流的error事件回调
+      const readableErrorHandler = (err: Error) => {
+        this.errorOccurred = true
+        LogUtil.error(this.constructor.name, `readable出错${err}`)
+        reject(err)
+      }
+      // 可读流的end事件回调
+      const readableEndHandler = (err: Error) => {
+        this.readableFinished = true
+        if (!this.errorOccurred) {
+          this.writable?.end()
+        } else {
+          reject(err)
+        }
+      }
+
       if (NotNullish(newWritable)) {
         this.writable = newWritable
       }
@@ -101,8 +84,8 @@ export default class ResourceWriter {
       const readable = this.readable
       const writable = this.writable
       this.errorOccurred = false
-      if (!readable.listeners('error').includes(this.readableErrorHandler)) {
-        readable.once('error', this.readableErrorHandler)
+      if (!readable.listeners('error').includes(readableErrorHandler)) {
+        readable.once('error', readableErrorHandler)
       }
       writable.once('error', (err) => {
         this.errorOccurred = true
@@ -110,8 +93,8 @@ export default class ResourceWriter {
         writable.destroy()
         reject(err)
       })
-      if (!readable.listeners('end').includes(this.readableEndHandler)) {
-        readable.once('end', this.readableEndHandler)
+      if (!readable.listeners('end').includes(readableEndHandler)) {
+        readable.once('end', readableEndHandler)
       }
       writable.once('finish', () => {
         if (!this.errorOccurred) {
