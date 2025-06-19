@@ -57,6 +57,9 @@ export default class ResourceWriter {
    * 写入文件
    */
   public doWrite(newWritable?: fs.WriteStream): Promise<FileSaveResult> {
+    if (this.paused) {
+      return Promise.resolve(FileSaveResult.PAUSE)
+    }
     this.paused = false
 
     return new Promise((resolve, reject) => {
