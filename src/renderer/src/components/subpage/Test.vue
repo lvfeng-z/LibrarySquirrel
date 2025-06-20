@@ -46,6 +46,37 @@ const load = (node, resolve) => {
 
 <template>
   <base-subpage>
+    <div style="display: flex; flex-direction: row">
+      <div style="width: 50%; height: 500px">
+        <template v-for="item in parentTaskStatus.values()" :key="item.id">
+          <span style="white-space: nowrap">
+            {{ 'id: ' + item.id + ', taskName: ' + item.taskName + ', pid:' + item.pid + ', status: ' + item.status }}
+          </span>
+          <br />
+        </template>
+      </div>
+      <div style="width: 50%; height: 500px">
+        <template v-for="item in taskStatus.values()" :key="item.task.id">
+          <span style="white-space: nowrap">
+            {{
+              'id: ' +
+              item.task.id +
+              ', taskName: ' +
+              item.task.taskName +
+              ', pid:' +
+              item.task.pid +
+              ', status: ' +
+              item.task.status +
+              ', finished: ' +
+              item.task.finished +
+              ', total: ' +
+              item.task.total
+            }}
+          </span>
+          <br />
+        </template>
+      </div>
+    </div>
     <button class="button">hover me</button>
     <div class="wrapper">
       <div class="content"></div>
@@ -53,36 +84,6 @@ const load = (node, resolve) => {
     <el-tree-select v-model="value" lazy :load="load" :props="props" style="width: 240px" />
     <el-divider />
     <el-tree-select v-model="value2" lazy :load="load" :props="props" :cache-data="cacheData" style="width: 240px" />
-    <div>
-      <template v-for="item in parentTaskStatus.values()" :key="item.id">
-        <span style="white-space: nowrap">
-          {{ 'id: ' + item.id + ', taskName: ' + item.taskName + ', pid:' + item.pid + ', status: ' + item.status }}
-        </span>
-        <br />
-      </template>
-    </div>
-    <div>
-      <template v-for="item in taskStatus.values()" :key="item.task.id">
-        <span style="white-space: nowrap">
-          {{
-            'id: ' +
-            item.task.id +
-            ', taskName: ' +
-            item.task.taskName +
-            ', pid:' +
-            item.task.pid +
-            ', status: ' +
-            item.task.status +
-            ', finished: ' +
-            item.task.finished +
-            ', total: ' +
-            item.task.total
-          }}
-        </span>
-        <br />
-      </template>
-    </div>
-    <el-button @click="console.log(taskStatus)">test</el-button>
   </base-subpage>
 </template>
 

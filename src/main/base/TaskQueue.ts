@@ -767,7 +767,7 @@ export class TaskQueue {
       clearTimeout(oldInst.clearTimeoutId)
     }
     this.taskMap.set(taskRunInstance.taskId, taskRunInstance)
-    // 任务状态推送到渲染进程
+    // 任务运行信息推送到渲染进程
     const taskProgressDTO = new TaskProgressDTO()
     CopyIgnoreUndefined(taskProgressDTO, task)
     SendMsgToRender(RenderEvent.TASK_STATUS_SET_TASK, [taskProgressDTO])

@@ -292,13 +292,10 @@ async function handleTest() {
               <template #title>站点</template>
               <el-icon><Link /></el-icon>
             </el-menu-item>
-            <el-sub-menu index="5">
-              <template #title>
-                <el-icon><List /></el-icon>
-                <span>任务</span>
-              </template>
-              <el-menu-item index="5-1" @click="showSubpage(subpageStates.taskManage)">任务管理</el-menu-item>
-            </el-sub-menu>
+            <el-menu-item index="5" @click="showSubpage(subpageStates.taskManage)">
+              <template #title>任务</template>
+              <el-icon><List /></el-icon>
+            </el-menu-item>
             <el-menu-item index="6" @click="showSubpage(subpageStates.pluginManage)">
               <template #title>插件</template>
               <el-icon><Box /></el-icon>

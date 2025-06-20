@@ -18,23 +18,17 @@ export const useTaskStore = defineStore('task', {
     },
     setTask(taskList: TaskProgressDTO[]): void {
       const taskStatus: Map<number, TaskStoreObj> = this.$state
-      const notificationStore = useNotificationStore()
       taskList.forEach((task) => {
+        let notificationId: string | undefined
         // 只有进行中、等待中两种状态才推送到通知Store中
         if (TaskStatusEnum.PROCESSING === task.status || TaskStatusEnum.WAITING === task.status) {
-          const tempRemovePromise: Promise<string> = new Promise((resolve) => {
-            if (IsNullish(task.id)) {
-              throw new Error('UseTaskStore: 赋值任务失败，任务id为空')
-            }
-
-            taskStatus.set(task.id, { task, removeResolve: resolve })
-          })
-          const notificationItem = new NotificationItem()
-          notificationItem.title = task.taskName as string
-          notificationItem.removeOnSettle = tempRemovePromise
-          notificationItem.render = () => h('div', {}, () => task.finished)
-          notificationStore.add(notificationItem)
+          const notificationItem = createNotificationItem(task)
+          notificationId = useNotificationStore().add(notificationItem)
         }
+        if (IsNullish(task.id)) {
+          throw new Error('UseTaskStore: 赋值任务失败，任务id为空')
+        }
+        taskStatus.set(task.id, { task, notificationId })
       })
     },
     hasTask(taskId: number): boolean {
@@ -45,17 +39,33 @@ export const useTaskStore = defineStore('task', {
         if (IsNullish(task.id)) {
           throw new Error('UseTaskStore: 更新任务失败，任务id为空')
         }
-        const oldTask = this.$state.get(task.id)
-        if (NotNullish(oldTask)) {
-          // 更新状态是发现任务状态变化为完成或失败，解决通知Store中该任务的Promise
-          if (task.status !== oldTask.task.status) {
-            if (task.status === TaskStatusEnum.FINISHED) {
-              oldTask.removeResolve(`任务${task.id}已完成`)
-            } else if (task.status === TaskStatusEnum.FAILED) {
-              oldTask.removeResolve(`任务${task.id}失败`)
+        const taskStoreObj = this.$state.get(task.id)
+        if (NotNullish(taskStoreObj)) {
+          if (task.status !== taskStoreObj.task.status) {
+            // 任务状态变化为完成或失败，解决通知Store中该任务的Promise
+            if (NotNullish(taskStoreObj.notificationId)) {
+              if (task.status === TaskStatusEnum.FINISHED) {
+                useNotificationStore().remove(taskStoreObj.notificationId, {
+                  type: 'success',
+                  msg: `从${taskStoreObj.task.siteName}下载【${taskStoreObj.task.taskName}】完成`
+                })
+              } else if (task.status === TaskStatusEnum.FAILED) {
+                useNotificationStore().remove(taskStoreObj.notificationId, {
+                  type: 'error',
+                  msg: `从${taskStoreObj.task.siteName}下载【${taskStoreObj.task.id}】失败`
+                })
+              }
+            }
+            // 如果状态为进行中、等待中，就推送到通知Store中
+            if (
+              IsNullish(taskStoreObj.notificationId) &&
+              (TaskStatusEnum.PROCESSING === task.status || TaskStatusEnum.WAITING === task.status)
+            ) {
+              const notificationItem = createNotificationItem(task)
+              useNotificationStore().add(notificationItem)
             }
           }
-          CopyIgnoreUndefined(oldTask.task, task)
+          CopyIgnoreUndefined(taskStoreObj.task, task)
         }
       })
     },
@@ -81,4 +91,20 @@ export const useTaskStore = defineStore('task', {
   }
 })
 
-export type TaskStoreObj = { task: TaskProgressDTO; removeResolve: (msg: string) => void }
+export type TaskStoreObj = {
+  /**
+   * 任务进度DTO
+   */
+  task: TaskProgressDTO
+  /**
+   * 通知id
+   */
+  notificationId: string | undefined
+}
+
+function createNotificationItem(task: TaskProgressDTO): NotificationItem {
+  const notificationItem = new NotificationItem()
+  notificationItem.title = task.taskName as string
+  notificationItem.render = () => h('div', {}, () => task.finished)
+  return notificationItem
+}
