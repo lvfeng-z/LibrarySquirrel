@@ -9,7 +9,7 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/Comm
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
-import { CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
+import { AddSuffix, CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
 import path from 'path'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import { AuthorRank } from '../constant/AuthorRank.js'
@@ -22,7 +22,7 @@ import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import ResFileNameFormatEnum from '../constant/ResFileNameFormatEnum.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
-import { rename } from 'node:fs/promises'
+import { rename, rm } from 'node:fs/promises'
 
 /**
  * 资源服务
@@ -240,7 +240,15 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const workdir = settings.get('workdir')
     const oldResAbsolutePath = path.join(workdir, oldResource.filePath)
     const backupService = new BackupService()
-    await backupService.createBackup(BackupSourceTypeEnum.WORKS, resourceId, oldResAbsolutePath)
+    const backupAbsolutePath = AddSuffix(oldResAbsolutePath, '-lsBackup')
+    // 先重命名文件再创建备份，避免原文件占用新的资源的名称
+    await rename(oldResAbsolutePath, backupAbsolutePath)
+    backupService
+      .createBackup(BackupSourceTypeEnum.WORKS, resourceId, backupAbsolutePath)
+      .then(() => rm(backupAbsolutePath))
+      .catch(() => {
+        // TODO 通知用户创建备份失败
+      })
 
     try {
       // 创建写入流

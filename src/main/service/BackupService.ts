@@ -17,6 +17,12 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     super(BackupDao, db)
   }
 
+  /**
+   * 创建备份
+   * @param sourceType 源数据类型
+   * @param sourceId 源数据id
+   * @param sourceFilePath 源文件路径
+   */
   async createBackup(sourceType: BackupSourceTypeEnum, sourceId: number, sourceFilePath: string): Promise<Backup> {
     try {
       await fs.access(sourceFilePath)

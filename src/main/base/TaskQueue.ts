@@ -392,25 +392,26 @@ export class TaskQueue {
       }
       const tempChildren = tempParent.children
       tempParent.children = []
-      let inserted = false
+      let parentPushed = false
       for (const tempChild of tempChildren) {
         if (IsNullish(tempChild.id)) {
           continue
         }
-        // 优先使用任务池中的任务状态
+        // 优先使用运行实例的任务状态判断任务状态，同时把运行实例的状态作为任务的状态
         const tempRunInst = this.taskMap.get(tempChild.id)
         if (NotNullish(tempRunInst)) {
           if (includeStatus.includes(tempRunInst.status)) {
-            if (!inserted) {
+            if (!parentPushed) {
               result.push(tempParent)
-              inserted = true
+              parentPushed = true
             }
+            tempChild.status = tempRunInst.status
             tempParent.children.push(tempChild)
           }
         } else if (includeStatus.includes(tempChild.status as TaskStatusEnum)) {
-          if (!inserted) {
+          if (!parentPushed) {
             result.push(tempParent)
-            inserted = true
+            parentPushed = true
           }
           tempParent.children.push(tempChild)
         }
