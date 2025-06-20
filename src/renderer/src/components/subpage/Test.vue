@@ -4,12 +4,14 @@ import { ElTreeSelect } from 'element-plus'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
+import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 
 const value = ref()
 const value2 = ref(5)
 
 const taskStatus = useTaskStore().$state
 const parentTaskStatus = useParentTaskStore().$state
+const notificationStore = useNotificationStore().$state
 
 const cacheData = [
   { value: 5, label: 'lazy load node5' },
@@ -47,7 +49,7 @@ const load = (node, resolve) => {
 <template>
   <base-subpage>
     <div style="display: flex; flex-direction: row">
-      <div style="width: 50%; height: 500px">
+      <div style="width: 50%">
         <template v-for="item in parentTaskStatus.values()" :key="item.id">
           <span style="white-space: nowrap">
             {{ 'id: ' + item.id + ', taskName: ' + item.taskName + ', pid:' + item.pid + ', status: ' + item.status }}
@@ -55,7 +57,7 @@ const load = (node, resolve) => {
           <br />
         </template>
       </div>
-      <div style="width: 50%; height: 500px">
+      <div style="width: 50%">
         <template v-for="item in taskStatus.values()" :key="item.task.id">
           <span style="white-space: nowrap">
             {{
@@ -72,6 +74,16 @@ const load = (node, resolve) => {
               ', total: ' +
               item.task.total
             }}
+          </span>
+          <br />
+        </template>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: row">
+      <div style="width: 50%">
+        <template v-for="item in notificationStore.values()" :key="item.id">
+          <span style="white-space: nowrap">
+            {{ 'id: ' + item.id + ', title: ' + item.title + ', description:' + item.description }}
           </span>
           <br />
         </template>

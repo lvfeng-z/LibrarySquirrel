@@ -177,38 +177,49 @@ const parentTaskStore = useParentTaskStore()
 // 方法
 // 从本地路径导入
 async function importFromDir(dir: string) {
-  apis.taskCreateTask('file://'.concat(dir)).then(handleCreatTaskResponse)
   const notificationItem = new NotificationItem()
   notificationItem.title = `正在从【${dir}】创建任务`
   const notificationStore = useNotificationStore()
-  notificationStore.add(notificationItem)
+  const notificationId = notificationStore.add(notificationItem)
+  apis.taskCreateTask('file://'.concat(dir)).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
 }
 // 从站点url导入
 async function importFromSite() {
-  apis.taskCreateTask(siteSourceUrl.value).then(handleCreatTaskResponse)
-  siteDownloadState.value = false
   const notificationItem = new NotificationItem()
   notificationItem.title = `正在从【${siteSourceUrl.value}】创建任务`
   const notificationStore = useNotificationStore()
-  notificationStore.add(notificationItem)
+  const notificationId = notificationStore.add(notificationItem)
+  apis.taskCreateTask(siteSourceUrl.value).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
+  siteDownloadState.value = false
 }
-function handleCreatTaskResponse(response: ApiResponse) {
+// 处理任务创建的响应
+function handleCreatTaskResponse(response: ApiResponse, notificationId: string) {
+  let type: 'error' | 'primary' | 'success' | 'warning' | 'info'
+  let msg: string
   if (ApiUtil.check(response)) {
     const data = ApiUtil.data<TaskCreateResponse>(response)
     if (NotNullish(data)) {
       // 刷新一次列表
       taskManageSearchTable.value.doSearch()
       if (data.succeed) {
-        return `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
+        type = 'success'
+        msg = `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
       } else {
-        return '创建失败' + data.msg
+        type = 'error'
+        msg = '创建失败' + data.msg
       }
     } else {
-      return '创建失败'
+      type = 'error'
+      msg = '创建失败'
     }
   } else {
-    return '创建失败'
+    type = 'error'
+    msg = '创建失败'
   }
+  useNotificationStore().remove(notificationId, {
+    type: type,
+    msg: msg
+  })
 }
 // 分页查询子任务的函数
 async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
