@@ -9,7 +9,6 @@ import { TreeNode } from 'element-plus'
 import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
-//todo 数据列的宽度可拖拽调整，表头的el-tag超长部分省略
 
 // props
 const props = withDefaults(
@@ -25,8 +24,9 @@ const props = withDefaults(
     treeData?: boolean // 是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
+    border?: boolean
   }>(),
-  { customOperationButton: false, treeData: false, treeLazy: false }
+  { customOperationButton: false, treeData: false, treeLazy: false, border: false }
 )
 
 // onBeforeMount
@@ -164,6 +164,7 @@ function setCacheData(scope, item, newData) {
     :row-key="dataKey"
     :row-class-name="tableRowClassName"
     :selectable="props.selectable"
+    :border="props.border"
     @selection-change="handleSelectionChange"
   >
     <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />

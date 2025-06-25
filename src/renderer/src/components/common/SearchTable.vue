@@ -27,6 +27,7 @@ const props = withDefaults(
     treeData?: boolean //是否为树形数据
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
+    border?: boolean // 是否带有纵向边框
     search: (page: Page<Query, Data>) => Promise<Page<Query, Data> | undefined> // 查询函数
     updateLoad?: (ids: (number | string)[]) => Promise<object[] | undefined> // 更新数据的函数
     updateProperties?: string[] // 要更新的属性名
@@ -36,7 +37,8 @@ const props = withDefaults(
   {
     createButton: false,
     pageSizes: () => [10, 20, 30, 50, 100],
-    treeLazy: false
+    treeLazy: false,
+    border: false
   }
 )
 
@@ -248,6 +250,7 @@ defineExpose({
         :tree-data="treeData"
         :lazy="props.treeLazy"
         :load="wrappedLoad"
+        :border="border"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
