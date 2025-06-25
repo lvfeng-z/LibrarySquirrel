@@ -21,6 +21,7 @@ import { ElMessage } from 'element-plus'
 import AuthorInfo from '@renderer/components/common/AuthorInfo.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import { Picture } from '@element-plus/icons-vue'
 
 // props
 const props = defineProps<{
@@ -236,6 +237,11 @@ function handleDrawerOpen() {
         :src="`resource://workdir/${worksFullInfo.resource?.filePath}`"
         @click="handlePictureClicked"
       >
+        <template #error>
+          <div class="works-dialog-image-error">
+            <el-icon class="works-dialog-image-error-icon"><Picture /></el-icon>
+          </div>
+        </template>
       </el-image>
       <el-scrollbar>
         <el-descriptions ref="infosRef" class="works-dialog-info" direction="horizontal" :column="1">
@@ -389,6 +395,19 @@ function handleDrawerOpen() {
   margin-right: 10px;
   flex-shrink: 0;
   cursor: pointer;
+}
+.works-dialog-image-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--el-fill-color-dark);
+  height: 100%;
+  width: 200px;
+}
+.works-dialog-image-error-icon {
+  color: var(--el-text-color-secondary);
+  scale: 2;
 }
 .works-dialog-info {
   margin-right: 10px;
