@@ -11,6 +11,7 @@ import StringUtil from './util/StringUtil.js'
 import GotoPageConfig from './model/util/GotoPageConfig.js'
 import { SubPageEnum } from './constant/SubPageEnum.js'
 import { Initialize } from './base/Initialize.js'
+import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -53,11 +54,12 @@ function createWindow(): Electron.BrowserWindow {
 
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     if (!taskQueue.isIdle()) {
-      mainWindow.webContents.send('mainWindow-closeConfirm')
-      await new Promise<boolean>((resolve) => {
-        Electron.ipcMain.once('mainWindow-closeConfirmed', (_event, confirmed: boolean) => {
-          resolve(confirmed)
-        })
+      await SendConfirmToWindow({
+        title: '有任务正在进行中',
+        msg: '是否关闭LibrarySquirrel？',
+        confirmButtonText: '关闭',
+        cancelButtonText: '取消',
+        type: 'warning'
       })
     }
 
