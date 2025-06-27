@@ -8,6 +8,8 @@ import path from 'path'
 import { RootDir } from '../util/FileSysUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import GotoPageConfig from '../model/util/GotoPageConfig.js'
+import { PageEnum } from '../constant/PageEnum.js'
 
 async function insertLocalTag10W() {
   const db = new DB('insertLocalTag10W')
@@ -83,10 +85,29 @@ async function mainWindowMsgTest() {
   mainWindow.webContents.send('goto-page', gotoPageProps)
 }
 
+function gotoPageSiteManage() {
+  const tempDomains = ['www.pixiv.net']
+  const gotoPageConfig: GotoPageConfig = {
+    page: PageEnum.SiteManage,
+    title: '插件创建了新的域名',
+    content: '建议将新的域名绑定到站点，以免影响插件使用',
+    options: {
+      confirmButtonText: '去绑定',
+      cancelButtonText: '以后再说',
+      type: 'warning',
+      showClose: false
+    },
+    extraData: tempDomains
+  }
+  const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+  mainWindow.webContents.send('goto-page', gotoPageConfig)
+}
+
 export default {
   insertLocalTag10W,
   transactionTest,
   pLimitTest,
   installPluginTest,
-  mainWindowMsgTest
+  mainWindowMsgTest,
+  gotoPageSiteManage
 }

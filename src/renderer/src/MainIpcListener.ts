@@ -6,7 +6,7 @@ import { ElMessageBox } from 'element-plus'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import ConfirmConfig from '@renderer/model/util/ConfirmConfig.ts'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
-import { PageEnum } from '@renderer/constants/Subpage.ts'
+import { PageEnum } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 
 export function iniListener() {
@@ -59,7 +59,7 @@ export function iniListener() {
           pageStatesStore.showPage(pageStatesStore.pageStates.settings)
           break
         case PageEnum.SiteManage:
-          // subpageProps.value.siteManageFocusOnSiteDomainId = config.extraData as string[]
+          pageStatesStore.pageStates.siteManage.setFocusOnDomains(config.extraData as string[])
           pageStatesStore.showPage(pageStatesStore.pageStates.siteManage)
           break
       }

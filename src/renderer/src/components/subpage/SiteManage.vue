@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
 import SearchTable from '@renderer/components/common/SearchTable.vue'
-import { onMounted, ref, Ref, UnwrapRef } from 'vue'
+import { onMounted, ref, Ref, toRaw, UnwrapRef } from 'vue'
 import Page from '@renderer/model/util/Page.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import OperationItem from '@renderer/model/util/OperationItem.ts'
@@ -11,14 +11,13 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import lodash from 'lodash'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteDialog from '@renderer/components/dialogs/SiteDialog.vue'
 import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO.ts'
 import SiteDomainDTO from '@renderer/model/main/dto/SiteDomainDTO.ts'
 import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
 import { ElMessage } from 'element-plus'
-
-const props = defineProps<{ focusOnDomains?: string[] | undefined }>()
+import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 
 // onMounted
 onMounted(() => {
@@ -30,15 +29,9 @@ onMounted(() => {
     { key: 'createTime', asc: false }
   ]
   siteSearchTable.value.doSearch()
-  if (NotNullish(props.focusOnDomains)) {
-    if (IsNullish(siteDomainPage.value.query)) {
-      siteDomainPage.value.query = new SiteDomainQueryDTO()
-    }
-    siteDomainPage.value.query.sort = [
-      { key: 'updateTime', asc: false },
-      { key: 'createTime', asc: false }
-    ]
-    siteDomainPage.value.query.domains = props.focusOnDomains
+  const focusOnDomains = toRaw(usePageStatesStore().pageStates.siteManage.focusOnDomains)
+  if (ArrayNotEmpty(focusOnDomains)) {
+    siteDomainSearchParams.value.domains = focusOnDomains
     siteDomainSearchTable.value.doSearch()
   }
 })

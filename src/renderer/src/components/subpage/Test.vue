@@ -44,10 +44,15 @@ const load = (node, resolve) => {
     resolve(r)
   }, 1)
 }
+
+function handleTest() {
+  window.api.testGotoPageSiteManage()
+}
 </script>
 
 <template>
   <base-subpage>
+    <el-button @click="handleTest">test</el-button>
     <div style="display: flex; flex-direction: row">
       <div style="width: 50%">
         <template v-for="item in parentTaskStatus.values()" :key="item.id">

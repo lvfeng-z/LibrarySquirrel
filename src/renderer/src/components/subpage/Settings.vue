@@ -9,7 +9,7 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
-import { PageState } from '@renderer/constants/Subpage.ts'
+import { PageState } from '@renderer/constants/PageState.ts'
 
 // props
 const props = defineProps<{ state: PageState }>()

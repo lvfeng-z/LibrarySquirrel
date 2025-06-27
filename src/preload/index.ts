@@ -11,6 +11,7 @@ const api = {
   testPLimitTest: (args) => Electron.ipcRenderer.invoke('test-pLimitTest', args),
   testInstallPluginTest: (args) => Electron.ipcRenderer.invoke('test-installPluginTest', args),
   testMainWindowMsgTest: (args) => Electron.ipcRenderer.invoke('test-mainWindowMsgTest', args),
+  testGotoPageSiteManage: (args) => Electron.ipcRenderer.invoke('test-gotoPageSiteManage', args),
 
   // AppLauncher
   appLauncherOpenImage: (args) => Electron.ipcRenderer.invoke('appLauncher-openImage', args),

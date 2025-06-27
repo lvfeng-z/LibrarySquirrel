@@ -12,6 +12,7 @@ declare global {
       testPLimitTest: function
       testInstallPluginTest: function
       testMainWindowMsgTest: function
+      testGotoPageSiteManage: function
 
       // AppLauncher
       appLauncherOpenImage: function

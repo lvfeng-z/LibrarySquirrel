@@ -21,7 +21,7 @@ import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import GotoPageConfig from '../model/util/GotoPageConfig.js'
-import { SubPageEnum } from '../constant/SubPageEnum.js'
+import { PageEnum } from '../constant/PageEnum.js'
 import { pathToFileURL } from 'node:url'
 import PluginInstallResultDTO from '../model/dto/PluginInstallResultDTO.js'
 import SiteService from './SiteService.js'
@@ -266,7 +266,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     this.installFromPath(packagePath).then((installResult) => {
       const tempDomains = installResult.domains.map((siteDomain) => siteDomain.domain)
       const gotoPageConfig: GotoPageConfig = {
-        page: SubPageEnum.SiteManage,
+        page: PageEnum.SiteManage,
         title: '插件创建了新的域名',
         content: '建议将新的域名绑定到站点，以免影响插件使用',
         options: {

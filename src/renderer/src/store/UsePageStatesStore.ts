@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { PageState, PageStates } from '@renderer/constants/Subpage.ts'
+import { PageState, PageStates } from '@renderer/constants/PageState.ts'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export const usePageStatesStore = defineStore('pageStates', {

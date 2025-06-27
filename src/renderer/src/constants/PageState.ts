@@ -37,7 +37,7 @@ export class PageStates {
   localAuthorManage = new PageState(PageEnum.LocalAuthorManage, false)
   siteAuthorManage = new PageState(PageEnum.SiteAuthorManage, false)
   pluginManage = new PageState(PageEnum.PluginManage, false)
-  siteManage = new PageState(PageEnum.SiteManage, false)
+  siteManage = new SiteManagePageState(PageEnum.SiteManage, false)
   taskManage = new PageState(PageEnum.TaskManage, false)
   settings = new PageState(PageEnum.Settings, false)
   developing = new PageState(PageEnum.Developing, false)
@@ -57,4 +57,17 @@ export enum PageEnum {
   SiteManage = 10,
   Developing = 11,
   Test = 12
+}
+
+export class SiteManagePageState extends PageState {
+  focusOnDomains: string[]
+
+  constructor(page: PageEnum, state: boolean) {
+    super(page, state)
+    this.focusOnDomains = []
+  }
+
+  public setFocusOnDomains(focusOnDomains: string[]) {
+    this.focusOnDomains = focusOnDomains
+  }
 }

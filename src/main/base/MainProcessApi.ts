@@ -46,6 +46,10 @@ function exposeService() {
     LogUtil.info('MainProcessApi', 'test-mainWindowMsgTest')
     return test.mainWindowMsgTest()
   })
+  Electron.ipcMain.handle('test-gotoPageSiteManage', async () => {
+    LogUtil.info('MainProcessApi', 'test-gotoPageSiteManage')
+    return test.gotoPageSiteManage()
+  })
 
   // AppLauncherService
   Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {

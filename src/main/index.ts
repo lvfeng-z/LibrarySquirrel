@@ -9,7 +9,7 @@ import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
 import { GlobalVar, GlobalVars } from './base/GlobalVar.ts'
 import StringUtil from './util/StringUtil.js'
 import GotoPageConfig from './model/util/GotoPageConfig.js'
-import { SubPageEnum } from './constant/SubPageEnum.js'
+import { PageEnum } from './constant/PageEnum.js'
 import { Initialize } from './base/Initialize.js'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 
@@ -34,7 +34,7 @@ function createWindow(): Electron.BrowserWindow {
     const settings = GlobalVar.get(GlobalVars.SETTINGS).store
     if (StringUtil.isBlank(settings.workdir)) {
       const gotoPageConfig: GotoPageConfig = {
-        page: SubPageEnum.Settings,
+        page: PageEnum.Settings,
         title: '请设置工作目录',
         content: 'LibrarySquirrel需要工作目录才能正常使用',
         options: {
