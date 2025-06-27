@@ -10,6 +10,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
 import { PageState } from '@renderer/constants/PageState.ts'
+import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 
 // props
 const props = defineProps<{ state: PageState }>()
@@ -19,9 +20,6 @@ onBeforeMount(() => {
   props.state.setBeforeClose(checkChangeSaved)
   loadSettings()
 })
-
-// model
-const tourStates: Ref<{ workdir: boolean }> = defineModel<{ workdir: boolean }>('tourStates', { default: { workdir: false } })
 
 // 变量
 const apis = reactive({
@@ -276,7 +274,7 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
           </el-row>
         </el-footer>
       </el-container>
-      <el-tour v-model="tourStates.workdir" :scroll-into-view-options="true">
+      <el-tour v-model="useTourStatesStore().$state.tourStates.workdirTour" :scroll-into-view-options="true">
         <el-tour-step :target="workdirInput?.$el" title="工作目录" description="在这里设置工作目录"></el-tour-step>
       </el-tour>
     </template>
@@ -377,8 +375,7 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
   </base-subpage>
 </template>
 
-<style scoped></style>
-<style>
+<style scoped>
 .settings-container {
   border-radius: 6px;
   display: flex;
@@ -390,6 +387,8 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
 .works-settings-file-name-format-button {
   margin-bottom: 10px;
 }
+</style>
+<style>
 .el-popper.is-customized {
   background: var(--el-color-warning-light-7);
 }

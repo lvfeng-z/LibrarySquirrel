@@ -74,8 +74,6 @@ const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义
 // 副页面名称
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
-// 设置页面向导配置
-const settingsPageTourStates: Ref<UnwrapRef<{ workdir: boolean }>> = ref({ workdir: false })
 // 作品分页
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
@@ -338,11 +336,7 @@ async function handleTest() {
           <site-author-manage v-if="pageStatesStore.pageStates.siteAuthorManage.state" />
           <plugin-manage v-if="pageStatesStore.pageStates.pluginManage.state" />
           <task-manage v-if="pageStatesStore.pageStates.taskManage.state" />
-          <settings
-            v-if="pageStatesStore.pageStates.settings.state"
-            v-model:tour-states="settingsPageTourStates"
-            :state="pageStatesStore.pageStates.settings"
-          />
+          <settings v-if="pageStatesStore.pageStates.settings.state" :state="pageStatesStore.pageStates.settings" />
           <site-manage v-if="pageStatesStore.pageStates.siteManage.state" />
           <developing v-if="pageStatesStore.pageStates.developing.state" />
           <test v-if="pageStatesStore.pageStates.test.state" />
