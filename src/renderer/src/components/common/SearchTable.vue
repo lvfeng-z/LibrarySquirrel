@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="Query extends BaseQueryDTO, Data, OpParam">
 import SearchToolbarV1 from '@renderer/components/common/SearchToolbarV1.vue'
-import { ref } from 'vue'
+import { ref, toRaw } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
@@ -101,7 +101,7 @@ async function doSearch() {
   // 配置查询参数
   tempPage.query = {
     ...tempPage.query,
-    ...searchToolbarParams.value
+    ...toRaw(searchToolbarParams.value)
   } as Query
   const newPage: Page<Query, Data> | undefined = await props.search(tempPage)
   if (NotNullish(newPage)) {
