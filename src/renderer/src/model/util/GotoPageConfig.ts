@@ -1,5 +1,5 @@
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
-import { SubPageEnum } from '@renderer/constants/Subpage.ts'
+import { PageEnum } from '@renderer/constants/Subpage.ts'
 
 export default interface GotoPageConfig {
   /**
@@ -20,7 +20,7 @@ export default interface GotoPageConfig {
   /**
    * 页面
    */
-  page: SubPageEnum
+  page: PageEnum
 
   /**
    * 额外数据

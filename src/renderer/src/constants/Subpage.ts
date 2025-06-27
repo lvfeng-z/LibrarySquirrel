@@ -1,11 +1,11 @@
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
-export class SubpageState {
-  readonly page: SubPageEnum
+export class PageState {
+  readonly page: PageEnum
   state: boolean
   beforeClose?: () => Promise<boolean>
 
-  constructor(page: SubPageEnum, state: boolean) {
+  constructor(page: PageEnum, state: boolean) {
     this.page = page
     this.state = state
   }
@@ -29,28 +29,32 @@ export class SubpageState {
   }
 }
 
-export class SubpageStates {
-  localTagManage = new SubpageState(SubPageEnum.LocalTagManage, false)
-  siteTagManage = new SubpageState(SubPageEnum.SiteTagManage, false)
-  localAuthorManage = new SubpageState(SubPageEnum.LocalAuthorManage, false)
-  siteAuthorManage = new SubpageState(SubPageEnum.SiteAuthorManage, false)
-  pluginManage = new SubpageState(SubPageEnum.PluginManage, false)
-  siteManage = new SubpageState(SubPageEnum.SiteManage, false)
-  taskManage = new SubpageState(SubPageEnum.TaskManage, false)
-  settings = new SubpageState(SubPageEnum.Settings, false)
-  developing = new SubpageState(SubPageEnum.Developing, false)
-  test = new SubpageState(SubPageEnum.Test, false)
+export class PageStates {
+  mainPage = new PageState(PageEnum.MainPage, true)
+  subPage = new PageState(PageEnum.SubPage, false)
+  localTagManage = new PageState(PageEnum.LocalTagManage, false)
+  siteTagManage = new PageState(PageEnum.SiteTagManage, false)
+  localAuthorManage = new PageState(PageEnum.LocalAuthorManage, false)
+  siteAuthorManage = new PageState(PageEnum.SiteAuthorManage, false)
+  pluginManage = new PageState(PageEnum.PluginManage, false)
+  siteManage = new PageState(PageEnum.SiteManage, false)
+  taskManage = new PageState(PageEnum.TaskManage, false)
+  settings = new PageState(PageEnum.Settings, false)
+  developing = new PageState(PageEnum.Developing, false)
+  test = new PageState(PageEnum.Test, false)
 }
 
-export enum SubPageEnum {
-  LocalTagManage = 1,
-  SiteTagManage = 2,
-  LocalAuthorManage = 3,
-  SiteAuthorManage = 4,
-  PluginManage = 5,
-  TaskManage = 6,
-  Settings = 7,
-  SiteManage = 8,
-  Developing = 9,
-  Test = 10
+export enum PageEnum {
+  MainPage = 1,
+  SubPage = 2,
+  LocalTagManage = 3,
+  SiteTagManage = 4,
+  LocalAuthorManage = 5,
+  SiteAuthorManage = 6,
+  PluginManage = 7,
+  TaskManage = 8,
+  Settings = 9,
+  SiteManage = 10,
+  Developing = 11,
+  Test = 12
 }

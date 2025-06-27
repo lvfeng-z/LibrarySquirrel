@@ -9,10 +9,10 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
-import { SubpageState } from '@renderer/constants/Subpage.ts'
+import { PageState } from '@renderer/constants/Subpage.ts'
 
 // props
-const props = defineProps<{ state: SubpageState }>()
+const props = defineProps<{ state: PageState }>()
 
 // onBeforeMount
 onBeforeMount(() => {
