@@ -337,7 +337,7 @@ async function deleteTask(ids: number[]) {
         v-if="showSearchTable"
         ref="childTaskSearchTable"
         v-model:page="page"
-        v-model:search-params="taskSearchParams"
+        v-model:toolbar-params="taskSearchParams"
         v-model:data-list="children"
         :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
         style="flex-grow: 1"

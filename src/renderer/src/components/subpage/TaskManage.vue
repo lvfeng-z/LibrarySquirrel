@@ -459,7 +459,7 @@ async function deleteTask(ids: number[]) {
         ref="taskManageSearchTable"
         v-model:data-list="dataList"
         v-model:page="page"
-        v-model:search-params="taskSearchParams"
+        v-model:toolbar-params="taskSearchParams"
         v-model:changed-rows="changedRows"
         class="task-manage-search-table"
         :selectable="true"

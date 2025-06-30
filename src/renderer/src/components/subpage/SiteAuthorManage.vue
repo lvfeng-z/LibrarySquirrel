@@ -260,7 +260,7 @@ async function creatSameNameLocalAuthorAndBind(siteAuthor: SiteAuthor) {
         <search-table
           ref="siteAuthorSearchTable"
           v-model:page="page"
-          v-model:search-params="siteAuthorSearchParams"
+          v-model:toolbar-params="siteAuthorSearchParams"
           v-model:changed-rows="changedRows"
           class="tag-manage-search-table"
           data-key="id"

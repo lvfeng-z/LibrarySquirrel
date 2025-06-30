@@ -256,7 +256,7 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
         <search-table
           ref="siteTagSearchTable"
           v-model:page="page"
-          v-model:search-params="siteTagSearchParams"
+          v-model:toolbar-params="siteTagSearchParams"
           v-model:changed-rows="changedRows"
           class="tag-manage-search-table"
           data-key="id"

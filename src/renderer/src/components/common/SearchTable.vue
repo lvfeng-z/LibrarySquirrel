@@ -45,15 +45,12 @@ const props = withDefaults(
 // model
 // DataTable的数据
 const dataList = defineModel<Data[]>('dataList', { default: [], required: false })
-// 查询参数
-const searchToolbarParams = defineModel<object>('searchParams', { default: {}, required: false })
 // 分页查询配置
-const page = defineModel<Page<Query, Data>>('page', {
-  default: new Page<Query, Data>(),
-  required: false
-})
+const page = defineModel<Page<Query, Data>>('page', { required: true })
+// 工具栏查询参数
+const toolbarParams = defineModel<object>('toolbarParams', { default: {}, required: false })
 // 已编辑的行
-const changedRows = defineModel<object[]>('changedRows', { default: [], required: false })
+const changedRows = defineModel<Data[]>('changedRows', { default: [], required: false })
 
 // 事件
 const emits = defineEmits([
@@ -109,7 +106,7 @@ async function doSearch() {
   // 配置查询参数
   tempPage.query = {
     ...tempPage.query,
-    ...toRaw(searchToolbarParams.value)
+    ...toRaw(toolbarParams.value)
   } as Query
   const newPage: Page<Query, Data> | undefined = await props.search(tempPage)
   if (NotNullish(newPage)) {
@@ -215,7 +212,7 @@ function handlePageSizeChange() {
   doSearch()
 }
 // 处理编辑事件
-function handleRowChange(changedRow: object) {
+function handleRowChange(changedRow: Data) {
   changedRows.value.push(changedRow)
 }
 // 获取可视范围内的行

@@ -43,8 +43,6 @@ const pluginSearchTable = ref()
 const pluginDomainSearchTable = ref()
 // 插件分页参数
 const pluginPage: Ref<Page<PluginQueryDTO, Plugin>> = ref(new Page<PluginQueryDTO, Plugin>())
-// 插件被修改的行
-const pluginChangedRows: Ref<Plugin[]> = ref([])
 // 插件操作栏按钮
 const pluginOperationButton: OperationItem<Plugin>[] = [
   { label: '查看', icon: 'View', code: DialogMode.VIEW },
@@ -227,8 +225,7 @@ async function reInstallFromPath(pluginId: number, packagePath: string) {
         <search-table
           ref="pluginSearchTable"
           v-model:page="pluginPage"
-          v-model:search-params="pluginSearchParams"
-          v-model:changed-rows="pluginChangedRows"
+          v-model:toolbar-params="pluginSearchParams"
           class="plugin-manage-left-search-table"
           data-key="id"
           :operation-button="pluginOperationButton"
