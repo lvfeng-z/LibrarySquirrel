@@ -11,13 +11,14 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import lodash from 'lodash'
 import Site from '@renderer/model/main/entity/Site.ts'
-import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteDialog from '@renderer/components/dialogs/SiteDialog.vue'
 import SiteDomainQueryDTO from '@renderer/model/main/queryDTO/SiteDomainQueryDTO.ts'
 import SiteDomainDTO from '@renderer/model/main/dto/SiteDomainDTO.ts'
 import SiteDomainDialog from '@renderer/components/dialogs/SiteDomainDialog.vue'
 import { ElMessage } from 'element-plus'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
+import SiteDomain from '@renderer/model/main/entity/SiteDomain.ts'
 
 // onMounted
 onMounted(() => {
@@ -49,10 +50,16 @@ const apis = {
 }
 // 站点数据表组件的实例
 const siteSearchTable = ref()
+// 站点侧边数据表组件的实例
+const siteDrawerSearchTable = ref()
 // 站点域名数据表组件的实例
 const siteDomainSearchTable = ref()
 // 站点域名侧边数据表组件的实例
-const siteDomainDrawerTable = ref()
+const siteDomainDrawerSearchTable = ref()
+// 是否调转站点和域名
+const reversed: Ref<boolean> = ref(false)
+// 侧边栏开关
+const drawerState: Ref<boolean> = ref(false)
 // 站点分页参数
 const sitePage: Ref<Page<SiteQueryDTO, Site>> = ref(new Page<SiteQueryDTO, Site>())
 // 站点被修改的行
@@ -66,7 +73,8 @@ const siteOperationButton: OperationItem<Site>[] = [
     code: 'save',
     rule: (row) => siteChangedRows.value.includes(row)
   },
-  { label: '绑定域名', icon: 'Paperclip', code: 'bind', clickToSelect: true },
+  { label: '绑定域名', icon: 'Paperclip', code: 'openSiteDomainDrawer', clickToSelect: true, rule: () => !reversed.value },
+  { label: '解绑', icon: 'DocumentDelete', code: 'unbind', rule: () => reversed.value },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
@@ -135,6 +143,24 @@ const siteDialogState: Ref<boolean> = ref(false)
 const siteDialogData: Ref<UnwrapRef<Site>> = ref(new Site())
 // 被选中的站点
 const siteSelected: Ref<UnwrapRef<Site>> = ref(new Site())
+// 站点侧边栏的分页参数
+const siteDrawerPage: Ref<Page<SiteQueryDTO, Site>> = ref(new Page<SiteQueryDTO, Site>())
+// 站点侧边栏的查询参数
+const siteDrawerSearchParams: Ref<SiteQueryDTO> = ref(new SiteQueryDTO())
+// 站点侧边栏的被修改的行
+const siteDrawerChangedRows: Ref<Site[]> = ref([])
+// 站点侧边栏的操作栏按钮
+const siteDrawerOperationButton: OperationItem<Site>[] = [
+  { label: '绑定', icon: 'Paperclip', code: 'bind', rule: (row) => reversed.value && row.id !== siteDomainSelected.value.siteId },
+  {
+    label: '解绑',
+    icon: 'DocumentDelete',
+    code: 'unbind',
+    buttonType: 'danger',
+    rule: (row) => reversed.value && row.id === siteDomainSelected.value.siteId
+  },
+  { label: '查看', icon: 'view', code: DialogMode.VIEW }
+]
 // 站点域名分页参数
 const siteDomainPage: Ref<Page<SiteDomainQueryDTO, SiteDomainDTO>> = ref(new Page<SiteDomainQueryDTO, SiteDomainDTO>())
 // 站点域名被修改的行
@@ -148,7 +174,8 @@ const siteDomainOperationButton: OperationItem<SiteDomainDTO>[] = [
     code: 'save',
     rule: (row) => siteDomainChangedRows.value.includes(row)
   },
-  { label: '解绑', icon: 'DocumentDelete', code: 'unbind' },
+  { label: '绑定', icon: 'Paperclip', code: 'openSiteDrawer', clickToSelect: true, rule: () => reversed.value },
+  { label: '解绑', icon: 'DocumentDelete', code: 'unbind', rule: () => !reversed.value },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
   { label: '删除', icon: 'delete', code: 'delete' }
@@ -222,14 +249,16 @@ const siteDomainThead: Ref<Thead[]> = ref([
 ])
 // 站点域名的查询参数
 const siteDomainSearchParams: Ref<SiteDomainQueryDTO> = ref(new SiteDomainQueryDTO())
+// 被选中的站点域名
+const siteDomainSelected: Ref<SiteDomain> = ref(new SiteDomain())
 // 站点弹窗的模式
 const siteDomainDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点对话框开关
 const siteDomainDialogState: Ref<boolean> = ref(false)
 // 站点对话框的数据
 const siteDomainDialogData: Ref<UnwrapRef<SiteDomainDTO>> = ref(new SiteDomainDTO())
-// 站点域名侧边栏开关
-const siteDomainDrawerState: Ref<boolean> = ref(false)
+// 站点域名侧边栏的查询参数
+const siteDomainDrawerSearchParams: Ref<SiteDomainQueryDTO> = ref(new SiteDomainQueryDTO())
 // 站点域名侧边数据表操作栏按钮
 const siteDomainDrawerOperationButton: OperationItem<SiteDomainDTO>[] = [
   {
@@ -248,6 +277,22 @@ const siteDomainDrawerOperationButton: OperationItem<SiteDomainDTO>[] = [
 // 方法
 // 分页查询站点
 async function siteQueryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQueryDTO, Site> | undefined> {
+  if (IsNullish(page.query)) {
+    page.query = new SiteQueryDTO()
+  }
+  if (reversed.value) {
+    page.query.id = siteDomainSelected.value.siteId
+  }
+  const response = await apis.siteQueryPage(page)
+  if (ApiUtil.check(response)) {
+    return ApiUtil.data<Page<SiteQueryDTO, Site>>(response)
+  } else {
+    ApiUtil.msg(response)
+    return undefined
+  }
+}
+// 分页查询站点（侧边栏用）
+async function siteDrawerQueryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQueryDTO, Site> | undefined> {
   const response = await apis.siteQueryPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data<Page<SiteQueryDTO, Site>>(response)
@@ -268,8 +313,14 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
     case 'save':
       saveSiteRowEdit(op.data)
       break
+    case 'openSiteDomainDrawer':
+      drawerState.value = true
+      break
     case 'bind':
-      siteDomainDrawerState.value = true
+      changeDomainBind(siteDomainSelected.value.id as number, Number(op.id), true)
+      break
+    case 'unbind':
+      changeDomainBind(siteDomainSelected.value.id as number, Number(op.id), false)
       break
     case DialogMode.VIEW:
       siteDialogMode.value = DialogMode.VIEW
@@ -325,7 +376,9 @@ async function siteDomainQueryPage(
   if (IsNullish(page.query)) {
     page.query = new SiteQueryDTO()
   }
-  page.query.siteId = siteSelected.value.id
+  if (!reversed.value) {
+    page.query.siteId = siteSelected.value.id
+  }
   const response = await apis.siteDomainQueryDTOPage(page)
   if (ApiUtil.check(response)) {
     return ApiUtil.data<Page<SiteDomainQueryDTO, SiteDomainDTO>>(response)
@@ -334,7 +387,7 @@ async function siteDomainQueryPage(
     return undefined
   }
 }
-// 分页查询站点域名
+// 根据站点分页查询站点域名
 async function siteDomainQueryPageBySite(
   page: Page<SiteDomainQueryDTO, SiteDomainDTO>
 ): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO> | undefined> {
@@ -369,6 +422,9 @@ function handleSiteDomainRowButtonClicked(op: DataTableOperationResponse<SiteDom
       break
     case 'bind':
       changeDomainBind(Number(op.id), siteSelected.value.id as number, true)
+      break
+    case 'openSiteDrawer':
+      drawerState.value = true
       break
     case 'unbind':
       changeDomainBind(Number(op.id), siteSelected.value.id as number, false)
@@ -421,8 +477,12 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
 
   const response = await apis.siteDomainUpdateById(tempData)
   siteDomainSearchTable.value.doSearch()
-  if (siteDomainDrawerState.value) {
-    siteDomainDrawerTable.value.doSearch()
+  if (reversed.value) {
+    drawerState.value = false
+  } else {
+    if (NotNullish(siteDomainDrawerSearchTable.value)) {
+      siteDomainDrawerSearchTable.value.doSearch()
+    }
   }
   if (ApiUtil.check(response)) {
     ElMessage({
@@ -436,12 +496,38 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
     })
   }
 }
+// 处理被选中的域名改变的事件
+async function handleSiteDomainSelectionChange(selections: SiteDomain[]) {
+  if (selections.length > 0) {
+    siteDomainSelected.value = selections[0]
+  }
+  siteSearchTable.value.doSearch()
+}
+function handleReverse() {
+  reversed.value = !reversed.value
+  siteDomainSearchTable.value.doSearch()
+  siteSearchTable.value.doSearch()
+}
 </script>
 <template>
   <base-subpage>
     <template #default>
-      <div class="site-manage-container">
-        <div class="site-manage-left">
+      <div :class="{ 'site-manage-title': true, 'site-manage-title-reverse': reversed }">
+        <div class="site-manage-left-title">
+          <el-button size="large" type="danger" icon="Link"> 站点 </el-button>
+        </div>
+        <el-tooltip>
+          <template #default>
+            <el-button size="large" icon="Switch" @click="handleReverse" />
+          </template>
+          <template #content>切换至 域名-站点 模式</template>
+        </el-tooltip>
+        <div class="site-manage-right-title">
+          <el-button size="large" type="primary" icon="Magnet"> 域名 </el-button>
+        </div>
+      </div>
+      <div :class="{ 'site-manage-container': true, 'site-manage-container-reverse': reversed }">
+        <div :class="{ 'site-manage-left': true, 'site-manage-left-reverse': reversed }">
           <search-table
             ref="siteSearchTable"
             v-model:page="sitePage"
@@ -453,7 +539,7 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
             :operation-width="140"
             :thead="siteThead"
             :search="siteQueryPage"
-            :multi-select="false"
+            :multi-select="reversed"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100]"
             @row-button-clicked="handleSiteRowButtonClicked"
@@ -465,21 +551,22 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
             </template>
           </search-table>
         </div>
-        <div class="site-manage-right">
+        <div :class="{ 'site-manage-right': true, 'site-manage-right-reverse': reversed }">
           <search-table
             ref="siteDomainSearchTable"
             v-model:page="siteDomainPage"
             v-model:search-params="siteDomainSearchParams"
             v-model:changed-rows="siteDomainChangedRows"
-            class="site-manage-left-search-table"
+            class="site-manage-right-search-table"
             data-key="id"
             :operation-button="siteDomainOperationButton"
             :thead="siteDomainThead"
             :search="siteDomainQueryPage"
-            :multi-select="true"
+            :multi-select="!reversed"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100, 1000]"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
+            @selection-change="handleSiteDomainSelectionChange"
           >
             <template #toolbarMain>
               <el-button type="primary" @click="handleSiteDomainCreateButtonClicked">新增</el-button>
@@ -488,15 +575,17 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
           </search-table>
         </div>
         <el-drawer
-          v-model="siteDomainDrawerState"
+          v-model="drawerState"
           :open-delay="1"
           size="45%"
           :with-header="false"
-          @open="siteDomainDrawerTable.doSearch()"
+          @open="reversed ? siteDrawerSearchTable.doSearch() : siteDomainDrawerSearchTable.doSearch()"
         >
           <search-table
-            ref="siteDomainDrawerTable"
+            v-if="!reversed"
+            ref="siteDomainDrawerSearchTable"
             v-model:page="siteDomainPage"
+            v-model:search-params="siteDomainDrawerSearchParams"
             v-model:changed-rows="siteDomainChangedRows"
             class="site-manage-left-search-table"
             data-key="id"
@@ -507,8 +596,33 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
             :selectable="false"
             :page-sizes="[10, 20, 50, 100, 1000]"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
-            @selection-change="handleSiteSelectionChange"
-          />
+          >
+            <template #toolbarMain>
+              <el-input v-model="siteDomainDrawerSearchParams.domain" placeholder="输入站点域名" clearable />
+            </template>
+          </search-table>
+          <search-table
+            v-if="reversed"
+            ref="siteDrawerSearchTable"
+            v-model:page="siteDrawerPage"
+            v-model:search-params="siteDrawerSearchParams"
+            v-model:changed-rows="siteDrawerChangedRows"
+            class="site-manage-left-search-table"
+            data-key="id"
+            :operation-button="siteDrawerOperationButton"
+            :operation-width="140"
+            :thead="siteThead"
+            :search="siteDrawerQueryPage"
+            :multi-select="false"
+            :selectable="false"
+            :page-sizes="[10, 20, 50, 100]"
+            @row-button-clicked="handleSiteRowButtonClicked"
+          >
+            <template #toolbarMain>
+              <el-button type="primary" @click="handleSiteCreateButtonClicked">新增</el-button>
+              <el-input v-model="siteSearchParams.siteName" placeholder="输入站点名称" clearable />
+            </template>
+          </search-table>
         </el-drawer>
       </div>
     </template>
@@ -534,6 +648,29 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
 </template>
 
 <style scoped>
+.site-manage-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5px;
+}
+.site-manage-title-reverse {
+  flex-direction: row-reverse;
+}
+.site-manage-left-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  width: 100%;
+}
+.site-manage-right-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  width: 100%;
+}
 .site-manage-container {
   display: flex;
   flex-direction: row;
@@ -542,15 +679,22 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
   background: #f4f4f4;
   border-radius: 6px;
   width: calc(100% - 20px);
-  height: calc(100% - 20px);
+  height: calc(100% - 20px - 45px);
   padding: 5px;
   margin: 5px;
+}
+
+.site-manage-container-reverse {
+  flex-direction: row-reverse;
 }
 
 .site-manage-left {
   width: calc(50% - 5px);
   height: 100%;
   margin-right: 5px;
+}
+.site-manage-left-reverse {
+  margin-left: 5px;
 }
 .site-manage-left-search-table {
   height: 100%;
@@ -560,5 +704,12 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
   width: calc(50% - 5px);
   height: 100%;
   margin-left: 5px;
+}
+.site-manage-right-reverse {
+  margin-right: 5px;
+}
+.site-manage-right-search-table {
+  height: 100%;
+  width: 100%;
 }
 </style>

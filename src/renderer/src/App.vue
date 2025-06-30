@@ -223,11 +223,11 @@ async function handleTest() {
           <template #default>
             <el-menu-item index="0" @click="closeSubpage">
               <template #title> 主页 </template>
-              <el-icon><House /></el-icon>
+              <el-icon><HomeFilled /></el-icon>
             </el-menu-item>
             <el-sub-menu index="1">
               <template #title>
-                <el-icon><PriceTag /></el-icon>
+                <el-icon><Discount /></el-icon>
                 <span>标签</span>
               </template>
               <el-menu-item index="1-1" @click="showSubpage(pageStatesStore.pageStates.localTagManage)">本地标签</el-menu-item>
@@ -255,7 +255,7 @@ async function handleTest() {
             </el-menu-item>
             <el-menu-item index="6" @click="showSubpage(pageStatesStore.pageStates.pluginManage)">
               <template #title>插件</template>
-              <el-icon><Box /></el-icon>
+              <el-icon><TakeawayBox /></el-icon>
             </el-menu-item>
             <el-menu-item index="7" @click="showSubpage(pageStatesStore.pageStates.settings)">
               <template #title>设置</template>
