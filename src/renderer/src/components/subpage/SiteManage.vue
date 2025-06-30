@@ -73,7 +73,7 @@ const siteOperationButton: OperationItem<Site>[] = [
     code: 'save',
     rule: (row) => siteChangedRows.value.includes(row)
   },
-  { label: '绑定域名', icon: 'Paperclip', code: 'openSiteDomainDrawer', clickToSelect: true, rule: () => !reversed.value },
+  { label: '绑定域名', icon: 'Paperclip', code: 'openSiteDomainDrawer', rule: () => !reversed.value },
   { label: '解绑', icon: 'DocumentDelete', code: 'unbind', rule: () => reversed.value },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
@@ -174,7 +174,7 @@ const siteDomainOperationButton: OperationItem<SiteDomainDTO>[] = [
     code: 'save',
     rule: (row) => siteDomainChangedRows.value.includes(row)
   },
-  { label: '绑定', icon: 'Paperclip', code: 'openSiteDrawer', clickToSelect: true, rule: () => reversed.value },
+  { label: '绑定', icon: 'Paperclip', code: 'openSiteDrawer', rule: () => reversed.value },
   { label: '解绑', icon: 'DocumentDelete', code: 'unbind', rule: () => !reversed.value },
   { label: '查看', icon: 'view', code: DialogMode.VIEW },
   { label: '编辑', icon: 'edit', code: DialogMode.EDIT },
@@ -315,6 +315,7 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
       break
     case 'openSiteDomainDrawer':
       drawerState.value = true
+      siteSearchTable.value.toggleRowSelection(op.data, true)
       break
     case 'bind':
       changeDomainBind(siteDomainSelected.value.id as number, Number(op.id), true)
@@ -425,6 +426,7 @@ function handleSiteDomainRowButtonClicked(op: DataTableOperationResponse<SiteDom
       break
     case 'openSiteDrawer':
       drawerState.value = true
+      siteDomainSearchTable.value.toggleRowSelection(op.data, true)
       break
     case 'unbind':
       changeDomainBind(Number(op.id), siteSelected.value.id as number, false)

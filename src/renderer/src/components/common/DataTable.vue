@@ -44,6 +44,16 @@ onMounted(() => {
 // model
 const data = defineModel<unknown[]>('tableData', { default: [] })
 
+// 事件
+const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll'])
+
+// 暴露
+defineExpose({
+  getVisibleRows,
+  cancelAllSelection,
+  toggleRowSelection
+})
+
 // 变量
 const dataTable = ref() // el-table组件的实例
 const selectDataList: Ref<Data[]> = ref([])
@@ -69,16 +79,17 @@ function cancelAllSelection() {
   selectDataList.value.length = 0
   dataTable.value.clearSelection()
 }
+// 切换选中行
+function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: boolean) {
+  if (props.multiSelect) {
+    dataTable.value.toggleRowSelection(row, selected, ignoreSelectable)
+  } else {
+    selectedDataKey.value = row[props.dataKey]
+  }
+  handleSelectionChange([row])
+}
 // 处理操作按钮点击事件
 function handleRowButtonClicked(operation: { row: Data; operationItem: OperationItem<OpParam> }) {
-  if (operation.operationItem.clickToSelect) {
-    if (props.multiSelect) {
-      dataTable.value.toggleRowSelection(operation.row, true)
-    } else {
-      selectedDataKey.value = operation.row[props.dataKey]
-    }
-    handleSelectionChange([operation.row])
-  }
   const operationResponse: DataTableOperationResponse<Data> = {
     id: operation.row[props.dataKey],
     code: operation.operationItem.code,
@@ -135,18 +146,11 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
       }
     })
 }
-
-// 事件
-const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll'])
-
-// 暴露
-defineExpose({
-  getVisibleRows,
-  cancelAllSelection
-})
+// 获取行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
 function getCacheData(scope, item): SelectItem | undefined {
   return StringUtil.isBlank(item.cacheDataKey) ? undefined : (GetPropByPath(scope.row, item.cacheDataKey) as SelectItem | undefined)
 }
+// 设置行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
 function setCacheData(scope, item, newData) {
   if (StringUtil.isNotBlank(item.cacheDataKey)) {
     SetPropByPath(scope.row, item.cacheDataKey, newData)

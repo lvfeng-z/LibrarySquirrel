@@ -50,10 +50,10 @@ const searchToolbarParams = defineModel<object>('searchParams', { default: {}, r
 // 分页查询配置
 const page = defineModel<Page<Query, Data>>('page', {
   default: new Page<Query, Data>(),
-  required: true
+  required: false
 })
 // 已编辑的行
-const changedRows = defineModel<object[]>('changedRows', { default: [], required: true })
+const changedRows = defineModel<object[]>('changedRows', { default: [], required: false })
 
 // 事件
 const emits = defineEmits([
@@ -65,6 +65,14 @@ const emits = defineEmits([
   'query',
   'scroll'
 ])
+
+// 暴露
+defineExpose({
+  doSearch,
+  refreshData,
+  getVisibleRows,
+  toggleRowSelection
+})
 
 // 变量
 // 数据栏
@@ -214,13 +222,10 @@ function handleRowChange(changedRow: object) {
 function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
   return dataTableRef.value.getVisibleRows(offsetTop, offsetBottom)
 }
-
-// 暴露
-defineExpose({
-  doSearch,
-  refreshData,
-  getVisibleRows
-})
+// 切换选中行
+function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: boolean) {
+  dataTableRef.value.toggleRowSelection(row, selected, ignoreSelectable)
+}
 </script>
 
 <template>
