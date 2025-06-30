@@ -82,6 +82,7 @@ const api = {
     Electron.ipcRenderer.invoke('siteAuthor-createAndBindSameNameLocalAuthor', args),
   siteAuthorUpdateBindLocalAuthor: (arg1, arg2) => Electron.ipcRenderer.invoke('siteAuthor-updateBindLocalAuthor', arg1, arg2),
   siteAuthorDeleteById: (args) => Electron.ipcRenderer.invoke('siteAuthor-deleteById', args),
+  siteAuthorSave: (args) => Electron.ipcRenderer.invoke('siteAuthor-save', args),
   siteAuthorUpdateById: (args) => Electron.ipcRenderer.invoke('siteAuthor-updateById', args),
   siteAuthorQueryBoundOrUnboundInLocalAuthorPage: (args) =>
     Electron.ipcRenderer.invoke('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', args),

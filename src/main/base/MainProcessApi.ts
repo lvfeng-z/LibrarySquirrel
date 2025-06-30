@@ -487,6 +487,15 @@ function exposeService() {
       return returnError(error)
     }
   })
+  Electron.ipcMain.handle('siteAuthor-save', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'siteAuthor-save')
+    const siteAuthorService = new SiteAuthorService()
+    try {
+      return ApiUtil.response(await siteAuthorService.save(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('siteAuthor-updateById', async (_event, args) => {
     LogUtil.info('MainProcessApi', 'siteAuthor-updateById')
     const siteAuthorService = new SiteAuthorService()

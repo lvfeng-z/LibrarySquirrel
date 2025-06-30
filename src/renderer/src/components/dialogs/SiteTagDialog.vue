@@ -33,6 +33,7 @@ const emits = defineEmits(['requestSuccess'])
 // 接口
 const apis = {
   localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
+  siteTagSave: window.api.siteTagSave,
   siteTagUpdateById: window.api.siteTagUpdateById
 }
 
@@ -40,6 +41,15 @@ const apis = {
 // 处理保存按钮点击事件
 async function handleSaveButtonClicked() {
   if (props.submitEnabled) {
+    if (props.mode === DialogMode.NEW) {
+      const tempFormData = lodash.cloneDeep(formData.value)
+      const response = await apis.siteTagSave(tempFormData)
+      if (ApiUtil.check(response)) {
+        emits('requestSuccess')
+        state.value = false
+      }
+      ApiUtil.msg(response)
+    }
     if (props.mode === DialogMode.EDIT) {
       const tempFormData = lodash.cloneDeep(formData.value)
       const response = await apis.siteTagUpdateById(tempFormData)
