@@ -111,7 +111,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 80,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true,
+    showOverflowTooltip: true,
     editMethod: 'replace',
     render: getTaskStatusElTag
   })
