@@ -83,7 +83,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 150,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'autoLoadSelect',
@@ -97,7 +97,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true,
+    showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
     remotePageMethod: localTagQuerySelectItemPage,
@@ -114,7 +114,7 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   })
 ])
 // 本地标签SearchTable的查询参数

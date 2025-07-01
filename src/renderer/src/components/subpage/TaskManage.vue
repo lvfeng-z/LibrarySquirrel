@@ -65,7 +65,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 200,
     headerAlign: 'center',
     dataAlign: 'left',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -76,7 +76,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -88,7 +88,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 150,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -99,7 +99,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'custom',

@@ -79,7 +79,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 150,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -91,7 +91,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 150,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -103,7 +103,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -115,7 +115,7 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   })
 ])
 // 本地作者SearchTable的查询参数

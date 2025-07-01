@@ -91,7 +91,7 @@ const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
     width: 100,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'textarea',
@@ -104,7 +104,7 @@ const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -117,7 +117,7 @@ const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -130,7 +130,7 @@ const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   })
 ])
 // 站点的查询参数
@@ -202,7 +202,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
     width: 150,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -215,7 +215,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -228,7 +228,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -241,7 +241,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -254,7 +254,7 @@ const siteDomainThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   })
 ])
 // 站点域名的查询参数

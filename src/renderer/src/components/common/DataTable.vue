@@ -191,7 +191,7 @@ function setCacheData(scope, item, newData) {
           :label="item.title"
           :width="item.width"
           :align="item.dataAlign"
-          :show-overflow-tooltip="item.overHide"
+          :show-overflow-tooltip="item.showOverflowTooltip"
         >
           <template #header>
             <div :style="{ textAlign: item.headerAlign }">

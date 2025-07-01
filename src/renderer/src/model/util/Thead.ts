@@ -10,7 +10,7 @@ export class Thead extends PopperInputConfig implements IThead {
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
-  overHide?: boolean //列超出长度时是否省略
+  showOverflowTooltip?: boolean // 是否隐藏额外内容并在单元格悬停时使用 Tooltip 显示它们
   editMethod?: 'replace' | 'popper'
   cacheDataKey?: string
 
@@ -23,7 +23,7 @@ export class Thead extends PopperInputConfig implements IThead {
     this.headerAlign = thead.headerAlign
     this.headerTagType = thead.headerTagType
     this.dataAlign = thead.dataAlign
-    this.overHide = IsNullish(thead.overHide) ? false : thead.overHide
+    this.showOverflowTooltip = IsNullish(thead.showOverflowTooltip) ? false : thead.showOverflowTooltip
     this.editMethod = IsNullish(thead.editMethod) ? 'popper' : thead.editMethod
     this.cacheDataKey = thead.cacheDataKey
   }
@@ -37,7 +37,7 @@ export interface IThead extends IPopperInputConfig {
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
-  overHide?: boolean // 列超出长度时是否省略
+  showOverflowTooltip?: boolean // 列超出长度时是否省略
   editMethod?: 'replace' | 'popper'
   cacheDataKey?: string
 }

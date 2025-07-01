@@ -77,7 +77,7 @@ const siteTagThead: Ref<Thead[]> = ref([
     width: 250,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'textarea',
@@ -89,7 +89,7 @@ const siteTagThead: Ref<Thead[]> = ref([
     width: 400,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'autoLoadSelect',
@@ -103,7 +103,7 @@ const siteTagThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true,
+    showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
     remotePageMethod: localTagQuerySelectItemPage,
@@ -121,7 +121,7 @@ const siteTagThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true,
+    showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
     remotePageMethod: siteQuerySelectItemPage,
@@ -138,7 +138,7 @@ const siteTagThead: Ref<Thead[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   })
 ])
 // 站点标签SearchTable的查询参数

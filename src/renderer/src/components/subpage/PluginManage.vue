@@ -60,7 +60,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     hide: false,
     headerAlign: 'center',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -72,7 +72,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'text',
@@ -85,7 +85,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   }),
   new Thead({
     type: 'datetime',
@@ -98,7 +98,7 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    overHide: true
+    showOverflowTooltip: true
   })
 ])
 // 插件的查询参数
