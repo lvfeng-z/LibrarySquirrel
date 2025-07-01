@@ -33,6 +33,7 @@ const props = withDefaults(
     updateProperties?: string[] // 要更新的属性名
     createButton?: boolean // 是否展示新增按钮
     pageSizes?: number[] // 可选分页大小
+    searchButtonDisabled?: boolean // 是否禁用搜索按钮
   }>(),
   {
     createButton: false,
@@ -44,7 +45,7 @@ const props = withDefaults(
 
 // model
 // DataTable的数据
-const dataList = defineModel<Data[]>('dataList', { default: [], required: false })
+const data = defineModel<Data[]>('data', { default: [], required: false })
 // 分页查询配置
 const page = defineModel<Page<Query, Data>>('page', { required: true })
 // 工具栏查询参数
@@ -67,7 +68,9 @@ const emits = defineEmits([
 defineExpose({
   doSearch,
   refreshData,
+  clearData,
   getVisibleRows,
+  getSelectionRows,
   toggleRowSelection
 })
 
@@ -101,7 +104,7 @@ const wrappedLoad = IsNullish(props.treeLoad)
 // 数据栏
 // 搜索页面并刷新数据
 async function doSearch() {
-  dataTableRef.value.cancelAllSelection()
+  dataTableRef.value.clearSelection()
   const tempPage = lodash.cloneDeep(page.value)
   // 配置查询参数
   tempPage.query = {
@@ -110,13 +113,13 @@ async function doSearch() {
   } as Query
   const newPage: Page<Query, Data> | undefined = await props.search(tempPage)
   if (NotNullish(newPage)) {
-    dataList.value = newPage.data === undefined ? [] : newPage.data
+    data.value = newPage.data === undefined ? [] : newPage.data
     page.value.dataCount = newPage.dataCount
   }
   // 刷新子数据
   if (NotNullish(props.treeLoad) && NotNullish(wrappedLoad)) {
-    if (NotNullish(dataList.value)) {
-      dataList.value.forEach((row) => {
+    if (NotNullish(data.value)) {
+      data.value.forEach((row) => {
         const treeInitItem = treeRefreshMap.get(row[props.dataKey])
         if (NotNullish(treeInitItem)) {
           wrappedLoad(row, treeInitItem.treeNode, treeInitItem.resolve)
@@ -148,7 +151,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
 
   // 根级节点列入待刷新数组
   let waitingUpdateList: Data[]
-  waitingUpdateList = dataList.value.filter((data) => idsStr.includes(String(data[props.dataKey])))
+  waitingUpdateList = data.value.filter((data) => idsStr.includes(String(data[props.dataKey])))
 
   // 根据treeData确认是否包含哪些下级数据
   if (props.treeData && updateChildren) {
@@ -178,7 +181,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     const waitingUpdateChildIds = waitingUpdateIds.filter((id) => !waitingUpdateRootIds.includes(id))
 
     // 利用树形工具找到叶子节点，列入waitingUpdateList
-    const tempRoot = { id: undefined, pid: undefined, children: dataList.value as TreeNode[], isLeaf: false }
+    const tempRoot = { id: undefined, pid: undefined, children: data.value as TreeNode[], isLeaf: false }
     for (const id of waitingUpdateChildIds) {
       const child = GetNode(tempRoot, id) as Data
       if (NotNullish(child)) {
@@ -202,6 +205,10 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     }
   }
 }
+// 清除所有数据
+function clearData() {
+  data.value.length = 0
+}
 // 分页栏
 // 当前页变化
 function handlePageNumberChange() {
@@ -219,6 +226,10 @@ function handleRowChange(changedRow: Data) {
 function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
   return dataTableRef.value.getVisibleRows(offsetTop, offsetBottom)
 }
+// 获取当前选中
+function getSelectionRows() {
+  return dataTableRef.value.getSelectionRows()
+}
 // 切换选中行
 function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: boolean) {
   dataTableRef.value.toggleRowSelection(row, selected, ignoreSelectable)
@@ -228,7 +239,11 @@ function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: bo
 <template>
   <div class="search-table">
     <!-- 为了不被el-table内置的2层z轴以及固定列的2+1增z轴遮挡，此处为3层z轴 -->
-    <search-toolbar-v1 class="search-table-toolbar z-layer-3" @search-button-clicked="doSearch">
+    <search-toolbar-v1
+      class="search-table-toolbar z-layer-3"
+      :search-button-disabled="searchButtonDisabled"
+      @search-button-clicked="doSearch"
+    >
       <template #main>
         <slot name="toolbarMain" />
       </template>
@@ -239,7 +254,7 @@ function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: bo
     <div class="search-table-data">
       <data-table
         ref="dataTableRef"
-        v-model:table-data="dataList"
+        v-model:data="data"
         class="search-table-data-table"
         :thead="thead"
         :selectable="selectable"

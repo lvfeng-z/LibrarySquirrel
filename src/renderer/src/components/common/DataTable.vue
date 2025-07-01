@@ -42,7 +42,7 @@ onMounted(() => {
 })
 
 // model
-const data = defineModel<unknown[]>('tableData', { default: [] })
+const data = defineModel<unknown[]>('data', { default: [], required: true })
 
 // 事件
 const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll'])
@@ -50,13 +50,14 @@ const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'sc
 // 暴露
 defineExpose({
   getVisibleRows,
-  cancelAllSelection,
+  getSelectionRows,
+  clearSelection,
   toggleRowSelection
 })
 
 // 变量
 const dataTable = ref() // el-table组件的实例
-const selectDataList: Ref<Data[]> = ref([])
+const currentSelect: Ref<Data[]> = ref([])
 const selectedDataKey: Ref<string> = ref('')
 
 // 方法
@@ -71,12 +72,16 @@ async function initializeThead() {
 }
 // 处理选中事件
 function handleSelectionChange(event: Data[]) {
-  selectDataList.value = event
-  emits('selectionChange', selectDataList.value)
+  currentSelect.value = event
+  emits('selectionChange', currentSelect.value)
+}
+// 获取当前选中
+function getSelectionRows() {
+  return currentSelect.value
 }
 // 取消所有选中
-function cancelAllSelection() {
-  selectDataList.value.length = 0
+function clearSelection() {
+  currentSelect.value.length = 0
   dataTable.value.clearSelection()
 }
 // 切换选中行
