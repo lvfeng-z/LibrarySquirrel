@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
 import SearchTable from '@renderer/components/common/SearchTable.vue'
-import { onMounted, ref, Ref, toRaw, UnwrapRef } from 'vue'
+import { computed, onMounted, ref, Ref, toRaw, UnwrapRef } from 'vue'
 import Page from '@renderer/model/util/Page.ts'
 import SiteQueryDTO from '@renderer/model/main/queryDTO/SiteQueryDTO.ts'
 import OperationItem from '@renderer/model/util/OperationItem.ts'
@@ -142,22 +142,32 @@ const siteDialogState: Ref<boolean> = ref(false)
 // 站点对话框的数据
 const siteDialogData: Ref<UnwrapRef<Site>> = ref(new Site())
 // 被选中的站点
-const siteSelected: Ref<UnwrapRef<Site>> = ref(new Site())
+const siteSelected: Ref<Site | undefined> = computed(() => {
+  if (IsNullish(siteSearchTable.value)) {
+    return undefined
+  }
+  const temp = siteSearchTable.value.getSelectionRows()
+  if (ArrayNotEmpty(temp)) {
+    return temp[0] as Site
+  } else {
+    return undefined
+  }
+})
+// 站点搜索按钮的开关
+const siteSearchButtonDisabled = computed(() => reversed.value && IsNullish(siteDomainSelected.value))
 // 站点侧边栏的分页参数
 const siteDrawerPage: Ref<Page<SiteQueryDTO, Site>> = ref(new Page<SiteQueryDTO, Site>())
 // 站点侧边栏的查询参数
 const siteDrawerSearchParams: Ref<SiteQueryDTO> = ref(new SiteQueryDTO())
-// 站点侧边栏的被修改的行
-const siteDrawerChangedRows: Ref<Site[]> = ref([])
 // 站点侧边栏的操作栏按钮
 const siteDrawerOperationButton: OperationItem<Site>[] = [
-  { label: '绑定', icon: 'Paperclip', code: 'bind', rule: (row) => reversed.value && row.id !== siteDomainSelected.value.siteId },
+  { label: '绑定', icon: 'Paperclip', code: 'bind', rule: (row) => reversed.value && row.id !== siteDomainSelected.value?.siteId },
   {
     label: '解绑',
     icon: 'DocumentDelete',
     code: 'unbind',
     buttonType: 'danger',
-    rule: (row) => reversed.value && row.id === siteDomainSelected.value.siteId
+    rule: (row) => reversed.value && row.id === siteDomainSelected.value?.siteId
   },
   { label: '查看', icon: 'view', code: DialogMode.VIEW }
 ]
@@ -250,7 +260,19 @@ const siteDomainThead: Ref<Thead[]> = ref([
 // 站点域名的查询参数
 const siteDomainSearchParams: Ref<SiteDomainQueryDTO> = ref(new SiteDomainQueryDTO())
 // 被选中的站点域名
-const siteDomainSelected: Ref<SiteDomain> = ref(new SiteDomain())
+const siteDomainSelected: Ref<SiteDomain | undefined> = computed(() => {
+  if (IsNullish(siteDomainSearchTable.value)) {
+    return undefined
+  }
+  const temp = siteDomainSearchTable.value.getSelectionRows()
+  if (ArrayNotEmpty(temp)) {
+    return temp[0] as SiteDomain
+  } else {
+    return undefined
+  }
+})
+// 站点域名搜索按钮的开关
+const siteDomainSearchButtonDisabled = computed(() => !reversed.value && IsNullish(siteSelected.value))
 // 站点弹窗的模式
 const siteDomainDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
 // 站点对话框开关
@@ -281,7 +303,7 @@ async function siteQueryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQ
     page.query = new SiteQueryDTO()
   }
   if (reversed.value) {
-    page.query.id = siteDomainSelected.value.siteId
+    page.query.id = siteDomainSelected.value?.siteId
   }
   const response = await apis.siteQueryPage(page)
   if (ApiUtil.check(response)) {
@@ -318,10 +340,10 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
       siteSearchTable.value.toggleRowSelection(op.data, true)
       break
     case 'bind':
-      changeDomainBind(siteDomainSelected.value.id as number, Number(op.id), true)
+      changeDomainBind(siteDomainSelected.value?.id as number, Number(op.id), true)
       break
     case 'unbind':
-      changeDomainBind(siteDomainSelected.value.id as number, Number(op.id), false)
+      changeDomainBind(siteDomainSelected.value?.id as number, Number(op.id), false)
       break
     case DialogMode.VIEW:
       siteDialogMode.value = DialogMode.VIEW
@@ -341,10 +363,7 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
   }
 }
 // 处理被选中的站点改变的事件
-async function handleSiteSelectionChange(selections: Site[]) {
-  if (selections.length > 0) {
-    siteSelected.value = selections[0]
-  }
+async function handleSiteSelectionChange() {
   siteDomainSearchTable.value.doSearch()
 }
 // 保存站点行数据编辑
@@ -378,7 +397,7 @@ async function siteDomainQueryPage(
     page.query = new SiteQueryDTO()
   }
   if (!reversed.value) {
-    page.query.siteId = siteSelected.value.id
+    page.query.siteId = siteSelected.value?.id
   }
   const response = await apis.siteDomainQueryDTOPage(page)
   if (ApiUtil.check(response)) {
@@ -395,7 +414,7 @@ async function siteDomainQueryPageBySite(
   if (IsNullish(page.query)) {
     page.query = new SiteQueryDTO()
   }
-  page.query.siteId = siteSelected.value.id
+  page.query.siteId = siteSelected.value?.id
   page.query.boundOnSite = false
   const response = await apis.siteDomainQueryDTOPageBySite(page)
   if (ApiUtil.check(response)) {
@@ -422,14 +441,14 @@ function handleSiteDomainRowButtonClicked(op: DataTableOperationResponse<SiteDom
       saveSiteDomainRowEdit(op.data)
       break
     case 'bind':
-      changeDomainBind(Number(op.id), siteSelected.value.id as number, true)
+      changeDomainBind(Number(op.id), siteSelected.value?.id as number, true)
       break
     case 'openSiteDrawer':
       drawerState.value = true
       siteDomainSearchTable.value.toggleRowSelection(op.data, true)
       break
     case 'unbind':
-      changeDomainBind(Number(op.id), siteSelected.value.id as number, false)
+      changeDomainBind(Number(op.id), siteSelected.value?.id as number, false)
       break
     case DialogMode.VIEW:
       siteDomainDialogMode.value = DialogMode.VIEW
@@ -499,16 +518,18 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
   }
 }
 // 处理被选中的域名改变的事件
-async function handleSiteDomainSelectionChange(selections: SiteDomain[]) {
-  if (selections.length > 0) {
-    siteDomainSelected.value = selections[0]
-  }
+async function handleSiteDomainSelectionChange() {
   siteSearchTable.value.doSearch()
 }
 function handleReverse() {
   reversed.value = !reversed.value
-  siteDomainSearchTable.value.doSearch()
-  siteSearchTable.value.doSearch()
+  if (reversed.value) {
+    siteDomainSearchTable.value.doSearch()
+    siteSearchTable.value.clearData()
+  } else {
+    siteSearchTable.value.doSearch()
+    siteDomainSearchTable.value.clearData()
+  }
 }
 </script>
 <template>
@@ -544,6 +565,7 @@ function handleReverse() {
             :multi-select="reversed"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100]"
+            :search-button-disabled="siteSearchButtonDisabled"
             @row-button-clicked="handleSiteRowButtonClicked"
             @selection-change="handleSiteSelectionChange"
           >
@@ -567,6 +589,7 @@ function handleReverse() {
             :multi-select="!reversed"
             :selectable="true"
             :page-sizes="[10, 20, 50, 100, 1000]"
+            :search-button-disabled="siteDomainSearchButtonDisabled"
             @row-button-clicked="handleSiteDomainRowButtonClicked"
             @selection-change="handleSiteDomainSelectionChange"
           >
@@ -588,7 +611,6 @@ function handleReverse() {
             ref="siteDomainDrawerSearchTable"
             v-model:page="siteDomainPage"
             v-model:toolbar-params="siteDomainDrawerSearchParams"
-            v-model:changed-rows="siteDomainChangedRows"
             class="site-manage-left-search-table"
             data-key="id"
             :operation-button="siteDomainDrawerOperationButton"
@@ -608,7 +630,6 @@ function handleReverse() {
             ref="siteDrawerSearchTable"
             v-model:page="siteDrawerPage"
             v-model:toolbar-params="siteDrawerSearchParams"
-            v-model:changed-rows="siteDrawerChangedRows"
             class="site-manage-left-search-table"
             data-key="id"
             :operation-button="siteDrawerOperationButton"
