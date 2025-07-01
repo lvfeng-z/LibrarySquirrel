@@ -46,7 +46,6 @@ import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import Resource from '../model/entity/Resource.js'
 import ResourcePluginDTO from '../model/dto/ResourcePluginDTO.js'
-import { SendConfirmToWindow } from '../util/MainWindowUtil.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -345,17 +344,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     if (IsNullish(activeRes)) {
       resourceSaveDTO.id = await resService.saveActive(resourceSaveDTO)
     } else {
-      // 提示已经有可用资源，并询问用户是否替换原有资源，不替换则直接返回成功状态
-      const confirmed = await SendConfirmToWindow({
-        title: oldWorks.siteWorksName + '已有可用的资源',
-        msg: '是否下载并替换原有资源？',
-        confirmButtonText: '替换原有资源',
-        cancelButtonText: '保留原有资源',
-        type: 'warning'
-      })
-      if (!confirmed) {
-        return Promise.resolve(TaskStatusEnum.FINISHED)
-      }
       resourceSaveDTO.id = activeRes.id
     }
     // 更新下载中的文件路径
@@ -376,7 +364,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       } else if (FileSaveResult.PAUSE === saveResult) {
         return TaskStatusEnum.PAUSE
       } else {
-        throw new Error(`保存资源未返回预期的值，saveResult: ${saveResult}`)
+        throw new Error(`保存资源未返回预期中的值，saveResult: ${saveResult}`)
       }
     })
   }

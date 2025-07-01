@@ -18,6 +18,8 @@ import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
 import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
 import lodash from 'lodash'
 import { queue, QueueObject } from 'async'
+import { SendConfirmToWindow } from '../util/MainWindowUtil.js'
+import ResourceService from '../service/ResourceService.js'
 
 /**
  * 任务队列
@@ -113,7 +115,7 @@ export class TaskQueue {
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
 
-    this.inletStream = new ReadableTaskRunInstance()
+    this.inletStream = new ReadableTaskRunInstance(new ResourceService())
     this.worksInfoSaveStream = new WorksInfoSaveStream()
     // 读取设置中的最大并行数
     const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
@@ -136,7 +138,13 @@ export class TaskQueue {
           }
         }
       }
-      // 信息保存流
+      // 入口流
+      this.inletStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
+        this.inletStream.unpipe(this.worksInfoSaveStream)
+        this.inletStream.pipe(this.worksInfoSaveStream)
+        handleError(error, taskRunInstance)
+      })
+      // 作品信息保存流
       this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
         this.inletStream.unpipe(this.worksInfoSaveStream)
         this.inletStream.pipe(this.worksInfoSaveStream)
@@ -184,7 +192,7 @@ export class TaskQueue {
           resolve()
         })
       )
-      // 作品信息保存流
+      // 任务信息保存流
       this.taskPersistStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
         this.resourceSaveStream.unpipe(this.taskPersistStream)
         this.resourceSaveStream.pipe(this.taskPersistStream)
@@ -1378,10 +1386,19 @@ class ReadableTaskRunInstance extends Readable {
    */
   private currentIndex: number
 
-  constructor() {
+  private resourceService: ResourceService
+
+  private readonly waitingConfirmList: Promise<void>[]
+
+  private readonly confirmedList: TaskRunInstance[]
+
+  constructor(resService: ResourceService) {
     super({ objectMode: true })
     this.allInstLists = []
     this.currentIndex = 0
+    this.resourceService = resService
+    this.waitingConfirmList = []
+    this.confirmedList = []
   }
 
   // 添加一个新的数组到流中
@@ -1414,6 +1431,60 @@ class ReadableTaskRunInstance extends Readable {
         resolve()
       }
     })
+  }
+
+  /**
+   * 判断是否已有资源
+   * @param taskRunInstance
+   * @private
+   */
+  private async isResourceSaved(taskRunInstance: TaskRunInstance): Promise<boolean> {
+    if (NotNullish(taskRunInstance.worksId)) {
+      return this.resourceService.hasActiveByWorksId(taskRunInstance.worksId)
+    } else {
+      return false
+    }
+  }
+
+  /**
+   * 询问用户是否替换原有资源
+   * @param taskRunInstance
+   * @private
+   */
+  private async confirmReplaceResource(taskRunInstance: TaskRunInstance): Promise<boolean> {
+    // 提示已经有可用资源，并询问用户是否替换原有资源，不替换则直接返回成功状态
+    return await SendConfirmToWindow({
+      title: taskRunInstance.getTaskInfo().taskName + '下载的作品已有可用的资源',
+      msg: '是否下载并替换原有资源？',
+      confirmButtonText: '替换原有资源',
+      cancelButtonText: '保留原有资源',
+      type: 'warning'
+    })
+  }
+
+  private async get1(): Promise<TaskRunInstance | undefined> {
+    let next = this.confirmedList.shift()
+    if (IsNullish(next)) {
+      next = this.getNext()
+    }
+    while (true) {
+      if (NotNullish(next)) {
+        if (await this.isResourceSaved(next)) {
+          const oldOne = next
+          const confirmPromise = this.confirmReplaceResource(oldOne).then((confirmed) => {
+            if (confirmed) {
+              this.confirmedList.push(oldOne)
+            }
+          })
+          this.waitingConfirmList.push(confirmPromise)
+          next = this.getNext()
+        } else {
+          this.push(next)
+          break
+        }
+      } else {
+      }
+    }
   }
 
   private getNext(): TaskRunInstance | undefined {

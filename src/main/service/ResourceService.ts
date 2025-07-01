@@ -330,6 +330,14 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   }
 
   /**
+   * 查询作品id是否有启用的资源
+   * @param worksId
+   */
+  public hasActiveByWorksId(worksId: number): Promise<boolean> {
+    return this.dao.hasActiveByWorksId(worksId)
+  }
+
+  /**
    * 根据作品id查询所有资源
    * @param worksId
    */

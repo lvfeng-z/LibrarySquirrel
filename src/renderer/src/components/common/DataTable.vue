@@ -262,9 +262,4 @@ function setCacheData(scope, item, newData) {
   </el-table>
 </template>
 
-<style scoped>
-.data-table {
-  height: 100%;
-  width: 100%;
-}
-</style>
+<style scoped></style>
