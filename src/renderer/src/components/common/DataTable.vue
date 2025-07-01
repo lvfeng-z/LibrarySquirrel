@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="Data, OpParam">
-import { onBeforeMount, onMounted, Ref, ref } from 'vue'
+import { computed, onBeforeMount, onMounted, Ref, ref } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
 import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
@@ -9,12 +9,14 @@ import { TreeNode } from 'element-plus'
 import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
+import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
+    clickRowSelect?: boolean // 点击行的任意位置进行选中（仅单选生效）
     thead: Thead[] // 表头信息
     dataKey: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
@@ -26,7 +28,7 @@ const props = withDefaults(
     treeLoad?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
     border?: boolean
   }>(),
-  { customOperationButton: false, treeData: false, treeLazy: false, border: false }
+  { customOperationButton: false, treeData: false, treeLazy: false, border: false, clickRowSelect: false }
 )
 
 // onBeforeMount
@@ -42,7 +44,7 @@ onMounted(() => {
 })
 
 // model
-const data = defineModel<unknown[]>('data', { default: [], required: true })
+const data = defineModel<unknown[]>('data', { required: true })
 
 // 事件
 const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll'])
@@ -58,7 +60,13 @@ defineExpose({
 // 变量
 const dataTable = ref() // el-table组件的实例
 const currentSelect: Ref<Data[]> = ref([])
-const selectedDataKey: Ref<string> = ref('')
+const currentSelectKey: Ref<unknown | undefined> = computed(() => {
+  if (ArrayNotEmpty(currentSelect.value)) {
+    return currentSelect.value[0][props.dataKey]
+  } else {
+    return undefined
+  }
+})
 
 // 方法
 // 初始化表头
@@ -88,8 +96,6 @@ function clearSelection() {
 function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: boolean) {
   if (props.multiSelect) {
     dataTable.value.toggleRowSelection(row, selected, ignoreSelectable)
-  } else {
-    selectedDataKey.value = row[props.dataKey]
   }
   handleSelectionChange([row])
 }
@@ -174,12 +180,13 @@ function setCacheData(scope, item, newData) {
     :row-class-name="tableRowClassName"
     :selectable="props.selectable"
     :border="props.border"
+    @current-change="(current: Data) => (clickRowSelect ? handleSelectionChange([current]) : undefined)"
     @selection-change="handleSelectionChange"
   >
     <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />
     <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
       <template #default="{ row }">
-        <el-radio v-model="selectedDataKey" :value="row[props.dataKey]" @change="handleSelectionChange([row])" />
+        <el-radio v-model="currentSelectKey" :value="row[dataKey]" @click="handleSelectionChange([row])" />
       </template>
     </el-table-column>
     <el-table-column v-if="props.treeData" width="25" />

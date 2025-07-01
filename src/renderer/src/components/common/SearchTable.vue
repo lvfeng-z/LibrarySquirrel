@@ -18,6 +18,7 @@ const props = withDefaults(
   defineProps<{
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
+    clickRowSelect?: boolean // 点击行的任意位置进行选中（仅单选生效）
     dataKey: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     thead: Thead[] // 表头
@@ -259,6 +260,7 @@ function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: bo
         :thead="thead"
         :selectable="selectable"
         :multi-select="multiSelect"
+        :click-row-select="clickRowSelect"
         :data-key="dataKey"
         :table-row-class-name="tableRowClassName"
         :operation-button="operationButton"

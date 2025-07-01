@@ -364,7 +364,9 @@ function handleSiteRowButtonClicked(op: DataTableOperationResponse<Site>) {
 }
 // 处理被选中的站点改变的事件
 async function handleSiteSelectionChange() {
-  siteDomainSearchTable.value.doSearch()
+  if (!reversed.value) {
+    siteDomainSearchTable.value.doSearch()
+  }
 }
 // 保存站点行数据编辑
 async function saveSiteRowEdit(newData: Site) {
@@ -519,7 +521,9 @@ async function changeDomainBind(siteDomainId: number, siteId: number, bind: bool
 }
 // 处理被选中的域名改变的事件
 async function handleSiteDomainSelectionChange() {
-  siteSearchTable.value.doSearch()
+  if (reversed.value) {
+    siteSearchTable.value.doSearch()
+  }
 }
 function handleReverse() {
   reversed.value = !reversed.value
@@ -562,8 +566,8 @@ function handleReverse() {
             :operation-width="140"
             :thead="siteThead"
             :search="siteQueryPage"
-            :multi-select="reversed"
             :selectable="true"
+            :multi-select="reversed"
             :page-sizes="[10, 20, 50, 100]"
             :search-button-disabled="siteSearchButtonDisabled"
             @row-button-clicked="handleSiteRowButtonClicked"
