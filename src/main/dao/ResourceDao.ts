@@ -16,11 +16,11 @@ export default class ResourceDao extends BaseDao<ResourceQueryDTO, Resource> {
    * @param worksId
    */
   public async hasActiveByWorksId(worksId: number): Promise<boolean> {
-    const statement = `SELECT COUNT(1) FROM ${this.tableName} WHERE works_id1 = ${worksId} AND state = 1`
+    const statement = `SELECT COUNT(1) as count FROM ${this.tableName} WHERE works_id = ${worksId} AND state = 1`
     const db = this.acquire()
     try {
-      const count = (await db.get(statement)) as number
-      return count > 0
+      const queryResult = (await db.get(statement)) as { count: number }
+      return queryResult.count > 0
     } finally {
       if (!this.injectedDB) {
         db.release()

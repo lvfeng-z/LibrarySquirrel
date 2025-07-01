@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
 import WorksService from '../service/WorksService.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
+import { Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import ResourceWriter from '../util/ResourceWriter.js'
@@ -139,10 +139,10 @@ export class TaskQueue {
         }
       }
       // 入口流
-      this.inletStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
+      this.inletStream.on('error', (error: Error) => {
         this.inletStream.unpipe(this.worksInfoSaveStream)
         this.inletStream.pipe(this.worksInfoSaveStream)
-        handleError(error, taskRunInstance)
+        LogUtil.error(this.constructor.name, `任务进入处理流程失败，error: ${error.message}`)
       })
       // 作品信息保存流
       this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
@@ -546,6 +546,7 @@ export class TaskQueue {
     this.refreshParentStatus(runInstances.map((runInstance) => runInstance.parentId))
 
     this.inletStream.addArray(runInstances)
+    this.inletStream.process()
   }
 
   /**
@@ -952,8 +953,11 @@ class TaskRunInstance extends TaskStatus {
    */
   public dbStored: boolean
   /**
+   * 用户是否确认替换原有资源
+   */
+  public confirmReplaceRes: boolean
+  /**
    * 作品id
-   * @private
    */
   public worksId: number | undefined
   /**
@@ -993,6 +997,7 @@ class TaskRunInstance extends TaskStatus {
     this.resourceWriter = resourceWriter
     this.taskInfo = taskInfo
     this.dbStored = true
+    this.confirmReplaceRes = false
     this.taskService = taskService
     this.pluginLoader = pluginLoader
     this.parentId = IsNullish(parentId) ? 0 : parentId
@@ -1373,7 +1378,7 @@ class TaskPersistStream extends Writable {
 /**
  * 任务运行实例流
  */
-class ReadableTaskRunInstance extends Readable {
+class ReadableTaskRunInstance extends Transform {
   /**
    * 所有待处理的数组
    * @private
@@ -1388,41 +1393,80 @@ class ReadableTaskRunInstance extends Readable {
 
   private resourceService: ResourceService
 
-  private readonly waitingConfirmList: Promise<void>[]
+  private resourceReplaceConfirmStream: ResourceReplaceConfirmStream
 
-  private readonly confirmedList: TaskRunInstance[]
+  private processing: boolean
 
   constructor(resService: ResourceService) {
     super({ objectMode: true })
     this.allInstLists = []
     this.currentIndex = 0
     this.resourceService = resService
-    this.waitingConfirmList = []
-    this.confirmedList = []
+    this.resourceReplaceConfirmStream = new ResourceReplaceConfirmStream()
+    this.resourceReplaceConfirmStream.pipe(this)
+    this.processing = false
   }
 
   // 添加一个新的数组到流中
-  public addArray(array: TaskRunInstance[]) {
+  public async addArray(array: TaskRunInstance[]) {
     this.allInstLists.push(array)
-    const next = this.getNext()
-    if (NotNullish(next)) {
-      this.push(next)
+  }
+
+  public process() {
+    if (this.processing) return // 如果已经在处理了，则直接返回
+    this.processing = true
+
+    const processNextChunk = async () => {
+      const next = this.getNext()
+      if (NotNullish(next)) {
+        const isDrain = await this._transform(next, 'utf-8', (err) => {
+          if (err) {
+            this.emit('error', err)
+          }
+        })
+        if (!isDrain) {
+          // 如果返回false，表示下游无法接受更多数据，暂停处理直到'drain'事件
+          this.once('drain', processNextChunk)
+        } else {
+          // 继续处理下一个数据块
+          process.nextTick(processNextChunk)
+        }
+      } else {
+        this.processing = false
+      }
+    }
+
+    return processNextChunk() // 开始处理第一个数据块
+  }
+
+  async _transform(taskRunInstance: TaskRunInstance, _encoding: BufferEncoding, callback: TransformCallback): Promise<boolean> {
+    try {
+      if (taskRunInstance.confirmReplaceRes) {
+        // taskRunInstance.preStart()
+        return this.push(taskRunInstance)
+      } else {
+        const resourceSaved = await this.isResourceSaved(taskRunInstance)
+        if (resourceSaved) {
+          this.resourceReplaceConfirmStream.manualPush(taskRunInstance)
+          return true
+        } else {
+          // taskRunInstance.preStart()
+          return this.push(taskRunInstance)
+        }
+      }
+    } catch (error) {
+      this.emit('error', error)
+      return true
+    } finally {
+      callback()
     }
   }
 
-  _read() {
-    const next = this.getNext()
-    if (NotNullish(next)) {
-      this.push(next)
-    } else {
-      this.emit('waiting')
-    }
-  }
-
-  public preDestroy(): Promise<void> {
+  public async preDestroy(): Promise<void> {
+    await this.resourceReplaceConfirmStream.allRespond()
     return new Promise<void>((resolve) => {
       if (this.hasNext()) {
-        this.once('waiting', () => {
+        this.once('drain', () => {
           this.push(null)
           resolve()
         })
@@ -1443,47 +1487,6 @@ class ReadableTaskRunInstance extends Readable {
       return this.resourceService.hasActiveByWorksId(taskRunInstance.worksId)
     } else {
       return false
-    }
-  }
-
-  /**
-   * 询问用户是否替换原有资源
-   * @param taskRunInstance
-   * @private
-   */
-  private async confirmReplaceResource(taskRunInstance: TaskRunInstance): Promise<boolean> {
-    // 提示已经有可用资源，并询问用户是否替换原有资源，不替换则直接返回成功状态
-    return await SendConfirmToWindow({
-      title: taskRunInstance.getTaskInfo().taskName + '下载的作品已有可用的资源',
-      msg: '是否下载并替换原有资源？',
-      confirmButtonText: '替换原有资源',
-      cancelButtonText: '保留原有资源',
-      type: 'warning'
-    })
-  }
-
-  private async get1(): Promise<TaskRunInstance | undefined> {
-    let next = this.confirmedList.shift()
-    if (IsNullish(next)) {
-      next = this.getNext()
-    }
-    while (true) {
-      if (NotNullish(next)) {
-        if (await this.isResourceSaved(next)) {
-          const oldOne = next
-          const confirmPromise = this.confirmReplaceResource(oldOne).then((confirmed) => {
-            if (confirmed) {
-              this.confirmedList.push(oldOne)
-            }
-          })
-          this.waitingConfirmList.push(confirmPromise)
-          next = this.getNext()
-        } else {
-          this.push(next)
-          break
-        }
-      } else {
-      }
     }
   }
 
@@ -1521,5 +1524,53 @@ class ReadableTaskRunInstance extends Readable {
       }
     }
     return false
+  }
+}
+
+class ResourceReplaceConfirmStream extends Transform {
+  /**
+   * 等待用户确认的个数
+   */
+  waitingCount: number
+
+  constructor() {
+    super({ objectMode: true })
+    this.waitingCount = 0
+  }
+
+  _transform(taskRunInstance: TaskRunInstance, _encoding: BufferEncoding, callback: TransformCallback) {
+    this.waitingCount++
+    SendConfirmToWindow({
+      title: taskRunInstance.getTaskInfo().taskName + '下载的作品已有可用的资源',
+      msg: '是否下载并替换原有资源？',
+      confirmButtonText: '替换原有资源',
+      cancelButtonText: '保留原有资源',
+      type: 'warning'
+    }).then((confirm) => {
+      this.waitingCount--
+      if (this.waitingCount === 0) {
+        this.emit('allRespond')
+      }
+      if (confirm) {
+        taskRunInstance.confirmReplaceRes = true
+        this.push(taskRunInstance)
+      }
+    })
+    callback()
+  }
+
+  public allRespond(): Promise<void> {
+    if (this.waitingCount === 0) {
+      return Promise.resolve()
+    }
+    return new Promise((resolve) => this.on('allRespond', resolve))
+  }
+
+  public manualPush(taskRunInstance: TaskRunInstance): void {
+    ;((callback) => this._transform(taskRunInstance, 'utf-8', callback))((err) => {
+      if (err) {
+        this.emit('error', err)
+      }
+    })
   }
 }
