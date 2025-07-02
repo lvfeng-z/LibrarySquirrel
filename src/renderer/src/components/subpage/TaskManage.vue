@@ -145,6 +145,10 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
           tagType = 'danger'
           tagText = '失败'
           break
+        case TaskStatusEnum.WAITING_USER_INPUT:
+          tagType = 'warning'
+          tagText = '等待用户操作'
+          break
       }
       const elTag = h(ElTag, { type: tagType }, () => tagText)
       return h('div', { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } }, elTag)
