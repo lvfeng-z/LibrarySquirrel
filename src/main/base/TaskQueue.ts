@@ -144,6 +144,7 @@ export class TaskQueue {
         this.queueEntrance.pipe(this.worksInfoSaveStream)
         LogUtil.error(this.constructor.name, `任务进入处理流程失败，error: ${error.message}`)
       })
+      this.queueEntrance.on('not-entered', (taskRunInstance: TaskRunInstance) => this.refreshParentStatus([taskRunInstance.parentId]))
       // 作品信息保存流
       this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
         this.queueEntrance.unpipe(this.worksInfoSaveStream)
@@ -179,11 +180,11 @@ export class TaskQueue {
           this.refreshParentStatus([taskRunInstance.parentId])
         }
       })
-      this.resourceSaveStream.on('saveStart', (taskRunInstance: TaskRunInstance) => {
+      this.resourceSaveStream.on('save-start', (taskRunInstance: TaskRunInstance) => {
         // this.taskPersistStream.addTask([taskRunInstance])
         this.refreshParentStatus([taskRunInstance.parentId])
       })
-      this.resourceSaveStream.on('saveFailed', handleError)
+      this.resourceSaveStream.on('save-failed', handleError)
       this.resourceSaveStream.on('finish', () => LogUtil.info(this.constructor.name, '任务队列完成'))
       const taskResourceStreamDestroyed = new Promise<void>((resolve) =>
         this.resourceSaveStream.once('end', () => {
@@ -490,11 +491,6 @@ export class TaskQueue {
         taskRunInstance.inStream = true
         runInstances.push(taskRunInstance)
       }
-      // try {
-      //   taskRunInstance.preStart()
-      // } catch (error) {
-      //   LogUtil.error(this.constructor.name, error)
-      // }
     }
 
     if (ArrayNotEmpty(notExistsTasks)) {
@@ -970,7 +966,7 @@ class TaskRunInstance extends TaskStatus {
   /**
    * 用户是否确认替换原有资源
    */
-  public confirmReplaceRes: boolean
+  public confirmReplaceRes: ConfirmReplaceResStateEnum
   /**
    * 作品id
    */
@@ -1012,7 +1008,7 @@ class TaskRunInstance extends TaskStatus {
     this.resourceWriter = resourceWriter
     this.taskInfo = taskInfo
     this.dbStored = true
-    this.confirmReplaceRes = false
+    this.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
     this.taskService = taskService
     this.pluginLoader = pluginLoader
     this.parentId = IsNullish(parentId) ? 0 : parentId
@@ -1157,6 +1153,12 @@ class TaskRunInstance extends TaskStatus {
   }
 }
 
+enum ConfirmReplaceResStateEnum {
+  UNKNOWN = 0,
+  CONFIRM = 1,
+  REFUSE = 2
+}
+
 /**
  * 父任务运行实例
  */
@@ -1244,7 +1246,7 @@ class ResourceSaveStream extends Transform {
       return
     }
     // 发出任务开始保存的事件
-    this.emit('saveStart', chunk)
+    this.emit('save-start', chunk)
 
     // 开始任务
     return chunk
@@ -1257,7 +1259,7 @@ class ResourceSaveStream extends Transform {
       })
       .catch((err) => {
         chunk.inStream = false
-        this.emit('saveFailed', err, chunk)
+        this.emit('save-failed', err, chunk)
       })
   }
 
@@ -1478,11 +1480,11 @@ class TaskQueueEntrance extends Transform {
         // 如果资源保存是中断的，则直接推入下游，不用判断是否保存过资源
         taskRunInstance.preStart()
         return this.push(taskRunInstance)
-      } else if (taskRunInstance.confirmReplaceRes) {
+      } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.CONFIRM) {
         // 如果没有中断，则判断用户是否确认替换资源
         taskRunInstance.preStart()
         return this.push(taskRunInstance)
-      } else {
+      } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.UNKNOWN) {
         // 最后判断是否保存过资源，保存过就询问用户是否替换
         const resourceSaved = await this.isResourceSaved(taskRunInstance)
         if (resourceSaved) {
@@ -1492,6 +1494,9 @@ class TaskQueueEntrance extends Transform {
           taskRunInstance.preStart()
           return this.push(taskRunInstance)
         }
+      } else {
+        this.emit('not-entered', taskRunInstance)
+        return true
       }
     } catch (error) {
       this.emit('error', error)
@@ -1592,16 +1597,17 @@ class ResourceReplaceConfirmStream extends Transform {
       confirmButtonText: '替换原有资源',
       cancelButtonText: '保留原有资源',
       type: 'warning'
-    }).then((confirm) => {
-      this.waitingCount--
-      if (this.waitingCount === 0) {
-        this.emit('allRespond')
-      }
-      if (confirm) {
-        taskRunInstance.confirmReplaceRes = true
-        this.push(taskRunInstance)
-      }
     })
+      .then((confirm: boolean) => {
+        taskRunInstance.confirmReplaceRes = confirm ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
+        this.push(taskRunInstance)
+      })
+      .finally(() => {
+        this.waitingCount--
+        if (this.waitingCount === 0) {
+          this.emit('allRespond')
+        }
+      })
     callback()
   }
 
