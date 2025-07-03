@@ -115,11 +115,11 @@ export class TaskQueue {
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
 
-    this.queueEntrance = new TaskQueueEntrance(new ResourceService())
+    this.queueEntrance = new TaskQueueEntrance(new ResourceService(), this.refreshParentStatus.bind(this))
     this.worksInfoSaveStream = new WorksInfoSaveStream()
     // 读取设置中的最大并行数
     const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
-    this.resourceSaveStream = new ResourceSaveStream(maxParallelImportInSettings)
+    this.resourceSaveStream = new ResourceSaveStream(maxParallelImportInSettings, this.refreshParentStatus.bind(this))
     this.taskPersistStream = new TaskPersistStream()
 
     // 初始化流
@@ -144,7 +144,6 @@ export class TaskQueue {
         this.queueEntrance.pipe(this.worksInfoSaveStream)
         LogUtil.error(this.constructor.name, `任务进入处理流程失败，error: ${error.message}`)
       })
-      this.queueEntrance.on('not-entered', (taskRunInstance: TaskRunInstance) => this.refreshParentStatus([taskRunInstance.parentId]))
       // 作品信息保存流
       this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
         this.queueEntrance.unpipe(this.worksInfoSaveStream)
@@ -1060,6 +1059,25 @@ class TaskRunInstance extends TaskStatus {
     }
   }
 
+  public waitUserInput() {
+    if (
+      this.status === TaskStatusEnum.CREATED ||
+      this.status === TaskStatusEnum.FINISHED ||
+      this.status === TaskStatusEnum.FAILED ||
+      this.status === TaskStatusEnum.PAUSE
+    ) {
+      try {
+        this.changeStatus(TaskStatusEnum.WAITING_USER_INPUT)
+      } catch (error) {
+        this.errorOccurred = true
+        throw error
+      }
+    } else {
+      this.errorOccurred = true
+      throw new Error(`等待用户输入失败${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+    }
+  }
+
   public pause(): Promise<boolean> {
     if (this.status === TaskStatusEnum.PROCESSING || this.status === TaskStatusEnum.WAITING) {
       try {
@@ -1229,37 +1247,44 @@ class WorksInfoSaveStream extends Transform {
 class ResourceSaveStream extends Transform {
   private processQueue: QueueObject<TaskRunInstance>
 
-  constructor(maxParallel: number) {
+  /**
+   * 刷新父任务状态
+   * @private
+   */
+  private readonly refreshParentStatus: (pids: number[]) => Promise<void>
+
+  constructor(maxParallel: number, refreshParentStatus: (pids: number[]) => Promise<void>) {
     super({ objectMode: true, highWaterMark: 64, autoDestroy: false }) // 设置为对象模式
     const finalMaxParallel = maxParallel >= 1 ? maxParallel : 1
     this.processQueue = queue(async (chunk: TaskRunInstance) => this.processTask(chunk), finalMaxParallel)
+    this.refreshParentStatus = refreshParentStatus
   }
 
   public updateMaxParallel(newNum: number): void {
     this.processQueue.concurrency = newNum
   }
 
-  private async processTask(chunk: TaskRunInstance): Promise<void> {
+  private async processTask(runInstance: TaskRunInstance): Promise<void> {
     // 开始之前检查当前的状态
-    if (chunk.paused()) {
-      chunk.inStream = false
+    if (runInstance.paused()) {
+      runInstance.inStream = false
       return
     }
     // 发出任务开始保存的事件
-    this.emit('save-start', chunk)
+    this.refreshParentStatus([runInstance.parentId])
 
     // 开始任务
-    return chunk
+    return runInstance
       .process()
       .then((saveResult: TaskStatusEnum) => {
-        chunk.inStream = false
+        runInstance.inStream = false
         if (TaskStatusEnum.PAUSE !== saveResult) {
-          this.push(chunk)
+          this.push(runInstance)
         }
       })
       .catch((err) => {
-        chunk.inStream = false
-        this.emit('save-failed', err, chunk)
+        runInstance.inStream = false
+        this.emit('save-failed', err, runInstance)
       })
   }
 
@@ -1426,7 +1451,13 @@ class TaskQueueEntrance extends Transform {
    */
   private processing: boolean
 
-  constructor(resService: ResourceService) {
+  /**
+   * 刷新父任务状态
+   * @private
+   */
+  private readonly refreshParentState: (pids: number[]) => Promise<void>
+
+  constructor(resService: ResourceService, refreshParent: (pids: number[]) => Promise<void>) {
     super({ objectMode: true })
     this.allInstLists = []
     this.currentIndex = 0
@@ -1434,6 +1465,7 @@ class TaskQueueEntrance extends Transform {
     this.resourceReplaceConfirmStream = new ResourceReplaceConfirmStream()
     this.resourceReplaceConfirmStream.pipe(this)
     this.processing = false
+    this.refreshParentState = refreshParent
   }
 
   /**
@@ -1489,13 +1521,16 @@ class TaskQueueEntrance extends Transform {
         const resourceSaved = await this.isResourceSaved(taskRunInstance)
         if (resourceSaved) {
           this.resourceReplaceConfirmStream.manualPush(taskRunInstance)
+          taskRunInstance.waitUserInput()
+          this.refreshParentState([taskRunInstance.parentId])
           return true
         } else {
           taskRunInstance.preStart()
           return this.push(taskRunInstance)
         }
       } else {
-        this.emit('not-entered', taskRunInstance)
+        taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
+        this.refreshParentState([taskRunInstance.parentId])
         return true
       }
     } catch (error) {

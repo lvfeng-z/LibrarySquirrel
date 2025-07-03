@@ -108,7 +108,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     key: 'status',
     title: '状态',
     hide: false,
-    width: 80,
+    width: 110,
     headerAlign: 'center',
     dataAlign: 'center',
     showOverflowTooltip: false,
