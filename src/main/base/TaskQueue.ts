@@ -139,10 +139,10 @@ export class TaskQueue {
         }
       }
       // 入口流
-      this.queueEntrance.on('error', (error: Error) => {
+      this.queueEntrance.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
         this.queueEntrance.unpipe(this.worksInfoSaveStream)
         this.queueEntrance.pipe(this.worksInfoSaveStream)
-        LogUtil.error(this.constructor.name, `任务进入处理流程失败，error: ${error.message}`)
+        handleError(error, taskRunInstance)
       })
       // 作品信息保存流
       this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
@@ -1042,7 +1042,8 @@ class TaskRunInstance extends TaskStatus {
       this.status === TaskStatusEnum.CREATED ||
       this.status === TaskStatusEnum.FINISHED ||
       this.status === TaskStatusEnum.FAILED ||
-      this.status === TaskStatusEnum.PAUSE
+      this.status === TaskStatusEnum.PAUSE ||
+      this.status === TaskStatusEnum.WAITING_USER_INPUT
     ) {
       try {
         this.changeStatus(TaskStatusEnum.WAITING)
@@ -1280,6 +1281,8 @@ class ResourceSaveStream extends Transform {
         runInstance.inStream = false
         if (TaskStatusEnum.PAUSE !== saveResult) {
           this.push(runInstance)
+          // 下载完成后，是否替换资源的标记重置
+          runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
         }
       })
       .catch((err) => {
@@ -1464,6 +1467,10 @@ class TaskQueueEntrance extends Transform {
     this.resourceService = resService
     this.resourceReplaceConfirmStream = new ResourceReplaceConfirmStream()
     this.resourceReplaceConfirmStream.pipe(this)
+    this.on('error', () => {
+      this.resourceReplaceConfirmStream.unpipe(this)
+      this.resourceReplaceConfirmStream.pipe(this)
+    })
     this.processing = false
     this.refreshParentState = refreshParent
   }
@@ -1486,11 +1493,7 @@ class TaskQueueEntrance extends Transform {
     const processNextChunk = async () => {
       const next = this.getNext()
       if (NotNullish(next)) {
-        const isDrain = await this._transform(next, 'utf-8', (err) => {
-          if (err) {
-            this.emit('error', err)
-          }
-        })
+        const isDrain = await this._transform(next, 'utf-8', () => {})
         if (!isDrain) {
           // 如果返回false，表示下游无法接受更多数据，暂停处理直到drain事件
           this.once('drain', processNextChunk)
@@ -1511,33 +1514,40 @@ class TaskQueueEntrance extends Transform {
       if (taskRunInstance.resSaveSuspended) {
         // 如果资源保存是中断的，则直接推入下游，不用判断是否保存过资源
         taskRunInstance.preStart()
+        callback()
         return this.push(taskRunInstance)
       } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.CONFIRM) {
         // 如果没有中断，则判断用户是否确认替换资源
         taskRunInstance.preStart()
+        callback()
         return this.push(taskRunInstance)
       } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.UNKNOWN) {
-        // 最后判断是否保存过资源，保存过就询问用户是否替换
+        // 如果用户未确认过是否替换，判断是否保存过资源，保存过就询问用户是否替换
         const resourceSaved = await this.isResourceSaved(taskRunInstance)
         if (resourceSaved) {
           this.resourceReplaceConfirmStream.manualPush(taskRunInstance)
           taskRunInstance.waitUserInput()
           this.refreshParentState([taskRunInstance.parentId])
+          callback()
           return true
         } else {
           taskRunInstance.preStart()
+          this.refreshParentState([taskRunInstance.parentId])
+          callback()
           return this.push(taskRunInstance)
         }
       } else {
+        // 用户拒绝替换的情况下这个运行实例不推入下游，是否替换资源的标记重置，返回true
         taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
+        taskRunInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
         this.refreshParentState([taskRunInstance.parentId])
+        callback()
         return true
       }
     } catch (error) {
-      this.emit('error', error)
-      return true
-    } finally {
+      this.emit('error', error, taskRunInstance)
       callback()
+      return true
     }
   }
 
@@ -1617,7 +1627,7 @@ class ResourceReplaceConfirmStream extends Transform {
   /**
    * 等待用户确认的个数
    */
-  waitingCount: number
+  private waitingCount: number
 
   constructor() {
     super({ objectMode: true })
