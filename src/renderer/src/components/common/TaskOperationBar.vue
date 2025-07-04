@@ -40,6 +40,12 @@ const taskStatusMapping: {
     operation: TaskOperationCodeEnum.PAUSE,
     processing: true
   },
+  [TaskStatusEnum.WAITING_USER_INPUT]: {
+    tooltip: '等待用户操作',
+    icon: 'RefreshRight',
+    operation: TaskOperationCodeEnum.PAUSE,
+    processing: false
+  },
   [TaskStatusEnum.PAUSE]: {
     tooltip: '继续',
     icon: 'RefreshRight',
