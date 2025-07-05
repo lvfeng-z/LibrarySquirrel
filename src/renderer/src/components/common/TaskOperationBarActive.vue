@@ -199,8 +199,12 @@ function formatBytes(bytes: number) {
       :class="{
         'task-operation-bar-parent-progress': true,
         'task-operation-bar-parent-progress-disappear':
-          !(status === TaskStatusEnum.PROCESSING || status === TaskStatusEnum.WAITING || status === TaskStatusEnum.PAUSE) ||
-          !row.hasChildren
+          !(
+            status === TaskStatusEnum.PROCESSING ||
+            status === TaskStatusEnum.WAITING ||
+            status === TaskStatusEnum.PAUSE ||
+            status === TaskStatusEnum.WAITING_USER_INPUT
+          ) || !row.hasChildren
       }"
     >
       <el-progress style="width: 100%" :percentage="schedule" text-inside :stroke-width="15">
