@@ -1,4 +1,5 @@
 export default interface ConfirmConfig {
+  confirmId: string
   title: string
   msg: string
   confirmButtonText: string

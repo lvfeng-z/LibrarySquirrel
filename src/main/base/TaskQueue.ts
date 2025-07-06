@@ -18,8 +18,9 @@ import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
 import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
 import lodash from 'lodash'
 import { queue, QueueObject } from 'async'
-import { SendConfirmToWindow } from '../util/MainWindowUtil.js'
 import ResourceService from '../service/ResourceService.js'
+import { v4 } from 'uuid'
+import Electron from 'electron'
 
 /**
  * 任务队列
@@ -1629,20 +1630,24 @@ class ResourceReplaceConfirmStream extends Transform {
    */
   private waitingCount: number
 
+  private readonly waitingConfirmMap: Map<string, (value: boolean | PromiseLike<boolean>) => void>
+
   constructor() {
     super({ objectMode: true })
     this.waitingCount = 0
+    this.waitingConfirmMap = new Map()
+    // 收到确认替换的响应事件后调用对于的resolve函数
+    Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: string[], confirmed: boolean) => {
+      const resolvedConfirms = receivedIds.map((confirmId: string) => this.waitingConfirmMap.get(confirmId)).filter(NotNullish)
+      if (ArrayNotEmpty(resolvedConfirms)) {
+        resolvedConfirms.forEach((resolveFn) => resolveFn(confirmed))
+      }
+    })
   }
 
   _transform(taskRunInstance: TaskRunInstance, _encoding: BufferEncoding, callback: TransformCallback) {
     this.waitingCount++
-    SendConfirmToWindow({
-      title: taskRunInstance.getTaskInfo().taskName + '下载的作品已有可用的资源',
-      msg: '是否下载并替换原有资源？',
-      confirmButtonText: '替换原有资源',
-      cancelButtonText: '保留原有资源',
-      type: 'warning'
-    })
+    this.sendReplaceConfirmToMainWindow(taskRunInstance.getTaskInfo().taskName + '')
       .then((confirm: boolean) => {
         taskRunInstance.confirmReplaceRes = confirm ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
         this.push(taskRunInstance)
@@ -1675,6 +1680,22 @@ class ResourceReplaceConfirmStream extends Transform {
       if (err) {
         this.emit('error', err)
       }
+    })
+  }
+
+  /**
+   * 在主页面弹出是否替换原有资源的弹窗
+   * @param msg 弹窗的消息
+   * @private
+   */
+  private sendReplaceConfirmToMainWindow(msg: string): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      const confirmId = v4()
+      this.waitingConfirmMap.set(confirmId, resolve)
+      GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
+        confirmId: confirmId,
+        msg: msg
+      })
     })
   }
 }

@@ -55,8 +55,8 @@ function createWindow(): Electron.BrowserWindow {
     const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
     if (!taskQueue.isIdle()) {
       await SendConfirmToWindow({
-        title: '有任务正在进行中',
-        msg: '是否关闭LibrarySquirrel？',
+        msg: '有任务正在进行中',
+        title: '是否关闭LibrarySquirrel？',
         confirmButtonText: '关闭',
         cancelButtonText: '取消',
         type: 'warning'

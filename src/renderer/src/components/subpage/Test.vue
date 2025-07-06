@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ElTreeSelect } from 'element-plus'
+import { h, Ref, ref } from 'vue'
+import { ElMessageBox, ElTreeSelect } from 'element-plus'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
@@ -45,14 +45,30 @@ const load = (node, resolve) => {
   }, 1)
 }
 
-function handleTest() {
-  window.api.testGotoPageSiteManage()
+function handleTest1() {
+  elMessageBoxTest()
 }
+
+function handleTest2() {
+  elMessageBoxTestItems.value.push({ context: '1' })
+}
+
+const elMessageBoxTestItems: Ref<{ context: string }[]> = ref([])
+function elMessageBoxTest() {
+  ElMessageBox.confirm(hFunc, 'msg', {
+    confirmButtonText: 'confirmButtonText',
+    cancelButtonText: 'cancelButtonText',
+    type: 'warning'
+  })
+}
+const hFunc = () =>
+  h('div', {}, [h('button', { onClick: handleTest2 }, 'addone'), ...elMessageBoxTestItems.value.map((item) => item.context)])
 </script>
 
 <template>
   <base-subpage>
-    <el-button @click="handleTest">test</el-button>
+    <el-button @click="handleTest1">test1</el-button>
+    <el-button @click="handleTest2">test2</el-button>
     <div style="display: flex; flex-direction: row">
       <div style="width: 50%">
         <template v-for="item in parentTaskStatus.values()" :key="item.id">
