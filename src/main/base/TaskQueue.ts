@@ -4,7 +4,7 @@ import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
 import WorksService from '../service/WorksService.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import { Transform, TransformCallback, Writable } from 'node:stream'
+import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
 import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import ResourceWriter from '../util/ResourceWriter.js'
@@ -1607,60 +1607,64 @@ class TaskQueueEntrance extends Transform {
 /**
  * 询问用户是否替换原有资源的流
  */
-class ResourceReplaceConfirmStream extends Transform {
+class ResourceReplaceConfirmStream extends Readable {
   /**
-   * 等待用户确认的个数
+   * 等待响应的任务id-运行实例map
+   * @private
    */
-  private waitingCount: number
+  private readonly waitingMap: Map<number, TaskRunInstance>
 
-  private readonly waitingConfirmMap: Map<number, (value: boolean | PromiseLike<boolean>) => void>
+  /**
+   * 已响应的运行实例列表
+   * @private
+   */
+  private readonly resolvedList: TaskRunInstance[]
 
+  /**
+   * 下游是否正在等待数据
+   * @private
+   */
+  private waitingData: boolean
+
+  /**
+   * 是否已经强制关闭
+   * @private
+   */
   private forceClosed: boolean
 
   constructor() {
     super({ objectMode: true })
-    this.waitingCount = 0
-    this.waitingConfirmMap = new Map()
+    this.waitingMap = new Map()
+    this.resolvedList = []
+    this.waitingData = false
     this.forceClosed = false
     // 收到确认替换的响应事件后调用对应的resolve函数
     Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: number[], confirmed: boolean) => {
       receivedIds.map((taskId: number) => {
-        const tempResolveFn = this.waitingConfirmMap.get(taskId)
-        if (NotNullish(tempResolveFn)) {
-          this.waitingConfirmMap.delete(taskId)
-          tempResolveFn(confirmed)
+        const taskRunInstance = this.waitingMap.get(taskId)
+        if (NotNullish(taskRunInstance)) {
+          taskRunInstance.confirmReplaceRes = confirmed ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
+          this.waitingMap.delete(taskId)
+          this.resolvedList.push(taskRunInstance)
+          if (this.waitingData) {
+            this._read()
+          }
         }
       })
     })
   }
 
-  _transform(taskRunInstance: TaskRunInstance, _encoding: BufferEncoding, callback: TransformCallback) {
-    this.waitingCount++
-    this.sendReplaceConfirmToMainWindow(taskRunInstance.taskId, taskRunInstance.getTaskInfo().taskName + '')
-      .then((confirm: boolean) => {
-        taskRunInstance.confirmReplaceRes = confirm ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
-        this.push(taskRunInstance)
-      })
-      .finally(() => {
-        this.waitingCount--
-        if (this.waitingCount === 0) {
-          this.emit('allRespond')
-          if (this.forceClosed) {
-            this.push(null)
-          }
-        }
-      })
-    callback()
-  }
-
-  /**
-   * 等待所有替换询问被答复
-   */
-  public allRespond(): Promise<void> {
-    if (this.waitingCount === 0) {
-      return Promise.resolve()
+  _read() {
+    const firstResolved = this.resolvedList.shift()
+    if (NotNullish(firstResolved)) {
+      this.push(firstResolved)
+    } else if (this.waitingMap.size === 0) {
+      if (this.forceClosed) {
+        this.push(null)
+      } else {
+        this.waitingData = true
+      }
     }
-    return new Promise((resolve) => this.once('allRespond', resolve))
   }
 
   /**
@@ -1668,10 +1672,15 @@ class ResourceReplaceConfirmStream extends Transform {
    */
   public forceClose() {
     this.forceClosed = true
-    if (this.waitingConfirmMap.size === 0) {
+    if (this.waitingMap.size === 0) {
       this.push(null)
     }
-    this.waitingConfirmMap.values().forEach((resolveFn) => resolveFn(false))
+    Electron.ipcMain.removeAllListeners('task-queue-resource-replace-confirm-echo')
+    this.waitingMap.values().forEach((runInstance) => {
+      runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.REFUSE
+      this.push(runInstance)
+    })
+    this.push(null)
   }
 
   /**
@@ -1679,26 +1688,20 @@ class ResourceReplaceConfirmStream extends Transform {
    * @param taskRunInstance
    */
   public manualPush(taskRunInstance: TaskRunInstance): void {
-    ;((callback) => this._transform(taskRunInstance, 'utf-8', callback))((err) => {
-      if (err) {
-        this.emit('error', err)
-      }
-    })
+    this.sendReplaceConfirmToMainWindow(taskRunInstance, taskRunInstance.getTaskInfo().taskName + '')
   }
 
   /**
    * 在主页面弹出是否替换原有资源的弹窗
-   * @param taskId 任务id
+   * @param taskRunInstance 任务运行实例
    * @param msg 弹窗的消息
    * @private
    */
-  private sendReplaceConfirmToMainWindow(taskId: number, msg: string): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      this.waitingConfirmMap.set(taskId, resolve)
-      GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
-        taskId: taskId,
-        msg: msg
-      })
+  private sendReplaceConfirmToMainWindow(taskRunInstance: TaskRunInstance, msg: string): void {
+    this.waitingMap.set(taskRunInstance.taskId, taskRunInstance)
+    GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
+      taskId: taskRunInstance.taskId,
+      msg: msg
     })
   }
 }
