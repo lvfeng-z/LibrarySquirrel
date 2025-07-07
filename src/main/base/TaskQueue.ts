@@ -472,17 +472,24 @@ export class TaskQueue {
    * @private
    */
   private async processTask(tasks: Task[]) {
-    const changeStatusNeededList: TaskRunInstance[] = [] // 用于更新数据库中任务的数据
     const runInstances: TaskRunInstance[] = [] // 需要处理的运行实例
     const existsTasks: TaskRunInstance[] = []
     const notExistsTasks: Task[] = []
+    const tempPidSet: Set<number> = new Set<number>()
     tasks.forEach((task) => {
       const taskRunInstance = this.taskMap.get(task.id as number)
       if (NotNullish(taskRunInstance)) {
         clearTimeout(taskRunInstance.clearTimeoutId)
+        tempPidSet.add(taskRunInstance.parentId)
         existsTasks.push(taskRunInstance)
       } else {
         notExistsTasks.push(task)
+      }
+    })
+    tempPidSet.forEach((pid) => {
+      const tempTimeout = this.parentMap.get(pid)?.clearTimeoutId
+      if (NotNullish(tempTimeout)) {
+        clearTimeout(tempTimeout)
       }
     })
 
@@ -532,12 +539,9 @@ export class TaskQueue {
         taskRunInstance.inStream = true
         runInstances.push(taskRunInstance)
         this.inletTask(taskRunInstance, task)
-        changeStatusNeededList.push(taskRunInstance)
       }
     }
 
-    // 所有任务设置为等待中
-    this.taskPersistStream.addTask(changeStatusNeededList)
     // 刷新父任务状态
     await this.fillChildren(runInstances)
     // this.refreshParentStatus(runInstances.map((runInstance) => runInstance.parentId))
@@ -1539,6 +1543,7 @@ class TaskQueueEntrance extends Transform {
         }
       } else {
         // 用户拒绝替换的情况下这个运行实例不推入下游，是否替换资源的标记重置，返回true
+        taskRunInstance.inStream = false
         taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
         taskRunInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
         this.refreshParentState([taskRunInstance.parentId])

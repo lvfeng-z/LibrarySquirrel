@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import * as electron from 'electron'
 import { onBeforeUnmount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import LocalAuthorManage from '@renderer/components/subpage/LocalAuthorManage.vue'
 import LocalTagManage from '@renderer/components/subpage/LocalTagManage.vue'
@@ -34,6 +35,7 @@ import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { PageState } from '@renderer/constants/PageState.ts'
 import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
+import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
 
 // onMounted
 onMounted(() => {
@@ -69,8 +71,6 @@ const pageStatesStore = usePageStatesStore()
 const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
-const showExplainPath = ref(false) // 解释路径对话框的开关
-const pathWaitingExplain: Ref<UnwrapRef<string>> = ref('') // 需要解释含义的路径
 // 副页面名称
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
@@ -87,6 +87,13 @@ const resizeObserver = new ResizeObserver((entries) => {
   loadMore.value =
     entries[0].contentRect.height < worksSpace.value.clientHeight && worksPage.value.pageNumber < worksPage.value.pageCount
 })
+// IpcRenderer相关
+// 路径解释
+const showExplainPath = ref(false) // 解释路径对话框的开关
+const pathWaitingExplain: Ref<string> = ref('') // 需要解释含义的路径
+// 资源替换确认
+const resourceReplaceConfirmState: Ref<boolean> = ref(false)
+const resourceReplaceConfirmList: Ref<{ confirmId: string; msg: string }[]> = ref([])
 
 // 方法
 // 查询标签选择列表
@@ -189,11 +196,18 @@ async function queryWorksPage(next: boolean) {
   }
 }
 
-// 监听
-window.electron.ipcRenderer.on('explain-path-request', (_event, dir) => {
+// 监听IpcRenderer
+window.electron.ipcRenderer.on('explain-path-request', (_event: electron.IpcRendererEvent, dir) => {
   showExplainPath.value = true
   pathWaitingExplain.value = dir
 })
+window.electron.ipcRenderer.on(
+  'task-queue-resource-replace-confirm',
+  (_event: electron.IpcRendererEvent, config: { confirmId: string; msg: string }) => {
+    resourceReplaceConfirmState.value = true
+    resourceReplaceConfirmList.value.push(config)
+  }
+)
 
 // test
 const showTestDialog = ref(false)
@@ -342,9 +356,13 @@ async function handleTest() {
           <test v-if="pageStatesStore.pageStates.test.state" />
         </div>
       </el-main>
-      <notification-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
     </el-container>
+    <notification-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
+    <task-queue-resource-replace-confirm-dialog
+      v-model:state="resourceReplaceConfirmState"
+      v-model:confirm-list="resourceReplaceConfirmList"
+    />
     <transaction-test v-model="showTestDialog"></transaction-test>
   </div>
 </template>
