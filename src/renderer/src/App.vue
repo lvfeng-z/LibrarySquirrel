@@ -93,7 +93,7 @@ const showExplainPath = ref(false) // 解释路径对话框的开关
 const pathWaitingExplain: Ref<string> = ref('') // 需要解释含义的路径
 // 资源替换确认
 const resourceReplaceConfirmState: Ref<boolean> = ref(false)
-const resourceReplaceConfirmList: Ref<{ confirmId: string; msg: string }[]> = ref([])
+const resourceReplaceConfirmList: Ref<{ taskId: number; msg: string }[]> = ref([])
 
 // 方法
 // 查询标签选择列表
@@ -203,7 +203,7 @@ window.electron.ipcRenderer.on('explain-path-request', (_event: electron.IpcRend
 })
 window.electron.ipcRenderer.on(
   'task-queue-resource-replace-confirm',
-  (_event: electron.IpcRendererEvent, config: { confirmId: string; msg: string }) => {
+  (_event: electron.IpcRendererEvent, config: { taskId: number; msg: string }) => {
     resourceReplaceConfirmState.value = true
     resourceReplaceConfirmList.value.push(config)
   }
@@ -349,7 +349,10 @@ async function handleTest() {
           <local-author-manage v-if="pageStatesStore.pageStates.localAuthorManage.state" />
           <site-author-manage v-if="pageStatesStore.pageStates.siteAuthorManage.state" />
           <plugin-manage v-if="pageStatesStore.pageStates.pluginManage.state" />
-          <task-manage v-if="pageStatesStore.pageStates.taskManage.state" />
+          <task-manage
+            v-if="pageStatesStore.pageStates.taskManage.state"
+            @open-replace-res-confirm-dialog="resourceReplaceConfirmState = true"
+          />
           <settings v-if="pageStatesStore.pageStates.settings.state" :state="pageStatesStore.pageStates.settings" />
           <site-manage v-if="pageStatesStore.pageStates.siteManage.state" />
           <developing v-if="pageStatesStore.pageStates.developing.state" />

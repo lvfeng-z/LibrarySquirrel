@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const props = defineProps<{ confirmList: { confirmId: string; msg: string }[] }>()
+const props = defineProps<{ confirmList: { taskId: number; msg: string }[] }>()
 </script>
 
 <template>
   <div class="task-queue-replace-confirm-list-container">
-    <template v-for="(item, index) in props.confirmList" :key="item.confirmId">
+    <template v-for="(item, index) in props.confirmList" :key="item.taskId">
       <div class="task-queue-replace-confirm-list-item-container">
         <div class="task-queue-replace-confirm-list-item">
           <span class="task-queue-replace-confirm-list-item-index">{{ index + 1 }}</span>

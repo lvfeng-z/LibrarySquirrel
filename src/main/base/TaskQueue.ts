@@ -19,7 +19,6 @@ import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
 import lodash from 'lodash'
 import { queue, QueueObject } from 'async'
 import ResourceService from '../service/ResourceService.js'
-import { v4 } from 'uuid'
 import Electron from 'electron'
 
 /**
@@ -1635,15 +1634,15 @@ class ResourceReplaceConfirmStream extends Transform {
    */
   private waitingCount: number
 
-  private readonly waitingConfirmMap: Map<string, (value: boolean | PromiseLike<boolean>) => void>
+  private readonly waitingConfirmMap: Map<number, (value: boolean | PromiseLike<boolean>) => void>
 
   constructor() {
     super({ objectMode: true })
     this.waitingCount = 0
     this.waitingConfirmMap = new Map()
     // 收到确认替换的响应事件后调用对于的resolve函数
-    Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: string[], confirmed: boolean) => {
-      const resolvedConfirms = receivedIds.map((confirmId: string) => this.waitingConfirmMap.get(confirmId)).filter(NotNullish)
+    Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: number[], confirmed: boolean) => {
+      const resolvedConfirms = receivedIds.map((taskId: number) => this.waitingConfirmMap.get(taskId)).filter(NotNullish)
       if (ArrayNotEmpty(resolvedConfirms)) {
         resolvedConfirms.forEach((resolveFn) => resolveFn(confirmed))
       }
@@ -1652,7 +1651,7 @@ class ResourceReplaceConfirmStream extends Transform {
 
   _transform(taskRunInstance: TaskRunInstance, _encoding: BufferEncoding, callback: TransformCallback) {
     this.waitingCount++
-    this.sendReplaceConfirmToMainWindow(taskRunInstance.getTaskInfo().taskName + '')
+    this.sendReplaceConfirmToMainWindow(taskRunInstance.taskId, taskRunInstance.getTaskInfo().taskName + '')
       .then((confirm: boolean) => {
         taskRunInstance.confirmReplaceRes = confirm ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
         this.push(taskRunInstance)
@@ -1690,15 +1689,15 @@ class ResourceReplaceConfirmStream extends Transform {
 
   /**
    * 在主页面弹出是否替换原有资源的弹窗
+   * @param taskId 任务id
    * @param msg 弹窗的消息
    * @private
    */
-  private sendReplaceConfirmToMainWindow(msg: string): Promise<boolean> {
+  private sendReplaceConfirmToMainWindow(taskId: number, msg: string): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      const confirmId = v4()
-      this.waitingConfirmMap.set(confirmId, resolve)
+      this.waitingConfirmMap.set(taskId, resolve)
       GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
-        confirmId: confirmId,
+        taskId: taskId,
         msg: msg
       })
     })

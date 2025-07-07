@@ -68,8 +68,8 @@ const taskStatusMapping: {
   },
   [TaskStatusEnum.WAITING_USER_INPUT]: {
     tooltip: '等待用户操作',
-    icon: 'Loading',
-    operation: TaskOperationCodeEnum.PAUSE,
+    icon: 'QuestionFilled',
+    operation: TaskOperationCodeEnum.CONFIRM_REPLACE_RES,
     processing: false
   }
 }

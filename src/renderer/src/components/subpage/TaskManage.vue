@@ -33,6 +33,9 @@ onMounted(() => {
   taskManageSearchTable.value.doSearch()
 })
 
+// 事件
+const emits = defineEmits(['openReplaceResConfirmDialog'])
+
 // 变量
 // 接口
 const apis = {
@@ -343,6 +346,9 @@ function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeE
       break
     case TaskOperationCodeEnum.DELETE:
       deleteTask([row.id as number])
+      break
+    case TaskOperationCodeEnum.CONFIRM_REPLACE_RES:
+      emits('openReplaceResConfirmDialog')
       break
     default:
       break

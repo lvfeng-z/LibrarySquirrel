@@ -3,21 +3,21 @@ import { Ref } from 'vue'
 
 // model
 const state: Ref<boolean> = defineModel<boolean>('state', { required: true })
-const confirmList: Ref<{ confirmId: string; msg: string }[]> = defineModel<{ confirmId: string; msg: string }[]>('confirmList', {
+const confirmList: Ref<{ taskId: number; msg: string }[]> = defineModel<{ taskId: number; msg: string }[]>('confirmList', {
   required: true
 })
 
 // 方法
 // 解决所有
 function resolveAll(confirm: boolean) {
-  const responseConfirmIds = confirmList.value.map((resourceReplaceConfirm) => resourceReplaceConfirm.confirmId)
+  const responseConfirmIds = confirmList.value.map((resourceReplaceConfirm) => resourceReplaceConfirm.taskId)
   window.electron.ipcRenderer.send('task-queue-resource-replace-confirm-echo', responseConfirmIds, confirm)
   confirmList.value.splice(0, responseConfirmIds.length)
   state.value = confirmList.value.length !== 0
 }
 // 解决一个
-function resolveOne(confirm: boolean, confirmItem: { confirmId: string; msg: string }) {
-  window.electron.ipcRenderer.send('task-queue-resource-replace-confirm-echo', [confirmItem.confirmId], confirm)
+function resolveOne(confirm: boolean, confirmItem: { taskId: number; msg: string }) {
+  window.electron.ipcRenderer.send('task-queue-resource-replace-confirm-echo', [confirmItem.taskId], confirm)
   confirmList.value.splice(confirmList.value.indexOf(confirmItem), 1)
   state.value = confirmList.value.length !== 0
 }
@@ -26,7 +26,7 @@ function resolveOne(confirm: boolean, confirmItem: { confirmId: string; msg: str
 <template>
   <el-dialog v-model="state" :title="`以下任务下载的作品已有可用的资源，是否替换？(共${confirmList.length}个)`" destroy-on-close>
     <div class="task-queue-replace-confirm-list-container">
-      <template v-for="(item, index) in confirmList" :key="item.confirmId">
+      <template v-for="(item, index) in confirmList" :key="item.taskId">
         <div class="task-queue-replace-confirm-list-item-container">
           <div class="task-queue-replace-confirm-list-item">
             <span class="task-queue-replace-confirm-list-item-index">{{ index + 1 }}</span>
