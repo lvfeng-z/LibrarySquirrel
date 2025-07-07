@@ -1557,17 +1557,12 @@ class TaskQueueEntrance extends Transform {
   }
 
   public async preDestroy(): Promise<void> {
-    await this.resourceReplaceConfirmStream.allRespond()
+    this.resourceReplaceConfirmStream.forceClose()
     return new Promise<void>((resolve) => {
-      if (this.hasNext()) {
-        this.once('drain', () => {
-          this.push(null)
-          resolve()
-        })
-      } else {
+      this.once('finish', () => {
         this.push(null)
         resolve()
-      }
+      })
     })
   }
 
@@ -1607,22 +1602,6 @@ class TaskQueueEntrance extends Transform {
     // 从当前数组中读取一个元素返回
     return this.allInstLists[0][this.currentIndex++]
   }
-
-  /**
-   * 是否还有下一个数据
-   * @private
-   */
-  private hasNext(): boolean {
-    let tempCurrentIndex = this.currentIndex
-    for (let i = 0; i < this.allInstLists.length; i++) {
-      if (tempCurrentIndex >= this.allInstLists[i].length) {
-        tempCurrentIndex = 0
-      } else {
-        return true
-      }
-    }
-    return false
-  }
 }
 
 /**
@@ -1636,16 +1615,22 @@ class ResourceReplaceConfirmStream extends Transform {
 
   private readonly waitingConfirmMap: Map<number, (value: boolean | PromiseLike<boolean>) => void>
 
+  private forceClosed: boolean
+
   constructor() {
     super({ objectMode: true })
     this.waitingCount = 0
     this.waitingConfirmMap = new Map()
-    // 收到确认替换的响应事件后调用对于的resolve函数
+    this.forceClosed = false
+    // 收到确认替换的响应事件后调用对应的resolve函数
     Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: number[], confirmed: boolean) => {
-      const resolvedConfirms = receivedIds.map((taskId: number) => this.waitingConfirmMap.get(taskId)).filter(NotNullish)
-      if (ArrayNotEmpty(resolvedConfirms)) {
-        resolvedConfirms.forEach((resolveFn) => resolveFn(confirmed))
-      }
+      receivedIds.map((taskId: number) => {
+        const tempResolveFn = this.waitingConfirmMap.get(taskId)
+        if (NotNullish(tempResolveFn)) {
+          this.waitingConfirmMap.delete(taskId)
+          tempResolveFn(confirmed)
+        }
+      })
     })
   }
 
@@ -1660,19 +1645,33 @@ class ResourceReplaceConfirmStream extends Transform {
         this.waitingCount--
         if (this.waitingCount === 0) {
           this.emit('allRespond')
+          if (this.forceClosed) {
+            this.push(null)
+          }
         }
       })
     callback()
   }
 
   /**
-   * 所有替换询问是否已被答复
+   * 等待所有替换询问被答复
    */
   public allRespond(): Promise<void> {
     if (this.waitingCount === 0) {
       return Promise.resolve()
     }
     return new Promise((resolve) => this.once('allRespond', resolve))
+  }
+
+  /**
+   * 强制关闭流，所有询问的等待全部返回拒绝
+   */
+  public forceClose() {
+    this.forceClosed = true
+    if (this.waitingConfirmMap.size === 0) {
+      this.push(null)
+    }
+    this.waitingConfirmMap.values().forEach((resolveFn) => resolveFn(false))
   }
 
   /**
