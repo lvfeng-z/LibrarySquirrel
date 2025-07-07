@@ -10,6 +10,7 @@ import { PageEnum } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import { h, ref, Ref } from 'vue'
+import TaskQueueResourceReplaceConfirmList from '@renderer/components/oneOff/TaskQueueResourceReplaceConfirmList.vue'
 
 export function iniListener() {
   // 任务队列
@@ -62,13 +63,8 @@ export function iniListener() {
       if (!resourceReplaceConfirmState) {
         resourceReplaceConfirmState = true
         ElMessageBox.confirm(
-          () =>
-            h(
-              'div',
-              {},
-              resourceReplaceConfirmList.value.map((resourceReplaceConfirm) => h('div', resourceReplaceConfirm.msg))
-            ),
-          '以下任务下载的作品已有可用的资源，是否替换？',
+          () => h(TaskQueueResourceReplaceConfirmList, { confirmList: resourceReplaceConfirmList.value }),
+          `以下任务下载的作品已有可用的资源，是否替换？`,
           {
             confirmButtonText: '替换原有资源',
             cancelButtonText: '保留原有资源',
