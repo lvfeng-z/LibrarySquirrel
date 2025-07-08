@@ -179,10 +179,6 @@ export class TaskQueue {
           this.refreshParentStatus([taskRunInstance.parentId])
         }
       })
-      this.resourceSaveStream.on('save-start', (taskRunInstance: TaskRunInstance) => {
-        // this.taskPersistStream.addTask([taskRunInstance])
-        this.refreshParentStatus([taskRunInstance.parentId])
-      })
       this.resourceSaveStream.on('save-failed', handleError)
       this.resourceSaveStream.on('finish', () => LogUtil.info(this.constructor.name, '任务队列完成'))
       const taskResourceStreamDestroyed = new Promise<void>((resolve) =>
@@ -994,6 +990,11 @@ class TaskRunInstance extends TaskStatus {
    * @private
    */
   private errorOccurred: boolean
+  /**
+   * 异常信息
+   * @private
+   */
+  private error: Error | undefined
 
   constructor(
     taskId: number,
@@ -1020,10 +1021,15 @@ class TaskRunInstance extends TaskStatus {
     this.inStream = false
     this.worksId = localWorksId
     this.errorOccurred = false
+    this.error = undefined
   }
 
   public isErrorOccurred(): boolean {
     return this.errorOccurred
+  }
+
+  public getError(): Error | undefined {
+    return this.error
   }
 
   public changeStatus(status: TaskStatusEnum): void {
@@ -1037,6 +1043,7 @@ class TaskRunInstance extends TaskStatus {
       this.worksId = await this.taskService.saveWorksInfo(task, this.pluginLoader)
     } catch (error) {
       this.errorOccurred = true
+      this.error = error as Error
       throw error
     }
   }
@@ -1056,11 +1063,14 @@ class TaskRunInstance extends TaskStatus {
         }
       } catch (error) {
         this.errorOccurred = true
+        this.error = error as Error
         throw error
       }
     } else {
       this.errorOccurred = true
-      throw new Error(`无法预启动任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      const error = new Error(`无法预启动任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      this.error = error
+      throw error
     }
   }
 
@@ -1075,11 +1085,14 @@ class TaskRunInstance extends TaskStatus {
         this.changeStatus(TaskStatusEnum.WAITING_USER_INPUT)
       } catch (error) {
         this.errorOccurred = true
+        this.error = error as Error
         throw error
       }
     } else {
       this.errorOccurred = true
-      throw new Error(`等待用户输入失败${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      const error = new Error(`等待用户输入失败${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      this.error = error
+      throw error
     }
   }
 
@@ -1100,11 +1113,14 @@ class TaskRunInstance extends TaskStatus {
         return result
       } catch (error) {
         this.errorOccurred = true
+        this.error = error as Error
         throw error
       }
     } else {
       this.errorOccurred = true
-      throw new Error(`无法暂停任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      const error = new Error(`无法暂停任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      this.error = error
+      throw error
     }
   }
 
@@ -1121,11 +1137,14 @@ class TaskRunInstance extends TaskStatus {
         return result
       } catch (error) {
         this.errorOccurred = true
+        this.error = error as Error
         throw error
       }
     } else {
       this.errorOccurred = true
-      throw new Error(`无法停止任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      const error = new Error(`无法停止任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      this.error = error
+      throw error
     }
   }
 
@@ -1149,16 +1168,20 @@ class TaskRunInstance extends TaskStatus {
           })
           .catch((error) => {
             this.errorOccurred = true
-            this.changeStatus(TaskStatusEnum.FAILED)
+            this.failed()
+            this.error = error as Error
             throw error
           })
       } catch (error) {
         this.errorOccurred = true
+        this.error = error as Error
         throw error
       }
     } else {
       this.errorOccurred = true
-      throw new Error(`无法开始任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      const error = new Error(`无法开始任务${this.taskId}，当前状态不支持，taskStatus: ${this.status}`)
+      this.error = error
+      throw error
     }
   }
 
@@ -1412,13 +1435,16 @@ class TaskPersistStream extends Writable {
   private createTaskFromRunInst(runInstance: TaskRunInstance) {
     const tempTask = new Task(runInstance.getTaskInfo())
     tempTask.id = runInstance.taskId
-    // 如果出现异常并且是失败之外的状态，忽略这次对状态的修改
+    // 如果出现异常并且是失败之外的状态，忽略这次对状态的修改，由TaskQueue类处理后再推入这个流
     if (!(runInstance.isErrorOccurred() && runInstance.status !== TaskStatusEnum.FAILED)) {
       tempTask.status = runInstance.status
     }
     if (TaskStatusEnum.FINISHED === tempTask.status) {
       tempTask.pendingResourceId = null
       tempTask.pendingSavePath = null
+    }
+    if (TaskStatusEnum.FAILED === tempTask.status) {
+      tempTask.errorMessage = runInstance.getError()?.message
     }
     return tempTask
   }
