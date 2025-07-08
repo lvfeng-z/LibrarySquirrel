@@ -58,11 +58,10 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'taskName',
     title: '名称',
     hide: false,
-    width: 200,
+    width: 380,
     headerAlign: 'center',
     dataAlign: 'left',
     showOverflowTooltip: true
@@ -70,22 +69,10 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
-    key: 'url',
-    title: 'url',
-    hide: false,
-    headerAlign: 'center',
-    dataAlign: 'center',
-    showOverflowTooltip: true
-  }),
-  new Thead({
-    type: 'text',
-    defaultDisabled: true,
-    dblclickToEdit: true,
-    key: 'siteDomain',
+    key: 'siteName',
     title: '站点',
     hide: false,
-    width: 150,
+    width: 100,
     headerAlign: 'center',
     dataAlign: 'center',
     showOverflowTooltip: true
@@ -93,10 +80,21 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'createTime',
     title: '创建时间',
     hide: false,
+    width: 152,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    showOverflowTooltip: true
+  }),
+  new Thead({
+    type: 'text',
+    defaultDisabled: true,
+    key: 'url',
+    title: 'url',
+    hide: false,
+    width: 380,
     headerAlign: 'center',
     dataAlign: 'center',
     showOverflowTooltip: true
@@ -104,16 +102,55 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'custom',
     defaultDisabled: true,
-    dblclickToEdit: false,
     key: 'status',
     title: '状态',
     hide: false,
-    width: 80,
+    width: 110,
     headerAlign: 'center',
     dataAlign: 'center',
-    showOverflowTooltip: true,
+    fixed: 'right',
+    showOverflowTooltip: false,
     editMethod: 'replace',
-    render: getTaskStatusElTag
+    render: (data: TaskStatusEnum): VNode => {
+      let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
+      let tagText: string | undefined
+      switch (data) {
+        case TaskStatusEnum.CREATED:
+          tagType = 'primary'
+          tagText = '已创建'
+          break
+        case TaskStatusEnum.PROCESSING:
+          tagType = 'warning'
+          tagText = '进行中'
+          break
+        case TaskStatusEnum.WAITING:
+          tagType = 'warning'
+          tagText = '等待中'
+          break
+        case TaskStatusEnum.PAUSE:
+          tagType = 'info'
+          tagText = '已暂停'
+          break
+        case TaskStatusEnum.FINISHED:
+          tagType = 'success'
+          tagText = '完成'
+          break
+        case TaskStatusEnum.PARTLY_FINISHED:
+          tagType = 'success'
+          tagText = '部分完成'
+          break
+        case TaskStatusEnum.FAILED:
+          tagType = 'danger'
+          tagText = '失败'
+          break
+        case TaskStatusEnum.WAITING_USER_INPUT:
+          tagType = 'warning'
+          tagText = '等待用户操作'
+          break
+      }
+      const elTag = h(ElTag, { type: tagType }, () => tagText)
+      return h('div', { style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center' } }, elTag)
+    }
   })
 ])
 // 任务查询的参数
@@ -349,6 +386,7 @@ async function deleteTask(ids: number[]) {
         :multi-select="true"
         :changed-rows="changedRows"
         :custom-operation-button="true"
+        :operation-width="163"
         data-key="id"
         @scroll="handleScroll"
       >
