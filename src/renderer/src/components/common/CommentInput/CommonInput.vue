@@ -72,16 +72,18 @@ const dynamicComponent = computed(() => {
   return undefined
 })
 const spanText = computed(() => {
-  if (props.config.type === 'custom') {
+  const type = props.config.type
+  const tempData = data.value
+  if (type === 'custom') {
     return
   }
-  if (props.config.type === 'date' || props.config.type === 'datetime') {
-    const datetime = new Date(data.value as number)
+  if (type === 'date' || type === 'datetime') {
+    const datetime = new Date(tempData as number)
     const year = datetime.getFullYear() + '-'
     const month = (datetime.getMonth() + 1 < 10 ? '0' + (datetime.getMonth() + 1) : datetime.getMonth() + 1) + '-'
     const day = (datetime.getDate() + 1 < 10 ? '0' + datetime.getDate() : datetime.getDate()) + ' '
     const date = year + month + day
-    if (props.config.type === 'date') {
+    if (type === 'date') {
       return date
     } else {
       const hour = (datetime.getHours() < 10 ? '0' + datetime.getHours() : datetime.getHours()) + ':'
@@ -89,29 +91,29 @@ const spanText = computed(() => {
       const second = datetime.getSeconds() < 10 ? '0' + datetime.getSeconds() : datetime.getSeconds()
       return date + hour + minute + second
     }
-  } else if (props.config.type === 'select') {
+  } else if (type === 'select') {
     let target
     if (NotNullish(props.config.selectList)) {
-      target = props.config.selectList.find((selectData) => selectData.value === data.value)
+      target = props.config.selectList.find((selectData) => selectData.value === tempData)
     }
     return IsNullish(target) ? '-' : target.value
-  } else if (props.config.type === 'treeSelect') {
+  } else if (type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = props.config.selectList as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
-    const node = GetNode(tempRoot, data.value as number)
+    const node = GetNode(tempRoot, tempData as number)
     return IsNullish(node) ? '-' : node.label
-  } else if (props.config.type === 'autoLoadSelect') {
-    if (cacheData.value?.value === data.value) {
+  } else if (type === 'autoLoadSelect') {
+    if (cacheData.value?.value === tempData) {
       return IsNullish(cacheData.value) ? '-' : cacheData.value.label
     }
     if (ArrayNotEmpty(selectList.value)) {
-      const target = selectList.value.find((selectData) => selectData.value === data.value)
+      const target = selectList.value.find((selectData) => selectData.value === tempData)
       return IsNullish(target) ? '-' : target.label
     }
     return '-'
   } else {
-    return data.value
+    return tempData
   }
 })
 const cursor = ref(props.config.dblclickToEdit ? 'pointer' : 'default')
