@@ -114,6 +114,7 @@ const spanText = computed(() => {
     return data.value
   }
 })
+const cursor = ref(props.config.dblclickToEdit ? 'pointer' : 'default')
 
 // 方法
 // 启用
@@ -170,6 +171,6 @@ function handleDataChange(newData) {
   display: grid;
   min-width: 10px;
   min-height: 10px;
-  cursor: pointer;
+  cursor: v-bind(cursor);
 }
 </style>

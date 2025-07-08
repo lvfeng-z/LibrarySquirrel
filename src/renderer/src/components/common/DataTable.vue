@@ -189,7 +189,7 @@ function setCacheData(scope, item, newData) {
         <el-radio v-model="currentSelectKey" :value="row[dataKey]" @click="handleSelectionChange([row])" />
       </template>
     </el-table-column>
-    <el-table-column v-if="props.treeData" width="25" />
+    <el-table-column v-if="props.treeData" :fixed="true" width="25" />
     <template v-for="(item, index) in props.thead">
       <template v-if="!item.hide">
         <el-table-column
@@ -198,6 +198,7 @@ function setCacheData(scope, item, newData) {
           :label="item.title"
           :width="item.width"
           :align="item.dataAlign"
+          :fixed="item.fixed"
           :show-overflow-tooltip="item.showOverflowTooltip"
         >
           <template #header>
