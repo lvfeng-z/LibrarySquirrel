@@ -87,7 +87,6 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
   }),
   new Thead({
     type: 'autoLoadSelect',
-    editMethod: 'replace',
     defaultDisabled: true,
     dblclickToEdit: true,
     key: 'baseLocalTagId',

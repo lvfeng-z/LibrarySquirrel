@@ -28,7 +28,7 @@ export class Thead extends PopperInputConfig implements IThead {
     this.dataAlign = thead.dataAlign
     this.fixed = IsNullish(thead.fixed) ? false : thead.fixed
     this.showOverflowTooltip = IsNullish(thead.showOverflowTooltip) ? false : thead.showOverflowTooltip
-    this.editMethod = IsNullish(thead.editMethod) ? 'popper' : thead.editMethod
+    this.editMethod = IsNullish(thead.editMethod) ? 'replace' : thead.editMethod
     this.cacheDataKey = thead.cacheDataKey
   }
 }

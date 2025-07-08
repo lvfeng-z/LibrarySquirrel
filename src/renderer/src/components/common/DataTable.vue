@@ -211,7 +211,7 @@ function setCacheData(scope, item, newData) {
           </template>
           <template #default="scope">
             <component
-              :is="item.editMethod === 'replace' ? CommonInput : PopperInput"
+              :is="item.editMethod === 'popper' ? PopperInput : CommonInput"
               :data="GetPropByPath(scope.row, item.key)"
               :config="item"
               :cache-data="getCacheData(scope, item)"
