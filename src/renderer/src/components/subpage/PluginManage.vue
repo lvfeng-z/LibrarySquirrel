@@ -54,7 +54,6 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'name',
     title: '名称',
     hide: false,
@@ -65,7 +64,6 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'author',
     title: '作者',
     hide: false,
@@ -77,7 +75,6 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'version',
     title: '版本号',
     hide: false,
@@ -90,7 +87,6 @@ const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'createTime',
     title: '安装时间',
     hide: false,
