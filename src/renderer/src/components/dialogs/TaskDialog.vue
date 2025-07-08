@@ -50,8 +50,6 @@ const baseDialog = ref()
 const parentTaskInfo = ref()
 // 下级任务
 const children: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
-// 列表高度
-const heightForSearchTable: Ref<UnwrapRef<string>> = ref('')
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
@@ -194,10 +192,6 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
 // 开关dialog
 function handleOpen() {
   nextTick(() => {
-    const baseDialogHeader = baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
-    const baseDialogFooter = baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
-    heightForSearchTable.value = 'calc(90vh - ' + parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader + 'px)'
-
     if (NotNullish(childTaskSearchTable.value)) {
       childTaskSearchTable.value.doSearch()
     }
@@ -343,45 +337,50 @@ function toParent() {
       <el-button v-show="!isParent" icon="ArrowLeftBold" type="primary" @click="toParent">查看任务集</el-button>
     </template>
     <template #form>
-      <div style="height: 100%; display: flex; flex-direction: column">
-        <div ref="parentTaskInfo">
-          <el-row>
-            <el-col>
-              <el-form-item label="名称">
-                <el-input v-model="formData.taskName"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col>
-              <el-form-item label="来源">
-                <el-input v-model="formData.url"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="7">
-              <el-form-item label="站点">
-                <el-input v-model="formData.id"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="3">
-              <el-form-item label="状态">
-                <component :is="getTaskStatusElTag(formData.status as TaskStatusEnum)" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="7">
-              <el-form-item label="创建时间">
-                <el-date-picker v-model="formData.createTime" type="datetime"></el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="7">
-              <el-form-item label="修改时间">
-                <el-date-picker v-model="formData.updateTime" type="datetime"></el-date-picker>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+      <div ref="parentTaskInfo">
+        <el-row>
+          <el-col>
+            <el-form-item label="名称">
+              <el-input v-model="formData.taskName"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col>
+            <el-form-item label="来源">
+              <el-input v-model="formData.url"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="7">
+            <el-form-item label="站点">
+              <el-input v-model="formData.id"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="3">
+            <el-form-item label="状态">
+              <component :is="getTaskStatusElTag(formData.status as TaskStatusEnum)" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
+            <el-form-item label="创建时间">
+              <el-date-picker v-model="formData.createTime" type="datetime"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
+            <el-form-item label="修改时间">
+              <el-date-picker v-model="formData.updateTime" type="datetime"></el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col>
+            <el-form-item label="异常信息">
+              <el-input v-model="formData.errorMessage" type="textarea" autosize />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </div>
     </template>
     <template #afterForm>
@@ -446,8 +445,7 @@ function toParent() {
 
 <style scoped>
 .task-dialog-search-table {
-  height: v-bind(heightForSearchTable);
-  min-height: 350px;
+  height: calc(90vh - 80px);
 }
 .task-dialog-search-bar {
   flex-grow: 1;
