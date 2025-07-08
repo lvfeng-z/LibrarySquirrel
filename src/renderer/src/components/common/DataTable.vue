@@ -184,7 +184,7 @@ function setCacheData(scope, item, newData) {
     @selection-change="handleSelectionChange"
   >
     <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />
-    <el-table-column v-if="props.selectable && !props.multiSelect" width="30">
+    <el-table-column v-if="props.selectable && !props.multiSelect" :fixed="true" width="30">
       <template #default="{ row }">
         <el-radio v-model="currentSelectKey" :value="row[dataKey]" @click="handleSelectionChange([row])" />
       </template>
@@ -197,6 +197,7 @@ function setCacheData(scope, item, newData) {
           :prop="item.key"
           :label="item.title"
           :width="item.width"
+          :min-width="item.minWidth"
           :align="item.dataAlign"
           :fixed="item.fixed"
           :show-overflow-tooltip="item.showOverflowTooltip"

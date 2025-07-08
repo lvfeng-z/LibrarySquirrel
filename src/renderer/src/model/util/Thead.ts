@@ -7,6 +7,7 @@ export class Thead extends PopperInputConfig implements IThead {
   title?: string // 标题名称
   hide?: boolean // 是否隐藏
   width?: number // 数据列宽度
+  minWidth?: number // 数据列最小宽度
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
@@ -21,6 +22,7 @@ export class Thead extends PopperInputConfig implements IThead {
     this.title = thead.title
     this.hide = IsNullish(thead.hide) ? false : thead.hide
     this.width = thead.width
+    this.minWidth = thead.minWidth
     this.headerAlign = thead.headerAlign
     this.headerTagType = thead.headerTagType
     this.dataAlign = thead.dataAlign
@@ -36,6 +38,7 @@ export interface IThead extends IPopperInputConfig {
   title?: string // 标题名称
   hide?: boolean // 是否隐藏
   width?: number // 数据列宽度
+  minWidth?: number // 数据列最小宽度
   headerAlign?: 'center' | 'left' | 'right' // 标题停靠位置
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置

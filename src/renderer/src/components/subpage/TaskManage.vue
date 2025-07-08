@@ -64,7 +64,7 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
     key: 'taskName',
     title: '名称',
     hide: false,
-    width: 380,
+    minWidth: 380,
     headerAlign: 'center',
     dataAlign: 'left',
     showOverflowTooltip: true
