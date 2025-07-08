@@ -170,8 +170,6 @@ const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, 
 const dialogData: Ref<UnwrapRef<TaskTreeDTO>> = ref(new TaskTreeDTO())
 // 任务详情的dialog开关
 const taskDialogState: Ref<UnwrapRef<boolean>> = ref(false)
-// 任务详情的dialog的searchTable开关
-const taskDialogSearchTableState: Ref<boolean> = ref(false)
 // 站点下载dialog的开关
 const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
 // 站点资源的url
@@ -320,7 +318,6 @@ function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeE
   switch (code) {
     case TaskOperationCodeEnum.VIEW:
       dialogData.value = row
-      taskDialogSearchTableState.value = NotNullish(row.isCollection) && Boolean(row.isCollection)
       taskDialogState.value = true
       break
     case TaskOperationCodeEnum.START:
@@ -528,7 +525,6 @@ async function deleteTask(ids: number[]) {
         v-model:state="taskDialogState"
         v-model:form-data="dialogData"
         :mode="DialogMode.VIEW"
-        :show-search-table="taskDialogSearchTableState"
         align-center
         destroy-on-close
         width="90%"

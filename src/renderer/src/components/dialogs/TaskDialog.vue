@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DialogMode from '../../model/util/DialogMode'
-import { h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
+import { computed, h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
 import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
@@ -23,12 +23,11 @@ import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 // props
 const props = defineProps<{
   mode: DialogMode
-  showSearchTable: boolean
 }>()
 
 // model
 // 表单数据
-const formData: Ref<UnwrapRef<TaskTreeDTO>> = defineModel('formData', { type: Object, required: true })
+const formData: Ref<TaskTreeDTO> = defineModel('formData', { type: Object, required: true })
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
@@ -52,7 +51,7 @@ const parentTaskInfo = ref()
 // 下级任务
 const children: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
 // 列表高度
-const heightForSearchTable: Ref<UnwrapRef<number>> = ref(0)
+const heightForSearchTable: Ref<UnwrapRef<string>> = ref('')
 // 表头
 const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
@@ -163,6 +162,9 @@ const changedRows: Ref<UnwrapRef<object[]>> = ref([])
 let refreshing: boolean = false
 // 防抖动refreshTask
 const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
+// 是否为父任务
+const isParent = computed(() => NotNullish(formData.value.isCollection) && Boolean(formData.value.isCollection))
+let parentCache: TaskTreeDTO | undefined = undefined
 
 // 方法
 // 分页查询子任务的函数
@@ -194,7 +196,7 @@ function handleOpen() {
   nextTick(() => {
     const baseDialogHeader = baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
     const baseDialogFooter = baseDialog.value.$el.parentElement.querySelector('.el-dialog__footer')?.clientHeight
-    heightForSearchTable.value = parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader
+    heightForSearchTable.value = 'calc(90vh - ' + parentTaskInfo.value.clientHeight + baseDialogFooter + baseDialogHeader + 'px)'
 
     if (NotNullish(childTaskSearchTable.value)) {
       childTaskSearchTable.value.doSearch()
@@ -241,6 +243,11 @@ function handleScroll() {
 // 处理操作栏按钮点击事件
 function handleOperationButtonClicked(row: TaskTreeDTO, code: TaskOperationCodeEnum) {
   switch (code) {
+    case TaskOperationCodeEnum.VIEW:
+      parentCache = formData.value
+      formData.value = row
+      children.value = []
+      break
     case TaskOperationCodeEnum.START:
       startTask(row, false)
       throttleRefreshTask()
@@ -323,10 +330,18 @@ async function deleteTask(ids: number[]) {
     await childTaskSearchTable.value.doSearch()
   }
 }
+// 转到父任务
+function toParent() {
+  if (NotNullish(parentCache)) formData.value = parentCache
+  nextTick(() => childTaskSearchTable.value.doSearch())
+}
 </script>
 
 <template>
   <form-dialog ref="baseDialog" v-model:form-data="formData" v-model:state="state" :mode="props.mode" @open="handleOpen">
+    <template #header>
+      <el-button v-show="!isParent" icon="ArrowLeftBold" type="primary" @click="toParent">查看任务集</el-button>
+    </template>
     <template #form>
       <div style="height: 100%; display: flex; flex-direction: column">
         <div ref="parentTaskInfo">
@@ -371,13 +386,12 @@ async function deleteTask(ids: number[]) {
     </template>
     <template #afterForm>
       <search-table
-        v-if="showSearchTable"
+        v-show="isParent"
         ref="childTaskSearchTable"
         v-model:page="page"
         v-model:toolbar-params="taskSearchParams"
         v-model:data="children"
-        :style="{ height: 'calc(90vh - ' + heightForSearchTable + 'px)', minHeight: '350px' }"
-        style="flex-grow: 1"
+        class="task-dialog-search-table"
         :selectable="true"
         :thead="thead"
         :search="taskQueryChildrenTaskPage"
@@ -431,6 +445,10 @@ async function deleteTask(ids: number[]) {
 </template>
 
 <style scoped>
+.task-dialog-search-table {
+  height: v-bind(heightForSearchTable);
+  min-height: 350px;
+}
 .task-dialog-search-bar {
   flex-grow: 1;
 }
