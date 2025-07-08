@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, Ref, ref, UnwrapRef } from 'vue'
+import { computed, nextTick, Ref, ref } from 'vue'
 import DialogMode from '@renderer/model/util/DialogMode.ts'
 
 // props
@@ -17,10 +17,10 @@ const state = defineModel<boolean>('state', { required: true })
 const emits = defineEmits(['saveButtonClicked', 'cancelButtonClicked'])
 
 // 变量
-// el-scrollbar组件实例
-const scrollbarRef = ref()
-// el-scrollbar的高度
-const scrollContentHeight: Ref<UnwrapRef<number>> = ref(0)
+// el-dialog组件实例
+const dialogRef = ref()
+// el-scrollbar内部容器的高度
+const scrollbarWrapHeight: Ref<string> = ref('')
 // 表单总开关
 const formDisabled = computed(() => {
   return props.mode === DialogMode.VIEW
@@ -43,26 +43,22 @@ function handleCancelButtonClicked() {
 // 开启对话框
 function handleChangeState() {
   nextTick(() => {
-    const dialog = scrollbarRef.value.$el.parentElement.parentElement
+    const dialog = dialogRef.value.$el.parentElement.parentElement
     const headerHeight = dialog.querySelector('.el-dialog__header').clientHeight
     const footerHeight = dialog.querySelector('.el-dialog__footer').clientHeight
 
-    scrollContentHeight.value = headerHeight + footerHeight
+    scrollbarWrapHeight.value = 'calc(90vh - ' + (headerHeight + footerHeight) + 'px)'
   })
 }
 </script>
 
 <template>
-  <el-dialog v-model="state" center @open="handleChangeState">
+  <el-dialog ref="dialogRef" v-model="state" center @open="handleChangeState">
     <template #header>
       <slot name="header" />
     </template>
-    <el-scrollbar ref="scrollbarRef">
-      <el-form
-        v-model="formData"
-        :disabled="formDisabled"
-        :style="{ maxHeight: 'calc(90vh - ' + scrollContentHeight + 'px)', marginRight: '10px' }"
-      >
+    <el-scrollbar class="form-dialog-scrollbar">
+      <el-form v-model="formData" class="form-dialog-form" :disabled="formDisabled">
         <slot name="form" />
       </el-form>
       <slot name="afterForm" />
@@ -82,4 +78,12 @@ function handleChangeState() {
   </el-dialog>
 </template>
 
-<style scoped></style>
+<style scoped>
+.form-dialog-scrollbar {
+  padding: 0 10px 0 0;
+  overflow: hidden;
+}
+.form-dialog-scrollbar > :deep(.el-scrollbar__wrap) {
+  max-height: v-bind(scrollbarWrapHeight);
+}
+</style>
