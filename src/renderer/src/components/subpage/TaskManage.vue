@@ -61,11 +61,10 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'taskName',
     title: '名称',
     hide: false,
-    width: 200,
+    width: 380,
     headerAlign: 'center',
     dataAlign: 'left',
     showOverflowTooltip: true
@@ -73,22 +72,10 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
-    dblclickToEdit: true,
-    key: 'url',
-    title: 'url',
-    hide: false,
-    headerAlign: 'center',
-    dataAlign: 'center',
-    showOverflowTooltip: true
-  }),
-  new Thead({
-    type: 'text',
-    defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'siteName',
     title: '站点',
     hide: false,
-    width: 150,
+    width: 100,
     headerAlign: 'center',
     dataAlign: 'center',
     showOverflowTooltip: true
@@ -96,10 +83,21 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'datetime',
     defaultDisabled: true,
-    dblclickToEdit: true,
     key: 'createTime',
     title: '创建时间',
     hide: false,
+    width: 152,
+    headerAlign: 'center',
+    dataAlign: 'center',
+    showOverflowTooltip: true
+  }),
+  new Thead({
+    type: 'text',
+    defaultDisabled: true,
+    key: 'url',
+    title: 'url',
+    hide: false,
+    width: 380,
     headerAlign: 'center',
     dataAlign: 'center',
     showOverflowTooltip: true
@@ -107,13 +105,13 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   new Thead({
     type: 'custom',
     defaultDisabled: true,
-    dblclickToEdit: false,
     key: 'status',
     title: '状态',
     hide: false,
     width: 110,
     headerAlign: 'center',
     dataAlign: 'center',
+    fixed: 'right',
     showOverflowTooltip: false,
     editMethod: 'replace',
     render: (data: TaskStatusEnum): VNode => {
@@ -484,6 +482,7 @@ async function deleteTask(ids: number[]) {
         :multi-select="true"
         :default-page-size="10"
         :custom-operation-button="true"
+        :operation-width="163"
         :tree-data="true"
         @scroll="handleScroll"
       >
