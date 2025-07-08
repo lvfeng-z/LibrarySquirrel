@@ -19,6 +19,7 @@ import Task from '@renderer/model/main/entity/Task.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 
 // props
 const props = defineProps<{
@@ -358,6 +359,30 @@ function toParent() {
               <el-input v-model="formData.id"></el-input>
             </el-form-item>
           </el-col>
+          <el-col v-if="!isParent" :span="17">
+            <el-form-item label="站点作品id">
+              <el-input v-model="formData.siteWorksId" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="插件作者">
+              <el-input v-model="formData.pluginAuthor" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="插件名称">
+              <el-input v-model="formData.pluginName" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="插件版本">
+              <el-input v-model="formData.pluginVersion" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="3">
             <el-form-item label="状态">
               <component :is="getTaskStatusElTag(formData.status as TaskStatusEnum)" />
@@ -374,7 +399,7 @@ function toParent() {
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <el-row v-if="StringUtil.isNotBlank(formData.errorMessage)">
           <el-col>
             <el-form-item label="异常信息">
               <el-input v-model="formData.errorMessage" type="textarea" autosize />
