@@ -8,7 +8,6 @@ import Task from '../entity/Task.js'
 import TaskService from '../../service/TaskService.js'
 import SiteService from '../../service/SiteService.js'
 import Plugin from '../entity/Plugin.js'
-import { OriginType } from '../../constant/OriginType.js'
 import PluginTaskResponseDTO from '../dto/PluginTaskResponseDTO.js'
 
 export default class CreateTaskWritable extends Writable {
@@ -97,18 +96,17 @@ export default class CreateTaskWritable extends Writable {
     task.status = TaskStatusEnum.CREATED
     task.isCollection = false
     task.pid = this.parentTask.id
-    if (task.originType === OriginType.SITE) {
-      let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteDomain)
-      if (IsNullish(siteId)) {
-        const tempSite = this.siteService.getByDomain(task.siteDomain)
-        siteId = tempSite.then((site) => site?.id)
-      }
-      task.siteId = await siteId
-      if (IsNullish(task.siteId)) {
-        LogUtil.error(this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
-        callback()
-        return
-      }
+    // 根据站点域名查询站点id
+    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteDomain)
+    if (IsNullish(siteId)) {
+      const tempSite = this.siteService.getByDomain(task.siteDomain)
+      siteId = tempSite.then((site) => site?.id)
+    }
+    task.siteId = await siteId
+    if (IsNullish(task.siteId)) {
+      LogUtil.error(this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+      callback()
+      return
     }
 
     // 将任务添加到缓冲区
@@ -119,6 +117,8 @@ export default class CreateTaskWritable extends Writable {
     if (this.taskBuffer.length % this.batchSize === 0) {
       // 如果父任务尚未保存且任务数大于1，则先保存父任务
       if (this.parentTaskSave === undefined && this.taskCount > 1) {
+        // 父任务使用第一个子任务的站点id
+        this.parentTask.siteId = task.siteId
         this.parentTaskSave = this.saveParentTask()
         this.parentTask.id = await this.parentTaskSave
         // 更新pid
@@ -132,6 +132,8 @@ export default class CreateTaskWritable extends Writable {
   async _final(callback: (error?: Error | null) => void) {
     // 如果父任务尚未保存且任务数大于1，则先保存父任务
     if (this.parentTaskSave === undefined && this.taskCount > 1) {
+      // 父任务使用第一个子任务的站点id
+      this.parentTask.siteId = this.taskBuffer[0].siteId
       this.parentTaskSave = this.saveParentTask()
       this.parentTask.id = await this.parentTaskSave
       // 更新pid

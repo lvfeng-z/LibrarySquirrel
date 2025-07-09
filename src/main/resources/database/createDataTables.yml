@@ -282,7 +282,6 @@ tables:
         resource_size      integer,
         workdir            text,
         resource_complete  integer not null,
-        import_method      integer not null,
         create_time        integer,
         update_time        integer
       );
@@ -309,7 +308,6 @@ tables:
         site_update_time      integer,
         nick_name             text,
         local_author_id       integer,
-        import_method         integer,
         last_view             integer,
         create_time           integer,
         update_time           integer

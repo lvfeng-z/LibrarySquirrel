@@ -39,7 +39,6 @@ import SiteService from './SiteService.js'
 import Site from '../model/entity/Site.js'
 import CreateTaskWritable from '../model/util/CreateTaskWritable.js'
 import ResourceService from './ResourceService.js'
-import { OriginType } from '../constant/OriginType.js'
 import PluginTaskResponseDTO from '../model/dto/PluginTaskResponseDTO.js'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
@@ -177,15 +176,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       task.pluginAuthor = taskPlugin.author
       task.pluginName = taskPlugin.name
       task.pluginVersion = taskPlugin.version
-      if (task.originType !== OriginType.LOCAL) {
-        let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
-        if (IsNullish(siteId)) {
-          const tempSite = siteService.getByDomain(task.siteDomain)
-          siteId = tempSite.then((site) => site?.id)
-        }
-        task.siteId = await siteId
-        AssertNotNullish(task.siteId, this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+      // 根据站点域名查询站点id
+      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
+      if (IsNullish(siteId)) {
+        const tempSite = siteService.getByDomain(task.siteDomain)
+        siteId = tempSite.then((site) => site?.id)
       }
+      task.siteId = await siteId
+      AssertNotNullish(task.siteId, this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -208,6 +206,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     } else {
       // 如果插件返回的的任务列表长度大于1，则创建一个父任务，所有的任务作为其子任务
       const tempTask = new Task(parentTask)
+      // 父任务使用第一个子任务的站点id
+      tempTask.siteId = taskCreateDTOS[0].siteId
       const pid = await super.save(tempTask)
       parentTask.id = pid
       parentTask.saved = true

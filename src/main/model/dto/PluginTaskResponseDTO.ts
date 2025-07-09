@@ -1,4 +1,3 @@
-import { OriginType } from '../../constant/OriginType.js'
 import TaskCreateDTO from './TaskCreateDTO.js'
 
 /**
@@ -35,11 +34,6 @@ export default class PluginTaskResponseDTO {
    */
   continuable: boolean | undefined | null
 
-  /**
-   * 来源类型
-   */
-  originType: OriginType | undefined | null
-
   public static toTaskCreateDTO(pluginTaskResponseDTO: PluginTaskResponseDTO): TaskCreateDTO {
     const result = new TaskCreateDTO()
     result.taskName = pluginTaskResponseDTO.taskName
@@ -48,7 +42,6 @@ export default class PluginTaskResponseDTO {
     result.pluginData = pluginTaskResponseDTO.pluginData
     result.siteDomain = pluginTaskResponseDTO.siteDomain
     result.continuable = pluginTaskResponseDTO.continuable
-    result.originType = pluginTaskResponseDTO.originType
     return result
   }
 }

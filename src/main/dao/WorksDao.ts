@@ -30,12 +30,12 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
         SELECT t1.*,
                CASE WHEN t2.id IS NOT NULL THEN
                  JSON_OBJECT(
-                      'id', t2.id, 'worksId', t2.works_id, 'taskId', t2.task_id, 'state', t2.state, 'filePath', t2.file_path, 'fileName', t2.file_name, 'filenameExtension', t2.filename_extension,
-                      'suggestedName', t2.suggest_name, 'workdir', t2.workdir, 'resourceComplete', t2.resource_complete, 'importMethod', t2.import_method)
+                      'id', t2.id, 'worksId', t2.works_id, 'taskId', t2.task_id, 'state', t2.state, 'filePath', t2.file_path, 'fileName', t2.file_name,
+                      'filenameExtension', t2.filename_extension, 'suggestedName', t2.suggest_name, 'workdir', t2.workdir, 'resourceComplete', t2.resource_complete)
                END AS resource,
                (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
-                            'id', rt1.id, 'worksId', rt1.works_id, 'taskId', rt1.task_id, 'state', rt1.state, 'filePath', rt1.file_path, 'fileName', rt1.file_name, 'filenameExtension', rt1.filename_extension,
-                            'suggestedName', rt1.suggest_name, 'workdir', rt1.workdir, 'resourceComplete', rt1.resource_complete, 'importMethod', rt1.import_method))
+                            'id', rt1.id, 'worksId', rt1.works_id, 'taskId', rt1.task_id, 'state', rt1.state, 'filePath', rt1.file_path, 'fileName', rt1.file_name, 'filenameExtension',
+                            rt1.filename_extension, 'suggestedName', rt1.suggest_name, 'workdir', rt1.workdir, 'resourceComplete', rt1.resource_complete))
                 FROM resource rt1
                 WHERE t1.id = rt1.works_id AND rt1.state = ${BOOL.FALSE}) AS inactiveResource,
                (SELECT JSON_GROUP_ARRAY(JSON_OBJECT('id', rt2.id, 'localTagName', rt2.local_tag_name, 'baseLocalTagId', rt2.base_local_tag_id, 'lastUse', rt2.last_use))
