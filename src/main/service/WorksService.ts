@@ -27,6 +27,10 @@ import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
 import ReWorksWorksSetService from './ReWorksWorksSetService.js'
+import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import path from 'path'
+import StringUtil from '../util/StringUtil.js'
+import fs from 'fs/promises'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DB) {
@@ -284,6 +288,36 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       }
       return this.updateById(worksFullDTO)
     }, '更新作品信息和资源信息')
+  }
+
+  /**
+   * 根据作品id删除作品及其相关数据
+   * @param worksId
+   */
+  public async deleteWorksAndSurroundingData(worksId: number): Promise<boolean> {
+    return this.db.transaction(async (transactionDB) => {
+      const resService = new ResourceService(transactionDB)
+      const resList = await resService.listByWorksId(worksId)
+      await this.deleteById(worksId)
+      if (ArrayNotEmpty(resList)) {
+        const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+        const resFiles = resList
+          .map((res) => {
+            if (StringUtil.isNotBlank(res.filePath)) {
+              return path.join(workdir, res.filePath)
+            } else {
+              return undefined
+            }
+          })
+          .filter(NotNullish)
+        const resDeletePromiseList: Promise<void>[] = []
+        for (const resFile of resFiles) {
+          resDeletePromiseList.push(fs.unlink(resFile))
+        }
+        await Promise.all(resDeletePromiseList)
+      }
+      return true
+    }, `删除作品${worksId}及其相关数据`)
   }
 
   /**

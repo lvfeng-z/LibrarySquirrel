@@ -118,6 +118,7 @@ const api = {
   taskResumeTaskTree: (args) => Electron.ipcRenderer.invoke('task-resumeTaskTree', args),
 
   // Works
+  worksDeleteWorksAndSurroundingData: (args) => Electron.ipcRenderer.invoke('works-deleteWorksAndSurroundingData', args),
   worksQueryPage: (args) => Electron.ipcRenderer.invoke('works-queryPage', args),
   worksGetFullWorksInfoById: (args) => Electron.ipcRenderer.invoke('works-getFullWorksInfoById', args),
 

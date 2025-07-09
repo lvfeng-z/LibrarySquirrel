@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
-import { computed, onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import { computed, h, onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
 import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
@@ -17,7 +17,7 @@ import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import lodash from 'lodash'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import AuthorInfo from '@renderer/components/common/AuthorInfo.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
@@ -54,6 +54,7 @@ const apis = {
   siteTagQuerySelectItemPageByWorksId: window.api.siteTagQuerySelectItemPageByWorksId,
   reWorksTagLink: window.api.reWorksTagLink,
   reWorksTagUnlink: window.api.reWorksTagUnlink,
+  worksDeleteWorksAndSurroundingData: window.api.worksDeleteWorksAndSurroundingData,
   worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
 }
 // container元素实例
@@ -218,7 +219,7 @@ function openDrawer(isLocal: boolean) {
     siteTagEdit.value = true
   }
 }
-//
+// 处理抽屉面板打开事件
 function handleDrawerOpen() {
   if (localTagEdit.value) {
     localTagExchangeBox.value.refreshData()
@@ -227,9 +228,33 @@ function handleDrawerOpen() {
     siteTagExchangeBox.value.refreshData()
   }
 }
+// 处理删除按钮点击事件
+function handleDeleteButtonClick() {
+  ElMessageBox.confirm(
+    h('div', {}, [h('span', null, '是否删除作品？'), h('br'), h('span', null, `${worksFullInfo.value.siteWorksName}`)]),
+    '确认删除',
+    {
+      confirmButtonText: '删除',
+      confirmButtonClass: 'el-button--danger',
+      cancelButtonText: '取消'
+    }
+  )
+    .then(() => deleteWorks())
+    .catch(() => ElMessage.warning({ message: '取消删除' }))
+}
+
+/**
+ * 删除作品
+ */
+async function deleteWorks() {
+  if (NotNullish(worksFullInfo.value.id)) {
+    const response = await apis.worksDeleteWorksAndSurroundingData(worksFullInfo.value.id)
+    ApiUtil.msg(response)
+  }
+}
 </script>
 <template>
-  <el-dialog top="50px">
+  <el-dialog style="margin: auto; max-height: 95%">
     <div ref="container" class="works-dialog-container">
       <el-image
         class="works-dialog-image"
@@ -256,17 +281,19 @@ function handleDrawerOpen() {
           <el-descriptions-item label="站点">
             <span id="site">{{ worksFullInfo.site?.siteName }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="本地标签">
-            <div id="localTag">
+          <el-descriptions-item>
+            <template #label>
+              <span>本地标签 </span>
               <el-button @click="openDrawer(true)"> 编辑 </el-button>
-              <tag-box v-model:data="localTags" />
-            </div>
+            </template>
+            <tag-box id="localTag" v-model:data="localTags" />
           </el-descriptions-item>
-          <el-descriptions-item label="站点标签">
-            <div id="siteTag">
+          <el-descriptions-item>
+            <template #label>
+              <span>站点标签 </span>
               <el-button @click="openDrawer(false)"> 编辑 </el-button>
-              <tag-box v-model:data="siteTags" />
-            </div>
+            </template>
+            <tag-box id="siteTag" v-model:data="siteTags" />
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -380,6 +407,9 @@ function handleDrawerOpen() {
         </exchange-box>
       </el-drawer>
     </div>
+    <el-button-group style="justify-self: center" size="large">
+      <el-button @click="handleDeleteButtonClick">删除</el-button>
+    </el-button-group>
   </el-dialog>
 </template>
 
@@ -390,7 +420,7 @@ function handleDrawerOpen() {
   height: calc(100vh - 16px - 16px - 16px - 50px - 50px);
 }
 .works-dialog-image {
-  height: auto;
+  height: 100%;
   max-width: 60%;
   margin-right: 10px;
   flex-shrink: 0;
@@ -402,7 +432,6 @@ function handleDrawerOpen() {
   justify-content: center;
   align-items: center;
   background-color: var(--el-fill-color-dark);
-  height: 100%;
   width: 200px;
 }
 .works-dialog-image-error-icon {

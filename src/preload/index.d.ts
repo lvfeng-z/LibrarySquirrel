@@ -118,6 +118,7 @@ declare global {
       taskResumeTaskTree: function
 
       // Works
+      worksDeleteWorksAndSurroundingData: function
       worksQueryPage: function
       worksSaveWorks: function
       worksGetFullWorksInfoById: function

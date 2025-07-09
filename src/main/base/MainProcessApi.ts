@@ -763,6 +763,15 @@ function exposeService() {
   })
 
   // WorksService
+  Electron.ipcMain.handle('works-deleteWorksAndSurroundingData', async (_event, args): Promise<ApiUtil> => {
+    const worksService = new WorksService()
+    try {
+      const result = await worksService.deleteWorksAndSurroundingData(args)
+      return ApiUtil.check(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
   Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
     const worksService = new WorksService()
     try {

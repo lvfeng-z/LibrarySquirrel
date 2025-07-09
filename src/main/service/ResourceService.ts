@@ -242,15 +242,22 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const backupService = new BackupService()
     const backupAbsolutePath = AddSuffix(oldResAbsolutePath, '-lsBackup')
     // 先重命名文件再创建备份，避免原文件占用新的资源的名称
-    await rename(oldResAbsolutePath, backupAbsolutePath)
-    backupService
-      .createBackup(BackupSourceTypeEnum.WORKS, resourceId, backupAbsolutePath)
-      .then(() => rm(backupAbsolutePath))
-      .catch(() => {
-        // TODO 通知用户创建备份失败
-      })
+    try {
+      await fs.promises.access(oldResAbsolutePath)
+      await rename(oldResAbsolutePath, backupAbsolutePath)
+      backupService
+        .createBackup(BackupSourceTypeEnum.WORKS, resourceId, backupAbsolutePath)
+        .then(() => rm(backupAbsolutePath))
+        .catch(() => {
+          // TODO 通知用户创建备份失败
+        })
+    } catch (error) {
+      LogUtil.warn(this.constructor.name, '替换资源时未创建备份，因为原文件不存在，', error)
+    }
 
     try {
+      // 创建保存目录
+      await CreateDirIfNotExists(path.dirname(resourceSaveDTO.fullSavePath))
       // 创建写入流
       const writeStream = fs.createWriteStream(resourceSaveDTO.fullSavePath)
 
@@ -261,7 +268,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
       // 创建写入Promise
       return resourceWriter.doWrite().then((saveResult) => {
-        this.resourceFinished(resourceId)
+        const tempResForUpdate = new Resource(resourceSaveDTO)
+        tempResForUpdate.id = resourceId
+        this.updateById(tempResForUpdate)
         return saveResult
       })
     } catch (error) {
