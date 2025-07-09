@@ -356,7 +356,7 @@ function toParent() {
         <el-row>
           <el-col :span="7">
             <el-form-item label="站点">
-              <el-input v-model="formData.id"></el-input>
+              <el-input v-model="formData.siteId"></el-input>
             </el-form-item>
           </el-col>
           <el-col v-if="!isParent" :span="17">

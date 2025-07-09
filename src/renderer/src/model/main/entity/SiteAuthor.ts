@@ -19,6 +19,10 @@ export default class SiteAuthor extends BaseEntity implements BaseAuthor {
    */
   authorName: string | undefined | null
   /**
+   * 站点中作者的固定名称（无法更改的，比如账号）
+   */
+  fixedAuthorName: string | undefined | null
+  /**
    * 站点中作者的曾用名
    */
   siteAuthorNameBefore: string[] | string | undefined | null
@@ -41,6 +45,7 @@ export default class SiteAuthor extends BaseEntity implements BaseAuthor {
       this.siteId = siteAuthor.siteId
       this.siteAuthorId = siteAuthor.siteAuthorId
       this.authorName = siteAuthor.authorName
+      this.fixedAuthorName = siteAuthor.fixedAuthorName
       if (typeof siteAuthor.siteAuthorNameBefore === 'string') {
         this.siteAuthorNameBefore = siteAuthor.siteAuthorNameBefore.split(',')
       } else {

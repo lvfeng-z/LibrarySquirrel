@@ -50,7 +50,8 @@ tables:
             references site
             on update restrict on delete restrict,
         site_author_id          text,
-        author_name        text,
+        author_name             text,
+        fixed_author_name       text,
         site_author_name_before text,
         introduce               text,
         local_author_id         integer,
