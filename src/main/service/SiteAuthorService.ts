@@ -80,30 +80,26 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       })
       .filter(NotNullish)
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
-    const newSiteAuthors = siteAuthors.map((siteAuthor) => {
+    const modifiedSiteAuthors = siteAuthors.map((siteAuthor) => {
       AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id不能为空')
       AssertNotNullish(siteAuthor.siteId, this.constructor.name, '保存站点作者失败，站点作者的站点id不能为空')
       const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
-      const newSiteAuthor = new SiteAuthor(siteAuthor)
+      const modifiedSiteAuthor = new SiteAuthor(siteAuthor)
 
-      if (oldSiteAuthor !== undefined) {
+      if (NotNullish(oldSiteAuthor)) {
         // 调整新数据
-        newSiteAuthor.id = oldSiteAuthor.id
-        newSiteAuthor.siteAuthorNameBefore = oldSiteAuthor.siteAuthorNameBefore
-        newSiteAuthor.createTime = undefined
-        newSiteAuthor.updateTime = undefined
+        modifiedSiteAuthor.id = oldSiteAuthor.id
+        modifiedSiteAuthor.siteAuthorNameBefore = oldSiteAuthor.siteAuthorNameBefore
+        modifiedSiteAuthor.createTime = undefined
+        modifiedSiteAuthor.updateTime = undefined
         // 如果站点作者的名称变更，对原本的名称写入到siteAuthorNameBefore
-        if (
-          newSiteAuthor.authorName !== oldSiteAuthor.authorName &&
-          oldSiteAuthor.authorName !== undefined &&
-          oldSiteAuthor.authorName !== null
-        ) {
-          ;(newSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.authorName)
+        if (modifiedSiteAuthor.authorName !== oldSiteAuthor.authorName && NotNullish(oldSiteAuthor.authorName)) {
+          ;(modifiedSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.authorName)
         }
       }
-      return newSiteAuthor
+      return modifiedSiteAuthor
     })
-    return super.saveOrUpdateBatchById(newSiteAuthors, [['site_id', 'site_author_id']])
+    return super.saveOrUpdateBatchById(modifiedSiteAuthors, [['site_id', 'site_author_id']])
   }
 
   /**
