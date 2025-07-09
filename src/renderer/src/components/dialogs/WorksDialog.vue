@@ -254,7 +254,7 @@ async function deleteWorks() {
 }
 </script>
 <template>
-  <el-dialog style="margin: auto; max-height: 95%">
+  <el-dialog style="margin: 2.5vh auto 2.5vh auto; width: 90%">
     <div ref="container" class="works-dialog-container">
       <el-image
         class="works-dialog-image"
