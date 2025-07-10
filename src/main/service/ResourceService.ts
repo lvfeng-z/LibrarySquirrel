@@ -23,6 +23,7 @@ import ResFileNameFormatEnum from '../constant/ResFileNameFormatEnum.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rename, rm } from 'node:fs/promises'
+import Backup from '../model/entity/Backup.js'
 
 /**
  * 资源服务
@@ -241,15 +242,20 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const oldResAbsolutePath = path.join(workdir, oldResource.filePath)
     const backupService = new BackupService()
     const backupAbsolutePath = AddSuffix(oldResAbsolutePath, '-lsBackup')
-    // 先重命名文件再创建备份，避免原文件占用新的资源的名称
+    let backupPromise: Promise<Backup | undefined> | undefined
     try {
+      // 先重命名文件再创建备份，避免原文件占用新的资源的名称
       await fs.promises.access(oldResAbsolutePath)
       await rename(oldResAbsolutePath, backupAbsolutePath)
-      backupService
+      backupPromise = backupService
         .createBackup(BackupSourceTypeEnum.WORKS, resourceId, backupAbsolutePath)
-        .then(() => rm(backupAbsolutePath))
+        .then((backup) => {
+          rm(backupAbsolutePath)
+          return backup
+        })
         .catch(() => {
           // TODO 通知用户创建备份失败
+          return undefined
         })
     } catch (error) {
       LogUtil.warn(this.constructor.name, '替换资源时未创建备份，因为原文件不存在，', error)
@@ -274,6 +280,13 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         return saveResult
       })
     } catch (error) {
+      const backup = await backupPromise
+      if (NotNullish(backup)) {
+        backupService.recoverToPath(backup.id as number, oldResAbsolutePath).catch((recoverError) => {
+          LogUtil.error(this.constructor.name, '恢复资源失败', recoverError)
+          throw recoverError
+        })
+      }
       const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}`
       LogUtil.error(this.constructor.name, msg, error)
       throw error

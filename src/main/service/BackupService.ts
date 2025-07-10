@@ -11,6 +11,7 @@ import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import path from 'path'
 import { BackupRootDirName } from '../constant/BackupConstants.js'
 import { copyFile } from 'node:fs/promises'
+import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
   constructor(db?: DB) {
@@ -23,7 +24,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
    * @param sourceId 源数据id
    * @param sourceFilePath 源文件路径
    */
-  async createBackup(sourceType: BackupSourceTypeEnum, sourceId: number, sourceFilePath: string): Promise<Backup> {
+  public async createBackup(sourceType: BackupSourceTypeEnum, sourceId: number, sourceFilePath: string): Promise<Backup> {
     try {
       await fs.access(sourceFilePath)
     } catch (error) {
@@ -77,5 +78,27 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       await copyFile(sourceFilePath, finalAbsolutePath)
       return backup
     }, '创建文件备份')
+  }
+
+  /**
+   * 备份恢复到指定目录
+   * @param backUpId 备份id
+   * @param targetPath 目录（包含文件名）
+   */
+  public async recoverToPath(backUpId: number, targetPath: string): Promise<void> {
+    const targetDirname = path.dirname(targetPath)
+    AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的目录为空`)
+    const backup = await this.getById(backUpId)
+    AssertNotNullish(backup, this.constructor.name, `无法恢复备份到${targetPath}，备份不存在，backupId: ${backUpId}`)
+    const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+    const absoluteBackupPath = path.join(workdir, backup.filePath as string)
+    try {
+      await fs.access(absoluteBackupPath)
+    } catch (error) {
+      LogUtil.error(this.constructor.name, '创建备份失败，找不到备份文件', error)
+      throw error
+    }
+    await CreateDirIfNotExists(targetDirname)
+    // TODO
   }
 }

@@ -10,7 +10,7 @@ export default class Backup extends BaseEntity {
   sourceType: BackupSourceTypeEnum | undefined | null
 
   /**
-   * 原id
+   * 源id
    */
   sourceId: number | undefined | null
 
