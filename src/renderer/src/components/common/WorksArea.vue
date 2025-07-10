@@ -36,7 +36,9 @@ function handleImageClicked(works: WorksFullDTO) {
         />
       </div>
     </template>
-    <works-dialog v-if="worksDialogState" v-model="worksDialogState" :works="worksDialogResources" />
+    <div class="works-area-dialog">
+      <works-dialog v-if="worksDialogState" v-model="worksDialogState" :works="worksDialogResources" />
+    </div>
   </div>
 </template>
 
@@ -62,5 +64,8 @@ function handleImageClicked(works: WorksFullDTO) {
 }
 .works-area-works-case {
   height: 100%;
+}
+.works-area-dialog :deep(.el-overlay-dialog) {
+  display: flex;
 }
 </style>

@@ -254,7 +254,12 @@ async function deleteWorks() {
 }
 </script>
 <template>
-  <el-dialog style="margin: 2.5vh auto 2.5vh auto; width: 90%">
+  <el-dialog center style="margin: auto; width: 90%">
+    <template #header>
+      <span class="works-dialog-works-name">
+        {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
+      </span>
+    </template>
     <div ref="container" class="works-dialog-container">
       <el-image
         class="works-dialog-image"
@@ -268,13 +273,8 @@ async function deleteWorks() {
           </div>
         </template>
       </el-image>
-      <el-scrollbar>
+      <el-scrollbar class="works-dialog-scrollbar">
         <el-descriptions ref="infosRef" class="works-dialog-info" direction="horizontal" :column="1">
-          <el-descriptions-item>
-            <span id="worksName">
-              {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
-            </span>
-          </el-descriptions-item>
           <el-descriptions-item label="作者">
             <author-info id="author" :local-authors="worksFullInfo.localAuthors" :site-authors="worksFullInfo.siteAuthors" />
           </el-descriptions-item>
@@ -298,7 +298,6 @@ async function deleteWorks() {
         </el-descriptions>
       </el-scrollbar>
       <el-anchor :container="infosRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
-        <el-anchor-link href="#worksName" title="名称" />
         <el-anchor-link href="#author" title="作者" />
         <el-anchor-link href="#site" title="站点" />
         <el-anchor-link href="#localTag" title="本地标签" />
@@ -407,24 +406,37 @@ async function deleteWorks() {
         </exchange-box>
       </el-drawer>
     </div>
-    <el-button-group style="justify-self: center" size="large">
-      <el-button @click="handleDeleteButtonClick">删除</el-button>
-    </el-button-group>
+    <template #footer>
+      <el-button-group size="large">
+        <el-button icon="delete" @click="handleDeleteButtonClick">删除</el-button>
+        <el-button icon="refresh">刷新</el-button>
+      </el-button-group>
+    </template>
   </el-dialog>
 </template>
 
 <style scoped>
+.works-dialog-works-name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .works-dialog-container {
   display: flex;
   flex-direction: row;
-  height: calc(100vh - 16px - 16px - 16px - 50px - 50px);
+}
+.works-dialog-scrollbar {
+  flex-grow: 1;
 }
 .works-dialog-image {
-  height: 100%;
+  max-height: 75vh;
   max-width: 60%;
   margin-right: 10px;
-  flex-shrink: 0;
   cursor: pointer;
+  transition-duration: 0.3s;
+}
+.works-dialog-image:hover {
+  background-color: rgb(166.2, 168.6, 173.4, 10%);
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
 }
 .works-dialog-image-error {
   display: flex;
