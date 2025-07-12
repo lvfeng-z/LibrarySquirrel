@@ -73,7 +73,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       backup.workdir = workdir
       backup.filePath = path.join(relativePath, fileName)
       backup.fileName = fileName
-      await this.save(backup)
+      backup.id = await this.save(backup)
 
       await copyFile(sourceFilePath, finalAbsolutePath)
       return backup
