@@ -20,6 +20,7 @@ import lodash from 'lodash'
 import { queue, QueueObject } from 'async'
 import ResourceService from '../service/ResourceService.js'
 import Electron from 'electron'
+import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
 
 /**
  * 任务队列
@@ -1148,7 +1149,7 @@ class TaskRunInstance extends TaskStatus {
     }
   }
 
-  public async process(): Promise<TaskStatusEnum> {
+  public async process(): Promise<TaskProcessResponseDTO> {
     if (this.status === TaskStatusEnum.WAITING) {
       try {
         this.changeStatus(TaskStatusEnum.PROCESSING)
@@ -1163,7 +1164,11 @@ class TaskRunInstance extends TaskStatus {
             : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
         return result
           .then((saveResult) => {
-            this.changeStatus(saveResult)
+            this.changeStatus(saveResult.taskStatus)
+            if (saveResult.taskStatus === TaskStatusEnum.FAILED) {
+              this.errorOccurred = true
+              this.error = saveResult.error
+            }
             return saveResult
           })
           .catch((error) => {
@@ -1304,9 +1309,9 @@ class ResourceSaveStream extends Transform {
     // 开始任务
     return runInstance
       .process()
-      .then((saveResult: TaskStatusEnum) => {
+      .then((saveResult: TaskProcessResponseDTO) => {
         runInstance.inStream = false
-        if (TaskStatusEnum.PAUSE !== saveResult) {
+        if (TaskStatusEnum.PAUSE !== saveResult.taskStatus) {
           this.push(runInstance)
           // 下载完成后，是否替换资源的标记重置
           runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
@@ -1441,9 +1446,9 @@ class TaskPersistStream extends Writable {
     }
     if (TaskStatusEnum.FINISHED === tempTask.status) {
       tempTask.pendingResourceId = null
-      tempTask.pendingSavePath = null
     }
     if (TaskStatusEnum.FAILED === tempTask.status) {
+      tempTask.pendingResourceId = null
       tempTask.errorMessage = runInstance.getError()?.message
     }
     return tempTask

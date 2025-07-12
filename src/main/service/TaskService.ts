@@ -42,6 +42,7 @@ import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import Resource from '../model/entity/Resource.js'
 import ResourcePluginDTO from '../model/dto/ResourcePluginDTO.js'
+import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DB) {
@@ -301,7 +302,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     worksId: number,
     pluginLoader: PluginLoader<TaskHandler>,
     resourceWriter: ResourceWriter
-  ): Promise<TaskStatusEnum> {
+  ): Promise<TaskProcessResponseDTO> {
     AssertNotNullish(task.id, this.constructor.name, `开始任务失败，任务id不能为空`)
     const taskId = task.id
 
@@ -318,7 +319,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       pluginResponse = await taskHandler.start(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件开始时失败`, error)
-      return TaskStatusEnum.FAILED
+      return new TaskProcessResponseDTO(TaskStatusEnum.FAILED, error as Error)
     }
     AssertNotNullish(pluginResponse.resource?.resourceStream, this.constructor.name, `插件没有返回任务${taskId}的资源`)
 
@@ -356,9 +357,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       : resService.replaceResource(resourceSaveDTO, resourceWriter)
     return resSavePromise.then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
-        return TaskStatusEnum.FINISHED
+        return new TaskProcessResponseDTO(TaskStatusEnum.FINISHED)
       } else if (FileSaveResult.PAUSE === saveResult) {
-        return TaskStatusEnum.PAUSE
+        return new TaskProcessResponseDTO(TaskStatusEnum.PAUSE)
       } else {
         throw new Error(`保存资源未返回预期中的值，saveResult: ${saveResult}`)
       }
@@ -565,7 +566,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     worksId: number,
     pluginLoader: PluginLoader<TaskHandler>,
     resourceWriter: ResourceWriter
-  ): Promise<TaskStatusEnum> {
+  ): Promise<TaskProcessResponseDTO> {
     AssertNotNullish(task.id, this.constructor.name, '恢复任务失败，任务id不能为空')
     const taskId = task.id
     AssertNotNullish(task.pendingResourceId, this.constructor.name, `恢复任务失败，任务的处理中的资源id不能为空，taskId: ${taskId}`)
@@ -581,15 +582,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskPluginDTO.resourcePluginDTO.resourceSize = resourceWriter.resourceSize
     taskPluginDTO.resourcePluginDTO.resourceStream = resourceWriter.readable
     taskPluginDTO.resourcePluginDTO.filenameExtension = resourceWriter.resource?.filenameExtension
-    // 读取已下载文件信息，获取已经下载的数据量
-    let bytesWritten: number = 0
-    try {
-      bytesWritten = await fs.promises.stat(task.pendingSavePath).then((stats) => stats.size)
-    } catch (error) {
-      LogUtil.info(this.constructor.name, `恢复任务${taskId}失败，先前下载的文件已经不存在 `, error)
-      await CreateDirIfNotExists(path.dirname(task.pendingSavePath))
-    }
-    taskPluginDTO.bytesWritten = bytesWritten
     const resourceService = new ResourceService()
     taskPluginDTO.resourcePath = await resourceService.getFullResourcePath(task.pendingResourceId)
 
@@ -624,12 +616,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     LogUtil.info(this.constructor.name, `任务${taskId}恢复下载`)
-    const resourceService = new ResourceService()
-    return resourceService.resumeSaveResource(resourceSaveDTO, resourceWriter, bytesWritten).then(async (saveResult) => {
+    return resourceService.resumeSaveResource(resourceSaveDTO, resourceWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
-        return TaskStatusEnum.FINISHED
+        return new TaskProcessResponseDTO(TaskStatusEnum.FINISHED)
       } else if (FileSaveResult.PAUSE === saveResult) {
-        return TaskStatusEnum.PAUSE
+        return new TaskProcessResponseDTO(TaskStatusEnum.PAUSE)
       } else {
         throw new Error(`保存资源未返回预期的值，saveResult: ${saveResult}`)
       }
