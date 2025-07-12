@@ -84,6 +84,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public async saveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
+    const fullSavePath = resourceSaveDTO.fullSavePath
     AssertNotNullish(resourceId, this.constructor.name, `保存作品资源失败，资源id不能为空`)
     AssertNotNullish(resourceSaveDTO.taskId, this.constructor.name, `保存作品资源失败，任务id不能为空`)
     AssertNotNullish(
@@ -92,7 +93,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       `保存作品资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
     )
     AssertNotNullish(
-      resourceSaveDTO.fullSavePath,
+      fullSavePath,
       this.constructor.name,
       `保存作品资源失败，资源的保存路径不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
@@ -106,9 +107,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
     try {
       // 创建保存目录
-      await CreateDirIfNotExists(path.dirname(resourceSaveDTO.fullSavePath))
+      await CreateDirIfNotExists(path.dirname(fullSavePath))
       // 创建写入流
-      const writeStream = fs.createWriteStream(resourceSaveDTO.fullSavePath)
+      const writeStream = fs.createWriteStream(fullSavePath)
 
       // 配置resourceWriter
       resourceWriter.readable = resourceSaveDTO.resourceStream
@@ -116,11 +117,17 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 创建写入Promise
-      return resourceWriter.doWrite().then((saveResult) => {
-        this.resourceFinished(resourceId)
-        // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
-        return saveResult
-      })
+      return resourceWriter
+        .doWrite()
+        .then((saveResult) => {
+          this.resourceFinished(resourceId)
+          // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
+          return saveResult
+        })
+        .catch((error) => {
+          fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除失败的资源文件失败，', error))
+          throw error
+        })
     } catch (error) {
       const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
       LogUtil.error(this.constructor.name, msg, error)
@@ -281,13 +288,16 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       })
     } catch (error) {
       const backup = await backupPromise
+      let recovered = false
       if (NotNullish(backup)) {
-        backupService.recoverToPath(backup.id as number, oldResAbsolutePath).catch((recoverError) => {
+        await backupService.recoverToPath(backup.id as number, oldResAbsolutePath).catch((recoverError) => {
           LogUtil.error(this.constructor.name, '恢复资源失败', recoverError)
-          throw recoverError
         })
+        recovered = true
+      } else {
+        LogUtil.error(this.constructor.name, '恢复资源失败，替换资源前没有创建备份')
       }
-      const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}`
+      const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}，原文件${recovered ? '已恢复' : '未能恢复'}`
       LogUtil.error(this.constructor.name, msg, error)
       throw error
     }

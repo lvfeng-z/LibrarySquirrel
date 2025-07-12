@@ -87,7 +87,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
    */
   public async recoverToPath(backUpId: number, targetPath: string): Promise<void> {
     const targetDirname = path.dirname(targetPath)
-    AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的目录为空`)
+    AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的路径为空`)
     const backup = await this.getById(backUpId)
     AssertNotNullish(backup, this.constructor.name, `无法恢复备份到${targetPath}，备份不存在，backupId: ${backUpId}`)
     const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
@@ -98,7 +98,9 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       LogUtil.error(this.constructor.name, '创建备份失败，找不到备份文件', error)
       throw error
     }
-    await CreateDirIfNotExists(targetDirname)
-    // TODO
+    return fs.copyFile(absoluteBackupPath, targetPath).catch((error) => {
+      LogUtil.error(this.constructor.name, `恢复备份到${targetPath}失败，error: `, error)
+      throw error
+    })
   }
 }
