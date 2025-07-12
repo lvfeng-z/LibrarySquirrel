@@ -1,5 +1,9 @@
 import BaseQueryDTO from './BaseQueryDTO.js'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
+/**
+ * 任务-QueryDTO
+ */
 export default class TaskQueryDTO extends BaseQueryDTO {
   /**
    * 是否是父任务
@@ -19,12 +23,12 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   /**
    * 任务的站点id
    */
-  siteId: string | undefined | null
+  siteId: number | undefined | null
 
   /**
    * 站点作品id
    */
-  siteWorksId: number | undefined | null
+  siteWorksId: string | undefined | null
 
   /**
    * 当任务是父任务时，url存储创建此父任务所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
@@ -42,24 +46,24 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   pendingResourceId: number | undefined | null
 
   /**
-   * 保存中的文件路径
-   */
-  pendingSavePath: string | undefined | null
-
-  /**
    * 资源是否支持续传
    */
   continuable: boolean | undefined | null
 
   /**
-   * 插件id
+   * 插件作者
    */
-  pluginId: number | undefined | null
+  pluginAuthor: string | undefined | null
 
   /**
-   * 插件信息
+   * 插件名称
    */
-  pluginInfo: string | undefined | null
+  pluginName: string | undefined | null
+
+  /**
+   * 插件版本
+   */
+  pluginVersion: string | undefined | null
 
   /**
    * 插件数据
@@ -73,22 +77,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
 
   constructor(task?: TaskQueryDTO) {
     super(task)
-    if (task === undefined) {
-      this.isCollection = undefined
-      this.pid = undefined
-      this.taskName = undefined
-      this.siteId = undefined
-      this.siteWorksId = undefined
-      this.url = undefined
-      this.status = undefined
-      this.pendingResourceId = undefined
-      this.pendingSavePath = undefined
-      this.continuable = undefined
-      this.pluginId = undefined
-      this.pluginInfo = undefined
-      this.pluginData = undefined
-      this.errorMessage = undefined
-    } else {
+    if (NotNullish(task)) {
       this.isCollection = task.isCollection
       this.pid = task.pid
       this.taskName = task.taskName
@@ -97,10 +86,10 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.url = task.url
       this.status = task.status
       this.pendingResourceId = task.pendingResourceId
-      this.pendingSavePath = task.pendingSavePath
       this.continuable = task.continuable
-      this.pluginId = task.pluginId
-      this.pluginInfo = task.pluginInfo
+      this.pluginAuthor = task.pluginAuthor
+      this.pluginName = task.pluginName
+      this.pluginVersion = task.pluginVersion
       if (typeof task.pluginData === 'string') {
         this.pluginData = JSON.parse(task.pluginData)
       } else {

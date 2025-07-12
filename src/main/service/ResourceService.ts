@@ -139,13 +139,8 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * 恢复保存资源
    * @param resourceSaveDTO
    * @param resourceWriter resourceWriter
-   * @param bytesWritten
    */
-  public async resumeSaveResource(
-    resourceSaveDTO: ResourceSaveDTO,
-    resourceWriter: ResourceWriter,
-    bytesWritten: number
-  ): Promise<FileSaveResult> {
+  public async resumeSaveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     AssertNotNullish(resourceSaveDTO.taskId, this.constructor.name, `恢复保存资源失败，任务id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
@@ -170,7 +165,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       await CreateDirIfNotExists(path.dirname(oldAbsolutePath))
       // 创建写入流
       const writeable: fs.WriteStream = fs.createWriteStream(oldAbsolutePath, { flags: 'a' })
-      writeable.bytesWritten = bytesWritten
+      writeable.bytesWritten = (await fs.promises.stat(oldAbsolutePath)).size
 
       // 配置resourceWriter
       resourceWriter.resourceSize = IsNullish(resourceSaveDTO.resourceSize) ? -1 : resourceSaveDTO.resourceSize
@@ -489,5 +484,17 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorId)
         ? ''
         : mainSiteAuthors[0].siteAuthorId
+  }
+
+  /**
+   * 获取资源的绝对路径
+   * @param resourceId 资源id
+   */
+  public async getFullResourcePath(resourceId: number) {
+    const res = await this.getById(resourceId)
+    AssertNotNullish(res, this.constructor.name, `获取资源${resourceId}的绝对路径失败，资源id不可用`)
+    AssertNotNullish(res.filePath, this.constructor.name, `获取资源${resourceId}的绝对路径失败，资源的路径不能为空`)
+    const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+    return path.join(workdir, res.filePath)
   }
 }

@@ -46,11 +46,6 @@ export default class TaskQueryDTO extends BaseQueryDTO {
   pendingResourceId: number | undefined | null
 
   /**
-   * 保存中的文件路径
-   */
-  pendingSavePath: string | undefined | null
-
-  /**
    * 资源是否支持续传
    */
   continuable: boolean | undefined | null
@@ -91,7 +86,6 @@ export default class TaskQueryDTO extends BaseQueryDTO {
       this.url = task.url
       this.status = task.status
       this.pendingResourceId = task.pendingResourceId
-      this.pendingSavePath = task.pendingSavePath
       this.continuable = task.continuable
       this.pluginAuthor = task.pluginAuthor
       this.pluginName = task.pluginName

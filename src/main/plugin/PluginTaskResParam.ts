@@ -13,13 +13,13 @@ export class PluginTaskResParam {
   resourcePluginDTO: ResourcePluginDTO | undefined | null
 
   /**
-   * 已写入数据量
+   * 资源路径
    */
-  bytesWritten: number
+  resourcePath: string | undefined
 
   constructor(task: Task) {
     this.task = task
     this.resourcePluginDTO = undefined
-    this.bytesWritten = 0
+    this.resourcePath = undefined
   }
 }

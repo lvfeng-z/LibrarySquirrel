@@ -20,13 +20,10 @@ import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { PluginTaskResParam } from '../plugin/PluginTaskResParam.ts'
-import fs from 'fs'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
-import path from 'path'
 import TaskCreateResponse from '../model/util/TaskCreateResponse.ts'
 import { AssertArrayNotEmpty, AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
-import { CreateDirIfNotExists } from '../util/FileSysUtil.js'
 import { GetNode } from '../util/TreeUtil.js'
 import { Id } from '../base/BaseEntity.js'
 import ResourceWriter from '../util/ResourceWriter.js'
@@ -346,9 +343,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     } else {
       resourceSaveDTO.id = activeRes.id
     }
-    // 更新下载中的文件路径
+    // 更新下载中的资源id
     task.pendingResourceId = resourceSaveDTO.id
-    task.pendingSavePath = resourceSaveDTO.fullSavePath
     this.updateById(task)
 
     // 标记为进行中
@@ -572,7 +568,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   ): Promise<TaskStatusEnum> {
     AssertNotNullish(task.id, this.constructor.name, '恢复任务失败，任务id不能为空')
     const taskId = task.id
-    AssertNotNullish(task.pendingSavePath, this.constructor.name, `恢复任务失败，任务的pendingSavePath不能为空，taskId: ${taskId}`)
+    AssertNotNullish(task.pendingResourceId, this.constructor.name, `恢复任务失败，任务的处理中的资源id不能为空，taskId: ${taskId}`)
     // 加载插件
     const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '恢复任务失败')
     AssertNotNullish(plugin?.id, this.constructor.name, `暂停任务失败，创建任务的插件id不能为空，taskId: ${taskId}`)
@@ -594,6 +590,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       await CreateDirIfNotExists(path.dirname(task.pendingSavePath))
     }
     taskPluginDTO.bytesWritten = bytesWritten
+    const resourceService = new ResourceService()
+    taskPluginDTO.resourcePath = await resourceService.getFullResourcePath(task.pendingResourceId)
 
     // 恢复下载
     const worksService = new WorksService()

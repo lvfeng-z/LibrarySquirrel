@@ -240,7 +240,6 @@ tables:
         update_time           integer,
         status                smallint,
         pending_resource_id   integer,
-        pending_save_path     text,
         continuable           integer,
         plugin_author         text,
         plugin_name           text,
