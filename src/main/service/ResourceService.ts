@@ -279,6 +279,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       const saveResult = resourceWriter.doWrite()
       const tempResForUpdate = new Resource(resourceSaveDTO)
       tempResForUpdate.id = resourceId
+      tempResForUpdate.resourceComplete = BOOL.TRUE
       this.updateById(tempResForUpdate)
       return saveResult
     } catch (error) {
