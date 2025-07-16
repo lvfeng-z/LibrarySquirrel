@@ -135,7 +135,9 @@ export class TaskQueue {
             this.removeTask([taskRunInstance.taskId])
           } else {
             // 有父任务的刷新父任务状态
-            this.refreshParentStatus([taskRunInstance.parentId])
+            this.refreshParentStatus([taskRunInstance.parentId]).catch((error) =>
+              LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+            )
           }
         }
       }
@@ -145,6 +147,7 @@ export class TaskQueue {
         this.queueEntrance.pipe(this.worksInfoSaveStream)
         handleError(error, taskRunInstance)
       })
+      this.queueEntrance.on('entry-failed', handleError)
       // 作品信息保存流
       this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
         this.queueEntrance.unpipe(this.worksInfoSaveStream)
@@ -178,7 +181,9 @@ export class TaskQueue {
           this.removeTask([taskRunInstance.taskId])
         } else {
           // 有父任务的刷新父任务状态
-          this.refreshParentStatus([taskRunInstance.parentId])
+          this.refreshParentStatus([taskRunInstance.parentId]).catch((error) =>
+            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+          )
         }
       })
       this.resourceSaveStream.on('save-failed', handleError)
@@ -240,7 +245,9 @@ export class TaskQueue {
     } else if (taskOperation === TaskOperation.PAUSE) {
       await this.pauseTask(tasks.map((task) => task.id as number))
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
-      this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
+      this.refreshParentStatus(Array.from(parentIdWaitingRefresh)).catch((error) =>
+        LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+      )
     } else if (taskOperation === TaskOperation.STOP) {
       await this.stopTask(tasks)
       // 清除单个的任务
@@ -248,7 +255,9 @@ export class TaskQueue {
       this.removeTask(singleTasks)
       // 刷新父任务
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
-      this.refreshParentStatus(Array.from(parentIdWaitingRefresh))
+      this.refreshParentStatus(Array.from(parentIdWaitingRefresh)).catch((error) =>
+        LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+      )
     }
     this.pushTaskSchedule()
   }
@@ -773,7 +782,7 @@ export class TaskQueue {
         }
       }
     }
-    this.pushParentTaskSchedule()
+    this.pushParentTaskSchedule().catch((error) => LogUtil.error(this.constructor.name, '推送父任务信息到渲染进程失败，', error))
   }
 
   /**
@@ -981,7 +990,7 @@ class TaskRunInstance extends TaskStatus {
    * 任务信息
    * @private
    */
-  private taskInfo: Task
+  private readonly taskInfo: Task
   /**
    * 插件加载器
    * @private
@@ -1304,7 +1313,9 @@ class ResourceSaveStream extends Transform {
       return
     }
     // 发出任务开始保存的事件
-    this.refreshParentStatus([runInstance.parentId])
+    this.refreshParentStatus([runInstance.parentId]).catch((error) =>
+      LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+    )
 
     // 开始任务
     try {
@@ -1340,7 +1351,7 @@ class TaskPersistStream extends Writable {
    * 资源保存结果列表
    * @private
    */
-  private runInstances: TaskRunInstance[]
+  private readonly runInstances: TaskRunInstance[]
   /**
    * 是否正在循环写入
    * @private
@@ -1560,12 +1571,16 @@ class TaskQueueEntrance extends Transform {
         if (resourceSaved) {
           this.resourceReplaceConfirmStream.manualPush(taskRunInstance)
           taskRunInstance.waitUserInput()
-          this.refreshParentState([taskRunInstance.parentId])
+          this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
+            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+          )
           callback()
           return true
         } else {
           taskRunInstance.preStart()
-          this.refreshParentState([taskRunInstance.parentId])
+          this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
+            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+          )
           callback()
           return this.push(taskRunInstance)
         }
@@ -1574,12 +1589,14 @@ class TaskQueueEntrance extends Transform {
         taskRunInstance.inStream = false
         taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
         taskRunInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
-        this.refreshParentState([taskRunInstance.parentId])
+        this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
+          LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+        )
         callback()
         return true
       }
     } catch (error) {
-      this.emit('error', error, taskRunInstance)
+      this.emit('entry-failed', error, taskRunInstance)
       callback()
       return true
     }
