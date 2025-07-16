@@ -1153,15 +1153,17 @@ class TaskRunInstance extends TaskStatus {
     if (this.status === TaskStatusEnum.WAITING) {
       try {
         this.changeStatus(TaskStatusEnum.PROCESSING)
+        AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
+        AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
 
         const resourceWriter = IsNullish(this.resourceWriter) ? new ResourceWriter() : this.resourceWriter
 
-        AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
-        AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
-        const result =
-          this.resSaveSuspended && this.taskInfo.continuable
-            ? this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
-            : this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
+        let result: Promise<TaskProcessResponseDTO>
+        if (this.resSaveSuspended && this.taskInfo.continuable) {
+          result = this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
+        } else {
+          result = this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
+        }
         return result
           .then((saveResult) => {
             this.changeStatus(saveResult.taskStatus)

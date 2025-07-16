@@ -66,6 +66,7 @@ export default class ResourceWriter {
       // 可读流的error事件回调
       const readableErrorHandler = (err: Error) => {
         this.errorOccurred = true
+        this.readable?.unpipe(this.writable)
         LogUtil.error(this.constructor.name, `readable出错${err}`)
         reject(err)
       }

@@ -125,7 +125,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
           return saveResult
         })
         .catch((error) => {
-          fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除失败的资源文件失败，', error))
+          fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
           throw error
         })
     } catch (error) {
@@ -212,6 +212,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public async replaceResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
+    const fullSavePath = resourceSaveDTO.fullSavePath
     AssertNotNullish(resourceId, this.constructor.name, `替换资源失败，资源id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
@@ -219,7 +220,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       `替换作品资源失败，资源不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
     AssertNotNullish(
-      resourceSaveDTO.fullSavePath,
+      fullSavePath,
       this.constructor.name,
       `替换作品资源失败，资源的保存路径不能为空，worksId: ${resourceSaveDTO.worksId}`
     )
@@ -265,6 +266,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
     // 处理资源写入的异常
     const handleError = async (error: unknown) => {
+      fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const backup = await backupPromise
       let recovered = false
       if (NotNullish(backup)) {
@@ -280,9 +282,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     }
     try {
       // 创建保存目录
-      await CreateDirIfNotExists(path.dirname(resourceSaveDTO.fullSavePath))
+      await CreateDirIfNotExists(path.dirname(fullSavePath))
       // 创建写入流
-      const writeStream = fs.createWriteStream(resourceSaveDTO.fullSavePath)
+      const writeStream = fs.createWriteStream(fullSavePath)
 
       // 配置resourceWriter
       resourceWriter.readable = resourceSaveDTO.resourceStream
