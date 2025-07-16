@@ -151,6 +151,7 @@ export class TaskQueue {
         this.queueEntrance.pipe(this.worksInfoSaveStream)
         handleError(error, taskRunInstance)
       })
+      this.worksInfoSaveStream.on('save-failed', handleError)
       const taskInfoStreamDestroyed = new Promise<void>((resolve) =>
         this.worksInfoSaveStream.once('end', () => {
           this.worksInfoSaveStream.destroy()
@@ -1259,9 +1260,13 @@ class WorksInfoSaveStream extends Transform {
       chunk.infoSaved = false
       const msg = `保存任务${chunk.taskId}的作品信息失败`
       const newError = new Error()
-      newError.message = msg + '，' + (error as { message: string }).message
-      LogUtil.error(this.constructor.name, error)
-      this.emit('error', error, chunk)
+      if ((error as { code: string }).code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        newError.message = msg + '，任务保存的作品已经存在'
+      } else {
+        newError.message = msg + '，' + (error as { message: string }).message
+      }
+      LogUtil.error(this.constructor.name, newError)
+      this.emit('save-failed', newError, chunk)
       if (!alreadyCallback) {
         callback()
       }

@@ -312,6 +312,8 @@ tables:
         create_time           integer,
         update_time           integer
       );
+      create unique index works_site_id_site_works_id_index
+      on works (site_id, site_works_id);
 
   - name: works_set
     sql: |
