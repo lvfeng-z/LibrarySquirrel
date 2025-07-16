@@ -1164,23 +1164,16 @@ class TaskRunInstance extends TaskStatus {
         } else {
           result = this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
         }
-        return result
-          .then((saveResult) => {
-            this.changeStatus(saveResult.taskStatus)
-            if (saveResult.taskStatus === TaskStatusEnum.FAILED) {
-              this.errorOccurred = true
-              this.error = saveResult.error
-            }
-            return saveResult
-          })
-          .catch((error) => {
-            this.errorOccurred = true
-            this.failed()
-            this.error = error as Error
-            throw error
-          })
+        const saveResult = await result
+        this.changeStatus(saveResult.taskStatus)
+        if (saveResult.taskStatus === TaskStatusEnum.FAILED) {
+          this.errorOccurred = true
+          this.error = saveResult.error
+        }
+        return saveResult
       } catch (error) {
         this.errorOccurred = true
+        this.failed()
         this.error = error as Error
         throw error
       }
@@ -1309,20 +1302,18 @@ class ResourceSaveStream extends Transform {
     this.refreshParentStatus([runInstance.parentId])
 
     // 开始任务
-    return runInstance
-      .process()
-      .then((saveResult: TaskProcessResponseDTO) => {
-        runInstance.inStream = false
-        if (TaskStatusEnum.PAUSE !== saveResult.taskStatus) {
-          this.push(runInstance)
-          // 下载完成后，是否替换资源的标记重置
-          runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
-        }
-      })
-      .catch((err) => {
-        runInstance.inStream = false
-        this.emit('save-failed', err, runInstance)
-      })
+    try {
+      const saveResult = await runInstance.process()
+      runInstance.inStream = false
+      if (TaskStatusEnum.PAUSE !== saveResult.taskStatus) {
+        this.push(runInstance)
+        // 下载完成后，是否替换资源的标记重置
+        runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
+      }
+    } catch (error) {
+      runInstance.inStream = false
+      this.emit('save-failed', error, runInstance)
+    }
   }
 
   async _transform(chunk: TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {

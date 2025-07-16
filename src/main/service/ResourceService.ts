@@ -264,8 +264,24 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       LogUtil.warn(this.constructor.name, '替换资源时未创建备份，因为原文件不存在，', error)
     }
 
-    // 处理资源写入的异常
-    const handleError = async (error: unknown) => {
+    try {
+      // 创建保存目录
+      await CreateDirIfNotExists(path.dirname(fullSavePath))
+      // 创建写入流
+      const writeStream = fs.createWriteStream(fullSavePath)
+
+      // 配置resourceWriter
+      resourceWriter.readable = resourceSaveDTO.resourceStream
+      resourceWriter.writable = writeStream
+      resourceWriter.resource = new Resource(resourceSaveDTO)
+
+      // 写入资源
+      const saveResult = resourceWriter.doWrite()
+      const tempResForUpdate = new Resource(resourceSaveDTO)
+      tempResForUpdate.id = resourceId
+      this.updateById(tempResForUpdate)
+      return saveResult
+    } catch (error) {
       fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const backup = await backupPromise
       let recovered = false
@@ -279,33 +295,6 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       }
       const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}，原文件${recovered ? '已恢复' : '未能恢复'}`
       LogUtil.error(this.constructor.name, msg, error)
-    }
-    try {
-      // 创建保存目录
-      await CreateDirIfNotExists(path.dirname(fullSavePath))
-      // 创建写入流
-      const writeStream = fs.createWriteStream(fullSavePath)
-
-      // 配置resourceWriter
-      resourceWriter.readable = resourceSaveDTO.resourceStream
-      resourceWriter.writable = writeStream
-      resourceWriter.resource = new Resource(resourceSaveDTO)
-
-      // 创建写入Promise
-      return resourceWriter
-        .doWrite()
-        .then((saveResult) => {
-          const tempResForUpdate = new Resource(resourceSaveDTO)
-          tempResForUpdate.id = resourceId
-          this.updateById(tempResForUpdate)
-          return saveResult
-        })
-        .catch(async (error) => {
-          await handleError(error)
-          throw error
-        })
-    } catch (error) {
-      await handleError(error)
       throw error
     }
   }
