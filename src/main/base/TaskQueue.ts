@@ -1287,7 +1287,17 @@ class WorksInfoSaveStream extends Transform {
  * 资源保存流
  */
 class ResourceSaveStream extends Transform {
-  private processQueue: QueueObject<TaskRunInstance>
+  /**
+   * 资源保存队列
+   * @private
+   */
+  private resSaveQueue: QueueObject<TaskRunInstance>
+
+  /**
+   * 队列是否饱和
+   * @private
+   */
+  private queueFull: boolean
 
   /**
    * 刷新父任务状态
@@ -1298,12 +1308,15 @@ class ResourceSaveStream extends Transform {
   constructor(maxParallel: number, refreshParentStatus: (pids: number[]) => Promise<void>) {
     super({ objectMode: true, highWaterMark: 64, autoDestroy: false }) // 设置为对象模式
     const finalMaxParallel = maxParallel >= 1 ? maxParallel : 1
-    this.processQueue = queue(async (chunk: TaskRunInstance) => this.processTask(chunk), finalMaxParallel)
+    this.queueFull = false
+    this.resSaveQueue = queue(async (chunk: TaskRunInstance) => this.processTask(chunk), finalMaxParallel)
+    this.resSaveQueue.saturated(() => (this.queueFull = true))
+    this.resSaveQueue.unsaturated(() => (this.queueFull = false))
     this.refreshParentStatus = refreshParentStatus
   }
 
   public updateMaxParallel(newNum: number): void {
-    this.processQueue.concurrency = newNum
+    this.resSaveQueue.concurrency = newNum
   }
 
   private async processTask(runInstance: TaskRunInstance): Promise<void> {
@@ -1333,8 +1346,13 @@ class ResourceSaveStream extends Transform {
   }
 
   async _transform(chunk: TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
-    this.processQueue.push(chunk)
-    callback()
+    const saveResultPromise = this.resSaveQueue.push(chunk)
+    if (this.queueFull) {
+      await saveResultPromise
+      callback()
+    } else {
+      callback()
+    }
   }
 }
 
