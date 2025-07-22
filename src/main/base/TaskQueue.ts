@@ -1300,6 +1300,13 @@ class ResourceSaveStream extends Transform {
   private queueFull: boolean
 
   /**
+   * 被阻止的callback
+   * @description因并行下载达到上限而被阻止的callback
+   * @private
+   */
+  private readonly blockedCallback: ((error?: Error | null, data?: unknown) => void)[]
+
+  /**
    * 刷新父任务状态
    * @private
    */
@@ -1310,8 +1317,16 @@ class ResourceSaveStream extends Transform {
     const finalMaxParallel = maxParallel >= 1 ? maxParallel : 1
     this.queueFull = false
     this.resSaveQueue = queue(async (chunk: TaskRunInstance) => this.processTask(chunk), finalMaxParallel)
+    this.blockedCallback = []
     this.resSaveQueue.saturated(() => (this.queueFull = true))
-    this.resSaveQueue.unsaturated(() => (this.queueFull = false))
+    this.resSaveQueue.unsaturated(() => {
+      this.queueFull = false
+      if (ArrayNotEmpty(this.blockedCallback)) {
+        while (this.blockedCallback.length > 0) {
+          this.blockedCallback.shift()?.()
+        }
+      }
+    })
     this.refreshParentStatus = refreshParentStatus
   }
 
@@ -1346,10 +1361,11 @@ class ResourceSaveStream extends Transform {
   }
 
   async _transform(chunk: TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
-    const saveResultPromise = this.resSaveQueue.push(chunk)
+    this.resSaveQueue.push(chunk).catch((error) => {
+      this.emit('error', error, chunk)
+    })
     if (this.queueFull) {
-      await saveResultPromise
-      callback()
+      this.blockedCallback.push(callback)
     } else {
       callback()
     }
