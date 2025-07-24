@@ -1322,7 +1322,7 @@ class ResourceSaveStream extends Transform {
     this.resSaveQueue.unsaturated(() => {
       this.queueFull = false
       if (ArrayNotEmpty(this.blockedCallback)) {
-        while (this.blockedCallback.length > 0) {
+        while (this.blockedCallback.length > 0 && !this.queueFull) {
           this.blockedCallback.shift()?.()
         }
       }
