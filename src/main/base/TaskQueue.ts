@@ -41,6 +41,18 @@ export class TaskQueue {
   private readonly parentMap: Map<number, ParentRunInstance>
 
   /**
+   * 所有待处理的数组
+   * @private
+   */
+  private readonly runInstBuffer: TaskRunInstance[][]
+
+  /**
+   * 当前数组中的索引
+   * @private
+   */
+  private currentBufferIndex: number
+
+  /**
    * 任务服务
    * @private
    */
@@ -109,6 +121,8 @@ export class TaskQueue {
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
+    this.runInstBuffer = []
+    this.currentBufferIndex = 0
     this.taskService = new TaskService()
     this.worksService = new WorksService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
@@ -116,7 +130,7 @@ export class TaskQueue {
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
 
-    this.queueEntrance = new TaskQueueEntrance(new ResourceService(), this.refreshParentStatus.bind(this))
+    this.queueEntrance = new TaskQueueEntrance(this.getNext.bind(this), new ResourceService(), this.refreshParentStatus.bind(this))
     this.worksInfoSaveStream = new WorksInfoSaveStream()
     // 读取设置中的最大并行数
     const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
@@ -446,7 +460,7 @@ export class TaskQueue {
       .map((runInst) => runInst.taskId)
     const parentIds = runInstList.map((runInst) => runInst.parentId)
     this.pauseTask(ids)
-    await this.queueEntrance.preDestroy()
+    this.queueEntrance.preDestroy()
     this.queueEntrance.destroy()
     await this.readyToClose
     await this.refreshParentStatus(parentIds)
@@ -551,9 +565,9 @@ export class TaskQueue {
     // 刷新父任务状态
     await this.fillChildren(runInstances)
     // this.refreshParentStatus(runInstances.map((runInstance) => runInstance.parentId))
-
-    this.queueEntrance.addArray(runInstances)
-    this.queueEntrance.process()
+    // this.queueEntrance.manualStart()
+    this.runInstBuffer.push(runInstances)
+    this.queueEntrance.manualStart()
   }
 
   /**
@@ -872,6 +886,30 @@ export class TaskQueue {
     } else {
       LogUtil.warn(this.constructor.name, `移除父任务运行实例失败，父任务运行实例不存在，taskId: ${taskId}`)
     }
+  }
+
+  /**
+   * 获取下一个运行实例
+   * @private
+   */
+  private getNext(): TaskRunInstance | undefined {
+    // 如果没有更多的数组或当前数组已经处理完毕，尝试切换到下一个数组
+    while (ArrayNotEmpty(this.runInstBuffer)) {
+      if (this.currentBufferIndex >= this.runInstBuffer[0].length) {
+        this.runInstBuffer.shift()
+        this.currentBufferIndex = 0
+      } else {
+        break
+      }
+    }
+
+    // 如果所有数组都已经处理完毕，等待新数据推入数据源
+    if (ArrayIsEmpty(this.runInstBuffer)) {
+      return
+    }
+
+    // 从当前数组中读取一个元素返回
+    return this.runInstBuffer[0][this.currentBufferIndex++]
   }
 }
 
@@ -1501,36 +1539,12 @@ class TaskPersistStream extends Writable {
 /**
  * 任务队列入口流
  */
-class TaskQueueEntrance extends Transform {
+class TaskQueueEntrance extends Readable {
   /**
-   * 所有待处理的数组
+   * 获取下一个待处理的任务的函数
    * @private
    */
-  private readonly allInstLists: TaskRunInstance[][]
-
-  /**
-   * 当前数组中的索引
-   * @private
-   */
-  private currentIndex: number
-
-  /**
-   * 资源服务
-   * @private
-   */
-  private resourceService: ResourceService
-
-  /**
-   * 询问用户是否替换资源的流
-   * @private
-   */
-  private resourceReplaceConfirmStream: ResourceReplaceConfirmStream
-
-  /**
-   * 是否正在进行中
-   * @private
-   */
-  private processing: boolean
+  private readonly getNext: () => TaskRunInstance | undefined
 
   /**
    * 刷新父任务状态
@@ -1538,111 +1552,81 @@ class TaskQueueEntrance extends Transform {
    */
   private readonly refreshParentState: (pids: number[]) => Promise<void>
 
-  constructor(resService: ResourceService, refreshParent: (pids: number[]) => Promise<void>) {
+  /**
+   * 等待响应的任务id-运行实例map
+   * @private
+   */
+  private readonly waitingMap: Map<number, TaskRunInstance>
+
+  /**
+   * 已响应的运行实例列表
+   * @private
+   */
+  private readonly resolvedList: TaskRunInstance[]
+
+  /**
+   * 下游是否正在等待
+   * @private
+   */
+  private downstreamWaiting: boolean
+
+  /**
+   * 资源服务
+   * @private
+   */
+  private resourceService: ResourceService
+
+  constructor(
+    getNext: () => TaskRunInstance | undefined,
+    resService: ResourceService,
+    refreshParent: (pids: number[]) => Promise<void>
+  ) {
     super({ objectMode: true })
-    this.allInstLists = []
-    this.currentIndex = 0
-    this.resourceService = resService
-    this.resourceReplaceConfirmStream = new ResourceReplaceConfirmStream()
-    this.resourceReplaceConfirmStream.pipe(this)
-    this.on('error', () => {
-      this.resourceReplaceConfirmStream.unpipe(this)
-      this.resourceReplaceConfirmStream.pipe(this)
-    })
-    this.processing = false
+    this.getNext = getNext
     this.refreshParentState = refreshParent
-  }
+    this.waitingMap = new Map()
+    this.resolvedList = []
+    this.downstreamWaiting = false
+    this.resourceService = resService
 
-  /**
-   * 添加一个新的运行实例数组到流中
-   * @param array 运行实例数组
-   */
-  public async addArray(array: TaskRunInstance[]) {
-    this.allInstLists.push(array)
-  }
-
-  /**
-   * 开始流
-   */
-  public process() {
-    if (this.processing) return // 如果已经在处理了，则直接返回
-    this.processing = true
-
-    const processNextChunk = async () => {
-      const next = this.getNext()
-      if (NotNullish(next)) {
-        const isDrain = await this._transform(next, 'utf-8', () => {})
-        if (!isDrain) {
-          // 如果返回false，表示下游无法接受更多数据，暂停处理直到drain事件
-          this.once('drain', processNextChunk)
-        } else {
-          // 继续处理下一个运行实例
-          process.nextTick(processNextChunk)
+    // 收到确认替换的响应事件后调用对应的resolve函数
+    Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: number[], confirmed: boolean) => {
+      receivedIds.map((taskId: number) => {
+        const taskRunInstance = this.waitingMap.get(taskId)
+        if (NotNullish(taskRunInstance)) {
+          taskRunInstance.confirmReplaceRes = confirmed ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
+          this.waitingMap.delete(taskId)
+          this.resolvedList.push(taskRunInstance)
         }
-      } else {
-        this.processing = false
-      }
-    }
-
-    return processNextChunk() // 开始处理第一个运行实例
-  }
-
-  async _transform(taskRunInstance: TaskRunInstance, _encoding: BufferEncoding, callback: TransformCallback): Promise<boolean> {
-    try {
-      if (taskRunInstance.resSaveSuspended) {
-        // 如果资源保存是中断的，则直接推入下游，不用判断是否保存过资源
-        taskRunInstance.preStart()
-        callback()
-        return this.push(taskRunInstance)
-      } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.CONFIRM) {
-        // 如果没有中断，则判断用户是否确认替换资源
-        taskRunInstance.preStart()
-        callback()
-        return this.push(taskRunInstance)
-      } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.UNKNOWN) {
-        // 如果用户未确认过是否替换，判断是否保存过资源，保存过就询问用户是否替换
-        const resourceSaved = await this.isResourceSaved(taskRunInstance)
-        if (resourceSaved) {
-          this.resourceReplaceConfirmStream.manualPush(taskRunInstance)
-          taskRunInstance.waitUserInput()
-          this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
-            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
-          )
-          callback()
-          return true
-        } else {
-          taskRunInstance.preStart()
-          this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
-            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
-          )
-          callback()
-          return this.push(taskRunInstance)
-        }
-      } else {
-        // 用户拒绝替换的情况下这个运行实例不推入下游，是否替换资源的标记重置，返回true
-        taskRunInstance.inStream = false
-        taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
-        taskRunInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
-        this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
-          LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
-        )
-        callback()
-        return true
-      }
-    } catch (error) {
-      this.emit('entry-failed', error, taskRunInstance)
-      callback()
-      return true
-    }
-  }
-
-  public async preDestroy(): Promise<void> {
-    this.resourceReplaceConfirmStream.forceClose()
-    return new Promise<void>((resolve) => {
-      this.once('finish', () => {
-        this.push(null)
-        resolve()
       })
+      if (this.downstreamWaiting) {
+        this.processNext()
+      }
+    })
+  }
+
+  /**
+   * 手动开始
+   */
+  public async manualStart(): Promise<boolean> {
+    return this.processNext()
+  }
+
+  async _read(): Promise<boolean> {
+    return this.processNext()
+  }
+
+  /**
+   * 进行摧毁前的准备
+   */
+  public preDestroy(): void {
+    if (this.waitingMap.size === 0) {
+      this.push(null)
+    }
+    Electron.ipcMain.removeAllListeners('task-queue-resource-replace-confirm-echo')
+    this.waitingMap.values().forEach((runInstance) => {
+      runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.REFUSE
+      this.push(runInstance)
     })
   }
 
@@ -1660,115 +1644,60 @@ class TaskQueueEntrance extends Transform {
   }
 
   /**
-   * 获取下一个运行实例
+   * 处理下一个对象
    * @private
    */
-  private getNext(): TaskRunInstance | undefined {
-    // 如果没有更多的数组或当前数组已经处理完毕，尝试切换到下一个数组
-    while (ArrayNotEmpty(this.allInstLists)) {
-      if (this.currentIndex >= this.allInstLists[0].length) {
-        this.allInstLists.shift()
-        this.currentIndex = 0
-      } else {
-        break
-      }
-    }
-
-    // 如果所有数组都已经处理完毕，等待新数据推入数据源
-    if (ArrayIsEmpty(this.allInstLists)) {
-      return
-    }
-
-    // 从当前数组中读取一个元素返回
-    return this.allInstLists[0][this.currentIndex++]
-  }
-}
-
-/**
- * 询问用户是否替换原有资源的流
- */
-class ResourceReplaceConfirmStream extends Readable {
-  /**
-   * 等待响应的任务id-运行实例map
-   * @private
-   */
-  private readonly waitingMap: Map<number, TaskRunInstance>
-
-  /**
-   * 已响应的运行实例列表
-   * @private
-   */
-  private readonly resolvedList: TaskRunInstance[]
-
-  /**
-   * 下游是否正在等待数据
-   * @private
-   */
-  private waitingData: boolean
-
-  /**
-   * 是否已经强制关闭
-   * @private
-   */
-  private forceClosed: boolean
-
-  constructor() {
-    super({ objectMode: true })
-    this.waitingMap = new Map()
-    this.resolvedList = []
-    this.waitingData = false
-    this.forceClosed = false
-    // 收到确认替换的响应事件后调用对应的resolve函数
-    Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: number[], confirmed: boolean) => {
-      receivedIds.map((taskId: number) => {
-        const taskRunInstance = this.waitingMap.get(taskId)
-        if (NotNullish(taskRunInstance)) {
-          taskRunInstance.confirmReplaceRes = confirmed ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
-          this.waitingMap.delete(taskId)
-          this.resolvedList.push(taskRunInstance)
-          if (this.waitingData) {
-            this._read()
+  private async processNext(): Promise<boolean> {
+    let taskRunInstance: TaskRunInstance | undefined = undefined
+    try {
+      while (true) {
+        taskRunInstance = this.getNext()
+        if (IsNullish(taskRunInstance)) {
+          taskRunInstance = this.resolvedList.shift()
+          if (IsNullish(taskRunInstance)) {
+            break
           }
         }
-      })
-    })
-  }
-
-  _read() {
-    const firstResolved = this.resolvedList.shift()
-    if (NotNullish(firstResolved)) {
-      this.push(firstResolved)
-    } else if (this.waitingMap.size === 0) {
-      if (this.forceClosed) {
-        this.push(null)
-      } else {
-        this.waitingData = true
+        if (taskRunInstance.resSaveSuspended) {
+          // 如果资源保存是中断的，则直接推入下游，不用判断是否保存过资源
+          taskRunInstance.preStart()
+          return this.push(taskRunInstance)
+        } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.CONFIRM) {
+          // 如果没有中断，则判断用户是否确认替换资源
+          taskRunInstance.preStart()
+          return this.push(taskRunInstance)
+        } else if (taskRunInstance.confirmReplaceRes === ConfirmReplaceResStateEnum.REFUSE) {
+          // 用户拒绝替换的情况下这个运行实例不推入下游，是否替换资源的标记重置，返回true
+          taskRunInstance.inStream = false
+          taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
+          taskRunInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
+          this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
+            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+          )
+        } else {
+          // 如果用户未确认过是否替换，判断是否保存过资源，保存过就询问用户是否替换
+          const resourceSaved = await this.isResourceSaved(taskRunInstance)
+          if (resourceSaved) {
+            this.sendReplaceConfirmToMainWindow(taskRunInstance, String(taskRunInstance.getTaskInfo().taskName))
+            taskRunInstance.waitUserInput()
+            this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
+              LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+            )
+          } else {
+            taskRunInstance.preStart()
+            this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
+              LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+            )
+            return this.push(taskRunInstance)
+          }
+        }
       }
+      this.downstreamWaiting = true
+      return true
+    } catch (error) {
+      this.emit('entry-failed', error, taskRunInstance)
+      return true
     }
-  }
-
-  /**
-   * 强制关闭流，所有询问的等待全部返回拒绝
-   */
-  public forceClose() {
-    this.forceClosed = true
-    if (this.waitingMap.size === 0) {
-      this.push(null)
-    }
-    Electron.ipcMain.removeAllListeners('task-queue-resource-replace-confirm-echo')
-    this.waitingMap.values().forEach((runInstance) => {
-      runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.REFUSE
-      this.push(runInstance)
-    })
-    this.push(null)
-  }
-
-  /**
-   * 手动推入
-   * @param taskRunInstance
-   */
-  public manualPush(taskRunInstance: TaskRunInstance): void {
-    this.sendReplaceConfirmToMainWindow(taskRunInstance, taskRunInstance.getTaskInfo().taskName + '')
   }
 
   /**
