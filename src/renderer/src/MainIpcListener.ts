@@ -2,13 +2,16 @@ import TaskProgressDTO from '@renderer/model/main/dto/TaskProgressDTO.ts'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import TaskProgressMapTreeDTO from '@renderer/model/main/dto/TaskProgressMapTreeDTO.ts'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElNotification } from 'element-plus'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import ConfirmConfig from '@renderer/model/util/ConfirmConfig.ts'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { PageEnum } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
+import { h } from 'vue'
+import NotifyConfig from '@renderer/model/util/NotifyConfig.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 
 export function iniListener() {
   // 任务队列
@@ -49,6 +52,27 @@ export function iniListener() {
     })
       .then(() => window.electron.ipcRenderer.send('custom-confirm-echo', confirmId, true))
       .catch(() => window.electron.ipcRenderer.send('custom-confirm-echo', confirmId, false))
+  })
+
+  // 自定义通知
+  window.electron.ipcRenderer.on('custom-notify', (_event: Electron.IpcRendererEvent, config: NotifyConfig) => {
+    ElNotification({
+      type: config.type,
+      message: h(
+        'span',
+        {
+          style: {
+            display: '-webkit-box',
+            '-webkit-box-orient': 'vertical',
+            '-webkit-line-clamp': IsNullish(config.maxRow) ? 3 : config.maxRow,
+            overflow: 'hidden',
+            'text-overflow': 'ellipsis'
+          }
+        },
+        config.msg
+      ),
+      duration: config.duration
+    })
   })
 
   // // 已有资源替换确认弹窗

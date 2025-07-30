@@ -24,6 +24,7 @@ import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rename, rm } from 'node:fs/promises'
 import Backup from '../model/entity/Backup.js'
+import { SendNotifyToWindow } from '../util/MainWindowUtil.js'
 
 /**
  * 资源服务
@@ -256,8 +257,8 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
           rm(backupAbsolutePath)
           return backup
         })
-        .catch(() => {
-          // TODO 通知用户创建备份失败
+        .catch((error) => {
+          SendNotifyToWindow({ type: 'error', msg: `创建备份失败，原文件【${oldResAbsolutePath}】，${error.message}` })
           return undefined
         })
     } catch (error) {

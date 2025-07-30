@@ -1,8 +1,10 @@
 import Electron from 'electron'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
 import { v4 } from 'uuid'
+import ConfirmConfig from '../model/util/ConfirmConfig.js'
+import NotifyConfig from '../model/util/NotifyConfig.js'
 
-export function SendConfirmToWindow(config: ConfirmConfigConstruct): Promise<boolean> {
+export function SendConfirmToWindow(config: ConfirmConfig): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     const confirmId = v4()
     Electron.ipcMain.on('custom-confirm-echo', (_event, receivedId: string, confirmed: boolean) => {
@@ -14,10 +16,6 @@ export function SendConfirmToWindow(config: ConfirmConfigConstruct): Promise<boo
   })
 }
 
-export interface ConfirmConfigConstruct {
-  title: string
-  msg: string
-  confirmButtonText: string
-  cancelButtonText: string
-  type: 'primary' | 'success' | 'warning' | 'info' | 'error'
+export function SendNotifyToWindow(config: NotifyConfig): void {
+  GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('custom-notify', config)
 }
