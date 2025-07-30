@@ -42,6 +42,9 @@ const api = {
   localTagListByWorksId: (args) => Electron.ipcRenderer.invoke('localTag-listByWorksId', args),
   localTagQuerySelectItemPageByWorksId: (args) => Electron.ipcRenderer.invoke('localTag-querySelectItemPageByWorksId', args),
 
+  //OpenUrlInWindow
+  getBrowserWindow: (args) => Electron.ipcRenderer.invoke('getBrowserWindow', args),
+
   // Plugin
   pluginQueryPage: (args) => Electron.ipcRenderer.invoke('plugin-queryPage', args),
   pluginInstallFromPath: (args) => Electron.ipcRenderer.invoke('plugin-installFromPath', args),

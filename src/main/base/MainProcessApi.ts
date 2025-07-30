@@ -23,6 +23,7 @@ import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.js'
 import Site from '../model/entity/Site.js'
 import SiteDomainService from '../service/SiteDomainService.js'
 import PluginService from '../service/PluginService.js'
+import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 
 function exposeService() {
   // test
@@ -257,6 +258,12 @@ function exposeService() {
     } catch (error) {
       return returnError(error)
     }
+  })
+
+  // GetBrowserWindow
+  Electron.ipcMain.handle('getBrowserWindow', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'getBrowserWindow')
+    GetBrowserWindow(args)
   })
 
   // PluginService

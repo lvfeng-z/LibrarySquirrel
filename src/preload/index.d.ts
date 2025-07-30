@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { GetBrowserWindow } from '../main/util/MainWindowUtil'
 
 declare global {
   interface Window {
@@ -43,6 +44,9 @@ declare global {
       localTagQuerySelectItemPage: function
       localTagListByWorksId: function
       localTagQuerySelectItemPageByWorksId: function
+
+      // OpenUrlInWindow
+      getBrowserWindow: function
 
       // Plugin
       pluginQueryPage: function

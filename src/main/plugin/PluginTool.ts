@@ -1,15 +1,16 @@
 import { EventEmitter } from 'node:events'
 import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
+import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 
 export default class PluginTool {
   /**
    * 事件收发器
    * @private
    */
-  events: EventEmitter
+  emitter: EventEmitter
 
   constructor(events: EventEmitter) {
-    this.events = events
+    this.emitter = events
   }
 
   /**
@@ -18,10 +19,10 @@ export default class PluginTool {
    */
   public explainPath(dir: string): Promise<MeaningOfPath[]> {
     return new Promise((resolve) => {
-      this.events.on('explain-path-response', (response) => {
+      this.emitter.on('explain-path-response', (response) => {
         resolve(response)
       })
-      this.events.emit('explain-path-request', dir)
+      this.emitter.emit('explain-path-request', dir)
     })
   }
 
@@ -30,6 +31,15 @@ export default class PluginTool {
    * @param collectionName 任务集名称
    */
   public changeCollectionName(collectionName: string): void {
-    this.events.emit('change-collection-name-request', collectionName)
+    this.emitter.emit('change-collection-name-request', collectionName)
+  }
+
+  /**
+   * 获取一个BrowserWindow实例
+   * @param width 窗口宽度
+   * @param height 窗口高度
+   */
+  public getBrowserWindow(width?: number, height?: number): Electron.BrowserWindow {
+    return GetBrowserWindow(width, height)
   }
 }

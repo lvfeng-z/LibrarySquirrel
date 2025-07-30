@@ -96,7 +96,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         parentTask.status = TaskStatusEnum.CREATED
         parentTask.isCollection = true
         parentTask.saved = false
-        taskHandler.pluginTool.events.on('change-collection-name-request', (taskName: string) => {
+        taskHandler.pluginTool.emitter.on('change-collection-name-request', (taskName: string) => {
           parentTask.taskName = taskName
           if (parentTask.saved) {
             const tempTask = new Task(parentTask)
