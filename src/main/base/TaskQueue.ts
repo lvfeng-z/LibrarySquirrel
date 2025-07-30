@@ -21,6 +21,8 @@ import { queue, QueueObject } from 'async'
 import ResourceService from '../service/ResourceService.js'
 import Electron from 'electron'
 import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
+import Site from '../model/entity/Site.js'
+import SiteService from '../service/SiteService.js'
 
 /**
  * 任务队列
@@ -59,10 +61,16 @@ export class TaskQueue {
   private readonly taskService: TaskService
 
   /**
-   * 任务服务
+   * 作品服务
    * @private
    */
   private worksService: WorksService
+
+  /**
+   * 站点服务
+   * @private
+   */
+  private siteService: SiteService
 
   /**
    * 插件加载器
@@ -118,6 +126,12 @@ export class TaskQueue {
    */
   private parentSchedulePushing: boolean
 
+  /**
+   * 站点信息缓存
+   * @private
+   */
+  private siteCache: Map<number, Site>
+
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
@@ -125,10 +139,12 @@ export class TaskQueue {
     this.currentBufferIndex = 0
     this.taskService = new TaskService()
     this.worksService = new WorksService()
+    this.siteService = new SiteService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
     this.closed = false
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
+    this.siteCache = new Map()
 
     this.queueEntrance = new TaskQueueEntrance(this.getNext.bind(this), new ResourceService(), this.refreshParentStatus.bind(this))
     this.worksInfoSaveStream = new WorksInfoSaveStream()
@@ -355,7 +371,9 @@ export class TaskQueue {
       if (this.closed) {
         break
       }
-      SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
+      if (ArrayNotEmpty(taskScheduleList)) {
+        SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
+      }
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
     this.taskSchedulePushing = false
@@ -805,7 +823,7 @@ export class TaskQueue {
    * @param task 任务信息
    * @private
    */
-  private inletTask(taskRunInstance: TaskRunInstance, task: Task) {
+  private async inletTask(taskRunInstance: TaskRunInstance, task: Task) {
     // 清除原有的删除定时器
     const oldInst = this.taskMap.get(taskRunInstance.taskId)
     if (NotNullish(oldInst)) {
@@ -815,6 +833,11 @@ export class TaskQueue {
     // 任务运行信息推送到渲染进程
     const taskProgressDTO = new TaskProgressDTO()
     CopyIgnoreUndefined(taskProgressDTO, task)
+    // 补充taskProgressDTO的站点名称，否则完成任务时的提示中，站点名称显示undefined
+    const siteId = taskProgressDTO.siteId
+    if (NotNullish(siteId)) {
+      taskProgressDTO.siteName = (await this.getSite(siteId))?.siteName
+    }
     SendMsgToRender(RenderEvent.TASK_STATUS_SET_TASK, [taskProgressDTO])
   }
 
@@ -910,6 +933,22 @@ export class TaskQueue {
 
     // 从当前数组中读取一个元素返回
     return this.runInstBuffer[0][this.currentBufferIndex++]
+  }
+
+  /**
+   * 获取站点信息
+   * @param siteId 站点id
+   * @private
+   */
+  private async getSite(siteId: number): Promise<Site | undefined> {
+    let result = this.siteCache.get(siteId)
+    if (IsNullish(result)) {
+      result = await this.siteService.getById(siteId)
+      if (NotNullish(result)) {
+        this.siteCache.set(siteId, result)
+      }
+    }
+    return result
   }
 }
 
