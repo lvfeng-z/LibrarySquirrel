@@ -61,8 +61,8 @@ export const useTaskStore = defineStore('task', {
               IsNullish(taskStoreObj.notificationId) &&
               (TaskStatusEnum.PROCESSING === task.status || TaskStatusEnum.WAITING === task.status)
             ) {
-              const notificationItem = createNotificationItem(task)
-              useNotificationStore().add(notificationItem)
+              const notificationItem = createNotificationItem(taskStoreObj.task)
+              taskStoreObj.notificationId = useNotificationStore().add(notificationItem)
             }
           }
           CopyIgnoreUndefined(taskStoreObj.task, task)
@@ -104,7 +104,7 @@ export type TaskStoreObj = {
 
 function createNotificationItem(task: TaskProgressDTO): NotificationItem {
   const notificationItem = new NotificationItem()
-  notificationItem.title = task.taskName as string
-  notificationItem.render = () => h('div', {}, () => task.finished)
+  notificationItem.title = `任务【${task.taskName}】`
+  notificationItem.render = () => h('div', {}, '下载中')
   return notificationItem
 }
