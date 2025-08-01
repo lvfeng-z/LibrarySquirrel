@@ -68,7 +68,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     const pluginInfo = JSON.stringify(pluginDTO)
 
     const module = await import(pluginDTO.loadPath)
-    const response = new module.default(pluginTool)
+    const response = new module.default(pluginTool, pluginDTO.pluginData)
 
     // 验证taskPlugin是否实现了TaskHandler接口
     let isTaskHandler: boolean
