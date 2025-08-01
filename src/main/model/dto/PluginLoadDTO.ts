@@ -8,14 +8,13 @@ export default class PluginLoadDTO extends Plugin {
   loadPath: string | undefined | null
 
   constructor(pluginDTO?: PluginLoadDTO | Plugin) {
+    super(pluginDTO)
     if (IsNullish(pluginDTO)) {
-      super()
       this.loadPath = undefined
     } else if (pluginDTO instanceof PluginLoadDTO) {
       super(pluginDTO)
       this.loadPath = pluginDTO.loadPath
     } else {
-      super()
       this.loadPath = undefined
     }
   }
