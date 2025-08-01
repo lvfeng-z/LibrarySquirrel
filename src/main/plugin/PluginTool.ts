@@ -9,8 +9,26 @@ export default class PluginTool {
    */
   emitter: EventEmitter
 
-  constructor(events: EventEmitter) {
+  /**
+   * 更新插件数据
+   * @private
+   */
+  private readonly _updatePluginData: (pluginData: string) => Promise<number>
+
+  /**
+   * 获取插件数据
+   * @private
+   */
+  private readonly _getPluginData: () => Promise<string | undefined>
+
+  constructor(
+    events: EventEmitter,
+    updatePluginData: (pluginData: string) => Promise<number>,
+    getPluginData: () => Promise<string | undefined>
+  ) {
     this.emitter = events
+    this._updatePluginData = updatePluginData
+    this._getPluginData = getPluginData
   }
 
   /**
@@ -41,5 +59,20 @@ export default class PluginTool {
    */
   public getBrowserWindow(width?: number, height?: number): Electron.BrowserWindow {
     return GetBrowserWindow(width, height)
+  }
+
+  /**
+   * 获取插件数据
+   */
+  public getPluginData(): Promise<string | undefined> {
+    return this._getPluginData()
+  }
+
+  /**
+   * 更新插件数据
+   * @param pluginData 插件数据
+   */
+  public setPluginData(pluginData: string): Promise<number> {
+    return this._updatePluginData(pluginData)
   }
 }

@@ -70,7 +70,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
 
     // 插件加载器
-    const pluginLoader = new PluginLoader(new TaskHandlerFactory())
+    const pluginLoader = new PluginLoader(new TaskHandlerFactory(), new PluginService(this.db))
 
     // 按照排序尝试每个插件
     for (const taskPlugin of taskPlugins) {

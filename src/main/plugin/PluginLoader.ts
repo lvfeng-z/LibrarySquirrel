@@ -11,6 +11,8 @@ import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginFactory from './PluginFactory.js'
 import { BasePlugin } from '../base/BasePlugin.js'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import PluginService from '../service/PluginService.js'
+import Plugin from '../model/entity/Plugin.js'
 
 export default class PluginLoader<T extends BasePlugin> {
   /**
@@ -21,25 +23,21 @@ export default class PluginLoader<T extends BasePlugin> {
   /**
    * 主窗口对象
    */
-  private mainWindow: Electron.BrowserWindow
-  /**
-   * 插件工具
-   */
-  private pluginTool: PluginTool
-
+  private readonly mainWindow: Electron.BrowserWindow
   /**
    * 插件缓存
    * @private
    */
   private readonly pluginCache: Record<number, Promise<T>>
+  private readonly pluginService: PluginService
 
-  constructor(factory: PluginFactory<T>) {
+  constructor(factory: PluginFactory<T>, pluginService: PluginService) {
     this.factory = factory
     this.mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+    this.pluginService = pluginService
     const event = new EventEmitter()
 
     this.attachExplainPathEvents(event)
-    this.pluginTool = new PluginTool(event)
     this.pluginCache = {}
   }
 
@@ -48,7 +46,17 @@ export default class PluginLoader<T extends BasePlugin> {
     let plugin: Promise<T>
 
     if (IsNullish(this.pluginCache[pluginId])) {
-      plugin = this.factory.create(pluginId, this.pluginTool)
+      const pluginTool = new PluginTool(
+        this.mainWindow,
+        async (pluginData: string) => {
+          const tempPlugin = new Plugin()
+          tempPlugin.id = pluginId
+          tempPlugin.pluginData = pluginData
+          return this.pluginService.updateById(tempPlugin)
+        },
+        () => this.pluginService.getById(pluginId).then((plugin) => (IsNullish(plugin?.pluginData) ? undefined : plugin.pluginData))
+      )
+      plugin = this.factory.create(pluginId, pluginTool)
       this.pluginCache[pluginId] = plugin
       return plugin
     } else {

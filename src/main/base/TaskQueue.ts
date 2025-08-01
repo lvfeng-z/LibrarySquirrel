@@ -23,6 +23,7 @@ import Electron from 'electron'
 import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
 import Site from '../model/entity/Site.js'
 import SiteService from '../service/SiteService.js'
+import PluginService from '../service/PluginService.js'
 
 /**
  * 任务队列
@@ -71,6 +72,12 @@ export class TaskQueue {
    * @private
    */
   private siteService: SiteService
+
+  /**
+   * 插件服务
+   * @private
+   */
+  private pluginService: PluginService
 
   /**
    * 插件加载器
@@ -140,7 +147,8 @@ export class TaskQueue {
     this.taskService = new TaskService()
     this.worksService = new WorksService()
     this.siteService = new SiteService()
-    this.pluginLoader = new PluginLoader(new TaskHandlerFactory())
+    this.pluginService = new PluginService()
+    this.pluginLoader = new PluginLoader(new TaskHandlerFactory(), this.pluginService)
     this.closed = false
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false

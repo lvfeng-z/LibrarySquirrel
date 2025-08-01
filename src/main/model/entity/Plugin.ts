@@ -47,6 +47,11 @@ export default class Plugin extends BaseEntity {
    */
   sortNum: number | undefined | null
 
+  /**
+   * 插件数据
+   */
+  pluginData: string | undefined | null
+
   constructor(plugin?: Plugin) {
     super(plugin)
     if (NotNullish(plugin)) {
@@ -59,6 +64,7 @@ export default class Plugin extends BaseEntity {
       this.fileName = plugin.fileName
       this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum
+      this.pluginData = plugin.pluginData
     }
   }
 }
