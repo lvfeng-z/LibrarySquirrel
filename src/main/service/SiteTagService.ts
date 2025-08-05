@@ -10,7 +10,7 @@ import DB from '../database/DB.ts'
 import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
-import { Operator } from '../constant/CrudConstant.js'
+import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import SiteService from './SiteService.js'
 import SiteTagPluginDTO from '../model/dto/SiteTagPluginDTO.js'
 import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
@@ -39,6 +39,9 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         return { siteTagId: siteTag.siteTagId, siteId: siteTag.siteId }
       })
       .filter(NotNullish)
+    if (ArrayNotEmpty(tempParam)) {
+      return SAVE_FAILED
+    }
     const oldSiteTags = await this.listBySiteTag(tempParam)
     const newSiteTags = siteTags.map((siteTag) => {
       AssertNotNullish(siteTag.siteTagId, this.constructor.name, '保存站点标签失败，站点标签的id不能为空')

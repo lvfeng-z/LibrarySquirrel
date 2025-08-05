@@ -193,7 +193,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param siteAuthors 站点作者
    */
   public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
-    AssertArrayNotEmpty(siteAuthors, this.constructor.name, '根据站点标签查询失败，参数不能为空')
+    AssertArrayNotEmpty(siteAuthors, this.constructor.name, '根据站点作者查询失败，参数不能为空')
     const whereClause = siteAuthors
       .map((siteAuthor) => `(site_author_id = ${siteAuthor.siteAuthorId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')

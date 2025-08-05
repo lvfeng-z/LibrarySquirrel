@@ -9,7 +9,7 @@ import DB from '../database/DB.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
-import { Operator } from '../constant/CrudConstant.js'
+import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
 import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
@@ -79,6 +79,9 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return { siteAuthorId: siteAuthor.siteAuthorId, siteId: siteAuthor.siteId }
       })
       .filter(NotNullish)
+    if (ArrayNotEmpty(tempParam)) {
+      return SAVE_FAILED
+    }
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
     const modifiedSiteAuthors = siteAuthors.map((siteAuthor) => {
       AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id不能为空')
