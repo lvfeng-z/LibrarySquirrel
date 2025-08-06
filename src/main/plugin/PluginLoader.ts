@@ -46,7 +46,11 @@ export default class PluginLoader<T extends BasePlugin> {
     let plugin: Promise<T>
 
     if (IsNullish(this.pluginCache[pluginId])) {
+      const pluginService = new PluginService()
+      const pluginLoadDTO = await pluginService.getDTOById(pluginId)
+      const pluginName = String(pluginLoadDTO?.name)
       const pluginTool = new PluginTool(
+        pluginName,
         this.mainWindow,
         async (pluginData: string) => {
           const tempPlugin = new Plugin()
@@ -56,7 +60,7 @@ export default class PluginLoader<T extends BasePlugin> {
         },
         () => this.pluginService.getById(pluginId).then((plugin) => (IsNullish(plugin?.pluginData) ? undefined : plugin.pluginData))
       )
-      plugin = this.factory.create(pluginId, pluginTool)
+      plugin = this.factory.create(pluginLoadDTO, pluginTool)
       this.pluginCache[pluginId] = plugin
       return plugin
     } else {

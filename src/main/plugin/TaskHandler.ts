@@ -3,11 +3,11 @@ import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { PluginTaskResParam } from './PluginTaskResParam.ts'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
-import PluginService from '../service/PluginService.js'
 import { BasePlugin } from '../base/BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
 import PluginTaskResponseDTO from '../model/dto/PluginTaskResponseDTO.js'
 import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
+import PluginLoadDTO from '../model/dto/PluginLoadDTO.js'
 
 export interface TaskHandler extends BasePlugin {
   pluginTool: PluginTool
@@ -59,11 +59,10 @@ export interface TaskHandler extends BasePlugin {
 }
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
-  async create(pluginId: number, pluginTool?: PluginTool): Promise<TaskHandler> {
+  async create(pluginDTO: PluginLoadDTO, pluginTool?: PluginTool): Promise<TaskHandler> {
+    AssertNotNullish(pluginDTO.id, this.constructor.name, `创建任务插件失败，pluginId不能为空`)
     AssertNotNullish(pluginTool, this.constructor.name, `创建任务插件失败，pluginTool不能为空`)
 
-    const pluginService = new PluginService()
-    const pluginDTO = await pluginService.getDTOById(pluginId)
     AssertNotBlank(pluginDTO.loadPath, this.constructor.name, `创建任务插件失败，插件加载入口不可用`)
     const pluginInfo = JSON.stringify(pluginDTO)
 
@@ -101,7 +100,7 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现resume方法，${pluginInfo}`)
 
     const taskHandler = response as TaskHandler
-    taskHandler.pluginId = pluginId
+    taskHandler.pluginId = pluginDTO.id
     return taskHandler
   }
 }

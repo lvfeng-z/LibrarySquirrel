@@ -1,8 +1,14 @@
 import { EventEmitter } from 'node:events'
 import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
+import log from 'electron-log'
 
 export default class PluginTool {
+  /**
+   * 插件日志工具
+   */
+  public pluginLogUtil: PluginLogUtil
+
   /**
    * 事件收发器
    * @private
@@ -22,11 +28,13 @@ export default class PluginTool {
   private readonly _getPluginData: () => Promise<string | undefined>
 
   constructor(
+    pluginName: string,
     events: EventEmitter,
     updatePluginData: (pluginData: string) => Promise<number>,
     getPluginData: () => Promise<string | undefined>
   ) {
     this.emitter = events
+    this.pluginLogUtil = new PluginLogUtil(pluginName)
     this._updatePluginData = updatePluginData
     this._getPluginData = getPluginData
   }
@@ -74,5 +82,27 @@ export default class PluginTool {
    */
   public setPluginData(pluginData: string): Promise<number> {
     return this._updatePluginData(pluginData)
+  }
+}
+
+class PluginLogUtil {
+  private readonly pluginName: string
+  constructor(pluginName: string) {
+    this.pluginName = pluginName
+  }
+  public info(...args: unknown[]) {
+    log.info(this.pluginName + ':', ...args)
+  }
+
+  public debug(...args: unknown[]) {
+    log.debug(this.pluginName + ':', ...args)
+  }
+
+  public warn(...args: unknown[]) {
+    log.warn(this.pluginName + ':', ...args)
+  }
+
+  public error(...args: unknown[]) {
+    log.error(this.pluginName + ':', ...args)
   }
 }
