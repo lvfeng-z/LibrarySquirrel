@@ -79,7 +79,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return { siteAuthorId: siteAuthor.siteAuthorId, siteId: siteAuthor.siteId }
       })
       .filter(NotNullish)
-    if (ArrayNotEmpty(tempParam)) {
+    if (ArrayIsEmpty(tempParam)) {
       return SAVE_FAILED
     }
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)

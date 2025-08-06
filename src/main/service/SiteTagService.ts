@@ -39,7 +39,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         return { siteTagId: siteTag.siteTagId, siteId: siteTag.siteId }
       })
       .filter(NotNullish)
-    if (ArrayNotEmpty(tempParam)) {
+    if (ArrayIsEmpty(tempParam)) {
       return SAVE_FAILED
     }
     const oldSiteTags = await this.listBySiteTag(tempParam)
