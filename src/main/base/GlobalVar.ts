@@ -1,6 +1,6 @@
 import LogUtil from '../util/LogUtil.ts'
 import { ConnectionPool } from '../database/ConnectionPool.ts'
-import Store from 'electron-store'
+import ElectronStore from 'electron-store'
 import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { PoolConfig } from '../database/PoolConfig.js'
 import { TaskQueue } from './TaskQueue.js'
@@ -8,7 +8,6 @@ import { Settings } from '../model/util/Settings.js'
 import { AppConfig } from '../model/util/AppConfig.js'
 import fs from 'fs'
 import yaml from 'js-yaml'
-import appConfigYml from '../resources/config/appConfig.yml?asset'
 
 export enum GlobalVars {
   APP_CONFIG = 'APP_CONFIG',
@@ -22,7 +21,7 @@ type GlobalVarMapping = {
   [GlobalVars.APP_CONFIG]: AppConfig
   [GlobalVars.CONNECTION_POOL]: ConnectionPool
   [GlobalVars.MAIN_WINDOW]: Electron.BrowserWindow
-  [GlobalVars.SETTINGS]: Store<Settings>
+  [GlobalVars.SETTINGS]: ElectronStore<Settings>
   [GlobalVars.TASK_QUEUE]: TaskQueue
 }
 
@@ -76,7 +75,7 @@ export class GlobalVar {
   private static createAppConfig() {
     // 读取初始化yml
     try {
-      const yamlContent = fs.readFileSync(appConfigYml, 'utf-8')
+      const yamlContent = fs.readFileSync('../resources/config/appConfig.yml', 'utf-8')
       global[GlobalVars.APP_CONFIG] = yaml.load(yamlContent)
       LogUtil.info('GlobalVar', '已创建APP_CONFIG')
     } catch (e) {
@@ -124,9 +123,9 @@ export class GlobalVar {
    * 创建设置
    */
   private static createSettings() {
-    const settings = new Store<Settings>()
+    const settings = new ElectronStore<Settings>()
     global[GlobalVars.SETTINGS] = settings
-    if (!settings.get('initialized', false)) {
+    if (!settings.get('initialize')) {
       DefaultSettings()
     }
     LogUtil.info('GlobalVar', '已创建设置')

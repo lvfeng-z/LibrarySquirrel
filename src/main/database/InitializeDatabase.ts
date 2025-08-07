@@ -5,7 +5,6 @@ import { CreateDirIfNotExists } from '../util/FileSysUtil.ts'
 import Database from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-import createDataTables from '../resources/database/createDataTables.yml?asset'
 import DB from './DB.ts'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
 
@@ -33,8 +32,8 @@ export async function InitializeDB() {
     let tableNameSqlStatements: { tables: { name: string; sql: string }[] }
     // 读取初始化yml
     try {
-      const yamlContent = fs.readFileSync(createDataTables, 'utf-8')
-      tableNameSqlStatements = yaml.load(yamlContent)
+      const yamlContent = fs.readFileSync('./resources/database/createDataTables.yml', 'utf-8')
+      tableNameSqlStatements = yaml.load(yamlContent) as { tables: { name: string; sql: string }[] }
     } catch (e) {
       LogUtil.error('InitializeDataBase', String(e))
       throw e

@@ -178,7 +178,7 @@ Electron.app.whenReady().then(() => {
       const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
 
       const data = await GetWorksResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
-      return new Response(data) // 返回文件
+      return new Response(data as BodyInit) // 返回文件
     } catch (error) {
       LogUtil.error('scheme-resource', 'Error handling protocol request:', String(error))
       return new Response('Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应

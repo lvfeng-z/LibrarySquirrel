@@ -6,6 +6,7 @@
     "types": ["electron-vite/node"],
     "module": "node16",
     "moduleResolution": "node16",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true
   }
 }

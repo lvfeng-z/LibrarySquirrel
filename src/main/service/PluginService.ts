@@ -108,7 +108,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const yamlEntry = packageContent.getEntry(`pluginInfo.yml`)
     AssertNotNullish(yamlEntry, this.constructor.name, `${msgPrefix}没有获取到必要的安装配置`)
     const yamlContent = yamlEntry.getData().toString('utf8')
-    const config: PluginInstallConfig = yaml.load(yamlContent)
+    const config: PluginInstallConfig = yaml.load(yamlContent) as PluginInstallConfig
 
     AssertNotNullish(config.type, this.constructor.name, `${msgPrefix}插件类型不能为空`)
     AssertNotNullish(config.author, this.constructor.name, `${msgPrefix}插件作者不能为空`)
