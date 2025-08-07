@@ -125,7 +125,7 @@ export class GlobalVar {
   private static createSettings() {
     const settings = new ElectronStore<Settings>()
     global[GlobalVars.SETTINGS] = settings
-    if (!settings.get('initialize')) {
+    if (!settings.get('initialized')) {
       DefaultSettings()
     }
     LogUtil.info('GlobalVar', '已创建设置')
