@@ -57,6 +57,7 @@ export default class PluginTool {
    * @param collectionName 任务集名称
    */
   public changeCollectionName(collectionName: string): void {
+    // TODO pixiv插件有时候会把别的任务名称改掉
     this.emitter.emit('change-collection-name-request', collectionName)
   }
 
