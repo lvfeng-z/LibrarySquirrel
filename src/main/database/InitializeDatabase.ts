@@ -7,6 +7,7 @@ import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from './DB.ts'
 import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
+import tableYml from '../resources/database/createDataTables.yml?asset'
 
 /**
  * @Description: 初始化数据库，同时创建一个全局连接池实例
@@ -32,7 +33,7 @@ export async function InitializeDB() {
     let tableNameSqlStatements: { tables: { name: string; sql: string }[] }
     // 读取初始化yml
     try {
-      const yamlContent = fs.readFileSync('./resources/database/createDataTables.yml', 'utf-8')
+      const yamlContent = fs.readFileSync(tableYml, 'utf-8')
       tableNameSqlStatements = yaml.load(yamlContent) as { tables: { name: string; sql: string }[] }
     } catch (e) {
       LogUtil.error('InitializeDataBase', String(e))

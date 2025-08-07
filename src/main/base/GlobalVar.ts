@@ -8,6 +8,7 @@ import { Settings } from '../model/util/Settings.js'
 import { AppConfig } from '../model/util/AppConfig.js'
 import fs from 'fs'
 import yaml from 'js-yaml'
+import appConfigYml from '../resources/config/appConfig.yml?asset'
 
 export enum GlobalVars {
   APP_CONFIG = 'APP_CONFIG',
@@ -75,7 +76,7 @@ export class GlobalVar {
   private static createAppConfig() {
     // 读取初始化yml
     try {
-      const yamlContent = fs.readFileSync('../resources/config/appConfig.yml', 'utf-8')
+      const yamlContent = fs.readFileSync(appConfigYml, 'utf-8')
       global[GlobalVars.APP_CONFIG] = yaml.load(yamlContent)
       LogUtil.info('GlobalVar', '已创建APP_CONFIG')
     } catch (e) {
