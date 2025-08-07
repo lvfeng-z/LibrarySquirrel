@@ -352,5 +352,5 @@ tables:
         create_time   integer,
         update_time   integer,
         sort_num      integer,
-        plugin_data   integer
+        plugin_data   text
       );

@@ -48,7 +48,7 @@ export default class PluginLoader<T extends BasePlugin> {
     if (IsNullish(this.pluginCache[pluginId])) {
       const pluginService = new PluginService()
       const pluginLoadDTO = await pluginService.getDTOById(pluginId)
-      const pluginName = String(pluginLoadDTO?.name)
+      const pluginName = `Plugin[${pluginLoadDTO.author}-${pluginLoadDTO.name}-${pluginLoadDTO.version}]`
       const pluginTool = new PluginTool(
         pluginName,
         this.mainWindow,
