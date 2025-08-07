@@ -6,9 +6,8 @@ import { PoolConfig } from '../database/PoolConfig.js'
 import { TaskQueue } from './TaskQueue.js'
 import { Settings } from '../model/util/Settings.js'
 import { AppConfig } from '../model/util/AppConfig.js'
-import fs from 'fs'
 import yaml from 'js-yaml'
-import appConfigYml from '../resources/config/appConfig.yml?asset'
+import fs from 'fs'
 
 export enum GlobalVars {
   APP_CONFIG = 'APP_CONFIG',
@@ -31,7 +30,7 @@ export class GlobalVar {
   public static create(globalVar: GlobalVars, arg?: unknown) {
     switch (globalVar) {
       case GlobalVars.APP_CONFIG:
-        this.createAppConfig()
+        this.createAppConfig(arg as string)
         break
       case GlobalVars.CONNECTION_POOL:
         this.createConnectionPool()
@@ -72,11 +71,12 @@ export class GlobalVar {
   // APP_CONFIG
   /**
    * 创建APP_CONFIG
+   * @param iniConfigFilePath 初始化配置文件路径
    */
-  private static createAppConfig() {
+  private static createAppConfig(iniConfigFilePath: string) {
     // 读取初始化yml
     try {
-      const yamlContent = fs.readFileSync(appConfigYml, 'utf-8')
+      const yamlContent = fs.readFileSync(iniConfigFilePath, 'utf-8')
       global[GlobalVars.APP_CONFIG] = yaml.load(yamlContent)
       LogUtil.info('GlobalVar', '已创建APP_CONFIG')
     } catch (e) {

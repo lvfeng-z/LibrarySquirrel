@@ -12,6 +12,7 @@ import GotoPageConfig from './model/util/GotoPageConfig.js'
 import { PageEnum } from './constant/PageEnum.js'
 import { Initialize } from './base/Initialize.js'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
+import iniConfig from './resources/config/iniConfig.yml?asset'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -185,7 +186,7 @@ Electron.app.whenReady().then(() => {
     }
   })
   // 初始化APP_CONFIG
-  GlobalVar.create(GlobalVars.APP_CONFIG)
+  GlobalVar.create(GlobalVars.APP_CONFIG, iniConfig)
   // 初始化设置
   GlobalVar.create(GlobalVars.SETTINGS)
 
