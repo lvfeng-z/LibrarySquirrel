@@ -1,7 +1,7 @@
 import SiteService from '../service/SiteService.js'
 import Site from '../model/entity/Site.js'
 import PluginService from '../service/PluginService.js'
-import { GlobalVar, GlobalVars } from './GlobalVar.js'
+import { GVar, GVarEnum } from './GVar.js'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.js'
 import { RESOURCE_PATH } from '../constant/CommonConstant.js'
@@ -9,7 +9,7 @@ import LogUtil from '../util/LogUtil.js'
 import { ArrayNotEmpty } from '../util/CommonUtil.js'
 
 export async function Initialize() {
-  const appConfig = GlobalVar.get(GlobalVars.APP_CONFIG)
+  const appConfig = GVar.get(GVarEnum.APP_CONFIG)
 
   // 初始化站点
   const defaultSiteConfigs = appConfig.sites

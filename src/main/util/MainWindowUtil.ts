@@ -1,5 +1,5 @@
 import Electron from 'electron'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import { v4 } from 'uuid'
 import NotifyConfig from '../model/util/NotifyConfig.js'
 import { IsNullish } from './CommonUtil.js'
@@ -30,10 +30,10 @@ export function SendConfirmToWindow(config: ConfirmConfigConstruct): Promise<boo
         resolve(confirmed)
       }
     })
-    GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('custom-confirm', confirmId, config)
+    GVar.get(GVarEnum.MAIN_WINDOW).webContents.send('custom-confirm', confirmId, config)
   })
 }
 
 export function SendNotifyToWindow(config: NotifyConfig): void {
-  GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('custom-notify', config)
+  GVar.get(GVarEnum.MAIN_WINDOW).webContents.send('custom-notify', config)
 }

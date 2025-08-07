@@ -10,7 +10,7 @@ import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
 import ResourceWriter from '../util/ResourceWriter.js'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
 import Task from '../model/entity/Task.js'
-import { GlobalVar, GlobalVars } from './GlobalVar.js'
+import { GVar, GVarEnum } from './GVar.js'
 import { RenderEvent, SendMsgToRender } from './EventToRender.js'
 import TaskProgressMapTreeDTO from '../model/dto/TaskProgressMapTreeDTO.js'
 import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
@@ -162,7 +162,7 @@ export class TaskQueue {
     )
     this.worksInfoSaveStream = new WorksInfoSaveStream()
     // 读取设置中的最大并行数
-    const maxParallelImportInSettings = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
+    const maxParallelImportInSettings = GVar.get(GVarEnum.SETTINGS).store.importSettings.maxParallelImport
     this.resourceSaveStream = new ResourceSaveStream(maxParallelImportInSettings, this.refreshParentStatus.bind(this))
     this.taskPersistStream = new TaskPersistStream()
 
@@ -1509,7 +1509,7 @@ class TaskQueueEntrance extends Readable {
    */
   private sendReplaceConfirmToMainWindow(taskRunInstance: TaskRunInstance, msg: string): void {
     this.waitingMap.set(taskRunInstance.taskId, taskRunInstance)
-    GlobalVar.get(GlobalVars.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
+    GVar.get(GVarEnum.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
       taskId: taskRunInstance.taskId,
       msg: msg
     })

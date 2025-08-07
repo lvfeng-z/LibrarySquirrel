@@ -1,13 +1,13 @@
 import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from '../model/util/Settings.ts'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
+import { GVar, GVarEnum } from '../base/GVar.ts'
 import LogUtil from '../util/LogUtil.js'
 
 /**
  * 全量获取配置
  */
 function getSettings(): Settings {
-  return GlobalVar.get(GlobalVars.SETTINGS).store
+  return GVar.get(GVarEnum.SETTINGS).store
 }
 
 /**
@@ -18,10 +18,10 @@ function saveSettings(settings: { path: string; value: unknown }[]): boolean {
     for (const setting of settings) {
       if (setting.path === 'importSettings.maxParallelImport') {
         // 读取设置中的最大并行数
-        const maxParallelImport = GlobalVar.get(GlobalVars.SETTINGS).store.importSettings.maxParallelImport
-        GlobalVar.get(GlobalVars.TASK_QUEUE).updateMaxParallel(maxParallelImport)
+        const maxParallelImport = GVar.get(GVarEnum.SETTINGS).store.importSettings.maxParallelImport
+        GVar.get(GVarEnum.TASK_QUEUE).updateMaxParallel(maxParallelImport)
       }
-      GlobalVar.get(GlobalVars.SETTINGS).set(setting.path, setting.value)
+      GVar.get(GVarEnum.SETTINGS).set(setting.path, setting.value)
     }
     return true
   } catch (e) {

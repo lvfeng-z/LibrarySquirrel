@@ -6,7 +6,7 @@ import Database from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DB from './DB.ts'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
+import { GVar, GVarEnum } from '../base/GVar.ts'
 import tableYml from '../resources/database/createDataTables.yml?asset'
 
 /**
@@ -25,7 +25,7 @@ export async function InitializeDB() {
   LogUtil.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
-  GlobalVar.create(GlobalVars.CONNECTION_POOL)
+  GVar.create(GVarEnum.CONNECTION_POOL)
 
   // 创建数据表
   // 读取当前数据库的数据表

@@ -1,11 +1,11 @@
 import Electron from 'electron'
 import { ExternalAppEnum } from '../constant/ExternalAppEnum.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 
 export default class AppLauncherService {
   public openImage(url: string): void {
-    const settings = GlobalVar.get(GlobalVars.SETTINGS)
+    const settings = GVar.get(GVarEnum.SETTINGS)
     this.microsoftPhotos()(path.join(settings.store.workdir, url))
   }
 

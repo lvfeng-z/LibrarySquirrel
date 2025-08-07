@@ -10,7 +10,7 @@ import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginFactory from './PluginFactory.js'
 import { BasePlugin } from '../base/BasePlugin.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import PluginService from '../service/PluginService.js'
 import Plugin from '../model/entity/Plugin.js'
 
@@ -33,7 +33,7 @@ export default class PluginLoader<T extends BasePlugin> {
 
   constructor(factory: PluginFactory<T>, pluginService: PluginService) {
     this.factory = factory
-    this.mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+    this.mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
     this.pluginService = pluginService
     const event = new EventEmitter()
 

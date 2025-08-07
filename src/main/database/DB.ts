@@ -2,7 +2,7 @@ import BetterSqlite3 from 'better-sqlite3'
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
+import { GVar, GVarEnum } from '../base/GVar.ts'
 import { Connection, RequestWeight } from './ConnectionPool.ts'
 
 /**
@@ -102,7 +102,7 @@ export default class DB {
     statement: string,
     ...params: BindParameters
   ): Promise<Database.RunResult> {
-    const connectionPool = GlobalVar.get(GlobalVars.CONNECTION_POOL)
+    const connectionPool = GVar.get(GVarEnum.CONNECTION_POOL)
     try {
       // 获取排他锁
       if (!this.holdingLock) {
@@ -248,7 +248,7 @@ export default class DB {
     const savepointName = `sp${this.savepointCounter++}`
     // 开启事务之前获取排他锁
     if (!this.holdingLock) {
-      await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquireLock(this.caller, operation)
+      await GVar.get(GVarEnum.CONNECTION_POOL).acquireLock(this.caller, operation)
       this.holdingLock = true
     }
 
@@ -258,7 +258,7 @@ export default class DB {
     } catch (error) {
       // 释放排他锁
       if (this.holdingLock && isStartPoint) {
-        GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+        GVar.get(GVarEnum.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
         this.holdingLock = false
       }
       LogUtil.error(this.caller, `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`, error)
@@ -289,7 +289,7 @@ export default class DB {
           this.inTransaction = false
 
           // 释放排他锁
-          GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+          GVar.get(GVarEnum.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
           this.holdingLock = false
         } else {
           // 事务代码出现异常的话回滚至此保存点
@@ -304,7 +304,7 @@ export default class DB {
       .finally(() => {
         // 释放排他锁
         if (this.holdingLock && isStartPoint) {
-          GlobalVar.get(GlobalVars.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+          GVar.get(GVarEnum.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
           this.holdingLock = false
         }
       })
@@ -322,7 +322,7 @@ export default class DB {
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(true, RequestWeight.LOW)
+          this.readingConnection = await GVar.get(GVarEnum.CONNECTION_POOL).acquire(true, RequestWeight.LOW)
           this.readingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.readingConnection.connection.function('REGEXP', (pattern, string) => {
@@ -339,7 +339,7 @@ export default class DB {
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection = await GlobalVar.get(GlobalVars.CONNECTION_POOL).acquire(false, RequestWeight.LOW)
+          this.writingConnection = await GVar.get(GVarEnum.CONNECTION_POOL).acquire(false, RequestWeight.LOW)
           this.writingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.writingConnection.connection.function('REGEXP', (pattern, string) => {

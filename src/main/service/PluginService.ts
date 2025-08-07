@@ -16,7 +16,7 @@ import AdmZip from 'adm-zip'
 import TaskPluginListenerService from './TaskPluginListenerService.js'
 import TaskPluginListener from '../model/entity/TaskPluginListener.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
@@ -277,7 +277,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         },
         extraData: tempDomains
       }
-      const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+      const mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
       mainWindow.webContents.send('goto-page', gotoPageConfig)
     })
   }

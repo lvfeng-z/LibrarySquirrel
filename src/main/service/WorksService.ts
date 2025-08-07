@@ -27,7 +27,7 @@ import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
 import ReWorksWorksSetService from './ReWorksWorksSetService.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 import StringUtil from '../util/StringUtil.js'
 import fs from 'fs/promises'
@@ -300,7 +300,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
       const resList = await resService.listByWorksId(worksId)
       await this.deleteById(worksId)
       if (ArrayNotEmpty(resList)) {
-        const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+        const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
         const resFiles = resList
           .map((res) => {
             if (StringUtil.isNotBlank(res.filePath)) {

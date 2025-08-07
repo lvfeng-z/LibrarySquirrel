@@ -6,7 +6,7 @@ import DB from '../database/DB.js'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import { BOOL } from '../constant/BOOL.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import StringUtil from '../util/StringUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { AddSuffix, CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
@@ -41,7 +41,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public static async createSaveInfo(worksFullDTO: WorksFullDTO): Promise<ResourceSaveDTO> {
     const result = new ResourceSaveDTO()
     // 读取设置中的工作目录信息
-    const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+    const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
     if (StringUtil.isBlank(workdir)) {
       const msg = `保存资源失败，工作目录不能为空，taskId: ${result.taskId}`
       LogUtil.error(this.constructor.name, msg)
@@ -156,7 +156,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(oldRes, this.constructor.name, `恢复保存资源失败，资源信息不可用`)
     AssertNotNullish(oldRes.filePath, this.constructor.name, `恢复保存资源失败，原有资源路径不能为空`)
 
-    const workdir = GlobalVar.get(GlobalVars.SETTINGS).get('workdir')
+    const workdir = GVar.get(GVarEnum.SETTINGS).get('workdir')
     const oldAbsolutePath = path.join(workdir, oldRes.filePath)
 
     const newFullSavePath = StringUtil.isBlank(resourceSaveDTO.fullSavePath) ? oldAbsolutePath : resourceSaveDTO.fullSavePath
@@ -241,7 +241,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     }
 
     // 创建备份
-    const settings = GlobalVar.get(GlobalVars.SETTINGS)
+    const settings = GVar.get(GVarEnum.SETTINGS)
     const workdir = settings.get('workdir')
     const oldResAbsolutePath = path.join(workdir, oldResource.filePath)
     const backupService = new BackupService()
@@ -384,7 +384,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public static createFileName(worksFullInfo: WorksFullDTO): string {
     // TODO 还有一部分类型没有进行处理；对ResFileNameFormatEnum.AUTHOR的处理逻辑还有问题；作者级别的处理也有问题
-    const fileNameFormat = GlobalVar.get(GlobalVars.SETTINGS).get('worksSettings').fileNameFormat
+    const fileNameFormat = GVar.get(GVarEnum.SETTINGS).get('worksSettings').fileNameFormat
     const getReplacement = (token: string): string => {
       switch (token) {
         case ResFileNameFormatEnum.AUTHOR.token:
@@ -497,7 +497,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const res = await this.getById(resourceId)
     AssertNotNullish(res, this.constructor.name, `获取资源${resourceId}的绝对路径失败，资源id不可用`)
     AssertNotNullish(res.filePath, this.constructor.name, `获取资源${resourceId}的绝对路径失败，资源的路径不能为空`)
-    const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+    const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
     return path.join(workdir, res.filePath)
   }
 }

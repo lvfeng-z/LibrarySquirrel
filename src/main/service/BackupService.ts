@@ -7,7 +7,7 @@ import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import fs from 'fs/promises'
 import LogUtil from '../util/LogUtil.js'
 import { AddSuffix, CreateDirIfNotExists } from '../util/FileSysUtil.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 import { BackupRootDirName } from '../constant/BackupConstants.js'
 import { copyFile } from 'node:fs/promises'
@@ -35,7 +35,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       throw error
     }
 
-    const settings = GlobalVar.get(GlobalVars.SETTINGS)
+    const settings = GVar.get(GVarEnum.SETTINGS)
     const workdir = settings.get('workdir')
     // 获取年、月、日
     const now = new Date()
@@ -90,7 +90,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的路径为空`)
     const backup = await this.getById(backUpId)
     AssertNotNullish(backup, this.constructor.name, `无法恢复备份到${targetPath}，备份不存在，backupId: ${backUpId}`)
-    const workdir = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+    const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
     const absoluteBackupPath = path.join(workdir, backup.filePath as string)
     try {
       await fs.access(absoluteBackupPath)

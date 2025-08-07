@@ -1,4 +1,4 @@
-import { GlobalVar, GlobalVars } from './GlobalVar.js'
+import { GVar, GVarEnum } from './GVar.js'
 import LogUtil from '../util/LogUtil.js'
 
 export enum RenderEvent {
@@ -18,7 +18,7 @@ export enum RenderEvent {
  * @param args 要发送的数据
  */
 export function SendMsgToRender(channel: RenderEvent, ...args: unknown[]) {
-  const mainWindow = GlobalVar.get(GlobalVars.MAIN_WINDOW)
+  const mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
   try {
     mainWindow.webContents.send(channel, args)
   } catch (ignoredError) {

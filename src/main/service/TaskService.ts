@@ -21,7 +21,7 @@ import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { PluginTaskResParam } from '../plugin/PluginTaskResParam.ts'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.ts'
+import { GVar, GVarEnum } from '../base/GVar.ts'
 import TaskCreateResponse from '../model/util/TaskCreateResponse.ts'
 import { AssertArrayNotEmpty, AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
 import { GetNode } from '../util/TreeUtil.js'
@@ -382,7 +382,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async processTaskTree(taskIds: number[], includeStatus: TaskStatusEnum[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GVar.get(GVarEnum.TASK_QUEUE)
     const taskTree = await taskQueue.listTaskTree(taskIds, includeStatus)
 
     for (const parent of taskTree) {
@@ -475,7 +475,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param ids id列表
    */
   public async pauseTaskTree(ids: number[]): Promise<void> {
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GVar.get(GVarEnum.TASK_QUEUE)
     const taskTree = await taskQueue.listTaskTree(ids, [TaskStatusEnum.PROCESSING, TaskStatusEnum.WAITING])
 
     for (const parent of taskTree) {
@@ -536,7 +536,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param ids id列表
    */
   public async stopTaskTree(ids: number[]): Promise<void> {
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GVar.get(GVarEnum.TASK_QUEUE)
     const taskTree = await taskQueue.listTaskTree(ids, [TaskStatusEnum.PROCESSING, TaskStatusEnum.WAITING])
 
     for (const parent of taskTree) {
@@ -633,7 +633,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async resumeTaskTree(ids: number[]): Promise<void> {
     // 查找id列表对应的所有子任务
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GVar.get(GVarEnum.TASK_QUEUE)
     const taskTree = await taskQueue.listTaskTree(ids, [TaskStatusEnum.PAUSE])
 
     for (const parent of taskTree) {
@@ -983,7 +983,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     let result: TaskScheduleDTO[] = []
     // 没有监听器的任务
     const noListenerIds: number[] = []
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GVar.get(GVarEnum.TASK_QUEUE)
     ids.forEach((id: number) => {
       const schedule = taskQueue.getSchedule(id)
       if (NotNullish(schedule)) {

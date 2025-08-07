@@ -5,7 +5,7 @@ import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
 import { IsNullish, NotNullish } from './CommonUtil.js'
-import { GlobalVar, GlobalVars } from '../base/GlobalVar.js'
+import { GVar, GVarEnum } from '../base/GVar.js'
 
 /**
  * 检查目录是否存在，如果不存在则创建此目录
@@ -58,7 +58,7 @@ export function RootDir(): string {
  * 打开一个文件/路径选择弹窗
  */
 export async function DirSelect(openFile: boolean, isModal?: boolean): Promise<Electron.OpenDialogReturnValue> {
-  const defaultPath = GlobalVar.get(GlobalVars.SETTINGS).store.workdir
+  const defaultPath = GVar.get(GVarEnum.SETTINGS).store.workdir
   const properties: Array<'openFile' | 'openDirectory' | 'multiSelections'> = ['multiSelections']
   if (openFile) {
     properties.push('openFile')
@@ -66,7 +66,7 @@ export async function DirSelect(openFile: boolean, isModal?: boolean): Promise<E
     properties.push('openDirectory')
   }
   if (isModal) {
-    return dialog.showOpenDialog(GlobalVar.get(GlobalVars.MAIN_WINDOW), {
+    return dialog.showOpenDialog(GVar.get(GVarEnum.MAIN_WINDOW), {
       defaultPath: defaultPath,
       properties: properties
     })

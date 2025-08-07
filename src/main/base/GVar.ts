@@ -9,7 +9,7 @@ import { AppConfig } from '../model/util/AppConfig.js'
 import yaml from 'js-yaml'
 import fs from 'fs'
 
-export enum GlobalVars {
+export enum GVarEnum {
   APP_CONFIG = 'APP_CONFIG',
   CONNECTION_POOL = 'CONNECTION_POOL',
   MAIN_WINDOW = 'MAIN_WINDOW',
@@ -18,51 +18,51 @@ export enum GlobalVars {
 }
 // 映射类型
 type GlobalVarMapping = {
-  [GlobalVars.APP_CONFIG]: AppConfig
-  [GlobalVars.CONNECTION_POOL]: ConnectionPool
-  [GlobalVars.MAIN_WINDOW]: Electron.BrowserWindow
-  [GlobalVars.SETTINGS]: ElectronStore<Settings>
-  [GlobalVars.TASK_QUEUE]: TaskQueue
+  [GVarEnum.APP_CONFIG]: AppConfig
+  [GVarEnum.CONNECTION_POOL]: ConnectionPool
+  [GVarEnum.MAIN_WINDOW]: Electron.BrowserWindow
+  [GVarEnum.SETTINGS]: ElectronStore<Settings>
+  [GVarEnum.TASK_QUEUE]: TaskQueue
 }
 
 // todo 设置更改时，一些全局变量也需要更改
-export class GlobalVar {
-  public static create(globalVar: GlobalVars, arg?: unknown) {
+export class GVar {
+  public static create(globalVar: GVarEnum, arg?: unknown) {
     switch (globalVar) {
-      case GlobalVars.APP_CONFIG:
+      case GVarEnum.APP_CONFIG:
         this.createAppConfig(arg as string)
         break
-      case GlobalVars.CONNECTION_POOL:
+      case GVarEnum.CONNECTION_POOL:
         this.createConnectionPool()
         break
-      case GlobalVars.MAIN_WINDOW:
+      case GVarEnum.MAIN_WINDOW:
         this.createMainWindow(arg as Electron.BrowserWindow)
         break
-      case GlobalVars.SETTINGS:
+      case GVarEnum.SETTINGS:
         this.createSettings()
         break
-      case GlobalVars.TASK_QUEUE:
+      case GVarEnum.TASK_QUEUE:
         this.createTaskQueue()
         break
     }
   }
 
-  public static get<T extends GlobalVars>(globalVar: T): GlobalVarMapping[T] {
-    return global[globalVar as GlobalVars]
+  public static get<T extends GVarEnum>(globalVar: T): GlobalVarMapping[T] {
+    return global[globalVar as GVarEnum]
   }
 
-  public static destroy(globalVar: GlobalVars) {
+  public static destroy(globalVar: GVarEnum) {
     switch (globalVar) {
-      case GlobalVars.APP_CONFIG:
+      case GVarEnum.APP_CONFIG:
         this.destroyAppConfig()
         break
-      case GlobalVars.CONNECTION_POOL:
+      case GVarEnum.CONNECTION_POOL:
         this.destroyConnectionPool()
         break
-      case GlobalVars.SETTINGS:
+      case GVarEnum.SETTINGS:
         this.destroySettings()
         break
-      case GlobalVars.TASK_QUEUE:
+      case GVarEnum.TASK_QUEUE:
         this.destroyTaskQueue()
         break
     }
@@ -77,7 +77,7 @@ export class GlobalVar {
     // 读取初始化yml
     try {
       const yamlContent = fs.readFileSync(iniConfigFilePath, 'utf-8')
-      global[GlobalVars.APP_CONFIG] = yaml.load(yamlContent)
+      global[GVarEnum.APP_CONFIG] = yaml.load(yamlContent)
       LogUtil.info('GlobalVar', '已创建APP_CONFIG')
     } catch (e) {
       LogUtil.error('InitializeDataBase', String(e))
@@ -89,7 +89,7 @@ export class GlobalVar {
    * 销毁APP_CONFIG
    */
   private static destroyAppConfig() {
-    delete global[GlobalVars.APP_CONFIG]
+    delete global[GVarEnum.APP_CONFIG]
     LogUtil.info('GlobalVar', '已销毁APP_CONFIG')
   }
 
@@ -98,7 +98,7 @@ export class GlobalVar {
    * 创建连接池
    */
   private static createConnectionPool() {
-    global[GlobalVars.CONNECTION_POOL] = new ConnectionPool(PoolConfig)
+    global[GVarEnum.CONNECTION_POOL] = new ConnectionPool(PoolConfig)
     LogUtil.info('GlobalVar', '已创建连接池')
   }
 
@@ -106,7 +106,7 @@ export class GlobalVar {
    * 销毁连接池
    */
   private static destroyConnectionPool() {
-    delete global[GlobalVars.CONNECTION_POOL]
+    delete global[GVarEnum.CONNECTION_POOL]
     LogUtil.info('GlobalVar', '已销毁连接池')
   }
 
@@ -116,7 +116,7 @@ export class GlobalVar {
    * @private
    */
   private static createMainWindow(mainWindow: Electron.BrowserWindow) {
-    global[GlobalVars.MAIN_WINDOW] = mainWindow
+    global[GVarEnum.MAIN_WINDOW] = mainWindow
   }
 
   // SETTINGS
@@ -125,7 +125,7 @@ export class GlobalVar {
    */
   private static createSettings() {
     const settings = new ElectronStore<Settings>()
-    global[GlobalVars.SETTINGS] = settings
+    global[GVarEnum.SETTINGS] = settings
     if (!settings.get('initialized')) {
       DefaultSettings()
     }
@@ -136,7 +136,7 @@ export class GlobalVar {
    * 销毁设置
    */
   private static destroySettings() {
-    delete global[GlobalVars.SETTINGS]
+    delete global[GVarEnum.SETTINGS]
     LogUtil.info('GlobalVar', '已销毁设置')
   }
 
@@ -146,7 +146,7 @@ export class GlobalVar {
    * @private
    */
   private static createTaskQueue() {
-    global[GlobalVars.TASK_QUEUE] = new TaskQueue()
+    global[GVarEnum.TASK_QUEUE] = new TaskQueue()
     LogUtil.info('GlobalVar', '已创建任务队列')
   }
 
@@ -155,7 +155,7 @@ export class GlobalVar {
    * @private
    */
   private static destroyTaskQueue() {
-    delete global[GlobalVars.TASK_QUEUE]
+    delete global[GVarEnum.TASK_QUEUE]
     LogUtil.info('GlobalVar', '已销毁任务队列')
   }
 }

@@ -6,7 +6,7 @@ import { InitializeDB } from './database/InitializeDatabase.ts'
 import MainProcessApi from './base/MainProcessApi.js'
 import LogUtil from './util/LogUtil.ts'
 import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
-import { GlobalVar, GlobalVars } from './base/GlobalVar.ts'
+import { GVar, GVarEnum } from './base/GVar.ts'
 import StringUtil from './util/StringUtil.js'
 import GotoPageConfig from './model/util/GotoPageConfig.js'
 import { PageEnum } from './constant/PageEnum.js'
@@ -32,7 +32,7 @@ function createWindow(): Electron.BrowserWindow {
     mainWindow.show()
 
     // 检查有没有设置工作目录，没有设置的话发送提醒
-    const settings = GlobalVar.get(GlobalVars.SETTINGS).store
+    const settings = GVar.get(GVarEnum.SETTINGS).store
     if (StringUtil.isBlank(settings.workdir)) {
       const gotoPageConfig: GotoPageConfig = {
         page: PageEnum.Settings,
@@ -53,7 +53,7 @@ function createWindow(): Electron.BrowserWindow {
     // 阻止默认关闭行为
     event.preventDefault()
 
-    const taskQueue = GlobalVar.get(GlobalVars.TASK_QUEUE)
+    const taskQueue = GVar.get(GVarEnum.TASK_QUEUE)
     if (!taskQueue.isIdle()) {
       await SendConfirmToWindow({
         msg: '有任务正在进行中',
@@ -149,14 +149,14 @@ Electron.app.whenReady().then(() => {
   Electron.ipcMain.on('ping', () => console.log('pong'))
 
   const mainWindow = createWindow()
-  GlobalVar.create(GlobalVars.MAIN_WINDOW, mainWindow)
+  GVar.create(GVarEnum.MAIN_WINDOW, mainWindow)
 
   // 配置日志
   LogUtil.initializeLogSetting()
 
   // 如何响应前面的resource自定义协议的请求
   Electron.protocol.handle('resource', async (request): Promise<Response> => {
-    const workdir: string = GlobalVar.get(GlobalVars.SETTINGS).get('workdir')
+    const workdir: string = GVar.get(GVarEnum.SETTINGS).get('workdir')
 
     // 使用正则表达式测试URL是否符合预期格式
     if (!/^resource:\/\/workdir\//i.test(request.url)) {
@@ -186,9 +186,9 @@ Electron.app.whenReady().then(() => {
     }
   })
   // 初始化APP_CONFIG
-  GlobalVar.create(GlobalVars.APP_CONFIG, iniConfig)
+  GVar.create(GVarEnum.APP_CONFIG, iniConfig)
   // 初始化设置
-  GlobalVar.create(GlobalVars.SETTINGS)
+  GVar.create(GVarEnum.SETTINGS)
 
   // 初始化数据库
   InitializeDB().then(() => {
@@ -198,7 +198,7 @@ Electron.app.whenReady().then(() => {
   })
 
   // 初始化任务队列
-  GlobalVar.create(GlobalVars.TASK_QUEUE)
+  GVar.create(GVarEnum.TASK_QUEUE)
 
   Electron.app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the
