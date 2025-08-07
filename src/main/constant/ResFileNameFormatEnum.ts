@@ -3,8 +3,8 @@ export default class ResFileNameFormatEnum {
   name: string
   description: string
 
-  constructor(code: string, name: string, description: string) {
-    this.token = code
+  constructor(token: string, name: string, description: string) {
+    this.token = token
     this.name = name
     this.description = description
   }
