@@ -696,7 +696,11 @@ export class TaskQueue {
       const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
       for (const parentInfo of parentList) {
         AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id不能为空`)
-        AssertNotNullish(parentInfo.status, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
+        if (IsNullish(parentInfo.status)) {
+          this.removeTaskByPid(parentInfo.id)
+          LogUtil.error(this.constructor.name, `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
+          continue
+        }
         const tempChildren = pidChildrenMap.get(parentInfo.id)
         if (ArrayNotEmpty(tempChildren)) {
           const tempInstList = tempChildren.map((tempChild) => {
@@ -899,6 +903,22 @@ export class TaskQueue {
       } else {
         LogUtil.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
       }
+    }
+  }
+
+  /**
+   * 从子任务池中移除任务运行实例
+   * @param pid 父任务id
+   * @private
+   */
+  private removeTaskByPid(pid: number) {
+    const waitingRemove = this.taskMap
+      .entries()
+      .filter((entry) => entry[1].parentId === pid)
+      .map((entry) => entry[0])
+      .toArray()
+    if (ArrayNotEmpty(waitingRemove)) {
+      this.removeTask(waitingRemove)
     }
   }
 

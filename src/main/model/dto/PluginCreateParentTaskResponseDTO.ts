@@ -1,10 +1,15 @@
-import PluginTaskResponseDTO from './PluginTaskResponseDTO.js'
+import PluginCreateTaskResponseDTO from './PluginCreateTaskResponseDTO.js'
 import TaskCreateDTO from './TaskCreateDTO.js'
 
 /**
  * 创建任务DTO
  */
-export default class PluginParentTaskResponseDTO {
+export default class PluginCreateParentTaskResponseDTO {
+  /**
+   * 插件在流式创建时用于标识父任务的id
+   */
+  pluginTaskId: string | undefined
+
   /**
    * 任务名称
    */
@@ -33,9 +38,9 @@ export default class PluginParentTaskResponseDTO {
   /**
    * 子任务
    */
-  children: PluginTaskResponseDTO[] = []
+  children: PluginCreateTaskResponseDTO[] = []
 
-  public static toTaskCreateDTO(pluginParentTaskResponseDTO: PluginParentTaskResponseDTO): TaskCreateDTO {
+  public static toTaskCreateDTO(pluginParentTaskResponseDTO: PluginCreateParentTaskResponseDTO): TaskCreateDTO {
     const result = new TaskCreateDTO()
     result.taskName = pluginParentTaskResponseDTO.taskName
     result.siteWorksId = pluginParentTaskResponseDTO.siteWorksId

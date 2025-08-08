@@ -238,7 +238,7 @@ tables:
         url                   text,
         create_time           integer,
         update_time           integer,
-        status                smallint,
+        status                integer not null,
         pending_resource_id   integer,
         continuable           integer,
         plugin_author         text,

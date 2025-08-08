@@ -1,14 +1,14 @@
 import { Writable } from 'node:stream'
-import TaskCreateDTO from '../dto/TaskCreateDTO.js'
-import StringUtil from '../../util/StringUtil.js'
-import LogUtil from '../../util/LogUtil.js'
-import { TaskStatusEnum } from '../../constant/TaskStatusEnum.js'
-import { ArrayNotEmpty, IsNullish } from '../../util/CommonUtil.js'
-import Task from '../entity/Task.js'
-import TaskService from '../../service/TaskService.js'
-import SiteService from '../../service/SiteService.js'
-import Plugin from '../entity/Plugin.js'
-import PluginTaskResponseDTO from '../dto/PluginTaskResponseDTO.js'
+import TaskCreateDTO from '../model/dto/TaskCreateDTO.js'
+import StringUtil from './StringUtil.js'
+import LogUtil from './LogUtil.js'
+import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
+import { ArrayNotEmpty, IsNullish } from './CommonUtil.js'
+import Task from '../model/entity/Task.js'
+import TaskService from '../service/TaskService.js'
+import SiteService from '../service/SiteService.js'
+import Plugin from '../model/entity/Plugin.js'
+import PluginCreateTaskResponseDTO from '../model/dto/PluginCreateTaskResponseDTO.js'
 
 export default class CreateTaskWritable extends Writable {
   /**
@@ -75,8 +75,12 @@ export default class CreateTaskWritable extends Writable {
     this.siteCache = new Map<string, Promise<number>>()
   }
 
-  async _write(pluginTaskResponseDTO: PluginTaskResponseDTO, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-    const task = PluginTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
+  async _write(
+    pluginTaskResponseDTO: PluginCreateTaskResponseDTO,
+    _encoding: BufferEncoding,
+    callback: (error?: Error | null) => void
+  ) {
+    const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
     // 校验
     if (StringUtil.isBlank(task.siteDomain)) {
       LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')

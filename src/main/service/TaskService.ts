@@ -34,10 +34,10 @@ import Works from '../model/entity/Works.js'
 import ObjectUtil from '../util/ObjectUtil.js'
 import SiteService from './SiteService.js'
 import Site from '../model/entity/Site.js'
-import CreateTaskWritable from '../model/util/CreateTaskWritable.js'
+import CreateTaskWritable from '../util/CreateTaskWritableR.js'
 import ResourceService from './ResourceService.js'
-import PluginTaskResponseDTO from '../model/dto/PluginTaskResponseDTO.js'
-import PluginParentTaskResponseDTO from '../model/dto/PluginParentTaskResponseDTO.js'
+import PluginCreateTaskResponseDTO from '../model/dto/PluginCreateTaskResponseDTO.js'
+import PluginCreateParentTaskResponseDTO from '../model/dto/PluginCreateParentTaskResponseDTO.js'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
@@ -102,24 +102,33 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const pluginResponse = await taskHandler.create(url)
 
         // 分别处理数组类型和流类型的响应值
-        if (pluginResponse instanceof Readable) {
-          const addedQuantity = await this.handleCreateTaskStream(pluginResponse, taskPlugin, parentTask, 100)
-          return new TaskCreateResponse({
-            succeed: true,
-            addedQuantity: addedQuantity,
-            msg: '创建成功',
-            plugin: taskPlugin
-          })
-        } else if (Array.isArray(pluginResponse)) {
-          const addedQuantity = await this.handleCreateTaskArray(pluginResponse, url, taskPlugin)
-          return new TaskCreateResponse({
-            succeed: true,
-            addedQuantity: addedQuantity,
-            msg: '创建成功',
-            plugin: taskPlugin
-          })
-        } else {
-          LogUtil.error(this.constructor.name, '插件创建任务失败，插件返回了不支持的类型')
+        const pluginProcessResult = await this.db.transaction<
+          () => Promise<TaskCreateResponse | undefined>,
+          TaskCreateResponse | undefined
+        >(async () => {
+          if (pluginResponse instanceof Readable) {
+            const addedQuantity = await this.handleCreateTaskStream(pluginResponse, taskPlugin, 100)
+            return new TaskCreateResponse({
+              succeed: true,
+              addedQuantity: addedQuantity,
+              msg: '创建成功',
+              plugin: taskPlugin
+            })
+          } else if (Array.isArray(pluginResponse)) {
+            const addedQuantity = await this.handleCreateTaskArray(pluginResponse, url, taskPlugin)
+            return new TaskCreateResponse({
+              succeed: true,
+              addedQuantity: addedQuantity,
+              msg: '创建成功',
+              plugin: taskPlugin
+            })
+          } else {
+            LogUtil.error(this.constructor.name, '插件创建任务失败，插件返回了不支持的类型')
+            return
+          }
+        }, '创建任务')
+        if (NotNullish(pluginProcessResult)) {
+          return pluginProcessResult
         }
       } catch (error) {
         LogUtil.error(this.constructor.name, `插件创建任务失败，url: ${url}，plugin: ${pluginInfo}，error:`, error)
@@ -139,7 +148,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskPlugin 插件信息
    */
   public async handleCreateTaskArray(
-    pluginParentTaskResponseDTOS: PluginParentTaskResponseDTO[],
+    pluginParentTaskResponseDTOS: PluginCreateParentTaskResponseDTO[],
     url: string,
     taskPlugin: Plugin
   ): Promise<number> {
@@ -154,9 +163,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       if (ArrayIsEmpty(childrenResponseDTOS)) {
         continue
       }
-      const parentTaskCreateDTO = PluginParentTaskResponseDTO.toTaskCreateDTO(parentTaskResponseDTO)
+      const parentTaskCreateDTO = PluginCreateParentTaskResponseDTO.toTaskCreateDTO(parentTaskResponseDTO)
       // 转换为TaskCreateDTO
-      const taskCreateDTOS = childrenResponseDTOS.map((task) => PluginTaskResponseDTO.toTaskCreateDTO(task))
+      const taskCreateDTOS = childrenResponseDTOS.map((task) => PluginCreateTaskResponseDTO.toTaskCreateDTO(task))
 
       // 用于查询和缓存站点id
       const siteService = new SiteService()
@@ -192,6 +201,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         }
       }
       await assignTask(parentTaskCreateDTO)
+      parentTaskCreateDTO.isCollection = true
       const parentId = await super.save(parentTaskCreateDTO)
 
       for (const task of taskCreateDTOS) {
@@ -209,18 +219,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 处理任务创建流
    * @param createTaskStream 创建任务流
    * @param taskPlugin 插件信息
-   * @param parentTask 任务集
    * @param batchSize 每次保存任务的数量
    */
-  public async handleCreateTaskStream(
-    createTaskStream: Readable,
-    taskPlugin: Plugin,
-    parentTask: TaskCreateDTO,
-    batchSize: number
-  ): Promise<number> {
+  public async handleCreateTaskStream(createTaskStream: Readable, taskPlugin: Plugin, batchSize: number): Promise<number> {
     // 最终用于返回的Promise
     return new Promise<number>((resolve, reject) => {
-      const writable = new CreateTaskWritable(parentTask, this, new SiteService(), taskPlugin, batchSize)
+      const writable = new CreateTaskWritable(this, new SiteService(this.db), taskPlugin, batchSize)
       createTaskStream.on('error', (error) => {
         LogUtil.error(this.constructor.name, '创建任务失败，ReadableError: ', error)
         reject(error)
@@ -701,7 +705,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
       waitingDelete.push(tempTask.id as number)
     }
-    return this.deleteBatchById(waitingDelete)
+    if (ArrayNotEmpty(waitingDelete)) {
+      return this.deleteBatchById(waitingDelete)
+    } else {
+      return 0
+    }
   }
 
   /**
