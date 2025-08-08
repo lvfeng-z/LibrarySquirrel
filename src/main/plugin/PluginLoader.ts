@@ -1,7 +1,6 @@
 import LogUtil from '../util/LogUtil.ts'
 import PluginTool from './PluginTool.ts'
 import Electron from 'electron'
-import { EventEmitter } from 'node:events'
 import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
@@ -35,9 +34,7 @@ export default class PluginLoader<T extends BasePlugin> {
     this.factory = factory
     this.mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
     this.pluginService = pluginService
-    const event = new EventEmitter()
 
-    this.attachExplainPathEvents(event)
     this.pluginCache = {}
   }
 
@@ -51,7 +48,7 @@ export default class PluginLoader<T extends BasePlugin> {
       const pluginName = `Plugin[${pluginLoadDTO.author}-${pluginLoadDTO.name}-${pluginLoadDTO.version}]`
       const pluginTool = new PluginTool(
         pluginName,
-        this.mainWindow,
+        (dir: string) => this.requestExplainPath(dir),
         async (pluginData: string) => {
           const tempPlugin = new Plugin()
           tempPlugin.id = pluginId
@@ -70,13 +67,12 @@ export default class PluginLoader<T extends BasePlugin> {
   }
 
   /**
-   * 为事件发射器附加用户解释目录含义的一系列事件和处理函数
-   * @param event
+   * 请求用户解释目录含义
+   * @param dir 目录
    * @private
    */
-  private attachExplainPathEvents(event: EventEmitter) {
-    // 处理插件工具的explain-path-request事件
-    event.on('explain-path-request', (dir) => {
+  private requestExplainPath(dir: string): Promise<MeaningOfPath[]> {
+    return new Promise((resolve, reject) => {
       // 监听渲染进程的explain-path-response事件
       Electron.ipcMain.once('explain-path-response', async (_event, meaningOfPaths: MeaningOfPath[]) => {
         for (const meaningOfPath of meaningOfPaths) {
@@ -87,10 +83,11 @@ export default class PluginLoader<T extends BasePlugin> {
               if (IsNullish(localAuthor)) {
                 const msg = '附加目录含义中的作者信息失败，未查询到作者'
                 LogUtil.error('PluginLoader', msg)
-                throw new Error(msg)
+                reject(msg)
+              } else {
+                meaningOfPath.name = localAuthor.authorName
+                meaningOfPath.details = localAuthor
               }
-              meaningOfPath.name = localAuthor.authorName
-              meaningOfPath.details = localAuthor
             }
           }
           if (meaningOfPath.type === PathTypeEnum.TAG) {
@@ -100,10 +97,11 @@ export default class PluginLoader<T extends BasePlugin> {
               if (IsNullish(localTag)) {
                 const msg = '附加目录含义中的标签信息失败，未查询到作者'
                 LogUtil.error('PluginLoader', msg)
-                throw new Error(msg)
+                reject(msg)
+              } else {
+                meaningOfPath.name = localTag.localTagName
+                meaningOfPath.details = localTag
               }
-              meaningOfPath.name = localTag.localTagName
-              meaningOfPath.details = localTag
             }
           }
           if (meaningOfPath.type === PathTypeEnum.SITE) {
@@ -113,14 +111,15 @@ export default class PluginLoader<T extends BasePlugin> {
               if (IsNullish(site)) {
                 const msg = '附加目录含义中的站点信息失败，未查询到作者'
                 LogUtil.error('PluginLoader', msg)
-                throw new Error(msg)
+                reject(msg)
+              } else {
+                meaningOfPath.name = site.siteName
+                meaningOfPath.details = site
               }
-              meaningOfPath.name = site.siteName
-              meaningOfPath.details = site
             }
           }
         }
-        event.emit('explain-path-response', meaningOfPaths)
+        resolve(meaningOfPaths)
       })
       // 向渲染进程发送explain-path-request事件
       this.mainWindow.webContents.send('explain-path-request', dir)

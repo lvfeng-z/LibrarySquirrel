@@ -1,4 +1,3 @@
-import { EventEmitter } from 'node:events'
 import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import log from 'electron-log'
@@ -10,10 +9,10 @@ export default class PluginTool {
   public pluginLogUtil: PluginLogUtil
 
   /**
-   * 事件收发器
+   * 请求用户解释路径含义
    * @private
    */
-  emitter: EventEmitter
+  private readonly _requestExplainPath: (dir: string) => Promise<MeaningOfPath[]>
 
   /**
    * 更新插件数据
@@ -29,12 +28,12 @@ export default class PluginTool {
 
   constructor(
     pluginName: string,
-    events: EventEmitter,
+    requestExplainPath: (dir: string) => Promise<MeaningOfPath[]>,
     updatePluginData: (pluginData: string) => Promise<number>,
     getPluginData: () => Promise<string | undefined>
   ) {
-    this.emitter = events
     this.pluginLogUtil = new PluginLogUtil(pluginName)
+    this._requestExplainPath = requestExplainPath
     this._updatePluginData = updatePluginData
     this._getPluginData = getPluginData
   }
@@ -44,21 +43,7 @@ export default class PluginTool {
    * @param dir 目录
    */
   public explainPath(dir: string): Promise<MeaningOfPath[]> {
-    return new Promise((resolve) => {
-      this.emitter.on('explain-path-response', (response) => {
-        resolve(response)
-      })
-      this.emitter.emit('explain-path-request', dir)
-    })
-  }
-
-  /**
-   * 修改当前任务集的名称
-   * @param collectionName 任务集名称
-   */
-  public changeCollectionName(collectionName: string): void {
-    // TODO pixiv插件有时候会把别的任务名称改掉
-    this.emitter.emit('change-collection-name-request', collectionName)
+    return this._requestExplainPath(dir)
   }
 
   /**
