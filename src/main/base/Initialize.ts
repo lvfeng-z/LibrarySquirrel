@@ -9,10 +9,10 @@ import LogUtil from '../util/LogUtil.js'
 import { ArrayNotEmpty } from '../util/CommonUtil.js'
 
 export async function Initialize() {
-  const appConfig = GVar.get(GVarEnum.APP_CONFIG)
+  const iniConfig = GVar.get(GVarEnum.INI_CONFIG)
 
   // 初始化站点
-  const defaultSiteConfigs = appConfig.sites
+  const defaultSiteConfigs = iniConfig.sites
   const siteNames = defaultSiteConfigs.map((siteConfig) => siteConfig.name)
   const siteService = new SiteService()
   const existingSites = await siteService.listByNames(siteNames)
@@ -31,7 +31,7 @@ export async function Initialize() {
   // 初始化插件
   const pluginService = new PluginService()
 
-  const defaultPlugins = appConfig.plugins
+  const defaultPlugins = iniConfig.plugins
   for (const defaultPlugin of defaultPlugins) {
     let packagePath: string
     if (defaultPlugin.pathType === 'Relative') {

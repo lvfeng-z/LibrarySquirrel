@@ -5,12 +5,12 @@ import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { PoolConfig } from '../database/PoolConfig.js'
 import { TaskQueue } from './TaskQueue.js'
 import { Settings } from '../model/util/Settings.js'
-import { AppConfig } from '../model/util/AppConfig.js'
+import { IniConfig } from '../model/util/IniConfig.js'
 import yaml from 'js-yaml'
 import fs from 'fs'
 
 export enum GVarEnum {
-  APP_CONFIG = 'APP_CONFIG',
+  INI_CONFIG = 'INI_CONFIG',
   CONNECTION_POOL = 'CONNECTION_POOL',
   MAIN_WINDOW = 'MAIN_WINDOW',
   SETTINGS = 'SETTINGS',
@@ -18,7 +18,7 @@ export enum GVarEnum {
 }
 // 映射类型
 type GlobalVarMapping = {
-  [GVarEnum.APP_CONFIG]: AppConfig
+  [GVarEnum.INI_CONFIG]: IniConfig
   [GVarEnum.CONNECTION_POOL]: ConnectionPool
   [GVarEnum.MAIN_WINDOW]: Electron.BrowserWindow
   [GVarEnum.SETTINGS]: ElectronStore<Settings>
@@ -29,8 +29,8 @@ type GlobalVarMapping = {
 export class GVar {
   public static create(globalVar: GVarEnum, arg?: unknown) {
     switch (globalVar) {
-      case GVarEnum.APP_CONFIG:
-        this.createAppConfig(arg as string)
+      case GVarEnum.INI_CONFIG:
+        this.createIniConfig(arg as string)
         break
       case GVarEnum.CONNECTION_POOL:
         this.createConnectionPool()
@@ -53,8 +53,8 @@ export class GVar {
 
   public static destroy(globalVar: GVarEnum) {
     switch (globalVar) {
-      case GVarEnum.APP_CONFIG:
-        this.destroyAppConfig()
+      case GVarEnum.INI_CONFIG:
+        this.destroyIniConfig()
         break
       case GVarEnum.CONNECTION_POOL:
         this.destroyConnectionPool()
@@ -68,17 +68,17 @@ export class GVar {
     }
   }
 
-  // APP_CONFIG
+  // INI_CONFIG
   /**
-   * 创建APP_CONFIG
+   * 创建INI_CONFIG
    * @param iniConfigFilePath 初始化配置文件路径
    */
-  private static createAppConfig(iniConfigFilePath: string) {
+  private static createIniConfig(iniConfigFilePath: string) {
     // 读取初始化yml
     try {
       const yamlContent = fs.readFileSync(iniConfigFilePath, 'utf-8')
-      global[GVarEnum.APP_CONFIG] = yaml.load(yamlContent)
-      LogUtil.info('GlobalVar', '已创建APP_CONFIG')
+      global[GVarEnum.INI_CONFIG] = yaml.load(yamlContent)
+      LogUtil.info('GlobalVar', '已创建INI_CONFIG')
     } catch (e) {
       LogUtil.error('InitializeDataBase', String(e))
       throw e
@@ -86,11 +86,11 @@ export class GVar {
   }
 
   /**
-   * 销毁APP_CONFIG
+   * 销毁INI_CONFIG
    */
-  private static destroyAppConfig() {
-    delete global[GVarEnum.APP_CONFIG]
-    LogUtil.info('GlobalVar', '已销毁APP_CONFIG')
+  private static destroyIniConfig() {
+    delete global[GVarEnum.INI_CONFIG]
+    LogUtil.info('GlobalVar', '已销毁INI_CONFIG')
   }
 
   // CONNECTION_POOL

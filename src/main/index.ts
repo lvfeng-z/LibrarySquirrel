@@ -185,8 +185,8 @@ Electron.app.whenReady().then(() => {
       return new Response('Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
     }
   })
-  // 初始化APP_CONFIG
-  GVar.create(GVarEnum.APP_CONFIG, iniConfig)
+  // 初始化INI_CONFIG
+  GVar.create(GVarEnum.INI_CONFIG, iniConfig)
   // 初始化设置
   GVar.create(GVarEnum.SETTINGS)
 
