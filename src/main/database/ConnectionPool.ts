@@ -57,22 +57,22 @@ export class ConnectionPool {
    * 链接列表
    * @private
    */
-  private readConnections: (Connection | undefined)[]
+  private readonly readConnections: (Connection | undefined)[]
   /**
    * 链接列表
    * @private
    */
-  private writeConnections: (Connection | undefined)[]
+  private readonly writeConnections: (Connection | undefined)[]
   /**
    * 等待队列
    * @private
    */
-  private readWaitingQueue: WaitingRequest[]
+  private readonly readWaitingQueue: WaitingRequest[]
   /**
    * 等待队列
    * @private
    */
-  private writeWaitingQueue: WaitingRequest[]
+  private readonly writeWaitingQueue: WaitingRequest[]
   /**
    * 是否写入锁定
    * @private

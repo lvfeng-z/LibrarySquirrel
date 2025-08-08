@@ -19,8 +19,7 @@ export async function InitializeDB() {
   await CreateDirIfNotExists(dbPath)
 
   // 创建数据库
-  const options = {}
-  const tempDB = new Database(dbPath + DataBaseConstant.DB_FILE_NAME, options)
+  const tempDB = new Database(dbPath + DataBaseConstant.DB_FILE_NAME, {})
   tempDB.close()
   LogUtil.info('InitializeDataBase', '已创建数据库文件')
 
