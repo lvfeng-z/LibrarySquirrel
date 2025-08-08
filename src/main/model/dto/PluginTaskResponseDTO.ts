@@ -15,7 +15,7 @@ export default class PluginTaskResponseDTO {
   siteWorksId: string | undefined | null
 
   /**
-   * 当任务是父任务时，url存储创建此父任务所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
+   来源url
    */
   url: string | undefined | null
 

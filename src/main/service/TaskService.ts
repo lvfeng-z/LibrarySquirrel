@@ -12,7 +12,7 @@ import { Readable } from 'node:stream'
 import BaseService from '../base/BaseService.ts'
 import DB from '../database/DB.ts'
 import lodash from 'lodash'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import TaskTreeDTO from '../model/dto/TaskTreeDTO.ts'
@@ -37,6 +37,7 @@ import Site from '../model/entity/Site.js'
 import CreateTaskWritable from '../model/util/CreateTaskWritable.js'
 import ResourceService from './ResourceService.js'
 import PluginTaskResponseDTO from '../model/dto/PluginTaskResponseDTO.js'
+import PluginParentTaskResponseDTO from '../model/dto/PluginParentTaskResponseDTO.js'
 import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
@@ -110,7 +111,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             plugin: taskPlugin
           })
         } else if (Array.isArray(pluginResponse)) {
-          const addedQuantity = await this.handleCreateTaskArray(pluginResponse, url, taskPlugin, parentTask)
+          const addedQuantity = await this.handleCreateTaskArray(pluginResponse, url, taskPlugin)
           return new TaskCreateResponse({
             succeed: true,
             addedQuantity: addedQuantity,
@@ -133,83 +134,75 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 处理插件返回的任务数组
-   * @param pluginTaskResponseDTOS 插件返回的任务数组
+   * @param pluginParentTaskResponseDTOS 插件返回的任务数组
    * @param url 传给插件的url
    * @param taskPlugin 插件信息
-   * @param parentTask 任务集
    */
   public async handleCreateTaskArray(
-    pluginTaskResponseDTOS: PluginTaskResponseDTO[],
+    pluginParentTaskResponseDTOS: PluginParentTaskResponseDTO[],
     url: string,
-    taskPlugin: Plugin,
-    parentTask: TaskCreateDTO
+    taskPlugin: Plugin
   ): Promise<number> {
     // 查询插件信息，用于输出日志
     const pluginInfo = JSON.stringify(taskPlugin)
-
     // 校验是否返回了空数据或非数组
-    AssertArrayNotEmpty(pluginTaskResponseDTOS, this.constructor.name, `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
-
-    // 转换为TaskCreateDTO
-    const taskCreateDTOS = pluginTaskResponseDTOS.map((task) => PluginTaskResponseDTO.toTaskCreateDTO(task))
-
-    // 用于查询和缓存站点id
-    const siteService = new SiteService()
-    const siteCache = new Map<string, Promise<number>>()
-    // 给任务赋值的函数
-    const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
-      // 校验
-      AssertNotBlank(task.siteDomain, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
-      AssertNotBlank(task.siteWorksId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点作品id')
-      task.status = TaskStatusEnum.CREATED
-      task.isCollection = false
-      task.pid = pid
-      task.pluginAuthor = taskPlugin.author
-      task.pluginName = taskPlugin.name
-      task.pluginVersion = taskPlugin.version
-      // 根据站点域名查询站点id
-      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
-      if (IsNullish(siteId)) {
-        const tempSite = siteService.getByDomain(task.siteDomain)
-        siteId = tempSite.then((site) => site?.id)
+    AssertArrayNotEmpty(pluginParentTaskResponseDTOS, this.constructor.name, `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+    const childrenSavePromise: Promise<number>[] = []
+    let childrenCount = 0
+    for (const parentTaskResponseDTO of pluginParentTaskResponseDTOS) {
+      const childrenResponseDTOS = parentTaskResponseDTO.children
+      if (ArrayIsEmpty(childrenResponseDTOS)) {
+        continue
       }
-      task.siteId = await siteId
-      AssertNotNullish(task.siteId, this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
-      try {
-        task.pluginData = JSON.stringify(task.pluginData)
-      } catch (error) {
-        LogUtil.error(
-          this.constructor.name,
-          `序列化插件保存的pluginData失败，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
-          error
-        )
-        return
-      }
-    }
+      const parentTaskCreateDTO = PluginParentTaskResponseDTO.toTaskCreateDTO(parentTaskResponseDTO)
+      // 转换为TaskCreateDTO
+      const taskCreateDTOS = childrenResponseDTOS.map((task) => PluginTaskResponseDTO.toTaskCreateDTO(task))
 
-    // 根据插件返回的任务数组长度判断如何处理
-    if (taskCreateDTOS.length === 1) {
-      // 如果插件返回的的任务列表长度为1，则不需要创建子任务
-      const task = taskCreateDTOS[0]
-      await assignTask(task)
-      const singleTask = new Task(task)
-      return super.save(singleTask).then(() => 1)
-    } else {
-      // 如果插件返回的的任务列表长度大于1，则创建一个父任务，所有的任务作为其子任务
-      const tempTask = new Task(parentTask)
-      // 父任务使用第一个子任务的站点id
-      tempTask.siteId = taskCreateDTOS[0].siteId
-      const pid = await super.save(tempTask)
-      parentTask.id = pid
-      parentTask.saved = true
+      // 用于查询和缓存站点id
+      const siteService = new SiteService()
+      const siteCache = new Map<string, Promise<number>>()
+      // 给任务赋值的函数
+      const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
+        // 校验
+        AssertNotBlank(task.siteDomain, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
+        AssertNotBlank(task.siteWorksId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点作品id')
+        task.status = TaskStatusEnum.CREATED
+        task.isCollection = false
+        task.pid = pid
+        task.pluginAuthor = taskPlugin.author
+        task.pluginName = taskPlugin.name
+        task.pluginVersion = taskPlugin.version
+        // 根据站点域名查询站点id
+        let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
+        if (IsNullish(siteId)) {
+          const tempSite = siteService.getByDomain(task.siteDomain)
+          siteId = tempSite.then((site) => site?.id)
+        }
+        task.siteId = await siteId
+        AssertNotNullish(task.siteId, this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+        try {
+          task.pluginData = JSON.stringify(task.pluginData)
+        } catch (error) {
+          LogUtil.error(
+            this.constructor.name,
+            `序列化插件保存的pluginData失败，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
+            error
+          )
+          return
+        }
+      }
+      await assignTask(parentTaskCreateDTO)
+      const parentId = await super.save(parentTaskCreateDTO)
 
       for (const task of taskCreateDTOS) {
-        await assignTask(task, pid)
+        await assignTask(task, parentId)
       }
       const childTasks = taskCreateDTOS.map((taskCreateDTO) => new Task(taskCreateDTO))
 
-      return super.saveBatch(childTasks)
+      childrenSavePromise.push(super.saveBatch(childTasks).then((count) => (childrenCount += count)))
     }
+    await Promise.allSettled(childrenSavePromise)
+    return childrenCount
   }
 
   /**

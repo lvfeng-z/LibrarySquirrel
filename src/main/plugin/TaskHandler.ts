@@ -5,7 +5,7 @@ import { PluginTaskResParam } from './PluginTaskResParam.ts'
 import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
 import { BasePlugin } from '../base/BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
-import PluginTaskResponseDTO from '../model/dto/PluginTaskResponseDTO.js'
+import PluginParentTaskResponseDTO from '../model/dto/PluginParentTaskResponseDTO.js'
 import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
 import PluginLoadDTO from '../model/dto/PluginLoadDTO.js'
 
@@ -17,7 +17,7 @@ export interface TaskHandler extends BasePlugin {
    * @param url 需解析的url
    * @return 根据解析结果创建的任务数组
    */
-  create(url: string): Promise<PluginTaskResponseDTO[] | Readable>
+  create(url: string): Promise<PluginParentTaskResponseDTO[] | Readable>
 
   /**
    * 生成作品信息
