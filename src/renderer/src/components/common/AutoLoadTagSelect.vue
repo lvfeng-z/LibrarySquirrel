@@ -56,7 +56,9 @@ onUnmounted(() => {
 
 // model
 // 已选数据
-const selectedData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('data', { required: true })
+const selectedData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('selectedData', { required: true })
+// 用户输入的自定义数据
+const customData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('customData', { required: true })
 // 输入文本
 const input: Ref<string | undefined> = defineModel<string | undefined>('input', { required: true })
 
@@ -71,8 +73,6 @@ const optionalTagBox = ref()
 const inputElement = ref()
 // hiddenSpan的实例
 const hiddenSpan = ref()
-// 用户输入的自定义数据
-const customData: Ref<SegmentedTagItem[]> = ref([])
 // 可选数据
 const optionalData: Ref<SegmentedTagItem[]> = ref([])
 // 可选数据被勾选的id数组
@@ -188,7 +188,7 @@ function clear() {
   optionalCheckedIdBuffer.clear()
 }
 function handleKeyPress(event: KeyboardEvent) {
-  // 检查按键是否为'Enter'键
+  // 按下Enter键时根据输入框内容创建一个自定义标签
   if (event.key === 'Enter' && StringUtil.isNotBlank(input.value)) {
     customData.value.push(
       new SegmentedTagItem({

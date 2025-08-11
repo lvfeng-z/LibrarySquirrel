@@ -70,6 +70,7 @@ const worksSpace = ref()
 const worksAreaRef = ref()
 const pageStatesStore = usePageStatesStore()
 const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏选中列表
+const customTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏自定义标签列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
 // 副页面名称
@@ -153,6 +154,14 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
       }
     })
     .filter(NotNullish)
+  if (IsNullish(page.query)) {
+    page.query = []
+  }
+  if (ArrayNotEmpty(customTagList.value)) {
+    customTagList.value.forEach((tag) =>
+      page.query?.push(new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: tag.value, operator: CrudOperator.LIKE }))
+    )
+  }
   // 处理搜索框输入的文本
   if (StringUtil.isNotBlank(autoLoadInput.value)) {
     const worksName = autoLoadInput.value
@@ -319,7 +328,8 @@ async function handleTest() {
               <el-col :span="19">
                 <div class="main-page-auto-load-tag-select z-layer-3">
                   <auto-load-tag-select
-                    v-model:data="selectedTagList"
+                    v-model:selected-data="selectedTagList"
+                    v-model:custom-data="customTagList"
                     v-model:input="autoLoadInput"
                     :load="querySearchItemPage"
                     :page-size="1000"
