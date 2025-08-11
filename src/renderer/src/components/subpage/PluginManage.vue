@@ -146,13 +146,16 @@ async function beforeReInstall(pluginId: number) {
   ElMessageBox.confirm('请选择修复方式', '', {
     confirmButtonText: '自动修复',
     cancelButtonText: '选择安装包修复',
-    type: 'warning'
+    type: 'warning',
+    distinguishCancelAndClose: true
   })
     .then(() => reInstall(pluginId))
-    .catch(async () => {
-      const packagePath = await selectPackage()
-      if (StringUtil.isNotBlank(packagePath)) {
-        reInstallFromPath(pluginId, packagePath)
+    .catch(async (action: 'cancel' | 'close') => {
+      if (action === 'cancel') {
+        const packagePath = await selectPackage()
+        if (StringUtil.isNotBlank(packagePath)) {
+          return reInstallFromPath(pluginId, packagePath)
+        }
       }
     })
 }

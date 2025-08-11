@@ -8,7 +8,7 @@ import { ElMessage } from 'element-plus'
 // props
 const props = withDefaults(
   defineProps<{
-    mode: DialogMode
+    mode?: DialogMode
     submitEnabled?: boolean
   }>(),
   {
