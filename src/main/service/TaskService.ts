@@ -884,7 +884,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const sourcePage = await super.queryPage(page)
     const resultPage = sourcePage.transform<TaskProgressTreeDTO>()
     const tasks = sourcePage.data
-    if (NotNullish(tasks) && tasks.length > 0) {
+    if (ArrayNotEmpty(tasks)) {
       // 查询站点信息
       const siteIds = tasks.map((tempTask) => tempTask.siteId).filter(NotNullish)
       let idSiteMap: Map<number, Site[]>
@@ -901,6 +901,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         if (NotNullish(idSiteMap)) {
           const tempSites = idSiteMap.get(task.siteId as number)
           dto.siteName = tempSites?.[0].siteName
+        }
+        // 从任务队列中查询任务状态
+        const tempStatus = GVar.get(GVarEnum.TASK_QUEUE).getTaskStatus(task.id as number)
+        if (tempStatus !== undefined) {
+          dto.status = tempStatus
         }
         return dto
       })

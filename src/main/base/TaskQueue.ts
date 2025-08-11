@@ -481,6 +481,14 @@ export class TaskQueue {
   }
 
   /**
+   * 获取任务状态
+   * @param id 任务id
+   */
+  public getTaskStatus(id: number): TaskStatusEnum | undefined {
+    return this.taskMap.get(id)?.status
+  }
+
+  /**
    * 暂停所有任务
    */
   public async shutdown(): Promise<void> {
