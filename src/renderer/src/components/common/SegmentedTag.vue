@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import { Close } from '@element-plus/icons-vue'
-import { computed, Ref, UnwrapRef } from 'vue'
+import { computed, ref, Ref, UnwrapRef } from 'vue'
 import { ArrayIsEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
@@ -21,6 +21,16 @@ const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
 })
 const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
   return props.closeable ? 'calc(100% - 18px)' : '100%'
+})
+const colorConfig = ref({
+  mainBackground: IsNullish(props.item.mainBackGround) ? 'rgb(133.4, 206.2, 97.4, 30%)' : props.item.mainBackGround,
+  mainBackgroundHover: IsNullish(props.item.mainBackGroundHover) ? 'rgb(133.4, 206.2, 97.4, 15%)' : props.item.mainBackGroundHover,
+  mainTextColor: IsNullish(props.item.mainTextColor) ? 'rgb(78.1, 141.8, 46.6, 75%)' : props.item.mainTextColor,
+  subTextColor: IsNullish(props.item.subTextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.subTextColor,
+  sub1BackGround: IsNullish(props.item.sub1BackGround) ? 'rgb(166.2, 168.6, 173.4, 20%)' : props.item.sub1BackGround,
+  sub1BackGroundHover: IsNullish(props.item.sub1BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub1BackGroundHover,
+  sub2BackGround: IsNullish(props.item.sub2BackGround) ? 'rgb(166.2, 168.6, 173.4, 30%)' : props.item.sub2BackGround,
+  sub2BackGroundHover: IsNullish(props.item.sub2BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub2BackGroundHover
 })
 
 // 事件
@@ -68,8 +78,8 @@ function handleCloseButtonClicked() {
         <div
           :class="{
             'segmented-tag-sub-label': true,
-            'segmented-tag-sub-label-dark': !(index % 2 === 0),
-            'segmented-tag-sub-label-light': index % 2 === 0
+            'segmented-tag-sub-2-label': !(index % 2 === 0),
+            'segmented-tag-sub-1-label': index % 2 === 0
           }"
           @click="handleSubLabelClicked(index)"
         >
@@ -89,8 +99,8 @@ function handleCloseButtonClicked() {
       v-if="closeable"
       :class="{
         'segmented-tag-sub-close-wrapper': true,
-        'segmented-tag-sub-label-dark': subLabelsLength % 2 === 0,
-        'segmented-tag-sub-label-light': !(subLabelsLength % 2 === 0)
+        'segmented-tag-sub-2-label': subLabelsLength % 2 === 0,
+        'segmented-tag-sub-1-label': !(subLabelsLength % 2 === 0)
       }"
       @click="handleCloseButtonClicked"
     >
@@ -123,10 +133,10 @@ function handleCloseButtonClicked() {
   transition-duration: 0.8s;
 }
 .segmented-tag-main-label-checked {
-  background-color: rgb(133.4, 206.2, 97.4, 30%);
+  background-color: v-bind('colorConfig.mainBackground');
 }
 .segmented-tag-main-label-checked:hover {
-  background-color: rgb(133.4, 206.2, 97.4, 15%);
+  background-color: v-bind('colorConfig.mainBackgroundHover');
 }
 .segmented-tag-main-label-unchecked {
   background-color: rgb(166.2, 168.6, 173.4, 30%);
@@ -142,7 +152,7 @@ function handleCloseButtonClicked() {
   text-align: center;
 }
 .segmented-tag-main-text-checked {
-  color: rgb(78.1, 141.8, 46.6, 75%);
+  color: v-bind('colorConfig.mainTextColor');
 }
 .segmented-tag-main-text-unchecked {
   color: rgb(166.2, 168.6, 173.4, 100%);
@@ -152,17 +162,17 @@ function handleCloseButtonClicked() {
   flex-grow: 1;
   transition-duration: 0.4s;
 }
-.segmented-tag-sub-label-dark {
-  background-color: rgb(166.2, 168.6, 173.4, 30%);
+.segmented-tag-sub-1-label {
+  background-color: v-bind('colorConfig.sub1BackGround');
 }
-.segmented-tag-sub-label-dark:hover {
-  background-color: rgb(166.2, 168.6, 173.4, 10%);
+.segmented-tag-sub-1-label:hover {
+  background-color: v-bind('colorConfig.sub1BackGroundHover');
 }
-.segmented-tag-sub-label-light {
-  background-color: rgb(166.2, 168.6, 173.4, 20%);
+.segmented-tag-sub-2-label {
+  background-color: v-bind('colorConfig.sub2BackGround');
 }
-.segmented-tag-sub-label-light:hover {
-  background-color: rgb(166.2, 168.6, 173.4, 10%);
+.segmented-tag-sub-2-label:hover {
+  background-color: v-bind('colorConfig.sub2BackGroundHover');
 }
 .segmented-tag-sub-text {
   width: 100%;
@@ -170,7 +180,7 @@ function handleCloseButtonClicked() {
   margin-right: 3px;
   font-weight: inherit;
   text-align: center;
-  color: rgb(166.2, 168.6, 173.4, 100%);
+  color: v-bind('colorConfig.subTextColor');
 }
 .segmented-tag-sub-text-last {
   margin-right: 6px;

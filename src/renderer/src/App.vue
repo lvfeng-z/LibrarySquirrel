@@ -196,6 +196,18 @@ async function queryWorksPage(next: boolean) {
     worksList.value.push(...nextPage.data)
   }
 }
+// 控制搜索标签颜色的函数
+function searchTagColorHandler(segmentedTagItem: SegmentedTagItem): void {
+  const subLabels = segmentedTagItem.subLabels
+  if (ArrayNotEmpty(subLabels)) {
+    switch (subLabels[0]) {
+      case 'author':
+        segmentedTagItem.mainBackGround = 'rgb(245, 108, 108, 25%)'
+        segmentedTagItem.mainBackGroundHover = 'rgb(245, 108, 108, 10%)'
+        segmentedTagItem.mainTextColor = 'rgb(245, 108, 108, 75%)'
+    }
+  }
+}
 
 // 监听IpcRenderer
 window.electron.ipcRenderer.on('explain-path-request', (_event: electron.IpcRendererEvent, dir) => {
@@ -310,7 +322,8 @@ async function handleTest() {
                     v-model:data="selectedTagList"
                     v-model:input="autoLoadInput"
                     :load="querySearchItemPage"
-                    :page-size="50"
+                    :page-size="1000"
+                    :color-handler="searchTagColorHandler"
                     tags-gap="10px"
                     max-height="300px"
                     min-height="33px"

@@ -20,9 +20,10 @@ const props = withDefaults(
     tagsGap?: string
     maxHeight?: string
     minHeight?: string
+    colorHandler?: (segmentedTagItem: SegmentedTagItem) => void
   }>(),
   {
-    pageSize: 30
+    pageSize: 10
   }
 )
 
@@ -98,9 +99,17 @@ async function innerLoad(page: IPage<BaseQueryDTO, SegmentedTagItem>): Promise<I
     result.data = apiRespPage.data?.map((selectItem) => {
       const checked = optionalCheckedIdBuffer.has(String(selectItem.value))
       if (checked) {
-        return new SegmentedTagItem({ disabled: true, ...selectItem })
+        const result = new SegmentedTagItem({ disabled: true, ...selectItem })
+        if (NotNullish(props.colorHandler)) {
+          props.colorHandler(result)
+        }
+        return result
       } else {
-        return new SegmentedTagItem({ disabled: false, ...selectItem })
+        const result = new SegmentedTagItem(selectItem)
+        if (NotNullish(props.colorHandler)) {
+          props.colorHandler(result)
+        }
+        return result
       }
     })
     return result

@@ -151,7 +151,7 @@ async function requestNextPage(page: IPage<Query, SelectItem>, isUpper: boolean)
   return newPagePromise.then((newPage) => {
     const resultPage = new Page(newPage).transform<SegmentedTagItem>()
     if (ArrayNotEmpty(newPage.data)) {
-      const segTagItems = newPage.data.map((selectItem) => new SegmentedTagItem({ disabled: false, ...selectItem }))
+      const segTagItems = newPage.data.map((selectItem) => new SegmentedTagItem(selectItem))
       resultPage.data = segTagItems
       newPage.data = leachBufferData(segTagItems, isUpper)
     }
