@@ -7,7 +7,6 @@ export default class SelectItem {
   value: string | number
   label: string
   subLabels?: string[]
-  disabled?: boolean
   rootId?: string | null | undefined
   extraData?: object | null | undefined
 
@@ -15,17 +14,15 @@ export default class SelectItem {
     this.value = IsNullish(selectItem.value) ? '' : selectItem.value
     this.label = IsNullish(selectItem.label) ? '' : selectItem.label
     this.subLabels = selectItem.subLabels
-    this.disabled = selectItem.disabled
     this.rootId = selectItem.rootId
     this.extraData = selectItem.extraData
   }
 }
 
-type CSelectItem = {
+export interface CSelectItem {
   value?: string | number
   label?: string
   subLabels?: string[]
-  disabled?: boolean
   rootId?: string | null | undefined
   extraData?: object | null | undefined
 }

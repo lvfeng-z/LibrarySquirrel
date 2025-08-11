@@ -16,6 +16,7 @@ import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
+import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
@@ -68,7 +69,7 @@ const worksSpace = ref()
 // worksArea组件的实例
 const worksAreaRef = ref()
 const pageStatesStore = usePageStatesStore()
-const selectedTagList: Ref<UnwrapRef<SelectItem[]>> = ref([]) // 主搜索栏选中列表
+const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏选中列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
 // 副页面名称

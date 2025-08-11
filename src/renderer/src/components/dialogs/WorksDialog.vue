@@ -22,6 +22,7 @@ import AuthorInfo from '@renderer/components/common/AuthorInfo.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { Picture } from '@element-plus/icons-vue'
+import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 
 // props
 const props = defineProps<{
@@ -68,24 +69,26 @@ const siteTagExchangeBox = ref()
 // 作品信息
 const worksFullInfo: Ref<WorksFullDTO> = ref(new WorksFullDTO(props.works[0]))
 // 本地标签
-const localTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
+const localTags: Ref<UnwrapRef<SegmentedTagItem[]>> = computed(() => {
   const result = worksFullInfo.value.localTags?.map(
     (localTag) =>
-      new SelectItem({
+      new SegmentedTagItem({
         value: localTag.id as number,
-        label: localTag.localTagName as string
+        label: localTag.localTagName as string,
+        disabled: false
       })
   )
   return IsNullish(result) ? [] : result
 })
 // 本地标签
-const siteTags: Ref<UnwrapRef<SelectItem[]>> = computed(() => {
+const siteTags: Ref<UnwrapRef<SegmentedTagItem[]>> = computed(() => {
   const result = worksFullInfo.value.siteTags?.map(
     (siteTag) =>
-      new SelectItem({
+      new SegmentedTagItem({
         value: siteTag.id as number,
         label: siteTag.siteTagName as string,
-        subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string]
+        subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string],
+        disabled: false
       })
   )
   return IsNullish(result) ? [] : result

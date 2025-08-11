@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import IPage from '@renderer/model/util/IPage.ts'
-import Page from '@renderer/model/util/Page.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { nextTick, onMounted, onUnmounted, Ref, ref, UnwrapRef, watch } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
@@ -8,6 +7,10 @@ import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash, { throttle } from 'lodash'
 import { Close } from '@element-plus/icons-vue'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
+import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
+import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
+import Page from '@renderer/model/util/Page.ts'
 
 // props
 const props = withDefaults(
@@ -37,6 +40,7 @@ onMounted(() => {
   // 监听compositionend事件
   inputElement.value.addEventListener('compositionend', (e) => {
     console.log('compositionend', e)
+    newSearch()
   })
   // 监听宽度变化
   resizeObserver.observe(wrapper.value)
@@ -51,7 +55,7 @@ onUnmounted(() => {
 
 // model
 // 已选数据
-const selectedData: Ref<UnwrapRef<SelectItem[]>> = defineModel<SelectItem[]>('data', { required: true })
+const selectedData: Ref<UnwrapRef<SegmentedTagItem[]>> = defineModel<SegmentedTagItem[]>('data', { required: true })
 // 输入文本
 const input: Ref<UnwrapRef<string | undefined>> = defineModel<string | undefined>('input', { required: true })
 
@@ -66,10 +70,8 @@ const optionalTagBox = ref()
 const inputElement = ref()
 // hiddenSpan的实例
 const hiddenSpan = ref()
-// 分页参数
-const page: Ref<UnwrapRef<IPage<BaseQueryDTO, SelectItem>>> = ref(new Page<BaseQueryDTO, SelectItem>())
 // 可选数据
-const optionalData: Ref<UnwrapRef<SelectItem[]>> = ref([])
+const optionalData: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
 // 可选数据被勾选的id数组
 const optionalCheckedIdBuffer: Set<string> = new Set()
 // 总体宽度
@@ -88,17 +90,20 @@ const expand: Ref<UnwrapRef<boolean>> = ref(false)
 
 // 方法
 // 加载分页的函数
-async function innerLoad() {
-  page.value.pageSize = props.pageSize
-  const tempPage = lodash.cloneDeep(page.value)
-  return props.load(tempPage, input.value).then((resultPage) => {
-    resultPage.data?.forEach((selectItem) => {
+async function innerLoad(page: IPage<BaseQueryDTO, SegmentedTagItem>): Promise<IPage<BaseQueryDTO, SegmentedTagItem>> {
+  page.pageSize = props.pageSize
+  const tempPage = lodash.cloneDeep(page)
+  return props.load(tempPage, input.value).then((apiRespPage) => {
+    const result = new Page(apiRespPage).transform<SegmentedTagItem>()
+    result.data = apiRespPage.data?.map((selectItem) => {
       const checked = optionalCheckedIdBuffer.has(String(selectItem.value))
       if (checked) {
-        selectItem.disabled = true
+        return new SegmentedTagItem({ disabled: true, ...selectItem })
+      } else {
+        return new SegmentedTagItem({ disabled: false, ...selectItem })
       }
     })
-    return resultPage
+    return result
   })
 }
 // 重新分页查询
@@ -113,7 +118,7 @@ function handleInputFocus(focus: boolean) {
   focused.value = focus
 }
 // 处理标签点击事件
-function handelTagClicked(tag: SelectItem, optional: boolean) {
+function handelTagClicked(tag: SegmentedTagItem, optional: boolean) {
   if (optional) {
     // 待选栏
     if (IsNullish(tag.disabled) || !tag.disabled) {
@@ -136,7 +141,7 @@ function handelTagClicked(tag: SelectItem, optional: boolean) {
   }
 }
 // 处理标签关闭按钮点击事件
-function handelTagClosed(tag: SelectItem) {
+function handelTagClosed(tag: SegmentedTagItem) {
   let index = selectedData.value.indexOf(tag)
   if (index > -1) {
     selectedData.value.splice(index, 1)
@@ -147,7 +152,7 @@ function handelTagClosed(tag: SelectItem) {
   }
 }
 // 改变待选栏中标签的选中状态
-function optionalCheck(tag: SelectItem, check: boolean) {
+function optionalCheck(tag: SegmentedTagItem, check: boolean) {
   tag.disabled = check
   // 更新选中状态缓存
   if (check) {
@@ -222,7 +227,6 @@ watch(input, () => {
     <template #default>
       <tag-box
         ref="optionalTagBox"
-        v-model:page="page"
         v-model:data="optionalData"
         class="auto-load-tag-select-optional"
         :load="innerLoad"

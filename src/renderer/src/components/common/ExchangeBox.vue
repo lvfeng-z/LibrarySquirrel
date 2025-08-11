@@ -8,6 +8,7 @@ import Page from '@renderer/model/util/Page.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import { Check, Close } from '@element-plus/icons-vue'
+import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 
 // props
 const props = defineProps<{
@@ -30,17 +31,17 @@ defineExpose({
 })
 
 // 变量
-const upperPage = new Page<Query, SelectItem>() // upper的分页
-const upperData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upper的数据
-const lowerPage = new Page<Query, SelectItem>() // lower的分页
-const lowerData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lower的数据
+const upperPage = new Page<Query, SegmentedTagItem>() // upper的分页
+const upperData: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // upper的数据
+const lowerPage = new Page<Query, SegmentedTagItem>() // lower的分页
+const lowerData: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // lower的数据
 const upperTagBox = ref() // upperTagBox组件的实例
 const lowerTagBox = ref() // lowerTagBox组件的实例
 const upperBufferState: Ref<boolean> = ref(false) // upperBuffer的折叠面板开关
-const upperBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // upperBuffer的数据
+const upperBufferData: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // upperBuffer的数据
 const upperBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // upperBuffer的数据Id
 const lowerBufferState: Ref<boolean> = ref(false) // lowerBuffer的折叠面板开关
-const lowerBufferData: Ref<UnwrapRef<SelectItem[]>> = ref([]) // lowerBuffer的数据
+const lowerBufferData: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // lowerBuffer的数据
 const lowerBufferId: Ref<UnwrapRef<Set<number | string>>> = ref(new Set<string>()) // lowerBuffer的数据Id
 
 // 方法
@@ -136,7 +137,7 @@ function refreshData(isUpper: boolean | undefined) {
   handleBufferToggle()
 }
 // 请求DataScroll下一页数据
-async function requestNextPage(page: IPage<Query, SelectItem>, isUpper: boolean): Promise<IPage<Query, SelectItem>> {
+async function requestNextPage(page: IPage<Query, SelectItem>, isUpper: boolean): Promise<IPage<Query, SegmentedTagItem>> {
   // 请求接口
   let newPagePromise: Promise<IPage<Query, SelectItem>>
   if (isUpper) {
@@ -148,10 +149,13 @@ async function requestNextPage(page: IPage<Query, SelectItem>, isUpper: boolean)
   }
 
   return newPagePromise.then((newPage) => {
+    const resultPage = new Page(newPage).transform<SegmentedTagItem>()
     if (ArrayNotEmpty(newPage.data)) {
-      newPage.data = leachBufferData(newPage.data, isUpper)
+      const segTagItems = newPage.data.map((selectItem) => new SegmentedTagItem({ disabled: false, ...selectItem }))
+      resultPage.data = segTagItems
+      newPage.data = leachBufferData(segTagItems, isUpper)
     }
-    return newPage
+    return resultPage
   })
 }
 // 滚动条位置重置(移动至顶端)
@@ -166,15 +170,15 @@ function resetScrollBarPosition(isUpper?: boolean) {
   }
 }
 // 过滤存在于Buffer中的
-function leachBufferData(increment: SelectItem[], isUpper: boolean) {
+function leachBufferData(increment: SegmentedTagItem[], isUpper: boolean) {
   if (isUpper) {
     // 过滤掉upperBufferId已包含的数据
-    return increment.filter((item: SelectItem) => {
+    return increment.filter((item: SegmentedTagItem) => {
       return !lowerBufferId.value.has(item.value)
     })
   } else {
     // 过滤掉lowerBufferId已包含的数据
-    return increment.filter((item: SelectItem) => {
+    return increment.filter((item: SegmentedTagItem) => {
       return !upperBufferId.value.has(item.value)
     })
   }

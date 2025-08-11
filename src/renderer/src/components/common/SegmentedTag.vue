@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SelectItem from '@renderer/model/util/SelectItem.ts'
+import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import { Close } from '@element-plus/icons-vue'
 import { computed, Ref, UnwrapRef } from 'vue'
 import { ArrayIsEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
@@ -7,7 +7,7 @@ import { ArrayIsEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 // props
 const props = withDefaults(
   defineProps<{
-    item: SelectItem
+    item: SegmentedTagItem
     closeable?: boolean
   }>(),
   {
@@ -64,7 +64,7 @@ function handleCloseButtonClicked() {
           >{{ props.item.label }}</span
         >
       </div>
-      <template v-for="(item, index) of props.item.subLabels" :key="index">
+      <template v-for="(subLabel, index) of props.item.subLabels" :key="index">
         <div
           :class="{
             'segmented-tag-sub-label': true,
@@ -80,7 +80,7 @@ function handleCloseButtonClicked() {
               'segmented-tag-sub-text-last': IsNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
             }"
           >
-            {{ item }}
+            {{ subLabel }}
           </span>
         </div>
       </template>

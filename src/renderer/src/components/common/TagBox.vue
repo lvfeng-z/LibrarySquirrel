@@ -6,11 +6,12 @@ import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
 import lodash from 'lodash'
+import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
-    load?: (page: IPage<Query, SelectItem>) => Promise<IPage<Query, SelectItem>>
+    load?: (page: IPage<Query, SegmentedTagItem>) => Promise<IPage<Query, SegmentedTagItem>>
     tagCloseable?: boolean
     tagsGap?: string
     maxHeight?: string
@@ -24,9 +25,9 @@ const props = withDefaults(
 
 // model
 // 分页参数
-const page = defineModel<IPage<Query, SelectItem>>('page', { default: new Page<Query, SelectItem>() })
+const page = defineModel<IPage<Query, SegmentedTagItem>>('page', { default: new Page<Query, SegmentedTagItem>() })
 // 数据列表
-const data = defineModel<SelectItem[]>('data', { default: [] })
+const data = defineModel<SegmentedTagItem[]>('data', { default: [] })
 
 // 事件
 const emit = defineEmits(['tagClicked', 'tagMainLabelClicked', 'tagSubLabelClicked', 'tagClose'])
@@ -138,7 +139,7 @@ function refreshLoadButton() {
   showLoadButton.value = hasNextPage.value && notFull
 }
 // 包装过的load
-function wrappedLoad(page: IPage<Query, SelectItem>): Promise<IPage<Query, SelectItem> | undefined> | undefined {
+function wrappedLoad(page: IPage<Query, SegmentedTagItem>): Promise<IPage<Query, SegmentedTagItem> | undefined> | undefined {
   if (NotNullish(props.load)) {
     return props
       .load(page)
