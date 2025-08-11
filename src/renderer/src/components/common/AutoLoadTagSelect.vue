@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
-import { nextTick, onMounted, onUnmounted, Ref, ref, UnwrapRef, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, Ref, ref, watch } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash, { throttle } from 'lodash'
@@ -56,9 +56,9 @@ onUnmounted(() => {
 
 // model
 // 已选数据
-const selectedData: Ref<UnwrapRef<SegmentedTagItem[]>> = defineModel<SegmentedTagItem[]>('data', { required: true })
+const selectedData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('data', { required: true })
 // 输入文本
-const input: Ref<UnwrapRef<string | undefined>> = defineModel<string | undefined>('input', { required: true })
+const input: Ref<string | undefined> = defineModel<string | undefined>('input', { required: true })
 
 // 变量
 // 最外部div的实例
@@ -71,23 +71,25 @@ const optionalTagBox = ref()
 const inputElement = ref()
 // hiddenSpan的实例
 const hiddenSpan = ref()
+// 用户输入的自定义数据
+const customData: Ref<SegmentedTagItem[]> = ref([])
 // 可选数据
-const optionalData: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
+const optionalData: Ref<SegmentedTagItem[]> = ref([])
 // 可选数据被勾选的id数组
 const optionalCheckedIdBuffer: Set<string> = new Set()
 // 总体宽度
-const width: Ref<UnwrapRef<number>> = ref(0)
+const width: Ref<number> = ref(0)
 // 总体宽度
-const popoverOffset: Ref<UnwrapRef<number>> = ref(0)
+const popoverOffset: Ref<number> = ref(0)
 // 输入框宽度
-const inputWidth: Ref<UnwrapRef<string>> = ref('11px')
+const inputWidth: Ref<string> = ref('11px')
 // 监听wrapper div的宽度变化
 const resizeObserver = new ResizeObserver((entries) => {
   throttle(() => (width.value = entries[0].contentRect.width), 300, { leading: true, trailing: true })()
   throttle(() => (popoverOffset.value = (entries[0].contentRect.height + 1000) / 100), 300, { leading: true, trailing: true })()
 })
 // 控制已选中栏的展开和折叠
-const expand: Ref<UnwrapRef<boolean>> = ref(false)
+const expand: Ref<boolean> = ref(false)
 
 // 方法
 // 加载分页的函数
@@ -160,6 +162,13 @@ function handelTagClosed(tag: SegmentedTagItem) {
     optionalCheck(optionalData.value[index], false)
   }
 }
+// 处理自定义标签关闭按钮点击事件
+function handelCustomTagClosed(tag: SegmentedTagItem) {
+  let index = customData.value.indexOf(tag)
+  if (index > -1) {
+    customData.value.splice(index, 1)
+  }
+}
 // 改变待选栏中标签的选中状态
 function optionalCheck(tag: SegmentedTagItem, check: boolean) {
   tag.disabled = check
@@ -172,10 +181,26 @@ function optionalCheck(tag: SegmentedTagItem, check: boolean) {
 }
 // 清除所有选择
 function clear() {
+  customData.value = []
   selectedData.value = []
   input.value = undefined
   optionalData.value.forEach((selectItem) => (selectItem.disabled = false))
   optionalCheckedIdBuffer.clear()
+}
+function handleKeyPress(event: KeyboardEvent) {
+  // 检查按键是否为'Enter'键
+  if (event.key === 'Enter' && StringUtil.isNotBlank(input.value)) {
+    customData.value.push(
+      new SegmentedTagItem({
+        value: input.value,
+        label: input.value,
+        mainBackGround: 'rgb(230, 162, 60, 30%)',
+        mainBackGroundHover: 'rgb(230, 162, 60, 15%)',
+        mainTextColor: 'rgb(230, 162, 60, 85%)'
+      })
+    )
+    input.value = ''
+  }
 }
 
 // watch
@@ -220,8 +245,19 @@ watch(input, () => {
             @tag-clicked="(tag) => handelTagClicked(tag, false)"
             @click="inputElement.focus()"
           >
+            <template #head>
+              <template v-for="customItem in customData" :key="customItem.value">
+                <segmented-tag :item="customItem" @close="handelCustomTagClosed(customItem)" />
+              </template>
+            </template>
             <template #tail>
-              <input ref="inputElement" v-model="input" class="auto-load-tag-select-input" @input="newSearch" />
+              <input
+                ref="inputElement"
+                v-model="input"
+                class="auto-load-tag-select-input"
+                :onkeydown="handleKeyPress"
+                @input="newSearch"
+              />
               <span ref="hiddenSpan" style="visibility: hidden">{{ input }}</span>
             </template>
           </tag-box>
