@@ -68,6 +68,8 @@ const sideMenuRef = ref()
 const worksSpace = ref()
 // worksArea组件的实例
 const worksAreaRef = ref()
+// 搜索条件工具栏组件的实例
+const searchConditionBar = ref()
 const pageStatesStore = usePageStatesStore()
 const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏选中列表
 const customTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏自定义标签列表
@@ -75,7 +77,7 @@ const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
 // 副页面名称
 // 查询参数类型
-const searchConditionType: Ref<UnwrapRef<SearchType[] | undefined>> = ref()
+const searchConditionType: Ref<UnwrapRef<SearchType[]>> = ref([])
 // 作品分页
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
@@ -132,7 +134,7 @@ async function closeSubpage() {
   return pageStatesStore.closePage()
 }
 // 监听esc键
-function handleKeyUp(event) {
+function handleKeyUp(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     closeSubpage()
   }
@@ -184,7 +186,7 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
     }
   })
 }
-// 加载下一页
+// 加载下一页作品
 async function queryWorksPage(next: boolean) {
   // 新查询重置查询条件
   if (!next) {
@@ -205,8 +207,12 @@ async function queryWorksPage(next: boolean) {
     worksList.value.push(...nextPage.data)
   }
 }
+// 重新查询搜索条件
+async function querySearchCondition() {
+  return searchConditionBar.value.newSearch()
+}
 // 控制搜索标签颜色的函数
-function searchTagColorHandler(segmentedTagItem: SegmentedTagItem): void {
+function searchTagColorResolver(segmentedTagItem: SegmentedTagItem): void {
   const subLabels = segmentedTagItem.subLabels
   if (ArrayNotEmpty(subLabels)) {
     switch (subLabels[0]) {
@@ -308,38 +314,36 @@ async function handleTest() {
         <div v-show="pageStatesStore.pageStates.mainPage.state" class="main-page">
           <div class="main-page-searchbar">
             <el-row>
-              <el-col style="display: flex; justify-content: center; transition: width 1s ease" :span="3">
-                <el-select
-                  v-model="searchConditionType"
-                  multiple
-                  collapse-tags
-                  collapse-tags-tooltip
-                  clearable
-                  placeholder="查询参数类型"
-                >
-                  <el-option-group>
-                    <el-option :value="SearchType.LOCAL_TAG" label="本地标签"></el-option>
-                    <el-option :value="SearchType.SITE_TAG" label="站点标签"></el-option>
-                    <el-option :value="SearchType.LOCAL_AUTHOR" label="本地作者"></el-option>
-                    <el-option :value="SearchType.SITE_AUTHOR" label="站点作者"></el-option>
-                  </el-option-group>
-                </el-select>
-              </el-col>
-              <el-col :span="19">
+              <el-col :span="22">
                 <div class="main-page-auto-load-tag-select z-layer-3">
                   <auto-load-tag-select
+                    ref="searchConditionBar"
                     v-model:selected-data="selectedTagList"
                     v-model:custom-data="customTagList"
                     v-model:input="autoLoadInput"
                     :load="querySearchItemPage"
-                    :page-size="1000"
-                    :color-handler="searchTagColorHandler"
+                    :page-size="30"
+                    :color-resolver="searchTagColorResolver"
                     tags-gap="10px"
                     max-height="300px"
                     min-height="33px"
-                  />
+                  >
+                    <template #left>
+                      <el-checkbox-group
+                        v-model="searchConditionType"
+                        class="main-page-auto-load-tag-select-tag-type-checkbox"
+                        @change="querySearchCondition"
+                      >
+                        <el-checkbox :value="SearchType.LOCAL_TAG">本地标签</el-checkbox>
+                        <el-checkbox :value="SearchType.SITE_TAG">站点标签</el-checkbox>
+                        <el-checkbox :value="SearchType.LOCAL_AUTHOR">本地作者</el-checkbox>
+                        <el-checkbox :value="SearchType.SITE_AUTHOR">站点作者</el-checkbox>
+                      </el-checkbox-group>
+                    </template>
+                  </auto-load-tag-select>
                   <collapse-panel v-model:state="searchBarPanelState" border-radios="10px">
                     <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
+                      <!--TODO在这里实现一个更灵活的组合查询条件的组件，比如拖拽组成AND或OR组合-->
                       <el-button @click="handleTest"> test </el-button>
                     </div>
                   </collapse-panel>
@@ -492,6 +496,10 @@ async function handleTest() {
 .main-page-auto-load-tag-select {
   height: 33px;
   position: relative;
+}
+.main-page-auto-load-tag-select-tag-type-checkbox {
+  display: flex;
+  flex-direction: column;
 }
 .subPage {
   width: 100%;

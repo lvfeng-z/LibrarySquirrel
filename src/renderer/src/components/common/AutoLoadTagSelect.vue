@@ -20,12 +20,23 @@ const props = withDefaults(
     tagsGap?: string
     maxHeight?: string
     minHeight?: string
-    colorHandler?: (segmentedTagItem: SegmentedTagItem) => void
+    colorResolver?: (segmentedTagItem: SegmentedTagItem) => void
   }>(),
   {
     pageSize: 10
   }
 )
+
+// model
+// 已选数据
+const selectedData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('selectedData', { required: true })
+// 用户输入的自定义数据
+const customData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('customData', { required: true })
+// 输入文本
+const input: Ref<string | undefined> = defineModel<string | undefined>('input', { required: true })
+
+// 暴露
+defineExpose({ newSearch })
 
 // onMounted
 onMounted(() => {
@@ -53,14 +64,6 @@ onUnmounted(() => {
     resizeObserver.unobserve(wrapper.value)
   }
 })
-
-// model
-// 已选数据
-const selectedData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('selectedData', { required: true })
-// 用户输入的自定义数据
-const customData: Ref<SegmentedTagItem[]> = defineModel<SegmentedTagItem[]>('customData', { required: true })
-// 输入文本
-const input: Ref<string | undefined> = defineModel<string | undefined>('input', { required: true })
 
 // 变量
 // 最外部div的实例
@@ -102,14 +105,14 @@ async function innerLoad(page: IPage<BaseQueryDTO, SegmentedTagItem>): Promise<I
       const checked = optionalCheckedIdBuffer.has(String(selectItem.value))
       if (checked) {
         const result = new SegmentedTagItem({ disabled: true, ...selectItem })
-        if (NotNullish(props.colorHandler)) {
-          props.colorHandler(result)
+        if (NotNullish(props.colorResolver)) {
+          props.colorResolver(result)
         }
         return result
       } else {
         const result = new SegmentedTagItem(selectItem)
-        if (NotNullish(props.colorHandler)) {
-          props.colorHandler(result)
+        if (NotNullish(props.colorResolver)) {
+          props.colorResolver(result)
         }
         return result
       }
@@ -270,15 +273,19 @@ watch(input, () => {
       </div>
     </template>
     <template #default>
-      <tag-box
-        ref="optionalTagBox"
-        v-model:data="optionalData"
-        class="auto-load-tag-select-optional"
-        :load="innerLoad"
-        :tags-gap="tagsGap"
-        :max-height="maxHeight"
-        @tag-clicked="(tag) => handelTagClicked(tag, true)"
-      />
+      <div class="auto-load-tag-select-popper-container">
+        <slot name="left" />
+        <tag-box
+          ref="optionalTagBox"
+          v-model:data="optionalData"
+          class="auto-load-tag-select-optional"
+          :load="innerLoad"
+          :tags-gap="tagsGap"
+          :max-height="maxHeight"
+          @tag-clicked="(tag) => handelTagClicked(tag, true)"
+        />
+        <slot name="right" />
+      </div>
     </template>
   </el-popover>
 </template>
@@ -349,5 +356,9 @@ watch(input, () => {
   max-width: 100%;
   outline: none;
   padding: 0;
+}
+.auto-load-tag-select-popper-container {
+  display: flex;
+  flex-direction: row;
 }
 </style>
