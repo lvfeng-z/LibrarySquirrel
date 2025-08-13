@@ -217,9 +217,26 @@ function searchTagColorResolver(segmentedTagItem: SegmentedTagItem): void {
   if (ArrayNotEmpty(subLabels)) {
     switch (subLabels[0]) {
       case 'author':
-        segmentedTagItem.mainBackGround = 'rgb(245, 108, 108, 25%)'
-        segmentedTagItem.mainBackGroundHover = 'rgb(245, 108, 108, 10%)'
-        segmentedTagItem.mainTextColor = 'rgb(245, 108, 108, 75%)'
+        switch (subLabels[1]) {
+          case 'local':
+            segmentedTagItem.mainBackGround = 'rgb(245, 108, 108, 25%)'
+            segmentedTagItem.mainBackGroundHover = 'rgb(245, 108, 108, 10%)'
+            segmentedTagItem.mainTextColor = 'rgb(245, 108, 108, 75%)'
+            break
+          default:
+            segmentedTagItem.mainBackGround = 'rgb(164, 158, 255, 25%)'
+            segmentedTagItem.mainBackGroundHover = 'rgb(164, 158, 255, 10%)'
+            segmentedTagItem.mainTextColor = 'rgb(164, 158, 255, 95%)'
+            break
+        }
+        break
+      case 'tag':
+        if (subLabels[1] !== 'local') {
+          segmentedTagItem.mainBackGround = 'rgb(64, 158, 255, 25%)'
+          segmentedTagItem.mainBackGroundHover = 'rgb(64, 158, 255, 10%)'
+          segmentedTagItem.mainTextColor = 'rgb(64, 158, 255, 85%)'
+        }
+        break
     }
   }
 }
@@ -322,7 +339,7 @@ async function handleTest() {
                     v-model:custom-data="customTagList"
                     v-model:input="autoLoadInput"
                     :load="querySearchItemPage"
-                    :page-size="30"
+                    :page-size="40"
                     :color-resolver="searchTagColorResolver"
                     tags-gap="10px"
                     max-height="300px"
@@ -331,13 +348,37 @@ async function handleTest() {
                     <template #left>
                       <el-checkbox-group
                         v-model="searchConditionType"
-                        class="main-page-auto-load-tag-select-tag-type-checkbox"
+                        class="main-page-auto-load-tag-select-tag-type-checkbox-group"
                         @change="querySearchCondition"
                       >
-                        <el-checkbox :value="SearchType.LOCAL_TAG">本地标签</el-checkbox>
-                        <el-checkbox :value="SearchType.SITE_TAG">站点标签</el-checkbox>
-                        <el-checkbox :value="SearchType.LOCAL_AUTHOR">本地作者</el-checkbox>
-                        <el-checkbox :value="SearchType.SITE_AUTHOR">站点作者</el-checkbox>
+                        <el-checkbox :value="SearchType.LOCAL_TAG">
+                          <span
+                            class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-tag"
+                          >
+                            本地标签
+                          </span>
+                        </el-checkbox>
+                        <el-checkbox :value="SearchType.SITE_TAG">
+                          <span
+                            class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-tag"
+                          >
+                            站点标签
+                          </span>
+                        </el-checkbox>
+                        <el-checkbox :value="SearchType.LOCAL_AUTHOR">
+                          <span
+                            class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-author"
+                          >
+                            本地作者
+                          </span>
+                        </el-checkbox>
+                        <el-checkbox :value="SearchType.SITE_AUTHOR">
+                          <span
+                            class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-author"
+                          >
+                            站点作者
+                          </span>
+                        </el-checkbox>
                       </el-checkbox-group>
                     </template>
                   </auto-load-tag-select>
@@ -497,9 +538,29 @@ async function handleTest() {
   height: 33px;
   position: relative;
 }
-.main-page-auto-load-tag-select-tag-type-checkbox {
+.main-page-auto-load-tag-select-tag-type-checkbox-group {
   display: flex;
   flex-direction: column;
+}
+.main-page-auto-load-tag-select-tag-type-checkbox {
+  padding: 0 7px 0 6px;
+  border-radius: 15px;
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-local-tag {
+  background-color: rgb(133.4, 206.2, 97.4, 30%);
+  color: rgb(78.1, 141.8, 46.6, 75%);
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-site-tag {
+  background-color: rgb(64, 158, 255, 25%);
+  color: rgb(64, 158, 255, 85%);
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-local-author {
+  background-color: rgb(245, 108, 108, 25%);
+  color: rgb(245, 108, 108, 75%);
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-site-author {
+  background-color: rgb(164, 158, 255, 25%);
+  color: rgb(164, 158, 255, 95%);
 }
 .subPage {
   width: 100%;
