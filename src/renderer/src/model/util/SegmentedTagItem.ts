@@ -6,11 +6,12 @@ export default class SegmentedTagItem extends SelectItem {
   mainBackGround?: string
   mainBackGroundHover?: string
   mainTextColor?: string
-  subTextColor?: string
   sub1BackGround?: string
   sub1BackGroundHover?: string
+  sub1TextColor?: string
   sub2BackGround?: string
   sub2BackGroundHover?: string
+  sub2TextColor?: string
 
   constructor(cSegmentedTagItem: CSegmentedTagItem) {
     super(cSegmentedTagItem)
@@ -20,9 +21,10 @@ export default class SegmentedTagItem extends SelectItem {
     this.mainTextColor = cSegmentedTagItem.mainTextColor
     this.sub1BackGround = cSegmentedTagItem.sub1BackGround
     this.sub1BackGroundHover = cSegmentedTagItem.sub1BackGroundHover
-    this.subTextColor = cSegmentedTagItem.subTextColor
+    this.sub1TextColor = cSegmentedTagItem.sub1TextColor
     this.sub2BackGround = cSegmentedTagItem.sub2BackGround
     this.sub2BackGroundHover = cSegmentedTagItem.sub2BackGroundHover
+    this.sub2TextColor = cSegmentedTagItem.sub2TextColor
   }
 }
 
@@ -31,9 +33,10 @@ interface CSegmentedTagItem extends CSelectItem {
   mainBackGround?: string
   mainBackGroundHover?: string
   mainTextColor?: string
-  subTextColor?: string
   sub1BackGround?: string
   sub1BackGroundHover?: string
+  sub1TextColor?: string
   sub2BackGround?: string
   sub2BackGroundHover?: string
+  sub2TextColor?: string
 }

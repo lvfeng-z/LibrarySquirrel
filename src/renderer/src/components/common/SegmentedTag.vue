@@ -26,11 +26,12 @@ const colorConfig = ref({
   mainBackground: IsNullish(props.item.mainBackGround) ? 'rgb(133.4, 206.2, 97.4, 30%)' : props.item.mainBackGround,
   mainBackgroundHover: IsNullish(props.item.mainBackGroundHover) ? 'rgb(133.4, 206.2, 97.4, 15%)' : props.item.mainBackGroundHover,
   mainTextColor: IsNullish(props.item.mainTextColor) ? 'rgb(78.1, 141.8, 46.6, 75%)' : props.item.mainTextColor,
-  subTextColor: IsNullish(props.item.subTextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.subTextColor,
   sub1BackGround: IsNullish(props.item.sub1BackGround) ? 'rgb(166.2, 168.6, 173.4, 20%)' : props.item.sub1BackGround,
   sub1BackGroundHover: IsNullish(props.item.sub1BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub1BackGroundHover,
+  sub1TextColor: IsNullish(props.item.sub1TextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.sub1TextColor,
   sub2BackGround: IsNullish(props.item.sub2BackGround) ? 'rgb(166.2, 168.6, 173.4, 30%)' : props.item.sub2BackGround,
-  sub2BackGroundHover: IsNullish(props.item.sub2BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub2BackGroundHover
+  sub2BackGroundHover: IsNullish(props.item.sub2BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub2BackGroundHover,
+  sub2TextColor: IsNullish(props.item.sub2TextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.sub2TextColor
 })
 
 // 事件
@@ -78,14 +79,15 @@ function handleCloseButtonClicked() {
         <div
           :class="{
             'segmented-tag-sub-label': true,
-            'segmented-tag-sub-2-label': !(index % 2 === 0),
-            'segmented-tag-sub-1-label': index % 2 === 0
+            'segmented-tag-sub-1-label': index % 2 === 0,
+            'segmented-tag-sub-2-label': !(index % 2 === 0)
           }"
           @click="handleSubLabelClicked(index)"
         >
           <span
             :class="{
-              'segmented-tag-sub-text': true,
+              'segmented-tag-sub-1-text': index % 2 === 0,
+              'segmented-tag-sub-2-text': !(index % 2 === 0),
               'segmented-tag-ellipsis': true,
               'segmented-tag-sub-text-last': IsNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
             }"
@@ -174,13 +176,21 @@ function handleCloseButtonClicked() {
 .segmented-tag-sub-2-label:hover {
   background-color: v-bind('colorConfig.sub2BackGroundHover');
 }
-.segmented-tag-sub-text {
+.segmented-tag-sub-1-text {
   width: 100%;
   margin-left: 3px;
   margin-right: 3px;
   font-weight: inherit;
   text-align: center;
-  color: v-bind('colorConfig.subTextColor');
+  color: v-bind('colorConfig.sub1TextColor');
+}
+.segmented-tag-sub-2-text {
+  width: 100%;
+  margin-left: 3px;
+  margin-right: 3px;
+  font-weight: inherit;
+  text-align: center;
+  color: v-bind('colorConfig.sub2TextColor');
 }
 .segmented-tag-sub-text-last {
   margin-right: 6px;
