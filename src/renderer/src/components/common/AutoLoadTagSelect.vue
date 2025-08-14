@@ -292,18 +292,18 @@ watch(input, () => {
 
 <style scoped>
 .auto-load-tag-select-main {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  transition: 0.3s ease;
+  display: flex;
+  transition: height 0.5s ease;
 }
 .auto-load-tag-select-main-fold {
-  grid-template-rows: 1fr;
+  height: auto;
 }
 .auto-load-tag-select-main-unfold {
-  grid-template-rows: 0fr;
+  height: v-bind(minHeight);
 }
 .auto-load-tag-select-selected-wrapper {
   display: flex;
+  width: 100%;
   min-height: v-bind(minHeight);
   background-color: var(--el-fill-color-blank);
 }
