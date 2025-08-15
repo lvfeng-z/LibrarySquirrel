@@ -160,7 +160,7 @@ async function askBeforeReset(): Promise<boolean> {
 }
 // 作品-添加命名标识符
 function insertFormatToken(element: ResFileNameFormatEnum) {
-  const inputElement = worksSettingsFileNameFormatInput.value.input
+  const inputElement = worksSettingsFileNameFormatInput.value.textarea
   if (inputElement) {
     const startPos = inputElement.selectionStart // 光标起始位置
     const endPos = inputElement.selectionEnd // 光标结束位置
@@ -279,8 +279,8 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
       </el-tour>
     </template>
     <template #dialog>
-      <el-dialog v-model="worksSettingsFileNameFormatDialogState">
-        <div>
+      <el-dialog v-model="worksSettingsFileNameFormatDialogState" center align-center>
+        <el-scrollbar class="settings-works-settings-file-name-format-dialog">
           <el-button class="works-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.AUTHOR)">
             {{ ResFileNameFormatEnum.AUTHOR.name }}
           </el-button>
@@ -368,8 +368,15 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
           >
             {{ ResFileNameFormatEnum.DOWNLOAD_TIME_SECOND.name }}
           </el-button>
-        </div>
-        <el-input ref="worksSettingsFileNameFormatInput" v-model="settings.worksSettings.fileNameFormat"></el-input>
+          <div class="works-settings-file-name-format-input">
+            <el-input
+              ref="worksSettingsFileNameFormatInput"
+              v-model="settings.worksSettings.fileNameFormat"
+              autosize
+              type="textarea"
+            ></el-input>
+          </div>
+        </el-scrollbar>
       </el-dialog>
     </template>
   </base-subpage>
@@ -384,8 +391,14 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
   padding: 5px;
   margin: 5px;
 }
+.settings-works-settings-file-name-format-dialog > :deep(.el-scrollbar__wrap) {
+  max-height: 65vh;
+}
 .works-settings-file-name-format-button {
   margin-bottom: 10px;
+}
+.works-settings-file-name-format-input {
+  padding-right: 10px;
 }
 </style>
 <style>
