@@ -10,6 +10,9 @@ const props = withDefaults(
     hideHandle?: boolean
     borderRadios?: string
     destroyOnClose?: boolean
+    enableBadge?: boolean
+    badgeValue?: number
+    badgeMax?: number
   }>(),
   {
     position: 'top',
@@ -17,7 +20,10 @@ const props = withDefaults(
     toggleOnOutsideClick: true,
     hideHandle: false,
     borderRadios: '0',
-    destroyOnClose: false
+    destroyOnClose: false,
+    enableBadge: false,
+    badgeValue: 0,
+    badgeMax: 99
   }
 )
 
@@ -30,6 +36,19 @@ const bottom: Ref<boolean> = computed(() => props.position === 'bottom')
 const left: Ref<boolean> = computed(() => props.position === 'left')
 const right: Ref<boolean> = computed(() => props.position === 'right')
 const delayedState: Ref<boolean> = ref(state.value)
+const badgeOffset: Ref<number[]> = computed(() => {
+  if (props.position === 'top') {
+    return [15, 15]
+  } else if (props.position === 'bottom') {
+    return [15, -15]
+  } else if (props.position === 'left') {
+    return [30, -15]
+  } else if (props.position === 'right') {
+    return [-30, -15]
+  } else {
+    return [0, 0]
+  }
+})
 
 // 处理组件外部点击事件
 function handleClickOutSide() {
@@ -76,25 +95,44 @@ watch(state, (newValue: boolean) => {
         <slot v-if="delayedState || !destroyOnClose" />
       </div>
       <div
-        v-show="!hideHandle"
         :class="{
-          'collapse-panel-button-wrapper': true,
-          'collapse-panel-button-wrapper-top': top,
-          'collapse-panel-button-wrapper-bottom': bottom,
-          'collapse-panel-button-wrapper-left': left,
-          'collapse-panel-button-wrapper-right': right
+          'collapse-panel-badge-button-wrapper': true,
+          'collapse-panel-badge-button-wrapper-top': top,
+          'collapse-panel-badge-button-wrapper-bottom': bottom,
+          'collapse-panel-badge-button-wrapper-left': left,
+          'collapse-panel-badge-button-wrapper-right': right
         }"
       >
+        <el-badge
+          v-if="props.enableBadge"
+          class="collapse-panel-badge"
+          :value="props.badgeValue"
+          :max="props.badgeMax"
+          :offset="badgeOffset"
+        >
+          <div />
+        </el-badge>
         <div
+          v-show="!hideHandle"
           :class="{
-            'collapse-panel-button': true,
-            'collapse-panel-button-top': top,
-            'collapse-panel-button-bottom': bottom,
-            'collapse-panel-button-left': left,
-            'collapse-panel-button-right': right
+            'collapse-panel-button-wrapper': true,
+            'collapse-panel-button-wrapper-top': top,
+            'collapse-panel-button-wrapper-bottom': bottom,
+            'collapse-panel-button-wrapper-left': left,
+            'collapse-panel-button-wrapper-right': right
           }"
-          @click="state = !state"
-        />
+        >
+          <div
+            :class="{
+              'collapse-panel-button': true,
+              'collapse-panel-button-top': top,
+              'collapse-panel-button-bottom': bottom,
+              'collapse-panel-button-left': left,
+              'collapse-panel-button-right': right
+            }"
+            @click="state = !state"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -169,8 +207,33 @@ watch(state, (newValue: boolean) => {
 .collapse-panel-container-horizontal-close {
   width: 0;
 }
+.collapse-panel-badge-button-wrapper {
+  position: absolute;
+  display: flex;
+  align-self: center;
+  transition: 0.3s ease;
+}
+.collapse-panel-badge-button-wrapper-top {
+  top: 100%;
+  flex-direction: column;
+}
+.collapse-panel-badge-button-wrapper-bottom {
+  bottom: 100%;
+  flex-direction: column;
+}
+.collapse-panel-badge-button-wrapper-left {
+  left: 100%;
+}
+.collapse-panel-badge-button-wrapper-right {
+  right: 100%;
+}
+.collapse-panel-badge {
+  transition: 0.3s ease;
+  cursor: pointer;
+}
 .collapse-panel-button-wrapper {
   position: absolute;
+  display: flex;
   align-self: center;
   transition: 0.3s ease;
 }

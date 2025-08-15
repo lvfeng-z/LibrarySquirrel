@@ -11,7 +11,7 @@ const notificationStore = useNotificationStore().$state
 </script>
 
 <template>
-  <collapse-panel v-model:state="state" :destroy-on-close="true" border-radios="10px" position="right">
+  <collapse-panel v-model:state="state" :destroy-on-close="true" enable-badge border-radios="10px" position="right">
     <div class="background-list-container">
       <el-scrollbar>
         <template v-for="item in notificationStore.values()" :key="item.title">
