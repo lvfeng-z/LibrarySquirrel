@@ -36,19 +36,6 @@ const bottom: Ref<boolean> = computed(() => props.position === 'bottom')
 const left: Ref<boolean> = computed(() => props.position === 'left')
 const right: Ref<boolean> = computed(() => props.position === 'right')
 const delayedState: Ref<boolean> = ref(state.value)
-const badgeOffset: Ref<number[]> = computed(() => {
-  if (props.position === 'top') {
-    return [15, 15]
-  } else if (props.position === 'bottom') {
-    return [15, -15]
-  } else if (props.position === 'left') {
-    return [30, -15]
-  } else if (props.position === 'right') {
-    return [-30, -15]
-  } else {
-    return [0, 0]
-  }
-})
 
 // 处理组件外部点击事件
 function handleClickOutSide() {
@@ -105,15 +92,20 @@ watch(state, (newValue: boolean) => {
       >
         <el-badge
           v-if="props.enableBadge"
-          class="collapse-panel-badge"
+          :class="{
+            'collapse-panel-badge': true,
+            'collapse-panel-badge-top': top,
+            'collapse-panel-badge-bottom': bottom,
+            'collapse-panel-badge-left': left,
+            'collapse-panel-badge-right': right
+          }"
           :value="props.badgeValue"
           :max="props.badgeMax"
-          :offset="badgeOffset"
         >
           <div />
         </el-badge>
         <div
-          v-show="!hideHandle"
+          v-show="true"
           :class="{
             'collapse-panel-button-wrapper': true,
             'collapse-panel-button-wrapper-top': top,
@@ -230,6 +222,20 @@ watch(state, (newValue: boolean) => {
 .collapse-panel-badge {
   transition: 0.3s ease;
   cursor: pointer;
+}
+:deep(.collapse-panel-badge-top .el-badge__content) {
+  margin-right: -15px;
+  margin-top: 15px;
+}
+:deep(.collapse-panel-badge-bottom .el-badge__content) {
+  margin-right: -15px;
+  margin-top: -15px;
+}
+:deep(.collapse-panel-badge-left .el-badge__content) {
+  transform: translateX(81px) translateY(-25px);
+}
+:deep(.collapse-panel-badge-right .el-badge__content) {
+  transform: translateX(5px) translateY(-25px);
 }
 .collapse-panel-button-wrapper {
   position: absolute;
