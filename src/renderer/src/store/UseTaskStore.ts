@@ -9,15 +9,15 @@ import { h } from 'vue'
 import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
 
 export const useTaskStore = defineStore('task', {
-  state: (): Map<number, TaskStoreObj> => {
-    return new Map<number, TaskStoreObj>()
+  state: (): { tasks: Map<number, TaskStoreObj> } => {
+    return { tasks: new Map<number, TaskStoreObj>() }
   },
   actions: {
     getTask(taskId: number): TaskProgressDTO | undefined {
-      return this.$state.get(taskId)?.task
+      return this.tasks.get(taskId)?.task
     },
     setTask(taskList: TaskProgressDTO[]): void {
-      const taskStatus: Map<number, TaskStoreObj> = this.$state
+      const taskStatus: Map<number, TaskStoreObj> = this.tasks
       taskList.forEach((task) => {
         let notificationId: string | undefined
         // 只有进行中、等待中两种状态才推送到通知Store中
@@ -32,14 +32,14 @@ export const useTaskStore = defineStore('task', {
       })
     },
     hasTask(taskId: number): boolean {
-      return this.$state.has(taskId)
+      return this.tasks.has(taskId)
     },
     updateTask(taskList: TaskProgressDTO[]): void {
       taskList.forEach((task) => {
         if (IsNullish(task.id)) {
           throw new Error('UseTaskStore: 更新任务失败，任务id为空')
         }
-        const taskStoreObj = this.$state.get(task.id)
+        const taskStoreObj = this.tasks.get(task.id)
         if (NotNullish(taskStoreObj)) {
           if (task.status !== taskStoreObj.task.status) {
             // 任务状态变化为完成或失败，解决通知Store中该任务的Promise
@@ -83,7 +83,7 @@ export const useTaskStore = defineStore('task', {
       })
     },
     removeTask(ids: number[]) {
-      const taskStatus = this.$state
+      const taskStatus = this.tasks
       if (ArrayNotEmpty(ids)) {
         ids.forEach((id) => taskStatus.delete(id))
       }

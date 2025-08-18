@@ -5,18 +5,18 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 
 export const useParentTaskStore = defineStore('parentTask', {
-  state: (): Map<number, TaskProgressDTO> => {
-    return new Map<number, TaskProgressDTO>()
+  state: (): { parentTasks: Map<number, TaskProgressDTO> } => {
+    return { parentTasks: new Map<number, TaskProgressDTO>() }
   },
   actions: {
     getTask(taskId: number): TaskProgressDTO | undefined {
-      return this.$state.get(taskId)
+      return this.parentTasks.get(taskId)
     },
     hasTask(taskId: number): boolean {
-      return this.$state.has(taskId)
+      return this.parentTasks.has(taskId)
     },
     setParentTask(taskList: TaskProgressDTO[]): void {
-      const taskStatus = this.$state
+      const taskStatus = this.parentTasks
       taskList.forEach((task) => {
         if (IsNullish(task.id)) {
           throw new Error('UseTaskStatusStore: 赋值父任务失败，任务id为空')
@@ -25,7 +25,7 @@ export const useParentTaskStore = defineStore('parentTask', {
       })
     },
     updateParentTask(taskList: TaskProgressDTO[]): void {
-      const taskStatus = this.$state
+      const taskStatus = this.parentTasks
       taskList.forEach((task) => {
         if (IsNullish(task.id)) {
           throw new Error('UseTaskStatusStore: 更新父任务失败，任务id为空')
@@ -37,7 +37,7 @@ export const useParentTaskStore = defineStore('parentTask', {
       })
     },
     updateParentTaskSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
-      const taskStatus = this.$state
+      const taskStatus = this.parentTasks
       scheduleDTOList.forEach((scheduleDTO) => {
         if (IsNullish(scheduleDTO.id)) {
           throw new Error('UseTaskStatusStore: 更新父任务进度失败，任务id为空')
@@ -51,7 +51,7 @@ export const useParentTaskStore = defineStore('parentTask', {
       })
     },
     removeParentTask(ids: number[]) {
-      const taskStatus = this.$state
+      const taskStatus = this.parentTasks
       if (ArrayNotEmpty(ids)) {
         ids.forEach((id) => taskStatus.delete(id))
       }

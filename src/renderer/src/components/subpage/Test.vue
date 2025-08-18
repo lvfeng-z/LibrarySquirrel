@@ -9,8 +9,8 @@ import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 const value = ref()
 const value2 = ref(5)
 
-const taskStatus = useTaskStore().$state
-const parentTaskStatus = useParentTaskStore().$state
+const taskStatus = useTaskStore().tasks
+const parentTaskStatus = useParentTaskStore().parentTasks
 const notificationStore = useNotificationStore().notifications
 
 const cacheData = [
