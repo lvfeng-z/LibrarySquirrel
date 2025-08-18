@@ -13,6 +13,7 @@ import clickOutSide from './directives/clickOutSide.ts'
 import elSelectBottomed from './directives/elSelectBottomed.ts'
 import elScrollbarBottomed from './directives/elScrollbarBottomed.ts'
 import { iniListener } from '@renderer/MainIpcListener.ts'
+import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -29,3 +30,5 @@ app.directive('elScrollbarBottomed', elScrollbarBottomed)
 app.mount('#app')
 
 iniListener()
+
+useTourStatesStore().tourStates.newUserGuidingProcess()

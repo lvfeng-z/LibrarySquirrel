@@ -6,12 +6,10 @@ import { ElMessageBox, ElNotification } from 'element-plus'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import ConfirmConfig from '@renderer/model/util/ConfirmConfig.ts'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
-import { PageEnum } from '@renderer/constants/PageState.ts'
-import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
-import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import { h } from 'vue'
 import NotifyConfig from '@renderer/model/util/NotifyConfig.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { GotoPage } from '@renderer/utils/PageUtil.ts'
 
 export function iniListener() {
   // 任务队列
@@ -112,21 +110,5 @@ export function iniListener() {
   //   }
   // )
 
-  // 页面跳转
-  const pageStatesStore = usePageStatesStore()
-  const tourStatesStore = useTourStatesStore()
-  window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => {
-    ElMessageBox.alert(config.content, config.title, config.options).then(() => {
-      switch (config.page) {
-        case PageEnum.Settings:
-          tourStatesStore.tourStates.workdirTour = true
-          pageStatesStore.showPage(pageStatesStore.pageStates.settings)
-          break
-        case PageEnum.SiteManage:
-          pageStatesStore.pageStates.siteManage.setFocusOnDomains(config.extraData as string[])
-          pageStatesStore.showPage(pageStatesStore.pageStates.siteManage)
-          break
-      }
-    })
-  })
+  window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => GotoPage(config))
 }

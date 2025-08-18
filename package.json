@@ -36,6 +36,7 @@
     "electron-store": "8.2.0",
     "electron-updater": "^6.6.2",
     "element-plus": "^2.10.7",
+    "mitt": "^3.0.1",
     "pinia": "^3.0.3",
     "sharp": "^0.34.3",
     "sqlite3": "^5.1.7",

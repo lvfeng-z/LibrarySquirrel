@@ -1,4 +1,4 @@
-export interface Settings extends Record<string, unknown> {
+export interface Settings {
   initialized: boolean
   programVersion: string
   workdir: string
@@ -7,6 +7,10 @@ export interface Settings extends Record<string, unknown> {
   }
   importSettings: {
     maxParallelImport: number
+  }
+  tour: {
+    workdirTour: boolean
+    taskTour: boolean
   }
 }
 
@@ -19,5 +23,9 @@ export const emptySettings: Settings = {
   },
   importSettings: {
     maxParallelImport: 3
+  },
+  tour: {
+    workdirTour: false,
+    taskTour: false
   }
 }

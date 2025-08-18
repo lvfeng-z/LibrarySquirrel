@@ -37,6 +37,7 @@ import { PageState } from '@renderer/constants/PageState.ts'
 import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
+import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 
 // onMounted
 onMounted(() => {
@@ -68,6 +69,8 @@ const sideMenuRef = ref()
 const worksSpace = ref()
 // worksArea组件的实例
 const worksAreaRef = ref()
+// 任务按钮组件的实例
+const taskButton = ref()
 // 搜索条件工具栏组件的实例
 const searchConditionBar = ref()
 const pageStatesStore = usePageStatesStore()
@@ -309,7 +312,7 @@ async function handleTest() {
             </el-menu-item>
             <el-menu-item index="5" @click="showSubpage(pageStatesStore.pageStates.taskManage)">
               <template #title>任务</template>
-              <el-icon><List /></el-icon>
+              <el-icon ref="taskButton"><List /></el-icon>
             </el-menu-item>
             <el-menu-item index="6" @click="showSubpage(pageStatesStore.pageStates.pluginManage)">
               <template #title>插件</template>
@@ -434,6 +437,13 @@ async function handleTest() {
       v-model:confirm-list="resourceReplaceConfirmList"
     />
     <transaction-test v-model="showTestDialog"></transaction-test>
+    <el-tour
+      v-model="useTourStatesStore().tourStates.taskTour"
+      :scroll-into-view-options="true"
+      @finish="useTourStatesStore().tourStates.getCallback('taskTour')"
+    >
+      <el-tour-step :target="taskButton?.$el" title="任务向导" description="点击这里进入任务页面"></el-tour-step>
+    </el-tour>
   </div>
 </template>
 

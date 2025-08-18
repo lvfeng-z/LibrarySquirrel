@@ -8,4 +8,8 @@ export interface Settings {
   importSettings: {
     maxParallelImport: number
   }
+  tour: {
+    workdirTour: boolean
+    taskTour: boolean
+  }
 }

@@ -3,7 +3,7 @@ import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
 import { onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
-import { emptySettings, Settings } from '../../model/util/Settings'
+import { emptySettings, Settings } from '@renderer/model/util/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -274,7 +274,11 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
           </el-row>
         </el-footer>
       </el-container>
-      <el-tour v-model="useTourStatesStore().tourStates.workdirTour" :scroll-into-view-options="true">
+      <el-tour
+        v-model="useTourStatesStore().tourStates.workdirTour"
+        :scroll-into-view-options="true"
+        @finish="useTourStatesStore().tourStates.getCallback('workdirTour')"
+      >
         <el-tour-step :target="workdirInput?.$el" title="工作目录" description="在这里设置工作目录"></el-tour-step>
       </el-tour>
     </template>
