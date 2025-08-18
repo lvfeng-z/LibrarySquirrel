@@ -23,17 +23,17 @@ export const useNotificationStore = defineStore('notification', {
     add(notificationItem: NotificationItem): string {
       const id: string = v4()
       notificationItem.id = id
-      this.$state.notifications.set(id, notificationItem)
+      this.notifications.set(id, notificationItem)
       return id
     },
     get(id: string): NotificationItem | undefined {
-      return this.$state.notifications.get(id)
+      return this.notifications.get(id)
     },
     remove(
       id: string,
       notificationConfig?: { type?: 'error' | 'primary' | 'success' | 'warning' | 'info'; msg: string; duration?: number }
     ): void {
-      this.$state.notifications.delete(id)
+      this.notifications.delete(id)
       let type = notificationConfig?.type
       if (IsNullish(type)) {
         type = 'info'

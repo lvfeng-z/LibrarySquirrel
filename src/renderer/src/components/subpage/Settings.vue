@@ -274,7 +274,7 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
           </el-row>
         </el-footer>
       </el-container>
-      <el-tour v-model="useTourStatesStore().$state.tourStates.workdirTour" :scroll-into-view-options="true">
+      <el-tour v-model="useTourStatesStore().tourStates.workdirTour" :scroll-into-view-options="true">
         <el-tour-step :target="workdirInput?.$el" title="工作目录" description="在这里设置工作目录"></el-tour-step>
       </el-tour>
     </template>

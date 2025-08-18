@@ -12,27 +12,27 @@ export const usePageStatesStore = defineStore('pageStates', {
   },
   actions: {
     async showPage(page: PageState): Promise<void> {
-      if (!this.$state.pageStates.subPage.state) {
+      if (!this.pageStates.subPage.state) {
         page.state = true
-        this.$state.pageStates.subPage.state = true
-        this.$state.pageStates.mainPage.state = false
-        this.$state.currentPage = page
+        this.pageStates.subPage.state = true
+        this.pageStates.mainPage.state = false
+        this.currentPage = page
       } else {
-        if (NotNullish(this.$state.currentPage)) {
-          const closed = await this.$state.currentPage.close()
+        if (NotNullish(this.currentPage)) {
+          const closed = await this.currentPage.close()
           if (closed) {
-            this.$state.currentPage = page
+            this.currentPage = page
             page.state = true
           }
         }
       }
     },
     async closePage(): Promise<void> {
-      const closed = await this.$state.currentPage.close()
+      const closed = await this.currentPage.close()
       if (closed) {
-        this.$state.currentPage = this.$state.pageStates.mainPage
-        this.$state.pageStates.subPage.state = false
-        this.$state.pageStates.mainPage.state = true
+        this.currentPage = this.pageStates.mainPage
+        this.pageStates.subPage.state = false
+        this.pageStates.mainPage.state = true
       }
     }
   }
