@@ -7,14 +7,21 @@ import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 // model
 // 开关状态
 const state = defineModel<boolean>('state', { required: true })
-const notificationStore = useNotificationStore().$state
 </script>
 
 <template>
-  <collapse-panel v-model:state="state" :destroy-on-close="true" enable-badge border-radios="10px" position="right">
+  <collapse-panel
+    v-model:state="state"
+    :destroy-on-close="true"
+    :enable-badge="useNotificationStore().count !== 0"
+    :badge-value="useNotificationStore().count"
+    :badge-max="999"
+    border-radios="10px"
+    position="right"
+  >
     <div class="background-list-container">
       <el-scrollbar>
-        <template v-for="item in notificationStore.values()" :key="item.title">
+        <template v-for="item in useNotificationStore().notifications.values()" :key="item.title">
           <div class="background-list-item">
             <span class="background-list-item-title" :title="item.title">{{ item.title }}</span>
             <span v-if="StringUtil.isNotBlank(item.description)" class="background-list-item-description">

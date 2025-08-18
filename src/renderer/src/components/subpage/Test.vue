@@ -11,7 +11,7 @@ const value2 = ref(5)
 
 const taskStatus = useTaskStore().$state
 const parentTaskStatus = useParentTaskStore().$state
-const notificationStore = useNotificationStore().$state
+const notificationStore = useNotificationStore().notifications
 
 const cacheData = [
   { value: 5, label: 'lazy load node5' },

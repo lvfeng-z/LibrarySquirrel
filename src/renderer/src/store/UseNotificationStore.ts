@@ -6,7 +6,7 @@ import { h } from 'vue'
 import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 export const useNotificationStore = defineStore('notification', {
-  state: (): Map<string, NotificationItem> => {
+  state: (): { notifications: Map<string, NotificationItem> } => {
     // let i = 0
     // while (i < 20) {
     //   const item = new NotificationItem()
@@ -17,23 +17,23 @@ export const useNotificationStore = defineStore('notification', {
     //   result.push(item)
     //   i++
     // }
-    return new Map<string, NotificationItem>()
+    return { notifications: new Map<string, NotificationItem>() }
   },
   actions: {
     add(notificationItem: NotificationItem): string {
       const id: string = v4()
       notificationItem.id = id
-      this.$state.set(id, notificationItem)
+      this.$state.notifications.set(id, notificationItem)
       return id
     },
     get(id: string): NotificationItem | undefined {
-      return this.$state.get(id)
+      return this.$state.notifications.get(id)
     },
     remove(
       id: string,
       notificationConfig?: { type?: 'error' | 'primary' | 'success' | 'warning' | 'info'; msg: string; duration?: number }
     ): void {
-      this.$state.delete(id)
+      this.$state.notifications.delete(id)
       let type = notificationConfig?.type
       if (IsNullish(type)) {
         type = 'info'
@@ -50,5 +50,8 @@ export const useNotificationStore = defineStore('notification', {
         })
       }
     }
+  },
+  getters: {
+    count: (state): number => state.notifications.size
   }
 })

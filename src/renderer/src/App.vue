@@ -75,15 +75,14 @@ const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索
 const customTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏自定义标签列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
-// 副页面名称
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[]>> = ref([])
 // 作品分页
 const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
-// 后台任务列表开关
-const backgroundTaskState: Ref<boolean> = ref(false)
+// 提醒列表开关
+const notificationListState: Ref<boolean> = ref(false)
 // 加载更多按钮开关
 const loadMore: Ref<boolean> = ref(false)
 // 监听worksArea组件的高度变化
@@ -428,7 +427,7 @@ async function handleTest() {
         </div>
       </el-main>
     </el-container>
-    <notification-list class="main-background-task z-layer-3" :state="backgroundTaskState" />
+    <notification-list class="main-background-task z-layer-3" :state="notificationListState" />
     <explain-path v-model:state="showExplainPath" width="80%" :string-to-explain="pathWaitingExplain" :close-on-click-modal="false" />
     <task-queue-resource-replace-confirm-dialog
       v-model:state="resourceReplaceConfirmState"
