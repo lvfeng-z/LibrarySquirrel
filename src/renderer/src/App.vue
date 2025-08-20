@@ -9,6 +9,8 @@ import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import Developing from '@renderer/components/subpage/Developing.vue'
 import SiteManage from '@renderer/components/subpage/SiteManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
+import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
+import GuidePage from '@renderer/components/subpage/Guide.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/common/SideMenu.vue'
 import { Close, Coordinate, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
@@ -34,7 +36,6 @@ import StringUtil from '@renderer/utils/StringUtil.ts'
 import NotificationList from '@renderer/components/common/NotificationList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { PageState } from '@renderer/constants/PageState.ts'
-import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
@@ -322,7 +323,11 @@ async function handleTest() {
               <template #title>设置</template>
               <el-icon><Setting /></el-icon>
             </el-menu-item>
-            <el-menu-item index="8" @click="showSubpage(pageStatesStore.pageStates.test)">
+            <el-menu-item index="8" @click="showSubpage(pageStatesStore.pageStates.guide)">
+              <template #title>向导</template>
+              <el-icon><Guide /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="9" @click="showSubpage(pageStatesStore.pageStates.test)">
               <template #title>测试按钮</template>
               <el-icon><Coordinate /></el-icon>
             </el-menu-item>
@@ -425,6 +430,7 @@ async function handleTest() {
           />
           <settings v-if="pageStatesStore.pageStates.settings.state" :state="pageStatesStore.pageStates.settings" />
           <site-manage v-if="pageStatesStore.pageStates.siteManage.state" />
+          <guide-page v-if="pageStatesStore.pageStates.guide.state" />
           <developing v-if="pageStatesStore.pageStates.developing.state" />
           <test v-if="pageStatesStore.pageStates.test.state" />
         </div>

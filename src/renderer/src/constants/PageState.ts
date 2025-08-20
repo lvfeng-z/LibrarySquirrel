@@ -40,6 +40,7 @@ export class PageStates {
   siteManage = new SiteManagePageState(PageEnum.SiteManage, false)
   taskManage = new PageState(PageEnum.TaskManage, false)
   settings = new PageState(PageEnum.Settings, false)
+  guide = new PageState(PageEnum.Guide, false)
   developing = new PageState(PageEnum.Developing, false)
   test = new PageState(PageEnum.Test, false)
 }
@@ -52,11 +53,12 @@ export enum PageEnum {
   LocalAuthorManage = 5,
   SiteAuthorManage = 6,
   PluginManage = 7,
-  TaskManage = 8,
-  Settings = 9,
-  SiteManage = 10,
-  Developing = 11,
-  Test = 12
+  SiteManage = 8,
+  TaskManage = 9,
+  Settings = 10,
+  Guide = 11,
+  Developing = 12,
+  Test = 13
 }
 
 export class SiteManagePageState extends PageState {

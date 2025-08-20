@@ -20,28 +20,6 @@ sites:
       Founded in August 2000, DeviantArt is the largest online social network for artists and art enthusiasts, and a platform for emerging and established artists to exhibit, promote, and share their works with an enthusiastic, art-centric community. We have over 100 million registered members worldwide and host over 650 million pieces of art on the platform. Our members -- known as deviants -- upload tens of thousands of original pieces of art every day, everything from painting and sculpture to digital art, pixel art, films, and anime.
 
       Artists love us because we are an inclusive and supportive community. We help them find their identity through self-expression. We provide the tools, resources, and exposure to enable them to become better, more successful artists. We inspire people to create art by feeding their creativity. We can't help it - it runs through our veins and compels us to nurture it in others. This is DeviantArt.
-  - name: aryion
-    description: |
-      Some history about Aryion.com:
-      It all started around March 2005. One of the more well-known artists in the vore community, Strega, experienced some difficulty with Yahoo! Groups, where all his works and his e-mail account were deleted without warning. Once I became aware of that fact, I decided to make a website hosted all of Strega's art. Launched in April 2005, the address was https://strega.aryion.com, called Strega's Portal.
-
-      Strega's Portal was quite a success. After a while, a few other artists expressed an interest in having something similar. Even though all of them combined still didn't have half the collection Strega did at that time, so I made another portal. At first, it was merely called Artist's Portal at artists.aryion.com. However, after we received a few story submissions, and after we got a very lovely banner created by Dorogato, the name became "Eka's Portal".
-
-      Around October 2005, the site started having numerous downtimes due to the increase in traffic. Strega and I agreed to merge the two sections. Using Eka's Portal as the name, we officially reopened the site under the domain name "//aryion.com" on November 1st, 2005.
-      The purpose of the site is still to make a place for artists, but also we included authors and other types of contributions. Over time, the site has changed and added many things: four different hosting companies, different software, Interactive Stories area, Vore Wiki section, and various other projects. Around the time Yumchat started having difficulty, we added our chat as a semi-official replacement. We recently added a Upload Forum to fit the growing needs of this community. A bit after, we added a blog system as well.
-
-      When the site first started, it had nothing but a gallery, but we realized drawing is not the only way people enjoy vore and probably not the only thing valuable this community has to offer. So we have expanded our range of services. This change doesn't mean we have changed our core mission, only that we believe that by doing more and different things we can enhance our original mission. On top of making a site for artists, we will try to make the best vore site possible for anyone.
-
-      Timeline:
-      Thu Nov 09, 2006. Digit, the owner of http://www.vorarephile.com and the creator of biggulp, have discontinued one of the oldest vore sites on the entire internet. With permission from Digit, Aryion.com will try to continue from where he left off and continued the development of this community. It will be archived long as this site lives.
-      Mar 15, 2008. Leshana released the third gallery software, and our first custom gallery software, code name "G3" and begins public usage.
-      Jan 12, 2009. We moved to our fifth server and started using drupal and phpbb3 as our portal software, replacing the ancient PHP-Nuke content management system.
-      Mar 13, 2010. Leshana released the first custom in-house chat software, code name "C3" and began public usage.
-      Mon July 11, 2011. Leshana released the second version of our gallery software "G4" and begins public usage.
-      Apr 9, 2016. Leshana released the second custom in-house chat software, code name "C4" and began public usage.
-      Mar 24, 2019. We moved to our seventh server and started using CDN to improve our speed. Monthly visitor counts are now steadily in the million per month.
-
-      — Eka
 plugins:
   - packagePath: initialization/localTaskHandler.zip
     pathType: Relative
