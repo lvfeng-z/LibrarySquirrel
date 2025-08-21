@@ -27,6 +27,7 @@ import NotificationItem from '@renderer/model/util/NotificationItem.ts'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
+import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 
 // onMounted
 onMounted(() => {
@@ -54,6 +55,10 @@ const apis = {
 }
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
+// 本地导入按钮的实例
+const localImportButton = ref()
+// 站点导入按钮的实例
+const siteDownloadButton = ref()
 // 任务SearchTable的数据
 const dataList: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
 // 表头
@@ -445,7 +450,9 @@ async function deleteTask(ids: number[]) {
     <el-row class="task-manage-local-import-button-row">
       <el-col class="task-manage-local-import-button-col" :span="12">
         <el-dropdown>
-          <el-button size="large" type="danger" icon="Monitor" @click="selectDir(false)"> 从本地导入 </el-button>
+          <el-button ref="localImportButton" size="large" type="danger" icon="Monitor" @click="selectDir(false)">
+            从本地导入
+          </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="selectDir(true)">选择文件导入</el-dropdown-item>
@@ -454,7 +461,14 @@ async function deleteTask(ids: number[]) {
         </el-dropdown>
       </el-col>
       <el-col class="task-manage-site-import-button-col" :span="12">
-        <el-button v-model="siteDownloadState" size="large" type="primary" icon="Link" @click="handleSiteDownloadDialog">
+        <el-button
+          ref="siteDownloadButton"
+          v-model="siteDownloadState"
+          size="large"
+          type="primary"
+          icon="Link"
+          @click="handleSiteDownloadDialog"
+        >
           从站点下载
         </el-button>
       </el-col>
@@ -536,6 +550,14 @@ async function deleteTask(ids: number[]) {
           <el-button @click="siteDownloadState = false">取消</el-button>
         </template>
       </el-dialog>
+      <el-tour v-model="useTourStatesStore().tourStates.taskTour" @finish="useTourStatesStore().tourStates.getCallback('taskTour')">
+        <el-tour-step description="这里可以创建和开始任务" />
+        <el-tour-step :target="localImportButton.$el" description="在这里从本地创建任务，可以选择目录或单个文件" />
+        <el-tour-step
+          :target="siteDownloadButton.$el"
+          description="在这里输入url从站点创建任务，只能使用受支持的url，可以通过安装插件扩展受支持的url"
+        />
+      </el-tour>
     </template>
   </base-subpage>
 </template>

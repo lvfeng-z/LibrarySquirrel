@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
 import { ref } from 'vue'
+import { Discount, Link, List, TakeawayBox, User } from '@element-plus/icons-vue'
+import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 
 // 变量
 const activeName = ref('localTag')
 
 function startTour() {
   // TODO 打开向导
+  useTourStatesStore().tourStates.startTaskTour()
 }
 </script>
 <template>

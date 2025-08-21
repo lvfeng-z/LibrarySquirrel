@@ -34,6 +34,17 @@ export const usePageStatesStore = defineStore('pageStates', {
         this.pageStates.subPage.state = false
         this.pageStates.mainPage.state = true
       }
+    },
+    async waitPage(page: PageState): Promise<void> {
+      return new Promise((resolve) => {
+        this.$onAction(async (state) => {
+          state.after(() => {
+            if (this.currentPage === page) {
+              resolve()
+            }
+          })
+        })
+      })
     }
   }
 })

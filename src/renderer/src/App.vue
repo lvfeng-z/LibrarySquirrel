@@ -13,7 +13,7 @@ import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 import GuidePage from '@renderer/components/subpage/Guide.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/common/SideMenu.vue'
-import { Close, Coordinate, Link, List, Setting, Star, User } from '@element-plus/icons-vue'
+import { Close, Coordinate, Discount, HomeFilled, Link, List, Setting, Star, TakeawayBox, User } from '@element-plus/icons-vue'
 import WorksArea from './components/common/WorksArea.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
@@ -444,9 +444,9 @@ async function handleTest() {
     />
     <transaction-test v-model="showTestDialog"></transaction-test>
     <el-tour
-      v-model="useTourStatesStore().tourStates.taskTour"
+      v-model="useTourStatesStore().tourStates.taskMenuTour"
       :scroll-into-view-options="true"
-      @finish="useTourStatesStore().tourStates.getCallback('taskTour')"
+      @finish="useTourStatesStore().tourStates.getCallback('taskMenuTour')"
     >
       <el-tour-step :target="taskButton?.$el" title="任务向导" description="点击这里进入任务页面"></el-tour-step>
     </el-tour>

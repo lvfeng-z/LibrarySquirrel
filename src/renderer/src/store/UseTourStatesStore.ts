@@ -2,8 +2,6 @@ import { defineStore } from 'pinia'
 import { Settings } from '@renderer/model/util/Settings.ts'
 import mitt, { Emitter } from 'mitt'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
-import { GotoPage } from '@renderer/utils/PageUtil.ts'
-import { PageEnum } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 
 export const useTourStatesStore = defineStore('tourStates', {
@@ -27,12 +25,18 @@ export class TourStates {
   workdirTour: boolean
 
   /**
+   * 任务向导菜单开关
+   */
+  taskMenuTour: boolean
+
+  /**
    * 任务向导开关
    */
   taskTour: boolean
 
   emitter: Emitter<{
     workdirTour: void
+    taskMenuTour: void
     taskTour: void
   }>
 
@@ -41,6 +45,7 @@ export class TourStates {
 
   constructor(settingGetter: () => Promise<Settings>, settingSetter: () => Promise<void>) {
     this.workdirTour = false
+    this.taskMenuTour = false
     this.taskTour = false
     this.emitter = mitt()
     this.settingGetter = settingGetter
@@ -51,33 +56,12 @@ export class TourStates {
     this.emitter.emit(eventName)
   }
 
-  public async newUserGuidingProcess() {
-    const settings = await this.settingGetter()
-    const tourSettings = settings.tour
-    if (!tourSettings.workdirTour) {
-      GotoPage({
-        page: PageEnum.Settings,
-        title: '请设置工作目录',
-        content: 'LibrarySquirrel需要工作目录才能正常使用',
-        options: {
-          confirmButtonText: '去设置',
-          cancelButtonText: '取消',
-          type: 'warning',
-          showClose: false
-        }
-      })
-      const tempPromise = this.waitUserFinish('workdirTour')
-      this.workdirTour = true
-      await tempPromise
-    }
-    const unsubscribe = usePageStatesStore().$onAction(async (state) => {
-      if (!this.taskTour && (state.name === 'closePage' || (state.name === 'showPage' && state.args[0].page === PageEnum.MainPage))) {
-        const tempPromise = this.waitUserFinish('taskTour')
-        this.taskTour = true
-        await tempPromise
-        unsubscribe()
-      }
-    })
+  public async startTaskTour() {
+    this.taskMenuTour = true
+    const step1 = this.waitUserFinish('taskMenuTour')
+    const step2 = usePageStatesStore().waitPage(usePageStatesStore().pageStates.taskManage)
+    await Promise.all([step1, step2])
+    this.taskTour = true
   }
 
   private async waitUserFinish(eventName: TourEvents) {
@@ -88,4 +72,4 @@ export class TourStates {
   }
 }
 
-export type TourEvents = 'workdirTour' | 'taskTour'
+export type TourEvents = 'workdirTour' | 'taskMenuTour' | 'taskTour'
