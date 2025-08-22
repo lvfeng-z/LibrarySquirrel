@@ -201,6 +201,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const singleTaskCreateDTO = PluginCreateTaskResponseDTO.toTaskCreateDTO(childrenResponseDTOS[0])
         await assignTask(singleTaskCreateDTO)
         await super.save(singleTaskCreateDTO)
+        childrenCount++
         continue
       }
       const parentTaskCreateDTO = PluginCreateParentTaskResponseDTO.toTaskCreateDTO(parentTaskResponseDTO)
