@@ -60,7 +60,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskPlugins = await taskPluginListenerService.listListener(url)
 
     if (taskPlugins.length === 0) {
-      const msg = `没有监听此链接的插件，url: ${url}`
+      const msg = `url不受支持，url: ${url}`
       LogUtil.info(this.constructor.name, msg)
       return new TaskCreateResponse({
         succeed: false,

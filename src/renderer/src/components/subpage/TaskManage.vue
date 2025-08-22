@@ -28,6 +28,7 @@ import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
+import StringUtil from '@renderer/utils/StringUtil.ts'
 
 // onMounted
 onMounted(() => {
@@ -175,30 +176,33 @@ const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, 
 const dialogData: Ref<UnwrapRef<TaskTreeDTO>> = ref(new TaskTreeDTO())
 // 任务详情的dialog开关
 const taskDialogState: Ref<UnwrapRef<boolean>> = ref(false)
-// 站点下载dialog的开关
-const siteDownloadState: Ref<UnwrapRef<boolean>> = ref(false)
-// 站点资源的url
-const siteSourceUrl: Ref<UnwrapRef<string>> = ref('')
+// 下载dialog的开关
+const downloadDialogState: Ref<UnwrapRef<boolean>> = ref(false)
+// 下载模式
+const downloadMode: Ref<boolean> = ref(true)
+// 下载dialog输入框占位文本
+const downloadInputPlaceholder: Ref<string> = ref('')
+// 资源的url或文件路径
+const sourceUrl: Ref<UnwrapRef<string>> = ref('')
 const taskStore = useTaskStore()
 const parentTaskStore = useParentTaskStore()
 
 // 方法
-// 从本地路径导入
-async function importFromDir(dir: string) {
+// 根据url或文件路径创建任务
+async function createTaskFromSource() {
   const notificationItem = new NotificationItem()
-  notificationItem.title = `正在从【${dir}】创建任务`
+  notificationItem.title = `正在根据【${sourceUrl.value}】创建任务`
   const notificationStore = useNotificationStore()
   const notificationId = notificationStore.add(notificationItem)
-  apis.taskCreateTask('file://'.concat(dir)).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
-}
-// 从站点url导入
-async function importFromSite() {
-  const notificationItem = new NotificationItem()
-  notificationItem.title = `正在从【${siteSourceUrl.value}】创建任务`
-  const notificationStore = useNotificationStore()
-  const notificationId = notificationStore.add(notificationItem)
-  apis.taskCreateTask(siteSourceUrl.value).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
-  siteDownloadState.value = false
+  if (downloadMode.value) {
+    apis
+      .taskCreateTask('file://'.concat(sourceUrl.value))
+      .then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
+  } else {
+    apis.taskCreateTask(sourceUrl.value).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
+  }
+  downloadDialogState.value = false
+  sourceUrl.value = ''
 }
 // 处理任务创建的响应
 function handleCreatTaskResponse(response: ApiResponse, notificationId: string) {
@@ -214,7 +218,7 @@ function handleCreatTaskResponse(response: ApiResponse, notificationId: string) 
         msg = `${data.plugin?.author}-${data.plugin?.name}-${data.plugin?.version}创建了 ${data.addedQuantity} 个任务`
       } else {
         type = 'error'
-        msg = '创建失败' + data.msg
+        msg = '创建失败，' + data.msg
       }
     } else {
       type = 'error'
@@ -361,17 +365,23 @@ async function selectDir(openFile: boolean) {
     const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
     if (!dirSelectResult.canceled) {
       for (const dir of dirSelectResult.filePaths) {
-        await importFromDir(dir)
+        sourceUrl.value = dir
       }
     }
   }
 }
-// 打开站点下载dialog
-function handleSiteDownloadDialog(_event, newState?: boolean) {
-  if (NotNullish(newState)) {
-    siteDownloadState.value = newState
+// 打开下载dialog
+function handleDownloadDialog(_event: PointerEvent, isLocal: boolean, newState?: boolean) {
+  downloadMode.value = isLocal
+  if (isLocal) {
+    downloadInputPlaceholder.value = '输入文件路径'
   } else {
-    siteDownloadState.value = !siteDownloadState.value
+    downloadInputPlaceholder.value = '输入url'
+  }
+  if (NotNullish(newState)) {
+    downloadDialogState.value = newState
+  } else {
+    downloadDialogState.value = !downloadDialogState.value
   }
 }
 // 刷新任务进度和状态
@@ -447,32 +457,31 @@ async function deleteTask(ids: number[]) {
 
 <template>
   <base-subpage>
-    <el-row class="task-manage-local-import-button-row">
-      <el-col class="task-manage-local-import-button-col" :span="12">
-        <el-dropdown>
-          <el-button ref="localImportButton" size="large" type="danger" icon="Monitor" @click="selectDir(false)">
-            从本地导入
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="selectDir(true)">选择文件导入</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </el-col>
-      <el-col class="task-manage-site-import-button-col" :span="12">
+    <div class="task-manage-local-import-button-row">
+      <div class="task-manage-local-import-button-col">
+        <el-button
+          ref="localImportButton"
+          size="large"
+          type="danger"
+          icon="Monitor"
+          @click="(event: PointerEvent) => handleDownloadDialog(event, true)"
+        >
+          从本地导入
+        </el-button>
+      </div>
+      <div class="task-manage-site-import-button-col">
         <el-button
           ref="siteDownloadButton"
-          v-model="siteDownloadState"
+          v-model="downloadDialogState"
           size="large"
           type="primary"
           icon="Link"
-          @click="handleSiteDownloadDialog"
+          @click="(event: PointerEvent) => handleDownloadDialog(event, false)"
         >
           从站点下载
         </el-button>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
     <div class="task-manage-search-table-wrapper">
       <search-table
         ref="taskManageSearchTable"
@@ -543,11 +552,15 @@ async function deleteTask(ids: number[]) {
         destroy-on-close
         width="90%"
       />
-      <el-dialog v-model="siteDownloadState" center width="80%" align-center destroy-on-close>
-        <el-input v-model="siteSourceUrl" type="textarea" :rows="6" placeholder="输入url"></el-input>
+      <el-dialog v-model="downloadDialogState" center width="80%" align-center destroy-on-close>
+        <div v-if="downloadMode" class="task-manage-download-dialog-local-button-container">
+          <el-button type="primary" icon="FolderOpened" @click="selectDir(false)">选择文件夹导入</el-button>
+          <el-button type="primary" icon="Document" @click="selectDir(true)">选择单个文件导入</el-button>
+        </div>
+        <el-input v-model="sourceUrl" type="textarea" :rows="6" :placeholder="downloadInputPlaceholder"></el-input>
         <template #footer>
-          <el-button type="primary" @click="importFromSite">确定</el-button>
-          <el-button @click="siteDownloadState = false">取消</el-button>
+          <el-button type="primary" :disabled="StringUtil.isBlank(sourceUrl)" @click="createTaskFromSource">创建任务</el-button>
+          <el-button @click="downloadDialogState = false">取消</el-button>
         </template>
       </el-dialog>
       <el-tour v-model="useTourStatesStore().tourStates.taskTour" @finish="useTourStatesStore().tourStates.getCallback('taskTour')">
@@ -565,16 +578,15 @@ async function deleteTask(ids: number[]) {
 <style scoped>
 .task-manage-local-import-button-row {
   height: 50px;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 .task-manage-local-import-button-col {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin: auto;
 }
 .task-manage-site-import-button-col {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin: auto;
 }
 .task-manage-search-table-wrapper {
   background: #f4f4f4;
@@ -596,5 +608,10 @@ async function deleteTask(ids: number[]) {
 }
 .task-manage-search-bar {
   flex-grow: 1;
+}
+.task-manage-download-dialog-local-button-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 </style>
