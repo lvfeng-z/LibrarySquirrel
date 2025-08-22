@@ -56,6 +56,10 @@ export class TourStates {
     this.emitter.emit(eventName)
   }
 
+  public async startWorkdirTour() {
+    this.workdirTour = true
+  }
+
   public async startTaskTour() {
     this.taskMenuTour = true
     const step1 = this.waitUserFinish('taskMenuTour')

@@ -10,6 +10,9 @@ import { GVar, GVarEnum } from './base/GVar.ts'
 import { Initialize } from './base/Initialize.js'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 import iniConfig from './resources/config/iniConfig.yml?asset'
+import GotoPageConfig from './model/util/GotoPageConfig.js'
+import { PageEnum } from './constant/PageEnum.js'
+import StringUtil from './util/StringUtil.js'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -28,22 +31,23 @@ function createWindow(): Electron.BrowserWindow {
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
 
-    // // 检查有没有设置工作目录，没有设置的话发送提醒
-    // const settings = GVar.get(GVarEnum.SETTINGS).store
-    // if (StringUtil.isBlank(settings.workdir)) {
-    //   const gotoPageConfig: GotoPageConfig = {
-    //     page: PageEnum.Settings,
-    //     title: '请设置工作目录',
-    //     content: 'LibrarySquirrel需要工作目录才能正常使用',
-    //     options: {
-    //       confirmButtonText: '去设置',
-    //       cancelButtonText: '取消',
-    //       type: 'warning',
-    //       showClose: false
-    //     }
-    //   }
-    //   mainWindow.webContents.send('goto-page', gotoPageConfig)
-    // }
+    // 检查有没有设置工作目录，没有设置的话发送提醒
+    const settings = GVar.get(GVarEnum.SETTINGS).store
+    if (StringUtil.isBlank(settings.workdir)) {
+      const gotoPageConfig: GotoPageConfig = {
+        page: PageEnum.Settings,
+        title: '请设置工作目录',
+        content: 'LibrarySquirrel需要工作目录才能正常使用',
+        options: {
+          confirmButtonText: '去设置',
+          cancelButtonText: '取消',
+          type: 'warning',
+          showClose: false
+        },
+        extraData: true
+      }
+      mainWindow.webContents.send('goto-page', gotoPageConfig)
+    }
   })
 
   mainWindow.on('close', async (event) => {
