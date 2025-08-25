@@ -190,8 +190,8 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
             <el-anchor-link href="#worksSettings" title="作品" />
             <el-anchor-link href="#otherSettings" title="其他" />
           </el-anchor>
-          <el-scrollbar style="margin-left: 30px; flex-grow: 1">
-            <div ref="containerRef" style="margin-right: 10px">
+          <el-scrollbar class="settings-scrollbar">
+            <div ref="containerRef" class="settings-scrollbar-container">
               <div id="basicSettings">
                 <el-text class="mx-1" size="large">基本设置</el-text>
                 <el-divider content-position="left" border-style="dotted"><el-text>工作目录</el-text></el-divider>
@@ -394,6 +394,13 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
   height: calc(100% - 20px);
   padding: 5px;
   margin: 5px;
+}
+.settings-scrollbar {
+  margin-left: 30px;
+  flex-grow: 1;
+}
+.settings-scrollbar-container {
+  margin-right: 10px;
 }
 .settings-works-settings-file-name-format-dialog > :deep(.el-scrollbar__wrap) {
   max-height: 65vh;
