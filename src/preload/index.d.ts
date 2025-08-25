@@ -54,6 +54,7 @@ declare global {
       pluginReInstall: function
       pluginReInstallFromPath: function
       pluginUnInstall: function
+      pluginListPluginListenerDTO: function
 
       // ReWorksTag
       reWorksTagLink: function

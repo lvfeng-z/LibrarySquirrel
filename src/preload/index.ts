@@ -6,8 +6,6 @@ const api = {
   // test
   testInsertLocalTag10W: (args) => Electron.ipcRenderer.invoke('test-insertLocalTag10W', args),
   testTransactionTest: (args) => Electron.ipcRenderer.invoke('test-transactionTest', args),
-  testTaskPluginListenerSaveBatch: (args) => Electron.ipcRenderer.invoke('test-taskPluginListener-saveBatch', args),
-  testTaskPluginListenerGetMonitored: (args) => Electron.ipcRenderer.invoke('test-taskPluginListener-getMonitored', args),
   testPLimitTest: (args) => Electron.ipcRenderer.invoke('test-pLimitTest', args),
   testInstallPluginTest: (args) => Electron.ipcRenderer.invoke('test-installPluginTest', args),
   testMainWindowMsgTest: (args) => Electron.ipcRenderer.invoke('test-mainWindowMsgTest', args),
@@ -51,6 +49,7 @@ const api = {
   pluginReInstall: (args) => Electron.ipcRenderer.invoke('plugin-reInstall', args),
   pluginReInstallFromPath: (arg1, arg2) => Electron.ipcRenderer.invoke('plugin-reInstallFromPath', arg1, arg2),
   pluginUnInstall: (args) => Electron.ipcRenderer.invoke('plugin-unInstall', args),
+  pluginListPluginListenerDTO: (args) => Electron.ipcRenderer.invoke('plugin-listPluginListenerDTO', args),
 
   // SearchService
   searchQuerySearchConditionPage: (args) => Electron.ipcRenderer.invoke('search-querySearchConditionPage', args),

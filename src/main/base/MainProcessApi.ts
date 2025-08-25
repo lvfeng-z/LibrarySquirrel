@@ -64,7 +64,7 @@ function exposeService() {
     }
   })
 
-  //AutoExplainPathService
+  // AutoExplainPathService
   Electron.ipcMain.handle('autoExplainPath-getListenerPage', async (_event, args) => {
     LogUtil.info('MainProcessApi', 'autoExplainPath-getListenerPage')
     const service = new AutoExplainPathService()
@@ -317,6 +317,15 @@ function exposeService() {
     const pluginService = new PluginService()
     try {
       return ApiUtil.response(await pluginService.unInstall(args))
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+  Electron.ipcMain.handle('plugin-listPluginListenerDTO', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-listPluginListenerDTO')
+    const pluginService = new PluginService()
+    try {
+      return ApiUtil.response(await pluginService.listPluginListenerDTO(args))
     } catch (error) {
       return returnError(error)
     }

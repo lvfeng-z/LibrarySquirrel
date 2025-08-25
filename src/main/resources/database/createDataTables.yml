@@ -248,14 +248,14 @@ tables:
         error_message         text
       );
 
-  - name: task_plugin_listener
+  - name: plugin_task_url_listener
     sql: |
-      create table if not exists task_plugin_listener (
+      create table if not exists plugin_task_url_listener (
         id          integer not null
-          constraint task_plugin_listener_pk
+          constraint plugin_task_url_listener_pk
             primary key,
         plugin_id   integer
-          constraint task_plugin_listener_plugin_id_fk
+          constraint plugin_task_url_listener_plugin_id_fk
             references plugin
             on delete cascade,
         listener    text,

@@ -5,7 +5,7 @@ import PluginLoader from '../plugin/PluginLoader.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import PluginService from './PluginService.ts'
-import TaskPluginListenerService from './TaskPluginListenerService.ts'
+import PluginTaskUrlListenerService from './PluginTaskUrlListenerService.ts'
 import WorksService from './WorksService.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import { Readable } from 'node:stream'
@@ -56,8 +56,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async createTask(url: string): Promise<TaskCreateResponse> {
     // 查询监听此url的插件
-    const taskPluginListenerService = new TaskPluginListenerService()
-    const taskPlugins = await taskPluginListenerService.listListener(url)
+    const pluginTaskUrlListenerService = new PluginTaskUrlListenerService()
+    const taskPlugins = await pluginTaskUrlListenerService.listListener(url)
 
     if (taskPlugins.length === 0) {
       const msg = `url不受支持，url: ${url}`

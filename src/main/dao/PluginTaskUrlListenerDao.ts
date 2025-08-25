@@ -1,12 +1,12 @@
 import BaseDao from '../base/BaseDao.ts'
-import TaskPluginListener from '../model/entity/TaskPluginListener.ts'
-import TaskPluginListenerQueryDTO from '../model/queryDTO/TaskPluginListenerQueryDTO.ts'
+import PluginTaskUrlListener from '../model/entity/PluginTaskUrlListener.ts'
+import PluginTaskUrlListenerQueryDTO from '../model/queryDTO/PluginTaskUrlListenerQueryDTO.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import DB from '../database/DB.ts'
 
-export default class TaskPluginListenerDao extends BaseDao<TaskPluginListenerQueryDTO, TaskPluginListener> {
+export default class PluginTaskUrlListenerDao extends BaseDao<PluginTaskUrlListenerQueryDTO, PluginTaskUrlListener> {
   constructor(db: DB, injectedDB: boolean) {
-    super('task_plugin_listener', TaskPluginListener, db, injectedDB)
+    super('plugin_task_url_listener', PluginTaskUrlListener, db, injectedDB)
   }
 
   /**

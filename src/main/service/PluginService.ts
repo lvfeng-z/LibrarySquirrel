@@ -13,8 +13,8 @@ import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil
 import fs from 'fs'
 import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
-import TaskPluginListenerService from './TaskPluginListenerService.js'
-import TaskPluginListener from '../model/entity/TaskPluginListener.js'
+import PluginTaskUrlListenerService from './PluginTaskUrlListenerService.js'
+import PluginTaskUrlListener from '../model/entity/PluginTaskUrlListener.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
 import { GVar, GVarEnum } from '../base/GVar.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
@@ -26,6 +26,7 @@ import { pathToFileURL } from 'node:url'
 import PluginInstallResultDTO from '../model/dto/PluginInstallResultDTO.js'
 import SiteService from './SiteService.js'
 import lodash from 'lodash'
+import PluginListenerDTO from '../model/dto/PluginListenerDTO.js'
 
 /**
  * 主键查询
@@ -95,6 +96,19 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     query.name = name
     query.version = version
     return this.list(query)
+  }
+
+  public async listPluginListenerDTO(pluginQueryDTO: PluginQueryDTO): Promise<PluginListenerDTO[]> {
+    const pluginList = await this.list(pluginQueryDTO)
+    const pluginIds = pluginList.map((plugin) => plugin.id as number)
+    const pluginTaskUrlService = new PluginTaskUrlListenerService()
+    const pluginTaskUrlList = await pluginTaskUrlService.listByIds(pluginIds)
+    const pluginIdListenerListMap = lodash.groupBy(pluginTaskUrlList, (pluginTaskUrl) => pluginTaskUrl.pluginId)
+    return pluginList.map((plugin) => {
+      const temp = new PluginListenerDTO(plugin)
+      temp.pluginTaskUrlListeners = pluginIdListenerListMap[plugin.id as number]
+      return temp
+    })
   }
 
   /**
@@ -179,16 +193,16 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         // 任务创建监听器
         const listeners: string[] = pluginInstallDTO.listeners
         if (ArrayNotEmpty(listeners)) {
-          const taskPluginListenerService = new TaskPluginListenerService(transactionDB)
-          const taskPluginListeners: TaskPluginListener[] = []
-          let taskPluginListener: TaskPluginListener
+          const pluginTaskUrlListenerService = new PluginTaskUrlListenerService(transactionDB)
+          const pluginTaskUrlListeners: PluginTaskUrlListener[] = []
+          let pluginTaskUrlListener: PluginTaskUrlListener
           for (const listener of listeners) {
-            taskPluginListener = new TaskPluginListener()
-            taskPluginListener.pluginId = pluginId
-            taskPluginListener.listener = listener
-            taskPluginListeners.push(taskPluginListener)
+            pluginTaskUrlListener = new PluginTaskUrlListener()
+            pluginTaskUrlListener.pluginId = pluginId
+            pluginTaskUrlListener.listener = listener
+            pluginTaskUrlListeners.push(pluginTaskUrlListener)
           }
-          await taskPluginListenerService.saveBatch(taskPluginListeners)
+          await pluginTaskUrlListenerService.saveBatch(pluginTaskUrlListeners)
         }
         // 域名
         const domainConfigs = pluginInstallDTO.domains

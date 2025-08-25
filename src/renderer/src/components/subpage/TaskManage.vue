@@ -8,7 +8,7 @@ import { Thead } from '../../model/util/Thead'
 import DialogMode from '../../model/util/DialogMode'
 import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import { ElTag } from 'element-plus'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
 import { throttle } from 'lodash'
 import { TaskStatusEnum } from '../../constants/TaskStatusEnum.ts'
 import { GetNode } from '../../utils/TreeUtil'
@@ -29,6 +29,7 @@ import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
+import PluginListenerDTO from '@renderer/model/main/dto/PluginListenerDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -52,7 +53,8 @@ const apis = {
   taskPauseTaskTree: window.api.taskPauseTaskTree,
   taskStopTaskTree: window.api.taskStopTaskTree,
   taskResumeTaskTree: window.api.taskResumeTaskTree,
-  dirSelect: window.api.dirSelect
+  dirSelect: window.api.dirSelect,
+  pluginListPluginListener: window.api.pluginListPluginListenerDTO
 }
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
@@ -184,8 +186,8 @@ const downloadMode: Ref<boolean> = ref(true)
 const downloadInputPlaceholder: Ref<string> = ref('')
 // 资源的url或文件路径
 const sourceUrl: Ref<UnwrapRef<string>> = ref('')
-const taskStore = useTaskStore()
-const parentTaskStore = useParentTaskStore()
+//
+const pluginListenerDTOList: Ref<PluginListenerDTO[]> = ref([])
 
 // 方法
 // 根据url或文件路径创建任务
@@ -290,12 +292,12 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   const scheduleList: TaskScheduleDTO[] = []
   const notFoundList: (number | string)[] = []
   for (const id of ids) {
-    let tempStatus = parentTaskStore.getTask(Number(id))
+    let tempStatus = useParentTaskStore().getTask(Number(id))
     if (NotNullish(tempStatus)) {
       scheduleList.push(tempStatus)
       continue
     }
-    tempStatus = taskStore.getTask(Number(id))
+    tempStatus = useTaskStore().getTask(Number(id))
     if (NotNullish(tempStatus)) {
       scheduleList.push(tempStatus)
       continue
@@ -373,6 +375,7 @@ async function selectDir(openFile: boolean) {
 // 打开下载dialog
 function handleDownloadDialog(_event: PointerEvent, isLocal: boolean, newState?: boolean) {
   downloadMode.value = isLocal
+  setPluginListenerList()
   if (isLocal) {
     downloadInputPlaceholder.value = '输入文件路径'
   } else {
@@ -402,8 +405,8 @@ async function refreshTask() {
           (task.status === TaskStatusEnum.WAITING ||
             task.status === TaskStatusEnum.PROCESSING ||
             task.status === TaskStatusEnum.PAUSE ||
-            parentTaskStore.hasTask(task.id as number) ||
-            taskStore.hasTask(task.id as number))
+            useParentTaskStore().hasTask(task.id as number) ||
+            useTaskStore().hasTask(task.id as number))
         )
       })
     }
@@ -451,6 +454,53 @@ async function deleteTask(ids: number[]) {
   ApiUtil.msg(response)
   if (ApiUtil.check(response)) {
     await taskManageSearchTable.value.doSearch()
+  }
+}
+// 设置插件监听DTO列表
+async function setPluginListenerList() {
+  const response = await apis.pluginListPluginListener()
+  if (ApiUtil.check(response)) {
+    const data = ApiUtil.data<PluginListenerDTO[]>(response)
+    pluginListenerDTOList.value = IsNullish(data) ? [] : data
+  }
+}
+// 获取url匹配的插件
+function getUrlMatchedPlugin(url: string): PluginListenerDTO[] {
+  if (StringUtil.isBlank(url)) {
+    return []
+  }
+  return pluginListenerDTOList.value.filter((pluginListenerDTO) => {
+    if (ArrayIsEmpty(pluginListenerDTO.pluginTaskUrlListeners)) {
+      return false
+    } else {
+      return pluginListenerDTO.pluginTaskUrlListeners.some((listener) => {
+        if (IsNullish(listener.listener)) {
+          return false
+        } else {
+          return ArrayNotEmpty(url.match(listener.listener))
+        }
+      })
+    }
+  })
+}
+// 获取受支持提示文本
+function getSupportedText() {
+  const supportedPlugins = getUrlMatchedPlugin(sourceUrl.value)
+  if (ArrayIsEmpty(supportedPlugins)) {
+    return ''
+  } else {
+    const pluginNumber = supportedPlugins.length
+    if (pluginNumber > 5) {
+      const texts = supportedPlugins
+        .slice(0, 5)
+        .map((supportedPlugin) => `${supportedPlugin.author}-${supportedPlugin.name}-${supportedPlugin.version}`)
+      return texts.join('、') + `等${pluginNumber}个插件支持这个url`
+    } else {
+      const texts = supportedPlugins.map(
+        (supportedPlugin) => `${supportedPlugin.author}-${supportedPlugin.name}-${supportedPlugin.version}`
+      )
+      return texts.join('、') + ` 共${pluginNumber}个插件支持这个url`
+    }
   }
 }
 </script>
@@ -558,6 +608,7 @@ async function deleteTask(ids: number[]) {
           <el-button type="primary" icon="Document" @click="selectDir(true)">选择单个文件导入</el-button>
         </div>
         <el-input v-model="sourceUrl" type="textarea" :rows="6" :placeholder="downloadInputPlaceholder"></el-input>
+        <span class="task-manage-download-dialog-supported-tips"> {{ getSupportedText() }} </span>
         <template #footer>
           <el-button type="primary" :disabled="StringUtil.isBlank(sourceUrl)" @click="createTaskFromSource">创建任务</el-button>
           <el-button @click="downloadDialogState = false">取消</el-button>
@@ -568,7 +619,7 @@ async function deleteTask(ids: number[]) {
         <el-tour-step :target="localImportButton.$el" description="在这里从本地创建任务，可以选择目录或单个文件" />
         <el-tour-step
           :target="siteDownloadButton.$el"
-          description="在这里输入url从站点创建任务，只能使用受支持的url，可以通过安装插件扩展受支持的url"
+          description="在这里输入url从站点创建任务，只能使用受支持的url（可以通过安装插件扩展受支持的url）"
         />
       </el-tour>
     </template>
@@ -613,5 +664,8 @@ async function deleteTask(ids: number[]) {
   display: flex;
   justify-content: center;
   margin-bottom: 10px;
+}
+.task-manage-download-dialog-supported-tips {
+  color: rgb(245, 108, 108);
 }
 </style>
