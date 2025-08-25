@@ -260,6 +260,8 @@ function insertFormatToken(element: ResFileNameFormatEnum) {
               </div>
               <div id="otherSettings">
                 <el-text class="mx-1" size="large">其他</el-text>
+                <el-divider content-position="left" border-style="dotted"><el-text>向导</el-text></el-divider>
+                <el-button @click="() => (settings.tour.firstTimeTourPassed = false)">重置向导</el-button>
                 <el-divider />
               </div>
             </div>

@@ -9,6 +9,7 @@ export interface Settings {
     maxParallelImport: number
   }
   tour: {
+    firstTimeTourPassed: boolean
     workdirTour: boolean
     taskTour: boolean
   }

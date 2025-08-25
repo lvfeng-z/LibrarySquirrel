@@ -63,6 +63,10 @@ export class TourStates {
     this.emitter.emit(eventName)
   }
 
+  public async startGuideTour() {
+    this.guideMenuTour = true
+  }
+
   public async startWorkdirTour() {
     this.workdirTour = true
   }

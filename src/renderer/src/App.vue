@@ -35,17 +35,64 @@ import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import NotificationList from '@renderer/components/common/NotificationList.vue'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
-import { PageState } from '@renderer/constants/PageState.ts'
+import { PageEnum, PageState } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
+import { Settings as SettingsEntity } from '@renderer/model/util/Settings.ts'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { AskGotoPage, GotoPage } from '@renderer/utils/PageUtil.ts'
 
 // onMounted
-onMounted(() => {
+onMounted(async () => {
   // const request = apis.worksQueryPage()
   // console.log(request)
   resizeObserver.observe(worksAreaRef.value.$el)
   window.addEventListener('keyup', handleKeyUp)
+
+  // 首次使用软件的向导
+  const response = await apis.settingsGetSettings()
+  if (ApiUtil.check(response)) {
+    const data = ApiUtil.data<SettingsEntity>(response)
+    const workDirIsBlank = StringUtil.isBlank(data?.workdir)
+    const askSetWorkDir = () =>
+      AskGotoPage({
+        page: PageEnum.Settings,
+        title: '请设置工作目录',
+        content: 'LibrarySquirrel需要工作目录才能正常使用',
+        options: {
+          confirmButtonText: '去设置',
+          cancelButtonText: '取消',
+          type: 'warning',
+          showClose: false
+        },
+        extraData: true
+      })
+    if (!data?.tour.firstTimeTourPassed) {
+      ElMessageBox.confirm('在使用LibrarySquirrel之前，建议先查看向导', '', {
+        confirmButtonText: '前往查看',
+        cancelButtonText: '取消'
+      })
+        .then(async () => {
+          await GotoPage(PageEnum.Guide)
+          await apis.settingsSaveSettings([{ path: 'tour.firstTimeTourPassed', value: true }])
+          await usePageStatesStore().waitPage(usePageStatesStore().pageStates.mainPage)
+          askSetWorkDir()
+        })
+        .catch(async () => {
+          useTourStatesStore().tourStates.startGuideTour()
+          await apis.settingsSaveSettings([{ path: 'tour.firstTimeTourPassed', value: true }])
+          askSetWorkDir()
+        })
+    } else if (workDirIsBlank) {
+      askSetWorkDir()
+    }
+  } else {
+    ElMessage({
+      message: '获取设置失败',
+      type: 'error'
+    })
+  }
 })
 // onBeforeUnmount
 onBeforeUnmount(() => {
@@ -62,7 +109,9 @@ const apis = {
   localTagListSelectItems: window.api.localTagListSelectItems,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   worksQueryPage: window.api.worksQueryPage,
-  searchQueryWorksPage: window.api.searchQueryWorksPage
+  searchQueryWorksPage: window.api.searchQueryWorksPage,
+  settingsGetSettings: window.api.settingsGetSettings,
+  settingsSaveSettings: window.api.settingsSaveSettings
 }
 // sideMenu组件的实例
 const sideMenuRef = ref()
@@ -448,9 +497,15 @@ async function handleTest() {
     <el-tour
       v-model="useTourStatesStore().tourStates.guideMenuTour"
       :scroll-into-view-options="true"
+      :mask="false"
       @finish="useTourStatesStore().tourStates.getCallback('guideMenuTour')"
     >
-      <el-tour-step :target="guideButton?.$el" title="向导" description="点击这里进入向导页面"></el-tour-step>
+      <el-tour-step
+        :target="guideButton?.$el"
+        title="向导"
+        description="后续可以点击这里进入向导页面"
+        placement="right"
+      ></el-tour-step>
     </el-tour>
     <el-tour
       v-model="useTourStatesStore().tourStates.taskMenuTour"

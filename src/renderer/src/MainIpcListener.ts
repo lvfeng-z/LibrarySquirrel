@@ -9,7 +9,7 @@ import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { h } from 'vue'
 import NotifyConfig from '@renderer/model/util/NotifyConfig.ts'
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
-import { GotoPage } from '@renderer/utils/PageUtil.ts'
+import { AskGotoPage } from '@renderer/utils/PageUtil.ts'
 
 export function iniListener() {
   // 任务队列
@@ -110,5 +110,5 @@ export function iniListener() {
   //   }
   // )
 
-  window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => GotoPage(config))
+  window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => AskGotoPage(config))
 }

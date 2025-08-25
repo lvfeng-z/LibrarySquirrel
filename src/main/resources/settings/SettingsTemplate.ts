@@ -12,6 +12,7 @@ export const SettingsTemplate: Settings = {
     maxParallelImport: 3
   },
   tour: {
+    firstTimeTourPassed: false,
     workdirTour: false,
     taskTour: false
   }

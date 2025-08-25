@@ -9,6 +9,7 @@ export interface Settings {
     maxParallelImport: number
   }
   tour: {
+    firstTimeTourPassed: boolean
     workdirTour: boolean
     taskTour: boolean
   }
@@ -25,6 +26,7 @@ export const emptySettings: Settings = {
     maxParallelImport: 3
   },
   tour: {
+    firstTimeTourPassed: false,
     workdirTour: false,
     taskTour: false
   }
