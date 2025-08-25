@@ -70,6 +70,8 @@ const sideMenuRef = ref()
 const worksSpace = ref()
 // worksArea组件的实例
 const worksAreaRef = ref()
+// 向导按钮组件的实例
+const guideButton = ref()
 // 任务按钮组件的实例
 const taskButton = ref()
 // 搜索条件工具栏组件的实例
@@ -325,7 +327,7 @@ async function handleTest() {
             </el-menu-item>
             <el-menu-item index="8" @click="showSubpage(pageStatesStore.pageStates.guide)">
               <template #title>向导</template>
-              <el-icon><Guide /></el-icon>
+              <el-icon ref="guideButton"><Guide /></el-icon>
             </el-menu-item>
             <el-menu-item index="9" @click="showSubpage(pageStatesStore.pageStates.test)">
               <template #title>测试按钮</template>
@@ -443,6 +445,13 @@ async function handleTest() {
       v-model:confirm-list="resourceReplaceConfirmList"
     />
     <transaction-test v-model="showTestDialog"></transaction-test>
+    <el-tour
+      v-model="useTourStatesStore().tourStates.guideMenuTour"
+      :scroll-into-view-options="true"
+      @finish="useTourStatesStore().tourStates.getCallback('guideMenuTour')"
+    >
+      <el-tour-step :target="guideButton?.$el" title="向导" description="点击这里进入向导页面"></el-tour-step>
+    </el-tour>
     <el-tour
       v-model="useTourStatesStore().tourStates.taskMenuTour"
       :scroll-into-view-options="true"

@@ -20,12 +20,17 @@ export const useTourStatesStore = defineStore('tourStates', {
 
 export class TourStates {
   /**
+   * 向导页菜单向导开关
+   */
+  guideMenuTour: boolean
+
+  /**
    * 工作目录向导开关
    */
   workdirTour: boolean
 
   /**
-   * 任务向导菜单开关
+   * 任务菜单向导开关
    */
   taskMenuTour: boolean
 
@@ -35,6 +40,7 @@ export class TourStates {
   taskTour: boolean
 
   emitter: Emitter<{
+    guideMenuTour: void
     workdirTour: void
     taskMenuTour: void
     taskTour: void
@@ -44,6 +50,7 @@ export class TourStates {
   settingSetter: () => Promise<void>
 
   constructor(settingGetter: () => Promise<Settings>, settingSetter: () => Promise<void>) {
+    this.guideMenuTour = false
     this.workdirTour = false
     this.taskMenuTour = false
     this.taskTour = false
@@ -76,4 +83,4 @@ export class TourStates {
   }
 }
 
-export type TourEvents = 'workdirTour' | 'taskMenuTour' | 'taskTour'
+export type TourEvents = 'guideMenuTour' | 'workdirTour' | 'taskMenuTour' | 'taskTour'
