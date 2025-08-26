@@ -248,6 +248,28 @@ tables:
         error_message         text
       );
 
+  - name: plugin
+    sql: |
+      create table if not exists plugin
+      (
+        id            integer not null
+          constraint plugin_pk
+            primary key autoincrement,
+        type          text,
+        author        text,
+        name          text,
+        version       text,
+        file_name     text,
+        package_path  text,
+        create_time   integer,
+        update_time   integer,
+        sort_num      integer,
+        plugin_data   text,
+        uninstalled   integer
+      );
+      create unique index plugin_author_name_version_uindex
+      on plugin (author, name, version);
+
   - name: plugin_task_url_listener
     sql: |
       create table if not exists plugin_task_url_listener (
@@ -334,23 +356,4 @@ tables:
         last_view            integer,
         create_time          integer,
         update_time          integer
-      );
-
-  - name: plugin
-    sql: |
-      create table if not exists plugin
-      (
-        id            integer not null
-          constraint plugin_pk
-            primary key autoincrement,
-        type          text,
-        author        text,
-        name          text,
-        version       text,
-        file_name     text,
-        package_path  text,
-        create_time   integer,
-        update_time   integer,
-        sort_num      integer,
-        plugin_data   text
       );

@@ -1,51 +1,57 @@
 import BaseQueryDTO from '../../base/BaseQueryDTO.js'
 import { NotNullish } from '../../util/CommonUtil.js'
+import { BOOL } from '../../constant/BOOL.js'
 
 export default class PluginQueryDTO extends BaseQueryDTO {
   /**
    * 插件类型
    */
-  type: string | undefined | null
+  type?: string | undefined | null
 
   /**
    * 作者
    */
-  author: string | undefined | null
+  author?: string | undefined | null
 
   /**
    * 名称
    */
-  name: string | undefined | null
+  name?: string | undefined | null
 
   /**
    * 版本
    */
-  version: string | undefined | null
+  version?: string | undefined | null
 
   /**
    * 描述
    */
-  description: string | undefined | null
+  description?: string | undefined | null
 
   /**
    * 更新日志
    */
-  changelog: string | undefined | null
+  changelog?: string | undefined | null
 
   /**
    * 入口文件名
    */
-  fileName: string | undefined | null
+  fileName?: string | undefined | null
 
   /**
    * 安装包路径
    */
-  packagePath: string | undefined | null
+  packagePath?: string | undefined | null
 
   /**
    * 排序号
    */
-  sortNum: number | undefined | null
+  sortNum?: number | undefined | null
+
+  /**
+   * 是否已卸载
+   */
+  uninstalled?: BOOL | undefined | null
 
   constructor(plugin?: PluginQueryDTO) {
     super(plugin)
@@ -57,6 +63,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
       this.fileName = plugin.fileName
       this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum
+      this.uninstalled = plugin.uninstalled
     }
   }
 }

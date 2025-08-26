@@ -202,14 +202,20 @@ async function selectPackage(): Promise<string | undefined> {
   }
   return undefined
 }
+async function handleInstallClicked() {
+  const packagePath = await selectPackage()
+  if (StringUtil.isNotBlank(packagePath)) {
+    return installFromPath(packagePath)
+  }
+}
 // 通过安装包路径安装插件
-// async function installFromPath(packagePath: string) {
-//   const result = await apis.pluginInstallFromPath(packagePath)
-//   pluginSearchTable.value.doSearch()
-//   if (ApiUtil.check(result)) {
-//     ApiUtil.msg(result)
-//   }
-// }
+async function installFromPath(packagePath: string) {
+  const result = await apis.pluginInstallFromPath(packagePath)
+  pluginSearchTable.value.doSearch()
+  if (ApiUtil.check(result)) {
+    ApiUtil.msg(result)
+  }
+}
 // 通过安装包路径重新安装插件
 async function reInstallFromPath(pluginId: number, packagePath: string) {
   const result = await apis.pluginReInstallFromPath(pluginId, packagePath)
@@ -238,7 +244,7 @@ async function reInstallFromPath(pluginId: number, packagePath: string) {
           @selection-change="handleSelectionChange"
         >
           <template #toolbarMain>
-            <el-button type="primary"> 安装 </el-button>
+            <el-button type="primary" @click="handleInstallClicked"> 安装 </el-button>
             <el-input v-model="pluginSearchParams.nonFieldKeyword" placeholder="输入名称" clearable />
           </template>
           <template #toolbarDropdown>

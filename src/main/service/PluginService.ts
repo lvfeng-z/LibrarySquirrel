@@ -27,6 +27,8 @@ import PluginInstallResultDTO from '../model/dto/PluginInstallResultDTO.js'
 import SiteService from './SiteService.js'
 import lodash from 'lodash'
 import PluginListenerDTO from '../model/dto/PluginListenerDTO.js'
+import { BOOL } from '../constant/BOOL.js'
+import Page from '../model/util/Page.js'
 
 /**
  * 主键查询
@@ -98,6 +100,10 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     return this.list(query)
   }
 
+  /**
+   * 查询插件监听DTO列表
+   * @param pluginQueryDTO
+   */
   public async listPluginListenerDTO(pluginQueryDTO: PluginQueryDTO): Promise<PluginListenerDTO[]> {
     const pluginList = await this.list(pluginQueryDTO)
     const pluginIds = pluginList.map((plugin) => plugin.id as number)
@@ -152,10 +158,25 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   public async install(pluginInstallDTO: PluginInstallDTO): Promise<PluginInstallResultDTO> {
     // 校验是否已安装
     const existingList = await this.listByAuthorNameVersion(pluginInstallDTO.author, pluginInstallDTO.name, pluginInstallDTO.version)
+    let oldPlugin: Plugin | undefined = undefined
     if (ArrayNotEmpty(existingList)) {
-      const msg = `安装插件失败，已存在该插件author: ${pluginInstallDTO.author} name: ${pluginInstallDTO.name} version: ${pluginInstallDTO.version}`
-      LogUtil.error(this.constructor.name, msg)
-      throw new Error(msg)
+      const installed: Plugin[] = []
+      const uninstalled: Plugin[] = []
+      for (const plugin of existingList) {
+        if (plugin.uninstalled === BOOL.TRUE) {
+          uninstalled.push(plugin)
+        } else {
+          installed.push(plugin)
+        }
+      }
+      if (installed.length > 0) {
+        const msg = `安装插件失败，已存在该插件author: ${pluginInstallDTO.author} name: ${pluginInstallDTO.name} version: ${pluginInstallDTO.version}`
+        LogUtil.error(this.constructor.name, msg)
+        throw new Error(msg)
+      }
+      if (uninstalled.length > 0) {
+        oldPlugin = uninstalled[0]
+      }
     }
 
     // 复制安装包
@@ -188,7 +209,16 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       .transaction(async (transactionDB) => {
         const tempPlugin = new Plugin(pluginInstallDTO)
         const pluginService = new PluginService(transactionDB)
-        const pluginId = await pluginService.save(tempPlugin)
+        let pluginId: number
+        if (NotNullish(oldPlugin)) {
+          pluginId = oldPlugin.id as number
+          tempPlugin.id = oldPlugin.id
+          tempPlugin.pluginData = oldPlugin.pluginData
+          tempPlugin.uninstalled = BOOL.FALSE
+          await pluginService.updateById(tempPlugin)
+        } else {
+          pluginId = await pluginService.save(tempPlugin)
+        }
 
         // 任务创建监听器
         const listeners: string[] = pluginInstallDTO.listeners
@@ -348,7 +378,36 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         throw error
       }
     }
-    return this.deleteById(pluginId)
+    return this.setUninstalled(pluginId)
+  }
+
+  /**
+   * 插件设置为卸载状态
+   * @param pluginId 插件id
+   */
+  public async setUninstalled(pluginId: number) {
+    const plugin = new Plugin()
+    plugin.id = pluginId
+    plugin.uninstalled = BOOL.TRUE
+    return this.updateById(plugin)
+  }
+
+  /**
+   * 分页查询
+   * @param page
+   */
+  public async queryPage(page: Page<PluginQueryDTO, Plugin>): Promise<Page<PluginQueryDTO, Plugin>> {
+    try {
+      if (NotNullish(page.query)) {
+        page.query.uninstalled = BOOL.FALSE
+      } else {
+        page.query = { uninstalled: BOOL.FALSE }
+      }
+      return super.queryPage(page)
+    } catch (error) {
+      LogUtil.error('LocalTagService', error)
+      throw error
+    }
   }
 
   private assertSamePlugin(plugin1: Plugin, plugin2: Plugin): void {

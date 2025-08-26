@@ -1,5 +1,6 @@
 import BaseEntity from '../../base/BaseEntity.js'
 import { NotNullish } from '../../util/CommonUtil.js'
+import { BOOL } from '../../constant/BOOL.js'
 
 export default class Plugin extends BaseEntity {
   /**
@@ -52,6 +53,11 @@ export default class Plugin extends BaseEntity {
    */
   pluginData: string | undefined | null
 
+  /**
+   * 是否已卸载
+   */
+  uninstalled: BOOL | undefined | null
+
   constructor(plugin?: Plugin) {
     super(plugin)
     if (NotNullish(plugin)) {
@@ -65,6 +71,9 @@ export default class Plugin extends BaseEntity {
       this.packagePath = plugin.packagePath
       this.sortNum = plugin.sortNum
       this.pluginData = plugin.pluginData
+      this.uninstalled = plugin.uninstalled
+    } else {
+      this.uninstalled = BOOL.FALSE
     }
   }
 }
