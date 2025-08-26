@@ -77,12 +77,19 @@ onMounted(async () => {
           await GotoPage(PageEnum.Guide)
           await apis.settingsSaveSettings([{ path: 'tour.firstTimeTourPassed', value: true }])
           await usePageStatesStore().waitPage(usePageStatesStore().pageStates.mainPage)
-          askSetWorkDir()
+          if (workDirIsBlank) {
+            askSetWorkDir()
+          }
         })
         .catch(async () => {
-          useTourStatesStore().tourStates.startGuideTour()
+          useTourStatesStore()
+            .tourStates.startGuideTour()
+            .then(() => {
+              if (workDirIsBlank) {
+                askSetWorkDir()
+              }
+            })
           await apis.settingsSaveSettings([{ path: 'tour.firstTimeTourPassed', value: true }])
-          askSetWorkDir()
         })
     } else if (workDirIsBlank) {
       askSetWorkDir()

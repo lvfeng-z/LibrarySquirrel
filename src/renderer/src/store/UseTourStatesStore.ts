@@ -63,15 +63,17 @@ export class TourStates {
     this.emitter.emit(eventName)
   }
 
-  public async startGuideTour() {
+  public async startGuideTour(): Promise<void> {
     this.guideMenuTour = true
+    return this.waitUserFinish('guideMenuTour')
   }
 
-  public async startWorkdirTour() {
+  public async startWorkdirTour(): Promise<void> {
     this.workdirTour = true
+    return this.waitUserFinish('workdirTour')
   }
 
-  public async startTaskTour() {
+  public async startTaskTour(): Promise<void> {
     this.taskMenuTour = true
     const step1 = this.waitUserFinish('taskMenuTour')
     const step2 = usePageStatesStore().waitPage(usePageStatesStore().pageStates.taskManage)
@@ -79,7 +81,7 @@ export class TourStates {
     this.taskTour = true
   }
 
-  private async waitUserFinish(eventName: TourEvents) {
+  private async waitUserFinish(eventName: TourEvents): Promise<void> {
     let tempResolve: () => void
     const waitFinish: Promise<void> = new Promise((resolve) => (tempResolve = resolve))
     this.emitter.on(eventName, () => tempResolve())
