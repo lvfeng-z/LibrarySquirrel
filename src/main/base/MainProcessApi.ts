@@ -316,7 +316,7 @@ function exposeService() {
     LogUtil.info('MainProcessApi', 'plugin-unInstall')
     const pluginService = new PluginService()
     try {
-      return ApiUtil.response(await pluginService.unInstall(args))
+      return ApiUtil.response(await pluginService.uninstall(args))
     } catch (error) {
       return returnError(error)
     }
