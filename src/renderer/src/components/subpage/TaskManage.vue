@@ -186,8 +186,10 @@ const downloadMode: Ref<boolean> = ref(true)
 const downloadInputPlaceholder: Ref<string> = ref('')
 // 资源的url或文件路径
 const sourceUrl: Ref<UnwrapRef<string>> = ref('')
-//
+// 插件监听DTO列表
 const pluginListenerDTOList: Ref<PluginListenerDTO[]> = ref([])
+// 支持当前url的插件列表
+const supportedPluginListenerList: Ref<PluginListenerDTO[]> = ref([])
 
 // 方法
 // 根据url或文件路径创建任务
@@ -469,7 +471,7 @@ function getUrlMatchedPlugin(url: string): PluginListenerDTO[] {
   if (StringUtil.isBlank(url)) {
     return []
   }
-  return pluginListenerDTOList.value.filter((pluginListenerDTO) => {
+  const result = pluginListenerDTOList.value.filter((pluginListenerDTO) => {
     if (ArrayIsEmpty(pluginListenerDTO.pluginTaskUrlListeners)) {
       return false
     } else {
@@ -482,6 +484,8 @@ function getUrlMatchedPlugin(url: string): PluginListenerDTO[] {
       })
     }
   })
+  supportedPluginListenerList.value = result
+  return result
 }
 // 获取受支持提示文本
 function getSupportedText() {
@@ -610,7 +614,12 @@ function getSupportedText() {
         <el-input v-model="sourceUrl" type="textarea" :rows="6" :placeholder="downloadInputPlaceholder"></el-input>
         <span class="task-manage-download-dialog-supported-tips"> {{ getSupportedText() }} </span>
         <template #footer>
-          <el-button type="primary" :disabled="StringUtil.isBlank(sourceUrl)" @click="createTaskFromSource">创建任务</el-button>
+          <el-tooltip :disabled="ArrayNotEmpty(supportedPluginListenerList)">
+            <el-button type="primary" :disabled="ArrayIsEmpty(supportedPluginListenerList)" @click="createTaskFromSource">
+              创建任务
+            </el-button>
+            <template #content> 当前输入的url不受支持 </template>
+          </el-tooltip>
           <el-button @click="downloadDialogState = false">取消</el-button>
         </template>
       </el-dialog>
