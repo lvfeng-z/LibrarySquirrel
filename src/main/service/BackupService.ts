@@ -10,7 +10,7 @@ import { AddSuffix, CreateDirIfNotExists } from '../util/FileSysUtil.js'
 import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 import { BackupRootDirName } from '../constant/BackupConstants.js'
-import { copyFile } from 'node:fs/promises'
+import { cp } from 'node:fs/promises'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
@@ -75,7 +75,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       backup.fileName = fileName
       backup.id = await this.save(backup)
 
-      await copyFile(sourceFilePath, finalAbsolutePath)
+      await cp(sourceFilePath, finalAbsolutePath, { recursive: true })
       return backup
     }, '创建文件备份')
   }
@@ -98,7 +98,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       LogUtil.error(this.constructor.name, '创建备份失败，找不到备份文件', error)
       throw error
     }
-    return fs.copyFile(absoluteBackupPath, targetPath).catch((error) => {
+    return fs.cp(absoluteBackupPath, targetPath, { recursive: true }).catch((error) => {
       LogUtil.error(this.constructor.name, `恢复备份到${targetPath}失败，error: `, error)
       throw error
     })
