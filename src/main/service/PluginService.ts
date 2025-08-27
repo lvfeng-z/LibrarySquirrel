@@ -32,8 +32,7 @@ import { BOOL } from '../constant/BOOL.js'
 import Page from '../model/util/Page.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
-import { rename, rm } from 'node:fs/promises'
-import Backup from '../model/entity/Backup.js'
+import { rm } from 'node:fs/promises'
 
 /**
  * 主键查询
@@ -161,7 +160,6 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * @param pluginInstallDTO
    */
   public async install(pluginInstallDTO: PluginInstallDTO): Promise<PluginInstallResultDTO> {
-    throw new Error('test')
     // 校验是否已安装
     const existingList = await this.listByAuthorNameVersion(pluginInstallDTO.author, pluginInstallDTO.name, pluginInstallDTO.version)
     let oldPlugin: Plugin | undefined = undefined
@@ -357,54 +355,46 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     AssertNotNullish(plugin.name, `卸载插件失败，找不到插件所在目录，因为插件的名称为空，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.version, `卸载插件失败，找不到插件所在目录，因为插件的版本为空，pluginId: ${pluginId}`)
     AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    let backup: Backup | undefined
+    const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version)
+    const backupService = new BackupService(this.db)
+    const backup = await backupService.createBackup(BackupSourceTypeEnum.WORKS, pluginId, pluginPath)
     try {
-      backup = await this.uninstall(pluginId)
       await this.db.transaction(async () => {
+        await this.uninstall(pluginId)
         const installDTO = this.loadPluginPackage(packagePath)
         this.assertSamePlugin(plugin, installDTO)
         return await this.install(installDTO)
       }, '重新安装插件')
     } catch (error) {
       if (NotNullish(backup)) {
-        const backupService = new BackupService(this.db)
-        const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version)
         await backupService.recoverToPath(backup.id as number, pluginPath).catch((recoverError) => {
           LogUtil.error(this.constructor.name, '恢复插件失败', recoverError)
         })
-      } else {
-        throw error
       }
+      throw error
     }
   }
 
   /**
    * 卸载插件
    */
-  public async uninstall(pluginId: number): Promise<Backup | undefined> {
+  public async uninstall(pluginId: number): Promise<number> {
     const plugin = await this.getById(pluginId)
     AssertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.author, `卸载插件失败，找不到插件所在目录，因为插件的作者为空，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.name, `卸载插件失败，找不到插件所在目录，因为插件的名称为空，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.version, `卸载插件失败，找不到插件所在目录，因为插件的版本为空，pluginId: ${pluginId}`)
     const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version)
-    let backup: Backup | undefined
     try {
-      const backupService = new BackupService()
-      const tempPath = pluginPath + '-lsBackup'
-      // 先重命名文件再创建备份，避免原文件占用新的资源的名称
       await fs.promises.access(pluginPath)
-      await rename(pluginPath, tempPath)
-      backup = await backupService.createBackup(BackupSourceTypeEnum.WORKS, pluginId, tempPath)
-      await rm(tempPath)
+      await rm(pluginPath, { recursive: true, force: true })
     } catch (error) {
       LogUtil.error(this.constructor.name, `卸载插件失败，plugin: ${plugin.author}-${plugin.name}-${plugin.version},`, error)
       if ((error as { code: string }).code !== 'ENOENT') {
         throw error
       }
     }
-    await this.setUninstalled(pluginId)
-    return backup
+    return this.setUninstalled(pluginId)
   }
 
   /**
