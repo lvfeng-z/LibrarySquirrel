@@ -24,6 +24,7 @@ import Site from '../model/entity/Site.js'
 import SiteDomainService from '../service/SiteDomainService.js'
 import PluginService from '../service/PluginService.js'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
+import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
 
 function exposeService() {
   // test
@@ -393,6 +394,9 @@ function exposeService() {
     try {
       return ApiUtil.response(await siteService.deleteById(args))
     } catch (error) {
+      if (error instanceof ForeignKeyDeleteError) {
+        return ApiUtil.error('无法删除站点，此站点正在被其他数据引用')
+      }
       return returnError(error)
     }
   })

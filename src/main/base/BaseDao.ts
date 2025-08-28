@@ -10,6 +10,8 @@ import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertArrayNotEmpty, AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
 import Page from '../model/util/Page.js'
 import CoreDao from './CoreDao.js'
+import ForeignKeyConstraintError from '../error/ForeignKeyConstraintError.js'
+import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
 
 type PrimaryKey = string | number
 
@@ -138,6 +140,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     return db
       .run(statement)
       .then((runResult) => runResult.changes)
+      .catch((error) => {
+        if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
+          throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
+        } else {
+          throw error
+        }
+      })
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -180,6 +189,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     return db
       .run(statement, nonUndefinedValue)
       .then((runResult) => runResult.changes)
+      .catch((error) => {
+        if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
+          throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
+        } else {
+          throw error
+        }
+      })
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

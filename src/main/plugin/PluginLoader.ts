@@ -81,7 +81,7 @@ export default class PluginLoader<T extends BasePlugin> {
             if (NotNullish(meaningOfPath.id)) {
               const localAuthor = await localAuthorService.getById(meaningOfPath.id)
               if (IsNullish(localAuthor)) {
-                const msg = '附加目录含义中的作者信息失败，未查询到作者'
+                const msg = '附加目录含义中的作者信息失败，作者id不可用'
                 LogUtil.error('PluginLoader', msg)
                 reject(msg)
               } else {
@@ -95,7 +95,7 @@ export default class PluginLoader<T extends BasePlugin> {
             if (NotNullish(meaningOfPath.id)) {
               const localTag = await localTagService.getById(meaningOfPath.id)
               if (IsNullish(localTag)) {
-                const msg = '附加目录含义中的标签信息失败，未查询到作者'
+                const msg = '附加目录含义中的标签信息失败，标签id不可用'
                 LogUtil.error('PluginLoader', msg)
                 reject(msg)
               } else {
@@ -109,7 +109,7 @@ export default class PluginLoader<T extends BasePlugin> {
             if (NotNullish(meaningOfPath.id)) {
               const site = await siteService.getById(meaningOfPath.id)
               if (IsNullish(site)) {
-                const msg = '附加目录含义中的站点信息失败，未查询到作者'
+                const msg = '附加目录含义中的站点信息失败，站点id不可用'
                 LogUtil.error('PluginLoader', msg)
                 reject(msg)
               } else {
