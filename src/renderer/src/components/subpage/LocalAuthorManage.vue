@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { nextTick, onMounted, Ref, ref } from 'vue'
 import BaseSubpage from './BaseSubpage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
@@ -49,11 +49,11 @@ const localAuthorSearchTable = ref()
 // siteAuthorExchangeBox的组件实例
 const siteAuthorExchangeBox = ref()
 // 本地作者SearchTable的分页
-const page: Ref<UnwrapRef<Page<LocalAuthorQueryDTO, LocalAuthor>>> = ref(new Page<LocalAuthorQueryDTO, LocalAuthor>())
+const page: Ref<Page<LocalAuthorQueryDTO, LocalAuthor>> = ref(new Page<LocalAuthorQueryDTO, LocalAuthor>())
 // 被改变的数据行
-const changedRows: Ref<UnwrapRef<object[]>> = ref([])
+const changedRows: Ref<object[]> = ref([])
 // 被选中的本地作者
-const localAuthorSelected: Ref<UnwrapRef<LocalAuthor>> = ref(new LocalAuthor())
+const localAuthorSelected: Ref<LocalAuthor> = ref(new LocalAuthor())
 // 本地作者SearchTable的operationButton
 const operationButton: OperationItem<LocalAuthor>[] = [
   {
@@ -68,7 +68,7 @@ const operationButton: OperationItem<LocalAuthor>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 本地作者SearchTable的表头
-const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
+const localAuthorThead: Ref<Thead<LocalAuthor>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -121,11 +121,11 @@ const localAuthorThead: Ref<UnwrapRef<Thead[]>> = ref([
 // 本地作者SearchTable的查询参数
 const localAuthorSearchParams: Ref<LocalAuthorQueryDTO> = ref(new LocalAuthorQueryDTO())
 // 本地作者弹窗的mode
-const localAuthorDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+const localAuthorDialogMode: Ref<DialogMode> = ref(DialogMode.EDIT)
 // 本地作者的对话框开关
-const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
+const dialogState: Ref<boolean> = ref(false)
 // 本地作者对话框的数据
-const dialogData: Ref<UnwrapRef<LocalAuthor>> = ref(new LocalAuthor())
+const dialogData: Ref<LocalAuthor> = ref(new LocalAuthor())
 // 站点作者ExchangeBox的upper的查询参数
 const exchangeBoxUpperSearchParams: Ref<SiteAuthorQueryDTO> = ref(new SiteAuthorQueryDTO())
 // 站点作者ExchangeBox的lower的查询参数
@@ -135,10 +135,12 @@ const disableExcSearchButton: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询本地作者的函数
-async function localAuthorQueryPage(page: Page<LocalAuthorQueryDTO, object>): Promise<Page<LocalAuthorQueryDTO, object> | undefined> {
+async function localAuthorQueryPage(
+  page: Page<LocalAuthorQueryDTO, object>
+): Promise<Page<LocalAuthorQueryDTO, LocalAuthor> | undefined> {
   const response = await apis.localAuthorQueryPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as Page<LocalAuthorQueryDTO, object>
+    return ApiUtil.data<Page<LocalAuthorQueryDTO, LocalAuthor>>(response)
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -268,8 +270,8 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
             v-model:changed-rows="changedRows"
             class="local-author-manage-left-search-table"
             data-key="id"
-            :operation-button="operationButton"
-            :thead="localAuthorThead"
+            :operation-button="operationButton as OperationItem<object>[]"
+            :thead="localAuthorThead as Thead<object>[]"
             :search="localAuthorQueryPage"
             :multi-select="false"
             :selectable="true"

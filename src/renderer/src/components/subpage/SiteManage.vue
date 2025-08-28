@@ -80,7 +80,7 @@ const siteOperationButton: OperationItem<Site>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 站点的表头
-const siteThead: Ref<UnwrapRef<Thead[]>> = ref([
+const siteThead: Ref<Thead<Site>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -191,7 +191,7 @@ const siteDomainOperationButton: OperationItem<SiteDomainDTO>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 站点域名的表头
-const siteDomainThead: Ref<Thead[]> = ref([
+const siteDomainThead: Ref<Thead<SiteDomainDTO>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,

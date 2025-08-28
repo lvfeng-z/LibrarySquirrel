@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { onMounted, Ref, ref } from 'vue'
 import BaseSubpage from './BaseSubpage.vue'
 import SearchTable from '../common/SearchTable.vue'
 import ExchangeBox from '../common/ExchangeBox.vue'
@@ -19,10 +19,10 @@ import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
-import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 
 // onMounted
 onMounted(() => {
@@ -55,11 +55,11 @@ const localTagSearchTable = ref()
 // siteTagExchangeBox的组件实例
 const siteTagExchangeBox = ref()
 // 被改变的数据行
-const changedRows: Ref<UnwrapRef<LocalTagVO[]>> = ref([])
+const changedRows: Ref<LocalTagDTO[]> = ref([])
 // 被选中的本地标签
-const localTagSelected: Ref<UnwrapRef<LocalTagVO>> = ref(new LocalTagVO())
+const localTagSelected: Ref<LocalTagDTO> = ref(new LocalTagDTO())
 // 本地标签SearchTable的operationButton
-const operationButton: OperationItem<LocalTagVO>[] = [
+const operationButton: OperationItem<LocalTagDTO>[] = [
   {
     label: '保存',
     icon: 'Checked',
@@ -72,7 +72,7 @@ const operationButton: OperationItem<LocalTagVO>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 本地标签SearchTable的表头
-const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
+const localTagThead: Ref<Thead<LocalTagDTO>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -100,7 +100,22 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
     remote: true,
     remotePaging: true,
     remotePageMethod: localTagQuerySelectItemPage,
-    cacheDataKey: 'baseTag'
+    getCacheData: (rowData: LocalTagDTO) => {
+      if (IsNullish(rowData.baseTag?.id)) {
+        return undefined
+      }
+      return new SelectItem({
+        value: rowData.baseTag.id,
+        label: IsNullish(rowData.baseTag?.localTagName) ? '' : rowData.baseTag.localTagName
+      })
+    },
+    setCacheData: (rowData: LocalTagDTO, data: SelectItem) => {
+      if (IsNullish(rowData.baseTag)) {
+        rowData.baseTag = new LocalTag()
+      }
+      rowData.baseTag.id = Number(data.value)
+      rowData.baseTag.localTagName = data.label
+    }
   }),
   new Thead({
     type: 'datetime',
@@ -119,13 +134,13 @@ const localTagThead: Ref<UnwrapRef<Thead[]>> = ref([
 // 本地标签SearchTable的查询参数
 const localTagSearchParams: Ref<LocalTagQueryDTO> = ref(new LocalTagQueryDTO())
 // 本地标签SearchTable的分页
-const page: Ref<UnwrapRef<Page<LocalTagQueryDTO, LocalTagDTO>>> = ref(new Page<LocalTagQueryDTO, LocalTagDTO>())
+const page: Ref<Page<LocalTagQueryDTO, LocalTagDTO>> = ref(new Page<LocalTagQueryDTO, LocalTagDTO>())
 // 本地标签弹窗的mode
-const localTagDialogMode: Ref<UnwrapRef<DialogMode>> = ref(DialogMode.EDIT)
+const localTagDialogMode: Ref<DialogMode> = ref(DialogMode.EDIT)
 // 本地标签的对话框开关
-const dialogState: Ref<UnwrapRef<boolean>> = ref(false)
+const dialogState: Ref<boolean> = ref(false)
 // 本地标签对话框的数据
-const dialogData: Ref<UnwrapRef<LocalTagVO>> = ref(new LocalTagVO())
+const dialogData: Ref<LocalTagDTO> = ref(new LocalTagDTO())
 // 站点标签ExchangeBox的upper的查询参数
 const exchangeBoxUpperSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQueryDTO())
 // 站点标签ExchangeBox的lower的查询参数
@@ -135,18 +150,14 @@ const disableExcSearchButton: Ref<boolean> = ref(false)
 
 // 方法
 // 分页查询本地标签的函数
-async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<Page<LocalTagQueryDTO, object> | undefined> {
+async function localTagQueryPage(page: Page<LocalTagQueryDTO, LocalTagDTO>): Promise<Page<LocalTagQueryDTO, LocalTagDTO> | undefined> {
   const response = await apis.localTagQueryDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<LocalTagQueryDTO, LocalTagDTO>>(response)
     if (IsNullish(responsePage)) {
       return undefined
     }
-    responsePage = new Page(responsePage)
-    const voList = responsePage.data?.map((item: LocalTagDTO) => new LocalTagVO(item))
-    const result = responsePage.transform<LocalTagVO>()
-    result.data = voList
-    return result
+    return new Page(responsePage)
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -155,11 +166,11 @@ async function localTagQueryPage(page: Page<LocalTagQueryDTO, object>): Promise<
 // 处理本地标签新增按钮点击事件
 async function handleCreateButtonClicked() {
   localTagDialogMode.value = DialogMode.NEW
-  dialogData.value = new LocalTagVO()
+  dialogData.value = new LocalTagDTO()
   dialogState.value = true
 }
 // 处理本地标签数据行按钮点击事件
-function handleRowButtonClicked(op: DataTableOperationResponse<LocalTagVO>) {
+function handleRowButtonClicked(op: DataTableOperationResponse<LocalTagDTO>) {
   switch (op.code) {
     case 'save':
       saveRowEdit(op.data)
@@ -182,7 +193,7 @@ function handleRowButtonClicked(op: DataTableOperationResponse<LocalTagVO>) {
   }
 }
 // 处理被选中的本地标签改变的事件
-async function handleLocalTagSelectionChange(selections: LocalTagVO[]) {
+async function handleLocalTagSelectionChange(selections: LocalTagDTO[]) {
   if (selections.length > 0) {
     disableExcSearchButton.value = false
     localTagSelected.value = selections[0]
@@ -194,7 +205,7 @@ function refreshTable() {
   localTagSearchTable.value.doSearch()
 }
 // 保存行数据编辑
-async function saveRowEdit(newData: LocalTagVO) {
+async function saveRowEdit(newData: LocalTagDTO) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.localTagUpdateById(tempData)

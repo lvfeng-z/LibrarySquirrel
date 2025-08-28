@@ -50,7 +50,7 @@ const pluginOperationButton: OperationItem<Plugin>[] = [
   { label: '卸载', icon: 'delete', code: 'uninstall' }
 ]
 // 插件的表头
-const pluginThead: Ref<UnwrapRef<Thead[]>> = ref([
+const pluginThead: Ref<Thead<Plugin>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,

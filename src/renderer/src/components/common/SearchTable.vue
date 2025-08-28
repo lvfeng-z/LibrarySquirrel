@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="Query extends BaseQueryDTO, Data, OpParam">
+<script setup lang="ts" generic="Query extends BaseQueryDTO, Data extends object">
 import SearchToolbarV1 from '@renderer/components/common/SearchToolbarV1.vue'
 import { ref, toRaw } from 'vue'
 import OperationItem from '../../model/util/OperationItem'
@@ -21,8 +21,8 @@ const props = withDefaults(
     clickRowSelect?: boolean // 点击行的任意位置进行选中（仅单选生效）
     dataKey: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
-    thead: Thead[] // 表头
-    operationButton?: OperationItem<OpParam>[] // 数据行的操作按钮
+    thead: Thead<Data>[] // 表头
+    operationButton?: OperationItem<Data>[] // 数据行的操作按钮
     operationWidth?: number // 操作栏宽度
     customOperationButton?: boolean // 是否使用自定义操作按钮
     treeData?: boolean //是否为树形数据

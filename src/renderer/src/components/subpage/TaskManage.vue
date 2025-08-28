@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
-import { h, onMounted, Ref, ref, UnwrapRef, VNode } from 'vue'
+import { h, onMounted, Ref, ref, VNode } from 'vue'
 import ApiUtil from '../../utils/ApiUtil'
 import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
@@ -30,6 +30,7 @@ import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import PluginListenerDTO from '@renderer/model/main/dto/PluginListenerDTO.ts'
+import TaskProgressTreeDTO from '@renderer/model/main/dto/TaskProgressTreeDTO.ts'
 
 // onMounted
 onMounted(() => {
@@ -63,9 +64,9 @@ const localImportButton = ref()
 // 站点导入按钮的实例
 const siteDownloadButton = ref()
 // 任务SearchTable的数据
-const dataList: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
+const dataList: Ref<TaskTreeDTO[]> = ref([])
 // 表头
-const thead: Ref<UnwrapRef<Thead[]>> = ref([
+const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -165,27 +166,27 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
   })
 ])
 // 任务SearchTable的分页
-const page: Ref<UnwrapRef<Page<TaskQueryDTO, Task>>> = ref(new Page<TaskQueryDTO, Task>())
+const page: Ref<Page<TaskQueryDTO, Task>> = ref(new Page<TaskQueryDTO, Task>())
 // 任务查询的参数
 const taskSearchParams: Ref<TaskQueryDTO> = ref(new TaskQueryDTO())
 // 改变的行数据
-const changedRows: Ref<UnwrapRef<object[]>> = ref([])
+const changedRows: Ref<object[]> = ref([])
 // 是否正在刷新数据
 let refreshing: boolean = false
 // 防抖动refreshTask
 const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 // 当前dialog绑定数据
-const dialogData: Ref<UnwrapRef<TaskTreeDTO>> = ref(new TaskTreeDTO())
+const dialogData: Ref<TaskTreeDTO> = ref(new TaskTreeDTO())
 // 任务详情的dialog开关
-const taskDialogState: Ref<UnwrapRef<boolean>> = ref(false)
+const taskDialogState: Ref<boolean> = ref(false)
 // 下载dialog的开关
-const downloadDialogState: Ref<UnwrapRef<boolean>> = ref(false)
+const downloadDialogState: Ref<boolean> = ref(false)
 // 下载模式
 const downloadMode: Ref<boolean> = ref(true)
 // 下载dialog输入框占位文本
 const downloadInputPlaceholder: Ref<string> = ref('')
 // 资源的url或文件路径
-const sourceUrl: Ref<UnwrapRef<string>> = ref('')
+const sourceUrl: Ref<string> = ref('')
 // 插件监听DTO列表
 const pluginListenerDTOList: Ref<PluginListenerDTO[]> = ref([])
 // 支持当前url的插件列表
@@ -237,7 +238,7 @@ function handleCreatTaskResponse(response: ApiResponse, notificationId: string) 
     msg: msg
   })
 }
-// 分页查询子任务的函数
+// 分页查询父任务的函数
 async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
   if (IsNullish(page.query)) {
     page.query = new TaskQueryDTO()
@@ -258,7 +259,7 @@ async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Pa
   }
   const response = await apis.taskQueryParentPage(page)
   if (ApiUtil.check(response)) {
-    return ApiUtil.data(response) as Page<TaskQueryDTO, object>
+    return ApiUtil.data<Page<TaskQueryDTO, object>>(response)
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -545,7 +546,7 @@ function getSupportedText() {
         v-model:changed-rows="changedRows"
         class="task-manage-search-table"
         :selectable="true"
-        :thead="thead"
+        :thead="thead as Thead<object>[]"
         :search="taskQueryParentPage"
         :update-load="updateLoad"
         :update-properties="['status']"

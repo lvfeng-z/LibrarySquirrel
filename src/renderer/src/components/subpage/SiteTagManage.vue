@@ -10,15 +10,17 @@ import { Thead } from '../../model/util/Thead'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
-import SiteTagVO from '@renderer/model/main/vo/SiteTagVO.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import SiteTagFullDTO from '@renderer/model/main/dto/SiteTagFullDTO.ts'
+import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
+import Site from '@renderer/model/main/entity/Site.ts'
 
 // onMounted
 onMounted(() => {
@@ -66,7 +68,7 @@ const operationButton: OperationItem<SiteTagLocalRelateDTO>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 站点标签SearchTable的表头
-const siteTagThead: Ref<Thead[]> = ref([
+const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -107,7 +109,22 @@ const siteTagThead: Ref<Thead[]> = ref([
     remote: true,
     remotePaging: true,
     remotePageMethod: localTagQuerySelectItemPage,
-    cacheDataKey: 'localTagSelectItem'
+    getCacheData: (rowData: SiteTagFullDTO) => {
+      if (IsNullish(rowData.localTag?.id)) {
+        return undefined
+      }
+      return new SelectItem({
+        value: rowData.localTag.id,
+        label: IsNullish(rowData.localTag?.localTagName) ? '' : rowData.localTag.localTagName
+      })
+    },
+    setCacheData: (rowData: SiteTagFullDTO, data: SelectItem) => {
+      if (IsNullish(rowData.localTag)) {
+        rowData.localTag = new LocalTag()
+      }
+      rowData.localTag.id = Number(data.value)
+      rowData.localTag.localTagName = data.label
+    }
   }),
   new Thead({
     type: 'autoLoadSelect',
@@ -125,7 +142,22 @@ const siteTagThead: Ref<Thead[]> = ref([
     remote: true,
     remotePaging: true,
     remotePageMethod: siteQuerySelectItemPage,
-    cacheDataKey: 'siteSelectItem'
+    getCacheData: (rowData: SiteTagFullDTO) => {
+      if (IsNullish(rowData.site?.id)) {
+        return undefined
+      }
+      return new SelectItem({
+        value: rowData.site.id,
+        label: IsNullish(rowData.site?.siteName) ? '' : rowData.site.siteName
+      })
+    },
+    setCacheData: (rowData: SiteTagFullDTO, data: SelectItem) => {
+      if (IsNullish(rowData.site)) {
+        rowData.site = new Site()
+      }
+      rowData.site.id = Number(data.value)
+      rowData.site.siteName = data.label
+    }
   }),
   new Thead({
     type: 'datetime',
@@ -154,7 +186,9 @@ const dialogData: Ref<SiteTagLocalRelateDTO> = ref(new SiteTagLocalRelateDTO())
 
 // 方法
 // 分页查询站点标签的函数
-async function siteTagQueryPage(page: Page<SiteTagQueryDTO, object>): Promise<Page<SiteTagQueryDTO, SiteTagVO> | undefined> {
+async function siteTagQueryPage(
+  page: Page<SiteTagQueryDTO, object>
+): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO> | undefined> {
   const response = await apis.siteTagQueryLocalRelateDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>>(response)
@@ -162,22 +196,7 @@ async function siteTagQueryPage(page: Page<SiteTagQueryDTO, object>): Promise<Pa
       return undefined
     }
     responsePage = new Page(responsePage)
-    const relateDTOList = responsePage.data?.map((item: SiteTagLocalRelateDTO) => new SiteTagLocalRelateDTO(item))
-    let finalList: SiteTagVO[] = []
-    if (ArrayNotEmpty(relateDTOList)) {
-      finalList = relateDTOList.map((dto) => {
-        const tempVO = new SiteTagVO(dto)
-        const tempId = dto.localTag?.id
-        const tempName = dto.localTag?.localTagName
-        if (NotNullish(tempId)) {
-          tempVO.localTagSelectItem = new SelectItem({ value: tempId, label: IsNullish(tempName) ? '' : tempName })
-        }
-        return tempVO
-      })
-    }
-    const result = responsePage.transform<SiteTagVO>()
-    result.data = finalList
-    return result
+    return responsePage
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -190,7 +209,7 @@ async function handleCreateButtonClicked() {
   dialogState.value = true
 }
 // 处理站点标签数据行按钮点击事件
-async function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagVO>) {
+async function handleRowButtonClicked(op: DataTableOperationResponse<SiteTagLocalRelateDTO>) {
   switch (op.code) {
     case 'create':
       await creatSameNameLocalTagAndBind(lodash.cloneDeep(op.data))
@@ -229,7 +248,7 @@ async function deleteSiteTag(id: string) {
   }
 }
 // 保存行数据编辑
-async function saveRowEdit(newData: SiteTagVO) {
+async function saveRowEdit(newData: SiteTagLocalRelateDTO) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.siteTagUpdateById(tempData)

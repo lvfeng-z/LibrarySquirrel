@@ -5,8 +5,8 @@ import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import LocalTagVO from '@renderer/model/main/vo/LocalTagVO.ts'
 import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 
 // props
 const props = withDefaults(
@@ -22,7 +22,7 @@ const props = withDefaults(
 
 // model
 // 表单数据
-const formData = defineModel<LocalTagVO>('formData', { required: true })
+const formData = defineModel<LocalTagDTO>('formData', { required: true })
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
@@ -101,8 +101,8 @@ async function handleSaveButtonClicked() {
                 <el-option
                   v-if="NotNullish(formData.baseTag)"
                   :hidden="true"
-                  :value="formData.baseTag.value"
-                  :label="formData.baseTag.label"
+                  :value="formData.baseTag.id"
+                  :label="formData.baseTag.localTagName"
                 ></el-option>
                 <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
               </template>

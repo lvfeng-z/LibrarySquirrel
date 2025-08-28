@@ -1,8 +1,9 @@
 // DataTable的表头
 import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import { IPopperInputConfig, PopperInputConfig } from '@renderer/model/util/PopperInputConfig.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
 
-export class Thead extends PopperInputConfig implements IThead {
+export class Thead<Data> extends PopperInputConfig implements IThead<Data> {
   key: string // 值的键名
   title?: string // 标题名称
   hide?: boolean // 是否隐藏
@@ -14,9 +15,10 @@ export class Thead extends PopperInputConfig implements IThead {
   fixed?: 'left' | 'right' | boolean // 是否固定列
   showOverflowTooltip?: boolean // 是否隐藏额外内容并在单元格悬停时使用 Tooltip 显示它们
   editMethod?: 'replace' | 'popper'
-  cacheDataKey?: string
+  getCacheData: (rowData: Data) => SelectItem | undefined // 获取行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
+  setCacheData: (rowData: Data, data: SelectItem) => void // 设置行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
 
-  constructor(thead: IThead) {
+  constructor(thead: IThead<Data>) {
     super(thead)
     this.key = thead.key
     this.title = thead.title
@@ -29,11 +31,12 @@ export class Thead extends PopperInputConfig implements IThead {
     this.fixed = IsNullish(thead.fixed) ? false : thead.fixed
     this.showOverflowTooltip = IsNullish(thead.showOverflowTooltip) ? false : thead.showOverflowTooltip
     this.editMethod = IsNullish(thead.editMethod) ? 'replace' : thead.editMethod
-    this.cacheDataKey = thead.cacheDataKey
+    this.getCacheData = IsNullish(thead.getCacheData) ? () => undefined : thead.getCacheData
+    this.setCacheData = IsNullish(thead.setCacheData) ? () => {} : thead.setCacheData
   }
 }
 
-export interface IThead extends IPopperInputConfig {
+export interface IThead<Data> extends IPopperInputConfig {
   key: string // 值的键名
   title?: string // 标题名称
   hide?: boolean // 是否隐藏
@@ -45,5 +48,6 @@ export interface IThead extends IPopperInputConfig {
   fixed?: 'left' | 'right' | boolean // 是否固定列
   showOverflowTooltip?: boolean // 列超出长度时是否省略
   editMethod?: 'replace' | 'popper'
-  cacheDataKey?: string
+  getCacheData?: (rowData: Data) => SelectItem | undefined
+  setCacheData?: (rowData: Data, data: SelectItem) => void
 }

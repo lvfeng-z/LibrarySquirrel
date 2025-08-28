@@ -7,8 +7,6 @@ import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { TreeNode } from 'element-plus'
 import { GetPropByPath, SetPropByPath } from '@renderer/utils/ObjectUtil.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
-import SelectItem from '@renderer/model/util/SelectItem.ts'
 import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 
 // props
@@ -17,7 +15,7 @@ const props = withDefaults(
     selectable: boolean // 列表是否可选择
     multiSelect: boolean // 列表是否多选
     clickRowSelect?: boolean // 点击行的任意位置进行选中（仅单选生效）
-    thead: Thead[] // 表头信息
+    thead: Thead<Data>[] // 表头信息
     dataKey: string // 数据的唯一标识
     tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     operationButton?: OperationItem<OpParam>[] // 操作列按钮的文本、图标和代号
@@ -157,16 +155,6 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
       }
     })
 }
-// 获取行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
-function getCacheData(scope, item): SelectItem | undefined {
-  return StringUtil.isBlank(item.cacheDataKey) ? undefined : (GetPropByPath(scope.row, item.cacheDataKey) as SelectItem | undefined)
-}
-// 设置行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
-function setCacheData(scope, item, newData) {
-  if (StringUtil.isNotBlank(item.cacheDataKey)) {
-    SetPropByPath(scope.row, item.cacheDataKey, newData)
-  }
-}
 </script>
 
 <template>
@@ -214,11 +202,11 @@ function setCacheData(scope, item, newData) {
               :is="item.editMethod === 'popper' ? PopperInput : CommonInput"
               :data="GetPropByPath(scope.row, item.key)"
               :config="item"
-              :cache-data="getCacheData(scope, item)"
+              :cache-data="item.getCacheData(scope.row)"
               :extra-data="scope.row"
               @data-changed="handleRowChange(scope.row)"
               @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
-              @update:cache-data="(newData) => setCacheData(scope, item, newData)"
+              @update:cache-data="(newData) => item.setCacheData(scope.row, newData)"
             />
           </template>
         </el-table-column>

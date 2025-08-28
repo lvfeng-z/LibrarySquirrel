@@ -7,6 +7,7 @@ import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
 import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 
 // props
 const props = withDefaults(
@@ -84,6 +85,23 @@ async function handleSaveButtonClicked() {
         <el-col>
           <el-form-item label="本地标签">
             <auto-load-select v-model="formData.localTagId" :load="localTagQuerySelectItemPage" remote filterable clearable>
+              <template #default="{ list }">
+                <el-option
+                  v-if="NotNullish(formData.localTag)"
+                  :hidden="true"
+                  :value="formData.localTag.id"
+                  :label="formData.localTag.localTagName"
+                ></el-option>
+                <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+              </template>
+            </auto-load-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col>
+          <el-form-item label="站点">
+            <auto-load-select v-model="formData.siteId" :load="siteQuerySelectItemPage" remote filterable clearable>
               <template #default="{ list }">
                 <el-option
                   v-if="NotNullish(formData.localTag)"

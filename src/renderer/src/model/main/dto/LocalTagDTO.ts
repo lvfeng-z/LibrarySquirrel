@@ -1,6 +1,7 @@
 import LocalTag from '../entity/LocalTag.js'
 import lodash from 'lodash'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ParsePropertyFromJson } from '@renderer/utils/ObjectUtil.ts'
 
 export default class LocalTagDTO extends LocalTag {
   /**
@@ -13,14 +14,11 @@ export default class LocalTagDTO extends LocalTag {
    */
   baseTag: LocalTag | undefined | null
 
-  constructor(localTagDTO?: LocalTagDTO) {
+  constructor(localTagDTO?: LocalTag) {
     super(localTagDTO)
     if (NotNullish(localTagDTO)) {
-      const baseTag = lodash.pick(localTagDTO, ['baseTag']).baseTag
-      if (typeof baseTag === 'string') {
-        localTagDTO.baseTag = JSON.parse(baseTag)
-      }
       lodash.assign(this, lodash.pick(localTagDTO, ['isLeaf', 'baseTag']))
+      ParsePropertyFromJson(this, [{ property: 'baseTag', builder: (src) => new LocalTag(src) }])
     }
   }
 }

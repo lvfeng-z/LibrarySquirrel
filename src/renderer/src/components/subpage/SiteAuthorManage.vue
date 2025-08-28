@@ -9,16 +9,17 @@ import { Thead } from '../../model/util/Thead'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '@renderer/utils/CommonUtil.ts'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRelateDTO.ts'
-import SelectItem from '@renderer/model/util/SelectItem.ts'
-import SiteAuthorVO from '@renderer/model/main/vo/SiteAuthorVO.ts'
 import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
 import SiteAuthor from '@renderer/model/main/entity/SiteAuthor.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { localAuthorQuerySelectItemPage } from '@renderer/apis/SiteAuthorApi.ts'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
+import LocalAuthor from '@renderer/model/main/entity/LocalAuthor.ts'
+import Site from '@renderer/model/main/entity/Site.ts'
 
 // onMounted
 onMounted(() => {
@@ -66,7 +67,7 @@ const operationButton: OperationItem<SiteAuthorLocalRelateDTO>[] = [
   { label: '删除', icon: 'delete', code: 'delete' }
 ]
 // 站点作者SearchTable的表头
-const siteAuthorThead: Ref<Thead[]> = ref([
+const siteAuthorThead: Ref<Thead<SiteAuthorLocalRelateDTO>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -107,7 +108,22 @@ const siteAuthorThead: Ref<Thead[]> = ref([
     remote: true,
     remotePaging: true,
     remotePageMethod: localAuthorQuerySelectItemPage,
-    cacheDataKey: 'localAuthorSelectItem'
+    getCacheData: (rowData: SiteAuthorLocalRelateDTO) => {
+      if (IsNullish(rowData.localAuthor?.id)) {
+        return undefined
+      }
+      return new SelectItem({
+        value: rowData.localAuthor.id,
+        label: IsNullish(rowData.localAuthor?.authorName) ? '' : rowData.localAuthor.authorName
+      })
+    },
+    setCacheData: (rowData: SiteAuthorLocalRelateDTO, data: SelectItem) => {
+      if (IsNullish(rowData.localAuthor)) {
+        rowData.localAuthor = new LocalAuthor()
+      }
+      rowData.localAuthor.id = Number(data.value)
+      rowData.localAuthor.authorName = data.label
+    }
   }),
   new Thead({
     type: 'autoLoadSelect',
@@ -125,7 +141,22 @@ const siteAuthorThead: Ref<Thead[]> = ref([
     remote: true,
     remotePaging: true,
     remotePageMethod: siteQuerySelectItemPage,
-    cacheDataKey: 'siteSelectItem'
+    getCacheData: (rowData: SiteAuthorLocalRelateDTO) => {
+      if (IsNullish(rowData.site?.id)) {
+        return undefined
+      }
+      return new SelectItem({
+        value: rowData.site.id,
+        label: IsNullish(rowData.site?.siteName) ? '' : rowData.site.siteName
+      })
+    },
+    setCacheData: (rowData: SiteAuthorLocalRelateDTO, data: SelectItem) => {
+      if (IsNullish(rowData.site)) {
+        rowData.site = new Site()
+      }
+      rowData.site.id = Number(data.value)
+      rowData.site.siteName = data.label
+    }
   }),
   new Thead({
     type: 'datetime',
@@ -158,30 +189,14 @@ const dialogData: Ref<SiteAuthorLocalRelateDTO> = ref(new SiteAuthorLocalRelateD
 // 分页查询站点作者的函数
 async function siteAuthorQueryPage(
   page: Page<SiteAuthorQueryDTO, object>
-): Promise<Page<SiteAuthorQueryDTO, SiteAuthorVO> | undefined> {
+): Promise<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO> | undefined> {
   const response = await apis.siteAuthorQueryLocalRelateDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>>(response)
     if (IsNullish(responsePage)) {
       return undefined
     }
-    responsePage = new Page(responsePage)
-    const relateDTOList = responsePage.data?.map((item: SiteAuthorLocalRelateDTO) => new SiteAuthorLocalRelateDTO(item))
-    let finalList: SiteAuthorVO[] = []
-    if (ArrayNotEmpty(relateDTOList)) {
-      finalList = relateDTOList.map((dto) => {
-        const tempVO = new SiteAuthorVO(dto)
-        const tempId = dto.localAuthor?.id
-        const tempName = dto.localAuthor?.authorName
-        if (NotNullish(tempId)) {
-          tempVO.localAuthorSelectItem = new SelectItem({ value: tempId, label: IsNullish(tempName) ? '' : tempName })
-        }
-        return tempVO
-      })
-    }
-    const result = responsePage.transform<SiteAuthorVO>()
-    result.data = finalList
-    return result
+    return new Page(responsePage)
   } else {
     ApiUtil.msg(response)
     return undefined
@@ -194,7 +209,7 @@ async function handleCreateButtonClicked() {
   dialogState.value = true
 }
 // 处理站点作者数据行按钮点击事件
-async function handleRowButtonClicked(op: DataTableOperationResponse<SiteAuthorVO>) {
+async function handleRowButtonClicked(op: DataTableOperationResponse<SiteAuthorLocalRelateDTO>) {
   switch (op.code) {
     case 'create':
       await creatSameNameLocalAuthorAndBind(lodash.cloneDeep(op.data))
@@ -233,7 +248,7 @@ async function deleteSiteAuthor(id: string) {
   }
 }
 // 保存行数据编辑
-async function saveRowEdit(newData: SiteAuthorVO) {
+async function saveRowEdit(newData: SiteAuthorLocalRelateDTO) {
   const tempData = lodash.cloneDeep(newData)
 
   const response = await apis.siteAuthorUpdateById(tempData)

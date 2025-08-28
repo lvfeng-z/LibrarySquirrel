@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DialogMode from '../../model/util/DialogMode'
-import { computed, h, nextTick, Ref, ref, UnwrapRef, VNode } from 'vue'
+import { computed, h, nextTick, Ref, ref, VNode } from 'vue'
 import TaskTreeDTO from '../../model/main/dto/TaskTreeDTO.ts'
 import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
@@ -20,6 +20,7 @@ import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
 import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import StringUtil from '@renderer/utils/StringUtil.ts'
+import TaskProgressTreeDTO from '@renderer/model/main/dto/TaskProgressTreeDTO.ts'
 
 // props
 const props = defineProps<{
@@ -50,9 +51,9 @@ const baseDialog = ref()
 // parentTaskInfo的dom元素
 const parentTaskInfo = ref()
 // 下级任务
-const children: Ref<UnwrapRef<TaskTreeDTO[]>> = ref([])
+const children: Ref<TaskTreeDTO[]> = ref([])
 // 表头
-const thead: Ref<UnwrapRef<Thead[]>> = ref([
+const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
   new Thead({
     type: 'text',
     defaultDisabled: true,
@@ -154,9 +155,9 @@ const thead: Ref<UnwrapRef<Thead[]>> = ref([
 // 任务查询的参数
 const taskSearchParams: Ref<TaskQueryDTO> = ref(new TaskQueryDTO())
 // 任务SearchTable的分页
-const page: Ref<UnwrapRef<Page<TaskQueryDTO, Task>>> = ref(new Page<TaskQueryDTO, Task>())
+const page: Ref<Page<TaskQueryDTO, Task>> = ref(new Page<TaskQueryDTO, Task>())
 // 改变的行数据
-const changedRows: Ref<UnwrapRef<object[]>> = ref([])
+const changedRows: Ref<object[]> = ref([])
 // 是否正在刷新数据
 let refreshing: boolean = false
 // 防抖动refreshTask
@@ -417,7 +418,7 @@ function toParent() {
         v-model:data="children"
         class="task-dialog-search-table"
         :selectable="true"
-        :thead="thead"
+        :thead="thead as Thead<object>[]"
         :search="taskQueryChildrenTaskPage"
         :update-load="updateLoad"
         :update-properties="['schedule', 'status']"
