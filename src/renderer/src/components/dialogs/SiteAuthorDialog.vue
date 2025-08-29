@@ -7,6 +7,7 @@ import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRelateDTO.ts'
 import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/LocalAuthorApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 
 // props
 const props = withDefaults(
@@ -103,6 +104,23 @@ async function handleSaveButtonClicked() {
                   :hidden="true"
                   :value="formData.localAuthor.id"
                   :label="formData.localAuthor.authorName"
+                ></el-option>
+                <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
+              </template>
+            </auto-load-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col>
+          <el-form-item label="站点">
+            <auto-load-select v-model="formData.siteId" :load="siteQuerySelectItemPageBySiteName" remote filterable clearable>
+              <template #default="{ list }">
+                <el-option
+                  v-if="NotNullish(formData.site)"
+                  :hidden="true"
+                  :value="formData.site.id"
+                  :label="formData.site.siteName"
                 ></el-option>
                 <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
               </template>

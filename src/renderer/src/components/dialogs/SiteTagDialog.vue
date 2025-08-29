@@ -104,10 +104,10 @@ async function handleSaveButtonClicked() {
             <auto-load-select v-model="formData.siteId" :load="siteQuerySelectItemPageBySiteName" remote filterable clearable>
               <template #default="{ list }">
                 <el-option
-                  v-if="NotNullish(formData.localTag)"
+                  v-if="NotNullish(formData.site)"
                   :hidden="true"
-                  :value="formData.localTag.id"
-                  :label="formData.localTag.localTagName"
+                  :value="formData.site.id"
+                  :label="formData.site.siteName"
                 ></el-option>
                 <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
               </template>
