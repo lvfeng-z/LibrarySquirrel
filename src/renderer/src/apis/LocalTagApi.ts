@@ -8,13 +8,8 @@ import { ElMessage } from 'element-plus'
 /**
  * 分页查询本地标签选择列表
  * @param page
- * @param input
  */
-export async function localTagQuerySelectItemPage(
-  page: IPage<unknown, SelectItem>,
-  input?: string
-): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localTagName: input }
+export async function localTagQuerySelectItemPage(page: IPage<unknown, SelectItem>): Promise<IPage<unknown, SelectItem>> {
   const response = await window.api.localTagQuerySelectItemPage(page)
 
   // 解析响应值
@@ -30,4 +25,17 @@ export async function localTagQuerySelectItemPage(
     ApiUtil.failedMsg(response)
     throw new Error()
   }
+}
+
+/**
+ * 分页查询本地标签选择列表
+ * @param page
+ * @param localTagName
+ */
+export async function localTagQuerySelectItemPageByName(
+  page: IPage<unknown, SelectItem>,
+  localTagName: string
+): Promise<IPage<unknown, SelectItem>> {
+  page.query = { localTagName }
+  return localTagQuerySelectItemPage(page)
 }

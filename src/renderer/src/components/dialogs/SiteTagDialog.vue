@@ -6,8 +6,8 @@ import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
-import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 
 // props
 const props = withDefaults(
@@ -84,7 +84,7 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="本地标签">
-            <auto-load-select v-model="formData.localTagId" :load="localTagQuerySelectItemPage" remote filterable clearable>
+            <auto-load-select v-model="formData.localTagId" :load="localTagQuerySelectItemPageByName" remote filterable clearable>
               <template #default="{ list }">
                 <el-option
                   v-if="NotNullish(formData.localTag)"
@@ -101,7 +101,7 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="站点">
-            <auto-load-select v-model="formData.siteId" :load="siteQuerySelectItemPage" remote filterable clearable>
+            <auto-load-select v-model="formData.siteId" :load="siteQuerySelectItemPageBySiteName" remote filterable clearable>
               <template #default="{ list }">
                 <el-option
                   v-if="NotNullish(formData.localTag)"

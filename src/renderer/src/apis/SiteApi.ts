@@ -11,11 +11,19 @@ import { ElMessage } from 'element-plus'
  * @param sitePage
  * @param siteName
  */
-export async function siteQuerySelectItemPage(
+export async function siteQuerySelectItemPageBySiteName(
   sitePage: IPage<unknown, SelectItem>,
-  siteName?: string
+  siteName: string
 ): Promise<IPage<unknown, SelectItem>> {
   sitePage.query = { siteName }
+  return siteQuerySelectItemPage(sitePage)
+}
+
+/**
+ * 分页查询站点选择列表
+ * @param sitePage
+ */
+export async function siteQuerySelectItemPage(sitePage: IPage<unknown, SelectItem>): Promise<IPage<unknown, SelectItem>> {
   const response = await window.api.siteQuerySelectItemPage(sitePage)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<Page<LocalTagQueryDTO, SelectItem>>(response)

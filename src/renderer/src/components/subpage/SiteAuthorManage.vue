@@ -14,9 +14,9 @@ import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO
 import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRelateDTO.ts'
 import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
 import SiteAuthor from '@renderer/model/main/entity/SiteAuthor.ts'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { localAuthorQuerySelectItemPage } from '@renderer/apis/SiteAuthorApi.ts'
+import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/SiteAuthorApi.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import LocalAuthor from '@renderer/model/main/entity/LocalAuthor.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
@@ -107,7 +107,7 @@ const siteAuthorThead: Ref<Thead<SiteAuthorLocalRelateDTO>[]> = ref([
     showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: localAuthorQuerySelectItemPage,
+    remotePageMethod: localAuthorQuerySelectItemPageByName,
     getCacheData: (rowData: SiteAuthorLocalRelateDTO) => {
       if (IsNullish(rowData.localAuthor?.id)) {
         return undefined
@@ -140,7 +140,7 @@ const siteAuthorThead: Ref<Thead<SiteAuthorLocalRelateDTO>[]> = ref([
     showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: siteQuerySelectItemPage,
+    remotePageMethod: siteQuerySelectItemPageBySiteName,
     getCacheData: (rowData: SiteAuthorLocalRelateDTO) => {
       if (IsNullish(rowData.site?.id)) {
         return undefined
@@ -297,7 +297,7 @@ async function creatSameNameLocalAuthorAndBind(siteAuthor: SiteAuthor) {
               <el-col :span="4">
                 <auto-load-select
                   v-model="siteAuthorSearchParams.siteId"
-                  :load="siteQuerySelectItemPage"
+                  :load="siteQuerySelectItemPageBySiteName"
                   placeholder="选择站点"
                   remote
                   filterable

@@ -7,7 +7,7 @@ export default {
       const clientHeight = domTarget.clientHeight
       const scrollHeight = domTarget.scrollHeight
       if (scrollHeight - scrollTop <= clientHeight) {
-        binding.value()
+        binding.value(el.firstElementChild.firstElementChild.firstElementChild.firstElementChild.value)
       }
     }
     const child = el.querySelector('.el-select__input')
@@ -18,12 +18,12 @@ export default {
 
       if (selectWrapper !== null) {
         selectWrapper.addEventListener('scroll', handleScroll)
-        el.__handleScroll = handleScroll
-        el.__scrollDom = selectWrapper
+        el.__ls_handleScroll = handleScroll
+        el.__ls_scrollDom = selectWrapper
       }
     }
   },
   unmounted(el) {
-    el.__scrollDom.removeEventListener('scroll', el.__handleScroll)
+    el.__ls_scrollDom.removeEventListener('scroll', el.__ls_handleScroll)
   }
 }

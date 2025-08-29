@@ -20,8 +20,8 @@ import { ElMessage } from 'element-plus'
 import SiteTagQueryDTO from '@renderer/model/main/queryDTO/SiteTagQueryDTO.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
-import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
+import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 
 // onMounted
@@ -99,7 +99,7 @@ const localTagThead: Ref<Thead<LocalTagDTO>[]> = ref([
     showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: localTagQuerySelectItemPage,
+    remotePageMethod: localTagQuerySelectItemPageByName,
     getCacheData: (rowData: LocalTagDTO) => {
       if (IsNullish(rowData.baseTag?.id)) {
         return undefined
@@ -307,7 +307,7 @@ async function requestSiteTagSelectItemPage(
                 <el-col :span="8">
                   <auto-load-select
                     v-model="localTagSearchParams.baseLocalTagId"
-                    :load="localTagQuerySelectItemPage"
+                    :load="localTagQuerySelectItemPageByName"
                     placeholder="选择上级标签"
                     remote
                     filterable
@@ -343,7 +343,7 @@ async function requestSiteTagSelectItemPage(
                 <el-col :span="6">
                   <auto-load-select
                     v-model="exchangeBoxUpperSearchParams.siteId"
-                    :load="siteQuerySelectItemPage"
+                    :load="siteQuerySelectItemPageBySiteName"
                     placeholder="选择站点"
                     remote
                     filterable
@@ -364,7 +364,7 @@ async function requestSiteTagSelectItemPage(
                 <el-col :span="6">
                   <auto-load-select
                     v-model="exchangeBoxLowerSearchParams.siteId"
-                    :load="siteQuerySelectItemPage"
+                    :load="siteQuerySelectItemPageBySiteName"
                     placeholder="选择站点"
                     remote
                     filterable

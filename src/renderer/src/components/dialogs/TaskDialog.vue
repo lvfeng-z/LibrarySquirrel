@@ -17,7 +17,7 @@ import Page from '@renderer/model/util/Page.ts'
 import TaskQueryDTO from '@renderer/model/main/queryDTO/TaskQueryDTO.ts'
 import Task from '@renderer/model/main/entity/Task.ts'
 import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import TaskProgressTreeDTO from '@renderer/model/main/dto/TaskProgressTreeDTO.ts'
@@ -437,7 +437,7 @@ function toParent() {
             <el-col :span="6">
               <auto-load-select
                 v-model="taskSearchParams.siteId"
-                :load="siteQuerySelectItemPage"
+                :load="siteQuerySelectItemPageBySiteName"
                 placeholder="选择站点"
                 remote
                 filterable

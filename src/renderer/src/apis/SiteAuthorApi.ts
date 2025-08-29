@@ -8,13 +8,21 @@ import { ElMessage } from 'element-plus'
 /**
  * 分页查询站点作者选择列表
  * @param page
- * @param input
+ * @param localAuthorName
  */
-export async function localAuthorQuerySelectItemPage(
+export async function localAuthorQuerySelectItemPageByName(
   page: IPage<unknown, SelectItem>,
-  input?: string
+  localAuthorName: string
 ): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localAuthorName: input }
+  page.query = { localAuthorName }
+  return localAuthorQuerySelectItemPage(page)
+}
+
+/**
+ * 分页查询站点作者选择列表
+ * @param page
+ */
+export async function localAuthorQuerySelectItemPage(page: IPage<unknown, SelectItem>): Promise<IPage<unknown, SelectItem>> {
   const response = await window.api.localAuthorQuerySelectItemPage(page)
 
   // 解析响应值

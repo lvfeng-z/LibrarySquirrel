@@ -5,7 +5,7 @@ import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
 import LocalTagDTO from '@renderer/model/main/dto/LocalTagDTO.ts'
 
 // props
@@ -96,7 +96,7 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="基础标签">
-            <auto-load-select v-model="formData.baseLocalTagId" :load="localTagQuerySelectItemPage" remote filterable clearable>
+            <auto-load-select v-model="formData.baseLocalTagId" :load="localTagQuerySelectItemPageByName" remote filterable clearable>
               <template #default="{ list }">
                 <el-option
                   v-if="NotNullish(formData.baseTag)"

@@ -9,7 +9,7 @@ import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 // props
 const props = withDefaults(
   defineProps<{
-    load: (page: IPage<unknown, SelectItem>, input?: string) => Promise<IPage<unknown, SelectItem>>
+    load: (page: IPage<unknown, SelectItem>, input: string) => Promise<IPage<unknown, SelectItem>>
     pageSize?: number
   }>(),
   {
@@ -27,8 +27,8 @@ const select = ref()
 const page: Ref<IPage<unknown, SelectItem>> = ref(new Page<unknown, SelectItem>())
 
 // 方法
-// 处理DataScroll滚动事件
-async function handleScroll(newQuery: boolean, input?: string) {
+// 查询页
+async function queryPage(newQuery: boolean, input: string) {
   // 新查询重置查询条件
   if (newQuery) {
     page.value = new Page<unknown, SelectItem>()
@@ -61,8 +61,8 @@ defineExpose({ focus })
   <el-select
     ref="select"
     v-model="data"
-    v-el-select-bottomed="() => handleScroll(false)"
-    :remote-method="(query: string) => handleScroll(true, query)"
+    v-el-select-bottomed="(input: string) => queryPage(false, input)"
+    :remote-method="(input: string) => queryPage(true, input)"
     remote
   >
     <slot name="default" :list="selectList" />

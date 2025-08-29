@@ -20,7 +20,7 @@ import { ElMessage } from 'element-plus'
 import SiteAuthorQueryDTO from '@renderer/model/main/queryDTO/SiteAuthorQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -305,7 +305,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
                 <el-col :span="6">
                   <auto-load-select
                     v-model="exchangeBoxUpperSearchParams.siteId"
-                    :load="siteQuerySelectItemPage"
+                    :load="siteQuerySelectItemPageBySiteName"
                     placeholder="选择站点"
                     remote
                     filterable
@@ -326,7 +326,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
                 <el-col :span="6">
                   <auto-load-select
                     v-model="exchangeBoxLowerSearchParams.siteId"
-                    :load="siteQuerySelectItemPage"
+                    :load="siteQuerySelectItemPageBySiteName"
                     placeholder="选择站点"
                     remote
                     filterable

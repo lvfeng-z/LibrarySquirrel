@@ -6,7 +6,7 @@ import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRelateDTO.ts'
-import { localAuthorQuerySelectItemPage } from '@renderer/apis/SiteAuthorApi.ts'
+import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/SiteAuthorApi.ts'
 
 // props
 const props = withDefaults(
@@ -90,7 +90,13 @@ async function handleSaveButtonClicked() {
       <el-row>
         <el-col>
           <el-form-item label="本地作者">
-            <auto-load-select v-model="formData.localAuthorId" :load="localAuthorQuerySelectItemPage" remote filterable clearable>
+            <auto-load-select
+              v-model="formData.localAuthorId"
+              :load="localAuthorQuerySelectItemPageByName"
+              remote
+              filterable
+              clearable
+            >
               <template #default="{ list }">
                 <el-option
                   v-if="NotNullish(formData.localAuthor)"

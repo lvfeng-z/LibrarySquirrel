@@ -19,7 +19,7 @@ import LocalTagQueryDTO from '@renderer/model/main/queryDTO/LocalTagQueryDTO.ts'
 import lodash from 'lodash'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AuthorInfo from '@renderer/components/common/AuthorInfo.vue'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { Picture } from '@element-plus/icons-vue'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
@@ -362,7 +362,7 @@ async function deleteWorks() {
               <el-col :span="6">
                 <auto-load-select
                   v-model="siteTagExchangeUpperSearchParams.siteId"
-                  :load="siteQuerySelectItemPage"
+                  :load="siteQuerySelectItemPageBySiteName"
                   placeholder="选择站点"
                   remote
                   filterable
@@ -383,7 +383,7 @@ async function deleteWorks() {
               <el-col :span="6">
                 <auto-load-select
                   v-model="siteTagExchangeLowerSearchParams.siteId"
-                  :load="siteQuerySelectItemPage"
+                  :load="siteQuerySelectItemPageBySiteName"
                   placeholder="选择站点"
                   remote
                   filterable

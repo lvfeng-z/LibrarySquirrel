@@ -16,8 +16,8 @@ import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDT
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SiteTag from '@renderer/model/main/entity/SiteTag.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { siteQuerySelectItemPage } from '@renderer/apis/SiteApi.ts'
-import { localTagQuerySelectItemPage } from '@renderer/apis/LocalTagApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
+import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
 import SiteTagFullDTO from '@renderer/model/main/dto/SiteTagFullDTO.ts'
 import LocalTag from '@renderer/model/main/entity/LocalTag.ts'
 import Site from '@renderer/model/main/entity/Site.ts'
@@ -108,7 +108,7 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: localTagQuerySelectItemPage,
+    remotePageMethod: localTagQuerySelectItemPageByName,
     getCacheData: (rowData: SiteTagFullDTO) => {
       if (IsNullish(rowData.localTag?.id)) {
         return undefined
@@ -141,7 +141,7 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     showOverflowTooltip: true,
     remote: true,
     remotePaging: true,
-    remotePageMethod: siteQuerySelectItemPage,
+    remotePageMethod: siteQuerySelectItemPageBySiteName,
     getCacheData: (rowData: SiteTagFullDTO) => {
       if (IsNullish(rowData.site?.id)) {
         return undefined
@@ -297,7 +297,7 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
               <el-col :span="4">
                 <auto-load-select
                   v-model="siteTagSearchParams.siteId"
-                  :load="siteQuerySelectItemPage"
+                  :load="siteQuerySelectItemPageBySiteName"
                   placeholder="选择站点"
                   remote
                   filterable
