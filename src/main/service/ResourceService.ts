@@ -157,6 +157,28 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
     const newFullSavePath = StringUtil.isBlank(resourceSaveDTO.fullSavePath) ? oldAbsolutePath : resourceSaveDTO.fullSavePath
 
+    // 如果保存路径发生改变，移动到新路径
+    if (oldAbsolutePath !== newFullSavePath) {
+      let fileMoved = false
+      try {
+        await this.transaction(async () => {
+          await rename(oldAbsolutePath, newFullSavePath)
+          fileMoved = true
+          // 更新资源信息
+          await this.updateById(resourceSaveDTO)
+        }, '恢复资源保存时移动原有资源文件到新路径下')
+      } catch (error) {
+        LogUtil.error(
+          this.constructor.name,
+          `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}，恢复资源保存时移动原有资源文件到新路径下失败，尝试把文件移回原位`,
+          error
+        )
+        if (fileMoved) {
+          await rename(newFullSavePath, oldAbsolutePath)
+        }
+        throw error
+      }
+    }
     try {
       // 创建保存目录
       await CreateDirIfNotExists(path.dirname(newFullSavePath))
