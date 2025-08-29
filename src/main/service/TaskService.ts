@@ -323,7 +323,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 用已经保存在数据库里的作品信息补全插件返回的作品信息
     pluginResponse.works = ObjectUtil.mergeObjects<Works>(pluginResponse.works, new Works(oldWorks), (src) => new Works(src))
     // 创建资源保存DTO
-    const temp = await this.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
+    const temp = await TaskService.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
     const resourceSaveDTO = temp.resourceSaveDTO
     // 判断是否需要更新作品数据
     if (pluginResponse.doUpdate) {
@@ -600,7 +600,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       (src) => new PluginWorksResponseDTO(src)
     )
     // 创建资源保存DTO
-    const temp = await this.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
+    const temp = await TaskService.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
     const resourceSaveDTO = temp.resourceSaveDTO
     resourceSaveDTO.id = task.pendingResourceId
     // 判断是否需要更新作品数据
@@ -1033,7 +1033,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param worksId 作品id
    * @private
    */
-  private async createResAndWorksSaveData(
+  private static async createResAndWorksSaveData(
     oldWorksFullDTO: WorksFullDTO,
     pluginResponse: PluginWorksResponseDTO,
     taskId: number,

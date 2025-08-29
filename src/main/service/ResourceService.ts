@@ -118,18 +118,14 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 创建写入Promise
-      return resourceWriter
-        .doWrite()
-        .then((saveResult) => {
-          this.resourceFinished(resourceId)
-          // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
-          return saveResult
-        })
-        .catch((error) => {
-          fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
-          throw error
-        })
+      const saveResult = await resourceWriter.doWrite()
+      if (saveResult === FileSaveResult.FINISH) {
+        await this.resourceFinished(resourceId)
+      }
+      // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
+      return saveResult
     } catch (error) {
+      fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
       LogUtil.error(this.constructor.name, msg, error)
       throw error
@@ -163,10 +159,10 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
     try {
       // 创建保存目录
-      await CreateDirIfNotExists(path.dirname(oldAbsolutePath))
+      await CreateDirIfNotExists(path.dirname(newFullSavePath))
       // 创建写入流
-      const writeable: fs.WriteStream = fs.createWriteStream(oldAbsolutePath, { flags: 'a' })
-      writeable.bytesWritten = (await fs.promises.stat(oldAbsolutePath)).size
+      const writeable: fs.WriteStream = fs.createWriteStream(newFullSavePath, { flags: 'a' })
+      writeable.bytesWritten = (await fs.promises.stat(newFullSavePath)).size
 
       // 配置resourceWriter
       resourceWriter.resourceSize = IsNullish(resourceSaveDTO.resourceSize) ? -1 : resourceSaveDTO.resourceSize
@@ -175,35 +171,18 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 创建写入Promise
-      return resourceWriter.doWrite().then(async (saveResult) => {
-        // 如果保存路径发生改变，移动到新路径
-        if (oldAbsolutePath !== resourceSaveDTO.fullSavePath) {
-          await rename(oldAbsolutePath, newFullSavePath)
-        }
-        this.resourceFinished(resourceId)
-        // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
-        return saveResult
-      })
+      const saveResult = await resourceWriter.doWrite()
+      if (saveResult === FileSaveResult.FINISH) {
+        await this.resourceFinished(resourceId)
+      }
+      // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
+      return saveResult
     } catch (error) {
+      fs.rm(newFullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
       LogUtil.error(this.constructor.name, msg, error)
       throw error
     }
-  }
-
-  /**
-   * 新增启用的资源
-   * @param resource
-   */
-  public async saveActive(resource: Resource): Promise<number> {
-    AssertNotNullish(resource.worksId, `资源设置为启用失败，worksId不能为空`)
-    resource.state = BOOL.TRUE
-    const oldRes = await this.listByWorksId(resource.worksId)
-    if (ArrayNotEmpty(oldRes)) {
-      oldRes.forEach((res) => (res.state = BOOL.FALSE))
-      await this.updateBatchById(oldRes)
-    }
-    return this.save(resource)
   }
 
   /**
@@ -277,18 +256,21 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       resourceWriter.resource = new Resource(resourceSaveDTO)
 
       // 写入资源
-      const saveResult = resourceWriter.doWrite()
       const tempResForUpdate = new Resource(resourceSaveDTO)
       tempResForUpdate.id = resourceId
-      tempResForUpdate.resourceComplete = BOOL.TRUE
-      this.updateById(tempResForUpdate)
+      tempResForUpdate.resourceComplete = BOOL.FALSE
+      await this.updateById(tempResForUpdate)
+      const saveResult = await resourceWriter.doWrite()
+      if (saveResult === FileSaveResult.FINISH) {
+        await this.resourceFinished(resourceId)
+      }
       return saveResult
     } catch (error) {
       fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const backup = await backupPromise
       let recovered = false
       if (NotNullish(backup)) {
-        await backupService.recoverToPath(backup.id as number, oldResAbsolutePath).catch((recoverError) => {
+        await backupService.recoverToPath(backup.id as number, oldResAbsolutePath, true).catch((recoverError) => {
           LogUtil.error(this.constructor.name, '恢复资源失败', recoverError)
         })
         recovered = true
@@ -299,6 +281,21 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       LogUtil.error(this.constructor.name, msg, error)
       throw error
     }
+  }
+
+  /**
+   * 新增启用的资源
+   * @param resource
+   */
+  public async saveActive(resource: Resource): Promise<number> {
+    AssertNotNullish(resource.worksId, `资源设置为启用失败，worksId不能为空`)
+    resource.state = BOOL.TRUE
+    const oldRes = await this.listByWorksId(resource.worksId)
+    if (ArrayNotEmpty(oldRes)) {
+      oldRes.forEach((res) => (res.state = BOOL.FALSE))
+      await this.updateBatchById(oldRes)
+    }
+    return this.save(resource)
   }
 
   /**
