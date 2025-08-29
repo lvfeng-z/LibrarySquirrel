@@ -311,7 +311,6 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
             </el-row>
           </template>
         </search-table>
-        <el-drawer> </el-drawer>
       </div>
     </template>
     <template #dialog>
