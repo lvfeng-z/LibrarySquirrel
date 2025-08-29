@@ -4,7 +4,6 @@ import { Ref, ref, UnwrapRef } from 'vue'
 import { MeaningOfPath } from '../../model/util/MeaningOfPath.ts'
 import lodash from 'lodash'
 import AutoLoadSelect from '../common/AutoLoadSelect.vue'
-import ApiResponse from '../../model/util/ApiResponse'
 import ApiUtil from '../../utils/ApiUtil'
 import AutoExplainPath from '../../model/main/entity/AutoExplainPath.ts'
 import { PathTypeEnum } from '../../constants/PathTypeEnum'
@@ -14,6 +13,9 @@ import AutoExplainPathQueryDTO from '../../model/main/queryDTO/AutoExplainPathQu
 import { IsNullish } from '../../utils/CommonUtil'
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
+import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/LocalAuthorApi.ts'
+import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
+import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 
 // props
 const props = defineProps<{
@@ -31,7 +33,6 @@ const state = defineModel<boolean>('state', {
 const apis = {
   autoExplainPathGetListenerPage: window.api.autoExplainPathGetListenerPage,
   autoExplainPathGetListenerList: window.api.autoExplainPathGetListenerList,
-  localAuthorQuerySelectItemPage: window.api.localAuthorQuerySelectItemPage,
   localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
   siteQuerySelectItemPage: window.api.siteQuerySelectItemPage
 }
@@ -102,27 +103,16 @@ function getInputRowType(pathType: PathTypeEnum) {
   return inputType
 }
 // 获取输入栏数据接口
-function getInputRowDataApi(pathType: PathTypeEnum): (page) => Promise<ApiResponse> {
+function getInputRowDataApi(
+  pathType: PathTypeEnum
+): (page: IPage<unknown, SelectItem>, input: string) => Promise<IPage<unknown, SelectItem>> {
   switch (pathType) {
     case PathTypeEnum.AUTHOR:
-      return apis.localAuthorQuerySelectItemPage
+      return localAuthorQuerySelectItemPageByName
     case PathTypeEnum.TAG:
-      return apis.localTagQuerySelectItemPage
+      return localTagQuerySelectItemPageByName
     case PathTypeEnum.SITE:
-      return apis.siteQuerySelectItemPage
-    default:
-      throw new Error('不支持的类型使用了getInputRowDataApi函数')
-  }
-}
-// 获取输入栏数据接口
-function getInputRowApiParamName(pathType: PathTypeEnum): string {
-  switch (pathType) {
-    case PathTypeEnum.AUTHOR:
-      return 'localAuthorName'
-    case PathTypeEnum.TAG:
-      return 'localTagName'
-    case PathTypeEnum.SITE:
-      return 'siteName'
+      return siteQuerySelectItemPageBySiteName
     default:
       throw new Error('不支持的类型使用了getInputRowDataApi函数')
   }
@@ -131,21 +121,10 @@ function getInputRowApiParamName(pathType: PathTypeEnum): string {
 async function requestApi(
   pathType: PathTypeEnum,
   page: IPage<unknown, SelectItem>,
-  input?: string
+  input: string
 ): Promise<IPage<unknown, SelectItem>> {
   const api = getInputRowDataApi(pathType)
-  const paramName = getInputRowApiParamName(pathType)
-  page.query = { [paramName]: input }
-  const response = await api(page)
-
-  // 解析响应值
-  if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
-    return IsNullish(nextPage) ? page : nextPage
-  } else {
-    ApiUtil.failedMsg(response)
-    return page
-  }
+  return api(page, input)
 }
 // 重置输入栏
 function resetInputData(meaningOfPath: MeaningOfPath) {
@@ -183,13 +162,14 @@ function getOptions(str: string, reg: string) {
                   </el-select>
                 </el-col>
                 <el-col :span="16">
-                  <el-input v-if="getInputRowType(meaningOfPath.type) === 'input'" v-model="meaningOfPath.name"></el-input>
+                  <el-input v-if="getInputRowType(meaningOfPath.type) === 'input'" v-model="meaningOfPath.name" clearable></el-input>
                   <auto-load-select
                     v-if="getInputRowType(meaningOfPath.type) === 'select'"
                     v-model="meaningOfPath.id"
                     remote
                     filterable
-                    :load="(page: IPage<unknown, SelectItem>, input?: string) => requestApi(meaningOfPath.type, page, input)"
+                    clearable
+                    :load="(page: IPage<unknown, SelectItem>, input: string) => requestApi(meaningOfPath.type, page, input)"
                   >
                     <template #default="{ list }">
                       <el-option v-for="item in list" :key="item.value" :value="item.value" :label="item.label" />
@@ -198,7 +178,8 @@ function getOptions(str: string, reg: string) {
                   <el-date-picker
                     v-if="getInputRowType(meaningOfPath.type) === 'dateTimePicker'"
                     v-model="meaningOfPath.name"
-                  ></el-date-picker>
+                    clearable
+                  />
                 </el-col>
                 <el-col :span="2">
                   <el-button icon="Remove" @click="removeInputRow(index)"></el-button>
