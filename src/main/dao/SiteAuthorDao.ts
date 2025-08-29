@@ -93,8 +93,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     }
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.fixed_author_name AS fixedAuthorName, t1.local_author_id AS localAuthorId,
-                json_object('id', t2.id, 'authorName', t2.author_name) AS localAuthor,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) END AS localAuthor,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -141,8 +141,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
     // 以json字符串的形式返回本地作者和站点信息
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.fixed_author_name AS fixedAuthorName, t1.local_author_id AS localAuthorId,
-                json_object('id', t2.id, 'authorName', t2.author_name) AS localAuthor,
-                json_object('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) END AS localAuthor,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -246,8 +246,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const selectClause = `
       SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.fixed_author_name AS fixedAuthorName,t1.site_author_name_before AS siteAuthorNameBefore,
              t1.introduce, t1.local_author_id AS localAuthorId, t1.last_use AS lastUse, t1.update_time AS updateTime, t1.create_time AS createTime,
-             JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) AS localAuthor,
-             JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site,
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) END AS localAuthor,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,
              CASE WHEN t4.id IS NOT NULL THEN TRUE ELSE FALSE END AS hasSameNameLocalAuthor`
     const fromClause = `
       FROM site_author t1

@@ -75,8 +75,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     }
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
-                JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id, 'lastUse', t2.last_use) END AS localTag,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -121,8 +121,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   public async querySelectItemPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
     // 以json字符串的形式返回本地标签和站点信息
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
-                JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id, 'lastUse', t2.last_use) END AS localTag,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -181,8 +181,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const query = lodash.cloneDeep(modifiedPage.query)
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId, t1.description, t1.local_tag_id AS localTagId,
-                JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-                JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site`
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id, 'lastUse', t2.last_use) END AS localTag,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
     const fromClause = `FROM site_tag t1
           LEFT JOIN local_tag t2 ON t1.local_tag_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -241,8 +241,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const selectClause = `
       SELECT t1.id, t1.site_id AS siteId, t1.site_tag_id AS siteTagId, t1.site_tag_name AS siteTagName, t1.base_site_tag_id AS baseSiteTagId,
              t1.description, t1.local_tag_id AS localTagId, t1.update_time AS updateTime, t1.create_time AS createTime,
-             JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id) AS localTag,
-             JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) AS site,
+             CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'localTagName', t2.local_tag_name, 'baseLocalTagId', t2.base_local_tag_id, 'lastUse', t2.last_use) END AS localTag,
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,
              CASE WHEN t4.id IS NOT NULL THEN TRUE ELSE FALSE END AS hasSameNameLocalTag`
     const fromClause = `
       FROM site_tag t1
@@ -325,8 +325,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    */
   async listDTOByWorksId(worksId: number): Promise<SiteTagFullDTO[]> {
     const statement = `SELECT t1.*,
-                              JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) AS localTag,
-                              JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) AS site
+                              CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) END AS localTag,
+                              CASE WHEN t4.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) END AS site,
                        FROM site_tag t1
                               INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
                               LEFT JOIN local_tag t3 ON t1.local_tag_id = t3.id

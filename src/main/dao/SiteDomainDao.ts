@@ -21,7 +21,7 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
     const modifiedPage = new Page(page)
     AssertNotNullish(modifiedPage.query, this.constructor.name, '查询站点域名失败，查询参数为空')
     const selectClause = `SELECT t1.*,
-          JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description) as site
+          CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description) END as site
         FROM ${this.tableName} t1
           LEFT JOIN site t2 ON t1.site_id = t2.id`
     const whereClauseAndQuery = super.getWhereClauses(modifiedPage.query, 't1', SiteDomainQueryDTO.nonFieldProperties())
