@@ -8,7 +8,7 @@ import BaseService from '../base/BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import SiteService from './SiteService.ts'
 import LocalTagService from './LocalTagService.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { AuthorRank } from '../constant/AuthorRank.ts'
@@ -33,7 +33,7 @@ import StringUtil from '../util/StringUtil.js'
 import fs from 'fs/promises'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(WorksDao, db)
   }
 
@@ -131,75 +131,74 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     const localTags = worksDTO.localTags
 
     // 开启事务
-    return this.db
-      .transaction(async (transactionDB): Promise<number> => {
-        // 保存作品
-        if (update) {
-          const worksService = new WorksService(transactionDB)
-          await worksService.updateById(worksDTO)
-        } else {
-          const worksService = new WorksService(transactionDB)
-          worksDTO.id = await worksService.save(worksDTO)
-        }
-        AssertNotNullish(worksDTO.id, '保存作品的周边信息失败，作品id不能为空')
+    return this.transaction<number>(async (transactionDB): Promise<number> => {
+      // 保存作品
+      if (update) {
+        const worksService = new WorksService(transactionDB)
+        await worksService.updateById(worksDTO)
+      } else {
+        const worksService = new WorksService(transactionDB)
+        worksDTO.id = await worksService.save(worksDTO)
+      }
+      AssertNotNullish(worksDTO.id, '保存作品的周边信息失败，作品id不能为空')
 
-        // 关联作品和作品集
-        if (ArrayNotEmpty(worksSets)) {
-          const reWorksWorksSetService = new ReWorksWorksSetService(transactionDB)
-          const worksSetIds = worksSets.map((worksSet) => worksSet.id).filter(NotNullish)
-          await reWorksWorksSetService.updateLinks(worksDTO.id, worksSetIds)
+      // 关联作品和作品集
+      if (ArrayNotEmpty(worksSets)) {
+        const reWorksWorksSetService = new ReWorksWorksSetService(transactionDB)
+        const worksSetIds = worksSets.map((worksSet) => worksSet.id).filter(NotNullish)
+        await reWorksWorksSetService.updateLinks(worksDTO.id, worksSetIds)
+      }
+      // 作者
+      if (ArrayNotEmpty(localAuthors) || ArrayNotEmpty(siteAuthors)) {
+        const reWorksAuthorService = new ReWorksAuthorService(transactionDB)
+        // 关联作品和本地作者
+        if (ArrayNotEmpty(localAuthors)) {
+          const localAuthorIds = localAuthors
+            .map((localAuthor) => {
+              if (IsNullish(localAuthor.id)) {
+                return
+              }
+              return {
+                authorId: String(localAuthor.id),
+                rank: IsNullish(localAuthor.authorRank) ? AuthorRank.RANK_0 : localAuthor.authorRank
+              }
+            })
+            .filter(NotNullish)
+          await reWorksAuthorService.updateLinks(OriginType.LOCAL, localAuthorIds, worksDTO.id)
         }
-        // 作者
-        if (ArrayNotEmpty(localAuthors) || ArrayNotEmpty(siteAuthors)) {
-          const reWorksAuthorService = new ReWorksAuthorService(transactionDB)
-          // 关联作品和本地作者
-          if (ArrayNotEmpty(localAuthors)) {
-            const localAuthorIds = localAuthors
-              .map((localAuthor) => {
-                if (IsNullish(localAuthor.id)) {
-                  return
-                }
-                return {
-                  authorId: String(localAuthor.id),
-                  rank: IsNullish(localAuthor.authorRank) ? AuthorRank.RANK_0 : localAuthor.authorRank
-                }
-              })
-              .filter(NotNullish)
-            await reWorksAuthorService.updateLinks(OriginType.LOCAL, localAuthorIds, worksDTO.id)
-          }
-          // 关联作品和站点作者
-          if (ArrayNotEmpty(siteAuthors)) {
-            const siteAuthorIds = siteAuthors
-              .map((siteAuthor) => {
-                if (IsNullish(siteAuthor.id)) {
-                  return
-                }
-                return {
-                  authorId: String(siteAuthor.id),
-                  rank: IsNullish(siteAuthor.authorRank) ? AuthorRank.RANK_0 : siteAuthor.authorRank
-                }
-              })
-              .filter(NotNullish)
-            await reWorksAuthorService.updateLinks(OriginType.SITE, siteAuthorIds, worksDTO.id)
-          }
+        // 关联作品和站点作者
+        if (ArrayNotEmpty(siteAuthors)) {
+          const siteAuthorIds = siteAuthors
+            .map((siteAuthor) => {
+              if (IsNullish(siteAuthor.id)) {
+                return
+              }
+              return {
+                authorId: String(siteAuthor.id),
+                rank: IsNullish(siteAuthor.authorRank) ? AuthorRank.RANK_0 : siteAuthor.authorRank
+              }
+            })
+            .filter(NotNullish)
+          await reWorksAuthorService.updateLinks(OriginType.SITE, siteAuthorIds, worksDTO.id)
         }
-        // 标签
-        if (ArrayNotEmpty(localTags) || ArrayNotEmpty(siteTags)) {
-          const reWorksTagService = new ReWorksTagService(transactionDB)
-          // 关联作品和本地标签
-          if (ArrayNotEmpty(localTags)) {
-            const localTagIds = localTags.map((localTag) => localTag.id).filter(NotNullish)
-            await reWorksTagService.updateLinks(OriginType.LOCAL, localTagIds, worksDTO.id)
-          }
-          // 关联作品和站点标签
-          if (ArrayNotEmpty(siteTags)) {
-            const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter(NotNullish)
-            await reWorksTagService.updateLinks(OriginType.SITE, siteTagIds, worksDTO.id)
-          }
+      }
+      // 标签
+      if (ArrayNotEmpty(localTags) || ArrayNotEmpty(siteTags)) {
+        const reWorksTagService = new ReWorksTagService(transactionDB)
+        // 关联作品和本地标签
+        if (ArrayNotEmpty(localTags)) {
+          const localTagIds = localTags.map((localTag) => localTag.id).filter(NotNullish)
+          await reWorksTagService.updateLinks(OriginType.LOCAL, localTagIds, worksDTO.id)
         }
+        // 关联作品和站点标签
+        if (ArrayNotEmpty(siteTags)) {
+          const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter(NotNullish)
+          await reWorksTagService.updateLinks(OriginType.SITE, siteTagIds, worksDTO.id)
+        }
+      }
 
-        return worksDTO.id
-      }, `保存作品信息，taskId: ${worksDTO.taskId}`)
+      return worksDTO.id
+    }, `保存作品信息，taskId: ${worksDTO.taskId}`)
       .catch((error) => {
         LogUtil.error(this.constructor.name, '保存作品失败')
         throw error
@@ -281,7 +280,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   public async updateWithResById(worksFullDTO: WorksFullDTO): Promise<number> {
-    return this.db.transaction(async (transactionDB) => {
+    return this.transaction<number>(async (transactionDB) => {
       const resService = new ResourceService(transactionDB)
       if (NotNullish(worksFullDTO.resource)) {
         await resService.updateById(worksFullDTO.resource)
@@ -295,7 +294,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksId
    */
   public async deleteWorksAndSurroundingData(worksId: number): Promise<boolean> {
-    return this.db.transaction(async (transactionDB) => {
+    return this.transaction<boolean>(async (transactionDB) => {
       const resService = new ResourceService(transactionDB)
       const resList = await resService.listByWorksId(worksId)
       await this.deleteById(worksId)

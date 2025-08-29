@@ -1,11 +1,11 @@
 import BaseDao from '../base/BaseDao.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import PluginQueryDTO from '../model/queryDTO/PluginQueryDTO.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish } from '../util/CommonUtil.js'
 
 export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('plugin', Plugin, db, injectedDB)
   }
 

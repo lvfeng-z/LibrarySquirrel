@@ -1,7 +1,7 @@
 import BaseService from '../base/BaseService.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
 import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import WorksSetDao from '../dao/WorksSetDao.ts'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { NotNullish } from '../util/CommonUtil.js'
@@ -10,7 +10,7 @@ import { NotNullish } from '../util/CommonUtil.js'
  * 作品集Service
  */
 export default class WorksSetService extends BaseService<WorksSetQueryDTO, WorksSet, WorksSetDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(WorksSetDao, db)
   }
 

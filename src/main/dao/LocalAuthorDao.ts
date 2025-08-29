@@ -1,14 +1,14 @@
 import BaseDao from '../base/BaseDao.ts'
 import LocalAuthor from '../model/entity/LocalAuthor.ts'
 import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import LocalAuthorRankDTO from '../model/dto/LocalAuthorRankDTO.ts'
 
 /**
  * 本地作者Dao
  */
 export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAuthor> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('local_author', LocalAuthor, db, injectedDB)
   }
 

@@ -1,14 +1,14 @@
 import BaseDao from '../base/BaseDao.ts'
 import ReWorksAuthorQueryDTO from '../model/queryDTO/ReWorksAuthorQueryDTO.ts'
 import ReWorksAuthor from '../model/entity/ReWorksAuthor.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
 
 /**
  * 作品与作者关联Dao
  */
 export default class ReWorksAuthorDao extends BaseDao<ReWorksAuthorQueryDTO, ReWorksAuthor> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('re_works_author', ReWorksAuthor, db, injectedDB)
   }
 

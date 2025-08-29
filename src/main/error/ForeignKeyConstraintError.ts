@@ -1,6 +1,6 @@
-import DatabaseError from './DatabaseError.js'
+import DatabaseSqlError from './DatabaseSqlError.js'
 
-export default class ForeignKeyConstraintError extends DatabaseError {
+export default class ForeignKeyConstraintError extends DatabaseSqlError {
   public readonly tableName?: string
   public readonly constraintName?: string
   public readonly referencedTable?: string
@@ -8,8 +8,8 @@ export default class ForeignKeyConstraintError extends DatabaseError {
   public readonly violatingValue?: string
 
   constructor(
-    message: string = 'FOREIGN KEY constraint failed',
     code: string = 'SQLITE_CONSTRAINT_FOREIGN_KEY',
+    message: string = 'FOREIGN KEY constraint failed',
     originalError?: Error,
     sql?: string,
     params?: unknown,
@@ -19,7 +19,7 @@ export default class ForeignKeyConstraintError extends DatabaseError {
     referencedColumn?: string,
     violatingValue?: string
   ) {
-    super(message, code, originalError, sql, params)
+    super(code, message, originalError, sql, params)
     this.name = 'ForeignKeyConstraintError'
     this.tableName = tableName
     this.constraintName = constraintName

@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.ts'
 import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '../model/util/Page.ts'
 import lodash from 'lodash'
 import StringUtil from '../util/StringUtil.ts'
@@ -12,7 +12,7 @@ import { IsNullish } from '../util/CommonUtil.js'
  * 自动解释路径含义Dao
  */
 export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO, AutoExplainPath> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('auto_explain_path', AutoExplainPath, db, injectedDB)
   }
 

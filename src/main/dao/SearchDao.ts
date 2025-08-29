@@ -1,6 +1,6 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import BaseEntity from '../base/BaseEntity.js'
-import DB from '../database/DB.js'
+import DatabaseClient from '../database/DatabaseClient.js'
 import CoreDao from '../base/CoreDao.js'
 import Page from '../model/util/Page.js'
 import SearchConditionQueryDTO from '../model/queryDTO/SearchConditionQueryDTO.js'
@@ -16,7 +16,7 @@ import Site from '../model/entity/Site.js'
  * 作品查询Dao
  */
 export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super(db, injectedDB)
   }
 

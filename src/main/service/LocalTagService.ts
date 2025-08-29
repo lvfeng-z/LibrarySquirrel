@@ -9,13 +9,13 @@ import BaseService from '../base/BaseService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertTrue } from '../util/AssertUtil.js'
 import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(LocalTagDao, db)
   }
 

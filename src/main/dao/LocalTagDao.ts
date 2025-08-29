@@ -3,7 +3,7 @@ import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '../model/util/Page.js'
 import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
@@ -11,7 +11,7 @@ import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('local_tag', LocalTag, db, injectedDB)
   }
 

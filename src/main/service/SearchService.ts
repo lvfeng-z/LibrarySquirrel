@@ -17,17 +17,17 @@ import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
 import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
-import DB from '../database/DB.js'
+import DatabaseClient from '../database/DatabaseClient.js'
 
 /**
  * 作品查询服务类
  */
 export default class SearchService {
   /**
-   * 封装数据库链接实例
+   * 数据库客户端
    * @private
    */
-  protected db: DB
+  protected db: DatabaseClient
 
   /**
    * Dao
@@ -36,14 +36,14 @@ export default class SearchService {
   private dao: SearchDao
 
   /**
-   * 是否为注入的链接实例
+   * 是否为注入的数据库客户端
    * @private
    */
   protected readonly injectedDB: boolean
 
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     if (IsNullish(db)) {
-      this.db = new DB(this.constructor.name)
+      this.db = new DatabaseClient(this.constructor.name)
       this.injectedDB = false
     } else {
       this.db = db

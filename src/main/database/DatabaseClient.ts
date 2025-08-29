@@ -6,9 +6,9 @@ import { GVar, GVarEnum } from '../base/GVar.ts'
 import { Connection, RequestWeight } from './ConnectionPool.ts'
 
 /**
- * 数据库链接池封装
+ * 数据库客户端
  */
-export default class DB {
+export default class DatabaseClient {
   /**
    * 数据库链接
    * @private
@@ -238,7 +238,7 @@ export default class DB {
    * @param fn 事务代码
    * @param operation 操作说明
    */
-  public async transaction<F extends (db?: DB) => Promise<R>, R>(fn: F, operation: string): Promise<R> {
+  public async transaction<R>(fn: (db?: DatabaseClient) => Promise<R>, operation: string): Promise<R> {
     const connection = await this.acquire(false)
     // 记录是否为事务最外层保存点
     const isStartPoint = this.savepointCounter === 0

@@ -2,13 +2,13 @@ import BaseQueryDTO from './BaseQueryDTO.ts'
 import BaseEntity from './BaseEntity.ts'
 import Page from '../model/util/Page.ts'
 import BaseDao from './BaseDao.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish } from '../util/CommonUtil.ts'
 import { AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
 import SelectItem from '../model/util/SelectItem.js'
 
 /**
- * 基础Service类
+ * Service基类
  */
 export default abstract class BaseService<Query extends BaseQueryDTO, Model extends BaseEntity, Dao extends BaseDao<Query, Model>> {
   /**
@@ -17,20 +17,20 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   protected dao: Dao
 
   /**
-   * 封装数据库链接实例
+   * 数据库客户端
    * @private
    */
-  protected db: DB
+  protected db: DatabaseClient
 
   /**
-   * 是否为注入的链接实例
+   * 是否为注入的数据库客户端
    * @private
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(dao: new (db: DB, injectedDB: boolean) => Dao, db?: DB) {
+  protected constructor(dao: new (db: DatabaseClient, injectedDB: boolean) => Dao, db?: DatabaseClient) {
     if (IsNullish(db)) {
-      this.db = new DB(this.constructor.name)
+      this.db = new DatabaseClient(this.constructor.name)
       this.injectedDB = false
     } else {
       this.db = db
@@ -162,5 +162,11 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
     secondaryLabelName?: string
   ): Promise<Page<Query, SelectItem>> {
     return this.dao.querySelectItemPage(page, valueName, labelName, secondaryLabelName)
+  }
+
+  protected async transaction<R>(func: (db?: DatabaseClient) => Promise<R>, operation: string): Promise<R> {
+    return this.db.transaction<R>(func, operation).finally(() => {
+      if (!this.injectedDB) this.db.release()
+    })
   }
 }

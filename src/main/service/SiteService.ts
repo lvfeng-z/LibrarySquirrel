@@ -4,14 +4,14 @@ import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseService from '../base/BaseService.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SiteFullDTO from '../model/dto/SiteFullDTO.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(SiteDao, db)
   }
 

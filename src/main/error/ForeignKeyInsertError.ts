@@ -13,8 +13,8 @@ export default class ForeignKeyInsertError extends ForeignKeyConstraintError {
     violatingValue?: string
   ) {
     super(
-      message,
       'SQLITE_CONSTRAINT_FOREIGN_KEY_INSERT',
+      message,
       originalError,
       sql,
       params,

@@ -6,7 +6,7 @@ import SelectItem from '../model/util/SelectItem.ts'
 import StringUtil from '../util/StringUtil.ts'
 import Page from '../model/util/Page.ts'
 import BaseService from '../base/BaseService.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
@@ -22,7 +22,7 @@ import LocalTagService from './LocalTagService.js'
  * 站点标签Service
  */
 export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag, SiteTagDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(SiteTagDao, db)
   }
 

@@ -5,7 +5,7 @@ import { CreateDirIfNotExists } from '../util/FileSysUtil.ts'
 import Database from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-import DB from './DB.ts'
+import DatabaseClient from './DatabaseClient.ts'
 import { GVar, GVarEnum } from '../base/GVar.ts'
 import tableYml from '../resources/database/createDataTables.yml?asset'
 
@@ -42,7 +42,7 @@ export async function InitializeDB() {
     // 对于当前数据库中不存在的数据表，进行创建
     const processList: Promise<unknown>[] = []
     if (tableNameSqlStatements.tables.length > 0) {
-      const db = new DB('InitializeDatabase')
+      const db = new DatabaseClient('InitializeDatabase')
       try {
         for (const tableNameSql of tableNameSqlStatements.tables) {
           if (!currentTables.includes(tableNameSql.name)) {

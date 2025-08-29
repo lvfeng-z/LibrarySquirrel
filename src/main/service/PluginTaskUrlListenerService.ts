@@ -2,7 +2,7 @@ import PluginTaskUrlListener from '../model/entity/PluginTaskUrlListener.ts'
 import PluginTaskUrlListenerDao from '../dao/PluginTaskUrlListenerDao.ts'
 import BaseService from '../base/BaseService.ts'
 import PluginTaskUrlListenerQueryDTO from '../model/queryDTO/PluginTaskUrlListenerQueryDTO.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import Plugin from '../model/entity/Plugin.js'
 
 /**
@@ -13,7 +13,7 @@ export default class PluginTaskUrlListenerService extends BaseService<
   PluginTaskUrlListener,
   PluginTaskUrlListenerDao
 > {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(PluginTaskUrlListenerDao, db)
   }
 

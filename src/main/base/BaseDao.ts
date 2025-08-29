@@ -1,5 +1,5 @@
 import StringUtil from '../util/StringUtil.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import BaseEntity, { Id } from './BaseEntity.ts'
 import BaseQueryDTO from './BaseQueryDTO.ts'
 import ObjectUtil from '../util/ObjectUtil.ts'
@@ -16,7 +16,7 @@ import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
 type PrimaryKey = string | number
 
 /**
- * 抽象Dao基类，实现基本的CRUD方法
+ * Dao基类
  */
 export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends BaseEntity> extends CoreDao<Query, Model> {
   /**
@@ -31,7 +31,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected entityConstr: new (src?: Model) => Model
 
-  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model, db: DB, injectedDB: boolean) {
+  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model, db: DatabaseClient, injectedDB: boolean) {
     super(db, injectedDB)
     this.entityConstr = entityConstr
     this.tableName = tableName

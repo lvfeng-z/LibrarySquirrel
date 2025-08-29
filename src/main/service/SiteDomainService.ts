@@ -2,7 +2,7 @@ import BaseService from '../base/BaseService.js'
 import SiteDomainQueryDTO from '../model/queryDTO/SiteDomainQueryDTO.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import SiteDomainDao from '../dao/SiteDomainDao.js'
-import DB from '../database/DB.js'
+import DatabaseClient from '../database/DatabaseClient.js'
 import { Operator } from '../constant/CrudConstant.js'
 import Page from '../model/util/Page.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
@@ -11,7 +11,7 @@ import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
 import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, SiteDomain, SiteDomainDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(SiteDomainDao, db)
   }
 

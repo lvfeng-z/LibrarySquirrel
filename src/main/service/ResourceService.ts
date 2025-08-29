@@ -2,7 +2,7 @@ import BaseService from '../base/BaseService.js'
 import ResourceQueryDTO from '../model/queryDTO/ResourceQueryDTO.js'
 import Resource from '../model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
-import DB from '../database/DB.js'
+import DatabaseClient from '../database/DatabaseClient.js'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import { BOOL } from '../constant/BOOL.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
@@ -30,7 +30,7 @@ import { SendNotifyToWindow } from '../util/MainWindowUtil.js'
  * 资源服务
  */
 export default class ResourceService extends BaseService<ResourceQueryDTO, Resource, ResourceDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(ResourceDao, db)
   }
 

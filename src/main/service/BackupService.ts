@@ -2,7 +2,7 @@ import BaseService from '../base/BaseService.js'
 import BackupQueryDTO from '../model/queryDTO/BackupQueryDTO.js'
 import Backup from '../model/entity/Backup.js'
 import BackupDao from '../dao/BackupDao.js'
-import DB from '../database/DB.js'
+import DatabaseClient from '../database/DatabaseClient.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import fs from 'fs/promises'
 import LogUtil from '../util/LogUtil.js'
@@ -14,7 +14,7 @@ import { cp } from 'node:fs/promises'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(BackupDao, db)
   }
 
@@ -66,7 +66,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       }
     }
 
-    return this.db.transaction(async () => {
+    return this.transaction<Backup>(async () => {
       const backup = new Backup()
       backup.sourceType = sourceType
       backup.sourceId = sourceId

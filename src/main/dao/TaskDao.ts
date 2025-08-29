@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import Task from '../model/entity/Task.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '../model/util/Page.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
@@ -11,7 +11,7 @@ import { BuildTree } from '../util/TreeUtil.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('task', Task, db, injectedDB)
   }
 

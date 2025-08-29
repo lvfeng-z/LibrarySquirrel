@@ -1,16 +1,12 @@
 export default class DatabaseError extends Error {
   public readonly code: string
   public readonly originalError?: Error
-  public readonly sql?: string
-  public readonly params?: unknown
 
-  constructor(message: string, code: string = 'DATABASE_ERROR', originalError?: Error, sql?: string, params?: unknown) {
+  constructor(code: string = 'DATABASE_ERROR', message: string, originalError?: Error) {
     super(message)
     this.name = 'DatabaseError'
     this.code = code
     this.originalError = originalError
-    this.sql = sql
-    this.params = params
 
     // 保持正确的堆栈跟踪
     if (Error.captureStackTrace) {

@@ -2,7 +2,7 @@ import BaseService from '../base/BaseService.ts'
 import ReWorksTag from '../model/entity/ReWorksTag.ts'
 import { ReWorksTagQueryDTO } from '../model/queryDTO/ReWorksTagQueryDTO.ts'
 import { ReWorksTagDao } from '../dao/ReWorksTagDao.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
@@ -11,7 +11,7 @@ import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
  * 作品与标签关联Service
  */
 export class ReWorksTagService extends BaseService<ReWorksTagQueryDTO, ReWorksTag, ReWorksTagDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(ReWorksTagDao, db)
   }
 

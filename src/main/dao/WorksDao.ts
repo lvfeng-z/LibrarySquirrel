@@ -5,7 +5,7 @@ import Works from '../model/entity/Works.ts'
 import Page from '../model/util/Page.ts'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import lodash from 'lodash'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import StringUtil from '../util/StringUtil.js'
@@ -15,7 +15,7 @@ import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import { BOOL } from '../constant/BOOL.js'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('works', Works, db, injectedDB)
   }
 

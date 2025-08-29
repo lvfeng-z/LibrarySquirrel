@@ -10,7 +10,7 @@ import WorksService from './WorksService.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import { Readable } from 'node:stream'
 import BaseService from '../base/BaseService.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import lodash from 'lodash'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
@@ -46,7 +46,7 @@ import ResourcePluginDTO from '../model/dto/ResourcePluginDTO.js'
 import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(TaskDao, db)
   }
 
@@ -102,10 +102,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const pluginResponse = await taskHandler.create(url)
 
         // 分别处理数组类型和流类型的响应值
-        const pluginProcessResult = await this.db.transaction<
-          () => Promise<TaskCreateResponse | undefined>,
-          TaskCreateResponse | undefined
-        >(async () => {
+        const pluginProcessResult = await this.transaction<TaskCreateResponse | undefined>(async () => {
           if (pluginResponse instanceof Readable) {
             const addedQuantity = await this.handleCreateTaskStream(pluginResponse, taskPlugin, 100)
             return new TaskCreateResponse({

@@ -1,4 +1,4 @@
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import Database from 'better-sqlite3'
 import { DataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
@@ -12,7 +12,7 @@ import GotoPageConfig from '../model/util/GotoPageConfig.js'
 import { PageEnum } from '../constant/PageEnum.js'
 
 async function insertLocalTag10W() {
-  const db = new DB('insertLocalTag10W')
+  const db = new DatabaseClient('insertLocalTag10W')
   try {
     console.log('循环开始')
     for (let i = 0; i < 300000; i++) {

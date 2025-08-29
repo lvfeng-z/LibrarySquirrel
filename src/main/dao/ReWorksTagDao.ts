@@ -1,14 +1,14 @@
 import BaseDao from '../base/BaseDao.ts'
 import { ReWorksTagQueryDTO } from '../model/queryDTO/ReWorksTagQueryDTO.ts'
 import ReWorksTag from '../model/entity/ReWorksTag.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
 
 /**
  * 作品与标签关联Dao
  */
 export class ReWorksTagDao extends BaseDao<ReWorksTagQueryDTO, ReWorksTag> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('re_works_tag', ReWorksTag, db, injectedDB)
   }
 

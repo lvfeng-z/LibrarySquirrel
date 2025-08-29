@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthor from '../model/entity/SiteAuthor.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
@@ -18,7 +18,7 @@ import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
  * 站点作者Dao
  */
 export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAuthor> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('site_author', SiteAuthor, db, injectedDB)
   }
 

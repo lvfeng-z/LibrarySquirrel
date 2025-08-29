@@ -6,7 +6,7 @@ import SelectItem from '../model/util/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import Page from '../model/util/Page.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import LocalAuthorRankDTO from '../model/dto/LocalAuthorRankDTO.ts'
 import { NotNullish } from '../util/CommonUtil.ts'
 
@@ -14,7 +14,7 @@ import { NotNullish } from '../util/CommonUtil.ts'
  * 本地作者Service
  */
 export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor, LocalAuthorDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(LocalAuthorDao, db)
   }
 

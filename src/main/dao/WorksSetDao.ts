@@ -1,13 +1,13 @@
 import BaseDao from '../base/BaseDao.ts'
 import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import WorksSet from '../model/entity/WorksSet.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { NotNullish } from '../util/CommonUtil.ts'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('works_set', WorksSet, db, injectedDB)
   }
 

@@ -6,7 +6,7 @@ import StringUtil from '../util/StringUtil.ts'
 import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
@@ -16,7 +16,7 @@ import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
 
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('site_tag', SiteTag, db, injectedDB)
   }
 

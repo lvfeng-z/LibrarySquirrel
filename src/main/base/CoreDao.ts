@@ -5,23 +5,24 @@ import BaseQueryDTO from './BaseQueryDTO.js'
 import Page from '../model/util/Page.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import { QuerySortOption } from '../constant/QuerySortOption.js'
-import DB from '../database/DB.js'
+import DatabaseClient from '../database/DatabaseClient.js'
 import BaseEntity from './BaseEntity.js'
 import LogUtil from '../util/LogUtil.js'
+import DatabaseClientNotFoundError from '../error/DatabaseClientNotFoundError.js'
 
 export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
   /**
-   * 封装数据库链接实例
+   * 数据库客户端
    * @private
    */
-  protected db: DB | undefined
+  protected db: DatabaseClient | undefined
   /**
-   * 是否为注入的链接实例
+   * 是否为注入的数据库客户端
    * @private
    */
   protected readonly injectedDB: boolean
 
-  protected constructor(db: DB, injectedDB: boolean) {
+  protected constructor(db: DatabaseClient, injectedDB: boolean) {
     this.db = db
     this.injectedDB = injectedDB
   }
@@ -294,8 +295,8 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
   }
 
   protected acquire() {
-    if (this.db === undefined) {
-      this.db = new DB(this.constructor.name)
+    if (IsNullish(this.db)) {
+      throw new DatabaseClientNotFoundError()
     }
     return this.db
   }
@@ -315,5 +316,12 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     }
     tempStatement = await this.pager(tempStatement, page)
     return tempStatement
+  }
+
+  protected async transaction<R>(func: (db?: DatabaseClient) => Promise<R>, operation: string) {
+    const db = this.acquire()
+    return db.transaction<R>(func, operation).finally(() => {
+      if (!this.injectedDB) db.release()
+    })
   }
 }

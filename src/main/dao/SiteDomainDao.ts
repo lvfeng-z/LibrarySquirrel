@@ -1,5 +1,5 @@
 import BaseDao from '../base/BaseDao.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import SiteDomainQueryDTO from '../model/queryDTO/SiteDomainQueryDTO.js'
 import Page from '../model/util/Page.js'
@@ -9,7 +9,7 @@ import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
 import { ArrayNotEmpty } from '../util/CommonUtil.js'
 
 export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomain> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('site_domain', SiteDomain, db, injectedDB)
   }
 

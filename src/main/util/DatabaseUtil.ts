@@ -1,13 +1,13 @@
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import path from 'path'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { RootDir } from './FileSysUtil.ts'
 
 /**
  * 查询数据库所有数据表的名称
  */
 export async function ListAllDataTables(): Promise<string[]> {
-  const db = new DB('DatabaseUtil')
+  const db = new DatabaseClient('DatabaseUtil')
   try {
     const statement = "SELECT name FROM sqlite_master WHERE name != 'sqlite_sequence'"
 

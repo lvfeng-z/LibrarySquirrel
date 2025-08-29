@@ -5,7 +5,7 @@ import SiteAuthorDao from '../dao/SiteAuthorDao.ts'
 import StringUtil from '../util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import Page from '../model/util/Page.ts'
 import SelectItem from '../model/util/SelectItem.ts'
@@ -23,7 +23,7 @@ import LocalAuthor from '../model/entity/LocalAuthor.js'
  * 站点作者Service
  */
 export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor, SiteAuthorDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(SiteAuthorDao, db)
   }
 

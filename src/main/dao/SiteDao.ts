@@ -1,14 +1,14 @@
 import Site from '../model/entity/Site.ts'
 import SiteQueryDTO from '../model/queryDTO/SiteQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteFullDTO from '../model/dto/SiteFullDTO.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
 import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {
-  constructor(db: DB, injectedDB: boolean) {
+  constructor(db: DatabaseClient, injectedDB: boolean) {
     super('site', Site, db, injectedDB)
   }
 

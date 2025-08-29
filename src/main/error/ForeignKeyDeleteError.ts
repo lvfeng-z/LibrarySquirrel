@@ -13,8 +13,8 @@ export default class ForeignKeyDeleteError extends ForeignKeyConstraintError {
     violatingValue?: string
   ) {
     super(
-      message,
       'SQLITE_CONSTRAINT_FOREIGN_KEY_DELETE',
+      message,
       originalError,
       sql,
       params,

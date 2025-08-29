@@ -2,13 +2,13 @@ import BaseService from '../base/BaseService.ts'
 import ReWorksWorksSetQueryDTO from '../model/queryDTO/ReWorksWorksSetQueryDTO.ts'
 import ReWorksWorksSet from '../model/entity/ReWorksWorksSet.ts'
 import ReWorksWorksSetDao from '../dao/ReWorksWorksSetDao.ts'
-import DB from '../database/DB.ts'
+import DatabaseClient from '../database/DatabaseClient.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import Works from '../model/entity/Works.js'
 
 export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQueryDTO, ReWorksWorksSet, ReWorksWorksSetDao> {
-  constructor(db?: DB) {
+  constructor(db?: DatabaseClient) {
     super(ReWorksWorksSetDao, db)
   }
 
