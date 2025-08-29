@@ -6,7 +6,7 @@ import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import SiteAuthorLocalRelateDTO from '@renderer/model/main/dto/SiteAuthorLocalRelateDTO.ts'
-import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/SiteAuthorApi.ts'
+import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/LocalAuthorApi.ts'
 
 // props
 const props = withDefaults(

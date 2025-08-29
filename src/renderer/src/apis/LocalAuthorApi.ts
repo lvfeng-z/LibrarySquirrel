@@ -8,13 +8,13 @@ import { ElMessage } from 'element-plus'
 /**
  * 分页查询站点作者选择列表
  * @param page
- * @param localAuthorName
+ * @param authorName
  */
 export async function localAuthorQuerySelectItemPageByName(
   page: IPage<unknown, SelectItem>,
-  localAuthorName: string
+  authorName: string
 ): Promise<IPage<unknown, SelectItem>> {
-  page.query = { localAuthorName }
+  page.query = { authorName }
   return localAuthorQuerySelectItemPage(page)
 }
 
