@@ -329,17 +329,17 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 重新安装插件
    */
-  public async reInstall(pluginId: number) {
+  public async reinstall(pluginId: number) {
     const plugin = await this.getById(pluginId)
     AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
     AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，插件安装包路径不可用，pluginId: ${pluginId}`)
-    return this.reInstallFromPath(pluginId, plugin.packagePath)
+    return this.reinstallFromPath(pluginId, plugin.packagePath)
   }
 
   /**
    * 重新安装插件
    */
-  public async reInstallFromPath(pluginId: number, packagePath: string) {
+  public async reinstallFromPath(pluginId: number, packagePath: string) {
     AssertNotBlank(
       packagePath,
       this.constructor.name,
@@ -363,7 +363,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       }, '重新安装插件')
     } catch (error) {
       if (NotNullish(backup)) {
-        await backupService.recoverToPath(backup.id as number, pluginPath).catch((recoverError) => {
+        await backupService.recoverToPath(backup.id as number, pluginPath, true).catch((recoverError) => {
           LogUtil.error(this.constructor.name, '恢复插件失败', recoverError)
         })
       }

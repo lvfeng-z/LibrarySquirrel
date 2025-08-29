@@ -46,8 +46,8 @@ const api = {
   // Plugin
   pluginQueryPage: (args) => Electron.ipcRenderer.invoke('plugin-queryPage', args),
   pluginInstallFromPath: (args) => Electron.ipcRenderer.invoke('plugin-installFromPath', args),
-  pluginReInstall: (args) => Electron.ipcRenderer.invoke('plugin-reInstall', args),
-  pluginReInstallFromPath: (arg1, arg2) => Electron.ipcRenderer.invoke('plugin-reInstallFromPath', arg1, arg2),
+  pluginReinstall: (args) => Electron.ipcRenderer.invoke('plugin-reinstall', args),
+  pluginReinstallFromPath: (arg1, arg2) => Electron.ipcRenderer.invoke('plugin-reinstallFromPath', arg1, arg2),
   pluginUnInstall: (args) => Electron.ipcRenderer.invoke('plugin-unInstall', args),
   pluginListPluginListenerDTO: (args) => Electron.ipcRenderer.invoke('plugin-listPluginListenerDTO', args),
 

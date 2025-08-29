@@ -295,20 +295,20 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('plugin-reInstall', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-reInstall')
+  Electron.ipcMain.handle('plugin-reinstall', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'plugin-reinstall')
     const pluginService = new PluginService()
     try {
-      return ApiUtil.response(await pluginService.reInstall(args))
+      return ApiUtil.response(await pluginService.reinstall(args))
     } catch (error) {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('plugin-reInstallFromPath', async (_event, arg1, arg2) => {
-    LogUtil.info('MainProcessApi', 'plugin-reInstallFromPath')
+  Electron.ipcMain.handle('plugin-reinstallFromPath', async (_event, arg1, arg2) => {
+    LogUtil.info('MainProcessApi', 'plugin-reinstallFromPath')
     const pluginService = new PluginService()
     try {
-      return ApiUtil.response(await pluginService.reInstallFromPath(arg1, arg2), '安装成功')
+      return ApiUtil.response(await pluginService.reinstallFromPath(arg1, arg2), '安装成功')
     } catch (error) {
       return returnError(error)
     }

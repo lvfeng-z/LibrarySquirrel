@@ -33,8 +33,8 @@ const apis = {
   dirSelect: window.api.dirSelect,
   pluginQueryPage: window.api.pluginQueryPage,
   pluginInstallFromPath: window.api.pluginInstallFromPath,
-  pluginReInstall: window.api.pluginReInstall,
-  pluginReInstallFromPath: window.api.pluginReInstallFromPath,
+  pluginReinstall: window.api.pluginReinstall,
+  pluginReinstallFromPath: window.api.pluginReinstallFromPath,
   pluginUnInstall: window.api.pluginUnInstall
 }
 // 插件数据表组件的实例
@@ -161,7 +161,7 @@ async function beforeReInstall(pluginId: number) {
 }
 // 重新安装
 async function reInstall(pluginId: number) {
-  const response = await apis.pluginReInstall(pluginId)
+  const response = await apis.pluginReinstall(pluginId)
   pluginSearchTable.value.doSearch()
   if (ApiUtil.check(response)) {
     ElMessage({
@@ -218,7 +218,7 @@ async function installFromPath(packagePath: string) {
 }
 // 通过安装包路径重新安装插件
 async function reInstallFromPath(pluginId: number, packagePath: string) {
-  const result = await apis.pluginReInstallFromPath(pluginId, packagePath)
+  const result = await apis.pluginReinstallFromPath(pluginId, packagePath)
   pluginSearchTable.value.doSearch()
   ApiUtil.msg(result)
 }

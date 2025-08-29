@@ -51,8 +51,8 @@ declare global {
       // Plugin
       pluginQueryPage: function
       pluginInstallFromPath: function
-      pluginReInstall: function
-      pluginReInstallFromPath: function
+      pluginReinstall: function
+      pluginReinstallFromPath: function
       pluginUnInstall: function
       pluginListPluginListenerDTO: function
 

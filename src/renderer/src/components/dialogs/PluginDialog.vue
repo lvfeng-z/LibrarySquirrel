@@ -26,14 +26,14 @@ const state = defineModel<boolean>('state', { required: true })
 // 变量
 // 接口
 const apis = {
-  pluginReInstall: window.api.pluginReInstall,
+  pluginReinstall: window.api.pluginReinstall,
   pluginUnInstall: window.api.pluginUnInstall
 }
 
 // 方法
 // 重新安装
 async function reInstall(pluginId: number | undefined | null) {
-  const response = await apis.pluginReInstall(pluginId)
+  const response = await apis.pluginReinstall(pluginId)
   if (ApiUtil.check(response)) {
     ElMessage({
       type: 'success',

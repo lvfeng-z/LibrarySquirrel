@@ -84,8 +84,9 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
    * 备份恢复到指定目录
    * @param backUpId 备份id
    * @param targetPath 目录（包含文件名）
+   * @param deleteAfterFinish 恢复完成后删除备份
    */
-  public async recoverToPath(backUpId: number, targetPath: string): Promise<void> {
+  public async recoverToPath(backUpId: number, targetPath: string, deleteAfterFinish: boolean = false): Promise<void> {
     const targetDirname = path.dirname(targetPath)
     AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的路径为空`)
     const backup = await this.getById(backUpId)
@@ -95,12 +96,41 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     try {
       await fs.access(absoluteBackupPath)
     } catch (error) {
-      LogUtil.error(this.constructor.name, '创建备份失败，找不到备份文件', error)
+      LogUtil.error(this.constructor.name, '恢复备份失败，找不到备份文件', error)
       throw error
     }
-    return fs.cp(absoluteBackupPath, targetPath, { recursive: true }).catch((error) => {
-      LogUtil.error(this.constructor.name, `恢复备份到${targetPath}失败，error: `, error)
+    return fs
+      .cp(absoluteBackupPath, targetPath, { recursive: true })
+      .then((result) => {
+        if (deleteAfterFinish) {
+          this.deleteBackupByIdAndPath(backUpId, absoluteBackupPath).catch()
+        }
+        return result
+      })
+      .catch((error) => {
+        LogUtil.error(this.constructor.name, `恢复备份到${targetPath}失败，error: `, error)
+        throw error
+      })
+  }
+
+  public async deleteBackup(backUpId: number): Promise<number> {
+    const backup = await this.getById(backUpId)
+    AssertNotNullish(backup, this.constructor.name, `删除备份失败，备份id不可用，backupId: ${backUpId}`)
+    const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
+    const absoluteBackupPath = path.join(workdir, backup.filePath as string)
+    try {
+      await fs.access(absoluteBackupPath)
+    } catch (error) {
+      LogUtil.error(this.constructor.name, '删除备份失败，找不到备份文件', error)
       throw error
-    })
+    }
+    return this.deleteBackupByIdAndPath(backUpId, absoluteBackupPath)
+  }
+
+  private async deleteBackupByIdAndPath(backUpId: number, absoluteBackupPath: string): Promise<number> {
+    return this.transaction<number>(async () => {
+      await fs.rm(absoluteBackupPath, { recursive: true })
+      return this.deleteById(backUpId)
+    }, '删除备份')
   }
 }
