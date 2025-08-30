@@ -94,7 +94,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.fixed_author_name AS fixedAuthorName, t1.local_author_id AS localAuthorId,
              CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) END AS localAuthor,
-             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
@@ -142,7 +142,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     // 以json字符串的形式返回本地作者和站点信息
     const selectClause = `SELECT t1.id, t1.site_id AS siteId, t1.site_author_id AS siteAuthorId, t1.author_name AS authorName, t1.fixed_author_name AS fixedAuthorName, t1.local_author_id AS localAuthorId,
              CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'authorName', t2.author_name, 'lastUse', t2.last_use) END AS localAuthor,
-             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site,`
+             CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'siteName', t3.site_name, 'siteDescription', t3.site_description) END AS site`
     const fromClause = `FROM site_author t1
           LEFT JOIN local_author t2 ON t1.local_author_id = t2.id
           LEFT JOIN site t3 ON t1.site_id = t3.id`
