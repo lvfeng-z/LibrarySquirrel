@@ -112,7 +112,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const pluginList = await this.list(pluginQueryDTO)
     const pluginIds = pluginList.map((plugin) => plugin.id as number)
     const pluginTaskUrlService = new PluginTaskUrlListenerService()
-    const pluginTaskUrlList = await pluginTaskUrlService.listByIds(pluginIds)
+    const pluginTaskUrlList = await pluginTaskUrlService.listByPluginIds(pluginIds)
     const pluginIdListenerListMap = lodash.groupBy(pluginTaskUrlList, (pluginTaskUrl) => pluginTaskUrl.pluginId)
     return pluginList.map((plugin) => {
       const temp = new PluginListenerDTO(plugin)

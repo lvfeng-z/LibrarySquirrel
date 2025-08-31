@@ -27,4 +27,8 @@ export default class PluginTaskUrlListenerService extends BaseService<
   listListener(url: string): Promise<Plugin[]> {
     return this.dao.listListener(url)
   }
+
+  async listByPluginIds(pluginIds: number[]): Promise<PluginTaskUrlListener[]> {
+    return this.dao.listByPluginIds(pluginIds)
+  }
 }

@@ -25,4 +25,18 @@ export default class PluginTaskUrlListenerDao extends BaseDao<PluginTaskUrlListe
         }
       })
   }
+
+  async listByPluginIds(pluginIds: number[]): Promise<PluginTaskUrlListener[]> {
+    const db = this.acquire()
+    const idStr = pluginIds.join(', ')
+    const statement = `SELECT t1.* FROM ${this.tableName} t1 WHERE plugin_id IN (${idStr})`
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((result) => this.toResultTypeDataList<PluginTaskUrlListener>(result))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
 }
