@@ -199,13 +199,7 @@ async function createTaskFromSource() {
   notificationItem.title = `正在根据【${sourceUrl.value}】创建任务`
   const notificationStore = useNotificationStore()
   const notificationId = notificationStore.add(notificationItem)
-  if (downloadMode.value) {
-    apis
-      .taskCreateTask('file://'.concat(sourceUrl.value))
-      .then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
-  } else {
-    apis.taskCreateTask(sourceUrl.value).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
-  }
+  apis.taskCreateTask(sourceUrl.value).then((response: ApiResponse) => handleCreatTaskResponse(response, notificationId))
   downloadDialogState.value = false
   sourceUrl.value = ''
 }
