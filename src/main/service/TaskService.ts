@@ -891,7 +891,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const tasks = sourcePage.data
     if (ArrayNotEmpty(tasks)) {
       // 查询站点信息
-      const siteIds = tasks.map((tempTask) => tempTask.siteId).filter(NotNullish)
+      const siteIds = [...new Set(tasks.map((tempTask) => tempTask.siteId).filter(NotNullish))]
       let idSiteMap: Map<number, Site[]>
       if (ArrayNotEmpty(siteIds)) {
         const siteService = new SiteService()

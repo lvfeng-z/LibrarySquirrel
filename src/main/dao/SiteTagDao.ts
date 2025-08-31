@@ -326,7 +326,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   async listDTOByWorksId(worksId: number): Promise<SiteTagFullDTO[]> {
     const statement = `SELECT t1.*,
                               CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) END AS localTag,
-                              CASE WHEN t4.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) END AS site,
+                              CASE WHEN t4.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) END AS site
                        FROM site_tag t1
                               INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
                               LEFT JOIN local_tag t3 ON t1.local_tag_id = t3.id
