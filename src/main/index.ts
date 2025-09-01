@@ -16,6 +16,8 @@ function createWindow(): Electron.BrowserWindow {
   const mainWindow = new Electron.BrowserWindow({
     width: 1280,
     height: 720,
+    minWidth: 800,
+    minHeight: 450,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
