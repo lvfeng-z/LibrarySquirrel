@@ -47,12 +47,12 @@ export const useTaskStore = defineStore('task', {
               if (task.status === TaskStatusEnum.FINISHED) {
                 useNotificationStore().remove(taskStoreObj.notificationId, {
                   type: 'success',
-                  msg: `从${taskStoreObj.task.siteName}下载【${taskStoreObj.task.taskName}】完成`
+                  msg: `任务【${taskStoreObj.task.taskName}】完成`
                 })
               } else if (task.status === TaskStatusEnum.FAILED) {
                 useNotificationStore().remove(taskStoreObj.notificationId, {
                   type: 'error',
-                  msg: `从${taskStoreObj.task.siteName}下载【${taskStoreObj.task.id}】失败`
+                  msg: `任务【${taskStoreObj.task.id}】失败`
                 })
               }
             }

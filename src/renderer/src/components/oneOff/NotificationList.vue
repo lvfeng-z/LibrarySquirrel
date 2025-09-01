@@ -1,12 +1,22 @@
 <script setup lang="ts">
+import { computed, Ref, ref } from 'vue'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import NotificationItem from '@renderer/model/util/NotificationItem.ts'
 
 // model
 // 开关状态
 const state = defineModel<boolean>('state', { required: true })
+
+// 变量
+const pageNumber: Ref<number> = ref(1)
+const pageSize: Ref<number> = ref(10)
+const currentPage: Ref<NotificationItem[]> = computed(() => {
+  const start = (pageNumber.value - 1) * pageSize.value
+  return useNotificationStore().getRange(start, start + pageSize.value)
+})
 </script>
 
 <template>
@@ -19,30 +29,43 @@ const state = defineModel<boolean>('state', { required: true })
     border-radios="10px"
     position="right"
   >
-    <div class="background-list-container">
-      <el-scrollbar>
-        <template v-for="item in useNotificationStore().notifications.values()" :key="item.title">
-          <div class="background-list-item">
-            <span class="background-list-item-title" :title="item.title">{{ item.title }}</span>
-            <span v-if="StringUtil.isNotBlank(item.description)" class="background-list-item-description">
+    <div class="notification-list-container">
+      <el-scrollbar class="notification-list-container-scrollbar">
+        <template v-for="item in currentPage" :key="item.title">
+          <div class="notification-list-item">
+            <span class="notification-list-item-title" :title="item.title">{{ item.title }}</span>
+            <span v-if="StringUtil.isNotBlank(item.description)" class="notification-list-item-description">
               {{ item.description }}
             </span>
             <component :is="item.render()" v-if="NotNullish(item.render)"></component>
           </div>
         </template>
       </el-scrollbar>
+      <div class="notification-list-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pageNumber"
+          v-model:page-size="pageSize"
+          layout="prev, pager, next"
+          :default-page-size="10"
+          :pager-count="4"
+          :total="useNotificationStore().count"
+        />
+      </div>
     </div>
   </collapse-panel>
 </template>
 
 <style scoped>
-.background-list-container {
+.notification-list-container {
   height: 100%;
   width: 300px;
   background-color: rgb(255, 255, 255, 0.9);
   padding: 5px;
 }
-.background-list-item {
+.notification-list-container-scrollbar {
+  height: calc(100% - 40px);
+}
+.notification-list-item {
   display: flex;
   flex-direction: column;
   margin: 5px;
@@ -51,7 +74,7 @@ const state = defineModel<boolean>('state', { required: true })
   background-color: var(--el-fill-color);
   padding: 5px;
 }
-.background-list-item-title {
+.notification-list-item-title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -62,7 +85,7 @@ const state = defineModel<boolean>('state', { required: true })
   color: var(--el-text-color-primary);
   font-size: var(--el-font-size-medium);
 }
-.background-list-item-description {
+.notification-list-item-description {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -72,5 +95,10 @@ const state = defineModel<boolean>('state', { required: true })
   text-overflow: ellipsis;
   color: var(--el-text-color-regular);
   font-size: var(--el-font-size-small);
+}
+.notification-list-pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  height: 40px;
 }
 </style>
