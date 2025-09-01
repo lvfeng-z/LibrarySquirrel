@@ -899,7 +899,7 @@ export class TaskQueue {
           SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, [runInstance.taskId])
         } else {
           LogUtil.info(this.constructor.name, `任务${runInstance.taskId}移除失败，任务信息的更新尚未保存，已尝试${tried}次`)
-          delayedRemoval(runInstance, delay, tried++)
+          delayedRemoval(runInstance, delay, tried + 1)
         }
       }, delay)
     }
