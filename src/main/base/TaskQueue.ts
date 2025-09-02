@@ -21,8 +21,6 @@ import { queue, QueueObject } from 'async'
 import ResourceService from '../service/ResourceService.js'
 import Electron from 'electron'
 import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
-import Site from '../model/entity/Site.js'
-import SiteService from '../service/SiteService.js'
 import PluginService from '../service/PluginService.js'
 
 /**
@@ -67,17 +65,17 @@ export class TaskQueue {
    */
   private worksService: WorksService
 
-  /**
-   * 站点服务
-   * @private
-   */
-  private siteService: SiteService
+  // /**
+  //  * 站点服务
+  //  * @private
+  //  */
+  // private siteService: SiteService
 
   /**
    * 插件服务
    * @private
    */
-  private pluginService: PluginService
+  private readonly pluginService: PluginService
 
   /**
    * 插件加载器
@@ -133,11 +131,11 @@ export class TaskQueue {
    */
   private parentSchedulePushing: boolean
 
-  /**
-   * 站点信息缓存
-   * @private
-   */
-  private siteCache: Map<number, Site>
+  // /**
+  //  * 站点信息缓存
+  //  * @private
+  //  */
+  // private siteCache: Map<number, Site>
 
   constructor() {
     this.taskMap = new Map()
@@ -146,13 +144,13 @@ export class TaskQueue {
     this.currentBufferIndex = 0
     this.taskService = new TaskService()
     this.worksService = new WorksService()
-    this.siteService = new SiteService()
+    // this.siteService = new SiteService()
     this.pluginService = new PluginService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory(), this.pluginService)
     this.closed = false
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
-    this.siteCache = new Map()
+    // this.siteCache = new Map()
 
     this.queueEntrance = new TaskQueueEntrance(
       this.getNext.bind(this),
@@ -302,7 +300,7 @@ export class TaskQueue {
         LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
       )
     }
-    this.pushTaskSchedule()
+    this.pushTaskSchedule().catch((error) => LogUtil.error(this.constructor.name, '向渲染进程推送任务进度时出现错误，', error))
   }
 
   /**
@@ -489,7 +487,7 @@ export class TaskQueue {
   }
 
   /**
-   * 暂停所有任务
+   * 关闭任务队列
    */
   public async shutdown(): Promise<void> {
     this.closed = true
@@ -498,7 +496,7 @@ export class TaskQueue {
       .filter((runInst) => TaskStatusEnum.WAITING === runInst.status || TaskStatusEnum.PROCESSING === runInst.status)
       .map((runInst) => runInst.taskId)
     const parentIds = runInstList.map((runInst) => runInst.parentId)
-    this.pauseTask(ids)
+    this.pauseTask(ids).catch((error) => LogUtil.error(this.constructor.name, '关闭任务队列时暂停任务失败，', error))
     this.queueEntrance.preDestroy()
     this.queueEntrance.destroy()
     await this.readyToClose
@@ -606,7 +604,7 @@ export class TaskQueue {
     // this.refreshParentStatus(runInstances.map((runInstance) => runInstance.parentId))
     // this.queueEntrance.manualStart()
     this.runInstBuffer.push(runInstances)
-    this.queueEntrance.manualStart()
+    return this.queueEntrance.manualStart()
   }
 
   /**
@@ -828,7 +826,9 @@ export class TaskQueue {
           const parent = new Task()
           parent.id = parentRunInstance.taskId
           parent.status = newStatus
-          this.taskService.updateById(parent)
+          this.taskService
+            .updateById(parent)
+            .catch((error) => LogUtil.error(this.constructor.name, '刷新父任务状态并保存到数据库时出现错误', error))
         }
 
         // 清除不再活跃的父任务
@@ -848,7 +848,7 @@ export class TaskQueue {
    * @param task 任务信息
    * @private
    */
-  private async inletTask(taskRunInstance: TaskRunInstance, task: Task) {
+  private inletTask(taskRunInstance: TaskRunInstance, task: Task) {
     // 清除原有的删除定时器
     const oldInst = this.taskMap.get(taskRunInstance.taskId)
     if (NotNullish(oldInst)) {
@@ -858,11 +858,11 @@ export class TaskQueue {
     // 任务运行信息推送到渲染进程
     const taskProgressDTO = new TaskProgressDTO()
     CopyIgnoreUndefined(taskProgressDTO, task)
-    // 补充taskProgressDTO的站点名称，否则完成任务时的提示中，站点名称显示undefined
-    const siteId = taskProgressDTO.siteId
-    if (NotNullish(siteId)) {
-      taskProgressDTO.siteName = (await this.getSite(siteId))?.siteName
-    }
+    // // 补充taskProgressDTO的站点名称，否则完成任务时的提示中，站点名称显示undefined
+    // const siteId = taskProgressDTO.siteId
+    // if (NotNullish(siteId)) {
+    //   taskProgressDTO.siteName = (await this.getSite(siteId))?.siteName
+    // }
     SendMsgToRender(RenderEvent.TASK_STATUS_SET_TASK, [taskProgressDTO])
   }
 
@@ -980,21 +980,21 @@ export class TaskQueue {
     this.taskPersistStream.addTask([taskRunInstance])
   }
 
-  /**
-   * 获取站点信息
-   * @param siteId 站点id
-   * @private
-   */
-  private async getSite(siteId: number): Promise<Site | undefined> {
-    let result = this.siteCache.get(siteId)
-    if (IsNullish(result)) {
-      result = await this.siteService.getById(siteId)
-      if (NotNullish(result)) {
-        this.siteCache.set(siteId, result)
-      }
-    }
-    return result
-  }
+  // /**
+  //  * 获取站点信息
+  //  * @param siteId 站点id
+  //  * @private
+  //  */
+  // private async getSite(siteId: number): Promise<Site | undefined> {
+  //   let result = this.siteCache.get(siteId)
+  //   if (IsNullish(result)) {
+  //     result = await this.siteService.getById(siteId)
+  //     if (NotNullish(result)) {
+  //       this.siteCache.set(siteId, result)
+  //     }
+  //   }
+  //   return result
+  // }
 }
 
 /**
@@ -1428,7 +1428,9 @@ class TaskQueueEntrance extends Readable {
         }
       })
       if (this.downstreamWaiting) {
-        this.processNext()
+        this.processNext().catch((error) =>
+          LogUtil.error(this.constructor.name, '收到确认替换原有资源事件并向下游推送数据时出现错误', error)
+        )
       }
     })
   }
