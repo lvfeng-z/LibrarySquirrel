@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
-import { onBeforeMount, reactive, Ref, ref } from 'vue'
+import { nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '@renderer/model/util/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
@@ -181,8 +181,8 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
 
       // 设置新的光标位置
       const newCursorPos = startPos + element.token.length
-      inputElement.setSelectionRange(newCursorPos, newCursorPos)
       inputElement.focus() // 确保输入框保持焦点
+      nextTick(() => inputElement.setSelectionRange(newCursorPos, newCursorPos))
     }
   }
 }
