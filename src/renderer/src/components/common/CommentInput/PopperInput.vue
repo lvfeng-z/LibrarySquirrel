@@ -41,7 +41,6 @@ const cacheData = defineModel<SelectItem>('cacheData', { default: undefined, req
 const emits = defineEmits(['dataChanged'])
 
 // 变量
-const container = ref<HTMLElement>()
 const inputRef = ref<HTMLElement>()
 const config: Ref<UnwrapRef<CommonInputConfig>> = ref(lodash.cloneDeep(props.config))
 const disabled: Ref<UnwrapRef<boolean>> = ref(false)
@@ -167,7 +166,7 @@ function handleDataChange(newData) {
       />
     </template>
     <template #reference>
-      <div ref="container" class="common-input" @dblclick="handleDblclick">
+      <div class="common-input" @dblclick="handleDblclick">
         <span>{{ spanText }}</span>
       </div>
     </template>

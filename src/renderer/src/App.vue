@@ -120,8 +120,6 @@ const apis = {
   settingsGetSettings: window.api.settingsGetSettings,
   settingsSaveSettings: window.api.settingsSaveSettings
 }
-// sideMenu组件的实例
-const sideMenuRef = ref()
 // main-page-works-space的实例
 const worksSpace = ref()
 // worksArea组件的实例
@@ -339,7 +337,7 @@ async function handleTest() {
     <el-container>
       <el-aside class="z-layer-4" width="auto" style="overflow: visible">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-        <side-menu ref="sideMenuRef" class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
+        <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
           <template #default>
             <el-menu-item index="0" @click="closeSubpage">
               <template #title> 主页 </template>

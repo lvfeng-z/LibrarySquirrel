@@ -24,7 +24,7 @@ function handleImageClicked(works: WorksFullDTO) {
 
 <template>
   <div class="works-area">
-    <template v-for="works in props.worksList" :key="works.id">
+    <template v-for="works in props.worksList" :key="works.id ? works.id : Math.random()">
       <div class="works-area-container">
         <works-case
           class="works-area-works-case"

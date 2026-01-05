@@ -58,8 +58,6 @@ const apis = {
   worksDeleteWorksAndSurroundingData: window.api.worksDeleteWorksAndSurroundingData,
   worksGetFullWorksInfoById: window.api.worksGetFullWorksInfoById
 }
-// container元素实例
-const container = ref()
 // 主要容器的实例
 const infosRef = ref()
 // localTag的ExchangeBox组件的实例
@@ -263,7 +261,7 @@ async function deleteWorks() {
         {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
       </span>
     </template>
-    <div ref="container" class="works-dialog-container">
+    <div class="works-dialog-container">
       <el-image
         class="works-dialog-image"
         fit="contain"

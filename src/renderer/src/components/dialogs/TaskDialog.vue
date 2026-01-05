@@ -46,10 +46,6 @@ const apis = {
 }
 // childTaskSearchTable组件的实例
 const childTaskSearchTable = ref()
-// baseDialog组件的实例
-const baseDialog = ref()
-// parentTaskInfo的dom元素
-const parentTaskInfo = ref()
 // 下级任务
 const children: Ref<TaskTreeDTO[]> = ref([])
 // 表头
@@ -334,12 +330,12 @@ function toParent() {
 </script>
 
 <template>
-  <form-dialog ref="baseDialog" v-model:form-data="formData" v-model:state="state" :mode="props.mode" @open="handleOpen">
+  <form-dialog v-model:form-data="formData" v-model:state="state" :mode="props.mode" @open="handleOpen">
     <template #header>
       <el-button v-show="!isParent" icon="ArrowLeftBold" type="primary" @click="toParent">查看任务集</el-button>
     </template>
     <template #form>
-      <div ref="parentTaskInfo">
+      <div>
         <el-row>
           <el-col>
             <el-form-item label="名称">

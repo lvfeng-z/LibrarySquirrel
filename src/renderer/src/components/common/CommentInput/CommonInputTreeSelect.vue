@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 // model
-const data = defineModel<unknown>('data', { default: undefined, required: false })
+const data = defineModel<object | number | string | boolean>('data', { default: undefined, required: false })
 
 // 变量
 // el-input组件的实例

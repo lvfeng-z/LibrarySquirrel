@@ -71,12 +71,12 @@ export default class ResourceWriter {
         reject(err)
       }
       // 可读流的end事件回调
-      const readableEndHandler = (err: Error) => {
+      const readableEndHandler = () => {
         this.readableFinished = true
         if (!this.errorOccurred) {
           this.writable?.end()
         } else {
-          reject(err)
+          reject(new Error('可读流以错误状态结束'))
         }
       }
 
