@@ -395,7 +395,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         await taskQueue.pushBatch(children, TaskOperation.START)
       } catch (error) {
         LogUtil.error(this.constructor.name, error)
-        await this.taskFailed(parent.id, String(error))
+        if (parent.id) {
+          await this.taskFailed(parent.id, String(error))
+        }
       }
     }
   }

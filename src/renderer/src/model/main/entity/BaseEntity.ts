@@ -5,7 +5,7 @@ export default class BaseEntity {
   /**
    * 主键
    */
-  id: Id
+  id: Id | null | undefined
 
   /**
    * 创建时间
@@ -30,4 +30,4 @@ export default class BaseEntity {
   }
 }
 
-export type Id = number | null | undefined
+export type Id = number
