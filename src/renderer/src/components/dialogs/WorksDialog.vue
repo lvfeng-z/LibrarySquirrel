@@ -80,30 +80,9 @@ const siteTagExchangeBox = ref()
 // 作品信息
 const worksFullInfo: Ref<WorksFullDTO> = computed(() => new WorksFullDTO(props.works[currentWorksIndex.value]))
 // 本地标签
-const localTags: Ref<UnwrapRef<SegmentedTagItem[]>> = computed(() => {
-  const result = worksFullInfo.value.localTags?.map(
-    (localTag) =>
-      new SegmentedTagItem({
-        value: localTag.id as number,
-        label: localTag.localTagName as string,
-        disabled: false
-      })
-  )
-  return IsNullish(result) ? [] : result
-})
+const localTags: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
 // 本地标签
-const siteTags: Ref<UnwrapRef<SegmentedTagItem[]>> = computed(() => {
-  const result = worksFullInfo.value.siteTags?.map(
-    (siteTag) =>
-      new SegmentedTagItem({
-        value: siteTag.id as number,
-        label: siteTag.siteTagName as string,
-        subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string],
-        disabled: false
-      })
-  )
-  return IsNullish(result) ? [] : result
-})
+const siteTags: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
 // 本地标签编辑开关
 const drawerState: Ref<boolean> = ref(false)
 // 本地标签编辑开关
@@ -127,6 +106,7 @@ async function getWorksInfo() {
     const temp = ApiUtil.data<WorksFullDTO>(response)
     if (NotNullish(temp)) {
       CopyIgnoreUndefined(worksFullInfo.value, temp)
+      refreshTags()
     } else {
       ElMessage({
         type: 'error',
@@ -134,6 +114,30 @@ async function getWorksInfo() {
       })
     }
   }
+}
+// 刷新标签
+function refreshTags() {
+  // 本地标签
+  const tempLocalTags = worksFullInfo.value.localTags?.map(
+    (localTag) =>
+      new SegmentedTagItem({
+        value: localTag.id as number,
+        label: localTag.localTagName as string,
+        disabled: false
+      })
+  )
+  localTags.value = IsNullish(tempLocalTags) ? [] : tempLocalTags
+  // 站点标签
+  const tempSiteTags = worksFullInfo.value.siteTags?.map(
+    (siteTag) =>
+      new SegmentedTagItem({
+        value: siteTag.id as number,
+        label: siteTag.siteTagName as string,
+        subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string],
+        disabled: false
+      })
+  )
+  siteTags.value = IsNullish(tempSiteTags) ? [] : tempSiteTags
 }
 // 处理本地标签exchangeBox确认交换事件
 async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[], isUpper?: boolean) {
