@@ -9,16 +9,17 @@ const props = defineProps<{
   worksList: WorksFullDTO[]
 }>()
 
+// model
+const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: true })
+
 // 变量
 // worksDialog开关
 const worksDialogState: Ref<UnwrapRef<boolean>> = ref(false)
-// worksDialog的内容
-const worksDialogResources: Ref<WorksFullDTO[]> = ref([])
 
 // 方法
 function handleImageClicked(works: WorksFullDTO) {
+  currentWorksIndex.value = props.worksList.indexOf(works)
   worksDialogState.value = true
-  worksDialogResources.value[0] = works
 }
 </script>
 
@@ -37,7 +38,12 @@ function handleImageClicked(works: WorksFullDTO) {
       </div>
     </template>
     <div class="works-area-dialog">
-      <works-dialog v-if="worksDialogState" v-model="worksDialogState" :works="worksDialogResources" />
+      <works-dialog
+        v-if="worksDialogState"
+        v-model="worksDialogState"
+        v-model:current-works-index="currentWorksIndex"
+        :works="props.worksList"
+      />
     </div>
   </div>
 </template>

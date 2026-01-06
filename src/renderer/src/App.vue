@@ -135,6 +135,8 @@ const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索
 const customTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏自定义标签列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
 const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
+// 当前作品的索引
+const currentWorksIndex = ref(0)
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[]>> = ref([])
 // 作品分页
@@ -459,7 +461,12 @@ async function handleTest() {
           </div>
           <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-area ref="worksAreaRef" class="main-page-works-area" :works-list="worksList"></works-area>
+              <works-area
+                ref="worksAreaRef"
+                v-model:current-works-index="currentWorksIndex"
+                class="main-page-works-area"
+                :works-list="worksList"
+              ></works-area>
             </el-scrollbar>
             <span
               ref="loadMoreButton"

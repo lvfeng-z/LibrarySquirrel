@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
-import { computed, h, onBeforeMount, Ref, ref, UnwrapRef } from 'vue'
+import { computed, h, onBeforeMount, onBeforeUnmount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
@@ -23,13 +23,17 @@ import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { Picture } from '@element-plus/icons-vue'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
+import { CopyIgnoreUndefined } from '@renderer/utils/ObjectUtil.ts'
 
 // props
 const props = defineProps<{
   works: WorksFullDTO[]
 }>()
 
-// onMounted
+// model
+const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: true })
+
+// onBeforeMount
 onBeforeMount(() => {
   getWorksInfo()
   // nextTick(() => {
@@ -43,6 +47,15 @@ onBeforeMount(() => {
   //       ? 0
   //       : baseDialogFooter
   // })
+})
+// onMounted
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+// onBeforeUnmount
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
 })
 
 // 变量
@@ -65,7 +78,7 @@ const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件的实例
 const siteTagExchangeBox = ref()
 // 作品信息
-const worksFullInfo: Ref<WorksFullDTO> = ref(new WorksFullDTO(props.works[0]))
+const worksFullInfo: Ref<WorksFullDTO> = computed(() => new WorksFullDTO(props.works[currentWorksIndex.value]))
 // 本地标签
 const localTags: Ref<UnwrapRef<SegmentedTagItem[]>> = computed(() => {
   const result = worksFullInfo.value.localTags?.map(
@@ -113,7 +126,7 @@ async function getWorksInfo() {
   if (ApiUtil.check(response)) {
     const temp = ApiUtil.data<WorksFullDTO>(response)
     if (NotNullish(temp)) {
-      worksFullInfo.value = temp
+      CopyIgnoreUndefined(worksFullInfo.value, temp)
     } else {
       ElMessage({
         type: 'error',
@@ -243,10 +256,28 @@ function handleDeleteButtonClick() {
     .then(() => deleteWorks())
     .catch(() => ElMessage.warning({ message: '取消删除' }))
 }
-
-/**
- * 删除作品
- */
+// 切换当前作品
+function setCurrentWorks(newIndex: number): void {
+  if (props.works.length <= newIndex) {
+    currentWorksIndex.value = props.works.length - 1
+    return
+  }
+  if (newIndex < 0) {
+    currentWorksIndex.value = 0
+    return
+  }
+  currentWorksIndex.value = newIndex
+  getWorksInfo()
+}
+// 处理键盘按下事件
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowLeft') {
+    setCurrentWorks(currentWorksIndex.value - 1)
+  } else if (event.key === 'ArrowRight') {
+    setCurrentWorks(currentWorksIndex.value + 1)
+  }
+}
+// 删除作品
 async function deleteWorks() {
   if (NotNullish(worksFullInfo.value.id)) {
     const response = await apis.worksDeleteWorksAndSurroundingData(worksFullInfo.value.id)
@@ -408,10 +439,13 @@ async function deleteWorks() {
       </el-drawer>
     </div>
     <template #footer>
-      <el-button-group size="large">
-        <el-button icon="delete" @click="handleDeleteButtonClick">删除</el-button>
-        <el-button icon="refresh">刷新</el-button>
-      </el-button-group>
+      <div class="works-dialog-footer-buttons">
+        <el-button type="danger" icon="delete" @click="handleDeleteButtonClick">删除</el-button>
+        <el-button-group class="works-dialog-footer-buttons-group" size="large">
+          <el-button icon="back" @click="setCurrentWorks(currentWorksIndex - 1)" />
+          <el-button icon="right" @click="setCurrentWorks(currentWorksIndex + 1)" />
+        </el-button-group>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -472,5 +506,14 @@ async function deleteWorks() {
 }
 .works-dialog-search-bar {
   flex-grow: 1;
+}
+.works-dialog-footer-buttons {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+.works-dialog-footer-buttons .works-dialog-footer-buttons-group {
+  margin: 0 auto;
 }
 </style>
