@@ -92,9 +92,10 @@ function handleClickOutSide() {
 }
 .side-menu-main {
   height: 100%;
-  width: v-bind(mainWidth);
+  width: calc(v-bind(mainWidth) - 1px);
   overflow: visible;
   background-color: var(--el-fill-color-blank);
+  border-right: solid 1px var(--el-border-color);
   transition: width 0.3s ease;
 }
 .side-menu-collapse-button {
@@ -136,6 +137,7 @@ function handleClickOutSide() {
 }
 .side-menu-main-menu {
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   border-right: none;

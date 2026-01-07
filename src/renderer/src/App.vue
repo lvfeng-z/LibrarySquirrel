@@ -536,7 +536,6 @@ async function handleTest() {
   width: 100%;
   height: 100%;
   background-color: #fafafa;
-  overflow: hidden;
 }
 .close-subpage-button {
   display: flex;
@@ -575,7 +574,6 @@ async function handleTest() {
 }
 .aside-side-menu {
   height: 100%;
-  border-right: solid 1px var(--el-border-color);
 }
 .main-page {
   display: flex;
