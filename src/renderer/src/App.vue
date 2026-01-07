@@ -536,6 +536,7 @@ async function handleTest() {
   width: 100%;
   height: 100%;
   background-color: #fafafa;
+  overflow: hidden;
 }
 .close-subpage-button {
   display: flex;
