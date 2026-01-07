@@ -95,7 +95,6 @@ function handleClickOutSide() {
   width: v-bind(mainWidth);
   overflow: visible;
   background-color: var(--el-fill-color-blank);
-  border-right: solid 1px var(--el-border-color);
   transition: width 0.3s ease;
 }
 .side-menu-collapse-button {

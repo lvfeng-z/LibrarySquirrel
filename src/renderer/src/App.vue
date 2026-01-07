@@ -337,7 +337,7 @@ async function handleTest() {
       <Close class="close-subpage-button-icon" />
     </div>
     <el-container>
-      <el-aside class="z-layer-4" width="auto" style="overflow: visible">
+      <el-aside class="z-layer-4" width="auto">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
         <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
           <template #default>
@@ -574,6 +574,7 @@ async function handleTest() {
 }
 .aside-side-menu {
   height: 100%;
+  border-right: solid 1px var(--el-border-color);
 }
 .main-page {
   display: flex;
