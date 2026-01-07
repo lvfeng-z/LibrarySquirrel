@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
-import { computed, h, onBeforeMount, onBeforeUnmount, onMounted, Ref, ref, UnwrapRef } from 'vue'
+import { computed, h, nextTick, onBeforeMount, onBeforeUnmount, onMounted, Ref, ref, UnwrapRef } from 'vue'
 import { IsNullish, NotNullish } from '../../utils/CommonUtil'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
@@ -34,8 +34,9 @@ const props = defineProps<{
 const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: true })
 
 // onBeforeMount
-onBeforeMount(() => {
-  getWorksInfo()
+onBeforeMount(async () => {
+  await getWorksInfo()
+  refreshTags()
   // nextTick(() => {
   //   const baseDialogHeader =
   //     baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
@@ -78,7 +79,7 @@ const localTagExchangeBox = ref()
 // siteTag的ExchangeBox组件的实例
 const siteTagExchangeBox = ref()
 // 作品信息
-const worksFullInfo: Ref<WorksFullDTO> = computed(() => new WorksFullDTO(props.works[currentWorksIndex.value]))
+const currentWorksFullInfo: Ref<WorksFullDTO> = computed(() => new WorksFullDTO(props.works[currentWorksIndex.value]))
 // 本地标签
 const localTags: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
 // 本地标签
@@ -101,12 +102,11 @@ const siteTagExchangeLowerSearchParams: Ref<SiteTagQueryDTO> = ref(new SiteTagQu
 // 方法
 // 查询作品信息
 async function getWorksInfo() {
-  const response = await apis.worksGetFullWorksInfoById(props.works[0].id)
+  const response = await apis.worksGetFullWorksInfoById(currentWorksFullInfo.value.id)
   if (ApiUtil.check(response)) {
     const temp = ApiUtil.data<WorksFullDTO>(response)
     if (NotNullish(temp)) {
-      CopyIgnoreUndefined(worksFullInfo.value, temp)
-      refreshTags()
+      CopyIgnoreUndefined(currentWorksFullInfo.value, temp)
     } else {
       ElMessage({
         type: 'error',
@@ -118,7 +118,7 @@ async function getWorksInfo() {
 // 刷新标签
 function refreshTags() {
   // 本地标签
-  const tempLocalTags = worksFullInfo.value.localTags?.map(
+  const tempLocalTags = currentWorksFullInfo.value.localTags?.map(
     (localTag) =>
       new SegmentedTagItem({
         value: localTag.id as number,
@@ -128,7 +128,7 @@ function refreshTags() {
   )
   localTags.value = IsNullish(tempLocalTags) ? [] : tempLocalTags
   // 站点标签
-  const tempSiteTags = worksFullInfo.value.siteTags?.map(
+  const tempSiteTags = currentWorksFullInfo.value.siteTags?.map(
     (siteTag) =>
       new SegmentedTagItem({
         value: siteTag.id as number,
@@ -141,7 +141,7 @@ function refreshTags() {
 }
 // 处理本地标签exchangeBox确认交换事件
 async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[], isUpper?: boolean) {
-  const worksId = worksFullInfo.value.id
+  const worksId = currentWorksFullInfo.value.id
   if (IsNullish(isUpper) ? true : isUpper) {
     const boundIds = upper.map((item) => item.value)
     const boundResponse: ApiResponse = await apis.reWorksTagLink(type, boundIds, worksId)
@@ -166,21 +166,21 @@ async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], l
 // 更新标签
 async function updateWorksTags(type: OriginType) {
   if (OriginType.LOCAL === type) {
-    const response = await apis.localTagListByWorksId(worksFullInfo.value.id)
+    const response = await apis.localTagListByWorksId(currentWorksFullInfo.value.id)
     if (ApiUtil.check(response)) {
-      worksFullInfo.value.localTags = ApiUtil.data<LocalTag[]>(response)
+      currentWorksFullInfo.value.localTags = ApiUtil.data<LocalTag[]>(response)
     }
   } else {
     const tempSiteTagPage = new Page<SiteTagQueryDTO, SiteTag>()
     const tempSiteTagQuery = new SiteTagQueryDTO()
     tempSiteTagPage.pageSize = 100
-    tempSiteTagQuery.worksId = worksFullInfo.value.id
+    tempSiteTagQuery.worksId = currentWorksFullInfo.value.id
     tempSiteTagQuery.boundOnWorksId = true
     tempSiteTagPage.query = tempSiteTagQuery
     const response = await apis.siteTagQueryPageByWorksId(tempSiteTagPage)
     if (ApiUtil.check(response)) {
       const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagFullDTO>>(response)
-      worksFullInfo.value.siteTags = IsNullish(tempResultPage?.data) ? [] : tempResultPage.data
+      currentWorksFullInfo.value.siteTags = IsNullish(tempResultPage?.data) ? [] : tempResultPage.data
     }
   }
 }
@@ -189,7 +189,7 @@ async function requestWorksLocalTagPage(page: IPage<LocalTagQueryDTO, SelectItem
   if (IsNullish(page.query)) {
     page.query = new LocalTagQueryDTO()
   }
-  page.query.worksId = worksFullInfo.value.id
+  page.query.worksId = currentWorksFullInfo.value.id
   page.query.boundOnWorksId = bounded
   const tempPage = lodash.cloneDeep(page)
   const response = await apis.localTagQuerySelectItemPageByWorksId(tempPage)
@@ -205,7 +205,7 @@ async function requestWorksSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>,
   if (IsNullish(page.query)) {
     page.query = new SiteTagQueryDTO()
   }
-  page.query.worksId = worksFullInfo.value.id
+  page.query.worksId = currentWorksFullInfo.value.id
   page.query.boundOnWorksId = bounded
   const response = await apis.siteTagQuerySelectItemPageByWorksId(lodash.cloneDeep(page))
   if (ApiUtil.check(response)) {
@@ -217,8 +217,8 @@ async function requestWorksSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>,
 }
 // 处理图片点击事件
 function handlePictureClicked() {
-  if (NotNullish(worksFullInfo.value.resource?.filePath)) {
-    apis.appLauncherOpenImage(worksFullInfo.value.resource.filePath)
+  if (NotNullish(currentWorksFullInfo.value.resource?.filePath)) {
+    apis.appLauncherOpenImage(currentWorksFullInfo.value.resource.filePath)
   } else {
     ElMessage({
       type: 'error',
@@ -249,7 +249,7 @@ function handleDrawerOpen() {
 // 处理删除按钮点击事件
 function handleDeleteButtonClick() {
   ElMessageBox.confirm(
-    h('div', {}, [h('span', null, '是否删除作品？'), h('br'), h('span', null, `${worksFullInfo.value.siteWorksName}`)]),
+    h('div', {}, [h('span', null, '是否删除作品？'), h('br'), h('span', null, `${currentWorksFullInfo.value.siteWorksName}`)]),
     '确认删除',
     {
       confirmButtonText: '删除',
@@ -261,7 +261,7 @@ function handleDeleteButtonClick() {
     .catch(() => ElMessage.warning({ message: '取消删除' }))
 }
 // 切换当前作品
-function setCurrentWorks(newIndex: number): void {
+async function setCurrentWorks(newIndex: number): Promise<void> {
   if (props.works.length <= newIndex) {
     currentWorksIndex.value = props.works.length - 1
     return
@@ -271,7 +271,9 @@ function setCurrentWorks(newIndex: number): void {
     return
   }
   currentWorksIndex.value = newIndex
-  getWorksInfo()
+  await nextTick()
+  await getWorksInfo()
+  refreshTags()
 }
 // 处理键盘按下事件
 function handleKeydown(event: KeyboardEvent) {
@@ -283,8 +285,8 @@ function handleKeydown(event: KeyboardEvent) {
 }
 // 删除作品
 async function deleteWorks() {
-  if (NotNullish(worksFullInfo.value.id)) {
-    const response = await apis.worksDeleteWorksAndSurroundingData(worksFullInfo.value.id)
+  if (NotNullish(currentWorksFullInfo.value.id)) {
+    const response = await apis.worksDeleteWorksAndSurroundingData(currentWorksFullInfo.value.id)
     ApiUtil.msg(response)
   }
 }
@@ -293,14 +295,15 @@ async function deleteWorks() {
   <el-dialog center style="margin: auto; width: 90%">
     <template #header>
       <span class="works-dialog-works-name">
-        {{ StringUtil.isBlank(worksFullInfo.nickName) ? worksFullInfo.siteWorksName : worksFullInfo.nickName }}
+        {{ StringUtil.isBlank(currentWorksFullInfo.nickName) ? currentWorksFullInfo.siteWorksName : currentWorksFullInfo.nickName
+        }}
       </span>
     </template>
     <div class="works-dialog-container">
       <el-image
         class="works-dialog-image"
         fit="contain"
-        :src="`resource://workdir/${worksFullInfo.resource?.filePath}`"
+        :src="`resource://workdir/${currentWorksFullInfo.resource?.filePath}`"
         @click="handlePictureClicked"
       >
         <template #error>
@@ -312,10 +315,10 @@ async function deleteWorks() {
       <el-scrollbar class="works-dialog-scrollbar">
         <el-descriptions ref="infosRef" class="works-dialog-info" direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
-            <author-info id="author" :local-authors="worksFullInfo.localAuthors" :site-authors="worksFullInfo.siteAuthors" />
+            <author-info id="author" :local-authors="currentWorksFullInfo.localAuthors" :site-authors="currentWorksFullInfo.siteAuthors" />
           </el-descriptions-item>
           <el-descriptions-item label="站点">
-            <span id="site">{{ worksFullInfo.site?.siteName }}</span>
+            <span id="site">{{ currentWorksFullInfo.site?.siteName }}</span>
           </el-descriptions-item>
           <el-descriptions-item>
             <template #label>
