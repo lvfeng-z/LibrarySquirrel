@@ -14,7 +14,7 @@ import GuidePage from '@renderer/components/subpage/Guide.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/oneOff/SideMenu.vue'
 import { Close, Coordinate, Discount, HomeFilled, Link, List, Setting, Star, TakeawayBox, User } from '@element-plus/icons-vue'
-import WorksArea from './components/common/WorksArea.vue'
+import WorksGrid from './components/common/WorksGrid.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
@@ -461,12 +461,12 @@ async function handleTest() {
           </div>
           <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-area
+              <works-grid
                 ref="worksAreaRef"
                 v-model:current-works-index="currentWorksIndex"
                 class="main-page-works-area"
                 :works-list="worksList"
-              ></works-area>
+              ></works-grid>
             </el-scrollbar>
             <span
               ref="loadMoreButton"
