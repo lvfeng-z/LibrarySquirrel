@@ -55,7 +55,12 @@ function openWorksSetDialog() {
         :works="props.worksList"
         @open-works-set="openWorksSetDialog"
       />
-      <works-set-dialog v-if="worksSetDialogState" v-model="worksSetDialogState" v-model:current-works-set-id="currentWorksSetId" />
+      <works-set-dialog
+        v-if="worksSetDialogState"
+        v-model="worksSetDialogState"
+        v-model:current-works-set-id="currentWorksSetId"
+        scrollbar-height="80vh"
+      />
     </div>
   </div>
 </template>

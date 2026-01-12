@@ -6,6 +6,11 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksSetWithWorksDTO from '@renderer/model/main/dto/WorksSetWithWorksDTO.ts'
 
+//props
+const props = defineProps<{
+  scrollbarHeight: string
+}>()
+
 // model
 const currentWorksSetId = defineModel<number>('currentWorksSetId', { required: true })
 
@@ -41,10 +46,14 @@ async function loadWorksList() {
 
 <template>
   <el-dialog destroy-on-close center style="margin: auto; width: 90%">
-    <el-scrollbar>
+    <el-scrollbar class="works-set-dialog-works-grid-scrollbar">
       <works-grid :works-list="worksList" :current-works-index="currentWorksIndex"> </works-grid>
     </el-scrollbar>
   </el-dialog>
 </template>
 
-<style scoped></style>
+<style scoped>
+.works-set-dialog-works-grid-scrollbar {
+  height: v-bind(props.scrollbarHeight);
+}
+</style>
