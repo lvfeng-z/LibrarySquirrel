@@ -5,7 +5,7 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '../model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import StringUtil from '../util/StringUtil.ts'
-import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.ts'
+import RankedSiteAuthor from '../model/domain/RankedSiteAuthor.ts'
 import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import SelectItem from '../model/util/SelectItem.js'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
@@ -13,6 +13,7 @@ import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 import SiteAuthorFullDTO from '../model/dto/SiteAuthorFullDTO.js'
 import lodash from 'lodash'
 import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
+import RankedSiteAuthorWithWorksId from '../model/domain/RankedSiteAuthorWithWorksId.ts'
 
 /**
  * 站点作者Dao
@@ -162,7 +163,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     const db = this.acquire()
     return db
-      .all<unknown[], SiteAuthorRankDTO>(statement, query)
+      .all<unknown[], RankedSiteAuthor>(statement, query)
       .then((rows) => {
         const selectItems = rows.map((row) => {
           const siteAuthorDTO = new SiteAuthorFullDTO(row)
@@ -213,7 +214,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * 查询作品的站点作者
    * @param worksId 作品id
    */
-  async listByWorksId(worksId: number): Promise<SiteAuthorRankDTO[]> {
+  async listByWorksId(worksId: number): Promise<RankedSiteAuthor[]> {
     const statement = `SELECT t1.*, t2.author_rank
                        FROM site_author t1
                               INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
@@ -221,7 +222,27 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<SiteAuthorRankDTO>(runResult))
+      .then((runResult) => super.toResultTypeDataList<RankedSiteAuthor>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 查询作品的站点作者列表
+   * @param worksIds 作品id列表
+   */
+  async listRankedSiteAuthorWithWorksIdByWorksIds(worksIds: number[]): Promise<RankedSiteAuthorWithWorksId[]> {
+    const statement = `SELECT t1.*, t2.author_rank, t2.works_id
+                       FROM site_author t1
+                              INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
+                       WHERE t2.works_id IN (${worksIds.join(',')})`
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((runResult) => super.toResultTypeDataList<RankedSiteAuthorWithWorksId>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

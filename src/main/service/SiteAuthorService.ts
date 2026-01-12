@@ -13,7 +13,7 @@ import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
 import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
-import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
+import RankedSiteAuthor from '../model/domain/RankedSiteAuthor.ts'
 import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.js'
@@ -257,16 +257,24 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   }
 
   /**
+   * 查询作品的站点作者列表
+   * @param worksIds 作品id列表
+   */
+  public async listRankedSiteAuthorWithWorksIdByWorksIds(worksIds: number[]) {
+    return this.dao.listRankedSiteAuthorWithWorksIdByWorksIds(worksIds)
+  }
+
+  /**
    * 生成用于保存的站点作者信息
    */
-  public static async createSaveInfosFromPlugin(siteAuthors: SiteAuthorPluginDTO[]): Promise<SiteAuthorRankDTO[]> {
-    const result: SiteAuthorRankDTO[] = []
+  public static async createSaveInfosFromPlugin(siteAuthors: SiteAuthorPluginDTO[]): Promise<RankedSiteAuthor[]> {
+    const result: RankedSiteAuthor[] = []
     // 用于查询和缓存站点id
     const siteService = new SiteService()
     const siteCache = new Map<string, Promise<number>>()
     for (const siteAuthor of siteAuthors) {
       if (IsNullish(siteAuthor.siteDomain)) {
-        result.push(new SiteAuthorRankDTO(siteAuthor))
+        result.push(new RankedSiteAuthor(siteAuthor))
         continue
       }
       let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
@@ -276,10 +284,10 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       }
       const siteId = await siteIdPromise
       if (IsNullish(siteId)) {
-        result.push(new SiteAuthorRankDTO(siteAuthor))
+        result.push(new RankedSiteAuthor(siteAuthor))
         continue
       }
-      const tempDTO = new SiteAuthorRankDTO(siteAuthor)
+      const tempDTO = new RankedSiteAuthor(siteAuthor)
       tempDTO.siteId = siteId
       tempDTO.authorRank = siteAuthor.authorRank
       result.push(tempDTO)

@@ -61,6 +61,9 @@ function elMessageBoxTest() {
     type: 'warning'
   })
 }
+function testListWorksSetWithWorksByIds() {
+  window.api.testListWorksSetWithWorksByIds([1])
+}
 const hFunc = () =>
   h('div', {}, [h('button', { onClick: handleTest2 }, 'addone'), ...elMessageBoxTestItems.value.map((item) => item.context)])
 </script>
@@ -117,6 +120,7 @@ const hFunc = () =>
     <el-tree-select v-model="value" lazy :load="load" :props="props" style="width: 240px" />
     <el-divider />
     <el-tree-select v-model="value2" lazy :load="load" :props="props" :cache-data="cacheData" style="width: 240px" />
+    <el-button @click="testListWorksSetWithWorksByIds">测试查询作品集DTO接口</el-button>
   </base-subpage>
 </template>
 

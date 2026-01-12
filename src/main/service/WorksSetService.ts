@@ -4,7 +4,11 @@ import WorksSetQueryDTO from '../model/queryDTO/WorksSetQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import WorksSetDao from '../dao/WorksSetDao.ts'
 import { AssertNotNullish } from '../util/AssertUtil.js'
-import { NotNullish } from '../util/CommonUtil.js'
+import { IsNullish, NotNullish } from '../util/CommonUtil.js'
+import WorksSetWithWorksDTO from '../model/dto/WorksSetWithWorksDTO.ts'
+import { Operator } from '../constant/CrudConstant.ts'
+import WorksService from './WorksService.ts'
+import lodash from 'lodash'
 
 /**
  * 作品集Service
@@ -30,7 +34,31 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
   public async listBySiteWorksSetIds(siteWorksSetIds: string[]): Promise<WorksSet[]> {
     const query = new WorksSetQueryDTO()
     query.siteWorksSetId = siteWorksSetIds
+    query.operators = { siteWorksSetId: Operator.IN }
     return this.list(query)
+  }
+
+  /**
+   * 根据作品集在站点的id和入库任务的id查询作品集
+   * @param ids 作品集在站点的id
+   */
+  public async listWorksSetWithWorksByIds(ids: number[]): Promise<WorksSetWithWorksDTO[]> {
+    const query = new WorksSetQueryDTO()
+    query.id = ids
+    query.operators = { id: Operator.IN }
+    const worksSetList = await this.list(query)
+    const worksService = new WorksService(this.db)
+    const worksSetIds: number[] = worksSetList.map((worksSet) => worksSet.id).filter(NotNullish)
+    const worksDtoList = await worksService.listWorksWithWorkSetIdByWorksSetIds(worksSetIds)
+    const worksIds = worksDtoList.map((works) => works.id).filter(NotNullish)
+    const fullWorksList = await worksService.listFullWorksInfoByIds(worksIds)
+    const worksSetIdToWorksMap = lodash.groupBy(fullWorksList, 'siteId')
+    return worksSetList.map((worksSet: WorksSet) => {
+      const tempWorksSetId = worksSet.id
+      const tempWorks = IsNullish(tempWorksSetId) ? [] : worksSetIdToWorksMap[tempWorksSetId]
+      const t = new WorksSetWithWorksDTO(worksSet, tempWorks)
+      return t
+    })
   }
 
   /**

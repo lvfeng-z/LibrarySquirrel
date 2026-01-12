@@ -202,6 +202,14 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
   }
 
   /**
+   * 查询作品的本地标签列表
+   * @param worksIds 作品id列表
+   */
+  public async listLocalTagWithWorksIdByWorksIds(worksIds: number[]) {
+    return this.dao.listLocalTagWithWorksIdByWorksIds(worksIds)
+  }
+
+  /**
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */

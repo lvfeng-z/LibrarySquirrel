@@ -166,6 +166,14 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   }
 
   /**
+   * 查询作品的站点标签DTO
+   * @param worksIds 作品id列表
+   */
+  public async listSiteTagWithWorksIdByWorksIds(worksIds: number[]) {
+    return await this.dao.listSiteTagWithWorksIdByWorksIds(worksIds)
+  }
+
+  /**
    * 分页查询
    * @param page
    */

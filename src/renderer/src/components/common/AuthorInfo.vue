@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, Ref, ref } from 'vue'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
-import LocalAuthorRankDTO from '@renderer/model/main/dto/LocalAuthorRankDTO.ts'
-import SiteAuthorRankDTO from '@renderer/model/main/dto/SiteAuthorRankDTO.ts'
+import RankedLocalAuthor from '@renderer/model/main/domain/RankedLocalAuthor.ts'
+import RankedSiteAuthor from '@renderer/model/main/domain/RankedSiteAuthor.ts'
 import RankAuthor from '@renderer/model/main/interface/RankAuthor.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
-    localAuthors: LocalAuthorRankDTO[] | undefined | null
-    siteAuthors: SiteAuthorRankDTO[] | undefined | null
+    localAuthors: RankedLocalAuthor[] | undefined | null
+    siteAuthors: RankedSiteAuthor[] | undefined | null
     popoverTrigger?: 'click' | 'hover' | 'focus' | 'contextmenu'
     useHandCursor?: boolean
     width?: string
@@ -24,14 +24,14 @@ const props = withDefaults(
 // 变量
 // 作者
 const authors = computed(() => {
-  let noLocalAuthorList: SiteAuthorRankDTO[] = []
+  let noLocalAuthorList: RankedSiteAuthor[] = []
   if (ArrayNotEmpty(props.siteAuthors)) {
     const localAuthors = ArrayNotEmpty(props.localAuthors) ? props.localAuthors : []
     noLocalAuthorList = props.siteAuthors.filter(
       (siteAuthor) => !localAuthors.some((localAuthor) => siteAuthor.localAuthorId === localAuthor.id)
     )
   }
-  let authorList: (LocalAuthorRankDTO | SiteAuthorRankDTO)[] = []
+  let authorList: (RankedLocalAuthor | RankedSiteAuthor)[] = []
   if (ArrayNotEmpty(props.localAuthors)) {
     authorList.push(...props.localAuthors)
   }
@@ -42,7 +42,7 @@ const authors = computed(() => {
 })
 // 作者名称列表
 const authorNames = computed(() => {
-  let noLocalAuthorList: SiteAuthorRankDTO[] = []
+  let noLocalAuthorList: RankedSiteAuthor[] = []
   if (ArrayNotEmpty(props.siteAuthors)) {
     const localAuthors = ArrayNotEmpty(props.localAuthors) ? props.localAuthors : []
     noLocalAuthorList = props.siteAuthors.filter(

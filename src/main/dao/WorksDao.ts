@@ -13,6 +13,7 @@ import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import { BOOL } from '../constant/BOOL.js'
+import WorksWithWorksSetId from '../model/domain/WorksWithWorksSetId.ts'
 
 export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -276,6 +277,30 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)
       return super.toResultTypeDataList<Works>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 根据作品集id列表批量查询
+   * @param worksSetIds 作品集id列表
+   */
+  async listWorksWithWorkSetIdByWorksSetIds(worksSetIds: number[]): Promise<WorksWithWorksSetId[]> {
+    if (ArrayIsEmpty(worksSetIds)) {
+      return []
+    }
+    const clause = `
+        SELECT w.*, rwws.works_set_id FROM works w
+          INNER JOIN re_works_works_set rwws ON w.id = rwws.works_id
+          INNER JOIN works_set ws ON ws.id = rwws.works_set_id
+        WHERE rwws.works_set_id IN (${worksSetIds.join(',')})`
+    const db = this.acquire()
+    try {
+      const rows = await db.all<unknown[], Record<string, unknown>>(clause)
+      return this.toResultTypeDataList<WorksWithWorksSetId>(rows)
     } finally {
       if (!this.injectedDB) {
         db.release()

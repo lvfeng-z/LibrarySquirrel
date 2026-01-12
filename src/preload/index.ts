@@ -10,6 +10,7 @@ const api = {
   testInstallPluginTest: (args) => Electron.ipcRenderer.invoke('test-installPluginTest', args),
   testMainWindowMsgTest: (args) => Electron.ipcRenderer.invoke('test-mainWindowMsgTest', args),
   testGotoPageSiteManage: (args) => Electron.ipcRenderer.invoke('test-gotoPageSiteManage', args),
+  testListWorksSetWithWorksByIds: (args) => Electron.ipcRenderer.invoke('test-listWorksSetWithWorksByIds', args),
 
   // AppLauncher
   appLauncherOpenImage: (args) => Electron.ipcRenderer.invoke('appLauncher-openImage', args),

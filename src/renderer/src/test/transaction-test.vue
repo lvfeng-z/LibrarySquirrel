@@ -4,7 +4,7 @@ import Site from '../model/main/entity/Site.ts'
 import LocalTag from '../model/main/entity/LocalTag.ts'
 import WorksFullDTO from '../model/main/dto/WorksFullDTO.ts'
 import lodash from 'lodash'
-import SiteAuthorRankDTO from '../model/main/dto/SiteAuthorRankDTO.ts'
+import RankedSiteAuthor from '../model/main/domain/RankedSiteAuthor.ts'
 
 // 变量
 // 接口
@@ -13,14 +13,14 @@ const apis = {
   testTransactionTest: window.api.testTransactionTest
 }
 const site = ref(new Site())
-const siteAuthor = ref(new SiteAuthorRankDTO())
+const siteAuthor = ref(new RankedSiteAuthor())
 const localTag = ref(new LocalTag())
 
 // 方法
 function saveWorks() {
   const worksFullDTO = new WorksFullDTO()
   worksFullDTO.site = lodash.cloneDeep(site.value)
-  const siteAuthors: SiteAuthorRankDTO[] = []
+  const siteAuthors: RankedSiteAuthor[] = []
   siteAuthors.push(lodash.cloneDeep(siteAuthor.value))
   worksFullDTO.siteAuthors = siteAuthors
   worksFullDTO.localTags = lodash.cloneDeep([localTag.value])

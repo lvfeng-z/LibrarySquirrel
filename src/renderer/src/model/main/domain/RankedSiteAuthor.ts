@@ -6,7 +6,7 @@ import RankAuthor from '@renderer/model/main/interface/RankAuthor.ts'
 /**
  * 站点作者DTO
  */
-export default class SiteAuthorRankDTO extends SiteAuthor implements RankAuthor {
+export default class RankedSiteAuthor extends SiteAuthor implements RankAuthor {
   /**
    * 作者级别
    */

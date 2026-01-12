@@ -13,8 +13,8 @@ import { AddSuffix, CreateDirIfNotExists, SanitizeFileName } from '../util/FileS
 import path from 'path'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
 import { AuthorRank } from '../constant/AuthorRank.js'
-import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
-import LocalAuthorRankDTO from '../model/dto/LocalAuthorRankDTO.js'
+import RankedSiteAuthor from '../model/domain/RankedSiteAuthor.ts'
+import RankedLocalAuthor from '../model/domain/RankedLocalAuthor.ts'
 import ResourceWriter from '../util/ResourceWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
@@ -25,6 +25,7 @@ import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rename, rm } from 'node:fs/promises'
 import Backup from '../model/entity/Backup.js'
 import { SendNotifyToWindow } from '../util/MainWindowUtil.js'
+import { Operator } from '../constant/CrudConstant.ts'
 
 /**
  * 资源服务
@@ -388,11 +389,22 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 根据作品id查询所有资源
-   * @param worksId
+   * @param worksId 作品id
    */
   public listByWorksId(worksId: number): Promise<Resource[]> {
     const query = new ResourceQueryDTO()
     query.worksId = worksId
+    return this.list(query)
+  }
+
+  /**
+   * 根据作品id查询所有资源
+   * @param worksIds 作品id列表
+   */
+  public listByWorksIds(worksIds: number[]): Promise<Resource[]> {
+    const query = new ResourceQueryDTO()
+    query.worksId = worksIds
+    query.operators = { worksId: Operator.IN }
     return this.list(query)
   }
 
@@ -435,10 +447,10 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainLocalAuthors: LocalAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(worksFullInfo.localAuthors)
       ? []
       : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
-    const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
       : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     const localAuthorName = ArrayIsEmpty(mainLocalAuthors)
@@ -466,7 +478,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getLocalAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainLocalAuthors: LocalAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(worksFullInfo.localAuthors)
       ? []
       : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainLocalAuthors)
@@ -482,7 +494,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getSiteAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
       : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)
@@ -498,7 +510,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getSiteAuthorId(worksFullInfo: WorksFullDTO): string {
-    const mainSiteAuthors: SiteAuthorRankDTO[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
       ? []
       : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)

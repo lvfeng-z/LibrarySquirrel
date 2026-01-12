@@ -1,8 +1,8 @@
 import Works from '../entity/Works.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
-import LocalAuthorRankDTO from './LocalAuthorRankDTO.ts'
-import SiteAuthorRankDTO from './SiteAuthorRankDTO.ts'
+import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
+import RankedSiteAuthor from '../domain/RankedSiteAuthor.ts'
 import SiteTagFullDTO from './SiteTagFullDTO.ts'
 import WorksSet from '../entity/WorksSet.ts'
 import Resource from '../entity/Resource.js'
@@ -30,7 +30,7 @@ export default class WorksFullDTO extends Works {
   /**
    * 本地作者
    */
-  localAuthors: LocalAuthorRankDTO[] | undefined | null
+  localAuthors: RankedLocalAuthor[] | undefined | null
 
   /**
    * 本地标签数组
@@ -40,7 +40,7 @@ export default class WorksFullDTO extends Works {
   /**
    * 站点作者
    */
-  siteAuthors: SiteAuthorRankDTO[] | undefined | null
+  siteAuthors: RankedSiteAuthor[] | undefined | null
 
   /**
    * 站点标签数组

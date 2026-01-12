@@ -24,7 +24,7 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId: number | null | undefined
+  worksId: number | number[] | null | undefined
 
   /**
    * 查询绑定在worksId上的还是没绑定的

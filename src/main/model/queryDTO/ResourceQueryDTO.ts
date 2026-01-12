@@ -8,7 +8,7 @@ export default class ResourceQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId?: number | undefined | null
+  worksId?: number | number[] | undefined | null
 
   /**
    * 任务id

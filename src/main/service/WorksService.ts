@@ -22,7 +22,7 @@ import { AssertArrayNotEmpty, AssertNotNullish } from '../util/AssertUtil.js'
 import { SearchCondition } from '../model/util/SearchCondition.js'
 import ReWorksAuthorService from './ReWorksAuthorService.js'
 import { OriginType } from '../constant/OriginType.js'
-import SiteAuthorRankDTO from '../model/dto/SiteAuthorRankDTO.js'
+import RankedSiteAuthor from '../model/domain/RankedSiteAuthor.ts'
 import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
@@ -31,6 +31,8 @@ import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 import StringUtil from '../util/StringUtil.js'
 import fs from 'fs/promises'
+import WorksWithWorksSetId from '../model/domain/WorksWithWorksSetId.ts'
+import lodash from 'lodash'
 
 export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
   constructor(db?: DatabaseClient) {
@@ -97,7 +99,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         })
         .filter(NotNullish)
       worksDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map(
-        (siteAuthor) => new SiteAuthorRankDTO(siteAuthor)
+        (siteAuthor) => new RankedSiteAuthor(siteAuthor)
       )
     }
     if (ArrayNotEmpty(worksDTO.siteTags)) {
@@ -219,7 +221,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    */
   public async saveSurroundingData(
     worksSets: WorksSet[] | undefined | null,
-    siteAuthors: SiteAuthorRankDTO[] | undefined | null,
+    siteAuthors: RankedSiteAuthor[] | undefined | null,
     siteTags: SiteTagFullDTO[] | undefined | null
   ): Promise<void> {
     // 保存作品集
@@ -364,6 +366,68 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   }
 
   /**
+   * 查询作品的完整信息列表
+   * @param worksIds 作品id列表
+   */
+  public async listFullWorksInfoByIds(worksIds: number[]): Promise<WorksFullDTO[]> {
+    const baseWorksInfos = await this.listByIds(worksIds)
+    const fullInfos = baseWorksInfos.map((baseWorksInfo) => new WorksFullDTO(baseWorksInfo))
+    // 资源
+    const resService = new ResourceService()
+    const resourceList = await resService.listByWorksIds(worksIds)
+    const worksIdToResourceMap = lodash.groupBy(resourceList, 'worksId')
+
+    // 本地作者
+    const localAuthorService = new LocalAuthorService()
+    const localAuthors = await localAuthorService.listRankedLocalAuthorWithWorksIdByWorksIds(worksIds)
+    const worksIdToLocalAuthorMap = lodash.groupBy(localAuthors, 'worksId')
+
+    // 本地标签
+    const localTagService = new LocalTagService()
+    const localTags = await localTagService.listLocalTagWithWorksIdByWorksIds(worksIds)
+    const worksIdToLocalTagMap = lodash.groupBy(localTags, 'worksId')
+
+    // 站点作者
+    const siteAuthorService = new SiteAuthorService()
+    const siteAuthors = await siteAuthorService.listRankedSiteAuthorWithWorksIdByWorksIds(worksIds)
+    const worksIdToSiteAuthorMap = lodash.groupBy(siteAuthors, 'worksId')
+
+    // 站点标签
+    const siteTagService = new SiteTagService()
+    const siteTags = await siteTagService.listSiteTagWithWorksIdByWorksIds(worksIds)
+    const worksIdToSiteTagMap = lodash.groupBy(siteTags, 'worksId')
+
+    // 站点信息
+    const siteService = new SiteService()
+    const siteIds = fullInfos.map((fullInfo) => fullInfo.siteId).filter(NotNullish)
+    const sites = ArrayNotEmpty(siteIds) ? await siteService.listByIds(siteIds) : []
+    const siteIdToSiteMap = lodash.keyBy(sites, 'id')
+
+    for (const fullInfo of fullInfos) {
+      fullInfo.inactiveResource = []
+      const tempWorksId = fullInfo.id
+      if (NotNullish(tempWorksId)) {
+        const tempResourceList = worksIdToResourceMap[tempWorksId]
+        for (const resource of tempResourceList) {
+          if (resource.state === BOOL.TRUE) {
+            fullInfo.resource = resource
+          } else {
+            fullInfo.inactiveResource.push(resource)
+          }
+        }
+        fullInfo.localAuthors = worksIdToLocalAuthorMap[tempWorksId]
+        fullInfo.localTags = worksIdToLocalTagMap[tempWorksId]
+        fullInfo.siteAuthors = worksIdToSiteAuthorMap[tempWorksId]
+        fullInfo.siteTags = worksIdToSiteTagMap[tempWorksId]
+      }
+      const tempSiteId = fullInfo.siteId
+      fullInfo.site = IsNullish(tempSiteId) ? undefined : siteIdToSiteMap[tempSiteId]
+    }
+
+    return fullInfos
+  }
+
+  /**
    * 根据站点id和作品在站点的id查询作品列表
    * @param siteId 站点id
    * @param siteWorksId 作品在站点的id
@@ -382,5 +446,13 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
     AssertArrayNotEmpty(siteIdAndSiteWorksIds, this.constructor.name, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
     return this.dao.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
+  }
+
+  /**
+   * 根据作品集id列表批量查询
+   * @param worksSetIds 作品集id列表
+   */
+  public async listWorksWithWorkSetIdByWorksSetIds(worksSetIds: number[]): Promise<WorksWithWorksSetId[]> {
+    return this.dao.listWorksWithWorkSetIdByWorksSetIds(worksSetIds)
   }
 }

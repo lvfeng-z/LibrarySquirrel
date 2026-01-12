@@ -9,6 +9,7 @@ import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
+import LocalTagWithWorksId from '../model/domain/LocalTagWithWorksId.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -114,6 +115,26 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     return db
       .all<unknown[], Record<string, unknown>>(statement)
       .then((runResult) => super.toResultTypeDataList<LocalTag>(runResult))
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
+  }
+
+  /**
+   * 查询作品的本地标签列表
+   * @param worksIds 作品id列表
+   */
+  public async listLocalTagWithWorksIdByWorksIds(worksIds: number[]): Promise<LocalTagWithWorksId[]> {
+    const statement = `SELECT t1.*, t2.works_id
+                       FROM local_tag t1
+                              INNER JOIN re_works_tag t2 ON t1.id = t2.local_tag_id
+                       WHERE t2.works_id IN (${worksIds.join(',')})`
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement)
+      .then((runResult) => super.toResultTypeDataList<LocalTagWithWorksId>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()

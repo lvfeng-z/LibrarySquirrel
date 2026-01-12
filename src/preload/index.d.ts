@@ -14,6 +14,7 @@ declare global {
       testInstallPluginTest: function
       testMainWindowMsgTest: function
       testGotoPageSiteManage: function
+      testListWorksSetWithWorksByIds: function
 
       // AppLauncher
       appLauncherOpenImage: function

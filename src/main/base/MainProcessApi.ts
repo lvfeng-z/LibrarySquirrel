@@ -52,6 +52,10 @@ function exposeService() {
     LogUtil.info('MainProcessApi', 'test-gotoPageSiteManage')
     return test.gotoPageSiteManage()
   })
+  Electron.ipcMain.handle('test-listWorksSetWithWorksByIds', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'test-listWorksSetWithWorksByIds')
+    return test.listWorksSetWithWorksByIds(args)
+  })
 
   // AppLauncherService
   Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {

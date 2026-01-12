@@ -8,7 +8,7 @@ export default class BaseQueryDTO {
   /**
    * 主键
    */
-  id?: Id | null | undefined
+  id?: Id | Id[] | null | undefined
 
   /**
    * 创建时间
