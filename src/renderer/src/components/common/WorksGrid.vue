@@ -2,7 +2,8 @@
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksCard from './WorksCard.vue'
 import WorksDialog from '../dialogs/WorksDialog.vue'
-import { Ref, ref, UnwrapRef } from 'vue'
+import { Ref, ref } from 'vue'
+import WorksSetDialog from '@renderer/components/dialogs/WorksSetDialog.vue'
 
 // props
 const props = defineProps<{
@@ -14,21 +15,30 @@ const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: t
 
 // 变量
 // worksDialog开关
-const worksDialogState: Ref<UnwrapRef<boolean>> = ref(false)
+const worksDialogState: Ref<boolean> = ref(false)
+// worksSetDialogState开关
+const worksSetDialogState: Ref<boolean> = ref(false)
+// 当前作品集id
+const currentWorksSetId: Ref<number> = ref(-1)
 
 // 方法
 function handleImageClicked(works: WorksFullDTO) {
   currentWorksIndex.value = props.worksList.indexOf(works)
   worksDialogState.value = true
 }
+// 打开作品集dialog
+function openWorksSetDialog() {
+  worksSetDialogState.value = true
+  currentWorksSetId.value = props.worksList[currentWorksIndex.value].siteId
+}
 </script>
 
 <template>
-  <div class="works-area">
+  <div class="works-grid">
     <template v-for="works in props.worksList" :key="works.id ? works.id : Math.random()">
-      <div class="works-area-container">
+      <div class="works-grid-container">
         <works-card
-          class="works-area-works-case"
+          class="works-grid-works-case"
           :works="works"
           :max-height="500"
           :max-width="500"
@@ -37,24 +47,26 @@ function handleImageClicked(works: WorksFullDTO) {
         />
       </div>
     </template>
-    <div class="works-area-dialog">
+    <div class="works-grid-dialog">
       <works-dialog
         v-if="worksDialogState"
         v-model="worksDialogState"
         v-model:current-works-index="currentWorksIndex"
         :works="props.worksList"
+        @open-works-set="openWorksSetDialog"
       />
+      <works-set-dialog v-if="worksSetDialogState" v-model="worksSetDialogState" v-model:current-works-set-id="currentWorksSetId" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.works-area {
+.works-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
-.works-area-container {
+.works-grid-container {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
@@ -64,14 +76,14 @@ function handleImageClicked(works: WorksFullDTO) {
   background-color: rgb(166.2, 168.6, 173.4, 10%);
   transition-duration: 0.3s;
 }
-.works-area-container:hover {
+.works-grid-container:hover {
   background-color: rgb(166.2, 168.6, 173.4, 30%);
   filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
 }
-.works-area-works-case {
+.works-grid-works-case {
   height: 100%;
 }
-.works-area-dialog :deep(.el-overlay-dialog) {
+.works-grid-dialog :deep(.el-overlay-dialog) {
   display: flex;
 }
 </style>

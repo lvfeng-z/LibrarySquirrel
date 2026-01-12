@@ -25,6 +25,7 @@ import SiteDomainService from '../service/SiteDomainService.js'
 import PluginService from '../service/PluginService.js'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
+import WorksSetService from '../service/WorksSetService.ts'
 
 function exposeService() {
   // test
@@ -809,6 +810,17 @@ function exposeService() {
     const worksService = new WorksService()
     try {
       const result = await worksService.getFullWorksInfoById(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
+  // WorksSetService
+  Electron.ipcMain.handle('worksSet-listWorksSetWithWorksByIds', async (_event, args): Promise<ApiUtil> => {
+    const worksSetService = new WorksSetService()
+    try {
+      const result = await worksSetService.listWorksSetWithWorksByIds(args)
       return ApiUtil.response(result)
     } catch (error) {
       return returnError(error)

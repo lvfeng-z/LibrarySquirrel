@@ -125,6 +125,9 @@ const api = {
   worksQueryPage: (args) => Electron.ipcRenderer.invoke('works-queryPage', args),
   worksGetFullWorksInfoById: (args) => Electron.ipcRenderer.invoke('works-getFullWorksInfoById', args),
 
+  // WorksSet
+  worksSetListWorksSetWithWorksByIds: (args) => Electron.ipcRenderer.invoke('worksSet-listWorksSetWithWorksByIds', args),
+
   // FileSysUtil
   dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)
 }

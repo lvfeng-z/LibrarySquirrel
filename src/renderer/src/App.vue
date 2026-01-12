@@ -464,16 +464,16 @@ async function handleTest() {
               <works-grid
                 ref="worksAreaRef"
                 v-model:current-works-index="currentWorksIndex"
-                class="main-page-works-area"
+                class="main-page-works-grid"
                 :works-list="worksList"
               ></works-grid>
             </el-scrollbar>
             <span
               ref="loadMoreButton"
               :class="{
-                'works-area-load-more': true,
-                'works-area-show-load-more': loadMore,
-                'works-area-hide-load-more': !loadMore
+                'works-grid-load-more': true,
+                'works-grid-show-load-more': loadMore,
+                'works-grid-hide-load-more': !loadMore
               }"
               @click="queryWorksPage(true)"
             >
@@ -594,10 +594,10 @@ async function handleTest() {
   height: calc(100% - 33px);
   margin-right: 8px;
 }
-.main-page-works-area {
+.main-page-works-grid {
   margin-right: 19px;
 }
-.works-area-load-more {
+.works-grid-load-more {
   position: absolute;
   bottom: 0;
   width: 100%;
@@ -613,13 +613,13 @@ async function handleTest() {
   text-align: center;
   cursor: pointer;
 }
-.works-area-load-more:hover {
+.works-grid-load-more:hover {
   background-color: var(--el-color-info-light-7);
 }
-.works-area-show-load-more {
+.works-grid-show-load-more {
   height: 26px;
 }
-.works-area-hide-load-more {
+.works-grid-hide-load-more {
   height: 0;
   padding-top: 0;
   padding-bottom: 0;

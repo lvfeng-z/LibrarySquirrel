@@ -33,6 +33,9 @@ const props = defineProps<{
 // model
 const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: true })
 
+// 事件
+const emits = defineEmits(['openWorksSet'])
+
 // onBeforeMount
 onBeforeMount(async () => {
   await getWorksInfo()
@@ -295,8 +298,7 @@ async function deleteWorks() {
   <el-dialog center style="margin: auto; width: 90%">
     <template #header>
       <span class="works-dialog-works-name">
-        {{ StringUtil.isBlank(currentWorksFullInfo.nickName) ? currentWorksFullInfo.siteWorksName : currentWorksFullInfo.nickName
-        }}
+        {{ StringUtil.isBlank(currentWorksFullInfo.nickName) ? currentWorksFullInfo.siteWorksName : currentWorksFullInfo.nickName }}
       </span>
     </template>
     <div class="works-dialog-container">
@@ -315,7 +317,11 @@ async function deleteWorks() {
       <el-scrollbar class="works-dialog-scrollbar">
         <el-descriptions ref="infosRef" class="works-dialog-info" direction="horizontal" :column="1">
           <el-descriptions-item label="作者">
-            <author-info id="author" :local-authors="currentWorksFullInfo.localAuthors" :site-authors="currentWorksFullInfo.siteAuthors" />
+            <author-info
+              id="author"
+              :local-authors="currentWorksFullInfo.localAuthors"
+              :site-authors="currentWorksFullInfo.siteAuthors"
+            />
           </el-descriptions-item>
           <el-descriptions-item label="站点">
             <span id="site">{{ currentWorksFullInfo.site?.siteName }}</span>
@@ -452,6 +458,7 @@ async function deleteWorks() {
           <el-button icon="back" @click="setCurrentWorks(currentWorksIndex - 1)" />
           <el-button icon="right" @click="setCurrentWorks(currentWorksIndex + 1)" />
         </el-button-group>
+        <el-button type="primary" icon="Files" @click="emits('openWorksSet')">作品集</el-button>
       </div>
     </template>
   </el-dialog>

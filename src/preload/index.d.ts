@@ -129,6 +129,9 @@ declare global {
       worksSaveWorks: function
       worksGetFullWorksInfoById: function
 
+      // WorksSet
+      worksSetListWorksSetWithWorksByIds: function
+
       // FileSysUtil
       dirSelect: function
     }
