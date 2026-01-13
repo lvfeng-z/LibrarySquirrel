@@ -5,6 +5,7 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { NotNullish } from '../util/CommonUtil.ts'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
+import WorksSetWithWorksId from '../model/domain/WorksSetWithWorksId.ts'
 
 export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -62,6 +63,28 @@ export default class WorksSetDao extends BaseDao<WorksSetQueryDTO, WorksSet> {
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)
       return this.toResultTypeDataList<WorksSet>(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 根据作品id列表作品集+作品id
+   * @param worksIds 作品id列表
+   */
+  public async listWorksSetWithWorksIdByWorksIds(worksIds: number[]): Promise<WorksSetWithWorksId[]> {
+    const clause = `
+      SELECT ws.*, w.id as worksId
+      FROM works_set ws
+               INNER JOIN re_works_works_set rwws ON ws.id = rwws.works_set_id
+               INNER JOIN works w ON rwws.works_id = w.id
+      WHERE w.id IN (${worksIds.join(',')})`
+    const db = this.acquire()
+    try {
+      const row = await db.all<unknown[], Record<string, unknown>>(clause)
+      return this.toResultTypeDataList<WorksSetWithWorksId>(row)
     } finally {
       if (!this.injectedDB) {
         db.release()

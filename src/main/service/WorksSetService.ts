@@ -9,6 +9,8 @@ import WorksSetWithWorksDTO from '../model/dto/WorksSetWithWorksDTO.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import WorksService from './WorksService.ts'
 import lodash from 'lodash'
+import { Dictionary } from 'async'
+import WorksSetWithWorksId from '../model/domain/WorksSetWithWorksId.ts'
 
 /**
  * 作品集Service
@@ -46,18 +48,33 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
     const query = new WorksSetQueryDTO()
     query.id = ids
     query.operators = { id: Operator.IN }
+    // 查询作品集元数据
     const worksSetList = await this.list(query)
+    // 查询作品集的作品
     const worksService = new WorksService(this.db)
     const worksSetIds: number[] = worksSetList.map((worksSet) => worksSet.id).filter(NotNullish)
-    const worksDtoList = await worksService.listWorksWithWorkSetIdByWorksSetIds(worksSetIds)
-    const worksIds = worksDtoList.map((works) => works.id).filter(NotNullish)
+    const worksWithWorksSetIdList = await worksService.listWorksWithWorkSetIdByWorksSetIds(worksSetIds)
+    // 补全作品的作品信息
+    const worksIds = worksWithWorksSetIdList.map((works) => works.id).filter(NotNullish)
     const fullWorksList = await worksService.listFullWorksInfoByIds(worksIds)
-    const worksSetIdToWorksMap = lodash.groupBy(fullWorksList, 'siteId')
+    // 作品放入作品集中
+    const workIdToWorksSetIdMap = Object.fromEntries(
+      worksWithWorksSetIdList
+        .filter((item) => NotNullish(item.id) && NotNullish(item.worksSetId))
+        .map((item) => [item.id, item.worksSetId])
+    )
+    const worksSetIdToWorksMap = lodash.groupBy(fullWorksList, (works) => {
+      const worksId = works.id
+      if (IsNullish(worksId)) {
+        return
+      } else {
+        return workIdToWorksSetIdMap[worksId]
+      }
+    })
     return worksSetList.map((worksSet: WorksSet) => {
       const tempWorksSetId = worksSet.id
       const tempWorks = IsNullish(tempWorksSetId) ? [] : worksSetIdToWorksMap[tempWorksSetId]
-      const t = new WorksSetWithWorksDTO(worksSet, tempWorks)
-      return t
+      return new WorksSetWithWorksDTO(worksSet, tempWorks)
     })
   }
 
@@ -88,5 +105,14 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
    */
   public async listBySiteWorksSet(siteWorksSets: { siteWorksSetId: string; siteId: number }[]): Promise<WorksSet[]> {
     return this.dao.listBySiteWorksSet(siteWorksSets)
+  }
+
+  /**
+   * 根据作品id列表查询作品与作品集映射关系
+   * @param worksIds 作品id列表
+   */
+  public async getWorksToWorksSetMapByWorksIds(worksIds: number[]): Promise<Dictionary<WorksSetWithWorksId[]>> {
+    const worksSetWithWorksIdList = await this.dao.listWorksSetWithWorksIdByWorksIds(worksIds)
+    return lodash.groupBy(worksSetWithWorksIdList, 'worksId')
   }
 }

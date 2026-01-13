@@ -403,6 +403,10 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
     const sites = ArrayNotEmpty(siteIds) ? await siteService.listByIds(siteIds) : []
     const siteIdToSiteMap = lodash.keyBy(sites, 'id')
 
+    // 作品集
+    const worksSetService = new WorksSetService()
+    const worksIdToWorksSetMap = await worksSetService.getWorksToWorksSetMapByWorksIds(worksIds)
+
     for (const fullInfo of fullInfos) {
       fullInfo.inactiveResource = []
       const tempWorksId = fullInfo.id
@@ -419,6 +423,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
         fullInfo.localTags = worksIdToLocalTagMap[tempWorksId]
         fullInfo.siteAuthors = worksIdToSiteAuthorMap[tempWorksId]
         fullInfo.siteTags = worksIdToSiteTagMap[tempWorksId]
+        fullInfo.worksSets = worksIdToWorksSetMap[tempWorksId]
       }
       const tempSiteId = fullInfo.siteId
       fullInfo.site = IsNullish(tempSiteId) ? undefined : siteIdToSiteMap[tempSiteId]

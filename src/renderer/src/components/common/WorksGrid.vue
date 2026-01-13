@@ -29,7 +29,7 @@ function handleImageClicked(works: WorksFullDTO) {
 // 打开作品集dialog
 function openWorksSetDialog() {
   worksSetDialogState.value = true
-  currentWorksSetId.value = props.worksList[currentWorksIndex.value].siteId
+  currentWorksSetId.value = props.worksList[currentWorksIndex.value].worksSets[0].id
 }
 </script>
 
