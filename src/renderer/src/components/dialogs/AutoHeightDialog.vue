@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { nextTick, Ref, ref } from 'vue'
 
+// props
+const props = defineProps<{
+  width?: string
+}>()
+
 // model
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
 // 变量
-// el-dialog组件实例
-const dialogRef = ref()
+// el-scrollbar组件实例
+const scrollbarRef = ref()
 // el-scrollbar内部容器的高度
 const scrollbarWrapHeight: Ref<string> = ref('')
 
@@ -15,7 +20,7 @@ const scrollbarWrapHeight: Ref<string> = ref('')
 // 开启对话框
 function handleChangeState() {
   nextTick(() => {
-    const dialog = dialogRef.value.$el.parentElement.parentElement
+    const dialog = scrollbarRef.value.$el.parentElement.parentElement
     const headerHeight = dialog.querySelector('.el-dialog__header').clientHeight
     const footerHeight = dialog.querySelector('.el-dialog__footer').clientHeight
 
@@ -26,17 +31,19 @@ function handleChangeState() {
 </script>
 
 <template>
-  <el-dialog ref="dialogRef" v-model="state" center @open="handleChangeState">
-    <template #header>
-      <slot name="header" />
-    </template>
-    <el-scrollbar class="form-dialog-scrollbar">
-      <slot />
-    </el-scrollbar>
-    <template #footer>
-      <slot name="footer" />
-    </template>
-  </el-dialog>
+  <teleport to="#dialog-mount-point">
+    <el-dialog v-model="state" :width="props.width" style="margin: auto" @open="handleChangeState">
+      <template #header>
+        <slot name="header" />
+      </template>
+      <el-scrollbar ref="scrollbarRef" class="form-dialog-scrollbar">
+        <slot />
+      </el-scrollbar>
+      <template #footer>
+        <slot name="footer" />
+      </template>
+    </el-dialog>
+  </teleport>
 </template>
 
 <style scoped>

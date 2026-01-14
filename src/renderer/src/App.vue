@@ -466,6 +466,7 @@ async function handleTest() {
                 v-model:current-works-index="currentWorksIndex"
                 class="main-page-works-grid"
                 :works-list="worksList"
+                :works-set-disabled="false"
               ></works-grid>
             </el-scrollbar>
             <span

@@ -42,7 +42,7 @@ function handleCancelButtonClicked() {
 </script>
 
 <template>
-  <auto-height-dialog v-model:state="state" center>
+  <auto-height-dialog v-model:state="state">
     <template #header>
       <slot name="header" />
     </template>

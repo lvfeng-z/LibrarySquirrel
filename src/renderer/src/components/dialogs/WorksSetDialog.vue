@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import WorksGrid from '@renderer/components/common/WorksGrid.vue'
-import { onMounted, Ref, ref } from 'vue'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { Ref, ref, watch } from 'vue'
+import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksSetWithWorksDTO from '@renderer/model/main/dto/WorksSetWithWorksDTO.ts'
+import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
 
-//props
+// props
 const props = defineProps<{
-  scrollbarHeight: string
+  width?: string
 }>()
 
 // model
+// 弹窗开关
+const state = defineModel<boolean>('state', { required: true })
 const currentWorksSetId = defineModel<number>('currentWorksSetId', { required: true })
-
-// onMounted
-onMounted(() => {
-  loadWorksList()
-})
 
 // 变量
 // 接口
@@ -37,23 +35,24 @@ async function loadWorksList() {
   const response = await apis.worksSetListWorksSetWithWorksByIds([currentWorksSetId.value])
   if (ApiUtil.check(response)) {
     const worksSetList = ApiUtil.data<WorksSetWithWorksDTO[]>(response)
-    if (NotNullish(worksSetList)) {
+    if (ArrayNotEmpty(worksSetList)) {
       worksList.value = worksSetList[0].worksList
     }
   }
 }
+
+// watch
+watch(state, (newValue) => {
+  if (newValue) {
+    loadWorksList()
+  }
+})
 </script>
 
 <template>
-  <el-dialog destroy-on-close center style="margin: auto; width: 90%">
-    <el-scrollbar class="works-set-dialog-works-grid-scrollbar">
-      <works-grid :works-list="worksList" :current-works-index="currentWorksIndex"> </works-grid>
-    </el-scrollbar>
-  </el-dialog>
+  <auto-height-dialog v-model:state="state" :width="props.width">
+    <works-grid :works-list="worksList" :current-works-index="currentWorksIndex" :works-set-disabled="true"> </works-grid>
+  </auto-height-dialog>
 </template>
 
-<style scoped>
-.works-set-dialog-works-grid-scrollbar {
-  height: v-bind(props.scrollbarHeight);
-}
-</style>
+<style scoped></style>

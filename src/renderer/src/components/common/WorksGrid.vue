@@ -4,10 +4,12 @@ import WorksCard from './WorksCard.vue'
 import WorksDialog from '../dialogs/WorksDialog.vue'
 import { Ref, ref } from 'vue'
 import WorksSetDialog from '@renderer/components/dialogs/WorksSetDialog.vue'
+import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
   worksList: WorksFullDTO[]
+  worksSetDisabled: boolean
 }>()
 
 // model
@@ -27,9 +29,13 @@ function handleImageClicked(works: WorksFullDTO) {
   worksDialogState.value = true
 }
 // 打开作品集dialog
-function openWorksSetDialog() {
+async function openWorksSetDialog() {
+  worksDialogState.value = false
   worksSetDialogState.value = true
-  currentWorksSetId.value = props.worksList[currentWorksIndex.value].worksSets[0].id
+  const temp = props.worksList[currentWorksIndex.value].worksSets?.[0].id
+  if (NotNullish(temp)) {
+    currentWorksSetId.value = temp
+  }
 }
 </script>
 
@@ -47,7 +53,7 @@ function openWorksSetDialog() {
         />
       </div>
     </template>
-    <div class="works-grid-dialog">
+    <div class="works-grid-dialog-wrapper">
       <works-dialog
         v-if="worksDialogState"
         v-model="worksDialogState"
@@ -56,10 +62,10 @@ function openWorksSetDialog() {
         @open-works-set="openWorksSetDialog"
       />
       <works-set-dialog
-        v-if="worksSetDialogState"
-        v-model="worksSetDialogState"
+        v-if="!worksSetDisabled"
+        v-model:state="worksSetDialogState"
         v-model:current-works-set-id="currentWorksSetId"
-        scrollbar-height="80vh"
+        width="90%"
       />
     </div>
   </div>
@@ -87,8 +93,5 @@ function openWorksSetDialog() {
 }
 .works-grid-works-case {
   height: 100%;
-}
-.works-grid-dialog :deep(.el-overlay-dialog) {
-  display: flex;
 }
 </style>
