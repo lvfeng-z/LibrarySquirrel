@@ -86,9 +86,11 @@ const siteTagExchangeBox = ref()
 // 作品信息
 const currentWorksFullInfo: Ref<WorksFullDTO> = computed(() => new WorksFullDTO(props.works[currentWorksIndex.value]))
 // 本地标签
-const localTags: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
+const localTags: Ref<SegmentedTagItem[]> = ref([])
 // 本地标签
-const siteTags: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
+const siteTags: Ref<SegmentedTagItem[]> = ref([])
+// 作品集
+const worksSets: Ref<SegmentedTagItem[]> = ref([])
 // 本地标签编辑开关
 const drawerState: Ref<boolean> = ref(false)
 // 本地标签编辑开关
@@ -144,10 +146,23 @@ function refreshTags() {
   )
   siteTags.value = IsNullish(tempSiteTags) ? [] : tempSiteTags
 }
+// 刷新作品集
+function refreshWorksSets() {
+  const tempWorksSets = currentWorksFullInfo.value.worksSets?.map(
+    (worksSet) =>
+      new SegmentedTagItem({
+        value: worksSet.id as number,
+        label: worksSet.siteWorksSetName as string,
+        disabled: false
+      })
+  )
+  worksSets.value = IsNullish(tempWorksSets) ? [] : tempWorksSets
+}
 // 刷新作品
 async function refreshWorksInfo() {
   await getWorksInfo()
   refreshTags()
+  refreshWorksSets()
 }
 // 处理本地标签exchangeBox确认交换事件
 async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[], isUpper?: boolean) {
@@ -299,6 +314,10 @@ async function deleteWorks() {
     ApiUtil.msg(response)
   }
 }
+// 处理作品集标签被点击事件
+function handleWorksSetClicked(worksSetTag: SegmentedTagItem) {
+  emits('openWorksSet', worksSetTag.value)
+}
 </script>
 <template>
   <auto-height-dialog v-model:state="state" :width="props.width" @open="refreshWorksInfo">
@@ -345,6 +364,12 @@ async function deleteWorks() {
               <el-button @click="openDrawer(false)"> 编辑 </el-button>
             </template>
             <tag-box id="siteTag" v-model:data="siteTags" />
+          </el-descriptions-item>
+          <el-descriptions-item>
+            <template #label>
+              <span>作品集 </span>
+            </template>
+            <tag-box id="worksSet" v-model:data="worksSets" @tag-clicked="handleWorksSetClicked" />
           </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -464,7 +489,14 @@ async function deleteWorks() {
           <el-button icon="back" @click="setCurrentWorks(currentWorksIndex - 1)" />
           <el-button icon="right" @click="setCurrentWorks(currentWorksIndex + 1)" />
         </el-button-group>
-        <el-button type="primary" icon="Files" @click="emits('openWorksSet')">作品集</el-button>
+        <el-dropdown title="作品集" placement="top-end">
+          <el-button type="primary" icon="Files">作品集</el-button>
+          <template #dropdown>
+            <template v-for="worksSet in worksSets" :key="worksSet.value">
+              <el-dropdown-item @click="handleWorksSetClicked(worksSet)">{{ worksSet.label }}</el-dropdown-item>
+            </template>
+          </template>
+        </el-dropdown>
       </div>
     </template>
   </auto-height-dialog>
@@ -483,7 +515,7 @@ async function deleteWorks() {
   flex-grow: 1;
 }
 .works-dialog-image {
-  max-height: 75vh;
+  max-height: 65vh;
   max-width: 60%;
   margin-right: 10px;
   cursor: pointer;

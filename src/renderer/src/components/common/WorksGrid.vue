@@ -4,7 +4,6 @@ import WorksCard from './WorksCard.vue'
 import WorksDialog from '../dialogs/WorksDialog.vue'
 import { Ref, ref } from 'vue'
 import WorksSetDialog from '@renderer/components/dialogs/WorksSetDialog.vue'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
 
 // props
 const props = defineProps<{
@@ -29,13 +28,10 @@ function handleImageClicked(works: WorksFullDTO) {
   worksDialogState.value = true
 }
 // 打开作品集dialog
-async function openWorksSetDialog() {
+async function openWorksSetDialog(worksSetId: number) {
   worksDialogState.value = false
   worksSetDialogState.value = true
-  const temp = props.worksList[currentWorksIndex.value].worksSets?.[0].id
-  if (NotNullish(temp)) {
-    currentWorksSetId.value = temp
-  }
+  currentWorksSetId.value = worksSetId
 }
 </script>
 
