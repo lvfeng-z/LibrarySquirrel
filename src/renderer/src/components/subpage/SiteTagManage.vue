@@ -317,8 +317,6 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
       <site-tag-dialog
         v-model:form-data="dialogData"
         v-model:state="dialogState"
-        align-center
-        destroy-on-close
         :mode="siteTagDialogMode"
         @request-success="refreshTable"
       />

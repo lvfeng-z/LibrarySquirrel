@@ -593,15 +593,8 @@ function getSupportedText() {
       </search-table>
     </div>
     <template #dialog>
-      <task-dialog
-        v-model:state="taskDialogState"
-        v-model:form-data="dialogData"
-        :mode="DialogMode.VIEW"
-        align-center
-        destroy-on-close
-        width="90%"
-      />
-      <el-dialog v-model="downloadDialogState" center width="80%" align-center destroy-on-close>
+      <task-dialog v-model:state="taskDialogState" v-model:form-data="dialogData" :mode="DialogMode.VIEW" width="90%" />
+      <el-dialog v-model="downloadDialogState" width="80%">
         <div v-if="downloadMode" class="task-manage-download-dialog-local-button-container">
           <el-button type="primary" icon="FolderOpened" @click="selectDir(false)">选择文件夹导入</el-button>
           <el-button type="primary" icon="Document" @click="selectDir(true)">选择单个文件导入</el-button>

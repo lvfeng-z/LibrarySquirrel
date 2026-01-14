@@ -657,16 +657,12 @@ function handleReverse() {
       <site-dialog
         v-model:form-data="siteDialogData"
         v-model:state="siteDialogState"
-        align-center
-        destroy-on-close
         :mode="siteDialogMode"
         @request-success="handleSiteDialogRequestSuccess"
       />
       <site-domain-dialog
         v-model:form-data="siteDomainDialogData"
         v-model:state="siteDomainDialogState"
-        align-center
-        destroy-on-close
         :mode="siteDomainDialogMode"
         @request-success="handleSiteDomainDialogRequestSuccess"
       />

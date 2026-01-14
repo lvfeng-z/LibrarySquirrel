@@ -10,6 +10,9 @@ const props = defineProps<{
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
 
+// 事件
+const emits = defineEmits(['open'])
+
 // 变量
 // el-scrollbar组件实例
 const scrollbarRef = ref()
@@ -19,6 +22,7 @@ const scrollbarWrapHeight: Ref<string> = ref('')
 // 方法
 // 开启对话框
 function handleChangeState() {
+  emits('open')
   nextTick(() => {
     const dialog = scrollbarRef.value.$el.parentElement.parentElement
     const headerHeight = dialog.querySelector('.el-dialog__header').clientHeight

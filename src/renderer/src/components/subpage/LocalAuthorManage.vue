@@ -357,8 +357,6 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
       <local-author-dialog
         v-model:form-data="dialogData"
         v-model:state="dialogState"
-        align-center
-        destroy-on-close
         :mode="localAuthorDialogMode"
         @request-success="refreshTable"
       />

@@ -395,8 +395,6 @@ async function requestSiteTagSelectItemPage(
       <local-tag-dialog
         v-model:form-data="dialogData"
         v-model:state="dialogState"
-        align-center
-        destroy-on-close
         :mode="localTagDialogMode"
         @request-success="refreshTable"
       />

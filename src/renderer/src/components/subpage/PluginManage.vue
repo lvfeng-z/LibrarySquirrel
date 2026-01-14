@@ -254,13 +254,7 @@ async function reInstallFromPath(pluginId: number, packagePath: string) {
       </div>
     </template>
     <template #dialog>
-      <plugin-dialog
-        v-model:form-data="dialogData"
-        v-model:state="dialogState"
-        align-center
-        destroy-on-close
-        :mode="DialogMode.VIEW"
-      />
+      <plugin-dialog v-model:form-data="dialogData" v-model:state="dialogState" :mode="DialogMode.VIEW" />
     </template>
   </base-subpage>
 </template>

@@ -317,8 +317,6 @@ async function creatSameNameLocalAuthorAndBind(siteAuthor: SiteAuthor) {
       <site-author-dialog
         v-model:form-data="dialogData"
         v-model:state="dialogState"
-        align-center
-        destroy-on-close
         :mode="siteAuthorDialogMode"
         @request-success="refreshTable"
       />
