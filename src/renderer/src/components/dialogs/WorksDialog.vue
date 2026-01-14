@@ -24,13 +24,17 @@ import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { Picture } from '@element-plus/icons-vue'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import { CopyIgnoreUndefined } from '@renderer/utils/ObjectUtil.ts'
+import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
 
 // props
 const props = defineProps<{
   works: WorksFullDTO[]
+  width?: string
 }>()
 
 // model
+// 弹窗开关
+const state = defineModel<boolean>('state', { required: true })
 const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: true })
 
 // 事件
@@ -295,7 +299,7 @@ async function deleteWorks() {
 }
 </script>
 <template>
-  <el-dialog center style="margin: auto; width: 90%">
+  <auto-height-dialog v-model:state="state" :width="props.width">
     <template #header>
       <span class="works-dialog-works-name">
         {{ StringUtil.isBlank(currentWorksFullInfo.nickName) ? currentWorksFullInfo.siteWorksName : currentWorksFullInfo.nickName }}
@@ -461,7 +465,7 @@ async function deleteWorks() {
         <el-button type="primary" icon="Files" @click="emits('openWorksSet')">作品集</el-button>
       </div>
     </template>
-  </el-dialog>
+  </auto-height-dialog>
 </template>
 
 <style scoped>

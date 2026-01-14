@@ -55,18 +55,13 @@ async function openWorksSetDialog() {
     </template>
     <div class="works-grid-dialog-wrapper">
       <works-dialog
-        v-if="worksDialogState"
-        v-model="worksDialogState"
+        v-model:state="worksDialogState"
         v-model:current-works-index="currentWorksIndex"
         :works="props.worksList"
+        width="90%"
         @open-works-set="openWorksSetDialog"
       />
-      <works-set-dialog
-        v-if="!worksSetDisabled"
-        v-model:state="worksSetDialogState"
-        v-model:current-works-set-id="currentWorksSetId"
-        width="90%"
-      />
+      <works-set-dialog v-model:state="worksSetDialogState" v-model:current-works-set-id="currentWorksSetId" width="90%" />
     </div>
   </div>
 </template>
