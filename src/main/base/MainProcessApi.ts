@@ -26,6 +26,7 @@ import PluginService from '../service/PluginService.js'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
 import WorksSetService from '../service/WorksSetService.ts'
+import { IsNullish } from '../util/CommonUtil.ts'
 
 function exposeService() {
   // test
@@ -809,6 +810,9 @@ function exposeService() {
   Electron.ipcMain.handle('works-getFullWorksInfoById', async (_event, args): Promise<ApiUtil> => {
     const worksService = new WorksService()
     try {
+      if (IsNullish(args)) {
+        return returnError(new Error('作品id不能为空'))
+      }
       const result = await worksService.getFullWorksInfoById(args)
       return ApiUtil.response(result)
     } catch (error) {

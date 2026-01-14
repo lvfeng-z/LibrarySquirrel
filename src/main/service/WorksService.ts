@@ -326,7 +326,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param worksId 作品id
    */
   public async getFullWorksInfoById(worksId: number): Promise<WorksFullDTO | undefined> {
-    const baseWorksInfo = await super.getById(worksId)
+    const baseWorksInfo = await this.getById(worksId)
     const fullInfo = new WorksFullDTO(baseWorksInfo)
     // 资源
     const resService = new ResourceService()

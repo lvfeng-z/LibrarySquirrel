@@ -42,8 +42,6 @@ const emits = defineEmits(['openWorksSet'])
 
 // onBeforeMount
 onBeforeMount(async () => {
-  await getWorksInfo()
-  refreshTags()
   // nextTick(() => {
   //   const baseDialogHeader =
   //     baseDialog.value.$el.parentElement.querySelector('.el-dialog__header')?.clientHeight
@@ -145,6 +143,11 @@ function refreshTags() {
       })
   )
   siteTags.value = IsNullish(tempSiteTags) ? [] : tempSiteTags
+}
+// 刷新作品
+async function refreshWorksInfo() {
+  await getWorksInfo()
+  refreshTags()
 }
 // 处理本地标签exchangeBox确认交换事件
 async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[], isUpper?: boolean) {
@@ -279,8 +282,7 @@ async function setCurrentWorks(newIndex: number): Promise<void> {
   }
   currentWorksIndex.value = newIndex
   await nextTick()
-  await getWorksInfo()
-  refreshTags()
+  return refreshWorksInfo()
 }
 // 处理键盘按下事件
 function handleKeydown(event: KeyboardEvent) {
@@ -299,7 +301,7 @@ async function deleteWorks() {
 }
 </script>
 <template>
-  <auto-height-dialog v-model:state="state" :width="props.width">
+  <auto-height-dialog v-model:state="state" :width="props.width" @open="refreshWorksInfo">
     <template #header>
       <span class="works-dialog-works-name">
         {{ StringUtil.isBlank(currentWorksFullInfo.nickName) ? currentWorksFullInfo.siteWorksName : currentWorksFullInfo.nickName }}
