@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, Ref, ref } from 'vue'
+import { computed, Ref, ref } from 'vue'
 import DialogMode from '@renderer/model/util/DialogMode.ts'
+import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
 
 // props
 const props = defineProps<{
@@ -17,8 +18,6 @@ const state = defineModel<boolean>('state', { required: true })
 const emits = defineEmits(['saveButtonClicked', 'cancelButtonClicked'])
 
 // 变量
-// el-dialog组件实例
-const dialogRef = ref()
 // el-scrollbar内部容器的高度
 const scrollbarWrapHeight: Ref<string> = ref('')
 // 表单总开关
@@ -40,29 +39,17 @@ function handleCancelButtonClicked() {
   state.value = false
   emits('cancelButtonClicked')
 }
-// 开启对话框
-function handleChangeState() {
-  nextTick(() => {
-    const dialog = dialogRef.value.$el.parentElement.parentElement
-    const headerHeight = dialog.querySelector('.el-dialog__header').clientHeight
-    const footerHeight = dialog.querySelector('.el-dialog__footer').clientHeight
-
-    scrollbarWrapHeight.value = 'calc(90vh - ' + (headerHeight + footerHeight) + 'px)'
-  })
-}
 </script>
 
 <template>
-  <el-dialog ref="dialogRef" v-model="state" center @open="handleChangeState">
+  <auto-height-dialog v-model:state="state" center>
     <template #header>
       <slot name="header" />
     </template>
-    <el-scrollbar class="form-dialog-scrollbar">
-      <el-form v-model="formData" class="form-dialog-form" :disabled="formDisabled">
-        <slot name="form" />
-      </el-form>
-      <slot name="afterForm" />
-    </el-scrollbar>
+    <el-form v-model="formData" class="form-dialog-form" :disabled="formDisabled">
+      <slot name="form" />
+    </el-form>
+    <slot name="afterForm" />
     <template #footer>
       <slot name="footer">
         <el-row>
@@ -75,7 +62,7 @@ function handleChangeState() {
         </el-row>
       </slot>
     </template>
-  </el-dialog>
+  </auto-height-dialog>
 </template>
 
 <style scoped>
