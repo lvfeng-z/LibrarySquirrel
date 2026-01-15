@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import WorksGrid from '@renderer/components/common/WorksGrid.vue'
 import { Ref, ref, watch } from 'vue'
 import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksSetWithWorksDTO from '@renderer/model/main/dto/WorksSetWithWorksDTO.ts'
 import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
+import WorksGridForWorksSet from '@renderer/components/common/WorksGridForWorksSet.vue'
 
 // props
 const props = defineProps<{
@@ -42,16 +42,16 @@ async function loadWorksList() {
 }
 
 // watch
-watch(state, (newValue) => {
-  if (newValue) {
-    loadWorksList()
-  }
-})
+watch(currentWorksSetId, () => loadWorksList())
 </script>
 
 <template>
   <auto-height-dialog v-model:state="state" :width="props.width">
-    <works-grid :works-list="worksList" :current-works-index="currentWorksIndex" :works-set-disabled="true"> </works-grid>
+    <works-grid-for-works-set
+      v-model:current-works-set-id="currentWorksSetId"
+      :works-list="worksList"
+      :current-works-index="currentWorksIndex"
+    />
   </auto-height-dialog>
 </template>
 

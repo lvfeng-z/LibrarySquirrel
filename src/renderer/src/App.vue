@@ -14,7 +14,6 @@ import GuidePage from '@renderer/components/subpage/Guide.vue'
 import Test from '@renderer/components/subpage/Test.vue'
 import SideMenu from './components/oneOff/SideMenu.vue'
 import { Close, Coordinate, Discount, HomeFilled, Link, List, Setting, Star, TakeawayBox, User } from '@element-plus/icons-vue'
-import WorksGrid from './components/common/WorksGrid.vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
@@ -42,12 +41,13 @@ import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import { Settings as SettingsEntity } from '@renderer/model/util/Settings.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AskGotoPage, GotoPage } from '@renderer/utils/PageUtil.ts'
+import WorksGridForMainPage from '@renderer/components/common/WorksGridForMainPage.vue'
 
 // onMounted
 onMounted(async () => {
   // const request = apis.worksQueryPage()
   // console.log(request)
-  resizeObserver.observe(worksAreaRef.value.$el)
+  resizeObserver.observe(worksGridRef.value.$el)
   window.addEventListener('keyup', handleKeyUp)
 
   // 首次使用软件的向导
@@ -122,8 +122,8 @@ const apis = {
 }
 // main-page-works-space的实例
 const worksSpace = ref()
-// worksArea组件的实例
-const worksAreaRef = ref()
+// worksGrid组件的实例
+const worksGridRef = ref()
 // 向导按钮组件的实例
 const guideButton = ref()
 // 任务按钮组件的实例
@@ -461,13 +461,12 @@ async function handleTest() {
           </div>
           <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-grid
-                ref="worksAreaRef"
+              <works-grid-for-main-page
+                ref="worksGridRef"
                 v-model:current-works-index="currentWorksIndex"
                 class="main-page-works-grid"
                 :works-list="worksList"
-                :works-set-disabled="false"
-              ></works-grid>
+              />
             </el-scrollbar>
             <span
               ref="loadMoreButton"

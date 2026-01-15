@@ -36,7 +36,7 @@ function handleChangeState() {
 
 <template>
   <teleport to="#dialog-mount-point">
-    <el-dialog v-model="state" :width="props.width" style="margin: auto" @open="handleChangeState">
+    <el-dialog v-model="state" :width="props.width" style="margin: auto" destroy-on-close @open="handleChangeState">
       <template #header>
         <slot name="header" />
       </template>

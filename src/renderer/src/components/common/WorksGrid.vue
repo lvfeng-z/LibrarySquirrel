@@ -1,37 +1,18 @@
 <script setup lang="ts">
 import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksCard from './WorksCard.vue'
-import WorksDialog from '../dialogs/WorksDialog.vue'
-import { Ref, ref } from 'vue'
-import WorksSetDialog from '@renderer/components/dialogs/WorksSetDialog.vue'
 
 // props
 const props = defineProps<{
   worksList: WorksFullDTO[]
-  worksSetDisabled: boolean
 }>()
 
-// model
-const currentWorksIndex = defineModel<number>('currentWorksIndex', { required: true })
-
-// 变量
-// worksDialog开关
-const worksDialogState: Ref<boolean> = ref(false)
-// worksSetDialogState开关
-const worksSetDialogState: Ref<boolean> = ref(false)
-// 当前作品集id
-const currentWorksSetId: Ref<number> = ref(-1)
+// 事件
+const emits = defineEmits(['imageClicked'])
 
 // 方法
-function handleImageClicked(works: WorksFullDTO) {
-  currentWorksIndex.value = props.worksList.indexOf(works)
-  worksDialogState.value = true
-}
-// 打开作品集dialog
-async function openWorksSetDialog(worksSetId: number) {
-  worksDialogState.value = false
-  worksSetDialogState.value = true
-  currentWorksSetId.value = worksSetId
+function handleImageClicked(workFullDTO: WorksFullDTO) {
+  emits('imageClicked', workFullDTO)
 }
 </script>
 
@@ -45,20 +26,10 @@ async function openWorksSetDialog(worksSetId: number) {
           :max-height="500"
           :max-width="500"
           author-info-popper-width="380px"
-          @image-clicked="handleImageClicked"
+          @image-clicked="handleImageClicked(works)"
         />
       </div>
     </template>
-    <div class="works-grid-dialog-wrapper">
-      <works-dialog
-        v-model:state="worksDialogState"
-        v-model:current-works-index="currentWorksIndex"
-        :works="props.worksList"
-        width="90%"
-        @open-works-set="openWorksSetDialog"
-      />
-      <works-set-dialog v-model:state="worksSetDialogState" v-model:current-works-set-id="currentWorksSetId" width="90%" />
-    </div>
   </div>
 </template>
 
