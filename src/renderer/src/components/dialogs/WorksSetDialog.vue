@@ -37,6 +37,7 @@ async function loadWorksList() {
     const worksSetList = ApiUtil.data<WorksSetWithWorksDTO[]>(response)
     if (ArrayNotEmpty(worksSetList)) {
       worksList.value = worksSetList[0].worksList
+      currentWorksIndex.value = 0
     }
   }
 }
@@ -49,8 +50,8 @@ watch(currentWorksSetId, () => loadWorksList())
   <auto-height-dialog v-model:state="state" :width="props.width">
     <works-grid-for-works-set
       v-model:current-works-set-id="currentWorksSetId"
+      v-model:current-works-index="currentWorksIndex"
       :works-list="worksList"
-      :current-works-index="currentWorksIndex"
     />
   </auto-height-dialog>
 </template>

@@ -2,10 +2,15 @@
 import { nextTick, Ref, ref } from 'vue'
 
 // props
-const props = defineProps<{
-  width?: string
-}>()
-
+const props = withDefaults(
+  defineProps<{
+    destroyOnClose?: boolean
+    width?: string
+  }>(),
+  {
+    destroyOnClose: true
+  }
+)
 // model
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
@@ -36,7 +41,7 @@ function handleChangeState() {
 
 <template>
   <teleport to="#dialog-mount-point">
-    <el-dialog v-model="state" :width="props.width" style="margin: auto" destroy-on-close @open="handleChangeState">
+    <el-dialog v-model="state" :width="props.width" style="margin: auto" :destroy-on-close="destroyOnClose" @open="handleChangeState">
       <template #header>
         <slot name="header" />
       </template>
