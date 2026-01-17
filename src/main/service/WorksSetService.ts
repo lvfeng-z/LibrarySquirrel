@@ -41,8 +41,8 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
   }
 
   /**
-   * 根据作品集在站点的id和入库任务的id查询作品集
-   * @param ids 作品集在站点的id
+   * 根据作品集id列表查询作品集及其对应的作品列表
+   * @param ids 作品集id列表
    */
   public async listWorksSetWithWorksByIds(ids: number[]): Promise<WorksSetWithWorksDTO[]> {
     const query = new WorksSetQueryDTO()
@@ -51,7 +51,7 @@ export default class WorksSetService extends BaseService<WorksSetQueryDTO, Works
     // 查询作品集元数据
     const worksSetList = await this.list(query)
     // 查询作品集的作品
-    const worksService = new WorksService(this.db)
+    const worksService = new WorksService()
     const worksSetIds: number[] = worksSetList.map((worksSet) => worksSet.id).filter(NotNullish)
     const worksWithWorksSetIdList = await worksService.listWorksWithWorkSetIdByWorksSetIds(worksSetIds)
     // 补全作品的作品信息
