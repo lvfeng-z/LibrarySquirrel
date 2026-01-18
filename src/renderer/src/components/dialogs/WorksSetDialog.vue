@@ -6,6 +6,7 @@ import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksSetWithWorksDTO from '@renderer/model/main/dto/WorksSetWithWorksDTO.ts'
 import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
 import WorksGridForWorksSet from '@renderer/components/common/WorksGridForWorksSet.vue'
+import WorksSet from '@renderer/model/main/entity/WorksSet.ts'
 
 // props
 const props = defineProps<{
@@ -22,6 +23,8 @@ const currentWorksSetId = defineModel<number>('currentWorksSetId', { required: t
 const apis = {
   worksSetListWorksSetWithWorksByIds: window.api.worksSetListWorksSetWithWorksByIds
 }
+// 当前作品集
+const currentWorksSet = ref<WorksSet | undefined>(undefined)
 // 作品列表
 const worksList: Ref<WorksFullDTO[]> = ref([])
 // 当前作品的索引
@@ -36,6 +39,7 @@ async function loadWorksList() {
   if (ApiUtil.check(response)) {
     const worksSetList = ApiUtil.data<WorksSetWithWorksDTO[]>(response)
     if (ArrayNotEmpty(worksSetList)) {
+      currentWorksSet.value = worksSetList[0].worksSet
       worksList.value = worksSetList[0].worksList
       currentWorksIndex.value = 0
     }
@@ -48,6 +52,9 @@ watch(currentWorksSetId, () => loadWorksList())
 
 <template>
   <auto-height-dialog v-model:state="state" :width="props.width">
+    <template #header>
+      {{ currentWorksSet?.nickName }}
+    </template>
     <works-grid-for-works-set
       v-model:current-works-set-id="currentWorksSetId"
       v-model:current-works-index="currentWorksIndex"
