@@ -43,7 +43,7 @@ function handleImageClicked(workFullDTO: WorksFullDTO) {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  margin: 5px 5px 0;
+  margin: 5px 0 0 0;
   padding: 4px;
   border-radius: 10px;
   background-color: rgb(166.2, 168.6, 173.4, 10%);

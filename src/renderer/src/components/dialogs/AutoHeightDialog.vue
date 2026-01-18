@@ -5,9 +5,11 @@ import { nextTick, Ref, ref } from 'vue'
 const props = withDefaults(
   defineProps<{
     destroyOnClose?: boolean
+    height?: string
     width?: string
   }>(),
   {
+    height: '90vh',
     destroyOnClose: true
   }
 )
