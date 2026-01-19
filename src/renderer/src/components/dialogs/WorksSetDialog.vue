@@ -40,7 +40,7 @@ async function loadWorksList() {
     const worksSetList = ApiUtil.data<WorksSetWithWorksDTO[]>(response)
     if (ArrayNotEmpty(worksSetList)) {
       currentWorksSet.value = worksSetList[0].worksSet
-      worksList.value = worksSetList[0].worksList
+      worksList.value = worksSetList[0].worksList.map((origin) => new WorksFullDTO(origin))
       currentWorksIndex.value = 0
     }
   }

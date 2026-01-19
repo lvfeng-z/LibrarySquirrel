@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import WorksCard from './WorksCard.vue'
+import WorksCardItem from '@renderer/model/main/dto/WorksCardItem.ts'
 
 // props
 const props = defineProps<{
-  worksList: WorksFullDTO[]
+  worksList: WorksCardItem[]
 }>()
 
 // 事件
 const emits = defineEmits(['imageClicked'])
 
 // 方法
-function handleImageClicked(workFullDTO: WorksFullDTO) {
-  emits('imageClicked', workFullDTO)
+function handleImageClicked(worksCardItem: WorksCardItem) {
+  emits('imageClicked', worksCardItem)
 }
 </script>
 
@@ -25,6 +25,7 @@ function handleImageClicked(workFullDTO: WorksFullDTO) {
           :works="works"
           :max-height="500"
           :max-width="500"
+          works-info-popper-width="380px"
           author-info-popper-width="380px"
           @image-clicked="handleImageClicked(works)"
         />

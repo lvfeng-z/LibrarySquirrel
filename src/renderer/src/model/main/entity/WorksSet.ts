@@ -1,14 +1,11 @@
 import BaseEntity from './BaseEntity.ts'
-import { IsNullish } from '../../../utils/CommonUtil.ts'
+import { NotNullish } from '../../../utils/CommonUtil.ts'
+import lodash from 'lodash'
 
 /**
  * 作品集合
  */
 export default class WorksSet extends BaseEntity {
-  /**
-   * 主键
-   */
-  id: number | undefined | null
   /**
    * 集合来源站点id
    */
@@ -25,6 +22,10 @@ export default class WorksSet extends BaseEntity {
    * 集合在站点的作者id
    */
   siteAuthorId: string | undefined | null
+  /**
+   * 站点中作品集的描述
+   */
+  siteWorkSetDescription: string | undefined | null
   /**
    * 集合在站点的上传时间
    */
@@ -43,28 +44,22 @@ export default class WorksSet extends BaseEntity {
   lastView: number | undefined | null
 
   constructor(worksSet?: WorksSet) {
-    if (IsNullish(worksSet)) {
-      super()
-      this.id = undefined
-      this.siteId = undefined
-      this.siteWorksSetId = undefined
-      this.siteWorksSetName = undefined
-      this.siteAuthorId = undefined
-      this.siteUploadTime = undefined
-      this.siteUpdateTime = undefined
-      this.nickName = undefined
-      this.lastView = undefined
-    } else {
-      super(worksSet)
-      this.id = worksSet.id
-      this.siteId = worksSet.siteId
-      this.siteWorksSetId = worksSet.siteWorksSetId
-      this.siteWorksSetName = worksSet.siteWorksSetName
-      this.siteAuthorId = worksSet.siteAuthorId
-      this.siteUploadTime = worksSet.siteUploadTime
-      this.siteUpdateTime = worksSet.siteUpdateTime
-      this.nickName = worksSet.nickName
-      this.lastView = worksSet.lastView
+    super(worksSet)
+    if (NotNullish(worksSet)) {
+      lodash.assign(
+        this,
+        lodash.pick(worksSet, [
+          'siteId',
+          'siteWorksSetId',
+          'siteWorksSetName',
+          'siteAuthorId',
+          'siteWorkSetDescription',
+          'siteUploadTime',
+          'siteUpdateTime',
+          'nickName',
+          'lastView'
+        ])
+      )
     }
   }
 }

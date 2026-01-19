@@ -348,8 +348,10 @@ function handleWorksSetClicked(worksSetTag: SegmentedTagItem) {
               :site-authors="currentWorksFullInfo.siteAuthors"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="站点">
-            <span id="site">{{ currentWorksFullInfo.site?.siteName }}</span>
+          <el-descriptions-item>
+            <div id="description">
+              {{ currentWorksFullInfo.siteWorkDescription }}
+            </div>
           </el-descriptions-item>
           <el-descriptions-item>
             <template #label>
@@ -371,13 +373,17 @@ function handleWorksSetClicked(worksSetTag: SegmentedTagItem) {
             </template>
             <tag-box id="worksSet" v-model:data="worksSets" @tag-clicked="handleWorksSetClicked" />
           </el-descriptions-item>
+          <el-descriptions-item label="站点">
+            <span id="site">{{ currentWorksFullInfo.site?.siteName }}</span>
+          </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
       <el-anchor :container="infosRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
         <el-anchor-link href="#author" title="作者" />
-        <el-anchor-link href="#site" title="站点" />
+        <el-anchor-link href="#description" title="简介" />
         <el-anchor-link href="#localTag" title="本地标签" />
         <el-anchor-link href="#siteTag" title="站点标签" />
+        <el-anchor-link href="#site" title="站点" />
       </el-anchor>
       <el-drawer v-model="drawerState" size="45%" :with-header="false" :open-delay="1" @open="handleDrawerOpen">
         <exchange-box

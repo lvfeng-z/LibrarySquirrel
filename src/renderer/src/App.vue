@@ -241,7 +241,11 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
 
   return apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      return ApiUtil.data<Page<WorksQueryDTO, WorksFullDTO>>(response)
+      const page = ApiUtil.data<Page<WorksQueryDTO, WorksFullDTO>>(response)
+      if (NotNullish(page)) {
+        page.data = page.data?.map((origin) => new WorksFullDTO(origin))
+      }
+      return page
     } else {
       return page
     }
@@ -341,10 +345,13 @@ async function handleTest() {
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
         <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
           <template #default>
-            <el-menu-item index="0" @click="closeSubpage">
-              <template #title> 主页 </template>
-              <el-icon><HomeFilled /></el-icon>
-            </el-menu-item>
+            <el-sub-menu index="0" @click="closeSubpage">
+              <template #title>
+                <el-icon><HomeFilled /></el-icon>
+                <span>主页</span>
+              </template>
+              <el-menu-item index="0"> 作品视图 </el-menu-item>
+            </el-sub-menu>
             <el-sub-menu index="1">
               <template #title>
                 <el-icon><Discount /></el-icon>

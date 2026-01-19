@@ -2,16 +2,17 @@
 import WorksInfo from './WorksInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
 import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
+import WorksCardItem from '@renderer/model/main/dto/WorksCardItem.ts'
 
 // props
 const props = defineProps<{
-  works: WorksFullDTO
+  works: WorksCardItem
   maxHeight?: number
   maxWidth?: number
+  worksInfoPopperWidth?: string
   authorInfoPopperWidth?: string
 }>()
 
@@ -80,9 +81,9 @@ function handlePictureClicked() {
         </div>
       </template>
     </el-image>
-    <works-info class="works-case-works-info" :works="works" />
+    <works-info class="works-case-info" :works="works" :width="worksInfoPopperWidth" />
     <author-info
-      class="works-case-author-info"
+      class="works-case-info"
       :local-authors="props.works.localAuthors"
       :site-authors="props.works.siteAuthors"
       :width="authorInfoPopperWidth"
@@ -115,23 +116,7 @@ function handlePictureClicked() {
   color: var(--el-text-color-secondary);
   scale: 2;
 }
-.works-case-works-info {
-  width: calc(100% - 10px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-  white-space: nowrap;
-  border-radius: 5px;
-  margin-left: 3px;
-  margin-right: 3px;
-  margin-top: 3px;
-  padding-left: 4px;
-  transition: background-color 0.3s;
-}
-.works-case-works-info:hover {
-  background-color: var(--el-fill-color);
-}
-.works-case-author-info {
+.works-case-info {
   width: calc(100% - 10px);
   display: flex;
   overflow: hidden;
@@ -145,7 +130,7 @@ function handlePictureClicked() {
   padding-left: 4px;
   transition: background-color 0.3s;
 }
-.works-case-author-info:hover {
+.works-case-info:hover {
   background-color: var(--el-fill-color);
 }
 </style>
