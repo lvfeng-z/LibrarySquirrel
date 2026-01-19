@@ -340,20 +340,21 @@ tables:
   - name: works_set
     sql: |
       create table if not exists works_set (
-        id                   integer not null
+        id                        integer not null
           constraint works_pk
             primary key autoincrement,
-        site_id              integer
+        site_id                   integer
           constraint works_set_site_id_fk
             references site
             on update restrict on delete restrict,
-        site_works_set_id    text,
-        site_works_set_name  text,
-        site_author_id       text,
-        site_upload_time     integer,
-        site_update_time     integer,
-        nick_name            text,
-        last_view            integer,
-        create_time          integer,
-        update_time          integer
+        site_works_set_id         text,
+        site_works_set_name       text,
+        site_author_id            text,
+        site_work_set_description text,
+        site_upload_time          integer,
+        site_update_time          integer,
+        nick_name                 text,
+        last_view                 integer,
+        create_time               integer,
+        update_time               integer
       );
