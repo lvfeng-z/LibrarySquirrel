@@ -152,6 +152,8 @@ const resizeObserver = new ResizeObserver((entries) => {
   loadMore.value =
     entries[0].contentRect.height < worksSpace.value.clientHeight && worksPage.value.pageNumber < worksPage.value.pageCount
 })
+// 作品集视图开关
+const worksSetView: Ref<boolean> = ref(true)
 // IpcRenderer相关
 // 路径解释
 const showExplainPath = ref(false) // 解释路径对话框的开关
@@ -401,70 +403,70 @@ async function handleTest() {
       </el-aside>
       <el-main style="padding: 0">
         <div v-show="pageStatesStore.pageStates.mainPage.state" class="main-page">
-          <div class="main-page-searchbar">
-            <el-row class="z-layer-3">
-              <el-col :span="22">
-                <auto-load-tag-select
-                  ref="searchConditionBar"
-                  v-model:selected-data="selectedTagList"
-                  v-model:custom-data="customTagList"
-                  v-model:input="autoLoadInput"
-                  class="main-page-auto-load-tag-select"
-                  :load="querySearchItemPage"
-                  :page-size="40"
-                  :color-resolver="searchTagColorResolver"
-                  tags-gap="10px"
-                  max-height="300px"
-                  min-height="33px"
-                >
-                  <template #left>
-                    <el-checkbox-group
-                      v-model="searchConditionType"
-                      class="main-page-auto-load-tag-select-tag-type-checkbox-group"
-                      @change="querySearchCondition"
-                    >
-                      <el-checkbox :value="SearchType.LOCAL_TAG">
-                        <span
-                          class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-tag"
-                        >
-                          本地标签
-                        </span>
-                      </el-checkbox>
-                      <el-checkbox :value="SearchType.SITE_TAG">
-                        <span
-                          class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-tag"
-                        >
-                          站点标签
-                        </span>
-                      </el-checkbox>
-                      <el-checkbox :value="SearchType.LOCAL_AUTHOR">
-                        <span
-                          class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-author"
-                        >
-                          本地作者
-                        </span>
-                      </el-checkbox>
-                      <el-checkbox :value="SearchType.SITE_AUTHOR">
-                        <span
-                          class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-author"
-                        >
-                          站点作者
-                        </span>
-                      </el-checkbox>
-                    </el-checkbox-group>
-                  </template>
-                </auto-load-tag-select>
-                <collapse-panel v-model:state="searchBarPanelState" class="z-layer-3" border-radios="10px">
-                  <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
-                    <!--TODO在这里实现一个更灵活的组合查询条件的组件，比如拖拽组成AND或OR组合-->
-                    <el-button @click="handleTest"> test </el-button>
-                  </div>
-                </collapse-panel>
-              </el-col>
-              <el-col style="display: flex; justify-content: center" :span="2">
-                <el-button @click="queryWorksPage(false)">搜索</el-button>
-              </el-col>
-            </el-row>
+          <div class="main-page-topbar z-layer-3">
+            <el-radio-group v-model="worksSetView" class="topbar-others">
+              <el-radio-button label="作品" :value="false" />
+              <el-radio-button label="作品集" :value="true" />
+            </el-radio-group>
+            <div class="main-page-searchbar">
+              <auto-load-tag-select
+                ref="searchConditionBar"
+                v-model:selected-data="selectedTagList"
+                v-model:custom-data="customTagList"
+                v-model:input="autoLoadInput"
+                class="main-page-auto-load-tag-select"
+                :load="querySearchItemPage"
+                :page-size="40"
+                :color-resolver="searchTagColorResolver"
+                tags-gap="10px"
+                max-height="300px"
+                min-height="33px"
+              >
+                <template #left>
+                  <el-checkbox-group
+                    v-model="searchConditionType"
+                    class="main-page-auto-load-tag-select-tag-type-checkbox-group"
+                    @change="querySearchCondition"
+                  >
+                    <el-checkbox :value="SearchType.LOCAL_TAG">
+                      <span
+                        class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-tag"
+                      >
+                        本地标签
+                      </span>
+                    </el-checkbox>
+                    <el-checkbox :value="SearchType.SITE_TAG">
+                      <span
+                        class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-tag"
+                      >
+                        站点标签
+                      </span>
+                    </el-checkbox>
+                    <el-checkbox :value="SearchType.LOCAL_AUTHOR">
+                      <span
+                        class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-author"
+                      >
+                        本地作者
+                      </span>
+                    </el-checkbox>
+                    <el-checkbox :value="SearchType.SITE_AUTHOR">
+                      <span
+                        class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-author"
+                      >
+                        站点作者
+                      </span>
+                    </el-checkbox>
+                  </el-checkbox-group>
+                </template>
+              </auto-load-tag-select>
+              <collapse-panel v-model:state="searchBarPanelState" class="z-layer-3" border-radios="10px">
+                <div style="padding: 5px; background-color: var(--el-fill-color-blank)">
+                  <!--TODO在这里实现一个更灵活的组合查询条件的组件，比如拖拽组成AND或OR组合-->
+                  <el-button @click="handleTest"> test </el-button>
+                </div>
+              </collapse-panel>
+            </div>
+            <el-button class="topbar-others" @click="queryWorksPage(false)">搜索</el-button>
           </div>
           <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
@@ -590,9 +592,16 @@ async function handleTest() {
   margin-left: 3px;
   margin-top: 3px;
 }
-.main-page-searchbar {
+.main-page-topbar {
+  display: flex;
   height: 33px;
   width: 100%;
+}
+.topbar-others {
+  margin: 0 5px;
+}
+.main-page-searchbar {
+  flex-grow: 1;
 }
 .main-page-works-space {
   position: relative;
