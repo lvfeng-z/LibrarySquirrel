@@ -92,7 +92,7 @@ function handleClickOutSide() {
 }
 .side-menu-main {
   height: 100%;
-  width: calc(v-bind(mainWidth) - 1px);
+  width: v-bind(mainWidth);
   overflow: visible;
   background-color: var(--el-fill-color-blank);
   border-right: solid 1px var(--el-border-color);

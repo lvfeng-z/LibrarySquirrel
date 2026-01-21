@@ -343,17 +343,14 @@ async function handleTest() {
       <Close class="close-subpage-button-icon" />
     </div>
     <el-container>
-      <el-aside class="z-layer-4" width="auto">
+      <el-aside class="main-page-sidebar z-layer-4" width="auto">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
         <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
           <template #default>
-            <el-sub-menu index="0" @click="closeSubpage">
-              <template #title>
-                <el-icon><HomeFilled /></el-icon>
-                <span>主页</span>
-              </template>
-              <el-menu-item index="0"> 作品视图 </el-menu-item>
-            </el-sub-menu>
+            <el-menu-item index="0" @click="closeSubpage">
+              <template #title> 主页 </template>
+              <el-icon><HomeFilled /></el-icon>
+            </el-menu-item>
             <el-sub-menu index="1">
               <template #title>
                 <el-icon><Discount /></el-icon>
@@ -404,11 +401,11 @@ async function handleTest() {
       <el-main style="padding: 0">
         <div v-show="pageStatesStore.pageStates.mainPage.state" class="main-page">
           <div class="main-page-topbar z-layer-3">
-            <el-radio-group v-model="worksSetView" class="topbar-others">
+            <el-radio-group v-model="worksSetView" class="topbar-items">
               <el-radio-button label="作品" :value="false" />
               <el-radio-button label="作品集" :value="true" />
             </el-radio-group>
-            <div class="main-page-searchbar">
+            <div class="main-page-searchbar topbar-items">
               <auto-load-tag-select
                 ref="searchConditionBar"
                 v-model:selected-data="selectedTagList"
@@ -466,7 +463,7 @@ async function handleTest() {
                 </div>
               </collapse-panel>
             </div>
-            <el-button class="topbar-others" @click="queryWorksPage(false)">搜索</el-button>
+            <el-button type="danger" class="topbar-items" @click="queryWorksPage(false)">搜索</el-button>
           </div>
           <div ref="worksSpace" class="main-page-works-space">
             <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
@@ -538,7 +535,7 @@ async function handleTest() {
   </div>
 </template>
 
-<style>
+<style scoped>
 .ui {
   display: flex;
   flex-direction: row;
@@ -592,13 +589,17 @@ async function handleTest() {
   margin-left: 3px;
   margin-top: 3px;
 }
+:deep(.main-page-sidebar) {
+  overflow: visible;
+}
 .main-page-topbar {
   display: flex;
   height: 33px;
   width: 100%;
 }
-.topbar-others {
-  margin: 0 5px;
+.main-page-topbar > :deep(.topbar-items) {
+  flex-wrap: nowrap;
+  margin: 0 5px 0 0;
 }
 .main-page-searchbar {
   flex-grow: 1;
