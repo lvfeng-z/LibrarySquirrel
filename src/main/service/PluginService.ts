@@ -33,6 +33,7 @@ import Page from '../model/util/Page.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rm } from 'node:fs/promises'
+import Backup from '../model/entity/Backup.ts'
 
 /**
  * 主键查询
@@ -353,7 +354,12 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
     const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version)
     const backupService = new BackupService(this.db)
-    const backup = await backupService.createBackup(BackupSourceTypeEnum.PLUGIN, pluginId, pluginPath)
+    let backup: Backup | undefined
+    try {
+      backup = await backupService.createBackup(BackupSourceTypeEnum.PLUGIN, pluginId, pluginPath)
+    } catch (error) {
+      LogUtil.warn(this.constructor.name, '重新安装插件时未能创建备份', error)
+    }
     try {
       await this.transaction<PluginInstallResultDTO>(async () => {
         await this.uninstall(pluginId)
