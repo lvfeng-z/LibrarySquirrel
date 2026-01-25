@@ -4,19 +4,19 @@ import LogConstant from '../constant/LogConstant.ts'
 import { RootDir } from './FileSysUtil.ts'
 
 function info(module: string, ...args: unknown[]) {
-  log.info(module + ':', ...args)
+  log.info('[info]' + module + ':', ...args)
 }
 
 function debug(module: string, ...args: unknown[]) {
-  log.debug(module + ':', ...args)
+  log.debug('[debug]' + module + ':', ...args)
 }
 
 function warn(module: string, ...args: unknown[]) {
-  log.warn(module + ':', ...args)
+  log.warn('[warn]' + module + ':', ...args)
 }
 
 function error(module: string, ...args: unknown[]) {
-  log.error(module + ':', ...args)
+  log.error('[error]' + module + ':', ...args)
 }
 
 /**
