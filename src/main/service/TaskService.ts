@@ -6,7 +6,7 @@ import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 import TaskQueryDTO from '../model/queryDTO/TaskQueryDTO.ts'
 import PluginService from './PluginService.ts'
 import PluginTaskUrlListenerService from './PluginTaskUrlListenerService.ts'
-import WorksService from './WorksService.ts'
+import WorkService from './WorkService.ts'
 import Plugin from '../model/entity/Plugin.ts'
 import { Readable } from 'node:stream'
 import BaseService from '../base/BaseService.ts'
@@ -20,7 +20,7 @@ import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.ts'
 import TaskCreateDTO from '../model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.ts'
 import { PluginTaskResParam } from '../plugin/PluginTaskResParam.ts'
-import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
+import PluginWorkResponseDTO from '../model/dto/PluginWorkResponseDTO.ts'
 import { GVar, GVarEnum } from '../base/GVar.ts'
 import TaskCreateResponse from '../model/util/TaskCreateResponse.ts'
 import { AssertArrayNotEmpty, AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
@@ -38,9 +38,9 @@ import CreateTaskWritable from '../util/CreateTaskWritableR.js'
 import ResourceService from './ResourceService.js'
 import PluginCreateTaskResponseDTO from '../model/dto/PluginCreateTaskResponseDTO.js'
 import PluginCreateParentTaskResponseDTO from '../model/dto/PluginCreateParentTaskResponseDTO.js'
-import WorksSaveDTO from '../model/dto/WorksSaveDTO.js'
+import WorkSaveDTO from '../model/dto/WorkSaveDTO.ts'
 import ResourceSaveDTO from '../model/dto/ResourceSaveDTO.js'
-import WorksFullDTO from '../model/dto/WorksFullDTO.js'
+import WorkFullDTO from '../model/dto/WorkFullDTO.ts'
 import Resource from '../model/entity/Resource.js'
 import ResourcePluginDTO from '../model/dto/ResourcePluginDTO.js'
 import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
@@ -162,7 +162,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
       // 校验
       AssertNotBlank(task.siteDomain, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
-      AssertNotBlank(task.siteWorksId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点作品id')
+      AssertNotBlank(task.siteWorkId, this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点作品id')
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
@@ -248,7 +248,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param task
    * @param pluginLoader
    */
-  public async saveWorksInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<number> {
+  public async saveWorkInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<number> {
     AssertNotNullish(task.id, this.constructor.name, `保存作品信息失败，任务id不能为空`)
     const taskId = task.id
     // 加载插件
@@ -260,55 +260,55 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task.pluginVersion = plugin.version
     const taskHandler: TaskHandler = await pluginLoader.load(plugin.id)
 
-    // 调用插件的createWorksInfo方法，获取作品信息
-    let worksPluginDTO: PluginWorksResponseDTO
+    // 调用插件的createWorkInfo方法，获取作品信息
+    let pluginWorkResponseDTO: PluginWorkResponseDTO
     try {
-      worksPluginDTO = await taskHandler.createWorksInfo(task)
+      pluginWorkResponseDTO = await taskHandler.createWorkInfo(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件获取作品信息时失败`, error)
       throw error
     }
-    worksPluginDTO.works.siteId = task.siteId
+    pluginWorkResponseDTO.work.siteId = task.siteId
 
     // 保存远程资源是否可接续
-    task.continuable = IsNullish(worksPluginDTO.resource?.continuable) ? false : worksPluginDTO.resource.continuable
+    task.continuable = IsNullish(pluginWorkResponseDTO.resource?.continuable) ? false : pluginWorkResponseDTO.resource.continuable
     const updateContinuableTask = new Task()
     updateContinuableTask.id = taskId
     updateContinuableTask.continuable = task.continuable
     await this.updateById(updateContinuableTask)
 
     // 生成作品保存用的信息
-    const worksSaveInfo = await WorksService.createSaveInfoFromPlugin(worksPluginDTO, taskId)
+    const workSaveDTO = await WorkService.createSaveInfoFromPlugin(pluginWorkResponseDTO, taskId)
 
     // 保存作品信息
-    const worksService = new WorksService()
-    return worksService.saveOrUpdateWorksInfos(worksSaveInfo, false)
+    const workService = new WorkService()
+    return workService.saveOrUpdateWorkInfos(workSaveDTO, false)
   }
 
   /**
    * 处理任务
    * @param task
-   * @param worksId
+   * @param workId
    * @param pluginLoader
    * @param resourceWriter
    */
   public async startTask(
     task: Task,
-    worksId: number,
+    workId: number,
     pluginLoader: PluginLoader<TaskHandler>,
     resourceWriter: ResourceWriter
   ): Promise<TaskProcessResponseDTO> {
     AssertNotNullish(task.id, this.constructor.name, `开始任务失败，任务id不能为空`)
     const taskId = task.id
 
-    const worksService = new WorksService()
+    const workService = new WorkService()
 
     // 加载插件
     const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '开始任务失败')
     AssertNotNullish(plugin?.id, this.constructor.name, `开始任务失败，创建任务的插件id不能为空`)
 
     // 调用插件的start方法，获取资源
-    let pluginResponse: PluginWorksResponseDTO
+    let pluginResponse: PluginWorkResponseDTO
     try {
       const taskHandler: TaskHandler = await pluginLoader.load(plugin.id)
       pluginResponse = await taskHandler.start(task)
@@ -318,22 +318,22 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
     AssertNotNullish(pluginResponse.resource?.resourceStream, this.constructor.name, `插件没有返回任务${taskId}的资源`)
 
-    const oldWorks = await worksService.getFullWorksInfoById(worksId)
-    AssertNotNullish(oldWorks, `开始任务失败，任务的作品id不可用，taskId: ${taskId}`)
+    const oldWork = await workService.getFullWorkInfoById(workId)
+    AssertNotNullish(oldWork, `开始任务失败，任务的作品id不可用，taskId: ${taskId}`)
     // 用已经保存在数据库里的作品信息补全插件返回的作品信息
-    pluginResponse.works = ObjectUtil.mergeObjects<Work>(pluginResponse.works, new Work(oldWorks), (src) => new Work(src))
+    pluginResponse.work = ObjectUtil.mergeObjects<Work>(pluginResponse.work, new Work(oldWork), (src) => new Work(src))
     // 创建资源保存DTO
-    const temp = await TaskService.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
+    const temp = await TaskService.createResAndWorkSaveData(oldWork, pluginResponse, taskId, workId)
     const resourceSaveDTO = temp.resourceSaveDTO
     // 判断是否需要更新作品数据
     if (pluginResponse.doUpdate) {
-      const newWorksSaveInfo = temp.newWorksSaveInfo
-      newWorksSaveInfo.id = worksId
-      await worksService.saveOrUpdateWorksInfos(newWorksSaveInfo, true)
+      const newWorkSaveInfo = temp.newWorkSaveInfo
+      newWorkSaveInfo.id = workId
+      await workService.saveOrUpdateWorkInfos(newWorkSaveInfo, true)
     }
     // 查询作品已经存在的可用资源
     const resService = new ResourceService()
-    const activeRes = await resService.getActiveByWorksId(worksId)
+    const activeRes = await resService.getActiveByWorkId(workId)
     if (IsNullish(activeRes)) {
       resourceSaveDTO.id = await resService.saveActive(resourceSaveDTO)
     } else {
@@ -554,13 +554,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   /**
    * 恢复任务
    * @param task 任务
-   * @param worksId
+   * @param workId
    * @param pluginLoader 插件加载器
    * @param resourceWriter
    */
   public async resumeTask(
     task: Task,
-    worksId: number,
+    workId: number,
     pluginLoader: PluginLoader<TaskHandler>,
     resourceWriter: ResourceWriter
   ): Promise<TaskProcessResponseDTO> {
@@ -583,33 +583,29 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     taskPluginDTO.resourcePath = await resourceService.getFullResourcePath(task.pendingResourceId)
 
     // 恢复下载
-    const worksService = new WorksService()
+    const workService = new WorkService()
 
     // 标记为进行中
     task.status = TaskStatusEnum.PROCESSING
     // 调用插件的resume函数，获取资源
-    let pluginResponse: PluginWorksResponseDTO = await taskHandler.resume(taskPluginDTO)
+    let pluginResponse: PluginWorkResponseDTO = await taskHandler.resume(taskPluginDTO)
     const resourcePluginDTO = pluginResponse.resource
     AssertNotNullish(resourcePluginDTO, this.constructor.name, `恢复任务失败，插件返回的资源为空，taskId: ${taskId}`)
     AssertNotNullish(resourcePluginDTO.resourceStream, this.constructor.name, `恢复任务失败，插件返回的资源为空，taskId: ${taskId}`)
 
-    const oldWorks = await worksService.getFullWorksInfoById(worksId)
-    AssertNotNullish(oldWorks, `恢复任务失败，任务的作品id不可用，taskId: ${taskId}`)
+    const oldWork = await workService.getFullWorkInfoById(workId)
+    AssertNotNullish(oldWork, `恢复任务失败，任务的作品id不可用，taskId: ${taskId}`)
     // 用旧的作品信息补全插件返回的信息
-    pluginResponse = ObjectUtil.mergeObjects<PluginWorksResponseDTO>(
-      pluginResponse,
-      oldWorks,
-      (src) => new PluginWorksResponseDTO(src)
-    )
+    pluginResponse = ObjectUtil.mergeObjects<PluginWorkResponseDTO>(pluginResponse, oldWork, (src) => new PluginWorkResponseDTO(src))
     // 创建资源保存DTO
-    const temp = await TaskService.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
+    const temp = await TaskService.createResAndWorkSaveData(oldWork, pluginResponse, taskId, workId)
     const resourceSaveDTO = temp.resourceSaveDTO
     resourceSaveDTO.id = task.pendingResourceId
     // 判断是否需要更新作品数据
     if (pluginResponse.doUpdate) {
-      const newWorksSaveInfo = temp.newWorksSaveInfo
-      newWorksSaveInfo.id = worksId
-      await worksService.saveOrUpdateWorksInfos(newWorksSaveInfo, true)
+      const newWorkSaveInfo = temp.newWorkSaveInfo
+      newWorkSaveInfo.id = workId
+      await workService.saveOrUpdateWorkInfos(newWorkSaveInfo, true)
     }
 
     LogUtil.info(this.constructor.name, `任务${taskId}恢复下载`)
@@ -1029,41 +1025,41 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 创建资源保存DTO和作品信息保存DTO
-   * @param oldWorksFullDTO 调用插件前保存的作品信息
+   * @param oldWorkFullDTO 调用插件前保存的作品信息
    * @param pluginResponse 插件返回的数据
    * @param taskId 任务id
-   * @param worksId 作品id
+   * @param workId 作品id
    * @private
    */
-  private static async createResAndWorksSaveData(
-    oldWorksFullDTO: WorksFullDTO,
-    pluginResponse: PluginWorksResponseDTO,
+  private static async createResAndWorkSaveData(
+    oldWorkFullDTO: WorkFullDTO,
+    pluginResponse: PluginWorkResponseDTO,
     taskId: number,
-    worksId: number
-  ): Promise<{ resourceSaveDTO: ResourceSaveDTO; newWorksSaveInfo: WorksSaveDTO }> {
+    workId: number
+  ): Promise<{ resourceSaveDTO: ResourceSaveDTO; newWorkSaveInfo: WorkSaveDTO }> {
     // 用旧的作品信息补全插件返回的信息
-    const tempResponse = ObjectUtil.mergeObjects<PluginWorksResponseDTO>(
+    const tempResponse = ObjectUtil.mergeObjects<PluginWorkResponseDTO>(
       pluginResponse,
-      oldWorksFullDTO,
-      (src) => new PluginWorksResponseDTO(src)
+      oldWorkFullDTO,
+      (src) => new PluginWorkResponseDTO(src)
     )
-    tempResponse.works = new Work(oldWorksFullDTO)
-    const newWorksSaveInfo = await WorksService.createSaveInfoFromPlugin(tempResponse, taskId)
+    tempResponse.work = new Work(oldWorkFullDTO)
+    const newWorkSaveInfo = await WorkService.createSaveInfoFromPlugin(tempResponse, taskId)
     // 创建资源保存DTO
     let resourceSaveDTO: ResourceSaveDTO | undefined
     if (pluginResponse.doUpdate) {
-      newWorksSaveInfo.resource = new Resource()
-      newWorksSaveInfo.resource.worksId = worksId
-      newWorksSaveInfo.resource.taskId = taskId
-      newWorksSaveInfo.resource.filenameExtension = pluginResponse.resource?.filenameExtension
-      newWorksSaveInfo.resource.suggestedName = pluginResponse.resource?.suggestedName
-      newWorksSaveInfo.resource.importMethod = pluginResponse.resource?.importMethod
-      newWorksSaveInfo.resource.resourceSize = pluginResponse.resource?.resourceSize
-      resourceSaveDTO = await ResourceService.createSaveInfo(newWorksSaveInfo)
+      newWorkSaveInfo.resource = new Resource()
+      newWorkSaveInfo.resource.workId = workId
+      newWorkSaveInfo.resource.taskId = taskId
+      newWorkSaveInfo.resource.filenameExtension = pluginResponse.resource?.filenameExtension
+      newWorkSaveInfo.resource.suggestedName = pluginResponse.resource?.suggestedName
+      newWorkSaveInfo.resource.importMethod = pluginResponse.resource?.importMethod
+      newWorkSaveInfo.resource.resourceSize = pluginResponse.resource?.resourceSize
+      resourceSaveDTO = await ResourceService.createSaveInfo(newWorkSaveInfo)
     } else {
-      const temp = new WorksFullDTO(oldWorksFullDTO)
+      const temp = new WorkFullDTO(oldWorkFullDTO)
       temp.resource = new Resource()
-      temp.resource.worksId = worksId
+      temp.resource.workId = workId
       temp.resource.taskId = taskId
       temp.resource.filenameExtension = pluginResponse.resource?.filenameExtension
       temp.resource.suggestedName = pluginResponse.resource?.suggestedName
@@ -1071,9 +1067,9 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       temp.resource.resourceSize = pluginResponse.resource?.resourceSize
       resourceSaveDTO = await ResourceService.createSaveInfo(temp)
     }
-    resourceSaveDTO.worksId = worksId
+    resourceSaveDTO.workId = workId
     resourceSaveDTO.taskId = taskId
     resourceSaveDTO.resourceStream = pluginResponse.resource?.resourceStream
-    return { resourceSaveDTO, newWorksSaveInfo }
+    return { resourceSaveDTO, newWorkSaveInfo: newWorkSaveInfo }
   }
 }

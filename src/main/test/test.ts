@@ -10,7 +10,7 @@ import LogUtil from '../util/LogUtil.js'
 import { GVar, GVarEnum } from '../base/GVar.js'
 import GotoPageConfig from '../model/util/GotoPageConfig.js'
 import { PageEnum } from '../constant/PageEnum.js'
-import WorksSetService from '../service/WorksSetService.ts'
+import WorkSetService from '../service/WorkSetService.ts'
 
 async function insertLocalTag10W() {
   const db = new DatabaseClient('insertLocalTag10W')
@@ -104,9 +104,9 @@ function gotoPageSiteManage() {
   mainWindow.webContents.send('goto-page', gotoPageConfig)
 }
 
-function listWorksSetWithWorksByIds(ids: number[]) {
-  const worksSetService = new WorksSetService()
-  return worksSetService.listWorksSetWithWorksByIds(ids)
+function listWorkSetWithWorkByIds(ids: number[]) {
+  const workSetService = new WorkSetService()
+  return workSetService.listWorkSetWithWorkByIds(ids)
 }
 
 export default {
@@ -116,5 +116,5 @@ export default {
   installPluginTest,
   mainWindowMsgTest,
   gotoPageSiteManage,
-  listWorksSetWithWorksByIds
+  listWorkSetWithWorkByIds
 }

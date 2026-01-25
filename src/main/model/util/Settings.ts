@@ -2,7 +2,7 @@ export interface Settings {
   initialized: boolean
   programVersion: string
   workdir: string
-  worksSettings: {
+  workSettings: {
     fileNameFormat: string
   }
   importSettings: {

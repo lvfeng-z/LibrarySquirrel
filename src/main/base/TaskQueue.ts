@@ -2,7 +2,7 @@ import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import TaskService from '../service/TaskService.js'
-import WorksService from '../service/WorksService.js'
+import WorkService from '../service/WorkService.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../plugin/PluginLoader.js'
@@ -63,7 +63,7 @@ export class TaskQueue {
    * 作品服务
    * @private
    */
-  private worksService: WorksService
+  private workService: WorkService
 
   // /**
   //  * 站点服务
@@ -93,7 +93,7 @@ export class TaskQueue {
    * 作品信息保存流
    * @private
    */
-  private readonly worksInfoSaveStream: WorksInfoSaveStream
+  private readonly workInfoSaveStream: WorkInfoSaveStream
 
   /**
    * 资源保存流
@@ -143,7 +143,7 @@ export class TaskQueue {
     this.runInstBuffer = []
     this.currentBufferIndex = 0
     this.taskService = new TaskService()
-    this.worksService = new WorksService()
+    this.workService = new WorkService()
     // this.siteService = new SiteService()
     this.pluginService = new PluginService()
     this.pluginLoader = new PluginLoader(new TaskHandlerFactory(), this.pluginService)
@@ -158,7 +158,7 @@ export class TaskQueue {
       this.refreshParentStatus.bind(this),
       this.handleReplaceRefuse.bind(this)
     )
-    this.worksInfoSaveStream = new WorksInfoSaveStream()
+    this.workInfoSaveStream = new WorkInfoSaveStream()
     // 读取设置中的最大并行数
     const maxParallelImportInSettings = GVar.get(GVarEnum.SETTINGS).store.importSettings.maxParallelImport
     this.resourceSaveStream = new ResourceSaveStream(maxParallelImportInSettings, this.refreshParentStatus.bind(this))
@@ -184,29 +184,29 @@ export class TaskQueue {
       }
       // 入口流
       this.queueEntrance.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
-        this.queueEntrance.unpipe(this.worksInfoSaveStream)
-        this.queueEntrance.pipe(this.worksInfoSaveStream)
+        this.queueEntrance.unpipe(this.workInfoSaveStream)
+        this.queueEntrance.pipe(this.workInfoSaveStream)
         handleError(error, taskRunInstance)
       })
       this.queueEntrance.on('entry-failed', handleError)
       // 作品信息保存流
-      this.worksInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
-        this.queueEntrance.unpipe(this.worksInfoSaveStream)
-        this.queueEntrance.pipe(this.worksInfoSaveStream)
+      this.workInfoSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
+        this.queueEntrance.unpipe(this.workInfoSaveStream)
+        this.queueEntrance.pipe(this.workInfoSaveStream)
         handleError(error, taskRunInstance)
       })
-      this.worksInfoSaveStream.on('save-failed', handleError)
+      this.workInfoSaveStream.on('save-failed', handleError)
       const taskInfoStreamDestroyed = new Promise<void>((resolve) =>
-        this.worksInfoSaveStream.once('end', () => {
-          this.worksInfoSaveStream.destroy()
+        this.workInfoSaveStream.once('end', () => {
+          this.workInfoSaveStream.destroy()
           LogUtil.info(this.constructor.name, '作品信息保存流已销毁')
           resolve()
         })
       )
       // 资源保存流
       this.resourceSaveStream.on('error', (error: Error, taskRunInstance: TaskRunInstance) => {
-        this.worksInfoSaveStream.unpipe(this.resourceSaveStream)
-        this.worksInfoSaveStream.pipe(this.resourceSaveStream)
+        this.workInfoSaveStream.unpipe(this.resourceSaveStream)
+        this.workInfoSaveStream.pipe(this.resourceSaveStream)
         handleError(error, taskRunInstance)
       })
       this.resourceSaveStream.on('data', (taskRunInstance: TaskRunInstance) => {
@@ -251,8 +251,8 @@ export class TaskQueue {
       )
 
       // 建立管道
-      this.queueEntrance.pipe(this.worksInfoSaveStream)
-      this.worksInfoSaveStream.pipe(this.resourceSaveStream)
+      this.queueEntrance.pipe(this.workInfoSaveStream)
+      this.workInfoSaveStream.pipe(this.resourceSaveStream)
       this.resourceSaveStream.pipe(this.taskPersistStream)
 
       Promise.all([taskInfoStreamDestroyed, taskResourceStreamDestroyed, taskPersistStreamDestroyed])
@@ -559,24 +559,24 @@ export class TaskQueue {
 
     if (ArrayNotEmpty(notExistsTasks)) {
       // 查询已经下载过的作品列表
-      const siteIdAndSiteWorksIds = notExistsTasks.map((notExistsTask) => {
+      const siteIdAndSiteWorkIds = notExistsTasks.map((notExistsTask) => {
         return {
           siteId: notExistsTask.siteId as number,
-          siteWorksId: notExistsTask.siteWorksId as string
+          siteWorkId: notExistsTask.siteWorkId as string
         }
       })
-      const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
-      const existsWorksMap = new Map(existsWorksList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
+      const existsWorkList = await this.workService.listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds)
+      const existsWorkMap = new Map(existsWorkList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
       for (const task of notExistsTasks) {
         // 判断这个作品是否已经保存过
         let infoSaved = false
-        let localWorksId: number | undefined
+        let localWorkId: number | undefined
         const resSaveSuspended = NotNullish(task.pendingResourceId)
-        const existsWorks = existsWorksMap.get(`${task.siteId}_${task.siteWorksId}`)
-        infoSaved = NotNullish(existsWorks)
-        if (NotNullish(existsWorks)) {
-          AssertNotNullish(existsWorks.id)
-          localWorksId = existsWorks.id
+        const existsWork = existsWorkMap.get(`${task.siteId}_${task.siteWorkId}`)
+        infoSaved = NotNullish(existsWork)
+        if (NotNullish(existsWork)) {
+          AssertNotNullish(existsWork.id)
+          localWorkId = existsWork.id
         }
         const taskRunInstance = new TaskRunInstance(
           task.id as number,
@@ -589,7 +589,7 @@ export class TaskQueue {
           this.taskService,
           this.pluginLoader,
           new ResourceWriter(),
-          localWorksId
+          localWorkId
         )
         // task.status = TaskStatusEnum.WAITING
         taskRunInstance.inStream = true
@@ -692,14 +692,14 @@ export class TaskQueue {
       const pidChildrenMap: Map<number, Task[]> = Map.groupBy(allChildren, (child) => child.pid as number)
       const pidChildrenInstMap: object = lodash.keyBy(runInstances, 'taskId')
       // 查询已经下载过的作品列表
-      const siteIdAndSiteWorksIds = allChildren.map((notExistsTask) => {
+      const siteIdAndSiteWorkIds = allChildren.map((notExistsTask) => {
         return {
           siteId: notExistsTask.siteId as number,
-          siteWorksId: notExistsTask.siteWorksId as string
+          siteWorkId: notExistsTask.siteWorkId as string
         }
       })
-      const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
-      const existsWorksMap = new Map(existsWorksList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
+      const existsWorkList = await this.workService.listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds)
+      const existsWorkMap = new Map(existsWorkList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
       for (const parentInfo of parentList) {
         AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id不能为空`)
         if (IsNullish(parentInfo.status)) {
@@ -718,11 +718,11 @@ export class TaskQueue {
               // 处理没有添加到taskMap的
               // 判断这个作品是否已经保存过
               const resSaveSuspended = NotNullish(tempChild.pendingResourceId)
-              const infoSaved = existsWorksMap.has(`${tempChild.siteId}_${tempChild.siteWorksId}`)
-              let localWorksId: number | undefined
+              const infoSaved = existsWorkMap.has(`${tempChild.siteId}_${tempChild.siteWorkId}`)
+              let localWorkId: number | undefined
               if (infoSaved) {
-                AssertNotNullish(existsWorksList[0].id)
-                localWorksId = existsWorksList[0].id
+                AssertNotNullish(existsWorkList[0].id)
+                localWorkId = existsWorkList[0].id
               }
               const tempRunInstance = new TaskRunInstance(
                 tempChild.id as number,
@@ -734,7 +734,7 @@ export class TaskQueue {
                 this.taskService,
                 this.pluginLoader,
                 new ResourceWriter(),
-                localWorksId
+                localWorkId
               )
               this.inletTask(tempRunInstance, tempChild)
               return tempRunInstance
@@ -1105,7 +1105,7 @@ class TaskRunInstance extends TaskStatus {
   /**
    * 作品id
    */
-  public worksId: number | undefined
+  public workId: number | undefined
   /**
    * Task服务
    * @private
@@ -1137,12 +1137,12 @@ class TaskRunInstance extends TaskStatus {
     parentId: number | null | undefined,
     status: TaskStatusEnum,
     taskInfo: Task,
-    worksInfoSaved: boolean,
+    workInfoSaved: boolean,
     resSaveSuspended: boolean,
     taskService: TaskService,
     pluginLoader: PluginLoader<TaskHandler>,
     resourceWriter: ResourceWriter,
-    localWorksId?: number
+    localWorkId?: number
   ) {
     super(taskId, status, false)
     this.resourceWriter = resourceWriter
@@ -1152,10 +1152,10 @@ class TaskRunInstance extends TaskStatus {
     this.taskService = taskService
     this.pluginLoader = pluginLoader
     this.parentId = IsNullish(parentId) ? 0 : parentId
-    this.infoSaved = IsNullish(worksInfoSaved) ? false : worksInfoSaved
+    this.infoSaved = IsNullish(workInfoSaved) ? false : workInfoSaved
     this.resSaveSuspended = IsNullish(resSaveSuspended) ? false : resSaveSuspended
     this.inStream = false
-    this.worksId = localWorksId
+    this.workId = localWorkId
     this.errorOccurred = false
     this.error = undefined
   }
@@ -1176,7 +1176,7 @@ class TaskRunInstance extends TaskStatus {
     try {
       const task = await this.taskService.getById(this.taskId)
       AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
-      this.worksId = await this.taskService.saveWorksInfo(task, this.pluginLoader)
+      this.workId = await this.taskService.saveWorkInfo(task, this.pluginLoader)
     } catch (error) {
       this.errorOccurred = true
       this.error = error as Error
@@ -1289,15 +1289,15 @@ class TaskRunInstance extends TaskStatus {
       try {
         this.changeStatus(TaskStatusEnum.PROCESSING)
         AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
-        AssertNotNullish(this.worksId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
+        AssertNotNullish(this.workId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
 
         const resourceWriter = IsNullish(this.resourceWriter) ? new ResourceWriter() : this.resourceWriter
 
         let result: Promise<TaskProcessResponseDTO>
         if (this.resSaveSuspended && this.taskInfo.continuable) {
-          result = this.taskService.resumeTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
+          result = this.taskService.resumeTask(this.taskInfo, this.workId, this.pluginLoader, resourceWriter)
         } else {
-          result = this.taskService.startTask(this.taskInfo, this.worksId, this.pluginLoader, resourceWriter)
+          result = this.taskService.startTask(this.taskInfo, this.workId, this.pluginLoader, resourceWriter)
         }
         const saveResult = await result
         this.changeStatus(saveResult.taskStatus)
@@ -1463,8 +1463,8 @@ class TaskQueueEntrance extends Readable {
    * @private
    */
   private async isResourceSaved(taskRunInstance: TaskRunInstance): Promise<boolean> {
-    if (NotNullish(taskRunInstance.worksId)) {
-      return this.resourceService.hasActiveByWorksId(taskRunInstance.worksId)
+    if (NotNullish(taskRunInstance.workId)) {
+      return this.resourceService.hasActiveByWorkId(taskRunInstance.workId)
     } else {
       return false
     }
@@ -1546,7 +1546,7 @@ class TaskQueueEntrance extends Readable {
 /**
  * 作品信息保存流
  */
-class WorksInfoSaveStream extends Transform {
+class WorkInfoSaveStream extends Transform {
   constructor() {
     super({ objectMode: true, highWaterMark: 64 }) // 设置为对象模式
   }

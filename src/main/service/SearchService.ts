@@ -5,10 +5,10 @@ import SelectItem from '../model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
 import SearchDao from '../dao/SearchDao.js'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
-import WorksFullDTO from '../model/dto/WorksFullDTO.js'
-import WorksService from './WorksService.js'
+import WorkFullDTO from '../model/dto/WorkFullDTO.ts'
+import WorkService from './WorkService.ts'
 import Work from '../model/entity/Work.ts'
-import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.js'
+import WorkQueryDTO from '../model/queryDTO/WorkQueryDTO.ts'
 import { ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
 import { Operator } from '../constant/CrudConstant.js'
@@ -16,7 +16,7 @@ import LocalTagService from './LocalTagService.js'
 import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
-import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
+import WorkCommonQueryDTO from '../model/queryDTO/WorkCommonQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.js'
 
 /**
@@ -65,23 +65,23 @@ export default class SearchService {
    * 分页查询作品
    * @param page
    */
-  public async queryWorksPage(page: Page<SearchCondition[], WorksFullDTO>): Promise<Page<WorksQueryDTO, Work>> {
+  public async queryWorkPage(page: Page<SearchCondition[], WorkFullDTO>): Promise<Page<WorkQueryDTO, Work>> {
     const searchConditions = page.query
     page = new Page(page)
     page.query = searchConditions
-    const worksPage = page.copy<WorksQueryDTO, WorksFullDTO>()
-    const worksService = new WorksService()
+    const workPage = page.copy<WorkQueryDTO, WorkFullDTO>()
+    const workService = new WorkService()
 
-    const worksQueryDTO = new WorksCommonQueryDTO()
-    worksQueryDTO.includeLocalTagIds = []
-    worksQueryDTO.excludeLocalTagIds = []
-    worksQueryDTO.includeSiteTagIds = []
-    worksQueryDTO.excludeSiteTagIds = []
-    worksQueryDTO.includeLocalAuthorIds = []
-    worksQueryDTO.excludeLocalAuthorIds = []
-    worksQueryDTO.includeSiteAuthorIds = []
-    worksQueryDTO.excludeSiteAuthorIds = []
-    worksQueryDTO.operators = {}
+    const workCommonQueryDTO = new WorkCommonQueryDTO()
+    workCommonQueryDTO.includeLocalTagIds = []
+    workCommonQueryDTO.excludeLocalTagIds = []
+    workCommonQueryDTO.includeSiteTagIds = []
+    workCommonQueryDTO.excludeSiteTagIds = []
+    workCommonQueryDTO.includeLocalAuthorIds = []
+    workCommonQueryDTO.excludeLocalAuthorIds = []
+    workCommonQueryDTO.includeSiteAuthorIds = []
+    workCommonQueryDTO.excludeSiteAuthorIds = []
+    workCommonQueryDTO.operators = {}
     const usedLocalTag: number[] = []
     const usedSiteTag: number[] = []
     const usedLocalAuthor: number[] = []
@@ -91,9 +91,9 @@ export default class SearchService {
         switch (searchCondition.type) {
           case SearchType.LOCAL_TAG:
             if (searchCondition.operator === Operator.EQUAL) {
-              worksQueryDTO.includeLocalTagIds.push(searchCondition.value as number)
+              workCommonQueryDTO.includeLocalTagIds.push(searchCondition.value as number)
             } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              worksQueryDTO.excludeLocalTagIds.push(searchCondition.value as number)
+              workCommonQueryDTO.excludeLocalTagIds.push(searchCondition.value as number)
             } else {
               LogUtil.warn('SearchService', `本地标签不支持这种匹配方式，operator: ${searchCondition.operator}`)
             }
@@ -101,9 +101,9 @@ export default class SearchService {
             break
           case SearchType.SITE_TAG:
             if (searchCondition.operator === Operator.EQUAL) {
-              worksQueryDTO.includeSiteTagIds.push(searchCondition.value as number)
+              workCommonQueryDTO.includeSiteTagIds.push(searchCondition.value as number)
             } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              worksQueryDTO.excludeSiteTagIds.push(searchCondition.value as number)
+              workCommonQueryDTO.excludeSiteTagIds.push(searchCondition.value as number)
             } else {
               LogUtil.warn('SearchService', `站点标签不支持这种匹配方式，operator: ${searchCondition.operator}`)
             }
@@ -111,9 +111,9 @@ export default class SearchService {
             break
           case SearchType.LOCAL_AUTHOR:
             if (searchCondition.operator === Operator.EQUAL) {
-              worksQueryDTO.includeLocalAuthorIds.push(searchCondition.value as number)
+              workCommonQueryDTO.includeLocalAuthorIds.push(searchCondition.value as number)
             } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              worksQueryDTO.excludeLocalAuthorIds.push(searchCondition.value as number)
+              workCommonQueryDTO.excludeLocalAuthorIds.push(searchCondition.value as number)
             } else {
               LogUtil.warn('SearchService', `本地作者不支持这种匹配方式，operator: ${searchCondition.operator}`)
             }
@@ -121,9 +121,9 @@ export default class SearchService {
             break
           case SearchType.SITE_AUTHOR:
             if (searchCondition.operator === Operator.EQUAL) {
-              worksQueryDTO.includeSiteAuthorIds.push(searchCondition.value as number)
+              workCommonQueryDTO.includeSiteAuthorIds.push(searchCondition.value as number)
             } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              worksQueryDTO.excludeSiteAuthorIds.push(searchCondition.value as number)
+              workCommonQueryDTO.excludeSiteAuthorIds.push(searchCondition.value as number)
             } else {
               LogUtil.warn('SearchService', `站点作者不支持这种匹配方式，operator: ${searchCondition.operator}`)
             }
@@ -131,10 +131,10 @@ export default class SearchService {
             break
           case SearchType.WORKS_SITE_NAME:
             if (searchCondition.operator === Operator.EQUAL) {
-              worksQueryDTO.siteWorksName = searchCondition.value as string
+              workCommonQueryDTO.siteWorkName = searchCondition.value as string
             } else if (searchCondition.operator === Operator.LIKE) {
-              worksQueryDTO.siteWorksName = searchCondition.value as string
-              worksQueryDTO.operators['siteWorksName'] = Operator.LIKE
+              workCommonQueryDTO.siteWorkName = searchCondition.value as string
+              workCommonQueryDTO.operators['siteWorkName'] = Operator.LIKE
             } else {
               LogUtil.warn('SearchService', `站点作品名称不支持这种匹配方式，operator: ${searchCondition.operator}`)
             }
@@ -145,8 +145,8 @@ export default class SearchService {
         }
       }
     }
-    worksPage.query = worksQueryDTO
-    return worksService.synthesisQueryPage(worksPage).then((result) => {
+    workPage.query = workCommonQueryDTO
+    return workService.synthesisQueryPage(workPage).then((result) => {
       const used: Map<SearchType, number[]> = new Map<SearchType, number[]>()
       used.set(SearchType.LOCAL_TAG, usedLocalTag)
       used.set(SearchType.SITE_TAG, usedSiteTag)

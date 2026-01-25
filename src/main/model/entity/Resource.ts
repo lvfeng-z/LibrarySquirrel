@@ -5,7 +5,7 @@ export default class Resource extends BaseEntity {
   /**
    * 作品id
    */
-  worksId: number | undefined | null
+  workId: number | undefined | null
 
   /**
    * 任务id
@@ -60,7 +60,7 @@ export default class Resource extends BaseEntity {
   constructor(resource?: Resource) {
     super(resource)
     if (NotNullish(resource)) {
-      this.worksId = resource.worksId
+      this.workId = resource.workId
       this.taskId = resource.taskId
       this.state = resource.state
       this.filePath = resource.filePath

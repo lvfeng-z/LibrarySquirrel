@@ -13,10 +13,10 @@ export default class ResourceDao extends BaseDao<ResourceQueryDTO, Resource> {
 
   /**
    * 查询作品id是否有启用的资源
-   * @param worksId
+   * @param workId 作品id
    */
-  public async hasActiveByWorksId(worksId: number): Promise<boolean> {
-    const statement = `SELECT COUNT(1) as count FROM ${this.tableName} WHERE works_id = ${worksId} AND state = 1`
+  public async hasActiveByWorkId(workId: number): Promise<boolean> {
+    const statement = `SELECT COUNT(1) as count FROM ${this.tableName} WHERE work_id = ${workId} AND state = 1`
     const db = this.acquire()
     try {
       const queryResult = (await db.get(statement)) as { count: number }

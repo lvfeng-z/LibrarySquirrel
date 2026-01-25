@@ -2,14 +2,14 @@
 import { ref } from 'vue'
 import Site from '../model/main/entity/Site.ts'
 import LocalTag from '../model/main/entity/LocalTag.ts'
-import WorksFullDTO from '../model/main/dto/WorksFullDTO.ts'
+import WorkFullDTO from '../model/main/dto/WorkFullDTO.ts'
 import lodash from 'lodash'
 import RankedSiteAuthor from '../model/main/domain/RankedSiteAuthor.ts'
 
 // 变量
 // 接口
 const apis = {
-  worksSaveWorks: window.api.worksSaveWorks,
+  workSaveWork: window.api.workSaveWork,
   testTransactionTest: window.api.testTransactionTest
 }
 const site = ref(new Site())
@@ -17,14 +17,14 @@ const siteAuthor = ref(new RankedSiteAuthor())
 const localTag = ref(new LocalTag())
 
 // 方法
-function saveWorks() {
-  const worksFullDTO = new WorksFullDTO()
-  worksFullDTO.site = lodash.cloneDeep(site.value)
+function saveWork() {
+  const workFullDTO = new WorkFullDTO()
+  workFullDTO.site = lodash.cloneDeep(site.value)
   const siteAuthors: RankedSiteAuthor[] = []
   siteAuthors.push(lodash.cloneDeep(siteAuthor.value))
-  worksFullDTO.siteAuthors = siteAuthors
-  worksFullDTO.localTags = lodash.cloneDeep([localTag.value])
-  apis.worksSaveWorks(worksFullDTO)
+  workFullDTO.siteAuthors = siteAuthors
+  workFullDTO.localTags = lodash.cloneDeep([localTag.value])
+  apis.workSaveWork(workFullDTO)
   // apis.testTransactionTest()
 }
 </script>
@@ -74,7 +74,7 @@ function saveWorks() {
         </el-col>
       </el-row>
     </el-form>
-    <el-button @click="saveWorks">保存</el-button>
+    <el-button @click="saveWork">保存</el-button>
   </el-dialog>
 </template>
 

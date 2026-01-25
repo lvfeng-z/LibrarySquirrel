@@ -5,7 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import MainProcessApi from './base/MainProcessApi.js'
 import LogUtil from './util/LogUtil.ts'
-import { ConvertPath, GetWorksResource } from './util/FileSysUtil.ts'
+import { ConvertPath, GetWorkResource } from './util/FileSysUtil.ts'
 import { GVar, GVarEnum } from './base/GVar.ts'
 import { Initialize } from './base/Initialize.js'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
@@ -160,7 +160,7 @@ Electron.app.whenReady().then(() => {
       const visualWidthStr = url.searchParams.get('visualWidth')
       const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
 
-      const data = await GetWorksResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
+      const data = await GetWorkResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
       return new Response(data as BodyInit) // 返回文件
     } catch (error) {
       LogUtil.error('scheme-resource', 'Error handling protocol request:', String(error))

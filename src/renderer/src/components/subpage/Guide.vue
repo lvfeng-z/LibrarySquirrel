@@ -19,7 +19,7 @@ function startTour() {
         <el-anchor :container="containerRef?.parentElement?.parentElement" direction="vertical" type="default" :offset="30">
           <el-anchor-link href="#summary" title="软件概述" />
           <el-anchor-link href="#site" title="站点" />
-          <el-anchor-link href="#works" title="作品" />
+          <el-anchor-link href="#work" title="作品" />
           <el-anchor-link href="#task" title="任务" />
           <el-anchor-link href="#localAuthor" title="本地作者" />
           <el-anchor-link href="#siteAuthor" title="站点作者" />
@@ -55,7 +55,7 @@ function startTour() {
               </div>
               <el-divider />
             </div>
-            <div id="works">
+            <div id="work">
               <span class="guide-tabs-label">
                 <el-icon class="guide-tabs-label-icon-normal"><Link /></el-icon>
                 <span class="guide-tabs-label-text">作品</span>

@@ -12,7 +12,7 @@ import lodash from 'lodash'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
-import SiteTagFullWithWorksIdDTO from '../model/dto/SiteTagFullWithWorksIdDTO.ts'
+import SiteTagFullWithWorkIdDTO from '../model/dto/SiteTagFullWithWorkIdDTO.ts'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -173,7 +173,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * 分页查询作品的站点标签
    * @param page
    */
-  public async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
+  public async queryPageByWorkId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
     if (IsNullish(modifiedPage.query)) {
@@ -191,18 +191,18 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery
-    modifiedPage.query.worksId = query.worksId
-    modifiedPage.query.boundOnWorksId = query.boundOnWorksId
+    modifiedPage.query.workId = query.workId
+    modifiedPage.query.boundOnWorkId = query.boundOnWorkId
 
     if (
-      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'boundOnWorksId') &&
-      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'worksId')
+      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'boundOnWorkId') &&
+      Object.prototype.hasOwnProperty.call(modifiedPage.query, 'workId')
     ) {
-      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${modifiedPage.query.worksId} AND t1.id = re_works_tag.site_tag_id)`
-      if (modifiedPage.query.boundOnWorksId) {
-        whereClauses.set('worksId', existClause)
+      const existClause = `EXISTS(SELECT 1 FROM re_work_tag WHERE work_id = ${modifiedPage.query.workId} AND t1.id = re_work_tag.site_tag_id)`
+      if (modifiedPage.query.boundOnWorkId) {
+        whereClauses.set('workId', existClause)
       } else {
-        whereClauses.set('worksId', 'NOT ' + existClause)
+        whereClauses.set('workId', 'NOT ' + existClause)
       }
     }
 
@@ -254,8 +254,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery
-    modifiedPage.query.worksId = query.worksId
-    modifiedPage.query.boundOnWorksId = query.boundOnWorksId
+    modifiedPage.query.workId = query.workId
+    modifiedPage.query.boundOnWorkId = query.boundOnWorkId
 
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
@@ -302,13 +302,13 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
   /**
    * 查询作品的站点标签
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  public async listByWorksId(worksId: number): Promise<SiteTag[]> {
+  public async listByWorkId(workId: number): Promise<SiteTag[]> {
     const statement = `SELECT t1.*
                        FROM site_tag t1
-                              INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
-                       WHERE t2.works_id = ${worksId}`
+                              INNER JOIN re_work_tag t2 ON t1.id = t2.site_tag_id
+                       WHERE t2.work_id = ${workId}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
@@ -322,17 +322,17 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
   /**
    * 查询作品的站点标签DTO
-   * @param worksId
+   * @param workId
    */
-  public async listDTOByWorksId(worksId: number): Promise<SiteTagFullDTO[]> {
+  public async listDTOByWorkId(workId: number): Promise<SiteTagFullDTO[]> {
     const statement = `SELECT t1.*,
                               CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) END AS localTag,
                               CASE WHEN t4.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) END AS site
                        FROM site_tag t1
-                              INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
+                              INNER JOIN re_work_tag t2 ON t1.id = t2.site_tag_id
                               LEFT JOIN local_tag t3 ON t1.local_tag_id = t3.id
                               LEFT JOIN site t4 ON t1.site_id = t4.id
-                       WHERE t2.works_id = ${worksId}`
+                       WHERE t2.work_id = ${workId}`
     const db = this.acquire()
     try {
       const runResult = await db.all<unknown[], Record<string, unknown>>(statement)
@@ -347,22 +347,22 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
 
   /**
    * 查询作品的站点标签DTO
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public async listSiteTagWithWorksIdByWorksIds(worksIds: number[]): Promise<SiteTagFullWithWorksIdDTO[]> {
-    const statement = `SELECT t1.*, t2.works_id,
+  public async listSiteTagWithWorkIdByWorkIds(workIds: number[]): Promise<SiteTagFullWithWorkIdDTO[]> {
+    const statement = `SELECT t1.*, t2.work_id,
                               CASE WHEN t3.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t3.id, 'localTagName', t3.local_tag_name, 'baseLocalTagId', t3.base_local_tag_id, 'lastUse', t3.last_use) END AS localTag,
                               CASE WHEN t4.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t4.id, 'siteName', t4.site_name, 'siteDescription', t4.site_description) END AS site
                        FROM site_tag t1
-                              INNER JOIN re_works_tag t2 ON t1.id = t2.site_tag_id
+                              INNER JOIN re_work_tag t2 ON t1.id = t2.site_tag_id
                               LEFT JOIN local_tag t3 ON t1.local_tag_id = t3.id
                               LEFT JOIN site t4 ON t1.site_id = t4.id
-                       WHERE t2.works_id IN (${worksIds.join(',')})`
+                       WHERE t2.work_id IN (${workIds.join(',')})`
     const db = this.acquire()
     try {
       const runResult = await db.all<unknown[], Record<string, unknown>>(statement)
-      const originalList = super.toResultTypeDataList<SiteTagFullWithWorksIdDTO>(runResult)
-      return originalList.map((original) => new SiteTagFullWithWorksIdDTO(original))
+      const originalList = super.toResultTypeDataList<SiteTagFullWithWorkIdDTO>(runResult)
+      return originalList.map((original) => new SiteTagFullWithWorkIdDTO(original))
     } finally {
       if (!this.injectedDB) {
         db.release()

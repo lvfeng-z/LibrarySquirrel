@@ -10,7 +10,7 @@ const api = {
   testInstallPluginTest: (args) => Electron.ipcRenderer.invoke('test-installPluginTest', args),
   testMainWindowMsgTest: (args) => Electron.ipcRenderer.invoke('test-mainWindowMsgTest', args),
   testGotoPageSiteManage: (args) => Electron.ipcRenderer.invoke('test-gotoPageSiteManage', args),
-  testListWorksSetWithWorksByIds: (args) => Electron.ipcRenderer.invoke('test-listWorksSetWithWorksByIds', args),
+  testListWorkSetWithWorkByIds: (args) => Electron.ipcRenderer.invoke('test-listWorkSetWithWorkByIds', args),
 
   // AppLauncher
   appLauncherOpenImage: (args) => Electron.ipcRenderer.invoke('appLauncher-openImage', args),
@@ -38,8 +38,8 @@ const api = {
   localTagGetTree: (args) => Electron.ipcRenderer.invoke('localTag-getTree', args),
   localTagListSelectItems: (args) => Electron.ipcRenderer.invoke('localTag-listSelectItems', args),
   localTagQuerySelectItemPage: (args) => Electron.ipcRenderer.invoke('localTag-querySelectItemPage', args),
-  localTagListByWorksId: (args) => Electron.ipcRenderer.invoke('localTag-listByWorksId', args),
-  localTagQuerySelectItemPageByWorksId: (args) => Electron.ipcRenderer.invoke('localTag-querySelectItemPageByWorksId', args),
+  localTagListByWorkId: (args) => Electron.ipcRenderer.invoke('localTag-listByWorkId', args),
+  localTagQuerySelectItemPageByWorkId: (args) => Electron.ipcRenderer.invoke('localTag-querySelectItemPageByWorkId', args),
 
   //OpenUrlInWindow
   getBrowserWindow: (args) => Electron.ipcRenderer.invoke('getBrowserWindow', args),
@@ -54,11 +54,11 @@ const api = {
 
   // SearchService
   searchQuerySearchConditionPage: (args) => Electron.ipcRenderer.invoke('search-querySearchConditionPage', args),
-  searchQueryWorksPage: (args) => Electron.ipcRenderer.invoke('search-queryWorksPage', args),
+  searchQueryWorkPage: (args) => Electron.ipcRenderer.invoke('search-queryWorkPage', args),
 
-  // ReWorksTag
-  reWorksTagLink: (arg1, arg2, arg3) => Electron.ipcRenderer.invoke('reWorksTag-link', arg1, arg2, arg3),
-  reWorksTagUnlink: (arg1, arg2, arg3) => Electron.ipcRenderer.invoke('reWorksTag-unlink', arg1, arg2, arg3),
+  // ReWorkTag
+  reWorkTagLink: (arg1, arg2, arg3) => Electron.ipcRenderer.invoke('reWorkTag-link', arg1, arg2, arg3),
+  reWorkTagUnlink: (arg1, arg2, arg3) => Electron.ipcRenderer.invoke('reWorkTag-unlink', arg1, arg2, arg3),
 
   // Settings
   settingsGetSettings: () => Electron.ipcRenderer.invoke('settings-getSettings'),
@@ -99,9 +99,9 @@ const api = {
     Electron.ipcRenderer.invoke('siteTag-updateBindLocalTag', localTagId, siteTagIds),
   siteTagQueryPage: (args) => Electron.ipcRenderer.invoke('siteTag-queryPage', args),
   siteTagQueryBoundOrUnboundToLocalTagPage: (args) => Electron.ipcRenderer.invoke('siteTag-queryBoundOrUnboundToLocalTagPage', args),
-  siteTagQueryPageByWorksId: (args) => Electron.ipcRenderer.invoke('siteTag-queryPageByWorksId', args),
+  siteTagQueryPageByWorkId: (args) => Electron.ipcRenderer.invoke('siteTag-queryPageByWorkId', args),
   siteTagQueryLocalRelateDTOPage: (args) => Electron.ipcRenderer.invoke('siteTag-queryLocalRelateDTOPage', args),
-  siteTagQuerySelectItemPageByWorksId: (args) => Electron.ipcRenderer.invoke('siteTag-querySelectItemPageByWorksId', args),
+  siteTagQuerySelectItemPageByWorkId: (args) => Electron.ipcRenderer.invoke('siteTag-querySelectItemPageByWorkId', args),
   siteAuthorQueryLocalRelateDTOPage: (args) => Electron.ipcRenderer.invoke('siteAuthor-queryLocalRelateDTOPage', args),
 
   // Task
@@ -120,13 +120,13 @@ const api = {
   taskStopTaskTree: (args) => Electron.ipcRenderer.invoke('task-stopTaskTree', args),
   taskResumeTaskTree: (args) => Electron.ipcRenderer.invoke('task-resumeTaskTree', args),
 
-  // Works
-  worksDeleteWorksAndSurroundingData: (args) => Electron.ipcRenderer.invoke('works-deleteWorksAndSurroundingData', args),
-  worksQueryPage: (args) => Electron.ipcRenderer.invoke('works-queryPage', args),
-  worksGetFullWorksInfoById: (args) => Electron.ipcRenderer.invoke('works-getFullWorksInfoById', args),
+  // Work
+  workDeleteWorkAndSurroundingData: (args) => Electron.ipcRenderer.invoke('work-deleteWorkAndSurroundingData', args),
+  workQueryPage: (args) => Electron.ipcRenderer.invoke('work-queryPage', args),
+  workGetFullWorkInfoById: (args) => Electron.ipcRenderer.invoke('work-getFullWorkInfoById', args),
 
-  // WorksSet
-  worksSetListWorksSetWithWorksByIds: (args) => Electron.ipcRenderer.invoke('worksSet-listWorksSetWithWorksByIds', args),
+  // WorkSet
+  workSetListWorkSetWithWorkByIds: (args) => Electron.ipcRenderer.invoke('workSet-listWorkSetWithWorkByIds', args),
 
   // FileSysUtil
   dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)

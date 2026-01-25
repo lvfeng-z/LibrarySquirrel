@@ -2,7 +2,7 @@ export interface Settings {
   initialized: boolean
   programVersion: string
   workdir: string
-  worksSettings: {
+  workSettings: {
     fileNameFormat: string
   }
   importSettings: {
@@ -19,8 +19,8 @@ export const emptySettings: Settings = {
   initialized: false,
   programVersion: '',
   workdir: '',
-  worksSettings: {
-    fileNameFormat: '[${author}]_[${siteWorksId}]_${siteWorksName}'
+  workSettings: {
+    fileNameFormat: '[${author}]_[${siteWorkId}]_${siteWorkName}'
   },
   importSettings: {
     maxParallelImport: 3

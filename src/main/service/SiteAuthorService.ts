@@ -250,18 +250,18 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
 
   /**
    * 查询作品的站点作者
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  public async listByWorksId(worksId: number) {
-    return this.dao.listByWorksId(worksId)
+  public async listByWorkId(workId: number) {
+    return this.dao.listByWorkId(workId)
   }
 
   /**
    * 查询作品的站点作者列表
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public async listRankedSiteAuthorWithWorksIdByWorksIds(worksIds: number[]) {
-    return this.dao.listRankedSiteAuthorWithWorksIdByWorksIds(worksIds)
+  public async listRankedSiteAuthorWithWorkIdByWorkIds(workIds: number[]) {
+    return this.dao.listRankedSiteAuthorWithWorkIdByWorkIds(workIds)
   }
 
   /**

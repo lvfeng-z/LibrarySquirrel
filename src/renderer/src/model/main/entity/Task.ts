@@ -28,7 +28,7 @@ export default class Task extends BaseEntity {
   /**
    * 站点作品id
    */
-  siteWorksId: string | undefined | null
+  siteWorkId: string | undefined | null
 
   /**
    * 当任务是父任务时，url存储创建此父任务所使用的url，否则存储的是下载资源的链接（由于存在临时的下载链接，此字段可能没有作用）
@@ -83,7 +83,7 @@ export default class Task extends BaseEntity {
       this.pid = task.pid
       this.taskName = task.taskName
       this.siteId = task.siteId
-      this.siteWorksId = task.siteWorksId
+      this.siteWorkId = task.siteWorkId
       this.url = task.url
       this.status = task.status
       this.pendingResourceId = task.pendingResourceId

@@ -151,26 +151,26 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
 
   /**
    * 查询作品的站点标签
-   * @param worksId
+   * @param workId
    */
-  public async listByWorksId(worksId: number): Promise<SiteTag[]> {
-    return await this.dao.listByWorksId(worksId)
+  public async listByWorkId(workId: number): Promise<SiteTag[]> {
+    return await this.dao.listByWorkId(workId)
   }
 
   /**
    * 查询作品的站点标签DTO
-   * @param worksId
+   * @param workId
    */
-  public async listDTOByWorksId(worksId: number): Promise<SiteTagFullDTO[]> {
-    return await this.dao.listDTOByWorksId(worksId)
+  public async listDTOByWorkId(workId: number): Promise<SiteTagFullDTO[]> {
+    return await this.dao.listDTOByWorkId(workId)
   }
 
   /**
    * 查询作品的站点标签DTO
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public async listSiteTagWithWorksIdByWorksIds(worksIds: number[]) {
-    return await this.dao.listSiteTagWithWorksIdByWorksIds(worksIds)
+  public async listSiteTagWithWorkIdByWorkIds(workIds: number[]) {
+    return await this.dao.listSiteTagWithWorkIdByWorkIds(workIds)
   }
 
   /**
@@ -197,7 +197,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * 分页查询作品的站点标签
    * @param page
    */
-  public async queryPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
+  public async queryPageByWorkId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
@@ -205,14 +205,14 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         ...page.query.operators
       }
     }
-    return await this.dao.queryPageByWorksId(page)
+    return await this.dao.queryPageByWorkId(page)
   }
 
   /**
    * 分页查询作品的站点标签的SelectItem
    * @param page
    */
-  public async querySelectItemPageByWorksId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
+  public async querySelectItemPageByWorkId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
@@ -220,7 +220,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         ...page.query.operators
       }
     }
-    const sourcePage = await this.dao.queryPageByWorksId(page)
+    const sourcePage = await this.dao.queryPageByWorkId(page)
 
     // 根据SiteTag数据生成SelectItem
     const sourceData = sourcePage.data

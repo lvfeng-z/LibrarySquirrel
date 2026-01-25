@@ -1,0 +1,20 @@
+import WorkSet from '../entity/WorkSet.ts'
+import WorkFullDTO from './WorkFullDTO.ts'
+import { IsNullish } from '../../util/CommonUtil.ts'
+
+export default class WorkSetWithWorkDTO {
+  /**
+   * 作品集
+   */
+  workSet: WorkSet
+
+  /**
+   * 作品集的作品列表
+   */
+  workList: WorkFullDTO[]
+
+  constructor(workSet: WorkSet, workList?: WorkFullDTO[]) {
+    this.workSet = workSet
+    this.workList = IsNullish(workList) ? [] : workList
+  }
+}

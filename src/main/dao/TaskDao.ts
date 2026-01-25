@@ -107,9 +107,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   async setTaskTreeStatus(taskIds: number[], status: TaskStatusEnum, includeStatus?: TaskStatusEnum[]): Promise<number> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
-    const statement = `WITH children AS (SELECT id, is_collection, IFNULL(pid, 0) AS pid, task_name, site_id, site_works_id, url, create_time, update_time, status,
+    const statement = `WITH children AS (SELECT id, is_collection, IFNULL(pid, 0) AS pid, task_name, site_id, site_work_id, url, create_time, update_time, status,
                                                 pending_resource_id, continuable, plugin_author, plugin_name, plugin_version, plugin_data, error_message FROM task WHERE id in (${idsStr}) AND is_collection = 0),
-                            parent as (SELECT id, is_collection, 0 as pid, task_name, site_id, site_works_id, url, create_time, update_time, status, pending_resource_id,
+                            parent as (SELECT id, is_collection, 0 as pid, task_name, site_id, site_work_id, url, create_time, update_time, status, pending_resource_id,
                                               continuable, plugin_author, plugin_name, plugin_version, plugin_data, error_message FROM task WHERE id in (${idsStr}) AND is_collection = 1)
                        update task set status = ${status} WHERE id in(
                           SELECT id FROM children ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
@@ -143,16 +143,16 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
   async listTaskTree(taskIds: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskTreeDTO[]> {
     const idsStr = taskIds.join(',')
     const statusStr = includeStatus?.join(',')
-    const statement = `WITH children AS (SELECT id, is_collection, IFNULL(pid, 0) AS pid, task_name, site_id, site_works_id, url, create_time, update_time, status, pending_resource_id,
+    const statement = `WITH children AS (SELECT id, is_collection, IFNULL(pid, 0) AS pid, task_name, site_id, site_work_id, url, create_time, update_time, status, pending_resource_id,
                                                 continuable, plugin_author, plugin_name, plugin_version, plugin_data, error_message FROM task WHERE id in (${idsStr}) AND is_collection = 0),
-                            parent as (SELECT id, is_collection, 0 as pid, task_name, site_id, site_works_id, url, create_time, update_time, status, pending_resource_id,
+                            parent as (SELECT id, is_collection, 0 as pid, task_name, site_id, site_work_id, url, create_time, update_time, status, pending_resource_id,
                                               continuable, plugin_author, plugin_name, plugin_version, plugin_data, error_message FROM task WHERE id in (${idsStr}) AND is_collection = 1)
 
                        SELECT * FROM children ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
                        UNION
                        SELECT * FROM parent ${NotNullish(includeStatus) ? 'WHERE status in (' + statusStr + ')' : ''}
                        UNION
-                       SELECT id, is_collection, 0 as pid, task_name, site_id, site_works_id, url, create_time, update_time, status, pending_resource_id,
+                       SELECT id, is_collection, 0 as pid, task_name, site_id, site_work_id, url, create_time, update_time, status, pending_resource_id,
                               continuable, plugin_author, plugin_name, plugin_version, plugin_data, error_message
                        FROM task
                        WHERE id in (SELECT pid FROM children)

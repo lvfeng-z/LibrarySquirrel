@@ -8,7 +8,7 @@ export default class ResourceQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId?: number | number[] | undefined | null
+  workId?: number | number[] | undefined | null
 
   /**
    * 任务id
@@ -58,7 +58,7 @@ export default class ResourceQueryDTO extends BaseQueryDTO {
   constructor(resourceQueryDTO?: ResourceQueryDTO) {
     super(resourceQueryDTO)
     if (NotNullish(resourceQueryDTO)) {
-      this.worksId = resourceQueryDTO.worksId
+      this.workId = resourceQueryDTO.workId
       this.taskId = resourceQueryDTO.taskId
       this.state = resourceQueryDTO.state
       this.filePath = resourceQueryDTO.filePath

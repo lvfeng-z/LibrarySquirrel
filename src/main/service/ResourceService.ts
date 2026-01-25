@@ -18,7 +18,7 @@ import RankedLocalAuthor from '../model/domain/RankedLocalAuthor.ts'
 import ResourceWriter from '../util/ResourceWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import fs from 'fs'
-import WorksFullDTO from '../model/dto/WorksFullDTO.js'
+import WorkFullDTO from '../model/dto/WorkFullDTO.ts'
 import ResFileNameFormatEnum from '../constant/ResFileNameFormatEnum.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
@@ -37,9 +37,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 创建用于保存资源的资源信息
-   * @param worksFullDTO
+   * @param workFullDTO
    */
-  public static async createSaveInfo(worksFullDTO: WorksFullDTO): Promise<ResourceSaveDTO> {
+  public static async createSaveInfo(workFullDTO: WorkFullDTO): Promise<ResourceSaveDTO> {
     const result = new ResourceSaveDTO()
     // 读取设置中的工作目录信息
     const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
@@ -48,18 +48,18 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       LogUtil.error(this.constructor.name, msg)
       throw new Error(msg)
     }
-    const resource = worksFullDTO.resource
+    const resource = workFullDTO.resource
     AssertNotNullish(resource, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
 
     // 作者信息
-    const authorName = ResourceService.getAuthorName(worksFullDTO)
+    const authorName = ResourceService.getAuthorName(workFullDTO)
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
     const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
-    const filenameExtension = worksFullDTO.resource?.filenameExtension
+    const filenameExtension = workFullDTO.resource?.filenameExtension
 
-    const fileName = this.createFileName(worksFullDTO)
+    const fileName = this.createFileName(workFullDTO)
     const standardFileName = SanitizeFileName(fileName)
     const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : `${standardFileName}${filenameExtension}`
 
@@ -73,7 +73,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     result.importMethod = resource.importMethod
     result.suggestedName = resource.suggestedName
     result.filenameExtension = filenameExtension
-    result.resourceSize = worksFullDTO.resource?.resourceSize
+    result.resourceSize = workFullDTO.resource?.resourceSize
     result.resourceComplete = BOOL.FALSE
 
     return result
@@ -97,7 +97,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(
       fullSavePath,
       this.constructor.name,
-      `保存作品资源失败，资源的保存路径不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `保存作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`
     )
 
     if (NotNullish(resourceSaveDTO.resourceSize)) {
@@ -220,19 +220,19 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
       this.constructor.name,
-      `替换作品资源失败，资源不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `替换作品资源失败，资源不能为空，workId: ${resourceSaveDTO.workId}`
     )
     AssertNotNullish(
       fullSavePath,
       this.constructor.name,
-      `替换作品资源失败，资源的保存路径不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `替换作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`
     )
     const oldResource = await this.getById(resourceId)
     AssertNotNullish(oldResource, this.constructor.name, `替换资源失败，资源不存在`)
     AssertNotBlank(
       oldResource.filePath,
       this.constructor.name,
-      `替换作品资源失败，原作品资源的路径不能为空，worksId: ${resourceSaveDTO.worksId}`
+      `替换作品资源失败，原作品资源的路径不能为空，workId: ${resourceSaveDTO.workId}`
     )
 
     if (NotNullish(resourceSaveDTO.resourceSize)) {
@@ -254,7 +254,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       await fs.promises.access(oldResAbsolutePath)
       await rename(oldResAbsolutePath, backupAbsolutePath)
       backupPromise = backupService
-        .createBackup(BackupSourceTypeEnum.WORKS, resourceId, backupAbsolutePath)
+        .createBackup(BackupSourceTypeEnum.WORK, resourceId, backupAbsolutePath)
         .then((backup) => {
           rm(backupAbsolutePath)
           return backup
@@ -311,9 +311,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @param resource
    */
   public async saveActive(resource: Resource): Promise<number> {
-    AssertNotNullish(resource.worksId, `资源设置为启用失败，worksId不能为空`)
+    AssertNotNullish(resource.workId, `资源设置为启用失败，workId不能为空`)
     resource.state = BOOL.TRUE
-    const oldRes = await this.listByWorksId(resource.worksId)
+    const oldRes = await this.listByWorkId(resource.workId)
     if (ArrayNotEmpty(oldRes)) {
       oldRes.forEach((res) => (res.state = BOOL.FALSE))
       await this.updateBatchById(oldRes)
@@ -324,17 +324,17 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   /**
    * 资源设置为启用
    * @param id
-   * @param worksId
+   * @param workId
    */
-  public async setActive(id: number, worksId?: number): Promise<number> {
+  public async setActive(id: number, workId?: number): Promise<number> {
     let allRes: Resource[]
-    if (IsNullish(worksId)) {
+    if (IsNullish(workId)) {
       const target = await this.getById(id)
       AssertNotNullish(target, `资源设置为启用失败，资源id: ${id}不可用`)
-      AssertNotNullish(target.worksId, `资源设置为启用失败，worksId不能为空`)
-      allRes = await this.listByWorksId(target.worksId)
+      AssertNotNullish(target.workId, `资源设置为启用失败，workId不能为空`)
+      allRes = await this.listByWorkId(target.workId)
     } else {
-      allRes = await this.listByWorksId(worksId)
+      allRes = await this.listByWorkId(workId)
     }
     allRes.forEach((res) => {
       if (res.id === id) {
@@ -348,11 +348,11 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 清除作品不活跃的资源
-   * @param worksId
+   * @param workId
    */
-  public clearInactiveByWorksId(worksId: number): Promise<number> {
+  public clearInactiveByWorkId(workId: number): Promise<number> {
     const query = new ResourceQueryDTO()
-    query.worksId = worksId
+    query.workId = workId
     query.state = BOOL.FALSE
     return this.delete(query)
   }
@@ -370,68 +370,68 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 根据作品id查询启用的资源
-   * @param worksId
+   * @param workId
    */
-  public getActiveByWorksId(worksId: number): Promise<Resource | undefined> {
+  public getActiveByWorkId(workId: number): Promise<Resource | undefined> {
     const query = new ResourceQueryDTO()
-    query.worksId = worksId
+    query.workId = workId
     query.state = BOOL.TRUE
     return this.get(query)
   }
 
   /**
    * 查询作品id是否有启用的资源
-   * @param worksId
+   * @param workId
    */
-  public hasActiveByWorksId(worksId: number): Promise<boolean> {
-    return this.dao.hasActiveByWorksId(worksId)
+  public hasActiveByWorkId(workId: number): Promise<boolean> {
+    return this.dao.hasActiveByWorkId(workId)
   }
 
   /**
    * 根据作品id查询所有资源
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  public listByWorksId(worksId: number): Promise<Resource[]> {
+  public listByWorkId(workId: number): Promise<Resource[]> {
     const query = new ResourceQueryDTO()
-    query.worksId = worksId
+    query.workId = workId
     return this.list(query)
   }
 
   /**
    * 根据作品id查询所有资源
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public listByWorksIds(worksIds: number[]): Promise<Resource[]> {
+  public listByWorkIds(workIds: number[]): Promise<Resource[]> {
     const query = new ResourceQueryDTO()
-    query.worksId = worksIds
-    query.operators = { worksId: Operator.IN }
+    query.workId = workIds
+    query.operators = { workId: Operator.IN }
     return this.list(query)
   }
 
   /**
    * 创建资源文件名
-   * @description 根据setting.worksSettings.fileNameFormat给出的格式化字符串创建文件名
-   * @param worksFullInfo
+   * @description 根据setting.workSettings.fileNameFormat给出的格式化字符串创建文件名
+   * @param workFullInfo
    */
-  public static createFileName(worksFullInfo: WorksFullDTO): string {
+  public static createFileName(workFullInfo: WorkFullDTO): string {
     // TODO 还有一部分类型没有进行处理；对ResFileNameFormatEnum.AUTHOR的处理逻辑还有问题；作者级别的处理也有问题
-    const fileNameFormat = GVar.get(GVarEnum.SETTINGS).get('worksSettings').fileNameFormat
+    const fileNameFormat = GVar.get(GVarEnum.SETTINGS).get('workSettings').fileNameFormat
     const getReplacement = (token: string): string => {
       switch (token) {
         case ResFileNameFormatEnum.AUTHOR.token:
-          return this.getAuthorName(worksFullInfo)
+          return this.getAuthorName(workFullInfo)
         case ResFileNameFormatEnum.LOCAL_AUTHOR_NAME.token:
-          return this.getLocalAuthorName(worksFullInfo)
+          return this.getLocalAuthorName(workFullInfo)
         case ResFileNameFormatEnum.SITE_AUTHOR_NAME.token:
-          return this.getSiteAuthorName(worksFullInfo)
+          return this.getSiteAuthorName(workFullInfo)
         case ResFileNameFormatEnum.SITE_AUTHOR_ID.token:
-          return this.getSiteAuthorId(worksFullInfo)
-        case ResFileNameFormatEnum.SITE_WORKS_ID.token:
-          return IsNullish(worksFullInfo.siteWorkId) ? 'invalidSiteWorksId' : worksFullInfo.siteWorkId
-        case ResFileNameFormatEnum.SITE_WORKS_NAME.token:
-          return IsNullish(worksFullInfo.siteWorkName) ? 'invalidSiteWorksName' : worksFullInfo.siteWorkName
+          return this.getSiteAuthorId(workFullInfo)
+        case ResFileNameFormatEnum.SITE_WORK_ID.token:
+          return IsNullish(workFullInfo.siteWorkId) ? 'invalidSiteWorkId' : workFullInfo.siteWorkId
+        case ResFileNameFormatEnum.SITE_WORK_NAME.token:
+          return IsNullish(workFullInfo.siteWorkName) ? 'invalidSiteWorkName' : workFullInfo.siteWorkName
         case ResFileNameFormatEnum.DESCRIPTION.token:
-          return IsNullish(worksFullInfo.siteWorkDescription) ? '' : worksFullInfo.siteWorkDescription
+          return IsNullish(workFullInfo.siteWorkDescription) ? '' : workFullInfo.siteWorkDescription
         case ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.token:
           return Date.now().toString()
         default:
@@ -443,16 +443,16 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 获取作者名称
-   * @param worksFullInfo
+   * @param workFullInfo
    * @private
    */
-  private static getAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+  private static getAuthorName(workFullInfo: WorkFullDTO): string {
+    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(workFullInfo.localAuthors)
       ? []
-      : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
-    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+      : workFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
+    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(workFullInfo.siteAuthors)
       ? []
-      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
+      : workFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     const localAuthorName = ArrayIsEmpty(mainLocalAuthors)
       ? undefined
       : StringUtil.isBlank(mainLocalAuthors[0].authorName)
@@ -474,13 +474,13 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 获取本地作者名称
-   * @param worksFullInfo
+   * @param workFullInfo
    * @private
    */
-  private static getLocalAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(worksFullInfo.localAuthors)
+  private static getLocalAuthorName(workFullInfo: WorkFullDTO): string {
+    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(workFullInfo.localAuthors)
       ? []
-      : worksFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
+      : workFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainLocalAuthors)
       ? 'invalidAuthorName'
       : StringUtil.isBlank(mainLocalAuthors[0].authorName)
@@ -490,13 +490,13 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 获取站点作者名称
-   * @param worksFullInfo
+   * @param workFullInfo
    * @private
    */
-  private static getSiteAuthorName(worksFullInfo: WorksFullDTO): string {
-    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+  private static getSiteAuthorName(workFullInfo: WorkFullDTO): string {
+    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(workFullInfo.siteAuthors)
       ? []
-      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
+      : workFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorName'
       : StringUtil.isBlank(mainSiteAuthors[0].authorName)
@@ -506,13 +506,13 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 获取站点作者id
-   * @param worksFullInfo
+   * @param workFullInfo
    * @private
    */
-  private static getSiteAuthorId(worksFullInfo: WorksFullDTO): string {
-    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(worksFullInfo.siteAuthors)
+  private static getSiteAuthorId(workFullInfo: WorkFullDTO): string {
+    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(workFullInfo.siteAuthors)
       ? []
-      : worksFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
+      : workFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
     return ArrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorId'
       : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorId)

@@ -44,12 +44,12 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId?: number | null | undefined
+  workId?: number | null | undefined
 
   /**
-   * 查询绑定在localTagId上的，还是未绑定的（true：绑定的，false：未绑定的）
+   * 查询绑定在作品上的，还是未绑定的（true：绑定的，false：未绑定的）
    */
-  boundOnWorksId?: boolean | undefined | null
+  boundOnWorkId?: boolean | undefined | null
 
   constructor(siteTagQueryDTO?: SiteTagQueryDTO) {
     if (siteTagQueryDTO === undefined) {

@@ -14,7 +14,7 @@ declare global {
       testInstallPluginTest: function
       testMainWindowMsgTest: function
       testGotoPageSiteManage: function
-      testListWorksSetWithWorksByIds: function
+      testListWorkSetWithWorkByIds: function
 
       // AppLauncher
       appLauncherOpenImage: function
@@ -43,8 +43,8 @@ declare global {
       localTagGetTree: function
       localTagListSelectItems: function
       localTagQuerySelectItemPage: function
-      localTagListByWorksId: function
-      localTagQuerySelectItemPageByWorksId: function
+      localTagListByWorkId: function
+      localTagQuerySelectItemPageByWorkId: function
 
       // OpenUrlInWindow
       getBrowserWindow: function
@@ -57,13 +57,13 @@ declare global {
       pluginUnInstall: function
       pluginListPluginListenerDTO: function
 
-      // ReWorksTag
-      reWorksTagLink: function
-      reWorksTagUnlink: function
+      // ReWorkTag
+      reWorkTagLink: function
+      reWorkTagUnlink: function
 
       // SearchService
       searchQuerySearchConditionPage: function
-      searchQueryWorksPage: function
+      searchQueryWorkPage: function
 
       // Settings
       settingsGetSettings: function
@@ -102,9 +102,9 @@ declare global {
       siteTagUpdateBindLocalTag: function
       siteTagQueryPage: function
       siteTagQueryBoundOrUnboundToLocalTagPage: function
-      siteTagQueryPageByWorksId: function
+      siteTagQueryPageByWorkId: function
       siteTagQueryLocalRelateDTOPage: function
-      siteTagQuerySelectItemPageByWorksId: function
+      siteTagQuerySelectItemPageByWorkId: function
       siteTagGetSelectList: function
 
       // Task
@@ -123,14 +123,14 @@ declare global {
       taskStopTaskTree: function
       taskResumeTaskTree: function
 
-      // Works
-      worksDeleteWorksAndSurroundingData: function
-      worksQueryPage: function
-      worksSaveWorks: function
-      worksGetFullWorksInfoById: function
+      // Work
+      workDeleteWorkAndSurroundingData: function
+      workQueryPage: function
+      workSaveWork: function
+      workGetFullWorkInfoById: function
 
-      // WorksSet
-      worksSetListWorksSetWithWorksByIds: function
+      // WorkSet
+      workSetListWorkSetWithWorkByIds: function
 
       // FileSysUtil
       dirSelect: function

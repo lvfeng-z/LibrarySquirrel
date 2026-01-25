@@ -7,7 +7,7 @@ import Page from '../model/util/Page.ts'
 import SiteTag from '../model/entity/SiteTag.ts'
 import test from '../test/test.ts'
 import SettingsService from '../service/SettingsService.ts'
-import WorksService from '../service/WorksService.ts'
+import WorkService from '../service/WorkService.ts'
 import ApiUtil from '../util/ApiUtil.ts'
 import TaskService from '../service/TaskService.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
@@ -15,7 +15,7 @@ import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from '../service/SiteAuthorService.ts'
 import AutoExplainPathService from '../service/AutoExplainPathService.ts'
 import { DirSelect } from '../util/FileSysUtil.ts'
-import { ReWorksTagService } from '../service/ReWorksTagService.js'
+import { ReWorkTagService } from '../service/ReWorkTagService.ts'
 import SearchService from '../service/SearchService.js'
 import AppLauncherService from '../service/AppLauncherService.js'
 import { OriginType } from '../constant/OriginType.js'
@@ -25,7 +25,7 @@ import SiteDomainService from '../service/SiteDomainService.js'
 import PluginService from '../service/PluginService.js'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
-import WorksSetService from '../service/WorksSetService.ts'
+import WorkSetService from '../service/WorkSetService.ts'
 import { IsNullish } from '../util/CommonUtil.ts'
 
 function exposeService() {
@@ -54,9 +54,9 @@ function exposeService() {
     LogUtil.info('MainProcessApi', 'test-gotoPageSiteManage')
     return test.gotoPageSiteManage()
   })
-  Electron.ipcMain.handle('test-listWorksSetWithWorksByIds', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'test-listWorksSetWithWorksByIds')
-    return test.listWorksSetWithWorksByIds(args)
+  Electron.ipcMain.handle('test-listWorkSetWithWorkByIds', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'test-listWorkSetWithWorkByIds')
+    return test.listWorkSetWithWorkByIds(args)
   })
 
   // AppLauncherService
@@ -248,20 +248,20 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('localTag-listByWorksId', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-listByWorksId')
+  Electron.ipcMain.handle('localTag-listByWorkId', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-listByWorkId')
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.listByWorksId(args))
+      return ApiUtil.response(await localTagService.listByWorkId(args))
     } catch (error) {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('localTag-querySelectItemPageByWorksId', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-querySelectItemPageByWorksId')
+  Electron.ipcMain.handle('localTag-querySelectItemPageByWorkId', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'localTag-querySelectItemPageByWorkId')
     const localTagService = new LocalTagService()
     try {
-      return ApiUtil.response(await localTagService.querySelectItemPageByWorksId(args))
+      return ApiUtil.response(await localTagService.querySelectItemPageByWorkId(args))
     } catch (error) {
       return returnError(error)
     }
@@ -338,21 +338,21 @@ function exposeService() {
     }
   })
 
-  // ReWorksTagService
-  Electron.ipcMain.handle('reWorksTag-link', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {
-    LogUtil.info('MainProcessApi', 'reWorksTag-link')
-    const reWorksTagService = new ReWorksTagService()
+  // ReWorkTagService
+  Electron.ipcMain.handle('reWorkTag-link', async (_event, type: OriginType, localTagIds: number[], workId: number) => {
+    LogUtil.info('MainProcessApi', 'reWorkTag-link')
+    const reWorkTagService = new ReWorkTagService()
     try {
-      return ApiUtil.response(await reWorksTagService.link(type, localTagIds, worksId))
+      return ApiUtil.response(await reWorkTagService.link(type, localTagIds, workId))
     } catch (error) {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('reWorksTag-unlink', async (_event, type: OriginType, localTagIds: number[], worksId: number) => {
-    LogUtil.info('MainProcessApi', 'reWorksTag-unlink')
-    const reWorksTagService = new ReWorksTagService()
+  Electron.ipcMain.handle('reWorkTag-unlink', async (_event, type: OriginType, localTagIds: number[], workId: number) => {
+    LogUtil.info('MainProcessApi', 'reWorkTag-unlink')
+    const reWorkTagService = new ReWorkTagService()
     try {
-      return ApiUtil.response(await reWorksTagService.unlink(type, localTagIds, worksId))
+      return ApiUtil.response(await reWorkTagService.unlink(type, localTagIds, workId))
     } catch (error) {
       return returnError(error)
     }
@@ -368,11 +368,11 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('search-queryWorksPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'search-queryWorksPage')
+  Electron.ipcMain.handle('search-queryWorkPage', async (_event, args) => {
+    LogUtil.info('MainProcessApi', 'search-queryWorkPage')
     const queryService = new SearchService()
     try {
-      return ApiUtil.response(await queryService.queryWorksPage(args))
+      return ApiUtil.response(await queryService.queryWorkPage(args))
     } catch (error) {
       return returnError(error)
     }
@@ -632,11 +632,11 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('siteTag-queryPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-queryPageByWorksId')
+  Electron.ipcMain.handle('siteTag-queryPageByWorkId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-queryPageByWorkId')
     try {
       const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.queryPageByWorksId(page))
+      return ApiUtil.response(await siteTagService.queryPageByWorkId(page))
     } catch (error) {
       return returnError(error)
     }
@@ -650,11 +650,11 @@ function exposeService() {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('siteTag-querySelectItemPageByWorksId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-querySelectItemPageByWorksId')
+  Electron.ipcMain.handle('siteTag-querySelectItemPageByWorkId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
+    LogUtil.info('MainProcessApi', 'siteTag-querySelectItemPageByWorkId')
     try {
       const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.querySelectItemPageByWorksId(page))
+      return ApiUtil.response(await siteTagService.querySelectItemPageByWorkId(page))
     } catch (error) {
       return returnError(error)
     }
@@ -788,43 +788,43 @@ function exposeService() {
     }
   })
 
-  // WorksService
-  Electron.ipcMain.handle('works-deleteWorksAndSurroundingData', async (_event, args): Promise<ApiUtil> => {
-    const worksService = new WorksService()
+  // WorkService
+  Electron.ipcMain.handle('work-deleteWorkAndSurroundingData', async (_event, args): Promise<ApiUtil> => {
+    const workService = new WorkService()
     try {
-      const result = await worksService.deleteWorksAndSurroundingData(args)
+      const result = await workService.deleteWorkAndSurroundingData(args)
       return ApiUtil.check(result)
     } catch (error) {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('works-queryPage', async (_event, args): Promise<ApiUtil> => {
-    const worksService = new WorksService()
+  Electron.ipcMain.handle('work-queryPage', async (_event, args): Promise<ApiUtil> => {
+    const workService = new WorkService()
     try {
-      const result = await worksService.queryPage(args)
+      const result = await workService.queryPage(args)
       return ApiUtil.response(result)
     } catch (error) {
       return returnError(error)
     }
   })
-  Electron.ipcMain.handle('works-getFullWorksInfoById', async (_event, args): Promise<ApiUtil> => {
-    const worksService = new WorksService()
+  Electron.ipcMain.handle('work-getFullWorkInfoById', async (_event, args): Promise<ApiUtil> => {
+    const workService = new WorkService()
     try {
       if (IsNullish(args)) {
         return returnError(new Error('作品id不能为空'))
       }
-      const result = await worksService.getFullWorksInfoById(args)
+      const result = await workService.getFullWorkInfoById(args)
       return ApiUtil.response(result)
     } catch (error) {
       return returnError(error)
     }
   })
 
-  // WorksSetService
-  Electron.ipcMain.handle('worksSet-listWorksSetWithWorksByIds', async (_event, args): Promise<ApiUtil> => {
-    const worksSetService = new WorksSetService()
+  // WorkSetService
+  Electron.ipcMain.handle('workSet-listWorkSetWithWorkByIds', async (_event, args): Promise<ApiUtil> => {
+    const workSetService = new WorkSetService()
     try {
-      const result = await worksSetService.listWorksSetWithWorksByIds(args)
+      const result = await workSetService.listWorkSetWithWorkByIds(args)
       return ApiUtil.response(result)
     } catch (error) {
       return returnError(error)

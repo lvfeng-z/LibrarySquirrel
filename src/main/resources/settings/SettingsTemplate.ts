@@ -5,8 +5,8 @@ export const SettingsTemplate: Settings = {
   initialized: false,
   programVersion: '',
   workdir: '',
-  worksSettings: {
-    fileNameFormat: `[${ResFileNameFormatEnum.AUTHOR.token}]_[${ResFileNameFormatEnum.SITE_WORKS_ID.token}]_${ResFileNameFormatEnum.SITE_WORKS_NAME.token}`
+  workSettings: {
+    fileNameFormat: `[${ResFileNameFormatEnum.AUTHOR.token}]_[${ResFileNameFormatEnum.SITE_WORK_ID.token}]_${ResFileNameFormatEnum.SITE_WORK_NAME.token}`
   },
   importSettings: {
     maxParallelImport: 3

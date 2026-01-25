@@ -40,8 +40,8 @@ const apis = {
 const meaningTypes = [
   { value: PathTypeEnum.AUTHOR, label: '作者' },
   { value: PathTypeEnum.TAG, label: '标签' },
-  { value: PathTypeEnum.WORKS_NAME, label: '作品名称' },
-  { value: PathTypeEnum.WORKS_SET_NAME, label: '作品集名称' },
+  { value: PathTypeEnum.WORK_NAME, label: '作品名称' },
+  { value: PathTypeEnum.WORK_SET_NAME, label: '作品集名称' },
   { value: PathTypeEnum.SITE, label: '站点名称' },
   { value: PathTypeEnum.CREATE_TIME, label: '创建时间' },
   { value: PathTypeEnum.UNKNOWN, label: '未知/无含义' }
@@ -89,8 +89,8 @@ function getInputRowType(pathType: PathTypeEnum) {
     case PathTypeEnum.SITE:
       inputType = 'select'
       break
-    case PathTypeEnum.WORKS_NAME:
-    case PathTypeEnum.WORKS_SET_NAME:
+    case PathTypeEnum.WORK_NAME:
+    case PathTypeEnum.WORK_SET_NAME:
       inputType = 'input'
       break
     case PathTypeEnum.CREATE_TIME:

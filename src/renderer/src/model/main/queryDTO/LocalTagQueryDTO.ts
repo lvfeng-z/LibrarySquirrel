@@ -19,25 +19,25 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId: number | null | undefined
+  workId: number | null | undefined
 
   /**
-   * 查询绑定在worksId上的还是没绑定的
+   * 查询绑定在workId上的还是没绑定的
    */
-  boundOnWorksId: boolean | null | undefined
+  boundOnWorkId: boolean | null | undefined
 
   constructor(localTagQueryDTO?: LocalTagQueryDTO) {
     super(localTagQueryDTO)
     if (IsNullish(localTagQueryDTO)) {
       this.localTagName = undefined
       this.baseLocalTagId = undefined
-      this.worksId = undefined
-      this.boundOnWorksId = undefined
+      this.workId = undefined
+      this.boundOnWorkId = undefined
     } else {
       this.localTagName = localTagQueryDTO.localTagName
       this.baseLocalTagId = localTagQueryDTO.baseLocalTagId
-      this.worksId = localTagQueryDTO.worksId
-      this.boundOnWorksId = localTagQueryDTO.boundOnWorksId
+      this.workId = localTagQueryDTO.workId
+      this.boundOnWorkId = localTagQueryDTO.boundOnWorkId
     }
   }
 }

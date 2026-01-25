@@ -1,4 +1,4 @@
 export enum BackupSourceTypeEnum {
-  WORKS = 0,
+  WORK = 0,
   PLUGIN = 1
 }

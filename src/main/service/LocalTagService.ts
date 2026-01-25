@@ -195,25 +195,25 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
 
   /**
    * 查询作品的本地标签
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  public async listByWorksId(worksId: number): Promise<LocalTag[]> {
-    return this.dao.listByWorksId(worksId)
+  public async listByWorkId(workId: number): Promise<LocalTag[]> {
+    return this.dao.listByWorkId(workId)
   }
 
   /**
    * 查询作品的本地标签列表
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public async listLocalTagWithWorksIdByWorksIds(worksIds: number[]) {
-    return this.dao.listLocalTagWithWorksIdByWorksIds(worksIds)
+  public async listLocalTagWithWorkIdByWorkIds(workIds: number[]) {
+    return this.dao.listLocalTagWithWorkIdByWorkIds(workIds)
   }
 
   /**
    * 分页查询作品的本地标签的SelectItem
    * @param page
    */
-  public async querySelectItemPageByWorksId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, SelectItem>> {
+  public async querySelectItemPageByWorkId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, SelectItem>> {
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
@@ -221,7 +221,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
         ...page.query.operators
       }
     }
-    const sourcePage = await this.dao.queryPageByWorksId(page)
+    const sourcePage = await this.dao.queryPageByWorkId(page)
 
     // 根据localTag数据生成SelectItem
     const sourceData = sourcePage.data

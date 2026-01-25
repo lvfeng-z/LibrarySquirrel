@@ -1,7 +1,7 @@
 import LocalAuthor from '../entity/LocalAuthor.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import Work from '../entity/Work.ts'
-import WorksSet from '../entity/WorksSet.ts'
+import WorkSet from '../entity/WorkSet.ts'
 import Site from '../entity/Site.ts'
 import { PathTypeEnum } from '../../constant/PathTypeEnum.ts'
 
@@ -27,7 +27,7 @@ export class MeaningOfPath {
   /**
    * 详细信息
    */
-  details: LocalAuthor | LocalTag | Work | WorksSet | Site | null | undefined
+  details: LocalAuthor | LocalTag | Work | WorkSet | Site | null | undefined
 
   constructor(meaningOfPath?: MeaningOfPath) {
     if (meaningOfPath === undefined) {

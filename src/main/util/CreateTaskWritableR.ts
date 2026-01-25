@@ -103,8 +103,8 @@ export default class CreateTaskWritable extends Writable {
           callback()
           return
         }
-        if (StringUtil.isBlank(task.siteWorksId)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorksId')
+        if (StringUtil.isBlank(task.siteWorkId)) {
+          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
           callback()
           return
         }

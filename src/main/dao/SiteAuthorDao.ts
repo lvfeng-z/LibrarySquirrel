@@ -13,7 +13,7 @@ import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
 import SiteAuthorFullDTO from '../model/dto/SiteAuthorFullDTO.js'
 import lodash from 'lodash'
 import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
-import RankedSiteAuthorWithWorksId from '../model/domain/RankedSiteAuthorWithWorksId.ts'
+import RankedSiteAuthorWithWorkId from '../model/domain/RankedSiteAuthorWithWorkId.ts'
 
 /**
  * 站点作者Dao
@@ -212,13 +212,13 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
   /**
    * 查询作品的站点作者
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  async listByWorksId(worksId: number): Promise<RankedSiteAuthor[]> {
+  async listByWorkId(workId: number): Promise<RankedSiteAuthor[]> {
     const statement = `SELECT t1.*, t2.author_rank
                        FROM site_author t1
-                              INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
-                       WHERE t2.works_id = ${worksId}`
+                              INNER JOIN re_work_author t2 ON t1.id = t2.site_author_id
+                       WHERE t2.work_id = ${workId}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
@@ -232,17 +232,17 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
   /**
    * 查询作品的站点作者列表
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  async listRankedSiteAuthorWithWorksIdByWorksIds(worksIds: number[]): Promise<RankedSiteAuthorWithWorksId[]> {
-    const statement = `SELECT t1.*, t2.author_rank, t2.works_id
+  async listRankedSiteAuthorWithWorkIdByWorkIds(workIds: number[]): Promise<RankedSiteAuthorWithWorkId[]> {
+    const statement = `SELECT t1.*, t2.author_rank, t2.work_id
                        FROM site_author t1
-                              INNER JOIN re_works_author t2 ON t1.id = t2.site_author_id
-                       WHERE t2.works_id IN (${worksIds.join(',')})`
+                              INNER JOIN re_work_author t2 ON t1.id = t2.site_author_id
+                       WHERE t2.work_id IN (${workIds.join(',')})`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<RankedSiteAuthorWithWorksId>(runResult))
+      .then((runResult) => super.toResultTypeDataList<RankedSiteAuthorWithWorkId>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -279,8 +279,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
     modifiedPage.query = modifiedQuery
-    modifiedPage.query.worksId = query.worksId
-    modifiedPage.query.boundOnWorksId = query.boundOnWorksId
+    modifiedPage.query.workId = query.workId
+    modifiedPage.query.boundOnWorkId = query.boundOnWorkId
 
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 

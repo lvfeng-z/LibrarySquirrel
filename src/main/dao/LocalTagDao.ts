@@ -9,7 +9,7 @@ import { IsNullish, NotNullish } from '../util/CommonUtil.js'
 import lodash from 'lodash'
 import LocalTagDTO from '../model/dto/LocalTagDTO.js'
 import BaseQueryDTO from '../base/BaseQueryDTO.js'
-import LocalTagWithWorksId from '../model/domain/LocalTagWithWorksId.ts'
+import LocalTagWithWorkId from '../model/domain/LocalTagWithWorkId.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -104,13 +104,13 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
   /**
    * 查询作品的本地标签
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  async listByWorksId(worksId: number): Promise<LocalTag[]> {
+  async listByWorkId(workId: number): Promise<LocalTag[]> {
     const statement = `SELECT t1.*
                        FROM local_tag t1
-                              INNER JOIN re_works_tag t2 ON t1.id = t2.local_tag_id
-                       WHERE t2.works_id = ${worksId}`
+                              INNER JOIN re_work_tag t2 ON t1.id = t2.local_tag_id
+                       WHERE t2.work_id = ${workId}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
@@ -124,17 +124,17 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
   /**
    * 查询作品的本地标签列表
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public async listLocalTagWithWorksIdByWorksIds(worksIds: number[]): Promise<LocalTagWithWorksId[]> {
-    const statement = `SELECT t1.*, t2.works_id
+  public async listLocalTagWithWorkIdByWorkIds(workIds: number[]): Promise<LocalTagWithWorkId[]> {
+    const statement = `SELECT t1.*, t2.work_id
                        FROM local_tag t1
-                              INNER JOIN re_works_tag t2 ON t1.id = t2.local_tag_id
-                       WHERE t2.works_id IN (${worksIds.join(',')})`
+                              INNER JOIN re_work_tag t2 ON t1.id = t2.local_tag_id
+                       WHERE t2.work_id IN (${workIds.join(',')})`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<LocalTagWithWorksId>(runResult))
+      .then((runResult) => super.toResultTypeDataList<LocalTagWithWorkId>(runResult))
       .finally(() => {
         if (!this.injectedDB) {
           db.release()
@@ -146,7 +146,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * 分页查询作品的本地标签
    * @param page
    */
-  async queryPageByWorksId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
+  async queryPageByWorkId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
     if (IsNullish(page.query)) {
       page.query = new LocalTagQueryDTO()
     }
@@ -157,19 +157,19 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const whereClauseAndQuery = super.getWhereClauses(query, 't1', LocalTagQueryDTO.nonFieldProperties())
     const whereClauses = whereClauseAndQuery.whereClauses
     const modifiedQuery = whereClauseAndQuery.query
-    modifiedQuery.worksId = page.query.worksId
-    modifiedQuery.boundOnWorksId = page.query.boundOnWorksId
+    modifiedQuery.workId = page.query.workId
+    modifiedQuery.boundOnWorkId = page.query.boundOnWorkId
     page.query = modifiedQuery
 
     if (
-      Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorksId') &&
-      Object.prototype.hasOwnProperty.call(page.query, 'worksId')
+      Object.prototype.hasOwnProperty.call(page.query, 'boundOnWorkId') &&
+      Object.prototype.hasOwnProperty.call(page.query, 'workId')
     ) {
-      const existClause = `EXISTS(SELECT 1 FROM re_works_tag WHERE works_id = ${page.query.worksId} AND t1.id = re_works_tag.local_tag_id)`
-      if (page.query.boundOnWorksId) {
-        whereClauses.set('worksId', existClause)
+      const existClause = `EXISTS(SELECT 1 FROM re_work_tag WHERE work_id = ${page.query.workId} AND t1.id = re_work_tag.local_tag_id)`
+      if (page.query.boundOnWorkId) {
+        whereClauses.set('workId', existClause)
       } else {
-        whereClauses.set('worksId', 'NOT ' + existClause)
+        whereClauses.set('workId', 'NOT ' + existClause)
       }
     }
 

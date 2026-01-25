@@ -86,7 +86,7 @@ export async function DirSelect(openFile: boolean, isModal?: boolean): Promise<E
  * @param visualHeight 可视区域高度
  * @param visualWidth 可视区域宽度
  */
-export async function GetWorksResource(
+export async function GetWorkResource(
   fullPath: string,
   height?: number,
   width?: number,

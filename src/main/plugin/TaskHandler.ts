@@ -2,7 +2,7 @@ import Task from '../model/entity/Task.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { PluginTaskResParam } from './PluginTaskResParam.ts'
-import PluginWorksResponseDTO from '../model/dto/PluginWorksResponseDTO.ts'
+import PluginWorkResponseDTO from '../model/dto/PluginWorkResponseDTO.ts'
 import { BasePlugin } from '../base/BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
 import PluginCreateParentTaskResponseDTO from '../model/dto/PluginCreateParentTaskResponseDTO.js'
@@ -23,19 +23,19 @@ export interface TaskHandler extends BasePlugin {
    * 生成作品信息
    * @param task 需开始的任务
    */
-  createWorksInfo(task: Task): Promise<PluginWorksResponseDTO>
+  createWorkInfo(task: Task): Promise<PluginWorkResponseDTO>
 
   /**
    * 获取用于开始任务的读取流
    * @param task 需开始的任务
    */
-  start(task: Task): Promise<PluginWorksResponseDTO>
+  start(task: Task): Promise<PluginWorkResponseDTO>
 
   /**
    * 获取用于重试下载任务的读取流
    * @param task 需要重试的任务
    */
-  retry(task: Task): Promise<PluginWorksResponseDTO>
+  retry(task: Task): Promise<PluginWorkResponseDTO>
 
   /**
    * 暂停下载任务
@@ -55,7 +55,7 @@ export interface TaskHandler extends BasePlugin {
    * @description 获取用于恢复已停止的下载任务的数据，continuable表示提供的流是否可接续在已下载部分的末尾
    * @param taskResParam 需要恢复下载的任务和资源数据
    */
-  resume(taskResParam: PluginTaskResParam): Promise<PluginWorksResponseDTO>
+  resume(taskResParam: PluginTaskResParam): Promise<PluginWorkResponseDTO>
 }
 
 export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
@@ -75,9 +75,9 @@ export class TaskHandlerFactory implements PluginFactory<TaskHandler> {
     isTaskHandler = 'create' in response && typeof response.create === 'function'
     AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现create方法，${pluginInfo}`)
 
-    // createWorksInfo方法
-    isTaskHandler = 'createWorksInfo' in response && typeof response.createWorksInfo === 'function'
-    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现createWorksInfo方法，${pluginInfo}`)
+    // createWorkInfo方法
+    isTaskHandler = 'createWorkInfo' in response && typeof response.createWorkInfo === 'function'
+    AssertTrue(isTaskHandler, `加载任务插件失败，插件未实现createWorkInfo方法，${pluginInfo}`)
 
     // start方法
     isTaskHandler = 'start' in response && typeof response.start === 'function'

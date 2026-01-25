@@ -18,7 +18,7 @@ import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
-import WorksQueryDTO from './model/main/queryDTO/WorksQueryDTO.ts'
+import WorkQueryDTO from './model/main/queryDTO/WorkQueryDTO.ts'
 import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
@@ -33,7 +33,7 @@ import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import StringUtil from '@renderer/utils/StringUtil.ts'
 import NotificationList from '@renderer/components/oneOff/NotificationList.vue'
-import WorksFullDTO from '@renderer/model/main/dto/WorksFullDTO.ts'
+import WorkFullDTO from '@renderer/model/main/dto/WorkFullDTO.ts'
 import { PageEnum, PageState } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
@@ -41,13 +41,13 @@ import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import { Settings as SettingsEntity } from '@renderer/model/util/Settings.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AskGotoPage, GotoPage } from '@renderer/utils/PageUtil.ts'
-import WorksGridForMainPage from '@renderer/components/common/WorksGridForMainPage.vue'
+import WorkGridForMainPage from '@renderer/components/common/WorkGridForMainPage.vue'
 
 // onMounted
 onMounted(async () => {
-  // const request = apis.worksQueryPage()
+  // const request = apis.workQueryPage()
   // console.log(request)
-  resizeObserver.observe(worksGridRef.value.$el)
+  resizeObserver.observe(workGridRef.value.$el)
   window.addEventListener('keyup', handleKeyUp)
 
   // 首次使用软件的向导
@@ -115,15 +115,15 @@ const apis = {
   testInstallPluginTest: window.api.testInstallPluginTest,
   localTagListSelectItems: window.api.localTagListSelectItems,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
-  worksQueryPage: window.api.worksQueryPage,
-  searchQueryWorksPage: window.api.searchQueryWorksPage,
+  workQueryPage: window.api.workQueryPage,
+  searchQueryWorkPage: window.api.searchQueryWorkPage,
   settingsGetSettings: window.api.settingsGetSettings,
   settingsSaveSettings: window.api.settingsSaveSettings
 }
-// main-page-works-space的实例
-const worksSpace = ref()
-// worksGrid组件的实例
-const worksGridRef = ref()
+// main-page-work-space的实例
+const workSpace = ref()
+// workGrid组件的实例
+const workGridRef = ref()
 // 向导按钮组件的实例
 const guideButton = ref()
 // 任务按钮组件的实例
@@ -134,26 +134,25 @@ const pageStatesStore = usePageStatesStore()
 const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏选中列表
 const customTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([]) // 主搜索栏自定义标签列表
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref()
-const worksList: Ref<UnwrapRef<WorksFullDTO[]>> = ref([]) // 需展示的作品列表
+const workList: Ref<UnwrapRef<WorkFullDTO[]>> = ref([]) // 需展示的作品列表
 // 当前作品的索引
-const currentWorksIndex = ref(0)
+const currentWorkIndex = ref(0)
 // 查询参数类型
 const searchConditionType: Ref<UnwrapRef<SearchType[]>> = ref([])
 // 作品分页
-const worksPage: Ref<UnwrapRef<Page<SearchCondition[], WorksFullDTO>>> = ref(new Page<SearchCondition[], WorksFullDTO>())
+const workPage: Ref<UnwrapRef<Page<SearchCondition[], WorkFullDTO>>> = ref(new Page<SearchCondition[], WorkFullDTO>())
 // 搜索栏折叠面板开关
 const searchBarPanelState: Ref<boolean> = ref(false)
 // 提醒列表开关
 const notificationListState: Ref<boolean> = ref(false)
 // 加载更多按钮开关
 const loadMore: Ref<boolean> = ref(false)
-// 监听worksArea组件的高度变化
+// 监听workGrid组件的高度变化
 const resizeObserver = new ResizeObserver((entries) => {
-  loadMore.value =
-    entries[0].contentRect.height < worksSpace.value.clientHeight && worksPage.value.pageNumber < worksPage.value.pageCount
+  loadMore.value = entries[0].contentRect.height < workSpace.value.clientHeight && workPage.value.pageNumber < workPage.value.pageCount
 })
 // 作品集视图开关
-const worksSetView: Ref<boolean> = ref(true)
+const workSetView: Ref<boolean> = ref(false)
 // IpcRenderer相关
 // 路径解释
 const showExplainPath = ref(false) // 解释路径对话框的开关
@@ -203,7 +202,7 @@ function handleKeyUp(event: KeyboardEvent) {
   }
 }
 // 请求作品接口
-async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise<Page<WorksQueryDTO, WorksFullDTO>> {
+async function searchWork(page: Page<SearchCondition[], WorkFullDTO>): Promise<Page<WorkQueryDTO, WorkFullDTO>> {
   // 处理搜索框的标签
   page.query = selectedTagList.value
     .map((searchCondition) => {
@@ -229,23 +228,23 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
   }
   // 处理搜索框输入的文本
   if (StringUtil.isNotBlank(autoLoadInput.value)) {
-    const worksName = autoLoadInput.value
+    const workName = autoLoadInput.value
     if (IsNullish(page.query)) {
       page.query = []
     }
-    let tempCondition = new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: worksName, operator: CrudOperator.LIKE })
+    let tempCondition = new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: workName, operator: CrudOperator.LIKE })
     page.query.push(tempCondition)
-    tempCondition = new SearchCondition({ type: SearchType.WORKS_NICKNAME, value: worksName, operator: CrudOperator.LIKE })
+    tempCondition = new SearchCondition({ type: SearchType.WORKS_NICKNAME, value: workName, operator: CrudOperator.LIKE })
     page.query.push(tempCondition)
   }
 
   page.pageSize = 16
 
-  return apis.searchQueryWorksPage(page).then((response: ApiResponse) => {
+  return apis.searchQueryWorkPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const page = ApiUtil.data<Page<WorksQueryDTO, WorksFullDTO>>(response)
+      const page = ApiUtil.data<Page<WorkQueryDTO, WorkFullDTO>>(response)
       if (NotNullish(page)) {
-        page.data = page.data?.map((origin) => new WorksFullDTO(origin))
+        page.data = page.data?.map((origin) => new WorkFullDTO(origin))
       }
       return page
     } else {
@@ -254,24 +253,24 @@ async function searchWorks(page: Page<SearchCondition[], WorksFullDTO>): Promise
   })
 }
 // 加载下一页作品
-async function queryWorksPage(next: boolean) {
+async function queryWorkPage(next: boolean) {
   // 新查询重置查询条件
   if (!next) {
-    worksPage.value = new Page<SearchCondition[], WorksFullDTO>()
-    worksPage.value.pageSize = 10
-    worksList.value.length = 0
+    workPage.value = new Page<SearchCondition[], WorkFullDTO>()
+    workPage.value.pageSize = 10
+    workList.value.length = 0
   }
   //查询
-  const tempPage = lodash.cloneDeep(worksPage.value)
+  const tempPage = lodash.cloneDeep(workPage.value)
   tempPage.data = undefined
-  const nextPage = await searchWorks(tempPage)
+  const nextPage = await searchWork(tempPage)
 
   // 没有新数据时，不再增加页码
   if (ArrayNotEmpty(nextPage.data)) {
-    worksPage.value.pageNumber++
-    worksPage.value.pageCount = nextPage.pageCount
-    worksPage.value.dataCount = nextPage.dataCount
-    worksList.value.push(...nextPage.data)
+    workPage.value.pageNumber++
+    workPage.value.pageCount = nextPage.pageCount
+    workPage.value.dataCount = nextPage.dataCount
+    workList.value.push(...nextPage.data)
   }
 }
 // 重新查询搜索条件
@@ -401,7 +400,7 @@ async function handleTest() {
       <el-main style="padding: 0">
         <div v-show="pageStatesStore.pageStates.mainPage.state" class="main-page">
           <div class="main-page-topbar z-layer-3">
-            <el-radio-group v-model="worksSetView" class="topbar-items">
+            <el-radio-group v-model="workSetView" class="topbar-items">
               <el-radio-button label="作品" :value="false" />
               <el-radio-button label="作品集" :value="true" />
             </el-radio-group>
@@ -463,25 +462,25 @@ async function handleTest() {
                 </div>
               </collapse-panel>
             </div>
-            <el-button type="danger" class="topbar-items" @click="queryWorksPage(false)">搜索</el-button>
+            <el-button type="danger" class="topbar-items" @click="queryWorkPage(false)">搜索</el-button>
           </div>
-          <div ref="worksSpace" class="main-page-works-space">
-            <el-scrollbar v-el-scrollbar-bottomed="() => queryWorksPage(true)">
-              <works-grid-for-main-page
-                ref="worksGridRef"
-                v-model:current-works-index="currentWorksIndex"
-                class="main-page-works-grid"
-                :works-list="worksList"
+          <div ref="workSpace" class="main-page-work-space">
+            <el-scrollbar v-el-scrollbar-bottomed="() => queryWorkPage(true)">
+              <work-grid-for-main-page
+                ref="workGridRef"
+                v-model:current-work-index="currentWorkIndex"
+                class="main-page-work-grid"
+                :work-list="workList"
               />
             </el-scrollbar>
             <span
               ref="loadMoreButton"
               :class="{
-                'works-grid-load-more': true,
-                'works-grid-show-load-more': loadMore,
-                'works-grid-hide-load-more': !loadMore
+                'work-grid-load-more': true,
+                'work-grid-show-load-more': loadMore,
+                'work-grid-hide-load-more': !loadMore
               }"
-              @click="queryWorksPage(true)"
+              @click="queryWorkPage(true)"
             >
               加载更多...
             </span>
@@ -604,17 +603,17 @@ async function handleTest() {
 .main-page-searchbar {
   flex-grow: 1;
 }
-.main-page-works-space {
+.main-page-work-space {
   position: relative;
   display: flex;
   flex-direction: column;
   height: calc(100% - 33px);
   margin-right: 8px;
 }
-.main-page-works-grid {
+.main-page-work-grid {
   margin-right: 19px;
 }
-.works-grid-load-more {
+.work-grid-load-more {
   position: absolute;
   bottom: 0;
   width: 100%;
@@ -630,13 +629,13 @@ async function handleTest() {
   text-align: center;
   cursor: pointer;
 }
-.works-grid-load-more:hover {
+.work-grid-load-more:hover {
   background-color: var(--el-color-info-light-7);
 }
-.works-grid-show-load-more {
+.work-grid-show-load-more {
   height: 26px;
 }
-.works-grid-hide-load-more {
+.work-grid-hide-load-more {
   height: 0;
   padding-top: 0;
   padding-bottom: 0;

@@ -48,12 +48,12 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId?: number | null | undefined
+  workId?: number | null | undefined
 
   /**
-   * 查询绑定在worksId上的，还是未绑定的（true：绑定的，false：未绑定的）
+   * 查询绑定在workId上的，还是未绑定的（true：绑定的，false：未绑定的）
    */
-  boundOnWorksId?: boolean | undefined | null
+  boundOnWorkId?: boolean | undefined | null
 
   constructor(siteTagQueryDTO?: SiteTagQueryDTO) {
     super(siteTagQueryDTO)
@@ -70,6 +70,6 @@ export default class SiteTagQueryDTO extends BaseQueryDTO {
   }
 
   public static nonFieldProperties(): string[] {
-    return [...BaseQueryDTO.nonFieldProperties(), 'sites', 'boundOnLocalTagId', 'worksId', 'boundOnWorksId']
+    return [...BaseQueryDTO.nonFieldProperties(), 'sites', 'boundOnLocalTagId', 'workId', 'boundOnWorkId']
   }
 }

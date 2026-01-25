@@ -358,7 +358,7 @@ function toParent() {
           </el-col>
           <el-col v-if="!isParent" :span="17">
             <el-form-item label="站点作品id">
-              <el-input v-model="formData.siteWorksId" />
+              <el-input v-model="formData.siteWorkId" />
             </el-form-item>
           </el-col>
         </el-row>

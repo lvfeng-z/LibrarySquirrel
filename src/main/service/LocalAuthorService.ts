@@ -9,7 +9,7 @@ import Page from '../model/util/Page.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import RankedLocalAuthor from '../model/domain/RankedLocalAuthor.ts'
 import { NotNullish } from '../util/CommonUtil.ts'
-import RankedLocalAuthorWithWorksId from '../model/domain/RankedLocalAuthorWithWorksId.ts'
+import RankedLocalAuthorWithWorkId from '../model/domain/RankedLocalAuthorWithWorkId.ts'
 
 /**
  * 本地作者Service
@@ -83,25 +83,25 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
 
   /**
    * 批量获取作品与作者的关联
-   * @param worksIds
+   * @param workIds
    */
-  public async listReWorksAuthor(worksIds: number[]): Promise<Map<number, RankedLocalAuthor[]>> {
-    return this.dao.listReWorksAuthor(worksIds)
+  public async listReWorkAuthor(workIds: number[]): Promise<Map<number, RankedLocalAuthor[]>> {
+    return this.dao.listReWorkAuthor(workIds)
   }
 
   /**
    * 查询作品的本地作者
-   * @param worksId 作品id
+   * @param workId 作品id
    */
-  public async listDTOByWorksId(worksId: number): Promise<RankedLocalAuthor[]> {
-    return this.dao.listDTOByWorksId(worksId)
+  public async listDTOByWorkId(workId: number): Promise<RankedLocalAuthor[]> {
+    return this.dao.listDTOByWorkId(workId)
   }
 
   /**
    * 查询作品的本地作者列表
-   * @param worksIds 作品id列表
+   * @param workIds 作品id列表
    */
-  public async listRankedLocalAuthorWithWorksIdByWorksIds(worksIds: number[]): Promise<RankedLocalAuthorWithWorksId[]> {
-    return this.dao.listRankedLocalAuthorWithWorksIdByWorksIds(worksIds)
+  public async listRankedLocalAuthorWithWorkIdByWorkIds(workIds: number[]): Promise<RankedLocalAuthorWithWorkId[]> {
+    return this.dao.listRankedLocalAuthorWithWorkIdByWorkIds(workIds)
   }
 }

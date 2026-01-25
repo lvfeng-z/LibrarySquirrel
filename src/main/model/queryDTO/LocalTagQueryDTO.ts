@@ -24,12 +24,12 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
   /**
    * 作品id
    */
-  worksId: number | number[] | null | undefined
+  workId: number | number[] | null | undefined
 
   /**
-   * 查询绑定在worksId上的还是没绑定的
+   * 查询绑定在workId上的还是没绑定的
    */
-  boundOnWorksId: boolean | null | undefined
+  boundOnWorkId: boolean | null | undefined
 
   constructor(localTagQueryDTO?: LocalTagQueryDTO) {
     super(localTagQueryDTO)
@@ -37,12 +37,12 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
       this.localTagName = localTagQueryDTO.localTagName
       this.baseLocalTagId = localTagQueryDTO.baseLocalTagId
       this.lastUse = localTagQueryDTO.lastUse
-      this.worksId = localTagQueryDTO.worksId
-      this.boundOnWorksId = localTagQueryDTO.boundOnWorksId
+      this.workId = localTagQueryDTO.workId
+      this.boundOnWorkId = localTagQueryDTO.boundOnWorkId
     }
   }
 
   public static nonFieldProperties(): string[] {
-    return [...BaseQueryDTO.nonFieldProperties(), 'worksId', 'boundOnWorksId']
+    return [...BaseQueryDTO.nonFieldProperties(), 'workId', 'boundOnWorkId']
   }
 }

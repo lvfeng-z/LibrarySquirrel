@@ -18,7 +18,7 @@ export default class PluginCreateParentTaskResponseDTO {
   /**
    * 站点作品id
    */
-  siteWorksId: string | undefined | null
+  siteWorkId: string | undefined | null
 
   /**
    * 来源url
@@ -43,7 +43,7 @@ export default class PluginCreateParentTaskResponseDTO {
   public static toTaskCreateDTO(pluginParentTaskResponseDTO: PluginCreateParentTaskResponseDTO): TaskCreateDTO {
     const result = new TaskCreateDTO()
     result.taskName = pluginParentTaskResponseDTO.taskName
-    result.siteWorksId = pluginParentTaskResponseDTO.siteWorksId
+    result.siteWorkId = pluginParentTaskResponseDTO.siteWorkId
     result.url = pluginParentTaskResponseDTO.url
     result.pluginData = pluginParentTaskResponseDTO.pluginData
     result.siteDomain = pluginParentTaskResponseDTO.siteDomain
