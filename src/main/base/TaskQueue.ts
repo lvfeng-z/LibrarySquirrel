@@ -566,9 +566,7 @@ export class TaskQueue {
         }
       })
       const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
-      const existsWorksMap = new Map(
-        existsWorksList.map(w => [`${w.siteId}_${w.siteWorksId}`, w])
-      )
+      const existsWorksMap = new Map(existsWorksList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
       for (const task of notExistsTasks) {
         // 判断这个作品是否已经保存过
         let infoSaved = false
@@ -701,9 +699,7 @@ export class TaskQueue {
         }
       })
       const existsWorksList = await this.worksService.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
-      const existsWorksMap = new Map(
-        existsWorksList.map(w => [`${w.siteId}_${w.siteWorksId}`, w])
-      )
+      const existsWorksMap = new Map(existsWorksList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
       for (const parentInfo of parentList) {
         AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id不能为空`)
         if (IsNullish(parentInfo.status)) {

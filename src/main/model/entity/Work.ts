@@ -4,7 +4,7 @@ import { NotNullish } from '../../util/CommonUtil.ts'
 /**
  * 作品
  */
-export default class Works extends BaseEntity {
+export default class Work extends BaseEntity {
   /**
    * 作品来源站点id
    */
@@ -12,11 +12,11 @@ export default class Works extends BaseEntity {
   /**
    * 站点中作品的id
    */
-  siteWorksId: string | undefined | null
+  siteWorkId: string | undefined | null
   /**
    * 站点中作品的名称
    */
-  siteWorksName: string | undefined | null
+  siteWorkName: string | undefined | null
   /**
    * 站点中作品的作者id
    */
@@ -42,18 +42,18 @@ export default class Works extends BaseEntity {
    */
   lastView: number | undefined | null
 
-  constructor(works?: Works) {
-    super(works)
-    if (NotNullish(works)) {
-      this.siteId = works.siteId
-      this.siteWorksId = works.siteWorksId
-      this.siteWorksName = works.siteWorksName
-      this.siteWorkDescription = works.siteWorkDescription
-      this.siteAuthorId = works.siteAuthorId
-      this.siteUploadTime = works.siteUploadTime
-      this.siteUpdateTime = works.siteUpdateTime
-      this.nickName = works.nickName
-      this.lastView = works.lastView
+  constructor(work?: Work) {
+    super(work)
+    if (NotNullish(work)) {
+      this.siteId = work.siteId
+      this.siteWorkId = work.siteWorkId
+      this.siteWorkName = work.siteWorkName
+      this.siteWorkDescription = work.siteWorkDescription
+      this.siteAuthorId = work.siteAuthorId
+      this.siteUploadTime = work.siteUploadTime
+      this.siteUpdateTime = work.siteUpdateTime
+      this.nickName = work.nickName
+      this.lastView = work.lastView
     }
   }
 }

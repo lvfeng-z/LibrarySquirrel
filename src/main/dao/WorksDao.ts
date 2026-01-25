@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
 import WorksCommonQueryDTO from '../model/queryDTO/WorksCommonQueryDTO.js'
-import Works from '../model/entity/Works.ts'
+import Work from '../model/entity/Work.ts'
 import Page from '../model/util/Page.ts'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import lodash from 'lodash'
@@ -15,9 +15,9 @@ import BaseQueryDTO from '../base/BaseQueryDTO.js'
 import { BOOL } from '../constant/BOOL.js'
 import WorksWithWorksSetId from '../model/domain/WorksWithWorksSetId.ts'
 
-export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
+export class WorksDao extends BaseDao<WorksQueryDTO, Work> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('works', Works, db, injectedDB)
+    super('works', Work, db, injectedDB)
   }
 
   /**
@@ -255,7 +255,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     }
   }
 
-  public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
+  public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Work[]> {
     const selectClause = 'SELECT * FROM works'
     const clauses: string[] = []
     let currentIndex: number = 0
@@ -276,7 +276,7 @@ export class WorksDao extends BaseDao<WorksQueryDTO, Works> {
     const db = this.acquire()
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(statement)
-      return super.toResultTypeDataList<Works>(rows)
+      return super.toResultTypeDataList<Work>(rows)
     } finally {
       if (!this.injectedDB) {
         db.release()

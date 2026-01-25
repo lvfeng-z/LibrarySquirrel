@@ -1,4 +1,4 @@
-import Works from '../entity/Works.ts'
+import Work from '../entity/Work.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
@@ -13,7 +13,7 @@ import { ParsePropertyFromJson } from '../../util/ObjectUtil.js'
 /**
  * 作品
  */
-export default class WorksFullDTO extends Works {
+export default class WorksFullDTO extends Work {
   /**
    * 资源
    */
@@ -54,7 +54,7 @@ export default class WorksFullDTO extends Works {
    */
   worksSets: WorksSet[] | undefined | null
 
-  constructor(works?: Works) {
+  constructor(works?: Work) {
     super(works)
     if (NotNullish(works)) {
       ParsePropertyFromJson(works, [

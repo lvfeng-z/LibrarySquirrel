@@ -30,7 +30,7 @@ import ResourceWriter from '../util/ResourceWriter.js'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { TaskOperation } from '../base/TaskQueue.js'
 import TaskProgressTreeDTO from '../model/dto/TaskProgressTreeDTO.js'
-import Works from '../model/entity/Works.js'
+import Work from '../model/entity/Work.ts'
 import ObjectUtil from '../util/ObjectUtil.js'
 import SiteService from './SiteService.js'
 import Site from '../model/entity/Site.js'
@@ -321,7 +321,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const oldWorks = await worksService.getFullWorksInfoById(worksId)
     AssertNotNullish(oldWorks, `开始任务失败，任务的作品id不可用，taskId: ${taskId}`)
     // 用已经保存在数据库里的作品信息补全插件返回的作品信息
-    pluginResponse.works = ObjectUtil.mergeObjects<Works>(pluginResponse.works, new Works(oldWorks), (src) => new Works(src))
+    pluginResponse.works = ObjectUtil.mergeObjects<Work>(pluginResponse.works, new Work(oldWorks), (src) => new Work(src))
     // 创建资源保存DTO
     const temp = await TaskService.createResAndWorksSaveData(oldWorks, pluginResponse, taskId, worksId)
     const resourceSaveDTO = temp.resourceSaveDTO
@@ -1047,7 +1047,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       oldWorksFullDTO,
       (src) => new PluginWorksResponseDTO(src)
     )
-    tempResponse.works = new Works(oldWorksFullDTO)
+    tempResponse.works = new Work(oldWorksFullDTO)
     const newWorksSaveInfo = await WorksService.createSaveInfoFromPlugin(tempResponse, taskId)
     // 创建资源保存DTO
     let resourceSaveDTO: ResourceSaveDTO | undefined

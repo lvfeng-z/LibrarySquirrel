@@ -86,75 +86,75 @@ tables:
         update_time integer
       );
 
-  - name: re_works_author
+  - name: re_work_author
     sql: |
-      create table if not exists re_works_author (
+      create table if not exists re_work_author (
         id              integer not null
-          constraint re_works_author_pk
+          constraint re_work_author_pk
             primary key autoincrement,
         author_type     integer,
-        works_id        integer
-          constraint re_works_author_works_id_fk
-            references works
+        work_id        integer
+          constraint re_work_author_work_id_fk
+            references work
             on update cascade on delete cascade,
         local_author_id integer
-          constraint re_works_author_local_author_id_fk
+          constraint re_work_author_local_author_id_fk
             references local_author
             on update cascade on delete cascade,
         site_author_id  integer
-          constraint re_works_author_site_author_id_fk
+          constraint re_work_author_site_author_id_fk
             references site_author
             on update cascade on delete cascade,
         author_rank     integer,
         create_time     integer,
         update_time     integer
       );
-      create index re_works_author_local_author_id_index
-      on re_works_author (local_author_id desc);
-      create index re_works_author_site_author_id_index
-      on re_works_author (site_author_id desc);
-      create index re_works_author_works_id_index
-      on re_works_author (works_id desc);
+      create index re_work_author_local_author_id_index
+      on re_work_author (local_author_id desc);
+      create index re_work_author_site_author_id_index
+      on re_work_author (site_author_id desc);
+      create index re_work_author_work_id_index
+      on re_work_author (work_id desc);
 
-  - name: re_works_tag
+  - name: re_work_tag
     sql: |
-      create table if not exists re_works_tag (
+      create table if not exists re_work_tag (
         id           integer not null
-          constraint works_tag_pk
+          constraint work_tag_pk
           primary key autoincrement,
-        works_id     integer
-          constraint re_works_tag_works_id_fk
-            references works
+        work_id     integer
+          constraint re_work_tag_work_id_fk
+            references work
             on delete cascade,
         tag_type     integer,
         local_tag_id integer
-          constraint re_works_tag_local_tag_id_fk
+          constraint re_work_tag_local_tag_id_fk
             references local_tag
             on delete cascade,
         site_tag_id  integer
-          constraint re_works_tag_site_tag_id_fk
+          constraint re_work_tag_site_tag_id_fk
             references site_tag
             on delete cascade,
         create_time  integer,
         update_time  integer,
-        constraint re_works_tag_unique_local_tag_id
-        unique (works_id, local_tag_id),
-        constraint re_works_tag_unique_site_tag_id
-        unique (works_id, site_tag_id)
+        constraint re_work_tag_unique_local_tag_id
+        unique (work_id, local_tag_id),
+        constraint re_work_tag_unique_site_tag_id
+        unique (work_id, site_tag_id)
       );
 
-  - name: re_works_works_set
+  - name: re_work_work_set
     sql: |
-      create table if not exists re_works_works_set (
+      create table if not exists re_work_work_set (
         id           integer not null
-          constraint re_works_works_set_pk
+          constraint re_work_work_set_pk
             primary key,
-        works_id     integer
-          constraint re_works_works_set_works_id_fk
-            references works,
-        works_set_id integer
-          constraint re_works_works_set_works_set_id_fk
-            references works_set,
+        work_id     integer
+          constraint re_work_work_set_work_id_fk
+            references work,
+        work_set_id integer
+          constraint re_work_work_set_work_set_id_fk
+            references work_set,
         create_time  integer,
         update_time  integer
       );
@@ -234,7 +234,7 @@ tables:
         pid                   integer,
         task_name             text,
         site_id               number,
-        site_works_id         text,
+        site_work_id         text,
         url                   text,
         create_time           integer,
         update_time           integer,
@@ -291,9 +291,9 @@ tables:
         id                 integer not null
           constraint resource_pk
             primary key,
-        works_id           integer not null
-          constraint resource_works_id_fk
-            references works
+        work_id           integer not null
+          constraint resource_work_id_fk
+            references work
             on delete cascade,
         task_id            integer not null,
         state              integer not null,
@@ -309,21 +309,21 @@ tables:
       );
       create index resource_task_id_index
       on resource (task_id desc);
-      create index resource_works_id_index
-      on resource (works_id desc);
+      create index resource_work_id_index
+      on resource (work_id desc);
 
-  - name: works
+  - name: work
     sql: |
-      create table if not exists works (
+      create table if not exists work (
         id                    integer not null
-          constraint works_pk
+          constraint work_pk
             primary key autoincrement,
         site_id               integer
-          constraint works_site_id_fk
+          constraint work_site_id_fk
             references site
             on update restrict on delete restrict,
-        site_works_id         text,
-        site_works_name       text,
+        site_work_id         text,
+        site_work_name       text,
         site_author_id        text,
         site_work_description text,
         site_upload_time      integer,
@@ -334,21 +334,21 @@ tables:
         create_time           integer,
         update_time           integer
       );
-      create unique index works_site_id_site_works_id_index
-      on works (site_id, site_works_id);
+      create unique index work_site_id_site_work_id_index
+      on work (site_id, site_work_id);
 
-  - name: works_set
+  - name: work_set
     sql: |
-      create table if not exists works_set (
+      create table if not exists work_set (
         id                        integer not null
-          constraint works_pk
+          constraint work_pk
             primary key autoincrement,
         site_id                   integer
-          constraint works_set_site_id_fk
+          constraint work_set_site_id_fk
             references site
             on update restrict on delete restrict,
-        site_works_set_id         text,
-        site_works_set_name       text,
+        site_work_set_id         text,
+        site_work_set_name       text,
         site_author_id            text,
         site_work_set_description text,
         site_upload_time          integer,

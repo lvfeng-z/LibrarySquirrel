@@ -1,4 +1,4 @@
-import Works from '../entity/Works.ts'
+import Work from '../entity/Work.ts'
 import WorksSet from '../entity/WorksSet.ts'
 
 /**
@@ -8,14 +8,14 @@ export default class WorksWithWorkSetDTO {
   /**
    * 作品
    */
-  works: Works
+  works: Work
 
   /**
    * 作品集
    */
   worksSet: WorksSet
 
-  constructor(works: Works, worksSet: WorksSet) {
+  constructor(works: Work, worksSet: WorksSet) {
     this.works = works
     this.worksSet = worksSet
   }

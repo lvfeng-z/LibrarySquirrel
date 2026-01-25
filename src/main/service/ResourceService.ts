@@ -427,9 +427,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         case ResFileNameFormatEnum.SITE_AUTHOR_ID.token:
           return this.getSiteAuthorId(worksFullInfo)
         case ResFileNameFormatEnum.SITE_WORKS_ID.token:
-          return IsNullish(worksFullInfo.siteWorksId) ? 'invalidSiteWorksId' : worksFullInfo.siteWorksId
+          return IsNullish(worksFullInfo.siteWorkId) ? 'invalidSiteWorksId' : worksFullInfo.siteWorkId
         case ResFileNameFormatEnum.SITE_WORKS_NAME.token:
-          return IsNullish(worksFullInfo.siteWorksName) ? 'invalidSiteWorksName' : worksFullInfo.siteWorksName
+          return IsNullish(worksFullInfo.siteWorkName) ? 'invalidSiteWorksName' : worksFullInfo.siteWorkName
         case ResFileNameFormatEnum.DESCRIPTION.token:
           return IsNullish(worksFullInfo.siteWorkDescription) ? '' : worksFullInfo.siteWorkDescription
         case ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.token:

@@ -7,7 +7,7 @@ import SearchDao from '../dao/SearchDao.js'
 import { SearchCondition, SearchType } from '../model/util/SearchCondition.js'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import WorksService from './WorksService.js'
-import Works from '../model/entity/Works.js'
+import Work from '../model/entity/Work.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.js'
 import { ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
@@ -65,7 +65,7 @@ export default class SearchService {
    * 分页查询作品
    * @param page
    */
-  public async queryWorksPage(page: Page<SearchCondition[], WorksFullDTO>): Promise<Page<WorksQueryDTO, Works>> {
+  public async queryWorksPage(page: Page<SearchCondition[], WorksFullDTO>): Promise<Page<WorksQueryDTO, Work>> {
     const searchConditions = page.query
     page = new Page(page)
     page.query = searchConditions

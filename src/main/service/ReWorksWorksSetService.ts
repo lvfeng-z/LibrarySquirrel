@@ -5,7 +5,7 @@ import ReWorksWorksSetDao from '../dao/ReWorksWorksSetDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
-import Works from '../model/entity/Works.js'
+import Work from '../model/entity/Work.ts'
 
 export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQueryDTO, ReWorksWorksSet, ReWorksWorksSetDao> {
   constructor(db?: DatabaseClient) {
@@ -17,7 +17,7 @@ export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQ
    * @param works
    * @param worksSetId
    */
-  public async link(works: Works[], worksSetId: number): Promise<number> {
+  public async link(works: Work[], worksSetId: number): Promise<number> {
     // 校验
     const legalWorksList = works.filter((works) => {
       if (IsNullish(works)) {
@@ -25,7 +25,7 @@ export default class ReWorksWorksSetService extends BaseService<ReWorksWorksSetQ
         return false
       }
       if (IsNullish(!Object.hasOwn(works, 'id') || works.id)) {
-        const siteWorksName = Object.hasOwn(works, 'siteWorksName') ? works.siteWorksName : 'unknown'
+        const siteWorksName = Object.hasOwn(works, 'siteWorksName') ? works.siteWorkName : 'unknown'
         LogUtil.warn('WorksSetService', `关联作品集和作品失败，作品id不能为空，siteWorksName: ${siteWorksName}`)
         return false
       }

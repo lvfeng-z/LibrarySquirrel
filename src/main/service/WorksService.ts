@@ -1,6 +1,6 @@
 import Page from '../model/util/Page.ts'
 import WorksQueryDTO from '../model/queryDTO/WorksQueryDTO.ts'
-import Works from '../model/entity/Works.ts'
+import Work from '../model/entity/Work.ts'
 import WorksFullDTO from '../model/dto/WorksFullDTO.js'
 import { WorksDao } from '../dao/WorksDao.ts'
 import LogUtil from '../util/LogUtil.ts'
@@ -34,7 +34,7 @@ import fs from 'fs/promises'
 import WorksWithWorksSetId from '../model/domain/WorksWithWorksSetId.ts'
 import lodash from 'lodash'
 
-export default class WorksService extends BaseService<WorksQueryDTO, Works, WorksDao> {
+export default class WorksService extends BaseService<WorksQueryDTO, Work, WorksDao> {
   constructor(db?: DatabaseClient) {
     super(WorksDao, db)
   }
@@ -46,8 +46,8 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    */
   public static async createSaveInfoFromPlugin(worksPluginDTO: PluginWorksResponseDTO, taskId: number): Promise<WorksSaveDTO> {
     // 校验
-    AssertNotNullish(worksPluginDTO.works.siteWorksId, '生成作品信息失败，siteWorksId不能为空')
-    const worksFullDTO = new WorksFullDTO(worksPluginDTO.works as Works)
+    AssertNotNullish(worksPluginDTO.works.siteWorkId, '生成作品信息失败，siteWorksId不能为空')
+    const worksFullDTO = new WorksFullDTO(worksPluginDTO.works as Work)
     const result = new WorksSaveDTO(taskId, worksFullDTO)
     result.site = worksPluginDTO.site
     result.localAuthors = worksPluginDTO.localAuthors
@@ -245,7 +245,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 根据标签等信息分页查询作品
    * @param page 查询参数
    */
-  public async synthesisQueryPage(page: Page<WorksQueryDTO, WorksFullDTO>): Promise<Page<WorksQueryDTO, Works>> {
+  public async synthesisQueryPage(page: Page<WorksQueryDTO, WorksFullDTO>): Promise<Page<WorksQueryDTO, Work>> {
     return this.dao.synthesisQueryPage(page)
   }
 
@@ -257,7 +257,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
   public async multipleConditionQueryPage(
     page: Page<WorksQueryDTO, WorksFullDTO>,
     query: SearchCondition[]
-  ): Promise<Page<WorksQueryDTO, Works>> {
+  ): Promise<Page<WorksQueryDTO, Work>> {
     page = new Page(page)
     try {
       // 查询作品信息
@@ -437,7 +437,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * @param siteId 站点id
    * @param siteWorksId 作品在站点的id
    */
-  public async listBySiteIdAndSiteWorksId(siteId: number, siteWorksId: string): Promise<Works[]> {
+  public async listBySiteIdAndSiteWorksId(siteId: number, siteWorksId: string): Promise<Work[]> {
     const query = new WorksQueryDTO()
     query.siteId = siteId
     query.siteWorksId = siteWorksId
@@ -448,7 +448,7 @@ export default class WorksService extends BaseService<WorksQueryDTO, Works, Work
    * 根据站点id和作品在站点的id查询作品列表
    * @param siteIdAndSiteWorksIds
    */
-  public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Works[]> {
+  public async listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds: { siteId: number; siteWorksId: string }[]): Promise<Work[]> {
     AssertArrayNotEmpty(siteIdAndSiteWorksIds, this.constructor.name, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
     return this.dao.listBySiteIdAndSiteWorksIds(siteIdAndSiteWorksIds)
   }

@@ -1,4 +1,4 @@
-import Works from '../entity/Works.ts'
+import Work from '../entity/Work.ts'
 import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
@@ -15,7 +15,7 @@ export default class PluginWorksResponseDTO {
   /**
    * 作品信息
    */
-  works: Works
+  works: Work
 
   /**
    * 站点
@@ -69,7 +69,7 @@ export default class PluginWorksResponseDTO {
       this.doUpdate = works.doUpdate
       this.resource = works.resource
     } else {
-      this.works = new Works()
+      this.works = new Work()
     }
   }
 }
