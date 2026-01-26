@@ -1,12 +1,20 @@
 import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import log from 'electron-log'
+import WorkSetService from '../service/WorkSetService.ts'
+import WorkSet from '../model/entity/WorkSet.ts'
 
 export default class PluginTool {
   /**
    * 插件日志工具
    */
   public pluginLogUtil: PluginLogUtil
+
+  /**
+   * 作品集服务
+   * @private
+   */
+  private readonly _workSetService: WorkSetService
 
   /**
    * 请求用户解释路径含义
@@ -30,12 +38,14 @@ export default class PluginTool {
     pluginName: string,
     requestExplainPath: (dir: string) => Promise<MeaningOfPath[]>,
     updatePluginData: (pluginData: string) => Promise<number>,
-    getPluginData: () => Promise<string | undefined>
+    getPluginData: () => Promise<string | undefined>,
+    workSetService: WorkSetService
   ) {
     this.pluginLogUtil = new PluginLogUtil(pluginName)
     this._requestExplainPath = requestExplainPath
     this._updatePluginData = updatePluginData
     this._getPluginData = getPluginData
+    this._workSetService = workSetService
   }
 
   /**
@@ -68,6 +78,15 @@ export default class PluginTool {
    */
   public setPluginData(pluginData: string): Promise<number> {
     return this._updatePluginData(pluginData)
+  }
+
+  /**
+   * 根据作品集在站点的id和站点名称查询作品集
+   * @param siteWorkSetId 作品集在站点的id
+   * @param siteName 入库任务的id
+   */
+  public async getWorkSetBySiteWorkSetId(siteWorkSetId: string, siteName: string): Promise<WorkSet | undefined> {
+    return this._workSetService.getBySiteWorkSetIdAndSiteName(siteWorkSetId, siteName)
   }
 }
 

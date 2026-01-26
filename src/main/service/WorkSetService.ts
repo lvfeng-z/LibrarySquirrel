@@ -30,6 +30,15 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
   }
 
   /**
+   * 根据作品集在站点的id和站点名称查询作品集
+   * @param siteWorkSetId 作品集在站点的id
+   * @param siteName 入库任务的id
+   */
+  public async getBySiteWorkSetIdAndSiteName(siteWorkSetId: string, siteName: string): Promise<WorkSet | undefined> {
+    return this.dao.getBySiteWorkSetIdAndSiteName(siteWorkSetId, siteName)
+  }
+
+  /**
    * 根据作品集在站点的id和入库任务的id查询作品集
    * @param siteWorkSetIds 作品集在站点的id
    */

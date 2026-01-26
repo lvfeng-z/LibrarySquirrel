@@ -52,6 +52,31 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       })
   }
 
+  /**
+   * 根据作品集在站点的id和站点名称查询作品集
+   * @param siteWorkSetId 作品集在站点的id
+   * @param siteName 入库任务的id
+   */
+  public async getBySiteWorkSetIdAndSiteName(siteWorkSetId: string, siteName: string): Promise<WorkSet | undefined> {
+    const statement = `SELECT *
+                       FROM work_set ws
+                         INNER JOIN site ON ws.site_id = site.id
+                       WHERE ws.site_work_set_id = @siteWorkSetId AND site.name = @siteName`
+    const db = this.acquire()
+    try {
+      const row = await db.get<unknown[], Record<string, unknown>>(statement, { siteWorkSetId, siteName })
+
+      if (NotNullish(row)) {
+        return this.toResultTypeData<WorkSet>(row)
+      }
+      return undefined
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
   public async listBySiteWorkSet(siteWorkSets: { siteWorkSetId: string; siteId: number }[]): Promise<WorkSet[]> {
     const whereClause = siteWorkSets
       .map((siteWorkSet) => `(site_work_set_id = ${siteWorkSet.siteWorkSetId} AND site_id = ${siteWorkSet.siteId})`)
