@@ -356,5 +356,6 @@ tables:
         nick_name                 text,
         last_view                 integer,
         create_time               integer,
-        update_time               integer
-      );
+        update_time               integer);
+      create unique index work_set_site_id_site_work_set_id_uindex
+        on work_set (site_id, site_work_set_id);
