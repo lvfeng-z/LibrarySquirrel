@@ -52,13 +52,18 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     result.site = pluginWorkResponseDTO.site
     result.localAuthors = pluginWorkResponseDTO.localAuthors
     result.localTags = pluginWorkResponseDTO.localTags
+    // 生成站点作者保存信息
     if (ArrayNotEmpty(pluginWorkResponseDTO.siteAuthors)) {
       result.siteAuthors = await SiteAuthorService.createSaveInfosFromPlugin(pluginWorkResponseDTO.siteAuthors)
     }
+    // 生成站点标签保存信息
     if (ArrayNotEmpty(pluginWorkResponseDTO.siteTags)) {
       result.siteTags = await SiteTagService.createSaveInfosFromPlugin(pluginWorkResponseDTO.siteTags)
     }
-    result.workSets = pluginWorkResponseDTO.workSets
+    // 生成作品集保存信息
+    if (ArrayNotEmpty(pluginWorkResponseDTO.workSets)) {
+      result.workSets = await WorkSetService.createSaveInfosFromPlugin(pluginWorkResponseDTO.workSets)
+    }
     return result
   }
 

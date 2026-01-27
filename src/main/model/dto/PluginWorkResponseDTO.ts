@@ -3,7 +3,7 @@ import Site from '../entity/Site.ts'
 import LocalTag from '../entity/LocalTag.ts'
 import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
 import SiteAuthorPluginDTO from './SiteAuthorPluginDTO.js'
-import WorkSet from '../entity/WorkSet.ts'
+import PluginWorkSetDTO from './PluginWorkSetDTO.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
 import ResourcePluginDTO from './ResourcePluginDTO.js'
 import SiteTagPluginDTO from './SiteTagPluginDTO.js'
@@ -45,7 +45,7 @@ export default class PluginWorkResponseDTO {
   /**
    * 作品所属作品集
    */
-  workSets: WorkSet[] | undefined | null
+  workSets: PluginWorkSetDTO[] | undefined | null
 
   /**
    * 是否更新作品数据

@@ -12,6 +12,7 @@ import { BasePlugin } from '../base/BasePlugin.js'
 import { GVar, GVarEnum } from '../base/GVar.js'
 import PluginService from '../service/PluginService.js'
 import Plugin from '../model/entity/Plugin.js'
+import WorkSetService from '../service/WorkSetService.ts'
 
 export default class PluginLoader<T extends BasePlugin> {
   /**
@@ -55,7 +56,8 @@ export default class PluginLoader<T extends BasePlugin> {
           tempPlugin.pluginData = pluginData
           return this.pluginService.updateById(tempPlugin)
         },
-        () => this.pluginService.getById(pluginId).then((plugin) => (IsNullish(plugin?.pluginData) ? undefined : plugin.pluginData))
+        () => this.pluginService.getById(pluginId).then((plugin) => (IsNullish(plugin?.pluginData) ? undefined : plugin.pluginData)),
+        new WorkSetService()
       )
       plugin = this.factory.create(pluginLoadDTO, pluginTool)
       this.pluginCache[pluginId] = plugin

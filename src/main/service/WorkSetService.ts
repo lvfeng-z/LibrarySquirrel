@@ -11,6 +11,8 @@ import WorkService from './WorkService.ts'
 import lodash from 'lodash'
 import { Dictionary } from 'async'
 import WorkSetWithWorkId from '../model/domain/WorkSetWithWorkId.ts'
+import SiteService from './SiteService.ts'
+import PluginWorkSetDTO from '../model/dto/PluginWorkSetDTO.ts'
 
 /**
  * 作品集Service
@@ -95,8 +97,8 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const siteWorkSetIds = workSets.map((workSet) => workSet.siteWorkSetId) as string[]
     const oldWorkSets = await this.listBySiteWorkSetIds(siteWorkSetIds)
     const newWorkSets = workSets.map((workSet) => {
-      AssertNotNullish(workSet.siteAuthorId, this.constructor.name, '根据作品集在站点的id保存或更新失败，站点作者的id不能为空')
-      AssertNotNullish(workSet.siteId, this.constructor.name, '根据作品集在站点的id保存或更新失败，站点作者的站点id不能为空')
+      AssertNotNullish(workSet.siteAuthorId, this.constructor.name, '根据作品集在站点的id保存或更新失败，作品集的id不能为空')
+      AssertNotNullish(workSet.siteId, this.constructor.name, '根据作品集在站点的id保存或更新失败，作品集的站点id不能为空')
       const oldWorkSet = oldWorkSets.find((tempOldWorkSet) => tempOldWorkSet.siteWorkSetId === workSet.siteWorkSetId)
       const newWorkSet = new WorkSet(workSet)
 
@@ -123,5 +125,31 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
   public async getWorkToWorkSetMapByWorkIds(workIds: number[]): Promise<Dictionary<WorkSetWithWorkId[]>> {
     const workSetWithWorkIdList = await this.dao.listWorkSetWithWorkIdByWorkIds(workIds)
     return lodash.groupBy(workSetWithWorkIdList, 'workId')
+  }
+
+  /**
+   * 生成用于保存的作品集信息
+   */
+  public static async createSaveInfosFromPlugin(pluginWorkSetDTOS: PluginWorkSetDTO[]) {
+    const result: WorkSet[] = []
+    // 用于查询和缓存站点id
+    const siteService = new SiteService()
+    const sites = await siteService.listByNames(
+      pluginWorkSetDTOS.map((pluginWorkSetDTO) => pluginWorkSetDTO.siteName).filter(NotNullish)
+    )
+    const siteNameToSiteMap = lodash.keyBy(sites, 'siteName')
+    for (const pluginWorkSetDTO of pluginWorkSetDTOS) {
+      if (IsNullish(pluginWorkSetDTO.siteName)) {
+        result.push(new WorkSet(pluginWorkSetDTO.workSet))
+        continue
+      }
+      const tempSite = siteNameToSiteMap[pluginWorkSetDTO.siteName]
+      const tempWorkSet = new WorkSet(pluginWorkSetDTO.workSet)
+      if (NotNullish(tempSite)) {
+        tempWorkSet.siteId = tempSite.id
+      }
+      result.push(tempWorkSet)
+    }
+    return result
   }
 }
