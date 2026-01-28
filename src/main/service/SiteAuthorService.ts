@@ -12,7 +12,7 @@ import SelectItem from '../model/util/SelectItem.ts'
 import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import SiteService from './SiteService.js'
-import SiteAuthorPluginDTO from '../model/dto/SiteAuthorPluginDTO.js'
+import PluginSiteAuthorDTO from '../model/dto/PluginSiteAuthorDTO.ts'
 import RankedSiteAuthor from '../model/domain/RankedSiteAuthor.ts'
 import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
 import LocalAuthorService from './LocalAuthorService.js'
@@ -267,30 +267,25 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   /**
    * 生成用于保存的站点作者信息
    */
-  public static async createSaveInfosFromPlugin(siteAuthors: SiteAuthorPluginDTO[]): Promise<RankedSiteAuthor[]> {
+  public static async createSaveInfosFromPlugin(pluginSiteAuthorDTOS: PluginSiteAuthorDTO[]): Promise<RankedSiteAuthor[]> {
     const result: RankedSiteAuthor[] = []
-    // 用于查询和缓存站点id
     const siteService = new SiteService()
-    const siteCache = new Map<string, Promise<number>>()
-    for (const siteAuthor of siteAuthors) {
-      if (IsNullish(siteAuthor.siteDomain)) {
-        result.push(new RankedSiteAuthor(siteAuthor))
+    const sites = await siteService.listByNames(
+      pluginSiteAuthorDTOS.map((pluginSiteAuthorDTO) => pluginSiteAuthorDTO.siteName).filter(NotNullish)
+    )
+    const siteNameToSiteMap = lodash.keyBy(sites, 'siteName')
+    for (const pluginSiteAuthorDTO of pluginSiteAuthorDTOS) {
+      if (IsNullish(pluginSiteAuthorDTO.siteName)) {
+        result.push(new RankedSiteAuthor(pluginSiteAuthorDTO.siteAuthor))
         continue
       }
-      let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteAuthor.siteDomain)
-      if (IsNullish(siteIdPromise)) {
-        const tempSite = siteService.getByDomain(siteAuthor.siteDomain)
-        siteIdPromise = tempSite.then((site) => site?.id)
+      const tempSite = siteNameToSiteMap[pluginSiteAuthorDTO.siteName]
+      const tempSiteAuthor = new RankedSiteAuthor(pluginSiteAuthorDTO.siteAuthor)
+      if (NotNullish(tempSite)) {
+        tempSiteAuthor.siteId = tempSite.id
       }
-      const siteId = await siteIdPromise
-      if (IsNullish(siteId)) {
-        result.push(new RankedSiteAuthor(siteAuthor))
-        continue
-      }
-      const tempDTO = new RankedSiteAuthor(siteAuthor)
-      tempDTO.siteId = siteId
-      tempDTO.authorRank = siteAuthor.authorRank
-      result.push(tempDTO)
+      tempSiteAuthor.authorRank = pluginSiteAuthorDTO.authorRank
+      result.push(tempSiteAuthor)
     }
     return result
   }

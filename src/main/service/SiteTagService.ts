@@ -12,11 +12,12 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/Comm
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
 import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import SiteService from './SiteService.js'
-import SiteTagPluginDTO from '../model/dto/SiteTagPluginDTO.js'
+import PluginSiteTagDTO from '../model/dto/PluginSiteTagDTO.ts'
 import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
 import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.js'
 import LocalTag from '../model/entity/LocalTag.js'
 import LocalTagService from './LocalTagService.js'
+import lodash from 'lodash'
 
 /**
  * 站点标签Service
@@ -289,29 +290,24 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   /**
    * 生成用于保存的站点标签信息
    */
-  public static async createSaveInfosFromPlugin(siteTags: SiteTagPluginDTO[]): Promise<SiteTagFullDTO[]> {
+  public static async createSaveInfosFromPlugin(pluginSiteTagDTOS: PluginSiteTagDTO[]): Promise<SiteTagFullDTO[]> {
     const result: SiteTagFullDTO[] = []
     const siteService = new SiteService()
-    // 用于查询和缓存站点id
-    const siteCache = new Map<string, Promise<number>>()
-    for (const siteTag of siteTags) {
-      if (IsNullish(siteTag.siteDomain)) {
-        result.push(new SiteTagFullDTO(siteTag))
+    const sites = await siteService.listByNames(
+      pluginSiteTagDTOS.map((pluginSiteTagDTO) => pluginSiteTagDTO.siteName).filter(NotNullish)
+    )
+    const siteNameToSiteMap = lodash.keyBy(sites, 'siteName')
+    for (const pluginSiteTagDTO of pluginSiteTagDTOS) {
+      if (IsNullish(pluginSiteTagDTO.siteName)) {
+        result.push(new SiteTagFullDTO(pluginSiteTagDTO.siteTag))
         continue
       }
-      let siteIdPromise: Promise<number | null | undefined> | null | undefined = siteCache.get(siteTag.siteDomain)
-      if (IsNullish(siteIdPromise)) {
-        const tempSite = siteService.getByDomain(siteTag.siteDomain)
-        siteIdPromise = tempSite.then((site) => site?.id)
+      const tempSite = siteNameToSiteMap[pluginSiteTagDTO.siteName]
+      const tempSiteTag = new SiteTagFullDTO(pluginSiteTagDTO.siteTag)
+      if (NotNullish(tempSite)) {
+        tempSiteTag.siteId = tempSite.id
       }
-      const siteId = await siteIdPromise
-      if (IsNullish(siteId)) {
-        result.push(new SiteTagFullDTO(siteTag))
-        continue
-      }
-      const tempDTO = new SiteTagFullDTO(siteTag)
-      tempDTO.siteId = siteId
-      result.push(tempDTO)
+      result.push(tempSiteTag)
     }
     return result
   }
