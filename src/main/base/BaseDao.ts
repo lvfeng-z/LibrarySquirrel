@@ -323,7 +323,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param conflicts
    */
   public async saveOrUpdateBatchById(entities: Model[], conflicts?: string[][]): Promise<number> {
-    AssertArrayNotEmpty(entities, this.constructor.name, '批量保存失败，保存数据不能为空')
+    AssertArrayNotEmpty(entities, this.constructor.name, '批量保存或更新失败，保存数据不能为空')
     const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     // 对齐所有属性

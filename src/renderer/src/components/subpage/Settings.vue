@@ -232,7 +232,17 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
                   :min="1"
                   controls-position="right"
                 ></el-input-number>
-                <el-divider />
+                <el-divider content-position="left" border-style="dotted">
+                  <el-text>重新下载时是否更新作品信息</el-text>
+                  <el-switch
+                    v-model="settings.importSettings.updateWorkInfoWhenImport"
+                    class="work-settings-update-work-info-when-import-switch"
+                    inline-prompt
+                    size="large"
+                    active-text="是"
+                    inactive-text="否"
+                  ></el-switch
+                ></el-divider>
               </div>
               <div id="workSettings">
                 <el-text size="large">作品</el-text>
@@ -329,10 +339,7 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
           >
             {{ ResFileNameFormatEnum.SITE_WORK_ID.name }}
           </el-button>
-          <el-button
-            class="work-settings-file-name-format-button"
-            @click="insertFormatToken(ResFileNameFormatEnum.DESCRIPTION, true)"
-          >
+          <el-button class="work-settings-file-name-format-button" @click="insertFormatToken(ResFileNameFormatEnum.DESCRIPTION, true)">
             {{ ResFileNameFormatEnum.DESCRIPTION.name }}
           </el-button>
           <el-button
@@ -439,6 +446,9 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
 }
 .settings-work-settings-file-name-format-dialog > :deep(.el-scrollbar__wrap) {
   max-height: 65vh;
+}
+.work-settings-update-work-info-when-import-switch {
+  margin-left: 20px;
 }
 .work-settings-file-name-format-button {
   margin-bottom: 10px;

@@ -1173,11 +1173,11 @@ class TaskRunInstance extends TaskStatus {
     super.changeStatus(status, false)
   }
 
-  public async saveInfo(): Promise<void> {
+  public async saveInfo(update: boolean): Promise<void> {
     try {
       const task = await this.taskService.getById(this.taskId)
       AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
-      this.workId = await this.taskService.saveWorkInfo(task, this.pluginLoader)
+      this.workId = await this.taskService.saveWorkInfo(task, this.pluginLoader, update, this.workId)
     } catch (error) {
       this.errorOccurred = true
       this.error = error as Error
@@ -1554,7 +1554,8 @@ class WorkInfoSaveStream extends Transform {
 
   async _transform(chunk: TaskRunInstance, _encoding: string, callback: TransformCallback): Promise<void> {
     chunk.taskChangeStored = false
-    if (chunk.infoSaved) {
+    const isUpdate = chunk.infoSaved && getSettings().store.importSettings.updateWorkInfoWhenImport
+    if (chunk.infoSaved && !getSettings().store.importSettings.updateWorkInfoWhenImport) {
       this.push(chunk)
       callback()
       return
@@ -1565,7 +1566,7 @@ class WorkInfoSaveStream extends Transform {
     task.id = chunk.taskId
     let alreadyCallback = false
     try {
-      const saveInfoPromise = chunk.saveInfo()
+      const saveInfoPromise = chunk.saveInfo(isUpdate)
       callback()
       alreadyCallback = true
       await saveInfoPromise

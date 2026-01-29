@@ -7,6 +7,7 @@ export interface Settings {
   }
   importSettings: {
     maxParallelImport: number
+    updateWorkInfoWhenImport: boolean
   }
   tour: {
     firstTimeTourPassed: boolean
@@ -23,7 +24,8 @@ export const emptySettings: Settings = {
     fileNameFormat: '[${author}]_[${siteWorkId}]_${siteWorkName}'
   },
   importSettings: {
-    maxParallelImport: 3
+    maxParallelImport: 3,
+    updateWorkInfoWhenImport: true
   },
   tour: {
     firstTimeTourPassed: false,

@@ -9,7 +9,8 @@ export const SettingsTemplate: Settings = {
     fileNameFormat: `[${ResFileNameFormatEnum.AUTHOR.token}]_[${ResFileNameFormatEnum.SITE_WORK_ID.token}]_${ResFileNameFormatEnum.SITE_WORK_NAME.token}`
   },
   importSettings: {
-    maxParallelImport: 3
+    maxParallelImport: 3,
+    updateWorkInfoWhenImport: true
   },
   tour: {
     firstTimeTourPassed: false,

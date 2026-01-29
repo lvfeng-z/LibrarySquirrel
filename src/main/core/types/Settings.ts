@@ -7,6 +7,7 @@ export interface Settings {
   }
   importSettings: {
     maxParallelImport: number
+    updateWorkInfoWhenImport: boolean
   }
   tour: {
     firstTimeTourPassed: boolean

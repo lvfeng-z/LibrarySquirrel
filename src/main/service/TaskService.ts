@@ -247,8 +247,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * 保存作品信息
    * @param task
    * @param pluginLoader
+   * @param update
+   * @param workId
    */
-  public async saveWorkInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>): Promise<number> {
+  public async saveWorkInfo(task: Task, pluginLoader: PluginLoader<TaskHandler>, update: boolean, workId?: number): Promise<number> {
     AssertNotNullish(task.id, this.constructor.name, `保存作品信息失败，任务id不能为空`)
     const taskId = task.id
     // 加载插件
@@ -282,7 +284,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 保存作品信息
     const workService = new WorkService()
-    return workService.saveOrUpdateWorkInfos(workSaveDTO, false)
+    workSaveDTO.id = workId
+    return workService.saveOrUpdateWorkInfos(workSaveDTO, update)
   }
 
   /**
