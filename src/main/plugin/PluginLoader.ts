@@ -9,10 +9,10 @@ import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginFactory from './PluginFactory.js'
 import { BasePlugin } from '../base/BasePlugin.js'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import PluginService from '../service/PluginService.js'
 import Plugin from '../model/entity/Plugin.js'
 import WorkSetService from '../service/WorkSetService.ts'
+import { getMainWindow } from '../core/mainWindow.ts'
 
 export default class PluginLoader<T extends BasePlugin> {
   /**
@@ -33,7 +33,7 @@ export default class PluginLoader<T extends BasePlugin> {
 
   constructor(factory: PluginFactory<T>, pluginService: PluginService) {
     this.factory = factory
-    this.mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
+    this.mainWindow = getMainWindow()
     this.pluginService = pluginService
 
     this.pluginCache = {}

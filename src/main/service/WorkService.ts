@@ -27,12 +27,12 @@ import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.js'
 import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
 import ReWorkWorkSetService from './ReWorkWorkSetService.ts'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 import StringUtil from '../util/StringUtil.js'
 import fs from 'fs/promises'
 import WorkWithWorkSetId from '../model/domain/WorkWithWorkSetId.ts'
 import lodash from 'lodash'
+import { getSettings } from '../core/settings.ts'
 
 export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao> {
   constructor(db?: DatabaseClient) {
@@ -306,7 +306,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
       const resList = await resService.listByWorkId(workId)
       await this.deleteById(workId)
       if (ArrayNotEmpty(resList)) {
-        const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
+        const workdir = getSettings().store.workdir
         const resFiles = resList
           .map((res) => {
             if (StringUtil.isNotBlank(res.filePath)) {

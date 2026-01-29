@@ -9,7 +9,7 @@ import lodash from 'lodash'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
 import { AssertArrayNotEmpty, AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
 import Page from '../model/util/Page.js'
-import CoreDao from './CoreDao.js'
+import CoreDao from '../core/CoreDao.ts'
 import ForeignKeyConstraintError from '../error/ForeignKeyConstraintError.js'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
 

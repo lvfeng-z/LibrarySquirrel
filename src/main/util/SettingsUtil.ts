@@ -1,17 +1,18 @@
 import { SettingsTemplate } from '../resources/settings/SettingsTemplate.js'
 import LogUtil from './LogUtil.ts'
-import { GVar, GVarEnum } from '../base/GVar.ts'
+import { getSettings } from '../core/settings.ts'
 
 /**
  * 将设置全部重置到默认值
  */
 export function DefaultSettings() {
+  const settings = getSettings()
   try {
-    GVar.get(GVarEnum.SETTINGS).clear()
-    GVar.get(GVarEnum.SETTINGS).set(SettingsTemplate)
-    GVar.get(GVarEnum.SETTINGS).set('initialized', true)
+    settings.clear()
+    settings.set(SettingsTemplate)
+    settings.set('initialized', true)
   } catch (error) {
-    GVar.get(GVarEnum.SETTINGS).set('initialized', false)
+    settings.set('initialized', false)
     LogUtil.error('SettingsUtil', String(error))
     throw error
   }

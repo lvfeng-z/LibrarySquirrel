@@ -1,15 +1,15 @@
-import SiteService from '../service/SiteService.js'
-import Site from '../model/entity/Site.js'
-import PluginService from '../service/PluginService.js'
-import { GVar, GVarEnum } from './GVar.js'
+import SiteService from '../service/SiteService.ts'
+import Site from '../model/entity/Site.ts'
+import PluginService from '../service/PluginService.ts'
 import path from 'path'
-import { RootDir } from '../util/FileSysUtil.js'
-import { RESOURCE_PATH } from '../constant/CommonConstant.js'
-import LogUtil from '../util/LogUtil.js'
-import { ArrayNotEmpty } from '../util/CommonUtil.js'
+import { RootDir } from '../util/FileSysUtil.ts'
+import { RESOURCE_PATH } from '../constant/CommonConstant.ts'
+import LogUtil from '../util/LogUtil.ts'
+import { ArrayNotEmpty } from '../util/CommonUtil.ts'
+import { getIniConfig } from './iniConfig.ts'
 
 export async function Initialize() {
-  const iniConfig = GVar.get(GVarEnum.INI_CONFIG)
+  const iniConfig = getIniConfig()
 
   // 初始化站点
   const defaultSiteConfigs = iniConfig.sites

@@ -17,7 +17,6 @@ import PluginTaskUrlListenerService from './PluginTaskUrlListenerService.js'
 import PluginTaskUrlListener from '../model/entity/PluginTaskUrlListener.js'
 import PluginTaskUrlListenerQueryDTO from '../model/queryDTO/PluginTaskUrlListenerQueryDTO.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '../model/entity/SiteDomain.js'
@@ -34,6 +33,7 @@ import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rm } from 'node:fs/promises'
 import Backup from '../model/entity/Backup.ts'
+import { getMainWindow } from '../core/mainWindow.ts'
 
 /**
  * 主键查询
@@ -322,8 +322,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         },
         extraData: tempDomains
       }
-      const mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
-      mainWindow.webContents.send('goto-page', gotoPageConfig)
+      getMainWindow().webContents.send('goto-page', gotoPageConfig)
     })
   }
 

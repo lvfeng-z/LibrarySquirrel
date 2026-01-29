@@ -1,8 +1,8 @@
 import Electron from 'electron'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import { v4 } from 'uuid'
 import NotifyConfig from '../model/util/NotifyConfig.js'
 import { IsNullish } from './CommonUtil.js'
+import { getMainWindow } from '../core/mainWindow.ts'
 
 export function GetBrowserWindow(width?: number, height?: number): Electron.BrowserWindow {
   return new Electron.BrowserWindow({
@@ -30,10 +30,10 @@ export function SendConfirmToWindow(config: ConfirmConfigConstruct): Promise<boo
         resolve(confirmed)
       }
     })
-    GVar.get(GVarEnum.MAIN_WINDOW).webContents.send('custom-confirm', confirmId, config)
+    getMainWindow().webContents.send('custom-confirm', confirmId, config)
   })
 }
 
 export function SendNotifyToWindow(config: NotifyConfig): void {
-  GVar.get(GVarEnum.MAIN_WINDOW).webContents.send('custom-notify', config)
+  getMainWindow().webContents.send('custom-notify', config)
 }

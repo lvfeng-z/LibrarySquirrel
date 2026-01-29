@@ -1,12 +1,11 @@
 import Electron from 'electron'
 import { ExternalAppEnum } from '../constant/ExternalAppEnum.js'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
+import { getSettings } from '../core/settings.ts'
 
 export default class AppLauncherService {
   public openImage(url: string): void {
-    const settings = GVar.get(GVarEnum.SETTINGS)
-    this.microsoftPhotos()(path.join(settings.store.workdir, url))
+    this.microsoftPhotos()(path.join(getSettings().store.workdir, url))
   }
 
   public getLauncher<T extends ExternalAppEnum>(app: T): ExternalAppMapping[T] {

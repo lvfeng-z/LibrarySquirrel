@@ -7,10 +7,10 @@ import PluginService from '../service/PluginService.js'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.js'
 import LogUtil from '../util/LogUtil.js'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import GotoPageConfig from '../model/util/GotoPageConfig.js'
 import { PageEnum } from '../constant/PageEnum.js'
 import WorkSetService from '../service/WorkSetService.ts'
+import { getMainWindow } from '../core/mainWindow.ts'
 
 async function insertLocalTag10W() {
   const db = new DatabaseClient('insertLocalTag10W')
@@ -82,8 +82,7 @@ async function installPluginTest() {
 
 async function mainWindowMsgTest() {
   const gotoPageProps = { title: '需要设置工作目录', content: '请先设置工作目录', buttonText: '去设置' }
-  const mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
-  mainWindow.webContents.send('goto-page', gotoPageProps)
+  getMainWindow().webContents.send('goto-page', gotoPageProps)
 }
 
 function gotoPageSiteManage() {
@@ -100,8 +99,7 @@ function gotoPageSiteManage() {
     },
     extraData: tempDomains
   }
-  const mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
-  mainWindow.webContents.send('goto-page', gotoPageConfig)
+  getMainWindow().webContents.send('goto-page', gotoPageConfig)
 }
 
 function listWorkSetWithWorkByIds(ids: number[]) {

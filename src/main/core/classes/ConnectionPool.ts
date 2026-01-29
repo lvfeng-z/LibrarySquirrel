@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3'
-import LogUtil from '../util/LogUtil.ts'
+import LogUtil from '../../util/LogUtil.ts'
 
 export interface ConnectionPoolConfig {
   maxRead: number

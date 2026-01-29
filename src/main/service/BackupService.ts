@@ -7,11 +7,11 @@ import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import fs from 'fs/promises'
 import LogUtil from '../util/LogUtil.js'
 import { AddSuffix, CreateDirIfNotExists } from '../util/FileSysUtil.js'
-import { GVar, GVarEnum } from '../base/GVar.js'
 import path from 'path'
 import { BackupRootDirName } from '../constant/BackupConstants.js'
 import { cp } from 'node:fs/promises'
 import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
+import { getSettings } from '../core/settings.ts'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
   constructor(db?: DatabaseClient) {
@@ -35,8 +35,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       throw error
     }
 
-    const settings = GVar.get(GVarEnum.SETTINGS)
-    const workdir = settings.get('workdir')
+    const workdir = getSettings().store.workdir
     // 获取年、月、日
     const now = new Date()
     const year = now.getFullYear() // 四位数年份
@@ -91,7 +90,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的路径为空`)
     const backup = await this.getById(backUpId)
     AssertNotNullish(backup, this.constructor.name, `无法恢复备份到${targetPath}，备份不存在，backupId: ${backUpId}`)
-    const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
+    const workdir = getSettings().store.workdir
     const absoluteBackupPath = path.join(workdir, backup.filePath as string)
     try {
       await fs.access(absoluteBackupPath)
@@ -116,7 +115,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
   public async deleteBackup(backUpId: number): Promise<number> {
     const backup = await this.getById(backUpId)
     AssertNotNullish(backup, this.constructor.name, `删除备份失败，备份id不可用，backupId: ${backUpId}`)
-    const workdir = GVar.get(GVarEnum.SETTINGS).store.workdir
+    const workdir = getSettings().store.workdir
     const absoluteBackupPath = path.join(workdir, backup.filePath as string)
     try {
       await fs.access(absoluteBackupPath)

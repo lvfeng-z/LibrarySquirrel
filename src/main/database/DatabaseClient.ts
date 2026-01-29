@@ -2,8 +2,8 @@ import BetterSqlite3 from 'better-sqlite3'
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
 import StringUtil from '../util/StringUtil.ts'
-import { GVar, GVarEnum } from '../base/GVar.ts'
-import { Connection, RequestWeight } from './ConnectionPool.ts'
+import { Connection, RequestWeight } from '../core/classes/ConnectionPool.ts'
+import { getConnectionPool } from '../core/connectionPool.ts'
 
 /**
  * 数据库客户端
@@ -102,11 +102,10 @@ export default class DatabaseClient {
     statement: string,
     ...params: BindParameters
   ): Promise<Database.RunResult> {
-    const connectionPool = GVar.get(GVarEnum.CONNECTION_POOL)
     try {
       // 获取排他锁
       if (!this.holdingLock) {
-        await connectionPool.acquireLock(this.caller, statement)
+        await getConnectionPool().acquireLock(this.caller, statement)
         this.holdingLock = true
       }
       const prepare = await this.prepare<BindParameters, Result>(statement, false)
@@ -117,7 +116,7 @@ export default class DatabaseClient {
       throw error
     } finally {
       if (this.holdingLock && !this.inTransaction) {
-        connectionPool.releaseLock(this.caller)
+        getConnectionPool().releaseLock(this.caller)
         this.holdingLock = false
       }
     }
@@ -248,7 +247,7 @@ export default class DatabaseClient {
     const savepointName = `sp${this.savepointCounter++}`
     // 开启事务之前获取排他锁
     if (!this.holdingLock) {
-      await GVar.get(GVarEnum.CONNECTION_POOL).acquireLock(this.caller, operation)
+      await getConnectionPool().acquireLock(this.caller, operation)
       this.holdingLock = true
     }
 
@@ -258,7 +257,7 @@ export default class DatabaseClient {
     } catch (error) {
       // 释放排他锁
       if (this.holdingLock && isStartPoint) {
-        GVar.get(GVarEnum.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+        getConnectionPool().releaseLock(`${this.caller}_${operation}`)
         this.holdingLock = false
       }
       LogUtil.error(this.caller, `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`, error)
@@ -289,7 +288,7 @@ export default class DatabaseClient {
           this.inTransaction = false
 
           // 释放排他锁
-          GVar.get(GVarEnum.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+          getConnectionPool().releaseLock(`${this.caller}_${operation}`)
           this.holdingLock = false
         } else {
           // 事务代码出现异常的话回滚至此保存点
@@ -304,7 +303,7 @@ export default class DatabaseClient {
       .finally(() => {
         // 释放排他锁
         if (this.holdingLock && isStartPoint) {
-          GVar.get(GVarEnum.CONNECTION_POOL).releaseLock(`${this.caller}_${operation}`)
+          getConnectionPool().releaseLock(`${this.caller}_${operation}`)
           this.holdingLock = false
         }
       })
@@ -322,7 +321,7 @@ export default class DatabaseClient {
       }
       if (this.readingAcquirePromise === null) {
         this.readingAcquirePromise = (async () => {
-          this.readingConnection = await GVar.get(GVarEnum.CONNECTION_POOL).acquire(true, RequestWeight.LOW)
+          this.readingConnection = await getConnectionPool().acquire(true, RequestWeight.LOW)
           this.readingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.readingConnection.connection.function('REGEXP', (pattern, string) => {
@@ -339,7 +338,7 @@ export default class DatabaseClient {
       }
       if (this.writingAcquirePromise === null) {
         this.writingAcquirePromise = (async () => {
-          this.writingConnection = await GVar.get(GVarEnum.CONNECTION_POOL).acquire(false, RequestWeight.LOW)
+          this.writingConnection = await getConnectionPool().acquire(false, RequestWeight.LOW)
           this.writingAcquirePromise = null
           // 为每个链接注册REGEXP函数，以支持正则表达式
           this.writingConnection.connection.function('REGEXP', (pattern, string) => {

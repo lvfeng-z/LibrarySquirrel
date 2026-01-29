@@ -1,4 +1,4 @@
-import { Settings } from '../../model/util/Settings.js'
+import { Settings } from '../../core/types/Settings.ts'
 import ResFileNameFormatEnum from '../../constant/ResFileNameFormatEnum.js'
 
 export const SettingsTemplate: Settings = {

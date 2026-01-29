@@ -1,5 +1,5 @@
-import { GVar, GVarEnum } from './GVar.js'
-import LogUtil from '../util/LogUtil.js'
+import LogUtil from '../util/LogUtil.ts'
+import { getMainWindow } from './mainWindow.ts'
 
 export enum RenderEvent {
   TASK_STATUS_SET_TASK = 'taskStatus-setTask',
@@ -18,9 +18,8 @@ export enum RenderEvent {
  * @param args 要发送的数据
  */
 export function SendMsgToRender(channel: RenderEvent, ...args: unknown[]) {
-  const mainWindow = GVar.get(GVarEnum.MAIN_WINDOW)
   try {
-    mainWindow.webContents.send(channel, args)
+    getMainWindow().webContents.send(channel, args)
   } catch (ignoredError) {
     LogUtil.error('SendMsgToRender', ignoredError)
   }

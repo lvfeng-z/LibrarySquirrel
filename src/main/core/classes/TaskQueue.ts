@@ -1,27 +1,28 @@
-import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
-import LogUtil from '../util/LogUtil.js'
-import TaskService from '../service/TaskService.js'
-import WorkService from '../service/WorkService.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
+import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
+import { AssertNotNullish } from '../../util/AssertUtil.ts'
+import LogUtil from '../../util/LogUtil.ts'
+import TaskService from '../../service/TaskService.ts'
+import WorkService from '../../service/WorkService.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../../util/CommonUtil.ts'
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
-import PluginLoader from '../plugin/PluginLoader.js'
-import { TaskHandler, TaskHandlerFactory } from '../plugin/TaskHandler.js'
-import ResourceWriter from '../util/ResourceWriter.js'
-import TaskScheduleDTO from '../model/dto/TaskScheduleDTO.js'
-import Task from '../model/entity/Task.js'
-import { GVar, GVarEnum } from './GVar.js'
-import { RenderEvent, SendMsgToRender } from './EventToRender.js'
-import TaskProgressMapTreeDTO from '../model/dto/TaskProgressMapTreeDTO.js'
-import { CopyIgnoreUndefined } from '../util/ObjectUtil.js'
-import TaskTreeDTO from '../model/dto/TaskTreeDTO.js'
-import TaskProgressDTO from '../model/dto/TaskProgressDTO.js'
+import PluginLoader from '../../plugin/PluginLoader.ts'
+import { TaskHandler, TaskHandlerFactory } from '../../plugin/TaskHandler.ts'
+import ResourceWriter from '../../util/ResourceWriter.ts'
+import TaskScheduleDTO from '../../model/dto/TaskScheduleDTO.ts'
+import Task from '../../model/entity/Task.ts'
+import { RenderEvent, SendMsgToRender } from '../EventToRender.ts'
+import TaskProgressMapTreeDTO from '../../model/dto/TaskProgressMapTreeDTO.ts'
+import { CopyIgnoreUndefined } from '../../util/ObjectUtil.ts'
+import TaskTreeDTO from '../../model/dto/TaskTreeDTO.ts'
+import TaskProgressDTO from '../../model/dto/TaskProgressDTO.ts'
 import lodash from 'lodash'
 import { queue, QueueObject } from 'async'
-import ResourceService from '../service/ResourceService.js'
+import ResourceService from '../../service/ResourceService.ts'
 import Electron from 'electron'
-import TaskProcessResponseDTO from '../model/dto/TaskProcessResponseDTO.js'
-import PluginService from '../service/PluginService.js'
+import TaskProcessResponseDTO from '../../model/dto/TaskProcessResponseDTO.ts'
+import PluginService from '../../service/PluginService.ts'
+import { getSettings } from '../settings.ts'
+import { getMainWindow } from '../mainWindow.ts'
 
 /**
  * 任务队列
@@ -160,7 +161,7 @@ export class TaskQueue {
     )
     this.workInfoSaveStream = new WorkInfoSaveStream()
     // 读取设置中的最大并行数
-    const maxParallelImportInSettings = GVar.get(GVarEnum.SETTINGS).store.importSettings.maxParallelImport
+    const maxParallelImportInSettings = getSettings().store.importSettings.maxParallelImport
     this.resourceSaveStream = new ResourceSaveStream(maxParallelImportInSettings, this.refreshParentStatus.bind(this))
     this.taskPersistStream = new TaskPersistStream()
 
@@ -1536,7 +1537,7 @@ class TaskQueueEntrance extends Readable {
    */
   private sendReplaceConfirmToMainWindow(taskRunInstance: TaskRunInstance, msg: string): void {
     this.waitingMap.set(taskRunInstance.taskId, taskRunInstance)
-    GVar.get(GVarEnum.MAIN_WINDOW).webContents.send('task-queue-resource-replace-confirm', {
+    getMainWindow().webContents.send('task-queue-resource-replace-confirm', {
       taskId: taskRunInstance.taskId,
       msg: msg
     })
