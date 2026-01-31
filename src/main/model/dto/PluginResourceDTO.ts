@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 
-export default class ResourcePluginDTO {
+export default class PluginResourceDTO {
   /**
    * 扩展名
    */
@@ -31,7 +31,7 @@ export default class ResourcePluginDTO {
    */
   importMethod: number | undefined | null
 
-  constructor(resourcePluginDTO?: ResourcePluginDTO) {
+  constructor(resourcePluginDTO?: PluginResourceDTO) {
     this.filenameExtension = resourcePluginDTO?.filenameExtension
     this.suggestedName = resourcePluginDTO?.suggestedName
     this.resourceStream = resourcePluginDTO?.resourceStream

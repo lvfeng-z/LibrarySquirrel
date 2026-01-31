@@ -5,7 +5,7 @@ import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
 import PluginSiteAuthorDTO from './PluginSiteAuthorDTO.ts'
 import PluginWorkSetDTO from './PluginWorkSetDTO.ts'
 import { NotNullish } from '../../util/CommonUtil.js'
-import ResourcePluginDTO from './ResourcePluginDTO.js'
+import PluginResourceDTO from './PluginResourceDTO.ts'
 import PluginSiteTagDTO from './PluginSiteTagDTO.ts'
 
 /**
@@ -48,14 +48,9 @@ export default class PluginWorkResponseDTO {
   workSets: PluginWorkSetDTO[] | undefined | null
 
   /**
-   * 是否更新作品数据
-   */
-  doUpdate: boolean | undefined | null
-
-  /**
    * 资源
    */
-  resource: ResourcePluginDTO | undefined | null
+  resource: PluginResourceDTO | undefined | null
 
   constructor(pluginWorkResponseDTO?: PluginWorkResponseDTO) {
     if (NotNullish(pluginWorkResponseDTO)) {
@@ -66,7 +61,6 @@ export default class PluginWorkResponseDTO {
       this.siteAuthors = pluginWorkResponseDTO.siteAuthors
       this.siteTags = pluginWorkResponseDTO.siteTags
       this.workSets = pluginWorkResponseDTO.workSets
-      this.doUpdate = pluginWorkResponseDTO.doUpdate
       this.resource = pluginWorkResponseDTO.resource
     } else {
       this.work = new Work()

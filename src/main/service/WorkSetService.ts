@@ -152,4 +152,12 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     }
     return result
   }
+
+  /**
+   * 根据作品id查询作品集列表
+   * @param workId 作品id
+   */
+  public async listByWorkId(workId: number): Promise<WorkSet[]> {
+    return this.dao.listByWorkId(workId)
+  }
 }

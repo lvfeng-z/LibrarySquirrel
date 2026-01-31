@@ -26,6 +26,7 @@ import Backup from '../model/entity/Backup.js'
 import { SendNotifyToWindow } from '../util/MainWindowUtil.js'
 import { Operator } from '../constant/CrudConstant.ts'
 import { getSettings } from '../core/settings.ts'
+import PluginWorkResponseDTO from '../model/dto/PluginWorkResponseDTO.ts'
 
 /**
  * 资源服务
@@ -37,9 +38,15 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
 
   /**
    * 创建用于保存资源的资源信息
-   * @param workFullDTO
+   * @param workInfo 作品完整信息
+   * @param pluginResponse 插件返回的数据
+   * @param taskId 任务id
    */
-  public static async createSaveInfo(workFullDTO: WorkFullDTO): Promise<ResourceSaveDTO> {
+  public static createSaveInfoFromPlugin(
+    workInfo: WorkFullDTO,
+    pluginResponse: PluginWorkResponseDTO,
+    taskId: number
+  ): ResourceSaveDTO {
     const result = new ResourceSaveDTO()
     // 读取设置中的工作目录信息
     const workdir = getSettings().store.workdir
@@ -48,33 +55,36 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       LogUtil.error(this.constructor.name, msg)
       throw new Error(msg)
     }
-    const resource = workFullDTO.resource
-    AssertNotNullish(resource, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
+    const pluginResDTO = pluginResponse.resource
+    AssertNotNullish(pluginResDTO, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
 
     // 作者信息
-    const authorName = ResourceService.getAuthorName(workFullDTO)
+    const authorName = ResourceService.getAuthorName(workInfo)
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
     const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
-    const filenameExtension = workFullDTO.resource?.filenameExtension
+    const filenameExtension = pluginResDTO.filenameExtension
 
-    const fileName = this.createFileName(workFullDTO)
+    const fileName = this.createFileName(workInfo)
     const standardFileName = SanitizeFileName(fileName)
     const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : `${standardFileName}${filenameExtension}`
 
     const relativeSavePath = path.join('/includeDir', finalAuthorName)
 
     // 资源
+    result.workId = workInfo.id
+    result.taskId = taskId
     result.fileName = finalFileName
     result.fullSavePath = path.join(workdir, relativeSavePath, finalFileName)
     result.filePath = path.join(relativeSavePath, finalFileName)
     result.workdir = workdir
-    result.importMethod = resource.importMethod
-    result.suggestedName = resource.suggestedName
+    result.importMethod = pluginResDTO.importMethod
+    result.suggestedName = pluginResDTO.suggestedName
     result.filenameExtension = filenameExtension
-    result.resourceSize = workFullDTO.resource?.resourceSize
+    result.resourceSize = pluginResDTO.resourceSize
     result.resourceComplete = BOOL.FALSE
+    result.resourceStream = pluginResDTO.resourceStream
 
     return result
   }

@@ -116,4 +116,25 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       }
     }
   }
+
+  /**
+   * 根据作品id查询作品集列表
+   * @param workId 作品id
+   */
+  public async listByWorkId(workId: number): Promise<WorkSet[]> {
+    const clause = `
+      SELECT ws.*
+      FROM work_set ws
+               INNER JOIN re_work_work_set rwws ON ws.id = rwws.work_set_id
+      WHERE rwws.work_id = @workId`
+    const db = this.acquire()
+    try {
+      const row = await db.all<unknown[], Record<string, unknown>>(clause, workId)
+      return this.toResultTypeDataList<WorkSet>(row)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
 }

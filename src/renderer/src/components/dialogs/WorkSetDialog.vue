@@ -53,7 +53,7 @@ watch(currentWorkSetId, () => loadWorkList())
 <template>
   <auto-height-dialog v-model:state="state" :width="props.width">
     <template #header>
-      {{ currentWorkSet?.nickName }}
+      {{ currentWorkSet?.siteWorkSetName }}
     </template>
     <work-grid-for-work-set
       v-model:current-work-set-id="currentWorkSetId"

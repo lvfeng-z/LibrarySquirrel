@@ -1,5 +1,5 @@
 import Task from '../model/entity/Task.ts'
-import ResourcePluginDTO from '../model/dto/ResourcePluginDTO.js'
+import PluginResourceDTO from '../model/dto/PluginResourceDTO.ts'
 
 export class PluginTaskResParam {
   /**
@@ -10,7 +10,7 @@ export class PluginTaskResParam {
   /**
    * 资源信息
    */
-  resourcePluginDTO: ResourcePluginDTO | undefined | null
+  resourcePluginDTO: PluginResourceDTO | undefined | null
 
   /**
    * 资源路径

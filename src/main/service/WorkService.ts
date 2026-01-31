@@ -43,26 +43,52 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
    * 根据插件返回的作品DTO生成保存作品用的信息
    * @param pluginWorkResponseDTO 插件返回的作品DTO
    * @param taskId
+   * @param workId
    */
-  public static async createSaveInfoFromPlugin(pluginWorkResponseDTO: PluginWorkResponseDTO, taskId: number): Promise<WorkSaveDTO> {
+  public async createSaveInfoFromPlugin(
+    pluginWorkResponseDTO: PluginWorkResponseDTO,
+    taskId: number,
+    workId?: number
+  ): Promise<WorkSaveDTO> {
     // 校验
     AssertNotNullish(pluginWorkResponseDTO.work.siteWorkId, '生成作品信息失败，siteWorkId不能为空')
-    const workFullDTO = new WorkFullDTO(pluginWorkResponseDTO.work as Work)
+    const workFullDTO = new WorkFullDTO(pluginWorkResponseDTO.work)
+    // 在创建更新使用的作品信息时，插件返回的作品id中不包含作品id，手动赋值
+    workFullDTO.id = workId
     const result = new WorkSaveDTO(taskId, workFullDTO)
     result.site = pluginWorkResponseDTO.site
     result.localAuthors = pluginWorkResponseDTO.localAuthors
     result.localTags = pluginWorkResponseDTO.localTags
     // 生成站点作者保存信息
-    if (ArrayNotEmpty(pluginWorkResponseDTO.siteAuthors)) {
+    if (pluginWorkResponseDTO.siteAuthors === undefined) {
+      const siteAuthorService = new SiteAuthorService()
+      AssertNotNullish(workId, '生成作品信息失败，获取作品原站点作者时，workId不能为空')
+      result.siteAuthors = await siteAuthorService.listByWorkId(workId)
+    } else if (ArrayNotEmpty(pluginWorkResponseDTO.siteAuthors)) {
       result.siteAuthors = await SiteAuthorService.createSaveInfosFromPlugin(pluginWorkResponseDTO.siteAuthors)
+    } else {
+      result.siteAuthors = []
     }
     // 生成站点标签保存信息
-    if (ArrayNotEmpty(pluginWorkResponseDTO.siteTags)) {
+    if (pluginWorkResponseDTO.siteTags === undefined) {
+      const siteTagService = new SiteTagService()
+      AssertNotNullish(workId, '生成作品信息失败，获取作品原站点标签时，workId不能为空')
+      const tempSiteTags = await siteTagService.listByWorkId(workId)
+      result.siteTags = tempSiteTags.map((siteTag) => new SiteTagFullDTO(siteTag))
+    } else if (ArrayNotEmpty(pluginWorkResponseDTO.siteTags)) {
       result.siteTags = await SiteTagService.createSaveInfosFromPlugin(pluginWorkResponseDTO.siteTags)
+    } else {
+      result.siteTags = []
     }
     // 生成作品集保存信息
-    if (ArrayNotEmpty(pluginWorkResponseDTO.workSets)) {
+    if (pluginWorkResponseDTO.workSets === undefined) {
+      const workSetService = new WorkSetService()
+      AssertNotNullish(workId, '生成作品信息失败，获取作品原作品集时，workId不能为空')
+      result.workSets = await workSetService.listByWorkId(workId)
+    } else if (ArrayNotEmpty(pluginWorkResponseDTO.workSets)) {
       result.workSets = await WorkSetService.createSaveInfosFromPlugin(pluginWorkResponseDTO.workSets)
+    } else {
+      result.workSets = []
     }
     return result
   }
@@ -75,6 +101,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
   public async saveOrUpdateWorkInfos(workDTO: WorkSaveDTO, update: boolean): Promise<number> {
     await this.saveSurroundingData(workDTO.workSets, workDTO.siteAuthors, workDTO.siteTags)
 
+    // 查询数据库补全作品集、站点作者、站点标签的信息
     if (ArrayNotEmpty(workDTO.workSets)) {
       const workSetService = new WorkSetService()
       const tempParam = workDTO.workSets
@@ -103,9 +130,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
           }
         })
         .filter(NotNullish)
-      workDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map(
-        (siteAuthor) => new RankedSiteAuthor(siteAuthor)
-      )
+      workDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map((siteAuthor) => new RankedSiteAuthor(siteAuthor))
     }
     if (ArrayNotEmpty(workDTO.siteTags)) {
       const siteTagService = new SiteTagService()
