@@ -60,6 +60,19 @@ src/
         ├── store/     # Pinia stores
         └── utils/     # Renderer utilities
 ```
+## AI 开发辅助文档
+
+项目维护了一套快速参考文档，位于 `ai-assistant/` 目录：
+
+| 文档 | 用途 |
+|------|------|
+| `ai-assistant/architecture-quick-reference.md` | 架构速查 |
+| `ai-assistant/business-logic.md` | 业务逻辑说明 |
+| `ai-assistant/development-scenarios.md` | 开发场景示例 |
+| `ai-assistant/glossary.md` | 术语表 |
+| `ai-assistant/query-examples.md` | 查询示例 |
+
+**提示**：遇到架构、数据库、IPC通信等问题时，可参考上述文档获取详细上下文。
 
 ### Main Process (`src/main/`)
 
