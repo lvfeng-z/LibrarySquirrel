@@ -5,6 +5,7 @@ import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
 // props
 const props = defineProps<{
   workList: WorkCardItem[]
+  checkable: boolean
 }>()
 
 // 事件
@@ -25,6 +26,7 @@ function handleImageClicked(workCardItem: WorkCardItem) {
           :work="work"
           :max-height="500"
           :max-width="500"
+          :checkable="checkable"
           work-info-popper-width="380px"
           author-info-popper-width="380px"
           @image-clicked="handleImageClicked(work)"

@@ -10,11 +10,14 @@ import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
 // props
 const props = defineProps<{
   work: WorkCardItem
+  checkable: boolean
   maxHeight?: number
   maxWidth?: number
   workInfoPopperWidth?: string
   authorInfoPopperWidth?: string
 }>()
+
+const checked = defineModel<boolean>('checked', { required: false, default: false })
 
 // 事件
 const emit = defineEmits(['imageClicked'])
@@ -65,8 +68,16 @@ function handlePictureClicked() {
   }
 }
 </script>
+
 <template>
   <div class="work-card">
+    <div v-show="checkable" class="work-card-checkmark-container z-layer-1">
+      <div class="work-card-checkmark z-layer-1" @click.stop="checked = !checked">
+        <el-icon v-if="checked && checkable" class="work-card-icon-checked">
+          <Check />
+        </el-icon>
+      </div>
+    </div>
     <el-image
       :fit="imageFit"
       class="work-card-image"
@@ -95,7 +106,9 @@ function handlePictureClicked() {
 .work-card {
   display: flex;
   flex-direction: column;
+  position: relative; /* 添加相对定位使绝对定位元素相对于此容器 */
 }
+
 .work-card-image {
   width: auto;
   margin-top: auto;
@@ -104,6 +117,7 @@ function handlePictureClicked() {
   max-height: calc(v-bind(caseHeight) - 100px);
   border-radius: 10px;
 }
+
 .work-card-error {
   display: flex;
   flex-direction: column;
@@ -112,10 +126,12 @@ function handlePictureClicked() {
   height: 200px;
   width: 100%;
 }
+
 .work-card-error-icon {
   color: var(--el-text-color-secondary);
   scale: 2;
 }
+
 .work-card-info {
   width: calc(100% - 10px);
   display: flex;
@@ -130,7 +146,42 @@ function handlePictureClicked() {
   padding-left: 4px;
   transition: background-color 0.3s;
 }
+
 .work-card-info:hover {
   background-color: var(--el-fill-color);
+}
+
+.work-card-checkmark-container {
+  position: absolute;
+  top: 8px; /* 调整位置 */
+  right: 8px; /* 调整位置 */
+}
+.work-card-checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--el-color-primary-light-3);
+  border-radius: 6px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: visibleFill;
+  transition: all 0.2s;
+  position: static; /* 移除绝对定位，使用父容器定位 */
+}
+
+.work-card-checkmark:hover {
+  border-color: var(--el-color-primary);
+}
+
+.work-card-icon-checked {
+  color: var(--el-color-primary);
+  font-size: 15px;
+  transition: 0.3s;
+}
+
+.work-card-icon-checked:hover {
+  scale: 1.2;
 }
 </style>
