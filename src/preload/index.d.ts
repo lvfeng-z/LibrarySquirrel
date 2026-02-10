@@ -132,6 +132,9 @@ declare global {
       // WorkSet
       workSetListWorkSetWithWorkByIds: function
 
+      // ReWorkWorkSet
+      reWorkWorkSetRemoveBatchFromWorkSet: function
+
       // FileSysUtil
       dirSelect: function
     }

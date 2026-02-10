@@ -128,6 +128,9 @@ const api = {
   // WorkSet
   workSetListWorkSetWithWorkByIds: (args) => Electron.ipcRenderer.invoke('workSet-listWorkSetWithWorkByIds', args),
 
+  // ReWorkWorkSet
+  reWorkWorkSetRemoveBatchFromWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-removeBatchFromWorkSet', args),
+
   // FileSysUtil
   dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)
 }

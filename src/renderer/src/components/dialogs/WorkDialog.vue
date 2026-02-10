@@ -323,8 +323,7 @@ function handleWorkSetClicked(workSetTag: SegmentedTagItem) {
   <auto-height-dialog v-model:state="state" :width="props.width" @open="refreshWorkInfo">
     <template #header>
       <span class="work-dialog-work-name">
-        {{ StringUtil.isBlank(currentWorkFullInfo.nickName) ? currentWorkFullInfo.siteWorkName : currentWorkFullInfo.nickName
-        }}
+        {{ StringUtil.isBlank(currentWorkFullInfo.nickName) ? currentWorkFullInfo.siteWorkName : currentWorkFullInfo.nickName }}
       </span>
     </template>
     <div class="work-dialog-container">

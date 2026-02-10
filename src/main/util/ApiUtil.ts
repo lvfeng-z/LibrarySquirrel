@@ -1,15 +1,21 @@
 import StringUtil from './StringUtil.js'
 
-export default class ApiUtil {
+export interface ApiResponse {
+  success: boolean
+  msg: string
+  data?: unknown
+}
+
+export default class ApiUtil implements ApiResponse {
   /**
    * 是否成功
    */
-  success: boolean | undefined
+  success: boolean
 
   /**
    * 响应信息
    */
-  msg: string | undefined
+  msg: string
 
   /**
    * 数据
@@ -17,32 +23,32 @@ export default class ApiUtil {
   data: unknown | undefined
 
   constructor() {
-    this.success = undefined
-    this.msg = undefined
+    this.success = false
+    this.msg = ''
     this.data = undefined
   }
 
-  public static response(data?: unknown, msg?: string) {
-    const response = new ApiUtil()
-    response.success = true
-    response.msg = StringUtil.isBlank(msg) ? '操作成功' : msg
-    response.data = data
-    return response
+  public static response(data?: unknown, msg?: string): ApiUtil {
+    // 返回纯对象以确保Electron IPC可克隆，但类型断言为ApiUtil
+    return {
+      success: true,
+      msg: StringUtil.isBlank(msg) ? '操作成功' : msg,
+      data
+    } as ApiUtil
   }
 
-  public setMsg(msg: string) {
-    this.msg = msg
-    return this
+  // setMsg方法已移除，因为Electron IPC无法克隆函数
+
+  public static error(msg: string): ApiUtil {
+    // 返回纯对象以确保Electron IPC可克隆，但类型断言为ApiUtil
+    return {
+      success: false,
+      msg,
+      data: undefined
+    } as ApiUtil
   }
 
-  public static error(msg: string) {
-    const response = new ApiUtil()
-    response.success = false
-    response.msg = msg
-    return response
-  }
-
-  public static check(state: boolean) {
+  public static check(state: boolean): ApiUtil {
     if (state) {
       return this.response(undefined)
     } else {

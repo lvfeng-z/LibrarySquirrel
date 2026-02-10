@@ -16,6 +16,7 @@ import SiteAuthorService from '../service/SiteAuthorService.ts'
 import AutoExplainPathService from '../service/AutoExplainPathService.ts'
 import { DirSelect } from '../util/FileSysUtil.ts'
 import { ReWorkTagService } from '../service/ReWorkTagService.ts'
+import ReWorkWorkSetService from '../service/ReWorkWorkSetService.ts'
 import SearchService from '../service/SearchService.ts'
 import AppLauncherService from '../service/AppLauncherService.ts'
 import { OriginType } from '../constant/OriginType.ts'
@@ -825,6 +826,18 @@ function exposeService() {
     const workSetService = new WorkSetService()
     try {
       const result = await workSetService.listWorkSetWithWorkByIds(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
+  // ReWorkWorkSetService
+  Electron.ipcMain.handle('reWorkWorkSet-removeBatchFromWorkSet', async (_event, args): Promise<ApiUtil> => {
+    const reWorkWorkSetService = new ReWorkWorkSetService()
+    try {
+      const { workIds, workSetId } = args
+      const result = await reWorkWorkSetService.removeBatchFromWorkSet(workIds, workSetId)
       return ApiUtil.response(result)
     } catch (error) {
       return returnError(error)

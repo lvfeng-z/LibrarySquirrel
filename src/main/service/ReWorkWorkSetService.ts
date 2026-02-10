@@ -99,4 +99,41 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     query.workId = workId
     return this.list(query)
   }
+
+  /**
+   * 从作品集中移除作品
+   * @param workId 作品id
+   * @param workSetId 作品集id
+   */
+  public async removeFromWorkSet(workId: number, workSetId: number): Promise<number> {
+    const query = new ReWorkWorkSetQueryDTO()
+    query.workId = workId
+    query.workSetId = workSetId
+    return this.delete(query)
+  }
+
+  /**
+   * 从作品集中批量移除作品
+   * @param workIds 作品id列表
+   * @param workSetId 作品集id
+   */
+  public async removeBatchFromWorkSet(workIds: number[], workSetId: number): Promise<number> {
+    if (workIds.length === 0) {
+      return 0
+    }
+
+    // 构建查询条件：workSetId匹配，且workId在列表中
+    const query = new ReWorkWorkSetQueryDTO()
+    query.workSetId = workSetId
+    // 注意：这里需要扩展BaseQueryDTO以支持IN查询，暂时使用循环删除
+    // 对于批量操作，可以考虑优化
+    let deletedCount = 0
+    for (const workId of workIds) {
+      const singleQuery = new ReWorkWorkSetQueryDTO()
+      singleQuery.workId = workId
+      singleQuery.workSetId = workSetId
+      deletedCount += await this.delete(singleQuery)
+    }
+    return deletedCount
+  }
 }
