@@ -8,7 +8,12 @@ import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
 // props
 const props = defineProps<{
   workList: WorkFullDTO[]
+  checkable?: boolean
+  checkedWorkIds?: number[] // 选中的作品id列表
 }>()
+
+// 事件
+const emits = defineEmits(['checkedChange'])
 
 // model
 const currentWorkIndex = defineModel<number>('currentWorkIndex', { required: true })
@@ -31,11 +36,22 @@ async function openWorkSetDialog(workSetId: number) {
   currentWorkSetId.value = workSetId
   workDialogState.value = false
 }
+
+// 处理选中状态变化
+function handleCheckedChange(checkedIds: number[]) {
+  emits('checkedChange', checkedIds)
+}
 </script>
 
 <template>
   <div>
-    <work-grid :work-list="workCardItemList" :checkable="false" @image-clicked="handleImageClicked" />
+    <work-grid
+      :work-list="workCardItemList"
+      :checkable="props.checkable ?? false"
+      :checked-work-ids="props.checkedWorkIds"
+      @image-clicked="handleImageClicked"
+      @checked-change="handleCheckedChange"
+    />
     <work-dialog
       v-model:state="workDialogState"
       v-model:current-work-index="currentWorkIndex"

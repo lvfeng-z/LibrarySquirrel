@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(yarn typecheck:web:*)",
+      "Bash(yarn lint:*)",
+      "Bash(yarn eslint:*)",
+      "Bash(yarn typecheck:*)",
+      "Bash(yarn typecheck:node:*)"
     ]
   }
 }
