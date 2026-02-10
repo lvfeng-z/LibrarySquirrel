@@ -54,19 +54,19 @@ async function loadWorkList() {
   }
 }
 
-// 删除按钮点击处理
+// 移除按钮点击处理
 async function handleDelete() {
   if (checkedWorkIds.value.length === 0) {
     ElMessage({
       type: 'warning',
-      message: '请先选择要删除的作品'
+      message: '请先选择要移除的作品'
     })
     return
   }
 
   try {
     // 确认对话框
-    await ElMessageBox.confirm(`确定要从作品集中移除选中的 ${checkedWorkIds.value.length} 个作品吗？`, '确认删除', {
+    await ElMessageBox.confirm(`确定要从作品集中移除选中的 ${checkedWorkIds.value.length} 个作品吗？`, '确认移除', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -96,7 +96,7 @@ async function handleDelete() {
       })
     }
   } catch (error) {
-    // 用户取消删除
+    // 用户取消移除
     if (error === 'cancel' || error === 'close') {
       return
     }
@@ -136,7 +136,7 @@ watch(isCheckable, (newValue) => {
         <div v-else style="display: flex; gap: 8px">
           <el-button type="danger" @click="handleDelete">
             <el-icon><Delete /></el-icon>
-            删除
+            移除
           </el-button>
           <el-button @click="isCheckable = false">
             <el-icon><Close /></el-icon>
