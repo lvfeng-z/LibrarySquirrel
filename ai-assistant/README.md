@@ -45,6 +45,24 @@
   - 性能优化实践
   - 插件接口扩展
 
+### 5. [common-pitfalls.md](./common-pitfalls.md) - 常见误区与陷阱
+- **用途**：了解项目中容易犯的错误和需要特别注意的问题
+- **适合场景**：编写IPC通信代码、调试数据传输问题时参考
+- **包含内容**：
+  - IPC数据传输规则和常见错误
+  - 响应式变量处理注意事项
+  - 其他开发中容易忽略的陷阱
+
+### 6. [code-rules.md](./code-rules.md) - 代码规则与约定
+- **用途**：查看项目的代码编写规范、命名约定和开发规范
+- **适合场景**：编写新代码、重构或评审代码时参考
+- **包含内容**：
+  - 文件命名规范和目录结构约定
+  - TypeScript、Vue组件和命名约定
+  - IPC通信、数据库操作和插件开发规范
+  - 代码质量工具和日期处理规则
+  - 新增功能开发流程和常见注意事项
+
 ## 如何使用这些文档
 
 ### 对于新任务分析
@@ -57,11 +75,14 @@
 1. **定位相关概念**：使用`glossary.md`确定涉及的术语
 2. **理解业务逻辑**：参考`business-logic.md`相关章节
 3. **查看类似案例**：`development-scenarios.md`中的问题修复示例
+4. **检查常见陷阱**：参考`common-pitfalls.md`避免重复已知错误
 
 ### 对于新功能开发
 1. **确定开发模式**：`development-scenarios.md`中的模式总结
 2. **参考完整示例**：查看收藏功能添加的完整流程
 3. **检查架构约束**：`architecture-quick-reference.md`中的技术要点
+4. **遵循代码规范**：`code-rules.md`中的编码规则和约定
+5. **避免常见错误**：参考`common-pitfalls.md`中的注意事项
 
 ## 关键架构要点（快速记忆）
 
@@ -131,6 +152,8 @@ if (ApiUtil.check(response)) {
 - 添加新的核心业务概念时更新`glossary.md`
 - 架构重大变更时更新`architecture-quick-reference.md`
 - 新增典型开发模式时更新`development-scenarios.md`
+- 代码规范变更时更新`code-rules.md`
+- 发现新的常见错误时更新`common-pitfalls.md`
 
 ## 相关项目文档
 
