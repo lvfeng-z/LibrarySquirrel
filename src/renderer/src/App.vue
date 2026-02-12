@@ -242,11 +242,11 @@ async function searchWork(page: Page<SearchCondition[], WorkFullDTO>): Promise<P
 
   return apis.searchQueryWorkPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const page = ApiUtil.data<Page<WorkQueryDTO, WorkFullDTO>>(response)
-      if (NotNullish(page)) {
-        page.data = page.data?.map((origin) => new WorkFullDTO(origin))
+      const resultPage = ApiUtil.data<Page<WorkQueryDTO, WorkFullDTO>>(response)
+      if (NotNullish(resultPage)) {
+        resultPage.data = resultPage.data?.map((origin) => new WorkFullDTO(origin))
       }
-      return page
+      return resultPage
     } else {
       return page
     }
@@ -639,11 +639,6 @@ async function handleTest() {
   height: 0;
   padding-top: 0;
   padding-bottom: 0;
-}
-.main-page-auto-load-tag-select {
-  height: 33px;
-  width: 100%;
-  position: relative;
 }
 .main-page-auto-load-tag-select-tag-type-checkbox-group {
   display: flex;

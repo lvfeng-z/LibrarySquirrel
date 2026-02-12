@@ -133,6 +133,7 @@ declare global {
       workSetListWorkSetWithWorkByIds: function
 
       // ReWorkWorkSet
+      reWorkWorkSetLinkBatchToWorkSet: function
       reWorkWorkSetRemoveBatchFromWorkSet: function
 
       // FileSysUtil

@@ -72,7 +72,7 @@ function handlePictureClicked() {
 <template>
   <div class="work-card">
     <div v-show="checkable" class="work-card-checkmark-container z-layer-1">
-      <div class="work-card-checkmark z-layer-1" @click.stop="checked = !checked">
+      <div class="work-card-checkmark" @click.stop="checked = !checked">
         <el-icon v-if="checked && checkable" class="work-card-icon-checked">
           <Check />
         </el-icon>

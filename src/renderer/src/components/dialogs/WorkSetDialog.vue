@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { Ref, ref, watch } from 'vue'
+import { Ref, ref, watch, computed } from 'vue'
 import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import WorkFullDTO from '@renderer/model/main/dto/WorkFullDTO.ts'
 import WorkSetWithWorkDTO from '@renderer/model/main/dto/WorkSetWithWorkDTO.ts'
 import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
 import WorkGridForWorkSet from '@renderer/components/common/WorkGridForWorkSet.vue'
+import WorkQueryView from '@renderer/components/common/WorkQueryView.vue'
 import WorkSet from '@renderer/model/main/entity/WorkSet.ts'
-import { Edit, Delete, Close } from '@element-plus/icons-vue'
+import SelectItem from '@renderer/model/util/SelectItem.ts'
+import IPage from '@renderer/model/util/IPage.ts'
+import Page from '@renderer/model/util/Page.ts'
+import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
+import { Edit, Delete, Close, Plus, ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 // props
@@ -21,6 +26,8 @@ const state = defineModel<boolean>('state', { required: true })
 const currentWorkSetId = defineModel<number>('currentWorkSetId', { required: true })
 
 // 变量
+// 视图状态: 'manage' 管理模式, 'select' 选择作品模式
+const viewMode = ref<'manage' | 'select'>('manage')
 // 是否启用选择模式
 const isCheckable = ref(false)
 // 选中的作品id列表
@@ -28,7 +35,9 @@ const checkedWorkIds = ref<number[]>([])
 // 接口
 const apis = {
   workSetListWorkSetWithWorkByIds: window.api.workSetListWorkSetWithWorkByIds,
-  reWorkWorkSetRemoveBatchFromWorkSet: window.api.reWorkWorkSetRemoveBatchFromWorkSet
+  reWorkWorkSetLinkBatchToWorkSet: window.api.reWorkWorkSetLinkBatchToWorkSet,
+  reWorkWorkSetRemoveBatchFromWorkSet: window.api.reWorkWorkSetRemoveBatchFromWorkSet,
+  searchQueryWorkPage: window.api.searchQueryWorkPage
 }
 // 当前作品集
 const currentWorkSet = ref<WorkSet | undefined>(undefined)
@@ -36,6 +45,14 @@ const currentWorkSet = ref<WorkSet | undefined>(undefined)
 const workList: Ref<WorkFullDTO[]> = ref([])
 // 当前作品的索引
 const currentWorkIndex = ref(0)
+// 选择作品组件相关
+const isSelectingWork = ref(false)
+const selectedWorkIdsForAdd = ref<number[]>([])
+// WorkQueryView 组件的 ref
+const workQueryViewRef = ref()
+
+// 计算属性：选择作品面板是否显示
+const isSelectPanelVisible = computed(() => viewMode.value === 'select')
 
 // 方法
 async function loadWorkList() {
@@ -107,9 +124,84 @@ async function handleDelete() {
   }
 }
 
+// 加载搜索条件选项（WorkQueryView 需要，返回空数据）
+async function loadSearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, _input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
+  const emptyPage = new Page<BaseQueryDTO, SelectItem>()
+  emptyPage.data = []
+  emptyPage.dataCount = 0
+  emptyPage.pageNumber = page.pageNumber
+  emptyPage.pageSize = page.pageSize
+  emptyPage.currentCount = 0
+  emptyPage.pageCount = 0
+  return emptyPage
+}
+
+// 点击添加按钮，切换到选择作品模式
+function handleAdd() {
+  viewMode.value = 'select'
+  // 重置选择状态
+  selectedWorkIdsForAdd.value = []
+  // 重置 WorkQueryView 并加载作品列表
+  workQueryViewRef.value?.clearConditions()
+  workQueryViewRef.value?.queryWork()
+}
+
+// 点击选择面板的取消按钮
+function handleSelectCancel() {
+  viewMode.value = 'manage'
+  isSelectingWork.value = false
+}
+
+// 点击选择面板的确定按钮
+async function handleSelectConfirm() {
+  if (selectedWorkIdsForAdd.value.length === 0) {
+    ElMessage({
+      type: 'warning',
+      message: '请先选择要添加的作品'
+    })
+    return
+  }
+
+  try {
+    const response = await apis.reWorkWorkSetLinkBatchToWorkSet({
+      workIds: [...selectedWorkIdsForAdd.value],
+      workSetId: currentWorkSetId.value
+    })
+
+    if (ApiUtil.check(response)) {
+      const addedCount = ApiUtil.data<number>(response)
+      ElMessage({
+        type: 'success',
+        message: `成功添加 ${addedCount} 个作品到作品集`
+      })
+      // 重新加载作品列表
+      await loadWorkList()
+      // 返回管理视图
+      viewMode.value = 'manage'
+      isSelectingWork.value = false
+      selectedWorkIdsForAdd.value = []
+    } else {
+      ElMessage({
+        type: 'error',
+        message: `添加作品失败: ${response.msg || '未知错误'}`
+      })
+    }
+  } catch (error) {
+    ElMessage({
+      type: 'error',
+      message: `添加作品失败: ${error}`
+    })
+  }
+}
+
 // 处理选中状态变化
 function handleCheckedChange(ids: number[]) {
   checkedWorkIds.value = ids
+}
+
+// 处理选中作品变化
+function handleSelectWorkCheckedChange(ids: number[]) {
+  selectedWorkIdsForAdd.value = ids
 }
 
 // watch
@@ -125,7 +217,7 @@ watch(isCheckable, (newValue) => {
 <template>
   <auto-height-dialog v-model:state="state" :width="props.width">
     <template #header>
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+      <div v-if="viewMode === 'manage'" style="display: flex; justify-content: space-between; align-items: center; width: 100%">
         <span>{{ currentWorkSet?.siteWorkSetName }}</span>
         <div v-if="!isCheckable">
           <el-button type="primary" :plain="true" @click="isCheckable = true">
@@ -134,6 +226,10 @@ watch(isCheckable, (newValue) => {
           </el-button>
         </div>
         <div v-else style="display: flex; gap: 8px">
+          <el-button type="primary" @click="handleAdd">
+            <el-icon><Plus /></el-icon>
+            添加
+          </el-button>
           <el-button type="danger" @click="handleDelete">
             <el-icon><Delete /></el-icon>
             移除
@@ -144,16 +240,95 @@ watch(isCheckable, (newValue) => {
           </el-button>
         </div>
       </div>
+      <div v-else style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+        <div style="display: flex; gap: 10px">
+          <el-button @click="handleSelectCancel">
+            <el-icon><ArrowLeft /></el-icon>
+          </el-button>
+          <span>从作品库添加作品</span>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <el-button type="primary" :disabled="selectedWorkIdsForAdd.length === 0" @click="handleSelectConfirm">
+            <el-icon><Plus /></el-icon>
+            确定添加
+          </el-button>
+          <el-button @click="handleSelectCancel">
+            <el-icon><Close /></el-icon>
+            取消
+          </el-button>
+        </div>
+      </div>
     </template>
-    <work-grid-for-work-set
-      v-model:current-work-set-id="currentWorkSetId"
-      v-model:current-work-index="currentWorkIndex"
-      :work-list="workList"
-      :checkable="isCheckable"
-      :checked-work-ids="checkedWorkIds"
-      @checked-change="handleCheckedChange"
-    />
+
+    <div class="work-set-dialog-main-container">
+      <div :class="{ 'work-set-main-left': true, 'main-left-visible': !isSelectPanelVisible }">
+        <work-grid-for-work-set
+          v-model:current-work-set-id="currentWorkSetId"
+          v-model:current-work-index="currentWorkIndex"
+          :work-list="workList"
+          :checkable="isCheckable"
+          :checked-work-ids="checkedWorkIds"
+          @checked-change="handleCheckedChange"
+        />
+      </div>
+
+      <div :class="{ 'work-set-select-panel': true, 'z-layer-2': true, 'select-panel-visible': isSelectPanelVisible }">
+        <work-query-view
+          ref="workQueryViewRef"
+          :load-search-item-page="loadSearchItemPage"
+          :checkable="true"
+          :checked-work-ids="selectedWorkIdsForAdd"
+          :auto-search-on-input-change="false"
+          :auto-search-on-tag-change="false"
+          tag-select-tags-gap="8px"
+          tag-select-max-height="200px"
+          tag-select-min-height="36px"
+          @checked-change="handleSelectWorkCheckedChange"
+        >
+        </work-query-view>
+      </div>
+    </div>
   </auto-height-dialog>
 </template>
 
-<style scoped></style>
+<style scoped>
+.work-set-dialog-main-container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100% - 80px);
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 左侧区域 - 已有作品 */
+.work-set-main-left {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  transition: transform 0.3s ease;
+}
+
+.main-left-visible {
+  transform: translateX(0);
+}
+
+/* 选择作品面板 */
+.work-set-select-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background-color: var(--el-bg-color);
+  display: flex;
+  flex-direction: column;
+  padding-right: 3px;
+  transition: transform 0.3s ease;
+  transform: translateX(100%);
+}
+.select-panel-visible {
+  transform: translateX(3px);
+}
+</style>

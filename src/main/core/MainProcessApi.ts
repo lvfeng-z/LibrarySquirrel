@@ -833,6 +833,17 @@ function exposeService() {
   })
 
   // ReWorkWorkSetService
+  Electron.ipcMain.handle('reWorkWorkSet-linkBatchToWorkSet', async (_event, args): Promise<ApiUtil> => {
+    const reWorkWorkSetService = new ReWorkWorkSetService()
+    try {
+      const { workIds, workSetId } = args
+      const result = await reWorkWorkSetService.linkBatchToWorkSet(workIds, workSetId)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
   Electron.ipcMain.handle('reWorkWorkSet-removeBatchFromWorkSet', async (_event, args): Promise<ApiUtil> => {
     const reWorkWorkSetService = new ReWorkWorkSetService()
     try {

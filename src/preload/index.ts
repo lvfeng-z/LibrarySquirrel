@@ -129,6 +129,7 @@ const api = {
   workSetListWorkSetWithWorkByIds: (args) => Electron.ipcRenderer.invoke('workSet-listWorkSetWithWorkByIds', args),
 
   // ReWorkWorkSet
+  reWorkWorkSetLinkBatchToWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-linkBatchToWorkSet', args),
   reWorkWorkSetRemoveBatchFromWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-removeBatchFromWorkSet', args),
 
   // FileSysUtil

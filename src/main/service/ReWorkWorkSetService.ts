@@ -2,6 +2,7 @@ import BaseService from '../base/BaseService.ts'
 import ReWorkWorkSetQueryDTO from '../model/queryDTO/ReWorkWorkSetQueryDTO.ts'
 import ReWorkWorkSet from '../model/entity/ReWorkWorkSet.ts'
 import ReWorkWorkSetDao from '../dao/ReWorkWorkSetDao.ts'
+import { WorkDao } from '../dao/WorkDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../util/CommonUtil.js'
 import LogUtil from '../util/LogUtil.js'
@@ -10,6 +11,24 @@ import Work from '../model/entity/Work.ts'
 export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQueryDTO, ReWorkWorkSet, ReWorkWorkSetDao> {
   constructor(db?: DatabaseClient) {
     super(ReWorkWorkSetDao, db)
+  }
+
+  /**
+   * 批量关联作品到作品集
+   * @param workIds 作品id列表
+   * @param workSetId 作品集id
+   */
+  public async linkBatchToWorkSet(workIds: number[], workSetId: number): Promise<number> {
+    if (workIds.length === 0) {
+      return 0
+    }
+
+    // 获取作品信息
+    const workDao = new WorkDao(this.db, false)
+    const works = await workDao.listByIds(workIds)
+
+    // 关联作品集和作品
+    return this.link(works, workSetId)
   }
 
   /**
