@@ -223,7 +223,7 @@ watch(isCheckable, (newValue) => {
 <template>
   <static-height-dialog v-model:state="state" :width="props.width" :before-close="beforeDialogClose">
     <template #header>
-      <div v-if="viewMode === 'manage'" style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+      <div v-if="viewMode === 'manage'" class="work-set-header">
         <span>{{ currentWorkSet?.siteWorkSetName }}</span>
         <div v-if="!isCheckable">
           <el-button type="primary" :plain="true" @click="isCheckable = true">
@@ -231,7 +231,7 @@ watch(isCheckable, (newValue) => {
             管理
           </el-button>
         </div>
-        <div v-else style="display: flex; gap: 8px">
+        <div v-else class="work-set-header-actions">
           <el-button type="primary" @click="handleAdd">
             <el-icon><Plus /></el-icon>
             添加
@@ -246,14 +246,14 @@ watch(isCheckable, (newValue) => {
           </el-button>
         </div>
       </div>
-      <div v-else style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-        <div style="display: flex; gap: 10px">
+      <div v-else class="work-set-header">
+        <div class="work-set-header-back">
           <el-button @click="handleSelectCancel">
             <el-icon><ArrowLeft /></el-icon>
           </el-button>
           <span>从作品库添加作品</span>
         </div>
-        <div style="display: flex; gap: 8px">
+        <div class="work-set-header-actions">
           <el-button type="primary" :disabled="selectedWorkIdsForAdd.length === 0" @click="handleSelectConfirm">
             <el-icon><Plus /></el-icon>
             确定添加
@@ -338,5 +338,23 @@ watch(isCheckable, (newValue) => {
 }
 .select-panel-visible {
   transform: translateX(3px);
+}
+
+/* 头部样式 */
+.work-set-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.work-set-header-back {
+  display: flex;
+  gap: 10px;
+}
+
+.work-set-header-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>
