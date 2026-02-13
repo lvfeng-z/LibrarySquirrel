@@ -4,7 +4,7 @@ import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import WorkFullDTO from '@renderer/model/main/dto/WorkFullDTO.ts'
 import WorkSetWithWorkDTO from '@renderer/model/main/dto/WorkSetWithWorkDTO.ts'
-import AutoHeightDialog from '@renderer/components/dialogs/AutoHeightDialog.vue'
+import StaticHeightDialog from '@renderer/components/dialogs/StaticHeightDialog.vue'
 import WorkGridForWorkSet from '@renderer/components/common/WorkGridForWorkSet.vue'
 import WorkQueryView from '@renderer/components/common/WorkQueryView.vue'
 import WorkSet from '@renderer/model/main/entity/WorkSet.ts'
@@ -204,6 +204,12 @@ function handleSelectWorkCheckedChange(ids: number[]) {
   selectedWorkIdsForAdd.value = ids
 }
 
+// 关闭弹窗的回调
+function beforeDialogClose(done: (shouldCancel?: boolean) => void) {
+  viewMode.value = 'manage'
+  done()
+}
+
 // watch
 watch(currentWorkSetId, () => loadWorkList())
 watch(isCheckable, (newValue) => {
@@ -215,7 +221,7 @@ watch(isCheckable, (newValue) => {
 </script>
 
 <template>
-  <auto-height-dialog v-model:state="state" :width="props.width">
+  <static-height-dialog v-model:state="state" :width="props.width" :before-close="beforeDialogClose">
     <template #header>
       <div v-if="viewMode === 'manage'" style="display: flex; justify-content: space-between; align-items: center; width: 100%">
         <span>{{ currentWorkSet?.siteWorkSetName }}</span>
@@ -262,14 +268,16 @@ watch(isCheckable, (newValue) => {
 
     <div class="work-set-dialog-main-container">
       <div :class="{ 'work-set-main-left': true, 'main-left-visible': !isSelectPanelVisible }">
-        <work-grid-for-work-set
-          v-model:current-work-set-id="currentWorkSetId"
-          v-model:current-work-index="currentWorkIndex"
-          :work-list="workList"
-          :checkable="isCheckable"
-          :checked-work-ids="checkedWorkIds"
-          @checked-change="handleCheckedChange"
-        />
+        <el-scrollbar>
+          <work-grid-for-work-set
+            v-model:current-work-set-id="currentWorkSetId"
+            v-model:current-work-index="currentWorkIndex"
+            :work-list="workList"
+            :checkable="isCheckable"
+            :checked-work-ids="checkedWorkIds"
+            @checked-change="handleCheckedChange"
+          />
+        </el-scrollbar>
       </div>
 
       <div :class="{ 'work-set-select-panel': true, 'z-layer-2': true, 'select-panel-visible': isSelectPanelVisible }">
@@ -288,14 +296,14 @@ watch(isCheckable, (newValue) => {
         </work-query-view>
       </div>
     </div>
-  </auto-height-dialog>
+  </static-height-dialog>
 </template>
 
 <style scoped>
 .work-set-dialog-main-container {
   display: flex;
   flex-direction: row;
-  height: calc(100% - 80px);
+  height: 100%;
   width: 100%;
   overflow: hidden;
   position: relative;

@@ -15,29 +15,28 @@ const props = withDefaults(
   }
 )
 // model
+// container组件实例
+const containerRef = ref()
 // 弹窗开关
 const state = defineModel<boolean>('state', { required: true })
+const containerHeight: Ref<string> = ref('')
 
 // 事件
 const emits = defineEmits(['open'])
 
 // 变量
-// el-scrollbar组件实例
-const scrollbarRef = ref()
-// el-scrollbar内部容器的高度
-const scrollbarWrapHeight: Ref<string> = ref('')
 
 // 方法
 // 开启对话框
 function handleChangeState() {
   emits('open')
   nextTick(() => {
-    const dialog = scrollbarRef.value.$el.parentElement.parentElement
+    const dialog = containerRef.value.parentElement.parentElement
     const headerHeight = dialog.querySelector('.el-dialog__header').clientHeight
     const footerHeight = dialog.querySelector('.el-dialog__footer').clientHeight
 
     // 减去header+footer+dialog的padding共计4个16px
-    scrollbarWrapHeight.value = 'calc(' + props.height + ' - ' + (headerHeight + footerHeight) + 'px - 16px - 16px - 16px - 16px)'
+    containerHeight.value = 'calc(' + props.height + ' - ' + (headerHeight + footerHeight) + 'px - 16px - 16px - 16px - 16px)'
   })
 }
 </script>
@@ -55,9 +54,9 @@ function handleChangeState() {
       <template #header>
         <slot name="header" />
       </template>
-      <el-scrollbar ref="scrollbarRef" class="auto-height-dialog-scrollbar">
+      <div ref="containerRef" class="static-height-dialog-container">
         <slot />
-      </el-scrollbar>
+      </div>
       <template #footer>
         <slot name="footer" />
       </template>
@@ -66,11 +65,7 @@ function handleChangeState() {
 </template>
 
 <style scoped>
-.auto-height-dialog-scrollbar {
-  padding: 0 10px 0 0;
-  overflow: hidden;
-}
-.auto-height-dialog-scrollbar > :deep(.el-scrollbar__wrap) {
-  max-height: v-bind(scrollbarWrapHeight);
+.static-height-dialog-container {
+  height: v-bind(containerHeight);
 }
 </style>
