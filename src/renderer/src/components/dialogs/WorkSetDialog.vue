@@ -14,6 +14,10 @@ import Page from '@renderer/model/util/Page.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import { Edit, Delete, Close, Plus, ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
+import lodash from 'lodash'
+import ApiResponse from '@renderer/model/util/ApiResponse.ts'
+import { SearchType } from '@renderer/model/util/SearchCondition.ts'
 
 // props
 const props = defineProps<{
@@ -37,7 +41,8 @@ const apis = {
   workSetListWorkSetWithWorkByIds: window.api.workSetListWorkSetWithWorkByIds,
   reWorkWorkSetLinkBatchToWorkSet: window.api.reWorkWorkSetLinkBatchToWorkSet,
   reWorkWorkSetRemoveBatchFromWorkSet: window.api.reWorkWorkSetRemoveBatchFromWorkSet,
-  searchQueryWorkPage: window.api.searchQueryWorkPage
+  searchQueryWorkPage: window.api.searchQueryWorkPage,
+  searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage
 }
 // 当前作品集
 const currentWorkSet = ref<WorkSet | undefined>(undefined)
@@ -50,6 +55,8 @@ const isSelectingWork = ref(false)
 const selectedWorkIdsForAdd = ref<number[]>([])
 // WorkQueryView 组件的 ref
 const workQueryViewRef = ref()
+// 添加作品页面使用的搜索项类型
+const searchConditionType = ref<SearchType[]>()
 
 // 计算属性：选择作品面板是否显示
 const isSelectPanelVisible = computed(() => viewMode.value === 'select')
@@ -124,16 +131,30 @@ async function handleDelete() {
   }
 }
 
-// 加载搜索条件选项（WorkQueryView 需要，返回空数据）
-async function loadSearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, _input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
-  const emptyPage = new Page<BaseQueryDTO, SelectItem>()
-  emptyPage.data = []
-  emptyPage.dataCount = 0
-  emptyPage.pageNumber = page.pageNumber
-  emptyPage.pageSize = page.pageSize
-  emptyPage.currentCount = 0
-  emptyPage.pageCount = 0
-  return emptyPage
+// 加载搜索条件选项
+async function loadSearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
+  const query = new SearchConditionQueryDTO()
+  query.nonFieldKeyword = input
+  query.types = lodash.cloneDeep(searchConditionType.value)
+  page.query = query
+  let response: ApiResponse
+  try {
+    response = await apis.searchQuerySearchConditionPage(page)
+  } catch (e) {
+    console.log(e)
+    return page
+  }
+  if (ApiUtil.check(response)) {
+    const newPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
+    if (IsNullish(newPage)) {
+      ApiUtil.msg(response)
+      throw new Error(response.msg)
+    }
+    return newPage
+  } else {
+    ApiUtil.msg(response)
+    throw new Error(response.msg)
+  }
 }
 
 // 点击添加按钮，切换到选择作品模式
@@ -283,6 +304,7 @@ watch(isCheckable, (newValue) => {
       <div :class="{ 'work-set-select-panel': true, 'z-layer-2': true, 'select-panel-visible': isSelectPanelVisible }">
         <work-query-view
           ref="workQueryViewRef"
+          v-model:search-condition-type="searchConditionType"
           :load-search-item-page="loadSearchItemPage"
           :checkable="true"
           :checked-work-ids="selectedWorkIdsForAdd"

@@ -71,6 +71,8 @@ const emits = defineEmits<{
 const selectedTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
 const customTagList: Ref<UnwrapRef<SegmentedTagItem[]>> = ref([])
 const autoLoadInput: Ref<UnwrapRef<string | undefined>> = ref(undefined)
+// 查询参数类型
+const searchConditionType: Ref<SearchType[]> = defineModel<SearchType[]>('searchConditionType', { required: false, default: [] })
 
 // 变量
 const workList: Ref<UnwrapRef<WorkCardItem[]>> = ref([])
@@ -270,6 +272,10 @@ function handleInputChange(): void {
     }, 500)
   }
 }
+/** 重新查询搜索条件 */
+async function querySearchCondition() {
+  return searchConditionBar.value.newSearch()
+}
 
 // 暴露方法
 defineExpose({
@@ -299,6 +305,42 @@ defineExpose({
           :min-height="tagSelectMinHeight"
           @input="handleInputChange"
         >
+          <template #left>
+            <el-checkbox-group
+              v-model="searchConditionType"
+              class="main-page-auto-load-tag-select-tag-type-checkbox-group"
+              @change="querySearchCondition"
+            >
+              <el-checkbox :value="SearchType.LOCAL_TAG">
+                <span
+                  class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-tag"
+                >
+                  本地标签
+                </span>
+              </el-checkbox>
+              <el-checkbox :value="SearchType.SITE_TAG">
+                <span
+                  class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-tag"
+                >
+                  站点标签
+                </span>
+              </el-checkbox>
+              <el-checkbox :value="SearchType.LOCAL_AUTHOR">
+                <span
+                  class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-local-author"
+                >
+                  本地作者
+                </span>
+              </el-checkbox>
+              <el-checkbox :value="SearchType.SITE_AUTHOR">
+                <span
+                  class="main-page-auto-load-tag-select-tag-type-checkbox main-page-auto-load-tag-select-tag-type-checkbox-site-author"
+                >
+                  站点作者
+                </span>
+              </el-checkbox>
+            </el-checkbox-group>
+          </template>
         </auto-load-tag-select>
       </div>
       <el-button type="primary" :loading="loading" @click="search">搜索</el-button>
@@ -353,14 +395,29 @@ defineExpose({
   min-width: 200px;
 }
 
-.work-query-view-tag-type-checkbox-group {
+.main-page-auto-load-tag-select-tag-type-checkbox-group {
   display: flex;
   flex-direction: column;
 }
-
-.work-query-view-tag-type-checkbox {
+.main-page-auto-load-tag-select-tag-type-checkbox {
   padding: 0 7px 0 6px;
   border-radius: 15px;
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-local-tag {
+  background-color: rgb(133.4, 206.2, 97.4, 30%);
+  color: rgb(78.1, 141.8, 46.6, 75%);
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-site-tag {
+  background-color: rgb(64, 158, 255, 25%);
+  color: rgb(64, 158, 255, 85%);
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-local-author {
+  background-color: rgb(245, 108, 108, 25%);
+  color: rgb(245, 108, 108, 75%);
+}
+.main-page-auto-load-tag-select-tag-type-checkbox-site-author {
+  background-color: rgb(164, 158, 255, 25%);
+  color: rgb(164, 158, 255, 95%);
 }
 
 .work-query-view-work-space {
