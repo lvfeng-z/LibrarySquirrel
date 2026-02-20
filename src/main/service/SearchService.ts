@@ -18,6 +18,7 @@ import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
 import WorkCommonQueryDTO from '../model/queryDTO/WorkCommonQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.js'
+import { WorkDao } from '../dao/WorkDao.ts'
 
 /**
  * 作品查询服务类
@@ -139,7 +140,24 @@ export default class SearchService {
               LogUtil.warn('SearchService', `站点作品名称不支持这种匹配方式，operator: ${searchCondition.operator}`)
             }
             break
-          // TODO 其他查询参数类型
+          case SearchType.WORK_SET:
+            // 排除指定作品集下的作品
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              const workSetId = searchCondition.value as number
+              const workDao = new WorkDao(this.db, true)
+              const worksWithWorkSetId = await workDao.listWorkWithWorkSetIdByWorkSetIds([workSetId])
+              const workIds = worksWithWorkSetId.map((w) => w.id as number)
+              if (ArrayNotEmpty(workIds)) {
+                if (ArrayNotEmpty(workCommonQueryDTO.excludeWorkIds)) {
+                  workCommonQueryDTO.excludeWorkIds.push(...workIds)
+                } else {
+                  workCommonQueryDTO.excludeWorkIds = workIds
+                }
+              }
+            } else {
+              LogUtil.warn('SearchService', `作品集仅支持NOT_EQUAL操作符，operator: ${searchCondition.operator}`)
+            }
+            break
           default:
             LogUtil.error('SearchService', `不支持查询参数类型${searchCondition.type}`)
         }

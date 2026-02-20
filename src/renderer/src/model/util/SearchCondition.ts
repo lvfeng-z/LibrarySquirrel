@@ -34,5 +34,6 @@ export enum SearchType {
   WORKS_UPLOAD_TIME = 7,
   WORKS_LAST_VIEW = 8,
   MEDIA_TYPE = 9,
-  SITE = 10
+  SITE = 10,
+  WORK_SET = 11
 }

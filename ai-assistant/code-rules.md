@@ -37,6 +37,87 @@
 
 ## 代码风格规范
 
+### 注释规范
+
+#### 基本原则
+- **只描述目的和约束**: 注释应说明函数/方法的目的、用途和使用约束，而不是描述实现方式
+- **禁止变更描述**: 注释中禁止使用"改为"、"修改为"、"重构"、"优化"等描述变更的词汇
+
+#### 错误示例
+```typescript
+// 改为调用外部注入的方法  ← 禁止：描述变更
+// 重构这个方法实现  ← 禁止：描述变更
+// 修改为异步函数  ← 禁止：描述变更
+// 优化性能问题  ← 禁止：描述变更
+```
+
+#### 正确示例
+```typescript
+/**
+ * 批量关联作品到作品集
+ * @param workIds 作品id列表
+ * @param workSetId 作品集id
+ * @throws {string} 当作品已存在于作品集中时抛出错误信息
+ */
+
+/**
+ * 查询标签选择列表
+ * @param page 分页参数
+ * @param input 搜索关键字
+ * @returns 包含选择项的分页数据
+ */
+
+/**
+ * 作品查询函数 - 接收分页参数，返回作品分页结果
+ * @param page 包含查询条件的分页对象
+ * @returns 作品分页结果
+ */
+```
+
+### 命名规范
+
+#### 禁止方法名与 prop 同名
+- **原则**：组件内部方法名不得与 props 中定义的属性名相同
+- **原因**：避免变量遮蔽和潜在的代码混淆问题
+- **解决方案**：使用动词前缀区分方法与属性
+
+#### 方法命名模式
+使用明确的前缀来区分方法与 props 属性：
+
+| 前缀 | 用途 | 示例 |
+|------|------|------|
+| `handleXxx` | 处理事件或回调 | `handleSubmit`, `handleChange` |
+| `doXxx` | 执行操作 | `doFetch`, `doSearch` |
+| `buildXxx` | 构建或组装数据 | `buildConditions`, `buildQuery` |
+| `loadXxx` | 加载数据 | `loadData`, `loadItems` |
+| `checkXxx` | 检查或验证 | `checkPermission`, `validateInput` |
+
+#### 正确示例
+```typescript
+// props 中定义了 fetchWorkPage
+const props = defineProps<{
+  fetchWorkPage: (page: Page) => Promise<Page>
+}>()
+
+// 方法使用 doFetchWorkPage 而不是 fetchWorkPage
+async function doFetchWorkPage(page: Page) {
+  // 实现
+}
+```
+
+#### 错误示例
+```typescript
+// 方法名与 prop 同名 - 禁止
+async function fetchWorkPage(page: Page) {
+  // 这会导致变量遮蔽
+}
+```
+
+#### Vue 组件特有规则
+- Props 中的函数属性通常使用名词命名（如 `fetchWorkPage`）
+- 组件内部方法应使用动词前缀（如 `doFetchWorkPage`）
+- 事件处理统一使用 `handle` 前缀（如 `handleClick`）
+
 ### TypeScript 规范
 - **模块解析**: 主进程使用 `node16`，渲染进程使用 `bundler`
 - **路径别名**: 渲染进程使用 `@renderer/*` 指向 `src/renderer/src/*`
@@ -191,5 +272,5 @@
 
 ---
 
-**最后更新**: 2026-02-12
+**最后更新**: 2026-02-20
 **维护者**: AI Assistant

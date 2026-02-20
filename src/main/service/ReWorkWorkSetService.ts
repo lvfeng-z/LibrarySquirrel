@@ -17,10 +17,23 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
    * 批量关联作品到作品集
    * @param workIds 作品id列表
    * @param workSetId 作品集id
+   * @throws {string} 当作品已存在于作品集中时抛出错误信息
    */
   public async linkBatchToWorkSet(workIds: number[], workSetId: number): Promise<number> {
     if (workIds.length === 0) {
       return 0
+    }
+
+    // 检查哪些作品已存在于作品集中
+    const existingLinks = await this.listByWorkSetId(workSetId)
+    const existingWorkIds = new Set(existingLinks.map((link) => link.workId))
+    const duplicateWorkIds = workIds.filter((id) => existingWorkIds.has(id))
+
+    if (duplicateWorkIds.length > 0) {
+      const workDao = new WorkDao(this.db, false)
+      const works = await workDao.listByIds(duplicateWorkIds)
+      const workNames = works.map((w) => w.siteWorkName || w.siteWorkId).join(', ')
+      throw new Error(`以下作品已存在于作品集中: ${workNames}`)
     }
 
     // 获取作品信息
@@ -29,6 +42,16 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
 
     // 关联作品集和作品
     return this.link(works, workSetId)
+  }
+
+  /**
+   * 根据作品集ID查询所有关联
+   * @param workSetId 作品集ID
+   */
+  private async listByWorkSetId(workSetId: number): Promise<ReWorkWorkSet[]> {
+    const query = new ReWorkWorkSetQueryDTO()
+    query.workSetId = workSetId
+    return this.list(query)
   }
 
   /**

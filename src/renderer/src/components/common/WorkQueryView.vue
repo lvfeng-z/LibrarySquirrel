@@ -7,21 +7,19 @@ import SelectItem from '@renderer/model/util/SelectItem.ts'
 import Page from '@renderer/model/util/Page.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
-import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
-import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import { ref, UnwrapRef, Ref, watch, onMounted, onUnmounted } from 'vue'
 import lodash from 'lodash'
 import { NotNullish, ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
 import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
-import WorkQueryDTO from '@renderer/model/main/queryDTO/WorkQueryDTO.ts'
-import WorkFullDTO from '@renderer/model/main/dto/WorkFullDTO.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
     /** 查询标签选择列表的加载函数 */
     loadSearchItemPage: (page: IPage<BaseQueryDTO, SelectItem>, input?: string) => Promise<IPage<BaseQueryDTO, SelectItem>>
+    /** 作品查询函数 */
+    fetchWorkPage: (page: Page<SearchCondition[], WorkCardItem>) => Promise<Page<SearchCondition[], WorkCardItem>>
     /** 可选的搜索条件类型列表 */
     searchTypes?: SearchType[]
     /** 标签颜色解析器 */
@@ -141,15 +139,11 @@ watch(autoLoadInput, () => {
 // 方法
 /** 查询标签选择列表 */
 async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?: string): Promise<IPage<BaseQueryDTO, SelectItem>> {
-  const query = new SearchConditionQueryDTO()
-  query.nonFieldKeyword = input
-  query.types = lodash.cloneDeep(props.searchTypes)
-  page.query = query
   return props.loadSearchItemPage(page, input)
 }
 
-/** 处理搜索框的标签，构建查询条件 */
-function buildSearchConditions(): SearchCondition[] {
+/** 构建查询条件 */
+async function buildSearchConditions(): Promise<SearchCondition[]> {
   const conditions: SearchCondition[] = []
 
   // 处理选中的标签
@@ -181,22 +175,11 @@ function buildSearchConditions(): SearchCondition[] {
   return conditions
 }
 
-/** 请求作品接口 */
-async function fetchWorkPage(page: Page<SearchCondition[], WorkCardItem>): Promise<Page<SearchCondition[], WorkCardItem>> {
-  page.query = buildSearchConditions()
+/** 执行作品查询 */
+async function doFetchWorkPage(page: Page<SearchCondition[], WorkCardItem>): Promise<Page<SearchCondition[], WorkCardItem>> {
+  page.query = await buildSearchConditions()
   page.pageSize = props.workPageSize
-
-  return window.api.searchQueryWorkPage(page).then((response) => {
-    if (ApiUtil.check(response)) {
-      const resultPage = ApiUtil.data<Page<WorkQueryDTO, WorkFullDTO>>(response)
-      if (NotNullish(resultPage)) {
-        resultPage.data = resultPage.data?.map((origin) => new WorkFullDTO(origin))
-      }
-      return resultPage
-    } else {
-      return page
-    }
-  })
+  return props.fetchWorkPage(page)
 }
 
 /** 执行查询（首次查询或重新查询） */
@@ -214,7 +197,7 @@ async function queryWork(reset: boolean = true): Promise<void> {
     // 构建查询参数
     const tempPage = lodash.cloneDeep(workPage.value)
     tempPage.data = undefined
-    const nextPage = await fetchWorkPage(tempPage)
+    const nextPage = await doFetchWorkPage(tempPage)
 
     // 没有新数据时，不再增加页码
     if (ArrayNotEmpty(nextPage.data)) {

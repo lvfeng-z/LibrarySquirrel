@@ -146,18 +146,20 @@ tables:
   - name: re_work_work_set
     sql: |
       create table if not exists re_work_work_set (
-        id           integer not null
+        id          integer not null
           constraint re_work_work_set_pk
-            primary key,
+        primary key,
         work_id     integer
           constraint re_work_work_set_work_id_fk
-            references work,
+        references work,
         work_set_id integer
           constraint re_work_work_set_work_set_id_fk
             references work_set,
-        create_time  integer,
-        update_time  integer
+        create_time integer,
+        update_time integer
       );
+      create unique index re_work_work_set_work_id_work_set_id_uindex
+      on re_work_work_set (work_id, work_set_id);
 
   - name: site
     sql: |

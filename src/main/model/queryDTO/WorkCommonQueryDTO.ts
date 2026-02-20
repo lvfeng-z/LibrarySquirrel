@@ -9,6 +9,10 @@ import BaseQueryDTO from '../../base/BaseQueryDTO.js'
  */
 export default class WorkCommonQueryDTO extends WorkQueryDTO {
   /**
+   * 排除作品ID
+   */
+  excludeWorkIds?: (string | number)[]
+  /**
    * 包含本地标签
    */
   includeLocalTagIds?: (string | number)[]
@@ -47,6 +51,7 @@ export default class WorkCommonQueryDTO extends WorkQueryDTO {
       lodash.assign(
         this,
         lodash.pick(workQueryDTO, [
+          'excludeWorkIds',
           'includeLocalTagIds',
           'excludeLocalTagIds',
           'includeSiteTagIds',
@@ -63,6 +68,7 @@ export default class WorkCommonQueryDTO extends WorkQueryDTO {
   public static nonFieldProperties(): string[] {
     return [
       ...BaseQueryDTO.nonFieldProperties(),
+      'excludeWorkIds',
       'includeLocalTagIds',
       'excludeLocalTagIds',
       'includeSiteTagIds',

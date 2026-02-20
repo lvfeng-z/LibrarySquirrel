@@ -17,7 +17,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
 import lodash from 'lodash'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
-import { SearchType } from '@renderer/model/util/SearchCondition.ts'
+import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
+import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
+import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
 
 // props
 const props = defineProps<{
@@ -167,6 +169,33 @@ function handleAdd() {
   workQueryViewRef.value?.queryWork()
 }
 
+// 作品查询函数 - 支持排除当前作品集的作品
+async function fetchWorkPageForAdd(page: Page<SearchCondition[], WorkCardItem>): Promise<Page<SearchCondition[], WorkCardItem>> {
+  // 使用 WORK_SET 类型的 SearchCondition 排除当前作品集的作品
+  if (IsNullish(page.query)) {
+    page.query = []
+  }
+  page.query.push(
+    new SearchCondition({
+      type: SearchType.WORK_SET,
+      value: currentWorkSetId.value,
+      operator: CrudOperator.NOT_EQUAL
+    })
+  )
+
+  // 调用原始 API
+  const response = await apis.searchQueryWorkPage(page)
+  if (ApiUtil.check(response)) {
+    const resultPage = ApiUtil.data<Page<SearchCondition[], WorkFullDTO>>(response)
+    if (IsNullish(resultPage)) {
+      return new Page<SearchCondition[], WorkCardItem>()
+    }
+    resultPage.data = resultPage.data?.map((origin: WorkFullDTO) => new WorkFullDTO(origin))
+    return resultPage as unknown as Page<SearchCondition[], WorkCardItem>
+  }
+  return new Page<SearchCondition[], WorkCardItem>()
+}
+
 // 点击选择面板的取消按钮
 function handleSelectCancel() {
   viewMode.value = 'manage'
@@ -306,6 +335,7 @@ watch(isCheckable, (newValue) => {
           ref="workQueryViewRef"
           v-model:search-condition-type="searchConditionType"
           :load-search-item-page="loadSearchItemPage"
+          :fetch-work-page="fetchWorkPageForAdd"
           :checkable="true"
           :checked-work-ids="selectedWorkIdsForAdd"
           :auto-search-on-input-change="false"

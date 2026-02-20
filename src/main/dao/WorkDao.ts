@@ -136,6 +136,10 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
           `0 = (SELECT COUNT(1) FROM re_work_author ct8 WHERE ct8.work_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${OriginType.SITE})`
         )
       }
+      // 排除作品ID
+      if (ArrayNotEmpty(page.query.excludeWorkIds)) {
+        whereClauses.push(`t1.id NOT IN (${page.query.excludeWorkIds.join()})`)
+      }
 
       // 拼接where子句
       whereClause = this.splicingWhereClauses(whereClauses)
@@ -249,6 +253,11 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
         if (query.type === SearchType.MEDIA_TYPE) {
           const extList = MediaExtMapping[query.value as MediaType]
           fromAndWhere.where.push(`work_m.filename_extension IN (${extList.join(',')})`)
+        }
+        if (query.type === SearchType.WORK_SET) {
+          // 排除指定作品集下的作品
+          fromAndWhere.from.push('LEFT JOIN re_work_work_set rwws ON work_m.id = rwws.work_id')
+          fromAndWhere.where.push(`rwws.work_set_id <> ${query.value}`)
         }
       })
       return { from: fromAndWhere.from.join(' '), where: fromAndWhere.where.join(' ') }
