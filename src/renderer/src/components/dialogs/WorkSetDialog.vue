@@ -20,6 +20,7 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
+import { setSearchTagColor } from '@renderer/utils/SearchTagColorUtil.ts'
 
 // props
 const props = defineProps<{
@@ -336,6 +337,7 @@ watch(isCheckable, (newValue) => {
           v-model:search-condition-type="searchConditionType"
           :load-search-item-page="loadSearchItemPage"
           :fetch-work-page="fetchWorkPageForAdd"
+          :color-resolver="setSearchTagColor"
           :checkable="true"
           :checked-work-ids="selectedWorkIdsForAdd"
           :auto-search-on-input-change="false"

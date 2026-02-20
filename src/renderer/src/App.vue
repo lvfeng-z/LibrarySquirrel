@@ -23,6 +23,7 @@ import ExplainPath from './components/dialogs/ExplainPath.vue'
 import ApiResponse from './model/util/ApiResponse.ts'
 import TransactionTest from './test/transaction-test.vue'
 import { ArrayNotEmpty, IsNullish, NotNullish } from './utils/CommonUtil'
+import { setSearchTagColor } from './utils/SearchTagColorUtil.ts'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import SearchConditionQueryDTO from '@renderer/model/main/queryDTO/SearchConditionQueryDTO.ts'
 import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
@@ -222,7 +223,7 @@ async function searchWork(page: Page<SearchCondition[], WorkFullDTO>): Promise<P
     page.query = []
   }
   if (ArrayNotEmpty(customTagList.value)) {
-    customTagList.value.forEach((tag) =>
+    customTagList.value.forEach((tag: SegmentedTagItem) =>
       page.query?.push(new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: tag.value, operator: CrudOperator.LIKE }))
     )
   }
@@ -276,35 +277,6 @@ async function queryWorkPage(next: boolean) {
 // 重新查询搜索条件
 async function querySearchCondition() {
   return searchConditionBar.value.newSearch()
-}
-// 控制搜索标签颜色的函数
-function searchTagColorResolver(segmentedTagItem: SegmentedTagItem): void {
-  const subLabels = segmentedTagItem.subLabels
-  if (ArrayNotEmpty(subLabels)) {
-    switch (subLabels[0]) {
-      case 'author':
-        switch (subLabels[1]) {
-          case 'local':
-            segmentedTagItem.mainBackGround = 'rgb(245, 108, 108, 25%)'
-            segmentedTagItem.mainBackGroundHover = 'rgb(245, 108, 108, 10%)'
-            segmentedTagItem.mainTextColor = 'rgb(245, 108, 108, 75%)'
-            break
-          default:
-            segmentedTagItem.mainBackGround = 'rgb(164, 158, 255, 25%)'
-            segmentedTagItem.mainBackGroundHover = 'rgb(164, 158, 255, 10%)'
-            segmentedTagItem.mainTextColor = 'rgb(164, 158, 255, 95%)'
-            break
-        }
-        break
-      case 'tag':
-        if (subLabels[1] !== 'local') {
-          segmentedTagItem.mainBackGround = 'rgb(64, 158, 255, 25%)'
-          segmentedTagItem.mainBackGroundHover = 'rgb(64, 158, 255, 10%)'
-          segmentedTagItem.mainTextColor = 'rgb(64, 158, 255, 85%)'
-        }
-        break
-    }
-  }
 }
 
 // 监听IpcRenderer
@@ -413,7 +385,7 @@ async function handleTest() {
                 class="main-page-auto-load-tag-select"
                 :load="querySearchItemPage"
                 :page-size="40"
-                :color-resolver="searchTagColorResolver"
+                :color-resolver="setSearchTagColor"
                 tags-gap="10px"
                 max-height="300px"
                 min-height="33px"
