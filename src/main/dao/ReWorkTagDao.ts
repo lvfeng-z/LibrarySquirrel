@@ -1,6 +1,6 @@
 import BaseDao from '../base/BaseDao.ts'
-import { ReWorkTagQueryDTO } from '../model/queryDTO/ReWorkTagQueryDTO.ts'
-import ReWorkTag from '../model/entity/ReWorkTag.ts'
+import { ReWorkTagQueryDTO } from '../../shared/model/queryDTO/ReWorkTagQueryDTO.ts'
+import ReWorkTag from '../../shared/model/entity/ReWorkTag.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
 

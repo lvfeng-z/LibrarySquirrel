@@ -1,5 +1,5 @@
-import BaseQueryDTO from '@renderer/model/main/queryDTO/BaseQueryDTO.ts'
 import IPage from '@renderer/model/util/IPage.ts'
+import BaseQueryDTO from '../../../../shared/model/base/BaseQueryDTO.ts'
 
 export default class Page<Query, Result> implements IPage<Query, Result> {
   /**

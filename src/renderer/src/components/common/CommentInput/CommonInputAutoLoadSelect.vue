@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '../../../../../shared/util/CommonUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { AssertNotNullish } from '@renderer/utils/AssertUtil.ts'

@@ -1,11 +1,11 @@
 import SiteService from '../service/SiteService.ts'
-import Site from '../model/entity/Site.ts'
+import Site from '../../shared/model/entity/Site.ts'
 import PluginService from '../service/PluginService.ts'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.ts'
 import { RESOURCE_PATH } from '../constant/CommonConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { ArrayNotEmpty } from '../util/CommonUtil.ts'
+import { ArrayNotEmpty } from '../../shared/util/CommonUtil.ts'
 import { getIniConfig } from './iniConfig.ts'
 
 export async function Initialize() {

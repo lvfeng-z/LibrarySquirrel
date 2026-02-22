@@ -1,12 +1,13 @@
 import lodash from 'lodash'
-import StringUtil from '../util/StringUtil.ts'
+import StringUtil from '../../shared/util/StringUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import Page from '../model/util/Page.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import BaseQueryDTO from '../../shared/model/base/BaseQueryDTO.ts'
+import { toPlainParams } from '../util/DatabaseUtil.ts'
+import Page from '../../shared/model/util/Page.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
 import { QuerySortOption } from '../constant/QuerySortOption.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import BaseEntity from '../base/BaseEntity.ts'
+import BaseEntity from '../../shared/model/base/BaseEntity.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DatabaseClientNotFoundError from '../error/DatabaseClientNotFoundError.ts'
 
@@ -74,7 +75,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     query: Query
   } {
     const whereClauses: Map<string, string> = new Map<string, string>()
-    const modifiedQuery = BaseQueryDTO.toPlainParams(lodash.cloneDeep(queryConditions), ignore)
+    const modifiedQuery = toPlainParams(lodash.cloneDeep(queryConditions), ignore)
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
     Object.entries(modifiedQuery)
@@ -218,7 +219,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
       // 查询数据总量，计算页码数量
       let notNullishValue: Record<string, unknown> | undefined = undefined
       if (NotNullish(page.query)) {
-        notNullishValue = BaseQueryDTO.toPlainParams(page.query)
+        notNullishValue = toPlainParams(page.query)
       }
       const countSql = `SELECT COUNT(*) AS total FROM (${statement})`
       const countResult = (await db.get(countSql, notNullishValue)) as { total: number }

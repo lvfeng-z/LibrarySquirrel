@@ -2,10 +2,10 @@
 import WorkInfo from './WorkInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty, NotNullish } from '../../../../shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
-import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
+import WorkCardItem from '../../../../shared/model/dto/WorkCardItem.ts'
 
 // props
 const props = defineProps<{

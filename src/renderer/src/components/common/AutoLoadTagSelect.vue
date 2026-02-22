@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import IPage from '@renderer/model/util/IPage.ts'
-import BaseQueryDTO from '../../model/main/queryDTO/BaseQueryDTO'
 import { nextTick, onMounted, onUnmounted, Ref, ref, watch } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash, { throttle } from 'lodash'
 import { Close } from '@element-plus/icons-vue'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
-import StringUtil from '@renderer/utils/StringUtil.ts'
+import { IsNullish, NotNullish } from '../../../../shared/util/CommonUtil.ts'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import Page from '@renderer/model/util/Page.ts'
+import BaseQueryDTO from '../../../../shared/model/base/BaseQueryDTO.ts'
+import StringUtil from '../../../../shared/util/StringUtil.ts'
 
 // props
 const props = withDefaults(

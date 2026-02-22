@@ -1,9 +1,9 @@
 import BaseDao from '../base/BaseDao.ts'
-import LocalAuthor from '../model/entity/LocalAuthor.ts'
-import LocalAuthorQueryDTO from '../model/queryDTO/LocalAuthorQueryDTO.ts'
+import LocalAuthor from '../../shared/model/entity/LocalAuthor.ts'
+import LocalAuthorQueryDTO from '../../shared/model/queryDTO/LocalAuthorQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import RankedLocalAuthor from '../model/domain/RankedLocalAuthor.ts'
-import RankedLocalAuthorWithWorkId from '../model/domain/RankedLocalAuthorWithWorkId.ts'
+import RankedLocalAuthor from '../../shared/model/domain/RankedLocalAuthor.ts'
+import RankedLocalAuthorWithWorkId from '../../shared/model/domain/RankedLocalAuthorWithWorkId.ts'
 
 /**
  * 本地作者Dao

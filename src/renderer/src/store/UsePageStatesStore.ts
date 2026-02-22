@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { PageState, PageStates } from '@renderer/constants/PageState.ts'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '../../../shared/util/CommonUtil.ts'
 
 export const usePageStatesStore = defineStore('pageStates', {
   state: (): { pageStates: PageStates; currentPage: PageState } => {

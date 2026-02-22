@@ -4,7 +4,7 @@ import Page from '@renderer/model/util/Page.ts'
 import { Ref, ref } from 'vue'
 import lodash from 'lodash'
 import SelectItem from '../../model/util/SelectItem'
-import { ArrayNotEmpty } from '@renderer/utils/CommonUtil.ts'
+import { ArrayNotEmpty } from '../../../../shared/util/CommonUtil.ts'
 
 // props
 const props = withDefaults(

@@ -1,4 +1,4 @@
-import StringUtil from './StringUtil.js'
+import { isBlank } from '../../shared/util/StringUtil.ts'
 
 export interface ApiResponse {
   success: boolean
@@ -32,7 +32,7 @@ export default class ApiUtil implements ApiResponse {
     // 返回纯对象以确保Electron IPC可克隆，但类型断言为ApiUtil
     return {
       success: true,
-      msg: StringUtil.isBlank(msg) ? '操作成功' : msg,
+      msg: isBlank(msg) ? '操作成功' : msg,
       data
     } as ApiUtil
   }

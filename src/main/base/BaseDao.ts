@@ -1,17 +1,17 @@
-import StringUtil from '../util/StringUtil.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import BaseEntity, { Id } from './BaseEntity.ts'
-import BaseQueryDTO from './BaseQueryDTO.ts'
-import ObjectUtil from '../util/ObjectUtil.ts'
-import { ToObjAcceptedBySqlite3 } from '../util/DatabaseUtil.ts'
-import SelectItem from '../model/util/SelectItem.ts'
+import BaseEntity, { Id } from '../../shared/model/base/BaseEntity.ts'
+import BaseQueryDTO from '../../shared/model/base/BaseQueryDTO.ts'
+import ObjectUtil from '../../shared/util/ObjectUtil.ts'
+import { ToObjAcceptedBySqlite3, toPlainParams } from '../util/DatabaseUtil.ts'
+import SelectItem from '../../shared/model/util/SelectItem.ts'
 import lodash from 'lodash'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../util/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
 import { AssertArrayNotEmpty, AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
-import Page from '../model/util/Page.js'
+import Page from '../../shared/model/util/Page.js'
 import CoreDao from '../core/CoreDao.ts'
 import ForeignKeyConstraintError from '../error/ForeignKeyConstraintError.js'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
+import StringUtil from '../../shared/util/StringUtil.ts'
 
 type PrimaryKey = string | number
 
@@ -181,7 +181,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedQuery)) {
-      plainParams = BaseQueryDTO.toPlainParams(modifiedQuery)
+      plainParams = toPlainParams(modifiedQuery)
     }
     // 查询
     const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
@@ -440,7 +440,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedQuery)) {
-      plainParams = BaseQueryDTO.toPlainParams(modifiedQuery)
+      plainParams = toPlainParams(modifiedQuery)
     }
     // 查询
     const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
@@ -492,7 +492,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      plainParams = BaseQueryDTO.toPlainParams(modifiedPage.query)
+      plainParams = toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()
     return db
@@ -536,7 +536,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedQuery)) {
-      plainParams = BaseQueryDTO.toPlainParams(modifiedQuery)
+      plainParams = toPlainParams(modifiedQuery)
     }
     // 查询
     const nonUndefinedValue = ObjectUtil.nonUndefinedValue(plainParams)
@@ -605,7 +605,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
 
     // 查询
-    const queryObj = BaseQueryDTO.toPlainParams(modifiedQuery)
+    const queryObj = toPlainParams(modifiedQuery)
     return db
       .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
       .then((rows) => rows.map((row) => new SelectItem(row)))
@@ -672,7 +672,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      plainParams = BaseQueryDTO.toPlainParams(modifiedPage.query)
+      plainParams = toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()
     return db

@@ -1,5 +1,5 @@
 // DataTable的表头
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '../../../../shared/util/CommonUtil.ts'
 import { IPopperInputConfig, PopperInputConfig } from '@renderer/model/util/PopperInputConfig.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 

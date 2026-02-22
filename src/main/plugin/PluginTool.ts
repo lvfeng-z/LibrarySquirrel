@@ -1,8 +1,8 @@
-import { MeaningOfPath } from '../model/util/MeaningOfPath.ts'
+import { MeaningOfPath } from '../../shared/model/util/MeaningOfPath.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import log from 'electron-log'
 import WorkSetService from '../service/WorkSetService.ts'
-import WorkSet from '../model/entity/WorkSet.ts'
+import WorkSet from '../../shared/model/entity/WorkSet.ts'
 
 export default class PluginTool {
   /**

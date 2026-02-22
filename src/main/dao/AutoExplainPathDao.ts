@@ -1,12 +1,12 @@
 import BaseDao from '../base/BaseDao.ts'
-import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.ts'
-import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
+import AutoExplainPathQueryDTO from '../../shared/model/queryDTO/AutoExplainPathQueryDTO.ts'
+import AutoExplainPath from '../../shared/model/entity/AutoExplainPath.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import Page from '../model/util/Page.ts'
+import Page from '../../shared/model/util/Page.ts'
 import lodash from 'lodash'
-import StringUtil from '../util/StringUtil.ts'
+import StringUtil from '../../shared/util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { IsNullish } from '../util/CommonUtil.js'
+import { IsNullish } from '../../shared/util/CommonUtil.ts'
 
 /**
  * 自动解释路径含义Dao

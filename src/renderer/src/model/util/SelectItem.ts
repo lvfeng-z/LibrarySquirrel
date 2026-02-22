@@ -1,4 +1,4 @@
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '../../../../shared/util/CommonUtil.ts'
 
 /**
  * 下拉选择框选项

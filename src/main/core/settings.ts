@@ -1,4 +1,4 @@
-import { IsNullish } from '../util/CommonUtil.ts'
+import { IsNullish } from '../../shared/util/CommonUtil.ts'
 import ElectronStore from 'electron-store'
 import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from './types/Settings.ts'

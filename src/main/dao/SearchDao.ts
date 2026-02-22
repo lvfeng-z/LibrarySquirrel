@@ -1,16 +1,17 @@
-import BaseQueryDTO from '../base/BaseQueryDTO.js'
-import BaseEntity from '../base/BaseEntity.js'
+import BaseQueryDTO from '../../shared/model/base/BaseQueryDTO.ts'
+import { toPlainParams } from '../util/DatabaseUtil.ts'
+import BaseEntity from '../../shared/model/base/BaseEntity.ts'
 import DatabaseClient from '../database/DatabaseClient.js'
 import CoreDao from '../core/CoreDao.ts'
-import Page from '../model/util/Page.js'
-import SearchConditionQueryDTO from '../model/queryDTO/SearchConditionQueryDTO.js'
-import SelectItem from '../model/util/SelectItem.js'
+import Page from '../../shared/model/util/Page.js'
+import SearchConditionQueryDTO from '../../shared/model/queryDTO/SearchConditionQueryDTO.js'
+import SelectItem from '../../shared/model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
-import { SearchType } from '../model/util/SearchCondition.js'
-import { ArrayIsEmpty, IsNullish, NotNullish } from '../util/CommonUtil.js'
-import StringUtil from '../util/StringUtil.js'
+import { SearchType } from '../../shared/model/util/SearchCondition.js'
+import { ArrayIsEmpty, IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
+import StringUtil from '../../shared/util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.js'
-import Site from '../model/entity/Site.js'
+import Site from '../../shared/model/entity/Site.js'
 
 /**
  * 作品查询Dao
@@ -89,7 +90,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
 
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(query)) {
-      plainParams = BaseQueryDTO.toPlainParams(query, ['types'])
+      plainParams = toPlainParams(query, ['types'])
     }
 
     const db = this.acquire()

@@ -1,19 +1,19 @@
 import BaseDao from '../base/BaseDao.ts'
-import SiteAuthorQueryDTO from '../model/queryDTO/SiteAuthorQueryDTO.ts'
-import SiteAuthor from '../model/entity/SiteAuthor.ts'
+import SiteAuthorQueryDTO from '../../shared/model/queryDTO/SiteAuthorQueryDTO.ts'
+import SiteAuthor from '../../shared/model/entity/SiteAuthor.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import Page from '../model/util/Page.ts'
+import Page from '../../shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import StringUtil from '../util/StringUtil.ts'
-import RankedSiteAuthor from '../model/domain/RankedSiteAuthor.ts'
-import { IsNullish, NotNullish } from '../util/CommonUtil.ts'
-import SelectItem from '../model/util/SelectItem.js'
-import BaseQueryDTO from '../base/BaseQueryDTO.js'
+import StringUtil from '../../shared/util/StringUtil.ts'
+import RankedSiteAuthor from '../../shared/model/domain/RankedSiteAuthor.ts'
+import { IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
+import SelectItem from '../../shared/model/util/SelectItem.js'
+import { toPlainParams } from '../util/DatabaseUtil.ts'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
-import SiteAuthorFullDTO from '../model/dto/SiteAuthorFullDTO.js'
+import SiteAuthorFullDTO from '../../shared/model/dto/SiteAuthorFullDTO.js'
 import lodash from 'lodash'
-import SiteAuthorLocalRelateDTO from '../model/dto/SiteAuthorLocalRelateDTO.js'
-import RankedSiteAuthorWithWorkId from '../model/domain/RankedSiteAuthorWithWorkId.ts'
+import SiteAuthorLocalRelateDTO from '../../shared/model/dto/SiteAuthorLocalRelateDTO.js'
+import RankedSiteAuthorWithWorkId from '../../shared/model/domain/RankedSiteAuthorWithWorkId.ts'
 
 /**
  * 站点作者Dao
@@ -116,7 +116,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
-    const query = BaseQueryDTO.toPlainParams(modifiedQuery)
+    const query = toPlainParams(modifiedQuery)
     // 查询
     const db = super.acquire()
     return db

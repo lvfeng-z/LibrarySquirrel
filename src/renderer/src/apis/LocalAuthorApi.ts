@@ -2,7 +2,7 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import Page from '@renderer/model/util/Page.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '../../../shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 
 /**

@@ -1,5 +1,5 @@
-import { ArrayIsEmpty, IsNullish } from './CommonUtil.js'
-import StringUtil from './StringUtil.js'
+import { isBlank } from '../../../shared/util/StringUtil.ts'
+import { ArrayIsEmpty, IsNullish } from '../../../shared/util/CommonUtil.ts'
 
 export function AssertTrue(value: boolean, msg?: string) {
   if (!value) {
@@ -30,7 +30,7 @@ export function AssertArrayNotEmpty(value: unknown, msg?: string): asserts value
 }
 
 export function AssertNotBlank(value: string | undefined | null, msg?: string): asserts value {
-  if (StringUtil.isBlank(value)) {
+  if (isBlank(value)) {
     console.error(msg)
     throw new Error(msg)
   }

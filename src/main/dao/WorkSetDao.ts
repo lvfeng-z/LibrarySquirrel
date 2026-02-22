@@ -1,11 +1,11 @@
 import BaseDao from '../base/BaseDao.ts'
-import WorkSetQueryDTO from '../model/queryDTO/WorkSetQueryDTO.ts'
-import WorkSet from '../model/entity/WorkSet.ts'
+import WorkSetQueryDTO from '../../shared/model/queryDTO/WorkSetQueryDTO.ts'
+import WorkSet from '../../shared/model/entity/WorkSet.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { NotNullish } from '../util/CommonUtil.ts'
-import BaseQueryDTO from '../base/BaseQueryDTO.js'
-import WorkSetWithWorkId from '../model/domain/WorkSetWithWorkId.ts'
+import { NotNullish } from '../../shared/util/CommonUtil.ts'
+import { toPlainParams } from '../util/DatabaseUtil.ts'
+import WorkSetWithWorkId from '../../shared/model/domain/WorkSetWithWorkId.ts'
 
 export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -24,7 +24,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     const whereClause = whereClauseAndQuery.whereClause
     let modifiedQuery
     if (NotNullish(whereClauseAndQuery.query)) {
-      modifiedQuery = BaseQueryDTO.toPlainParams(whereClauseAndQuery.query)
+      modifiedQuery = toPlainParams(whereClauseAndQuery.query)
     }
     const statement = `SELECT *
                        FROM work_set ${whereClause}`

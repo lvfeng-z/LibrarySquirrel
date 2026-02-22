@@ -1,8 +1,8 @@
 import Electron from 'electron'
 import { v4 } from 'uuid'
-import NotifyConfig from '../model/util/NotifyConfig.js'
-import { IsNullish } from './CommonUtil.js'
+import NotifyConfig from '../../shared/model/util/NotifyConfig.js'
 import { getMainWindow } from '../core/mainWindow.ts'
+import { IsNullish } from '../../shared/util/CommonUtil.ts'
 
 export function GetBrowserWindow(width?: number, height?: number): Electron.BrowserWindow {
   return new Electron.BrowserWindow({

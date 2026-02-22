@@ -3,7 +3,7 @@ import NotificationItem from '@renderer/model/util/NotificationItem.ts'
 import { v4 } from 'uuid'
 import { ElNotification } from 'element-plus'
 import { h } from 'vue'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish, NotNullish } from '../../../shared/util/CommonUtil.ts'
 
 export const useNotificationStore = defineStore('notification', {
   state: (): {

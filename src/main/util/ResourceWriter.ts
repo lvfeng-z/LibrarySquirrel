@@ -1,10 +1,10 @@
 import { Readable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import LogUtil from './LogUtil.js'
-import { AssertNotNullish } from './AssertUtil.js'
-import { IsNullish, NotNullish } from './CommonUtil.js'
+import { AssertNotNullish } from '../../shared/util/AssertUtil.ts'
+import { IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
 import fs from 'fs'
-import Resource from '../model/entity/Resource.js'
+import Resource from '../../shared/model/entity/Resource.js'
 
 export default class ResourceWriter {
   /**

@@ -1,15 +1,15 @@
 import { Writable } from 'node:stream'
-import StringUtil from './StringUtil.js'
+import { isBlank } from '../../shared/util/StringUtil.ts'
 import LogUtil from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { ArrayNotEmpty, IsNullish } from './CommonUtil.js'
-import Task from '../model/entity/Task.js'
+import { ArrayNotEmpty, IsNullish } from '../../shared/util/CommonUtil.ts'
+import Task from '../../shared/model/entity/Task.js'
 import TaskService from '../service/TaskService.js'
 import SiteService from '../service/SiteService.js'
-import Plugin from '../model/entity/Plugin.js'
-import PluginCreateTaskResponseDTO from '../model/dto/PluginCreateTaskResponseDTO.js'
-import PluginStreamCreateTaskResponseDTO from '../model/dto/PluginStreamCreateTaskResponseDTO.js'
-import PluginCreateParentTaskResponseDTO from '../model/dto/PluginCreateParentTaskResponseDTO.js'
+import Plugin from '../../shared/model/entity/Plugin.js'
+import PluginCreateTaskResponseDTO from '../../shared/model/dto/PluginCreateTaskResponseDTO.js'
+import PluginStreamCreateTaskResponseDTO from '../../shared/model/dto/PluginStreamCreateTaskResponseDTO.js'
+import PluginCreateParentTaskResponseDTO from '../../shared/model/dto/PluginCreateParentTaskResponseDTO.js'
 
 export default class CreateTaskWritable extends Writable {
   /**
@@ -85,7 +85,7 @@ export default class CreateTaskWritable extends Writable {
       if (pluginResponse.taskType === 'child') {
         const pluginTaskResponseDTO = pluginResponse.task as PluginCreateTaskResponseDTO
         const pluginPid = pluginTaskResponseDTO.pluginPid
-        if (StringUtil.isBlank(pluginPid)) {
+        if (isBlank(pluginPid)) {
           LogUtil.error(this.constructor.name, '创建任务失败，插件返回的子任务信息中缺少pluginPid')
           callback()
           return
@@ -98,12 +98,12 @@ export default class CreateTaskWritable extends Writable {
         }
         const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
         // 校验
-        if (StringUtil.isBlank(task.siteDomain)) {
+        if (isBlank(task.siteDomain)) {
           LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
           callback()
           return
         }
-        if (StringUtil.isBlank(task.siteWorkId)) {
+        if (isBlank(task.siteWorkId)) {
           LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
           callback()
           return
@@ -129,7 +129,7 @@ export default class CreateTaskWritable extends Writable {
       } else if (pluginResponse.taskType === 'parent') {
         const pluginCreateParentTaskResponseDTO = pluginResponse.task as PluginCreateParentTaskResponseDTO
         const pluginPid = pluginCreateParentTaskResponseDTO.pluginTaskId
-        if (StringUtil.isBlank(pluginPid)) {
+        if (isBlank(pluginPid)) {
           LogUtil.info(this.constructor.name, '创建父任务失败，插件返回的父任务的pluginTaskId为空')
           callback()
           return
@@ -138,7 +138,7 @@ export default class CreateTaskWritable extends Writable {
           LogUtil.info(this.constructor.name, '保存父任务失败，插件返回了重复的pluginTaskId')
         } else {
           const parentTaskCreateDTO = PluginCreateParentTaskResponseDTO.toTaskCreateDTO(pluginCreateParentTaskResponseDTO)
-          if (StringUtil.isBlank(parentTaskCreateDTO.siteDomain)) {
+          if (isBlank(parentTaskCreateDTO.siteDomain)) {
             LogUtil.error(this.constructor.name, '创建任务失败，插件返回的父任务信息中缺少站点域名')
             callback()
             return

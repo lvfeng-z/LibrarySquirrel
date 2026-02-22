@@ -1,6 +1,6 @@
 import LogUtil from './LogUtil.js'
-import { ArrayIsEmpty, IsNullish } from './CommonUtil.js'
-import StringUtil from './StringUtil.js'
+import { isBlank } from '../../shared/util/StringUtil.ts'
+import { ArrayIsEmpty, IsNullish } from '../../shared/util/CommonUtil.ts'
 
 export function AssertTrue(value: boolean, caller?: string, msg?: string) {
   if (!value) {
@@ -31,7 +31,7 @@ export function AssertArrayNotEmpty(value: unknown, caller?: string, msg?: strin
 }
 
 export function AssertNotBlank(value: string | undefined | null, caller?: string, msg?: string): asserts value {
-  if (StringUtil.isBlank(value)) {
+  if (isBlank(value)) {
     LogUtil.error(caller as string, msg)
     throw new Error(msg)
   }

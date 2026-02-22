@@ -1,15 +1,15 @@
-import LocalTag from '../model/entity/LocalTag.ts'
-import SelectItem from '../model/util/SelectItem.ts'
-import StringUtil from '../util/StringUtil.ts'
-import LocalTagQueryDTO from '../model/queryDTO/LocalTagQueryDTO.ts'
+import LocalTag from '../../shared/model/entity/LocalTag.ts'
+import SelectItem from '../../shared/model/util/SelectItem.ts'
+import StringUtil from '../../shared/util/StringUtil.ts'
+import LocalTagQueryDTO from '../../shared/model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import Page from '../model/util/Page.js'
-import { IsNullish, NotNullish } from '../util/CommonUtil.js'
+import Page from '../../shared/model/util/Page.js'
+import { IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
 import lodash from 'lodash'
-import LocalTagDTO from '../model/dto/LocalTagDTO.js'
-import BaseQueryDTO from '../base/BaseQueryDTO.js'
-import LocalTagWithWorkId from '../model/domain/LocalTagWithWorkId.ts'
+import LocalTagDTO from '../../shared/model/dto/LocalTagDTO.js'
+import { toPlainParams } from '../util/DatabaseUtil.ts'
+import LocalTagWithWorkId from '../../shared/model/domain/LocalTagWithWorkId.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -229,7 +229,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
     if (NotNullish(modifiedPage.query)) {
-      plainParams = BaseQueryDTO.toPlainParams(modifiedPage.query)
+      plainParams = toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()
     try {

@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="Query extends object">
 import SelectItem from '../../model/util/SelectItem'
 import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../../utils/CommonUtil'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../../../shared/util/CommonUtil.ts'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'

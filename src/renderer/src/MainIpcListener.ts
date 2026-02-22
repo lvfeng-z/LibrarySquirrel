@@ -1,15 +1,15 @@
-import TaskProgressDTO from '@renderer/model/main/dto/TaskProgressDTO.ts'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
-import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
-import TaskProgressMapTreeDTO from '@renderer/model/main/dto/TaskProgressMapTreeDTO.ts'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
 import ConfirmConfig from '@renderer/model/util/ConfirmConfig.ts'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { h } from 'vue'
 import NotifyConfig from '@renderer/model/util/NotifyConfig.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '../../shared/util/CommonUtil.ts'
 import { AskGotoPage } from '@renderer/utils/PageUtil.ts'
+import TaskProgressDTO from '../../shared/model/dto/TaskProgressDTO.ts'
+import TaskScheduleDTO from '../../shared/model/dto/TaskScheduleDTO.ts'
+import TaskProgressMapTreeDTO from '../../shared/model/dto/TaskProgressMapTreeDTO.ts'
 
 export function iniListener() {
   // 任务队列

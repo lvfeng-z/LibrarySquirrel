@@ -3,11 +3,11 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '../../../../shared/util/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import SiteTagLocalRelateDTO from '@renderer/model/main/dto/SiteTagLocalRelateDTO.ts'
 import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
+import SiteTagLocalRelateDTO from '../../../../shared/model/dto/SiteTagLocalRelateDTO.ts'
 
 // props
 const props = withDefaults(

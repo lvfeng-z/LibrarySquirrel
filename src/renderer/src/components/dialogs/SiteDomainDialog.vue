@@ -3,12 +3,12 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import SiteDomain from '@renderer/model/main/entity/SiteDomain.ts'
+import SiteDomain from '../../../../shared/model/entity/SiteDomain.ts'
 
 // props
 const props = withDefaults(
   defineProps<{
-    mode: DialogMode
+    mode?: DialogMode
     submitEnabled?: boolean
   }>(),
   {

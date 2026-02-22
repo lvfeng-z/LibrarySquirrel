@@ -1,14 +1,14 @@
 import { Writable } from 'node:stream'
-import TaskCreateDTO from '../model/dto/TaskCreateDTO.js'
-import StringUtil from './StringUtil.js'
+import TaskCreateDTO from '../../shared/model/dto/TaskCreateDTO.js'
+import { isBlank } from '../../shared/util/StringUtil.ts'
 import LogUtil from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { ArrayNotEmpty, IsNullish } from './CommonUtil.js'
-import Task from '../model/entity/Task.js'
+import { ArrayNotEmpty, IsNullish } from '../../shared/util/CommonUtil.ts'
+import Task from '../../shared/model/entity/Task.js'
 import TaskService from '../service/TaskService.js'
 import SiteService from '../service/SiteService.js'
-import Plugin from '../model/entity/Plugin.js'
-import PluginCreateTaskResponseDTO from '../model/dto/PluginCreateTaskResponseDTO.js'
+import Plugin from '../../shared/model/entity/Plugin.js'
+import PluginCreateTaskResponseDTO from '../../shared/model/dto/PluginCreateTaskResponseDTO.js'
 
 export default class CreateTaskWritable extends Writable {
   /**
@@ -82,12 +82,12 @@ export default class CreateTaskWritable extends Writable {
   ) {
     const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
     // 校验
-    if (StringUtil.isBlank(task.siteDomain)) {
+    if (isBlank(task.siteDomain)) {
       LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
       callback()
       return
     }
-    if (StringUtil.isBlank(task.siteWorkId)) {
+    if (isBlank(task.siteWorkId)) {
       LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
       callback()
       return

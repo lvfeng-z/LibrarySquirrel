@@ -1,12 +1,12 @@
 import BaseDao from '../base/BaseDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import SiteDomain from '../model/entity/SiteDomain.js'
-import SiteDomainQueryDTO from '../model/queryDTO/SiteDomainQueryDTO.js'
-import Page from '../model/util/Page.js'
+import SiteDomain from '../../shared/model/entity/SiteDomain.js'
+import SiteDomainQueryDTO from '../../shared/model/queryDTO/SiteDomainQueryDTO.js'
+import Page from '../../shared/model/util/Page.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
-import StringUtil from '../util/StringUtil.js'
-import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
-import { ArrayNotEmpty } from '../util/CommonUtil.js'
+import StringUtil from '../../shared/util/StringUtil.ts'
+import SiteDomainDTO from '../../shared/model/dto/SiteDomainDTO.js'
+import { ArrayNotEmpty } from '../../shared/util/CommonUtil.ts'
 
 export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomain> {
   constructor(db: DatabaseClient, injectedDB: boolean) {

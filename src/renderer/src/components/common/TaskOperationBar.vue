@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
-import TaskTreeDTO from '@renderer/model/main/dto/TaskTreeDTO.ts'
-import { IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish, NotNullish } from '../../../../shared/util/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
-import TaskProgressTreeDTO from '@renderer/model/main/dto/TaskProgressTreeDTO.ts'
 import { computed, Ref } from 'vue'
+import TaskProgressTreeDTO from '../../../../shared/model/dto/TaskProgressTreeDTO.ts'
+import TaskTreeDTO from '../../../../shared/model/dto/TaskTreeDTO.ts'
 
 // props
 const props = defineProps<{

@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
-import TaskProgressDTO from '@renderer/model/main/dto/TaskProgressDTO.ts'
-import { CopyIgnoreUndefined } from '@renderer/utils/ObjectUtil.ts'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@renderer/utils/CommonUtil.ts'
-import TaskScheduleDTO from '@renderer/model/main/dto/TaskScheduleDTO.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '../../../shared/util/CommonUtil.ts'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import NotificationItem from '@renderer/model/util/NotificationItem.ts'
 import { h } from 'vue'
 import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
+import TaskProgressDTO from '../../../shared/model/dto/TaskProgressDTO.ts'
+import TaskScheduleDTO from '../../../shared/model/dto/TaskScheduleDTO.ts'
+import { CopyIgnoreUndefined } from '../../../shared/util/ObjectUtil.ts'
 
 export const useTaskStore = defineStore('task', {
   state: (): { tasks: Map<number, TaskStoreObj> } => {

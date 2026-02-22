@@ -1,13 +1,13 @@
 import BaseService from '../base/BaseService.js'
-import SiteDomainQueryDTO from '../model/queryDTO/SiteDomainQueryDTO.js'
-import SiteDomain from '../model/entity/SiteDomain.js'
+import SiteDomainQueryDTO from '../../shared/model/queryDTO/SiteDomainQueryDTO.js'
+import SiteDomain from '../../shared/model/entity/SiteDomain.js'
 import SiteDomainDao from '../dao/SiteDomainDao.js'
 import DatabaseClient from '../database/DatabaseClient.js'
 import { Operator } from '../constant/CrudConstant.js'
-import Page from '../model/util/Page.js'
+import Page from '../../shared/model/util/Page.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
-import { IsNullish } from '../util/CommonUtil.js'
-import SiteDomainDTO from '../model/dto/SiteDomainDTO.js'
+import { IsNullish } from '../../shared/util/CommonUtil.ts'
+import SiteDomainDTO from '../../shared/model/dto/SiteDomainDTO.js'
 import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, SiteDomain, SiteDomainDao> {

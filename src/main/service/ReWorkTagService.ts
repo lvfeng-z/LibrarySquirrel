@@ -1,11 +1,11 @@
 import BaseService from '../base/BaseService.ts'
-import ReWorkTag from '../model/entity/ReWorkTag.ts'
-import { ReWorkTagQueryDTO } from '../model/queryDTO/ReWorkTagQueryDTO.ts'
+import ReWorkTag from '../../shared/model/entity/ReWorkTag.ts'
+import { ReWorkTagQueryDTO } from '../../shared/model/queryDTO/ReWorkTagQueryDTO.ts'
 import { ReWorkTagDao } from '../dao/ReWorkTagDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
 import { AssertNotNullish } from '../util/AssertUtil.js'
-import { ArrayIsEmpty, ArrayNotEmpty } from '../util/CommonUtil.js'
+import { ArrayIsEmpty, ArrayNotEmpty } from '../../shared/util/CommonUtil.ts'
 
 /**
  * 作品与标签关联Service

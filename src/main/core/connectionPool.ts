@@ -1,7 +1,7 @@
 import { ConnectionPool } from './classes/ConnectionPool.ts'
 import { DataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
-import { IsNullish } from '../util/CommonUtil.ts'
+import { IsNullish } from '../../shared/util/CommonUtil.ts'
 
 let connectionPool: ConnectionPool | undefined = undefined
 

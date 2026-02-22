@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, Ref, ref } from 'vue'
-import { ArrayNotEmpty, NotNullish } from '@renderer/utils/CommonUtil.ts'
-import RankedLocalAuthor from '@renderer/model/main/domain/RankedLocalAuthor.ts'
-import RankedSiteAuthor from '@renderer/model/main/domain/RankedSiteAuthor.ts'
-import RankAuthor from '@renderer/model/main/interface/RankAuthor.ts'
+import { ArrayNotEmpty, NotNullish } from '../../../../shared/util/CommonUtil.ts'
+import RankedSiteAuthor from '../../../../shared/model/domain/RankedSiteAuthor.ts'
+import RankedLocalAuthor from '../../../../shared/model/domain/RankedLocalAuthor.ts'
+import RankAuthor from '../../../../shared/model/interface/RankAuthor.ts'
 
 // props
 const props = withDefaults(

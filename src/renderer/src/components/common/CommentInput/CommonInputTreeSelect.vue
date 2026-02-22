@@ -2,7 +2,7 @@
 import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import { ref } from 'vue'
 import { ElTreeSelect } from 'element-plus'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '../../../../../shared/util/CommonUtil.ts'
 
 // props
 const props = defineProps<{

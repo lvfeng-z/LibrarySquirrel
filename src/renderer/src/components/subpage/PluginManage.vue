@@ -8,13 +8,13 @@ import DialogMode from '@renderer/model/util/DialogMode.ts'
 import { Thead } from '@renderer/model/util/Thead.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
-import { ArrayNotEmpty, IsNullish } from '@renderer/utils/CommonUtil.ts'
-import Plugin from '@renderer/model/main/entity/Plugin.ts'
-import PluginQueryDTO from '@renderer/model/main/queryDTO/PluginQueryDTO.ts'
+import { ArrayNotEmpty, IsNullish } from '../../../../shared/util/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
 import Electron from 'electron'
-import StringUtil from '@renderer/utils/StringUtil.ts'
+import PluginQueryDTO from '../../../../shared/model/queryDTO/PluginQueryDTO.ts'
+import Plugin from '../../../../shared/model/entity/Plugin.ts'
+import StringUtil from '../../../../shared/util/StringUtil.ts'
 
 // onMounted
 onMounted(() => {

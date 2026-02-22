@@ -2,7 +2,7 @@
 import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import Plugin from '@renderer/model/main/entity/Plugin.ts'
+import Plugin from '../../../../shared/model/entity/Plugin.ts'
 import { ElMessage } from 'element-plus'
 
 // props

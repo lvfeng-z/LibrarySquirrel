@@ -1,7 +1,7 @@
 import SelectItem from './SelectItem.ts'
 import { VNode } from 'vue'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
-import { NotNullish } from '@renderer/utils/CommonUtil.ts'
+import { NotNullish } from '../../../../shared/util/CommonUtil.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 
 export class CommonInputConfig implements ICommonInputConfig {

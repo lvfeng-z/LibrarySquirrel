@@ -1,5 +1,5 @@
 import SelectItem, { CSelectItem } from './SelectItem.ts'
-import { IsNullish } from '@renderer/utils/CommonUtil.ts'
+import { IsNullish } from '../../../../shared/util/CommonUtil.ts'
 
 export default class SegmentedTagItem extends SelectItem {
   disabled: boolean

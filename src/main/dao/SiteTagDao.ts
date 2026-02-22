@@ -1,18 +1,18 @@
 import BaseDao from '../base/BaseDao.ts'
-import SiteTag from '../model/entity/SiteTag.ts'
-import SiteTagQueryDTO from '../model/queryDTO/SiteTagQueryDTO.ts'
-import SelectItem from '../model/util/SelectItem.ts'
-import StringUtil from '../util/StringUtil.ts'
-import SiteTagFullDTO from '../model/dto/SiteTagFullDTO.ts'
-import Page from '../model/util/Page.ts'
+import SiteTag from '../../shared/model/entity/SiteTag.ts'
+import SiteTagQueryDTO from '../../shared/model/queryDTO/SiteTagQueryDTO.ts'
+import SelectItem from '../../shared/model/util/SelectItem.ts'
+import StringUtil from '../../shared/util/StringUtil.ts'
+import SiteTagFullDTO from '../../shared/model/dto/SiteTagFullDTO.ts'
+import Page from '../../shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { IsNullish, NotNullish } from '../util/CommonUtil.js'
+import { IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
 import lodash from 'lodash'
-import BaseQueryDTO from '../base/BaseQueryDTO.js'
+import { toPlainParams } from '../util/DatabaseUtil.ts'
 import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
-import SiteTagLocalRelateDTO from '../model/dto/SiteTagLocalRelateDTO.js'
-import SiteTagFullWithWorkIdDTO from '../model/dto/SiteTagFullWithWorkIdDTO.ts'
+import SiteTagLocalRelateDTO from '../../shared/model/dto/SiteTagLocalRelateDTO.js'
+import SiteTagFullWithWorkIdDTO from '../../shared/model/dto/SiteTagFullWithWorkIdDTO.ts'
 
 export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
   tableName: string = 'site_tag'
@@ -101,7 +101,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     // 查询
     const db = super.acquire()
     return db
-      .all<unknown[], SiteTagFullDTO>(statement, BaseQueryDTO.toPlainParams(modifiedQuery))
+      .all<unknown[], SiteTagFullDTO>(statement, toPlainParams(modifiedQuery))
       .then((rows) => {
         const resultPage = modifiedPage.transform<SiteTagFullDTO>()
         // 利用构造方法反序列化本地标签和站点的json

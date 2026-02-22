@@ -2,6 +2,8 @@ import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import path from 'path'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { RootDir } from './FileSysUtil.ts'
+import BaseQueryDTO from '../../shared/model/base/BaseQueryDTO.ts'
+import { NotNullish } from '../../shared/util/CommonUtil.ts'
 
 /**
  * 查询数据库所有数据表的名称
@@ -45,4 +47,22 @@ export function ToObjAcceptedBySqlite3(obj: object | undefined, ignore?: string[
         return [key, value]
       })
   )
+}
+
+/**
+ * 获取非字段属性的名称
+ */
+export function queryDtoNonFieldProperties(): string[] {
+  return ['nonFieldKeyword', 'operators', 'sort']
+}
+
+/**
+ * 将 BaseQueryDTO 转换为纯对象，用于 SQL 查询
+ */
+export function toPlainParams<T extends BaseQueryDTO>(queryDTO: T, ignore?: string[]) {
+  const fullIgnore = queryDtoNonFieldProperties()
+  if (NotNullish(ignore)) {
+    fullIgnore.push(...ignore)
+  }
+  return ToObjAcceptedBySqlite3(queryDTO, fullIgnore)
 }

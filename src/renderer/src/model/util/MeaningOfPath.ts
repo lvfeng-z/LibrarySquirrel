@@ -1,9 +1,9 @@
-import LocalAuthor from '../main/entity/LocalAuthor.ts'
-import LocalTag from '../main/entity/LocalTag.ts'
-import Work from '../main/entity/Work.ts'
-import WorkSet from '../main/entity/WorkSet.ts'
-import Site from '../main/entity/Site.ts'
 import { PathTypeEnum } from '../../constants/PathTypeEnum.ts'
+import LocalAuthor from '../../../../shared/model/entity/LocalAuthor.ts'
+import LocalTag from '../../../../shared/model/entity/LocalTag.ts'
+import Work from '../../../../shared/model/entity/Work.ts'
+import WorkSet from '../../../../shared/model/entity/WorkSet.ts'
+import Site from '../../../../shared/model/entity/Site.ts'
 
 /**
  * 目录含义

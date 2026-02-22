@@ -1,6 +1,6 @@
 import BaseDao from '../base/BaseDao.ts'
-import ReWorkAuthorQueryDTO from '../model/queryDTO/ReWorkAuthorQueryDTO.ts'
-import ReWorkAuthor from '../model/entity/ReWorkAuthor.ts'
+import ReWorkAuthorQueryDTO from '../../shared/model/queryDTO/ReWorkAuthorQueryDTO.ts'
+import ReWorkAuthor from '../../shared/model/entity/ReWorkAuthor.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
 

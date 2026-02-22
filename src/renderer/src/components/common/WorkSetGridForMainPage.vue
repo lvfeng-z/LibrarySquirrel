@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import WorkFullDTO from '@renderer/model/main/dto/WorkFullDTO.ts'
 import WorkDialog from '../dialogs/WorkDialog.vue'
 import { computed, Ref, ref } from 'vue'
 import WorkSetDialog from '@renderer/components/dialogs/WorkSetDialog.vue'
 import WorkGrid from '@renderer/components/common/WorkGrid.vue'
-import WorkCardItem from '@renderer/model/main/dto/WorkCardItem.ts'
+import WorkFullDTO from '../../../../shared/model/dto/WorkFullDTO.ts'
+import WorkCardItem from '../../../../shared/model/dto/WorkCardItem.ts'
 
 // props
 const props = defineProps<{

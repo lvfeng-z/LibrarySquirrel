@@ -1,9 +1,9 @@
 import BaseService from '../base/BaseService.ts'
-import AutoExplainPathQueryDTO from '../model/queryDTO/AutoExplainPathQueryDTO.ts'
-import AutoExplainPath from '../model/entity/AutoExplainPath.ts'
+import AutoExplainPathQueryDTO from '../../shared/model/queryDTO/AutoExplainPathQueryDTO.ts'
+import AutoExplainPath from '../../shared/model/entity/AutoExplainPath.ts'
 import AutoExplainPathDao from '../dao/AutoExplainPathDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import Page from '../model/util/Page.ts'
+import Page from '../../shared/model/util/Page.ts'
 
 /**
  * 自动解释路径含义Service
