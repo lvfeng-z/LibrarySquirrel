@@ -13,12 +13,17 @@ export default class ReWorkWorkSet extends BaseEntity {
    * 作品集id
    */
   workSetId: number | undefined | null
+  /**
+   * 排序顺序
+   */
+  sortOrder: number | undefined | null
 
   constructor(reWorkWorkSet?: ReWorkWorkSet) {
     super(reWorkWorkSet)
     if (NotNullish(reWorkWorkSet)) {
       this.workId = reWorkWorkSet.workId
       this.workSetId = reWorkWorkSet.workSetId
+      this.sortOrder = reWorkWorkSet.sortOrder
     }
   }
 }

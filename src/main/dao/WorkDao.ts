@@ -302,10 +302,11 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       return []
     }
     const clause = `
-        SELECT w.*, rwws.work_set_id FROM work w
+        SELECT w.*, rwws.work_set_id, rwws.sort_order FROM work w
           INNER JOIN re_work_work_set rwws ON w.id = rwws.work_id
           INNER JOIN work_set ws ON ws.id = rwws.work_set_id
-        WHERE rwws.work_set_id IN (${workSetIds.join(',')})`
+        WHERE rwws.work_set_id IN (${workSetIds.join(',')})
+        ORDER BY rwws.sort_order ASC`
     const db = this.acquire()
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(clause)

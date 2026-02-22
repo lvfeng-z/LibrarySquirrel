@@ -155,11 +155,14 @@ tables:
         work_set_id integer
           constraint re_work_work_set_work_set_id_fk
             references work_set,
+        sort_order  integer default 0,
         create_time integer,
         update_time integer
       );
       create unique index re_work_work_set_work_id_work_set_id_uindex
       on re_work_work_set (work_id, work_set_id);
+      create index re_work_work_set_work_set_id_sort_order_index
+      on re_work_work_set (work_set_id, sort_order);
 
   - name: site
     sql: |

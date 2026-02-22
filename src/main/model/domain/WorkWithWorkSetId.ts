@@ -8,4 +8,8 @@ export default class WorkWithWorkSetId extends Work {
    * 作品集id
    */
   workSetId: number | undefined | null
+  /**
+   * 排序顺序
+   */
+  sortOrder: number | undefined | null
 }

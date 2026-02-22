@@ -135,6 +135,7 @@ declare global {
       // ReWorkWorkSet
       reWorkWorkSetLinkBatchToWorkSet: function
       reWorkWorkSetRemoveBatchFromWorkSet: function
+      reWorkWorkSetUpdateSortOrders: function
 
       // FileSysUtil
       dirSelect: function

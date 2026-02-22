@@ -131,6 +131,7 @@ const api = {
   // ReWorkWorkSet
   reWorkWorkSetLinkBatchToWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-linkBatchToWorkSet', args),
   reWorkWorkSetRemoveBatchFromWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-removeBatchFromWorkSet', args),
+  reWorkWorkSetUpdateSortOrders: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-updateSortOrders', args),
 
   // FileSysUtil
   dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)

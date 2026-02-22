@@ -78,11 +78,21 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
       return 0
     }
 
-    // 创建关联对象
-    const links = legalWorkList.map((workDTO) => {
+    // 获取当前作品集中最大的排序值
+    const existingLinks = await this.listByWorkSetId(workSetId)
+    let maxSortOrder = 0
+    for (const link of existingLinks) {
+      if (link.sortOrder !== null && link.sortOrder !== undefined && link.sortOrder > maxSortOrder) {
+        maxSortOrder = link.sortOrder
+      }
+    }
+
+    // 创建关联对象，设置排序值
+    const links = legalWorkList.map((workDTO, index) => {
       const reWorkWorkSet = new ReWorkWorkSet()
       reWorkWorkSet.workId = workDTO.id
       reWorkWorkSet.workSetId = workSetId
+      reWorkWorkSet.sortOrder = maxSortOrder + index + 1
       return reWorkWorkSet
     })
 
@@ -177,5 +187,32 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
       deletedCount += await this.delete(singleQuery)
     }
     return deletedCount
+  }
+
+  /**
+   * 批量更新作品集内作品的排序顺序
+   * @param workSetId 作品集id
+   * @param workIds 排序后的作品id列表（顺序即为排序值）
+   */
+  public async updateSortOrders(workSetId: number, workIds: number[]): Promise<number> {
+    if (workIds.length === 0) {
+      return 0
+    }
+
+    let updatedCount = 0
+    for (let i = 0; i < workIds.length; i++) {
+      const workId = workIds[i]
+      const query = new ReWorkWorkSetQueryDTO()
+      query.workId = workId
+      query.workSetId = workSetId
+      const links = await this.list(query)
+      if (links.length > 0) {
+        const link = links[0]
+        link.sortOrder = i + 1
+        await this.dao.save(link)
+        updatedCount++
+      }
+    }
+    return updatedCount
   }
 }

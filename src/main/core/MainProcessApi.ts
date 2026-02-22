@@ -855,6 +855,17 @@ function exposeService() {
     }
   })
 
+  Electron.ipcMain.handle('reWorkWorkSet-updateSortOrders', async (_event, args): Promise<ApiUtil> => {
+    const reWorkWorkSetService = new ReWorkWorkSetService()
+    try {
+      const { workSetId, workIds } = args
+      const result = await reWorkWorkSetService.updateSortOrders(workSetId, workIds)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
   // FileSysUtil
   Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, openFile, isModal): Promise<ApiUtil> => {
     const result = await DirSelect(openFile, isModal)
