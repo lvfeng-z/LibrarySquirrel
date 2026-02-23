@@ -4,7 +4,7 @@ import fsPromise from 'fs/promises'
 import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
-import { IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
+import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
 import { getSettings } from '../core/settings.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 

@@ -1,15 +1,15 @@
 import BaseService from '../base/BaseService.ts'
-import LocalAuthorQueryDTO from '../../shared/model/queryDTO/LocalAuthorQueryDTO.ts'
-import LocalAuthor from '../../shared/model/entity/LocalAuthor.ts'
+import LocalAuthorQueryDTO from '@shared/model/queryDTO/LocalAuthorQueryDTO.ts'
+import LocalAuthor from '@shared/model/entity/LocalAuthor.ts'
 import LocalAuthorDao from '../dao/LocalAuthorDao.ts'
-import SelectItem from '../../shared/model/util/SelectItem.ts'
+import SelectItem from '@shared/model/util/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import Page from '../../shared/model/util/Page.ts'
+import Page from '@shared/model/util/Page.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import RankedLocalAuthor from '../../shared/model/domain/RankedLocalAuthor.ts'
-import { NotNullish } from '../../shared/util/CommonUtil.ts'
-import RankedLocalAuthorWithWorkId from '../../shared/model/domain/RankedLocalAuthorWithWorkId.ts'
+import RankedLocalAuthor from '@shared/model/domain/RankedLocalAuthor.ts'
+import { NotNullish } from '@shared/util/CommonUtil.ts'
+import RankedLocalAuthorWithWorkId from '@shared/model/domain/RankedLocalAuthorWithWorkId.ts'
 
 /**
  * 本地作者Service

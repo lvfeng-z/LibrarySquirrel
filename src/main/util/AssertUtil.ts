@@ -1,6 +1,6 @@
 import LogUtil from './LogUtil.js'
-import { isBlank } from '../../shared/util/StringUtil.ts'
-import { ArrayIsEmpty, IsNullish } from '../../shared/util/CommonUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
+import { ArrayIsEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
 
 export function AssertTrue(value: boolean, caller?: string, msg?: string) {
   if (!value) {

@@ -1,4 +1,4 @@
-import { NotNullish } from '../../../shared/util/CommonUtil.ts'
+import { NotNullish } from '@shared/util/CommonUtil.ts'
 
 export class PageState {
   readonly page: PageEnum

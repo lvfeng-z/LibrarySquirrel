@@ -3,12 +3,19 @@ import { defineConfig } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
-  main: {},
+  main: {
+    resolve: {
+      alias: {
+        '@shared': Path.resolve('src/shared/')
+      }
+    }
+  },
   preload: {},
   renderer: {
     resolve: {
       alias: {
-        '@renderer': Path.resolve('src/renderer/src')
+        '@renderer': Path.resolve('src/renderer/src'),
+        '@shared': Path.resolve('src/shared/')
       }
     },
     plugins: [vue()]

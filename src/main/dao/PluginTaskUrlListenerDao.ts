@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
-import PluginTaskUrlListener from '../../shared/model/entity/PluginTaskUrlListener.ts'
-import PluginTaskUrlListenerQueryDTO from '../../shared/model/queryDTO/PluginTaskUrlListenerQueryDTO.ts'
-import Plugin from '../../shared/model/entity/Plugin.ts'
+import PluginTaskUrlListener from '@shared/model/entity/PluginTaskUrlListener.ts'
+import PluginTaskUrlListenerQueryDTO from '@shared/model/queryDTO/PluginTaskUrlListenerQueryDTO.ts'
+import Plugin from '@shared/model/entity/Plugin.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 
 export default class PluginTaskUrlListenerDao extends BaseDao<PluginTaskUrlListenerQueryDTO, PluginTaskUrlListener> {

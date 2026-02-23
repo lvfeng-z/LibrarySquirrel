@@ -1,14 +1,14 @@
-import Site from '../../shared/model/entity/Site.ts'
+import Site from '@shared/model/entity/Site.ts'
 import SiteDao from '../dao/SiteDao.ts'
-import SiteQueryDTO from '../../shared/model/queryDTO/SiteQueryDTO.ts'
+import SiteQueryDTO from '@shared/model/queryDTO/SiteQueryDTO.ts'
 import BaseService from '../base/BaseService.ts'
-import Page from '../../shared/model/util/Page.ts'
+import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../../shared/util/CommonUtil.ts'
-import SiteFullDTO from '../../shared/model/dto/SiteFullDTO.js'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import SiteFullDTO from '@shared/model/dto/SiteFullDTO.js'
 import SiteDomainService from './SiteDomainService.js'
-import SiteDomain from '../../shared/model/entity/SiteDomain.js'
+import SiteDomain from '@shared/model/entity/SiteDomain.js'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DatabaseClient) {

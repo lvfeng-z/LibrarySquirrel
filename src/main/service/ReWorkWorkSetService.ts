@@ -1,12 +1,12 @@
 import BaseService from '../base/BaseService.ts'
-import ReWorkWorkSetQueryDTO from '../../shared/model/queryDTO/ReWorkWorkSetQueryDTO.ts'
-import ReWorkWorkSet from '../../shared/model/entity/ReWorkWorkSet.ts'
+import ReWorkWorkSetQueryDTO from '@shared/model/queryDTO/ReWorkWorkSetQueryDTO.ts'
+import ReWorkWorkSet from '@shared/model/entity/ReWorkWorkSet.ts'
 import ReWorkWorkSetDao from '../dao/ReWorkWorkSetDao.ts'
 import { WorkDao } from '../dao/WorkDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '../../shared/util/CommonUtil.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
-import Work from '../../shared/model/entity/Work.ts'
+import Work from '@shared/model/entity/Work.ts'
 
 export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQueryDTO, ReWorkWorkSet, ReWorkWorkSetDao> {
   constructor(db?: DatabaseClient) {

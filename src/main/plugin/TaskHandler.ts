@@ -1,13 +1,13 @@
-import Task from '../../shared/model/entity/Task.ts'
+import Task from '@shared/model/entity/Task.ts'
 import { Readable } from 'node:stream'
 import PluginTool from './PluginTool.ts'
 import { PluginTaskResParam } from './PluginTaskResParam.ts'
-import PluginWorkResponseDTO from '../../shared/model/dto/PluginWorkResponseDTO.ts'
+import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
 import { BasePlugin } from '../base/BasePlugin.js'
 import PluginFactory from './PluginFactory.js'
-import PluginCreateParentTaskResponseDTO from '../../shared/model/dto/PluginCreateParentTaskResponseDTO.js'
+import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.js'
 import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
-import PluginLoadDTO from '../../shared/model/dto/PluginLoadDTO.js'
+import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.js'
 
 export interface TaskHandler extends BasePlugin {
   pluginTool: PluginTool

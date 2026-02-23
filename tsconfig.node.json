@@ -7,6 +7,12 @@
     "module": "node16",
     "moduleResolution": "node16",
     "allowImportingTsExtensions": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": [
+        "src/shared/*"
+      ]
+    }
   }
 }

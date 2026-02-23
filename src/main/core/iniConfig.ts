@@ -1,6 +1,6 @@
 import { IniConfig } from './types/IniConfig.ts'
 import fs from 'fs'
-import { IsNullish } from '../../shared/util/CommonUtil.ts'
+import { IsNullish } from '@shared/util/CommonUtil.ts'
 import yaml from 'js-yaml'
 
 let iniConfig: IniConfig | undefined = undefined

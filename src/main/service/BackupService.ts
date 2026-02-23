@@ -1,6 +1,6 @@
 import BaseService from '../base/BaseService.js'
-import BackupQueryDTO from '../../shared/model/queryDTO/BackupQueryDTO.js'
-import Backup from '../../shared/model/entity/Backup.js'
+import BackupQueryDTO from '@shared/model/queryDTO/BackupQueryDTO.js'
+import Backup from '@shared/model/entity/Backup.js'
 import BackupDao from '../dao/BackupDao.js'
 import DatabaseClient from '../database/DatabaseClient.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'

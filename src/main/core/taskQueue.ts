@@ -1,5 +1,5 @@
 import { TaskQueue } from './classes/TaskQueue.ts'
-import { IsNullish } from '../../shared/util/CommonUtil.ts'
+import { IsNullish } from '@shared/util/CommonUtil.ts'
 
 let taskQueue: TaskQueue | undefined = undefined
 

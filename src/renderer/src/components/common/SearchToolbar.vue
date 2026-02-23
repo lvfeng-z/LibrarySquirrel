@@ -5,7 +5,7 @@ import CollapseForm from './CollapseForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
-import { ArrayNotEmpty, NotNullish } from '../../../../shared/util/CommonUtil.ts'
+import { ArrayNotEmpty, NotNullish } from '@shared/util/CommonUtil.ts'
 
 // props
 const props = withDefaults(

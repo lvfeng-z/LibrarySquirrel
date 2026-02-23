@@ -1,11 +1,11 @@
 import BaseDao from '../base/BaseDao.ts'
-import WorkSetQueryDTO from '../../shared/model/queryDTO/WorkSetQueryDTO.ts'
-import WorkSet from '../../shared/model/entity/WorkSet.ts'
+import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
+import WorkSet from '@shared/model/entity/WorkSet.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { NotNullish } from '../../shared/util/CommonUtil.ts'
+import { NotNullish } from '@shared/util/CommonUtil.ts'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
-import WorkSetWithWorkId from '../../shared/model/domain/WorkSetWithWorkId.ts'
+import WorkSetWithWorkId from '@shared/model/domain/WorkSetWithWorkId.ts'
 
 export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
   constructor(db: DatabaseClient, injectedDB: boolean) {

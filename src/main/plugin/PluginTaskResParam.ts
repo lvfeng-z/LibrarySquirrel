@@ -1,5 +1,5 @@
-import Task from '../../shared/model/entity/Task.ts'
-import PluginResourceDTO from '../../shared/model/dto/PluginResourceDTO.ts'
+import Task from '@shared/model/entity/Task.ts'
+import PluginResourceDTO from '@shared/model/dto/PluginResourceDTO.ts'
 
 export class PluginTaskResParam {
   /**

@@ -1,9 +1,9 @@
-import PluginTaskUrlListener from '../../shared/model/entity/PluginTaskUrlListener.ts'
+import PluginTaskUrlListener from '@shared/model/entity/PluginTaskUrlListener.ts'
 import PluginTaskUrlListenerDao from '../dao/PluginTaskUrlListenerDao.ts'
 import BaseService from '../base/BaseService.ts'
-import PluginTaskUrlListenerQueryDTO from '../../shared/model/queryDTO/PluginTaskUrlListenerQueryDTO.ts'
+import PluginTaskUrlListenerQueryDTO from '@shared/model/queryDTO/PluginTaskUrlListenerQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import Plugin from '../../shared/model/entity/Plugin.js'
+import Plugin from '@shared/model/entity/Plugin.js'
 
 /**
  * 任务插件监听器Service

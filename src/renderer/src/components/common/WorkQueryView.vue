@@ -7,11 +7,11 @@ import Page from '@renderer/model/util/Page.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { ref, UnwrapRef, Ref, watch, onMounted, onUnmounted } from 'vue'
 import lodash from 'lodash'
-import { NotNullish, ArrayNotEmpty } from '../../../../shared/util/CommonUtil.ts'
+import { NotNullish, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
-import WorkCardItem from '../../../../shared/model/dto/WorkCardItem.ts'
-import BaseQueryDTO from '../../../../shared/model/base/BaseQueryDTO.ts'
+import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
+import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 
 // props
 const props = withDefaults(

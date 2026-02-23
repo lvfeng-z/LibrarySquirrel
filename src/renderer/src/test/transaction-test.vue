@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import lodash from 'lodash'
-import Site from '../../../shared/model/entity/Site.ts'
-import RankedSiteAuthor from '../../../shared/model/domain/RankedSiteAuthor.ts'
-import LocalTag from '../../../shared/model/entity/LocalTag.ts'
-import WorkFullDTO from '../../../shared/model/dto/WorkFullDTO.ts'
+import Site from '@shared/model/entity/Site.ts'
+import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
+import LocalTag from '@shared/model/entity/LocalTag.ts'
+import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 
 // 变量
 // 接口

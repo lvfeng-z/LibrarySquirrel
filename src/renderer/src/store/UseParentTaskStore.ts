@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../../../shared/util/CommonUtil.ts'
-import TaskProgressDTO from '../../../shared/model/dto/TaskProgressDTO.ts'
-import TaskScheduleDTO from '../../../shared/model/dto/TaskScheduleDTO.ts'
-import { CopyIgnoreUndefined } from '../../../shared/util/ObjectUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
+import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
+import { CopyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
 
 export const useParentTaskStore = defineStore('parentTask', {
   state: (): { parentTasks: Map<number, TaskProgressDTO> } => {

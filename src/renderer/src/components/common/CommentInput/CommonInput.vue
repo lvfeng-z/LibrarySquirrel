@@ -8,8 +8,8 @@ import CommonInputDate from '@renderer/components/common/CommentInput/CommonInpu
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '../../../../../shared/util/CommonUtil.ts'
-import { GetNode } from '../../../../../shared/util/TreeUtil.ts'
+import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { GetNode } from '@shared/util/TreeUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 
 // props

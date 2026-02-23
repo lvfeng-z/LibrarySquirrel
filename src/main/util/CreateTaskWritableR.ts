@@ -1,15 +1,15 @@
 import { Writable } from 'node:stream'
-import { isBlank } from '../../shared/util/StringUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 import LogUtil from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { ArrayNotEmpty, IsNullish } from '../../shared/util/CommonUtil.ts'
-import Task from '../../shared/model/entity/Task.js'
+import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import Task from '@shared/model/entity/Task.js'
 import TaskService from '../service/TaskService.js'
 import SiteService from '../service/SiteService.js'
-import Plugin from '../../shared/model/entity/Plugin.js'
-import PluginCreateTaskResponseDTO from '../../shared/model/dto/PluginCreateTaskResponseDTO.js'
-import PluginStreamCreateTaskResponseDTO from '../../shared/model/dto/PluginStreamCreateTaskResponseDTO.js'
-import PluginCreateParentTaskResponseDTO from '../../shared/model/dto/PluginCreateParentTaskResponseDTO.js'
+import Plugin from '@shared/model/entity/Plugin.js'
+import PluginCreateTaskResponseDTO from '@shared/model/dto/PluginCreateTaskResponseDTO.js'
+import PluginStreamCreateTaskResponseDTO from '@shared/model/dto/PluginStreamCreateTaskResponseDTO.js'
+import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.js'
 
 export default class CreateTaskWritable extends Writable {
   /**

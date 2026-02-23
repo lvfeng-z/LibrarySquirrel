@@ -3,7 +3,7 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import Site from '../../../../shared/model/entity/Site.ts'
+import Site from '@shared/model/entity/Site.ts'
 
 // props
 const props = withDefaults(

@@ -1,4 +1,4 @@
-import { IsNullish } from '../../shared/util/CommonUtil.ts'
+import { IsNullish } from '@shared/util/CommonUtil.ts'
 
 let mainWindow: Electron.BrowserWindow | undefined = undefined
 

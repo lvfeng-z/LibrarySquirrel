@@ -1,5 +1,5 @@
-import { isBlank } from '../../../shared/util/StringUtil.ts'
-import { ArrayIsEmpty, IsNullish } from '../../../shared/util/CommonUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
+import { ArrayIsEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
 
 export function AssertTrue(value: boolean, msg?: string) {
   if (!value) {

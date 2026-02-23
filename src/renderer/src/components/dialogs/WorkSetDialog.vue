@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, ref, watch, computed } from 'vue'
-import { ArrayNotEmpty, IsNullish } from '../../../../shared/util/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import StaticHeightDialog from '@renderer/components/dialogs/StaticHeightDialog.vue'
 import WorkGridForWorkSet from '@renderer/components/common/WorkGridForWorkSet.vue'
@@ -15,12 +15,12 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import { setSearchTagColor } from '@renderer/utils/SearchTagColorUtil.ts'
-import WorkSet from '../../../../shared/model/entity/WorkSet.ts'
-import WorkFullDTO from '../../../../shared/model/dto/WorkFullDTO.ts'
-import WorkSetWithWorkDTO from '../../../../shared/model/dto/WorkSetWithWorkDTO.ts'
-import BaseQueryDTO from '../../../../shared/model/base/BaseQueryDTO.ts'
-import SearchConditionQueryDTO from '../../../../shared/model/queryDTO/SearchConditionQueryDTO.ts'
-import WorkCardItem from '../../../../shared/model/dto/WorkCardItem.ts'
+import WorkSet from '@shared/model/entity/WorkSet.ts'
+import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
+import WorkSetWithWorkDTO from '@shared/model/dto/WorkSetWithWorkDTO.ts'
+import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
+import SearchConditionQueryDTO from '@shared/model/queryDTO/SearchConditionQueryDTO.ts'
+import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
 
 // props
 const props = defineProps<{

@@ -13,14 +13,14 @@ import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { ArrayNotEmpty, IsNullish } from '../../../../shared/util/CommonUtil.ts'
+import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import IPage from '@renderer/model/util/IPage.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
-import LocalAuthorQueryDTO from '../../../../shared/model/queryDTO/LocalAuthorQueryDTO.ts'
-import LocalAuthor from '../../../../shared/model/entity/LocalAuthor.ts'
-import SiteAuthorQueryDTO from '../../../../shared/model/queryDTO/SiteAuthorQueryDTO.ts'
+import LocalAuthorQueryDTO from '@shared/model/queryDTO/LocalAuthorQueryDTO.ts'
+import LocalAuthor from '@shared/model/entity/LocalAuthor.ts'
+import SiteAuthorQueryDTO from '@shared/model/queryDTO/SiteAuthorQueryDTO.ts'
 
 // onMounted
 onMounted(() => {

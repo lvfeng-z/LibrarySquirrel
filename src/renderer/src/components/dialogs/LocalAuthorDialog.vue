@@ -3,7 +3,7 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import LocalAuthor from '../../../../shared/model/entity/LocalAuthor.ts'
+import LocalAuthor from '@shared/model/entity/LocalAuthor.ts'
 
 // props
 const props = withDefaults(

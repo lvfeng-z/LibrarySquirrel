@@ -2,7 +2,7 @@
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import { Close } from '@element-plus/icons-vue'
 import { computed, ref, Ref, UnwrapRef } from 'vue'
-import { ArrayIsEmpty, IsNullish } from '../../../../shared/util/CommonUtil.ts'
+import { ArrayIsEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
 
 // props
 const props = withDefaults(

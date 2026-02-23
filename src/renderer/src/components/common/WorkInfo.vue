@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, Ref } from 'vue'
-import WorkCardItem from '../../../../shared/model/dto/WorkCardItem.ts'
-import StringUtil from '../../../../shared/util/StringUtil.ts'
+import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
+import StringUtil from '@shared/util/StringUtil.ts'
 // props
 const props = withDefaults(
   defineProps<{

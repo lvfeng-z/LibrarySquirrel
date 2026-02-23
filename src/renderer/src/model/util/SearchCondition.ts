@@ -1,5 +1,5 @@
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
-import { IsNullish } from '../../../../shared/util/CommonUtil.ts'
+import { IsNullish } from '@shared/util/CommonUtil.ts'
 
 export class SearchCondition {
   /**

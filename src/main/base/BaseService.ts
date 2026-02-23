@@ -1,11 +1,11 @@
-import BaseQueryDTO from '../../shared/model/base/BaseQueryDTO.ts'
-import BaseEntity from '../../shared/model/base/BaseEntity.ts'
-import Page from '../../shared/model/util/Page.ts'
+import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
+import BaseEntity from '@shared/model/base/BaseEntity.ts'
+import Page from '@shared/model/util/Page.ts'
 import BaseDao from './BaseDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { IsNullish } from '../../shared/util/CommonUtil.ts'
+import { IsNullish } from '@shared/util/CommonUtil.ts'
 import { AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
-import SelectItem from '../../shared/model/util/SelectItem.js'
+import SelectItem from '@shared/model/util/SelectItem.js'
 
 /**
  * Service基类

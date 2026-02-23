@@ -1,10 +1,10 @@
-import Site from '../../shared/model/entity/Site.ts'
-import SiteQueryDTO from '../../shared/model/queryDTO/SiteQueryDTO.ts'
+import Site from '@shared/model/entity/Site.ts'
+import SiteQueryDTO from '@shared/model/queryDTO/SiteQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import SiteFullDTO from '../../shared/model/dto/SiteFullDTO.js'
-import SiteDomain from '../../shared/model/entity/SiteDomain.js'
-import { ArrayIsEmpty, ArrayNotEmpty } from '../../shared/util/CommonUtil.ts'
+import SiteFullDTO from '@shared/model/dto/SiteFullDTO.js'
+import SiteDomain from '@shared/model/entity/SiteDomain.js'
+import { ArrayIsEmpty, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
 
 export default class SiteDao extends BaseDao<SiteQueryDTO, Site> {

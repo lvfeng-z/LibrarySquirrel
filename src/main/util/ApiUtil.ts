@@ -1,4 +1,4 @@
-import { isBlank } from '../../shared/util/StringUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 export interface ApiResponse {
   success: boolean

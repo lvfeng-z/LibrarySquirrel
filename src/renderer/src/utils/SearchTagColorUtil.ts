@@ -1,5 +1,5 @@
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
-import { ArrayNotEmpty } from '../../../shared/util/CommonUtil.ts'
+import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 /**
  * 设置搜索标签颜色

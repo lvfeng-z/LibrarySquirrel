@@ -6,12 +6,12 @@ import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import Page from '../../model/util/Page.ts'
 import lodash from 'lodash'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '../../../../shared/util/CommonUtil.ts'
+import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
 import TreeNode from '../../model/util/TreeNode'
 import { TreeNode as ElTreeNode } from 'element-plus'
-import { GetNode } from '../../../../shared/util/TreeUtil.ts'
+import { GetNode } from '@shared/util/TreeUtil.ts'
 import DataTable from '@renderer/components/common/DataTable.vue'
-import BaseQueryDTO from '../../../../shared/model/base/BaseQueryDTO.ts'
+import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 
 // props
 const props = withDefaults(

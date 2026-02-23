@@ -1,6 +1,6 @@
 import BaseDao from '../base/BaseDao.js'
-import ResourceQueryDTO from '../../shared/model/queryDTO/ResourceQueryDTO.js'
-import Resource from '../../shared/model/entity/Resource.js'
+import ResourceQueryDTO from '@shared/model/queryDTO/ResourceQueryDTO.js'
+import Resource from '@shared/model/entity/Resource.js'
 import DatabaseClient from '../database/DatabaseClient.js'
 
 /**

@@ -6,8 +6,8 @@ import DataTableOperationResponse from '../../model/util/DataTableOperationRespo
 import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { TreeNode } from 'element-plus'
-import { ArrayNotEmpty } from '../../../../shared/util/CommonUtil.ts'
-import { GetPropByPath, SetPropByPath } from '../../../../shared/util/ObjectUtil.ts'
+import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { GetPropByPath, SetPropByPath } from '@shared/util/ObjectUtil.ts'
 
 // props
 const props = withDefaults(

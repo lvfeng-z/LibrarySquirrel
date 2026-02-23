@@ -2,9 +2,9 @@
 import { computed, Ref, ref } from 'vue'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
-import { NotNullish } from '../../../../shared/util/CommonUtil.ts'
+import { NotNullish } from '@shared/util/CommonUtil.ts'
 import NotificationItem from '@renderer/model/util/NotificationItem.ts'
-import StringUtil from '../../../../shared/util/StringUtil.ts'
+import StringUtil from '@shared/util/StringUtil.ts'
 
 // model
 // 开关状态
