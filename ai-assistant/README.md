@@ -106,18 +106,25 @@
 - SAVEPOINT事务（支持嵌套）
 - 表结构在YAML配置中定义
 
+### 共享代码架构
+- **src/shared/** 目录包含主进程和渲染进程共用的代码
+- **src/shared/model/** - 实体类、DTO、枚举、常量（所有进程共用）
+- **src/shared/util/** - 工具函数（StringUtil, TreeUtil, AssertUtil等）
+- **路径别名**: `@shared/*` → `src/shared/*`
+
 ## 项目文件定位指南
 
 | 任务类型 | 主要文件位置 |
 |---------|-------------|
 | 业务逻辑 | `src/main/service/` |
-| 数据模型 | `src/main/model/` |
+| 共用实体/DTO | `src/shared/model/` |
 | 数据库操作 | `src/main/dao/` |
 | 插件开发 | `src/main/plugin/` |
 | 前端组件 | `src/renderer/src/components/` |
 | 状态管理 | `src/renderer/src/store/` |
 | IPC注册 | `src/main/core/MainProcessApi.ts` |
 | 任务队列 | `src/main/core/taskQueue.ts` |
+| 共用工具函数 | `src/shared/util/` |
 
 ## 常见开发任务参考
 

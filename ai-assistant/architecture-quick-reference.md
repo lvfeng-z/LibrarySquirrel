@@ -36,28 +36,44 @@ URL输入 → 任务创建 → 插件执行 → 获取作品信息 → 保存作
 - **框架**：Vue 3 + Composition API + Element Plus
 - **状态管理**：Pinia stores (`Use*Store.ts`)
 - **组件模式**：`<script setup lang="ts">` + Props后缀
-- **路径别名**：`@renderer/*` → `src/renderer/src/*`
+- **路径别名**：
+  - `@renderer/*` → `src/renderer/src/*`
+  - `@shared/*` → `src/shared/*`
 
 ### 后端架构 (Main Process)
 - **IPC模式**：`ipcRenderer.invoke('service-method', args)`
 - **API注册**：`MainProcessApi.ts` 集中注册所有服务方法
 - **数据库**：better-sqlite3 + DAO模式 + SAVEPOINT事务
 - **自定义协议**：`resource://` 处理本地文件访问
+- **路径别名**：`@shared/*` → `src/shared/*`（主进程和渲染进程共用代码）
 
 ### 核心目录
 ```
-src/main/
-├── service/     # 业务服务层
-├── model/       # 数据模型
-├── dao/         # 数据访问层
-├── plugin/      # 插件系统
-├── core/        # 核心组件（MainProcessApi, taskQueue）
-└── resources/   # 配置文件
-
-src/renderer/src/
-├── components/  # Vue组件
-├── store/       # Pinia状态管理
-└── apis/        # IPC API包装器
+src/
+├── main/                    # 主进程 (Node.js/Electron)
+│   ├── service/             # 业务服务层
+│   ├── model/               # 数据模型（主进程专用）
+│   ├── dao/                 # 数据访问层
+│   ├── plugin/              # 插件系统
+│   ├── core/                # 核心组件（MainProcessApi, taskQueue）
+│   ├── resources/           # 配置文件
+│   └── util/                # 工具类
+├── shared/                  # 主进程和渲染进程共用代码
+│   ├── model/               # 共用实体类、DTO、枚举、常量
+│   │   ├── constant/        # 枚举和常量
+│   │   ├── dto/             # 数据传输对象
+│   │   ├── domain/           # 领域模型
+│   │   ├── entity/          # 实体类
+│   │   ├── interface/        # 接口定义
+│   │   ├── queryDTO/        # 查询DTO
+│   │   └── util/            # 工具类型
+│   └── util/                # 共用工具函数
+├── preload/                 # 预加载脚本 (IPC桥接)
+└── renderer/src/           # 渲染进程 (Vue 3)
+    ├── components/          # Vue组件
+    ├── store/               # Pinia状态管理
+    ├── apis/                # IPC API包装器
+    └── utils/               # 渲染进程工具类
 ```
 
 ## 开发模式

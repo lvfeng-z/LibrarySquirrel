@@ -9,15 +9,25 @@
 ### 目录结构约定
 - **src/main/** - 主进程代码 (Node.js/Electron)
   - `base/` - 基类 (BaseDao, BaseService, BasePlugin)
-  - `constant/` - 常量与枚举
+  - `constant/` - 常量与枚举（主进程专用）
   - `core/` - 核心服务 (MainProcessApi, Initialize)
   - `dao/` - 数据访问对象
   - `database/` - 数据库初始化
-  - `model/` - 领域模型和实体
+  - `model/` - 领域模型和实体（主进程专用）
   - `plugin/` - 插件系统
   - `service/` - 业务逻辑服务
   - `resources/` - YAML 配置文件
-  - `util/` - 工具类
+  - `util/` - 工具类（主进程专用）
+- **src/shared/** - 主进程和渲染进程共用代码
+  - `model/` - 共用实体类、DTO、枚举、常量
+    - `constant/` - 枚举和常量
+    - `dto/` - 数据传输对象
+    - `domain/` - 领域模型
+    - `entity/` - 实体类
+    - `interface/` - 接口定义
+    - `queryDTO/` - 查询DTO
+    - `util/` - 工具类型
+  - `util/` - 共用工具函数（StringUtil, TreeUtil, AssertUtil等）
 - **src/preload/** - 预加载脚本 (IPC 桥接)
 - **src/renderer/** - 渲染进程代码 (Vue 3)
   - `src/apis/` - IPC API 封装
@@ -120,7 +130,9 @@ async function fetchWorkPage(page: Page) {
 
 ### TypeScript 规范
 - **模块解析**: 主进程使用 `node16`，渲染进程使用 `bundler`
-- **路径别名**: 渲染进程使用 `@renderer/*` 指向 `src/renderer/src/*`
+- **路径别名**:
+  - `@renderer/*` → `src/renderer/src/*`（渲染进程专用）
+  - `@shared/*` → `src/shared/*`（主进程和渲染进程共用，推荐使用）
 - **类型定义**: 优先使用 `interface` 定义对象结构，`type` 用于联合类型或工具类型
 - **空值处理**: 使用可选链 `?.` 和空值合并 `??` 运算符
 - **严格模式**: 启用 TypeScript 严格模式 (`strict: true`)
