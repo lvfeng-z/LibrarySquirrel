@@ -14,6 +14,10 @@ export default class ReWorkWorkSet extends BaseEntity {
    */
   workSetId: number | undefined | null
   /**
+   * 是否为封面作品
+   */
+  isCover: boolean | undefined | null
+  /**
    * 排序顺序
    */
   sortOrder: number | undefined | null
@@ -23,6 +27,7 @@ export default class ReWorkWorkSet extends BaseEntity {
     if (NotNullish(reWorkWorkSet)) {
       this.workId = reWorkWorkSet.workId
       this.workSetId = reWorkWorkSet.workSetId
+      this.isCover = reWorkWorkSet.isCover
       this.sortOrder = reWorkWorkSet.sortOrder
     }
   }

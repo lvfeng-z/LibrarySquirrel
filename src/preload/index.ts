@@ -132,6 +132,9 @@ const api = {
   reWorkWorkSetLinkBatchToWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-linkBatchToWorkSet', args),
   reWorkWorkSetRemoveBatchFromWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-removeBatchFromWorkSet', args),
   reWorkWorkSetUpdateSortOrders: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-updateSortOrders', args),
+  reWorkWorkSetSetCover: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-setCover', args),
+  reWorkWorkSetUnsetCover: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-unsetCover', args),
+  reWorkWorkSetGetCoverWorkId: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-getCoverWorkId', args),
 
   // FileSysUtil
   dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)

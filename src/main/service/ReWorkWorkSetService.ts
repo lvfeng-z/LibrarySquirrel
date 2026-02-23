@@ -215,4 +215,69 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     }
     return updatedCount
   }
+
+  /**
+   * 设置作品集封面
+   * @param workSetId 作品集id
+   * @param workId 作品id（作为封面）
+   */
+  public async setCover(workSetId: number, workId: number): Promise<number> {
+    // 先将该作品集中所有作品的 isCover 设置为 false
+    const query = new ReWorkWorkSetQueryDTO()
+    query.workSetId = workSetId
+    const allLinks = await this.list(query)
+    for (const link of allLinks) {
+      if (link.isCover) {
+        link.isCover = false
+        await this.dao.save(link)
+      }
+    }
+
+    // 设置指定作品为封面
+    const coverQuery = new ReWorkWorkSetQueryDTO()
+    coverQuery.workSetId = workSetId
+    coverQuery.workId = workId
+    const targetLinks = await this.list(coverQuery)
+    if (targetLinks.length > 0) {
+      const targetLink = targetLinks[0]
+      targetLink.isCover = true
+      await this.dao.save(targetLink)
+      return 1
+    }
+    return 0
+  }
+
+  /**
+   * 取消作品集封面
+   * @param workSetId 作品集id
+   * @param workId 作品id
+   */
+  public async unsetCover(workSetId: number, workId: number): Promise<number> {
+    const query = new ReWorkWorkSetQueryDTO()
+    query.workSetId = workSetId
+    query.workId = workId
+    const links = await this.list(query)
+    if (links.length > 0) {
+      const link = links[0]
+      link.isCover = false
+      await this.dao.save(link)
+      return 1
+    }
+    return 0
+  }
+
+  /**
+   * 获取作品集的封面作品id
+   * @param workSetId 作品集id
+   */
+  public async getCoverWorkId(workSetId: number): Promise<number | undefined> {
+    const query = new ReWorkWorkSetQueryDTO()
+    query.workSetId = workSetId
+    query.isCover = true
+    const links = await this.list(query)
+    if (links.length > 0 && links[0].workId !== null && links[0].workId !== undefined) {
+      return links[0].workId
+    }
+    return undefined
+  }
 }

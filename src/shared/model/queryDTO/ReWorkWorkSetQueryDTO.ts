@@ -14,6 +14,10 @@ export default class ReWorkWorkSetQueryDTO extends BaseQueryDTO {
    */
   workSetId: number | undefined | null
   /**
+   * 是否为封面作品
+   */
+  isCover: boolean | undefined | null
+  /**
    * 排序顺序
    */
   sortOrder: number | undefined | null
@@ -23,6 +27,7 @@ export default class ReWorkWorkSetQueryDTO extends BaseQueryDTO {
     if (NotNullish(reWorkWorkSetQueryDTO)) {
       this.workId = reWorkWorkSetQueryDTO.workId
       this.workSetId = reWorkWorkSetQueryDTO.workSetId
+      this.isCover = reWorkWorkSetQueryDTO.isCover
       this.sortOrder = reWorkWorkSetQueryDTO.sortOrder
     }
     // 默认按 sortOrder 升序排序

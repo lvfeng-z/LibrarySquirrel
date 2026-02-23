@@ -302,7 +302,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       return []
     }
     const clause = `
-        SELECT w.*, rwws.work_set_id, rwws.sort_order FROM work w
+        SELECT w.*, rwws.work_set_id, rwws.is_cover, rwws.sort_order FROM work w
           INNER JOIN re_work_work_set rwws ON w.id = rwws.work_id
           INNER JOIN work_set ws ON ws.id = rwws.work_set_id
         WHERE rwws.work_set_id IN (${workSetIds.join(',')})
@@ -310,7 +310,15 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     const db = this.acquire()
     try {
       const rows = await db.all<unknown[], Record<string, unknown>>(clause)
-      return this.toResultTypeDataList<WorkWithWorkSetId>(rows)
+      const result = this.toResultTypeDataList<WorkWithWorkSetId>(rows)
+      // 将 is_cover 从 number 转换为 boolean
+      for (const item of result) {
+        const isCoverValue = (item as unknown as { isCover: number | boolean | null | undefined }).isCover
+        if (isCoverValue !== undefined && isCoverValue !== null) {
+          item.isCover = isCoverValue === 1
+        }
+      }
+      return result
     } finally {
       if (!this.injectedDB) {
         db.release()

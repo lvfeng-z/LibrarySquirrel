@@ -866,6 +866,39 @@ function exposeService() {
     }
   })
 
+  Electron.ipcMain.handle('reWorkWorkSet-setCover', async (_event, args): Promise<ApiUtil> => {
+    const reWorkWorkSetService = new ReWorkWorkSetService()
+    try {
+      const { workSetId, workId } = args
+      const result = await reWorkWorkSetService.setCover(workSetId, workId)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
+  Electron.ipcMain.handle('reWorkWorkSet-unsetCover', async (_event, args): Promise<ApiUtil> => {
+    const reWorkWorkSetService = new ReWorkWorkSetService()
+    try {
+      const { workSetId, workId } = args
+      const result = await reWorkWorkSetService.unsetCover(workSetId, workId)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
+  Electron.ipcMain.handle('reWorkWorkSet-getCoverWorkId', async (_event, args): Promise<ApiUtil> => {
+    const reWorkWorkSetService = new ReWorkWorkSetService()
+    try {
+      const { workSetId } = args
+      const result = await reWorkWorkSetService.getCoverWorkId(workSetId)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
   // FileSysUtil
   Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, openFile, isModal): Promise<ApiUtil> => {
     const result = await DirSelect(openFile, isModal)

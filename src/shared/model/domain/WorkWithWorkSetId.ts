@@ -9,6 +9,10 @@ export default class WorkWithWorkSetId extends Work {
    */
   workSetId: number | undefined | null
   /**
+   * 是否为封面作品
+   */
+  isCover: boolean | undefined | null
+  /**
    * 排序顺序
    */
   sortOrder: number | undefined | null
