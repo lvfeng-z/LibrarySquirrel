@@ -832,6 +832,16 @@ function exposeService() {
     }
   })
 
+  Electron.ipcMain.handle('workSet-queryPageWithCover', async (_event, args): Promise<ApiUtil> => {
+    const workSetService = new WorkSetService()
+    try {
+      const result = await workSetService.queryPageWithCover(args)
+      return ApiUtil.response(result)
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
   // ReWorkWorkSetService
   Electron.ipcMain.handle('reWorkWorkSet-linkBatchToWorkSet', async (_event, args): Promise<ApiUtil> => {
     const reWorkWorkSetService = new ReWorkWorkSetService()

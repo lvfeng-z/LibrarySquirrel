@@ -127,6 +127,7 @@ const api = {
 
   // WorkSet
   workSetListWorkSetWithWorkByIds: (args) => Electron.ipcRenderer.invoke('workSet-listWorkSetWithWorkByIds', args),
+  workSetQueryPageWithCover: (args) => Electron.ipcRenderer.invoke('workSet-queryPageWithCover', args),
 
   // ReWorkWorkSet
   reWorkWorkSetLinkBatchToWorkSet: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-linkBatchToWorkSet', args),

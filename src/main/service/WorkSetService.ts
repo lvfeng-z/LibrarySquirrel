@@ -13,6 +13,8 @@ import { Dictionary } from 'async'
 import WorkSetWithWorkId from '@shared/model/domain/WorkSetWithWorkId.ts'
 import SiteService from './SiteService.ts'
 import PluginWorkSetDTO from '@shared/model/dto/PluginWorkSetDTO.ts'
+import Page from '@shared/model/util/Page.ts'
+import WorkSetCoverDTO from '@shared/model/dto/WorkSetCoverDTO.ts'
 
 /**
  * 作品集Service
@@ -159,5 +161,33 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
    */
   public async listByWorkId(workId: number): Promise<WorkSet[]> {
     return this.dao.listByWorkId(workId)
+  }
+
+  /**
+   * 分页查询作品集（包含封面）
+   * @param page 分页查询参数
+   */
+  public async queryPageWithCover(page: Page<WorkSetQueryDTO, WorkSet>): Promise<Page<WorkSetQueryDTO, WorkSetCoverDTO>> {
+    // 查询作品集分页列表
+    const resultPage = await this.dao.queryPageWithCover(page)
+
+    // 获取作品集id列表
+    const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(NotNullish) as number[]
+
+    // 查询封面资源
+    const coverResourceMap = await this.dao.listCoverResourceByWorkSetIds(workSetIds)
+
+    // 组合作品集和封面
+    const workSetCoverList = resultPage.data?.map((workSet) => {
+      const workSetId = workSet.id
+      const coverResource = workSetId ? coverResourceMap.get(workSetId) : undefined
+      return new WorkSetCoverDTO(workSet, coverResource)
+    }) ?? []
+
+    // 转换结果
+    const coverPage = resultPage.transform<WorkSetCoverDTO>()
+    coverPage.data = workSetCoverList
+
+    return coverPage
   }
 }
