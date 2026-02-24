@@ -315,7 +315,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       for (const item of result) {
         const isCoverValue = (item as unknown as { isCover: number | boolean | null | undefined }).isCover
         if (isCoverValue !== undefined && isCoverValue !== null) {
-          item.isCover = isCoverValue === 1
+          item.isCover = isCoverValue === BOOL.TRUE
         }
       }
       return result

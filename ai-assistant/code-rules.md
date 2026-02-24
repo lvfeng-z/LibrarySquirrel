@@ -210,6 +210,28 @@ async function fetchWorkPage(page: Page) {
 - **DAO 模式**: 所有数据库操作通过 DAO 层进行
 - **SQL 文件**: 表结构定义在 YAML 配置文件中 (`src/main/resources/database/`)
 
+### 数据库布尔类型转换
+- **原则**: 数据库中使用整数（0/1）表示布尔值，转换为 JS 布尔值时必须使用 `BOOL` 常量进行比较
+- **常量位置**: `src/shared/model/constant/BOOL.ts`
+- **正确示例**:
+  ```typescript
+  import { BOOL } from '@shared/model/constant/BOOL.ts'
+
+  // 从数据库读取后转换
+  item.isCover = isCoverValue === BOOL.TRUE
+
+  // 写入数据库前转换
+  link.isCover = true ? BOOL.TRUE : BOOL.FALSE
+  ```
+- **错误示例**:
+  ```typescript
+  // 禁止使用硬编码数字比较
+  item.isCover = isCoverValue === 1  // ✗
+
+  // 禁止使用布尔字面量比较
+  item.isCover = isCoverValue === true  // ✗
+  ```
+
 ### 插件开发规范
 - **目录位置**: `src/main/plugin/package/`
 - **插件结构**: 每个插件是独立包，包含 `package.json`
