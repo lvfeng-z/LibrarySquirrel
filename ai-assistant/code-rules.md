@@ -199,6 +199,85 @@ async function fetchWorkPage(page: Page) {
   }
   ```
 
+### DTO 设计与数据暴露原则
+
+规则名称：DTO_FLATTENING_AND_ISOLATION
+优先级：P0 (最高)
+适用范围：所有涉及数据传输对象（DTO）、API 响应/请求类、VO（View Object）生成的场景。
+
+#### 1. 核心指令 (Core Directive)
+
+在生成或修改 DTO 类时，严禁直接将领域实体（Entity/Domain Model）或数据库模型作为属性嵌套在 DTO 中。必须采用扁平化结构，将需要的属性显式复制到 DTO 类中。
+
+#### 2. 具体执行标准 (Execution Standards)
+
+**❌ 禁止模式 (Anti-Pattern)**：
+
+- 禁止在 DTO 中定义类型为 Entity 的属性（例如：`user: User`）
+- 禁止直接使用 `@JsonIgnore` 等注解来"修补"直接嵌套实体带来的安全问题
+- 禁止让 DTO 的字段结构完全被动地跟随数据库表结构变更
+
+**✅ 推荐模式 (Best Practice)**：
+
+- 显式复制：DTO 应包含独立的、基础类型的字段（如 `id: number`, `username: string`, `createTime: number`）
+- 按需裁剪：只复制业务场景真正需要的字段，自动过滤掉敏感字段（如 `password`, `salt`, `internalFlag`）
+- 语义重命名：如果前端需要的字段名与数据库不一致，直接在 DTO 中定义符合前端语义的字段名（例如：数据库叫 `usr_nm`，DTO 叫 `userName`）
+- 嵌套即嵌套 DTO：如果确实需要层级结构（如订单包含地址），嵌套的对象必须是另一个专门的 DTO（如 `AddressDTO`），绝不能是 `Address` 实体
+
+**🛠️ 映射要求 (Mapping Requirement)**：
+
+当实体与 DTO 字段较多时，必须生成或使用现有的映射代码（推荐使用手动 `convert()` 方法），严禁省略映射步骤。
+
+#### 3. 理由与约束 (Rationale & Constraints)
+
+- **安全性 (Security)**：防止因实体类新增敏感字段而意外泄露给前端（Over-exposure）
+- **解耦 (Decoupling)**：确保 API 契约（Contract）独立于内部数据库模型，允许数据库重构而不破坏前端接口
+- **序列化安全 (Serialization Safety)**：避免懒加载（Lazy Loading）导致的异常或循环引用导致的栈溢出
+- **前端友好 (Frontend Friendly)**：提供扁平、直观的 JSON 结构，减少前端访问路径深度
+
+#### 4. 示例对比 (Example)
+
+**❌ 错误示例 (AI 不应生成)**：
+
+```typescript
+// 违反规则：直接嵌套实体，可能泄露 password 和 salt
+class UserResponseDTO {
+  user: User
+  token: string
+}
+// 输出 JSON: { "user": { "id": 1, "username": "admin", "password": "...", "salt": "..." }, "token": "..." }
+```
+
+**✅ 正确示例 (AI 应生成)**：
+
+```typescript
+// 遵守规则：扁平化，只暴露必要字段，独立于 User 实体
+class UserResponseDTO {
+  id: number
+  username: string
+  email: string
+  token: string
+  // 即使 User 实体中有 password 字段，这里也不会出现
+}
+// 输出 JSON: { "id": 1, "username": "admin", "email": "admin@example.com", "token": "..." }
+
+// 映射方法
+function fromEntity(user: User, token: string): UserResponseDTO {
+  const dto = new UserResponseDTO()
+  dto.id = user.id
+  dto.username = user.username
+  dto.email = user.email
+  dto.token = token
+  return dto
+}
+```
+
+#### 5. 异常处理 (Exception Handling)
+
+仅在以下极端情况可考虑嵌套对象，但嵌套的子对象必须也是 DTO：
+
+- 业务逻辑明确要求复杂的层级分组，且该子结构在多个 API 中复用（此时应创建 `XXXSubDTO`）
+
 ### 数据库操作
 - **事务处理**: 使用 `db.transaction()` 支持嵌套 SAVEPOINT
   ```typescript
@@ -230,6 +309,36 @@ async function fetchWorkPage(page: Page) {
 
   // 禁止使用布尔字面量比较
   item.isCover = isCoverValue === true  // ✗
+  ```
+
+### 数据库查询结果转换为实体类
+- **原则**: 从数据库查询出的元数据应先通过框架的转换方法（`toResultTypeData`/`toResultTypeDataList`）转换为项目中定义的实体类或其他对应类，再进行后续操作
+- **避免使用 `as` 类型断言**: 不要直接使用 `as` 从 `Record<string, unknown>` 中提取字段
+- **需要额外字段时创建 DTO 类**: 如果查询结果需要返回比实体类更多的字段（如关联表的外键），应在 `src/shared/model/domain/` 目录下创建对应的 DTO 类继承原实体类
+- **正确示例**:
+  ```typescript
+  // 1. 创建继承实体类的 DTO（包含额外字段）
+  // 文件: src/shared/model/domain/ResourceWithWorkSetId.ts
+  import Resource from '../entity/Resource.ts'
+  export default class ResourceWithWorkSetId extends Resource {
+    workSetId: number | undefined | null
+  }
+
+  // 2. 在 DAO 中使用框架方法转换
+  const resultList = super.toResultTypeDataList<ResourceWithWorkSetId>(rows)
+
+  // 3. 从实体类中获取属性（无需类型断言）
+  for (const item of resultList) {
+    const workSetId = item.workSetId  // 类型安全
+  }
+  ```
+- **错误示例**:
+  ```typescript
+  // 禁止直接使用 as 类型断言提取字段
+  const workSetId = row['work_set_id'] as number  // ✗
+
+  // 禁止直接访问 Record 的索引
+  const id = row['id']  // ✗ 类型为 unknown
   ```
 
 ### 插件开发规范
@@ -306,5 +415,5 @@ async function fetchWorkPage(page: Page) {
 
 ---
 
-**最后更新**: 2026-02-20
+**最后更新**: 2026-02-24
 **维护者**: AI Assistant
