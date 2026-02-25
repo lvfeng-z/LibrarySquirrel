@@ -29,896 +29,467 @@ import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.ts'
 import WorkSetService from '../service/WorkSetService.ts'
 import { IsNullish } from '@shared/util/CommonUtil.ts'
 
-function exposeService() {
-  // test
-  Electron.ipcMain.handle('test-insertLocalTag10W', async () => {
-    LogUtil.info('MainProcessApi', 'test-insertLocalTag10W')
-    return test.insertLocalTag10W()
-  })
-  Electron.ipcMain.handle('test-transactionTest', async () => {
-    LogUtil.info('MainProcessApi', 'test-transactionTest')
-    return test.transactionTest()
-  })
-  Electron.ipcMain.handle('test-pLimitTest', async () => {
-    LogUtil.info('MainProcessApi', 'test-pLimitTest')
-    return test.pLimitTest()
-  })
-  Electron.ipcMain.handle('test-installPluginTest', async () => {
-    LogUtil.info('MainProcessApi', 'test-installPluginTest')
-    return test.installPluginTest()
-  })
-  Electron.ipcMain.handle('test-mainWindowMsgTest', async () => {
-    LogUtil.info('MainProcessApi', 'test-mainWindowMsgTest')
-    return test.mainWindowMsgTest()
-  })
-  Electron.ipcMain.handle('test-gotoPageSiteManage', async () => {
-    LogUtil.info('MainProcessApi', 'test-gotoPageSiteManage')
-    return test.gotoPageSiteManage()
-  })
-  Electron.ipcMain.handle('test-listWorkSetWithWorkByIds', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'test-listWorkSetWithWorkByIds')
-    return test.listWorkSetWithWorkByIds(args)
-  })
-
-  // AppLauncherService
-  Electron.ipcMain.handle('appLauncher-openImage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'appLauncher-openImage')
-    const service = new AppLauncherService()
-    try {
-      service.openImage(args)
-      return ApiUtil.response()
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // AutoExplainPathService
-  Electron.ipcMain.handle('autoExplainPath-getListenerPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'autoExplainPath-getListenerPage')
-    const service = new AutoExplainPathService()
-    try {
-      const page = await service.getListenerPage(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('autoExplainPath-getListenerList', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'autoExplainPath-getListenerList')
-    const service = new AutoExplainPathService()
-    try {
-      const page = await service.getListenerList(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // LocalAuthorService
-  Electron.ipcMain.handle('localAuthor-save', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-save')
-    const service = new LocalAuthorService()
-    try {
-      const page = await service.save(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localAuthor-deleteById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-deleteById')
-    const service = new LocalAuthorService()
-    try {
-      const page = await service.deleteById(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localAuthor-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-updateById')
-    const service = new LocalAuthorService()
-    try {
-      const page = await service.updateById(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localAuthor-getById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-getById')
-    const service = new LocalAuthorService()
-    try {
-      const page = await service.getById(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localAuthor-queryPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-queryPage')
-    const service = new LocalAuthorService()
-    args = new Page(args)
-    try {
-      const page = await service.queryPage(args)
-      return ApiUtil.response(page)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localAuthor-listSelectItems', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-listSelectItems')
-    const service = new LocalAuthorService()
-    try {
-      const result = await service.listSelectItems(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localAuthor-querySelectItemPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localAuthor-querySelectItemPage')
-    const service = new LocalAuthorService()
-    try {
-      const result = await service.querySelectItemPage(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // LocalTagService
-  Electron.ipcMain.handle('localTag-save', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-save')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.save(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-deleteById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-deleteById')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.deleteById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-updateById')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.updateById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-queryPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-queryPage')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.queryPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-queryDTOPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-queryDTOPage')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.queryDTOPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-getById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-getById')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.getById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-getTree', async (_event, arg1, arg2?) => {
-    LogUtil.info('MainProcessApi', 'localTag-getTree')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.getTree(arg1, arg2))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-listSelectItems', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-listSelectItems')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.listSelectItems(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-querySelectItemPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-querySelectItemPage')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.querySelectItemPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-listByWorkId', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-listByWorkId')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.listByWorkId(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('localTag-querySelectItemPageByWorkId', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'localTag-querySelectItemPageByWorkId')
-    const localTagService = new LocalTagService()
-    try {
-      return ApiUtil.response(await localTagService.querySelectItemPageByWorkId(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // GetBrowserWindow
-  Electron.ipcMain.handle('getBrowserWindow', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'getBrowserWindow')
-    GetBrowserWindow(args)
-  })
-
-  // PluginService
-  Electron.ipcMain.handle('plugin-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-updateById')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.updateById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('plugin-queryPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-queryPage')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.queryPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('plugin-installFromPath', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-installFromPath')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.installFromPath(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('plugin-reinstall', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-reinstall')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.reinstall(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('plugin-reinstallFromPath', async (_event, arg1, arg2) => {
-    LogUtil.info('MainProcessApi', 'plugin-reinstallFromPath')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.reinstallFromPath(arg1, arg2), '安装成功')
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('plugin-unInstall', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-unInstall')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.uninstall(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('plugin-listPluginListenerDTO', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'plugin-listPluginListenerDTO')
-    const pluginService = new PluginService()
-    try {
-      return ApiUtil.response(await pluginService.listPluginListenerDTO(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // ReWorkTagService
-  Electron.ipcMain.handle('reWorkTag-link', async (_event, type: OriginType, localTagIds: number[], workId: number) => {
-    LogUtil.info('MainProcessApi', 'reWorkTag-link')
-    const reWorkTagService = new ReWorkTagService()
-    try {
-      return ApiUtil.response(await reWorkTagService.link(type, localTagIds, workId))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('reWorkTag-unlink', async (_event, type: OriginType, localTagIds: number[], workId: number) => {
-    LogUtil.info('MainProcessApi', 'reWorkTag-unlink')
-    const reWorkTagService = new ReWorkTagService()
-    try {
-      return ApiUtil.response(await reWorkTagService.unlink(type, localTagIds, workId))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // SearchService
-  Electron.ipcMain.handle('search-querySearchConditionPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'search-querySearchConditionPage')
-    const queryService = new SearchService()
-    try {
-      return ApiUtil.response(await queryService.querySearchConditionPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('search-queryWorkPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'search-queryWorkPage')
-    const queryService = new SearchService()
-    try {
-      return ApiUtil.response(await queryService.queryWorkPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  //SettingsService
-  Electron.ipcMain.handle('settings-getSettings', () => {
-    try {
-      return ApiUtil.response(SettingsService.getSettings())
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('settings-saveSettings', (_event, args) => {
-    return ApiUtil.response(SettingsService.saveSettings(args))
-  })
-  Electron.ipcMain.handle('settings-resetSettings', () => {
-    return ApiUtil.response(SettingsService.resetSettings())
-  })
-
-  // SiteService
-  Electron.ipcMain.handle('site-deleteById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'site-deleteById')
-    const siteService = new SiteService()
-    try {
-      return ApiUtil.response(await siteService.deleteById(args))
-    } catch (error) {
-      if (error instanceof ForeignKeyDeleteError) {
-        return ApiUtil.error('无法删除站点，此站点正在被其他数据引用')
-      }
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('site-queryPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'site-queryPage')
-    const siteService = new SiteService()
-    try {
-      args = new Page<SiteQueryDTO, Site>(args)
-      return ApiUtil.response(await siteService.queryPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('site-querySelectItemPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'site-querySelectItemPage')
-    const siteService = new SiteService()
-    try {
-      return ApiUtil.response(await siteService.querySelectItemPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('site-save', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'site-save')
-    const siteService = new SiteService()
-    try {
-      return ApiUtil.response(await siteService.save(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('site-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'site-updateById')
-    const siteService = new SiteService()
-    try {
-      return ApiUtil.response(await siteService.updateById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // SiteDomainService
-  Electron.ipcMain.handle('siteDomain-deleteById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteDomain-deleteById')
-    const siteDomainService = new SiteDomainService()
-    try {
-      return ApiUtil.response(await siteDomainService.deleteById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteDomain-queryPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteDomain-queryPage')
-    const siteDomainService = new SiteDomainService()
-    try {
-      args = new Page<SiteQueryDTO, Site>(args)
-      return ApiUtil.response(await siteDomainService.queryPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteDomain-save', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteDomain-save')
-    const siteDomainService = new SiteDomainService()
-    try {
-      return ApiUtil.response(await siteDomainService.save(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteDomain-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteDomain-updateById')
-    const siteDomainService = new SiteDomainService()
-    try {
-      return ApiUtil.response(await siteDomainService.updateById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteDomain-queryDTOPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteDomain-queryDTOPage')
-    const siteDomainService = new SiteDomainService()
-    try {
-      args = new Page(args)
-      return ApiUtil.response(await siteDomainService.queryDTOPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteDomain-queryDTOPageBySite', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteDomain-queryDTOPageBySite')
-    const siteDomainService = new SiteDomainService()
-    try {
-      args = new Page(args)
-      return ApiUtil.response(await siteDomainService.queryDTOPageBySite(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // SiteAuthorService
-  Electron.ipcMain.handle('siteAuthor-deleteById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-deleteById')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.deleteById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteAuthor-save', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-save')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.save(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteAuthor-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-updateById')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.updateById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteAuthor-updateBindLocalAuthor', async (_event, arg1, arg2) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-updateBindLocalAuthor')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.updateBindLocalAuthor(arg1, arg2))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteAuthor-createAndBindSameNameLocalAuthor', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-createAndBindSameNameLocalAuthor')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.createAndBindSameNameLocalAuthor(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-queryBoundOrUnboundInLocalAuthorPage')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.queryBoundOrUnboundInLocalAuthorPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteAuthor-queryLocalRelateDTOPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteAuthor-queryLocalRelateDTOPage')
-    const siteAuthorService = new SiteAuthorService()
-    try {
-      return ApiUtil.response(await siteAuthorService.queryLocalRelateDTOPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // SiteTagService
-  Electron.ipcMain.handle('siteTag-save', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteTag-save')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.save(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-createAndBindSameNameLocalTag', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteTag-createAndBindSameNameLocalTag')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.createAndBindSameNameLocalTag(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-updateById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteTag-updateById')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.updateById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-deleteById', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'siteTag-deleteById')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.deleteById(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-updateBindLocalTag', async (_event, localTagId: number, siteTagIds: number[]) => {
-    LogUtil.info('MainProcessApi', 'siteTag-updateBindLocalTag')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.updateBindLocalTag(localTagId, siteTagIds))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-queryPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-queryPage')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.queryPage(page))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-queryBoundOrUnboundToLocalTagPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-queryBoundOrUnboundToLocalTagPage')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.queryBoundOrUnboundToLocalTagPage(page))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-queryPageByWorkId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-queryPageByWorkId')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.queryPageByWorkId(page))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-queryLocalRelateDTOPage', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-queryLocalRelateDTOPage')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.queryLocalRelateDTOPage(page))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('siteTag-querySelectItemPageByWorkId', async (_event, page: Page<SiteTagQueryDTO, SiteTag>) => {
-    LogUtil.info('MainProcessApi', 'siteTag-querySelectItemPageByWorkId')
-    try {
-      const siteTagService = new SiteTagService()
-      return ApiUtil.response(await siteTagService.querySelectItemPageByWorkId(page))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // TaskService
-  Electron.ipcMain.handle('task-createTask', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-createTask')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.createTask(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-startTaskTree', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-startTaskTree')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.startTaskTree(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-retryTaskTree', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-retryTaskTree')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.retryTaskTree(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-deleteTask', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-deleteTask')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.deleteTask(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-queryPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-queryPage')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.queryPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-queryParentPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-queryParentPage')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.queryParentPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-queryTreeDataPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-queryTreeDataPage')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.queryTreeDataPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-listChildrenTask', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-listChildrenTask')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.listChildrenTask(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-queryChildrenTaskPage', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-queryChildrenTaskPage')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.queryChildrenTaskPage(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-listStatus', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-listStatus')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.listStatus(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-listSchedule', async (_event, args) => {
-    // LogUtil.info('MainProcessApi', 'task-listSchedule')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.listSchedule(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-stopTaskTree', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-stopTaskTree')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.stopTaskTree(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-pauseTaskTree', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-pauseTaskTree')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.pauseTaskTree(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('task-resumeTaskTree', async (_event, args) => {
-    LogUtil.info('MainProcessApi', 'task-resumeTaskTree')
-    try {
-      const taskService = new TaskService()
-      return ApiUtil.response(await taskService.resumeTaskTree(args))
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // WorkService
-  Electron.ipcMain.handle('work-deleteWorkAndSurroundingData', async (_event, args): Promise<ApiUtil> => {
-    const workService = new WorkService()
-    try {
-      const result = await workService.deleteWorkAndSurroundingData(args)
-      return ApiUtil.check(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('work-queryPage', async (_event, args): Promise<ApiUtil> => {
-    const workService = new WorkService()
-    try {
-      const result = await workService.queryPage(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-  Electron.ipcMain.handle('work-getFullWorkInfoById', async (_event, args): Promise<ApiUtil> => {
-    const workService = new WorkService()
-    try {
-      if (IsNullish(args)) {
-        return returnError(new Error('作品id不能为空'))
-      }
-      const result = await workService.getFullWorkInfoById(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // WorkSetService
-  Electron.ipcMain.handle('workSet-listWorkSetWithWorkByIds', async (_event, args): Promise<ApiUtil> => {
-    const workSetService = new WorkSetService()
-    try {
-      const result = await workSetService.listWorkSetWithWorkByIds(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  Electron.ipcMain.handle('workSet-queryPageWithCover', async (_event, args): Promise<ApiUtil> => {
-    const workSetService = new WorkSetService()
-    try {
-      const result = await workSetService.queryPageWithCover(args)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // ReWorkWorkSetService
-  Electron.ipcMain.handle('reWorkWorkSet-linkBatchToWorkSet', async (_event, args): Promise<ApiUtil> => {
-    const reWorkWorkSetService = new ReWorkWorkSetService()
-    try {
-      const { workIds, workSetId } = args
-      const result = await reWorkWorkSetService.linkBatchToWorkSet(workIds, workSetId)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  Electron.ipcMain.handle('reWorkWorkSet-removeBatchFromWorkSet', async (_event, args): Promise<ApiUtil> => {
-    const reWorkWorkSetService = new ReWorkWorkSetService()
-    try {
-      const { workIds, workSetId } = args
-      const result = await reWorkWorkSetService.removeBatchFromWorkSet(workIds, workSetId)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  Electron.ipcMain.handle('reWorkWorkSet-updateSortOrders', async (_event, args): Promise<ApiUtil> => {
-    const reWorkWorkSetService = new ReWorkWorkSetService()
-    try {
-      const { workSetId, workIds } = args
-      const result = await reWorkWorkSetService.updateSortOrders(workSetId, workIds)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  Electron.ipcMain.handle('reWorkWorkSet-setCover', async (_event, args): Promise<ApiUtil> => {
-    const reWorkWorkSetService = new ReWorkWorkSetService()
-    try {
-      const { workSetId, workId } = args
-      const result = await reWorkWorkSetService.setCover(workSetId, workId)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  Electron.ipcMain.handle('reWorkWorkSet-unsetCover', async (_event, args): Promise<ApiUtil> => {
-    const reWorkWorkSetService = new ReWorkWorkSetService()
-    try {
-      const { workSetId, workId } = args
-      const result = await reWorkWorkSetService.unsetCover(workSetId, workId)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  Electron.ipcMain.handle('reWorkWorkSet-getCoverWorkId', async (_event, args): Promise<ApiUtil> => {
-    const reWorkWorkSetService = new ReWorkWorkSetService()
-    try {
-      const { workSetId } = args
-      const result = await reWorkWorkSetService.getCoverWorkId(workSetId)
-      return ApiUtil.response(result)
-    } catch (error) {
-      return returnError(error)
-    }
-  })
-
-  // FileSysUtil
-  Electron.ipcMain.handle('fileSysUtil-dirSelect', async (_event, openFile, isModal): Promise<ApiUtil> => {
-    const result = await DirSelect(openFile, isModal)
-    return ApiUtil.response(result)
-  })
-}
-
 function returnError(error: unknown) {
   LogUtil.error('MainProcessApi', error)
   return ApiUtil.error(String(error))
+}
+
+/**
+ * 创建通用 IPC 处理器 - 自动处理日志记录和错误捕获
+ */
+function createHandler<T>(
+  channel: string,
+  handler: (...args: any[]) => T | Promise<T>,
+  options?: {
+    /** 是否禁用日志记录 */
+    silent?: boolean
+    /** 自定义错误处理 */
+    onError?: (error: unknown) => ApiUtil | undefined
+    /** 自定义响应处理 */
+    transformResponse?: (result: T) => ApiUtil
+  }
+) {
+  return async (_event: Electron.IpcMainInvokeEvent, ...args: any[]) => {
+    if (!options?.silent) {
+      LogUtil.info('MainProcessApi', channel)
+    }
+    try {
+      const result = await handler(...args)
+      if (options?.transformResponse) {
+        return options.transformResponse(result)
+      }
+      return ApiUtil.response(result)
+    } catch (error) {
+      if (options?.onError) {
+        const customResult = options.onError(error)
+        if (customResult) return customResult
+      }
+      return returnError(error)
+    }
+  }
+}
+
+function exposeService() {
+  // test
+  Electron.ipcMain.handle('test-insertLocalTag10W', createHandler('test-insertLocalTag10W', () => test.insertLocalTag10W()))
+  Electron.ipcMain.handle('test-transactionTest', createHandler('test-transactionTest', () => test.transactionTest()))
+  Electron.ipcMain.handle('test-pLimitTest', createHandler('test-pLimitTest', () => test.pLimitTest()))
+  Electron.ipcMain.handle('test-installPluginTest', createHandler('test-installPluginTest', () => test.installPluginTest()))
+  Electron.ipcMain.handle('test-mainWindowMsgTest', createHandler('test-mainWindowMsgTest', () => test.mainWindowMsgTest()))
+  Electron.ipcMain.handle('test-gotoPageSiteManage', createHandler('test-gotoPageSiteManage', () => test.gotoPageSiteManage()))
+  Electron.ipcMain.handle('test-listWorkSetWithWorkByIds', createHandler('test-listWorkSetWithWorkByIds', (args) => test.listWorkSetWithWorkByIds(args)))
+
+  // AppLauncherService
+  Electron.ipcMain.handle('appLauncher-openImage', createHandler('appLauncher-openImage', (args) => {
+    const service = new AppLauncherService()
+    service.openImage(args)
+  }))
+
+  // AutoExplainPathService
+  Electron.ipcMain.handle('autoExplainPath-getListenerPage', createHandler('autoExplainPath-getListenerPage', (args) => {
+    const service = new AutoExplainPathService()
+    return service.getListenerPage(args)
+  }))
+  Electron.ipcMain.handle('autoExplainPath-getListenerList', createHandler('autoExplainPath-getListenerList', (args) => {
+    const service = new AutoExplainPathService()
+    return service.getListenerList(args)
+  }))
+
+  // LocalAuthorService
+  Electron.ipcMain.handle('localAuthor-save', createHandler('localAuthor-save', (args) => {
+    const service = new LocalAuthorService()
+    return service.save(args)
+  }))
+  Electron.ipcMain.handle('localAuthor-deleteById', createHandler('localAuthor-deleteById', (args) => {
+    const service = new LocalAuthorService()
+    return service.deleteById(args)
+  }))
+  Electron.ipcMain.handle('localAuthor-updateById', createHandler('localAuthor-updateById', (args) => {
+    const service = new LocalAuthorService()
+    return service.updateById(args)
+  }))
+  Electron.ipcMain.handle('localAuthor-getById', createHandler('localAuthor-getById', (args) => {
+    const service = new LocalAuthorService()
+    return service.getById(args)
+  }))
+  Electron.ipcMain.handle('localAuthor-queryPage', createHandler('localAuthor-queryPage', (args) => {
+    const service = new LocalAuthorService()
+    args = new Page(args)
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('localAuthor-listSelectItems', createHandler('localAuthor-listSelectItems', (args) => {
+    const service = new LocalAuthorService()
+    return service.listSelectItems(args)
+  }))
+  Electron.ipcMain.handle('localAuthor-querySelectItemPage', createHandler('localAuthor-querySelectItemPage', (args) => {
+    const service = new LocalAuthorService()
+    return service.querySelectItemPage(args)
+  }))
+
+  // LocalTagService
+  Electron.ipcMain.handle('localTag-save', createHandler('localTag-save', (args) => {
+    const service = new LocalTagService()
+    return service.save(args)
+  }))
+  Electron.ipcMain.handle('localTag-deleteById', createHandler('localTag-deleteById', (args) => {
+    const service = new LocalTagService()
+    return service.deleteById(args)
+  }))
+  Electron.ipcMain.handle('localTag-updateById', createHandler('localTag-updateById', (args) => {
+    const service = new LocalTagService()
+    return service.updateById(args)
+  }))
+  Electron.ipcMain.handle('localTag-queryPage', createHandler('localTag-queryPage', (args) => {
+    const service = new LocalTagService()
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('localTag-queryDTOPage', createHandler('localTag-queryDTOPage', (args) => {
+    const service = new LocalTagService()
+    return service.queryDTOPage(args)
+  }))
+  Electron.ipcMain.handle('localTag-getById', createHandler('localTag-getById', (args) => {
+    const service = new LocalTagService()
+    return service.getById(args)
+  }))
+  Electron.ipcMain.handle('localTag-getTree', createHandler('localTag-getTree', (arg1, arg2) => {
+    const service = new LocalTagService()
+    return service.getTree(arg1, arg2)
+  }))
+  Electron.ipcMain.handle('localTag-listSelectItems', createHandler('localTag-listSelectItems', (args) => {
+    const service = new LocalTagService()
+    return service.listSelectItems(args)
+  }))
+  Electron.ipcMain.handle('localTag-querySelectItemPage', createHandler('localTag-querySelectItemPage', (args) => {
+    const service = new LocalTagService()
+    return service.querySelectItemPage(args)
+  }))
+  Electron.ipcMain.handle('localTag-listByWorkId', createHandler('localTag-listByWorkId', (args) => {
+    const service = new LocalTagService()
+    return service.listByWorkId(args)
+  }))
+  Electron.ipcMain.handle('localTag-querySelectItemPageByWorkId', createHandler('localTag-querySelectItemPageByWorkId', (args) => {
+    const service = new LocalTagService()
+    return service.querySelectItemPageByWorkId(args)
+  }))
+
+  // GetBrowserWindow
+  Electron.ipcMain.handle('getBrowserWindow', createHandler('getBrowserWindow', (args) => {
+    GetBrowserWindow(args)
+  }))
+
+  // PluginService
+  Electron.ipcMain.handle('plugin-updateById', createHandler('plugin-updateById', (args) => {
+    const service = new PluginService()
+    return service.updateById(args)
+  }))
+  Electron.ipcMain.handle('plugin-queryPage', createHandler('plugin-queryPage', (args) => {
+    const service = new PluginService()
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('plugin-installFromPath', createHandler('plugin-installFromPath', (args) => {
+    const service = new PluginService()
+    return service.installFromPath(args)
+  }))
+  Electron.ipcMain.handle('plugin-reinstall', createHandler('plugin-reinstall', (args) => {
+    const service = new PluginService()
+    return service.reinstall(args)
+  }))
+  Electron.ipcMain.handle('plugin-reinstallFromPath', createHandler('plugin-reinstallFromPath', (arg1, arg2) => {
+    const service = new PluginService()
+    return service.reinstallFromPath(arg1, arg2)
+  }))
+  Electron.ipcMain.handle('plugin-unInstall', createHandler('plugin-unInstall', (args) => {
+    const service = new PluginService()
+    return service.uninstall(args)
+  }))
+  Electron.ipcMain.handle('plugin-listPluginListenerDTO', createHandler('plugin-listPluginListenerDTO', (args) => {
+    const service = new PluginService()
+    return service.listPluginListenerDTO(args)
+  }))
+
+  // ReWorkTagService
+  Electron.ipcMain.handle('reWorkTag-link', createHandler('reWorkTag-link', (type: OriginType, localTagIds: number[], workId: number) => {
+    const service = new ReWorkTagService()
+    return service.link(type, localTagIds, workId)
+  }))
+  Electron.ipcMain.handle('reWorkTag-unlink', createHandler('reWorkTag-unlink', (type: OriginType, localTagIds: number[], workId: number) => {
+    const service = new ReWorkTagService()
+    return service.unlink(type, localTagIds, workId)
+  }))
+
+  // SearchService
+  Electron.ipcMain.handle('search-querySearchConditionPage', createHandler('search-querySearchConditionPage', (args) => {
+    const service = new SearchService()
+    return service.querySearchConditionPage(args)
+  }))
+  Electron.ipcMain.handle('search-queryWorkPage', createHandler('search-queryWorkPage', (args) => {
+    const service = new SearchService()
+    return service.queryWorkPage(args)
+  }))
+
+  //SettingsService
+  Electron.ipcMain.handle('settings-getSettings', createHandler('settings-getSettings', () => SettingsService.getSettings()))
+  Electron.ipcMain.handle('settings-saveSettings', createHandler('settings-saveSettings', (args) => SettingsService.saveSettings(args)))
+  Electron.ipcMain.handle('settings-resetSettings', createHandler('settings-resetSettings', () => SettingsService.resetSettings()))
+
+  // SiteService
+  Electron.ipcMain.handle('site-deleteById', createHandler('site-deleteById', (args) => {
+    const service = new SiteService()
+    return service.deleteById(args)
+  }, {
+    onError: (error) => {
+      if (error instanceof ForeignKeyDeleteError) {
+        return ApiUtil.error('无法删除站点，此站点正在被其他数据引用')
+      }
+      return undefined
+    }
+  }))
+  Electron.ipcMain.handle('site-queryPage', createHandler('site-queryPage', (args) => {
+    const service = new SiteService()
+    args = new Page<SiteQueryDTO, Site>(args)
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('site-querySelectItemPage', createHandler('site-querySelectItemPage', (args) => {
+    const service = new SiteService()
+    return service.querySelectItemPage(args)
+  }))
+  Electron.ipcMain.handle('site-save', createHandler('site-save', (args) => {
+    const service = new SiteService()
+    return service.save(args)
+  }))
+  Electron.ipcMain.handle('site-updateById', createHandler('site-updateById', (args) => {
+    const service = new SiteService()
+    return service.updateById(args)
+  }))
+
+  // SiteDomainService
+  Electron.ipcMain.handle('siteDomain-deleteById', createHandler('siteDomain-deleteById', (args) => {
+    const service = new SiteDomainService()
+    return service.deleteById(args)
+  }))
+  Electron.ipcMain.handle('siteDomain-queryPage', createHandler('siteDomain-queryPage', (args) => {
+    const service = new SiteDomainService()
+    args = new Page<SiteQueryDTO, Site>(args)
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('siteDomain-save', createHandler('siteDomain-save', (args) => {
+    const service = new SiteDomainService()
+    return service.save(args)
+  }))
+  Electron.ipcMain.handle('siteDomain-updateById', createHandler('siteDomain-updateById', (args) => {
+    const service = new SiteDomainService()
+    return service.updateById(args)
+  }))
+  Electron.ipcMain.handle('siteDomain-queryDTOPage', createHandler('siteDomain-queryDTOPage', (args) => {
+    const service = new SiteDomainService()
+    args = new Page(args)
+    return service.queryDTOPage(args)
+  }))
+  Electron.ipcMain.handle('siteDomain-queryDTOPageBySite', createHandler('siteDomain-queryDTOPageBySite', (args) => {
+    const service = new SiteDomainService()
+    args = new Page(args)
+    return service.queryDTOPageBySite(args)
+  }))
+
+  // SiteAuthorService
+  Electron.ipcMain.handle('siteAuthor-deleteById', createHandler('siteAuthor-deleteById', (args) => {
+    const service = new SiteAuthorService()
+    return service.deleteById(args)
+  }))
+  Electron.ipcMain.handle('siteAuthor-save', createHandler('siteAuthor-save', (args) => {
+    const service = new SiteAuthorService()
+    return service.save(args)
+  }))
+  Electron.ipcMain.handle('siteAuthor-updateById', createHandler('siteAuthor-updateById', (args) => {
+    const service = new SiteAuthorService()
+    return service.updateById(args)
+  }))
+  Electron.ipcMain.handle('siteAuthor-updateBindLocalAuthor', createHandler('siteAuthor-updateBindLocalAuthor', (arg1, arg2) => {
+    const service = new SiteAuthorService()
+    return service.updateBindLocalAuthor(arg1, arg2)
+  }))
+  Electron.ipcMain.handle('siteAuthor-createAndBindSameNameLocalAuthor', createHandler('siteAuthor-createAndBindSameNameLocalAuthor', (args) => {
+    const service = new SiteAuthorService()
+    return service.createAndBindSameNameLocalAuthor(args)
+  }))
+  Electron.ipcMain.handle('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', createHandler('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', (args) => {
+    const service = new SiteAuthorService()
+    return service.queryBoundOrUnboundInLocalAuthorPage(args)
+  }))
+  Electron.ipcMain.handle('siteAuthor-queryLocalRelateDTOPage', createHandler('siteAuthor-queryLocalRelateDTOPage', (args) => {
+    const service = new SiteAuthorService()
+    return service.queryLocalRelateDTOPage(args)
+  }))
+
+  // SiteTagService
+  Electron.ipcMain.handle('siteTag-save', createHandler('siteTag-save', (args) => {
+    const service = new SiteTagService()
+    return service.save(args)
+  }))
+  Electron.ipcMain.handle('siteTag-createAndBindSameNameLocalTag', createHandler('siteTag-createAndBindSameNameLocalTag', (args) => {
+    const service = new SiteTagService()
+    return service.createAndBindSameNameLocalTag(args)
+  }))
+  Electron.ipcMain.handle('siteTag-updateById', createHandler('siteTag-updateById', (args) => {
+    const service = new SiteTagService()
+    return service.updateById(args)
+  }))
+  Electron.ipcMain.handle('siteTag-deleteById', createHandler('siteTag-deleteById', (args) => {
+    const service = new SiteTagService()
+    return service.deleteById(args)
+  }))
+  Electron.ipcMain.handle('siteTag-updateBindLocalTag', createHandler('siteTag-updateBindLocalTag', (localTagId: number, siteTagIds: number[]) => {
+    const service = new SiteTagService()
+    return service.updateBindLocalTag(localTagId, siteTagIds)
+  }))
+  Electron.ipcMain.handle('siteTag-queryPage', createHandler('siteTag-queryPage', (page: Page<SiteTagQueryDTO, SiteTag>) => {
+    const service = new SiteTagService()
+    return service.queryPage(page)
+  }))
+  Electron.ipcMain.handle('siteTag-queryBoundOrUnboundToLocalTagPage', createHandler('siteTag-queryBoundOrUnboundToLocalTagPage', (page: Page<SiteTagQueryDTO, SiteTag>) => {
+    const service = new SiteTagService()
+    return service.queryBoundOrUnboundToLocalTagPage(page)
+  }))
+  Electron.ipcMain.handle('siteTag-queryPageByWorkId', createHandler('siteTag-queryPageByWorkId', (page: Page<SiteTagQueryDTO, SiteTag>) => {
+    const service = new SiteTagService()
+    return service.queryPageByWorkId(page)
+  }))
+  Electron.ipcMain.handle('siteTag-queryLocalRelateDTOPage', createHandler('siteTag-queryLocalRelateDTOPage', (page: Page<SiteTagQueryDTO, SiteTag>) => {
+    const service = new SiteTagService()
+    return service.queryLocalRelateDTOPage(page)
+  }))
+  Electron.ipcMain.handle('siteTag-querySelectItemPageByWorkId', createHandler('siteTag-querySelectItemPageByWorkId', (page: Page<SiteTagQueryDTO, SiteTag>) => {
+    const service = new SiteTagService()
+    return service.querySelectItemPageByWorkId(page)
+  }))
+
+  // TaskService
+  Electron.ipcMain.handle('task-createTask', createHandler('task-createTask', (args) => {
+    const service = new TaskService()
+    return service.createTask(args)
+  }))
+  Electron.ipcMain.handle('task-startTaskTree', createHandler('task-startTaskTree', (args) => {
+    const service = new TaskService()
+    return service.startTaskTree(args)
+  }))
+  Electron.ipcMain.handle('task-retryTaskTree', createHandler('task-retryTaskTree', (args) => {
+    const service = new TaskService()
+    return service.retryTaskTree(args)
+  }))
+  Electron.ipcMain.handle('task-deleteTask', createHandler('task-deleteTask', (args) => {
+    const service = new TaskService()
+    return service.deleteTask(args)
+  }))
+  Electron.ipcMain.handle('task-queryPage', createHandler('task-queryPage', (args) => {
+    const service = new TaskService()
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('task-queryParentPage', createHandler('task-queryParentPage', (args) => {
+    const service = new TaskService()
+    return service.queryParentPage(args)
+  }))
+  Electron.ipcMain.handle('task-queryTreeDataPage', createHandler('task-queryTreeDataPage', (args) => {
+    const service = new TaskService()
+    return service.queryTreeDataPage(args)
+  }))
+  Electron.ipcMain.handle('task-listChildrenTask', createHandler('task-listChildrenTask', (args) => {
+    const service = new TaskService()
+    return service.listChildrenTask(args)
+  }))
+  Electron.ipcMain.handle('task-queryChildrenTaskPage', createHandler('task-queryChildrenTaskPage', (args) => {
+    const service = new TaskService()
+    return service.queryChildrenTaskPage(args)
+  }))
+  Electron.ipcMain.handle('task-listStatus', createHandler('task-listStatus', (args) => {
+    const service = new TaskService()
+    return service.listStatus(args)
+  }))
+  Electron.ipcMain.handle('task-listSchedule', createHandler('task-listSchedule', (args) => {
+    const service = new TaskService()
+    return service.listSchedule(args)
+  }, { silent: true }))
+  Electron.ipcMain.handle('task-stopTaskTree', createHandler('task-stopTaskTree', (args) => {
+    const service = new TaskService()
+    return service.stopTaskTree(args)
+  }))
+  Electron.ipcMain.handle('task-pauseTaskTree', createHandler('task-pauseTaskTree', (args) => {
+    const service = new TaskService()
+    return service.pauseTaskTree(args)
+  }))
+  Electron.ipcMain.handle('task-resumeTaskTree', createHandler('task-resumeTaskTree', (args) => {
+    const service = new TaskService()
+    return service.resumeTaskTree(args)
+  }))
+
+  // WorkService
+  Electron.ipcMain.handle('work-deleteWorkAndSurroundingData', createHandler('work-deleteWorkAndSurroundingData', (args) => {
+    const service = new WorkService()
+    return service.deleteWorkAndSurroundingData(args)
+  }, { transformResponse: (result) => ApiUtil.check(result) }))
+  Electron.ipcMain.handle('work-queryPage', createHandler('work-queryPage', (args) => {
+    const service = new WorkService()
+    return service.queryPage(args)
+  }))
+  Electron.ipcMain.handle('work-getFullWorkInfoById', createHandler('work-getFullWorkInfoById', (args) => {
+    if (IsNullish(args)) {
+      throw new Error('作品id不能为空')
+    }
+    const service = new WorkService()
+    return service.getFullWorkInfoById(args)
+  }))
+
+  // WorkSetService
+  Electron.ipcMain.handle('workSet-listWorkSetWithWorkByIds', createHandler('workSet-listWorkSetWithWorkByIds', (args) => {
+    const service = new WorkSetService()
+    return service.listWorkSetWithWorkByIds(args)
+  }))
+
+  Electron.ipcMain.handle('workSet-queryPageWithCover', createHandler('workSet-queryPageWithCover', (args) => {
+    const service = new WorkSetService()
+    return service.queryPageWithCover(args)
+  }))
+
+  // ReWorkWorkSetService
+  Electron.ipcMain.handle('reWorkWorkSet-linkBatchToWorkSet', createHandler('reWorkWorkSet-linkBatchToWorkSet', (args) => {
+    const service = new ReWorkWorkSetService()
+    const { workIds, workSetId } = args
+    return service.linkBatchToWorkSet(workIds, workSetId)
+  }))
+
+  Electron.ipcMain.handle('reWorkWorkSet-removeBatchFromWorkSet', createHandler('reWorkWorkSet-removeBatchFromWorkSet', (args) => {
+    const service = new ReWorkWorkSetService()
+    const { workIds, workSetId } = args
+    return service.removeBatchFromWorkSet(workIds, workSetId)
+  }))
+
+  Electron.ipcMain.handle('reWorkWorkSet-updateSortOrders', createHandler('reWorkWorkSet-updateSortOrders', (args) => {
+    const service = new ReWorkWorkSetService()
+    const { workSetId, workIds } = args
+    return service.updateSortOrders(workSetId, workIds)
+  }))
+
+  Electron.ipcMain.handle('reWorkWorkSet-setCover', createHandler('reWorkWorkSet-setCover', (args) => {
+    const service = new ReWorkWorkSetService()
+    const { workSetId, workId } = args
+    return service.setCover(workSetId, workId)
+  }))
+
+  Electron.ipcMain.handle('reWorkWorkSet-unsetCover', createHandler('reWorkWorkSet-unsetCover', (args) => {
+    const service = new ReWorkWorkSetService()
+    const { workSetId, workId } = args
+    return service.unsetCover(workSetId, workId)
+  }))
+
+  Electron.ipcMain.handle('reWorkWorkSet-getCoverWorkId', createHandler('reWorkWorkSet-getCoverWorkId', (args) => {
+    const service = new ReWorkWorkSetService()
+    const { workSetId } = args
+    return service.getCoverWorkId(workSetId)
+  }))
+
+  // FileSysUtil
+  Electron.ipcMain.handle('fileSysUtil-dirSelect', createHandler('fileSysUtil-dirSelect', (openFile, isModal) => {
+    return DirSelect(openFile, isModal)
+  }))
 }
 
 export default {
