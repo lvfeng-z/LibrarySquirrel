@@ -14,8 +14,7 @@ import { OriginType } from '../constant/OriginType.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
 import WorkWithWorkSetId from '@shared/model/domain/WorkWithWorkSetId.ts'
-import { Operator } from '../constant/CrudConstant.ts'
-import LogUtil from '../util/LogUtil.ts'
+import { SearchConditionUtil } from '../util/SearchConditionUtil.ts'
 
 export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -319,119 +318,8 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
         FROM work t1
           LEFT JOIN resource t2 ON t1.id = t2.work_id AND t2.state = ${BOOL.TRUE}`
 
-    // 使用 SearchCondition[] 生成 WHERE 子句
-    const whereClauses: string[] = []
-    if (ArrayNotEmpty(searchConditions)) {
-      for (const searchCondition of searchConditions) {
-        switch (searchCondition.type) {
-          case SearchType.LOCAL_TAG:
-            // 本地标签：同时匹配直接关联的本地标签和通过站点标签关联的本地标签
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              // 排除
-              whereClauses.push(
-                `NOT EXISTS(SELECT 1 FROM re_work_tag rwt
-                 LEFT JOIN site_tag st ON rwt.site_tag_id = st.id
-                 WHERE rwt.work_id = t1.id AND (rwt.local_tag_id = ${searchCondition.value} OR st.local_tag_id = ${searchCondition.value}))`
-              )
-            } else {
-              // 包含（默认）
-              whereClauses.push(
-                `EXISTS(SELECT 1 FROM re_work_tag rwt
-                 LEFT JOIN site_tag st ON rwt.site_tag_id = st.id
-                 WHERE rwt.work_id = t1.id AND (rwt.local_tag_id = ${searchCondition.value} OR st.local_tag_id = ${searchCondition.value}))`
-              )
-            }
-            break
-          case SearchType.SITE_TAG:
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              // 排除
-              whereClauses.push(
-                `NOT EXISTS(SELECT 1 FROM re_work_tag rwt WHERE rwt.work_id = t1.id AND rwt.site_tag_id = ${searchCondition.value})`
-              )
-            } else {
-              // 包含（默认）
-              whereClauses.push(`EXISTS(SELECT 1 FROM re_work_tag rwt WHERE rwt.work_id = t1.id AND rwt.site_tag_id = ${searchCondition.value})`)
-            }
-            break
-          case SearchType.LOCAL_AUTHOR:
-            // 本地作者：同时匹配直接关联的本地作者和通过站点作者关联的本地作者
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              // 排除
-              whereClauses.push(
-                `NOT EXISTS(SELECT 1 FROM re_work_author rwa
-                 LEFT JOIN site_author sa ON rwa.site_author_id = sa.id
-                 WHERE rwa.work_id = t1.id AND (rwa.local_author_id = ${searchCondition.value} OR sa.local_author_id = ${searchCondition.value}))`
-              )
-            } else {
-              // 包含（默认）
-              whereClauses.push(
-                `EXISTS(SELECT 1 FROM re_work_author rwa
-                 LEFT JOIN site_author sa ON rwa.site_author_id = sa.id
-                 WHERE rwa.work_id = t1.id AND (rwa.local_author_id = ${searchCondition.value} OR sa.local_author_id = ${searchCondition.value}))`
-              )
-            }
-            break
-          case SearchType.SITE_AUTHOR:
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              // 排除
-              whereClauses.push(
-                `NOT EXISTS(SELECT 1 FROM re_work_author rwa WHERE rwa.work_id = t1.id AND rwa.site_author_id = ${searchCondition.value})`
-              )
-            } else {
-              // 包含（默认）
-              whereClauses.push(`EXISTS(SELECT 1 FROM re_work_author rwa WHERE rwa.work_id = t1.id AND rwa.site_author_id = ${searchCondition.value})`)
-            }
-            break
-          case SearchType.WORKS_SITE_NAME:
-            if (searchCondition.operator === Operator.LIKE) {
-              whereClauses.push(`t1.site_work_name LIKE '%${searchCondition.value}%'`)
-            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              whereClauses.push(`t1.site_work_name <> '${searchCondition.value}'`)
-            } else {
-              whereClauses.push(`t1.site_work_name = '${searchCondition.value}'`)
-            }
-            break
-          case SearchType.WORKS_NICKNAME:
-            if (searchCondition.operator === Operator.LIKE) {
-              whereClauses.push(`t1.nick_name LIKE '%${searchCondition.value}%'`)
-            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              whereClauses.push(`t1.nick_name <> '${searchCondition.value}'`)
-            } else {
-              whereClauses.push(`t1.nick_name = '${searchCondition.value}'`)
-            }
-            break
-          case SearchType.WORKS_UPLOAD_TIME:
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              whereClauses.push(`t1.site_upload_time <> '${searchCondition.value}'`)
-            } else {
-              whereClauses.push(`t1.site_upload_time = '${searchCondition.value}'`)
-            }
-            break
-          case SearchType.WORKS_LAST_VIEW:
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              whereClauses.push(`t1.last_view <> ${searchCondition.value}`)
-            } else {
-              whereClauses.push(`t1.last_view = ${searchCondition.value}`)
-            }
-            break
-          case SearchType.MEDIA_TYPE:
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              const extList = MediaExtMapping[searchCondition.value as MediaType]
-              whereClauses.push(`t1.filename_extension NOT IN (${extList.join(',')})`)
-            } else {
-              const extList = MediaExtMapping[searchCondition.value as MediaType]
-              whereClauses.push(`t1.filename_extension IN (${extList.join(',')})`)
-            }
-            break
-          case SearchType.WORK_SET:
-            // 排除指定作品集下的作品
-            whereClauses.push(`NOT EXISTS(SELECT 1 FROM re_work_work_set rwws WHERE rwws.work_id = t1.id AND rwws.work_set_id = ${searchCondition.value})`)
-            break
-          default:
-            LogUtil.warn('WorkDao', `不支持查询参数类型${searchCondition.type}`)
-        }
-      }
-    }
+    // 使用 SearchConditionUtil 生成 WHERE 子句
+    const whereClauses = SearchConditionUtil.generateWhereClauses(searchConditions, 't1')
 
     // 拼接语句
     let statement = selectClause.concat(' ', fromClause)
