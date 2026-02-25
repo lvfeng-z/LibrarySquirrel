@@ -25,8 +25,17 @@ const apis = {
 }
 const imageFit: Ref<UnwrapRef<'contain' | 'cover' | 'fill' | 'none' | 'scale-down'>> = ref('contain')
 const caseHeight: Ref<UnwrapRef<string>> = computed(() => (props.maxHeight === undefined ? 'auto' : String(props.maxHeight) + 'px'))
+// 封面资源路径，如果无效则为空字符串，让el-image触发error插槽显示默认图片
+const coverFilePath: Ref<UnwrapRef<string>> = computed(() => {
+  const filePath = props.workSet.coverResource?.filePath
+  return filePath ?? ''
+})
 // src的参数
 const srcParamStr: Ref<UnwrapRef<string>> = computed(() => {
+  // 如果没有封面路径，返回空，不添加参数
+  if (!coverFilePath.value) {
+    return ''
+  }
   const params: string[] = []
   if (NotNullish(props.maxHeight)) {
     params.push(`visualHeight=${props.maxHeight}`)
@@ -78,7 +87,7 @@ function getWorkSetName(): string {
     <el-image
       :fit="imageFit"
       class="work-card-image"
-      :src="`resource://workdir${props.workSet.coverResource?.filePath}${srcParamStr}`"
+      :src="coverFilePath ? `resource://workdir${coverFilePath}${srcParamStr}` : ''"
       @load="handleElImageFit"
       @click="handleImageClicked"
       @dblclick="handlePictureClicked"

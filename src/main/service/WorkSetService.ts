@@ -4,7 +4,7 @@ import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import WorkSetDao from '../dao/WorkSetDao.ts'
 import { AssertNotNullish } from '../util/AssertUtil.js'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { IsNullish, NotNullish, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import WorkSetWithWorkDTO from '@shared/model/dto/WorkSetWithWorkDTO.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import WorkService from './WorkService.ts'
@@ -15,6 +15,7 @@ import SiteService from './SiteService.ts'
 import PluginWorkSetDTO from '@shared/model/dto/PluginWorkSetDTO.ts'
 import Page from '@shared/model/util/Page.ts'
 import WorkSetCoverDTO from '@shared/model/dto/WorkSetCoverDTO.ts'
+import { SearchCondition } from '@shared/model/util/SearchCondition.js'
 
 /**
  * 作品集Service
@@ -175,6 +176,46 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(NotNullish) as number[]
 
     // 查询封面资源
+    const coverResourceMap = await this.dao.listCoverResourceByWorkSetIds(workSetIds)
+
+    // 组合作品集和封面
+    const workSetCoverList = resultPage.data?.map((workSet) => {
+      const workSetId = workSet.id
+      const coverResource = workSetId ? coverResourceMap.get(workSetId) : undefined
+      return new WorkSetCoverDTO(workSet, coverResource)
+    }) ?? []
+
+    // 转换结果
+    const coverPage = resultPage.transform<WorkSetCoverDTO>()
+    coverPage.data = workSetCoverList
+
+    return coverPage
+  }
+
+  /**
+   * 根据作品搜索条件分页查询作品集（包含封面）
+   * 当作品集中的任意作品符合条件时，将这个作品集放入结果集中
+   * @param page 分页查询参数
+   * @param searchConditions 作品搜索条件
+   */
+  public async queryPageByWorkConditionsWithCover(
+    page: Page<WorkSetQueryDTO, WorkSet>,
+    searchConditions: SearchCondition[]
+  ): Promise<Page<WorkSetQueryDTO, WorkSetCoverDTO>> {
+    // 查询作品集基础信息
+    const resultPage = await this.dao.queryPageByWorkConditions(page, searchConditions)
+
+    // 获取作品集id列表
+    const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(NotNullish) as number[]
+
+    // 如果没有作品集，直接返回空结果
+    if (!ArrayNotEmpty(workSetIds)) {
+      const emptyPage = resultPage.transform<WorkSetCoverDTO>()
+      emptyPage.data = []
+      return emptyPage
+    }
+
+    // 批量查询封面资源
     const coverResourceMap = await this.dao.listCoverResourceByWorkSetIds(workSetIds)
 
     // 组合作品集和封面

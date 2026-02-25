@@ -226,6 +226,10 @@ function exposeService() {
     const service = new SearchService()
     return service.queryWorkPage(args)
   }))
+  Electron.ipcMain.handle('search-queryWorkSetPage', createHandler('search-queryWorkSetPage', (args) => {
+    const service = new SearchService()
+    return service.queryWorkSetPage(args)
+  }))
 
   //SettingsService
   Electron.ipcMain.handle('settings-getSettings', createHandler('settings-getSettings', () => SettingsService.getSettings()))

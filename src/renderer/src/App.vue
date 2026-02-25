@@ -122,6 +122,7 @@ const apis = {
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   workQueryPage: window.api.workQueryPage,
   searchQueryWorkPage: window.api.searchQueryWorkPage,
+  searchQueryWorkSetPage: window.api.searchQueryWorkSetPage,
   settingsGetSettings: window.api.settingsGetSettings,
   settingsSaveSettings: window.api.settingsSaveSettings
 }
@@ -173,7 +174,7 @@ const workSetList: Ref<UnwrapRef<WorkSetCoverDTO[]>> = ref([])
 // 当前作品集的索引
 const currentWorkSetIndex = ref(0)
 // 作品集分页
-const workSetPage: Ref<UnwrapRef<Page<WorkSetQueryDTO, WorkSetCoverDTO>>> = ref(new Page<WorkSetQueryDTO, WorkSetCoverDTO>())
+const workSetPage: Ref<UnwrapRef<Page<SearchCondition[], WorkSetCoverDTO>>> = ref(new Page<SearchCondition[], WorkSetCoverDTO>())
 // IpcRenderer相关
 // 路径解释
 const showExplainPath = ref(false) // 解释路径对话框的开关
@@ -273,6 +274,55 @@ async function searchWork(page: Page<SearchCondition[], WorkFullDTO>): Promise<P
     }
   })
 }
+// 请求作品集接口
+async function searchWorkSet(page: Page<SearchCondition[], WorkSetCoverDTO>): Promise<Page<WorkSetQueryDTO, WorkSetCoverDTO>> {
+  // 处理搜索框的标签
+  page.query = selectedTagList.value
+    .map((searchCondition) => {
+      let operator: CrudOperator | undefined = undefined
+      if (NotNullish(searchCondition.disabled) && searchCondition.disabled) {
+        operator = CrudOperator.NOT_EQUAL
+      }
+      if (NotNullish(searchCondition.extraData)) {
+        const extraData = searchCondition.extraData as { type: SearchType; id: number }
+        return new SearchCondition({ type: extraData.type, value: extraData.id, operator: operator })
+      } else {
+        return undefined
+      }
+    })
+    .filter(NotNullish)
+  if (IsNullish(page.query)) {
+    page.query = []
+  }
+  if (ArrayNotEmpty(customTagList.value)) {
+    customTagList.value.forEach((tag: SegmentedTagItem) =>
+      page.query?.push(new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: tag.value, operator: CrudOperator.LIKE }))
+    )
+  }
+  // 处理搜索框输入的文本
+  if (StringUtil.isNotBlank(autoLoadInput.value)) {
+    const workName = autoLoadInput.value
+    if (IsNullish(page.query)) {
+      page.query = []
+    }
+    let tempCondition = new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: workName, operator: CrudOperator.LIKE })
+    page.query.push(tempCondition)
+    tempCondition = new SearchCondition({ type: SearchType.WORKS_NICKNAME, value: workName, operator: CrudOperator.LIKE })
+    page.query.push(tempCondition)
+  }
+
+  page.pageSize = 16
+
+  return apis.searchQueryWorkSetPage(page).then((response: ApiResponse) => {
+    if (ApiUtil.check(response)) {
+      const resultPage = ApiUtil.data<Page<WorkSetQueryDTO, WorkSetCoverDTO>>(response)
+      // WorkSetCoverDTO 没有继承 WorkSet，直接使用返回的数据即可
+      return resultPage
+    } else {
+      return page
+    }
+  })
+}
 // 加载下一页作品
 async function queryWorkPage(next: boolean) {
   // 新查询重置查询条件
@@ -298,22 +348,21 @@ async function queryWorkPage(next: boolean) {
 async function queryWorkSetPage(next: boolean) {
   // 新查询重置查询条件
   if (!next) {
-    workSetPage.value = new Page<WorkSetQueryDTO, WorkSetCoverDTO>()
+    workSetPage.value = new Page<SearchCondition[], WorkSetCoverDTO>()
     workSetPage.value.pageSize = 12
     workSetList.value.length = 0
   }
   // 查询
   const tempPage = lodash.cloneDeep(workSetPage.value)
   tempPage.data = undefined
-  const response = await window.api.workSetQueryPageWithCover(tempPage)
-  if (ApiUtil.check(response)) {
-    const nextPage = ApiUtil.data<Page<WorkSetQueryDTO, WorkSetCoverDTO>>(response)
-    if (NotNullish(nextPage) && ArrayNotEmpty(nextPage.data)) {
-      workSetPage.value.pageNumber++
-      workSetPage.value.pageCount = nextPage.pageCount
-      workSetPage.value.dataCount = nextPage.dataCount
-      workSetList.value.push(...nextPage.data)
-    }
+  const nextPage = await searchWorkSet(tempPage)
+
+  // 没有新数据时，不再增加页码
+  if (ArrayNotEmpty(nextPage.data)) {
+    workSetPage.value.pageNumber++
+    workSetPage.value.pageCount = nextPage.pageCount
+    workSetPage.value.dataCount = nextPage.dataCount
+    workSetList.value.push(...nextPage.data)
   }
 }
 // 重新查询搜索条件

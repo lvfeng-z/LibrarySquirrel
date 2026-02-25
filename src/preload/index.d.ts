@@ -64,6 +64,7 @@ declare global {
       // SearchService
       searchQuerySearchConditionPage: function
       searchQueryWorkPage: function
+      searchQueryWorkSetPage: function
 
       // Settings
       settingsGetSettings: function

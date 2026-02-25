@@ -55,6 +55,7 @@ const api = {
   // SearchService
   searchQuerySearchConditionPage: (args) => Electron.ipcRenderer.invoke('search-querySearchConditionPage', args),
   searchQueryWorkPage: (args) => Electron.ipcRenderer.invoke('search-queryWorkPage', args),
+  searchQueryWorkSetPage: (args) => Electron.ipcRenderer.invoke('search-queryWorkSetPage', args),
 
   // ReWorkTag
   reWorkTagLink: (arg1, arg2, arg3) => Electron.ipcRenderer.invoke('reWorkTag-link', arg1, arg2, arg3),

@@ -19,6 +19,9 @@ import SiteAuthorService from './SiteAuthorService.js'
 import WorkCommonQueryDTO from '@shared/model/queryDTO/WorkCommonQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.js'
 import { WorkDao } from '../dao/WorkDao.ts'
+import WorkSetService from './WorkSetService.ts'
+import WorkSetCoverDTO from '@shared/model/dto/WorkSetCoverDTO.ts'
+import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 
 /**
  * 作品查询服务类
@@ -202,5 +205,20 @@ export default class SearchService {
       process.push(siteAuthorService.updateLastUse(usedSiteAuthor))
     }
     return Promise.allSettled(process)
+  }
+
+  /**
+   * 分页查询作品集（根据作品搜索条件）
+   * 当作品集中的任意作品符合条件时，将这个作品集放入结果集中
+   * @param page 分页查询参数，query 为 SearchCondition[] 数组
+   */
+  public async queryWorkSetPage(
+    page: Page<SearchCondition[], WorkSetCoverDTO>
+  ): Promise<Page<SearchCondition[], WorkSetCoverDTO>> {
+    const workSetService = new WorkSetService()
+    const searchConditions = page.query ?? []
+    // 创建 WorkSetQueryDTO 用于分页
+    const workSetPage = new Page<WorkSetQueryDTO, WorkSetCoverDTO>(page as unknown as Page<WorkSetQueryDTO, WorkSetCoverDTO>)
+    return workSetService.queryPageByWorkConditionsWithCover(workSetPage, searchConditions) as unknown as Promise<Page<SearchCondition[], WorkSetCoverDTO>>
   }
 }

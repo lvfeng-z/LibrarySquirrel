@@ -10,6 +10,8 @@ import Page from '@shared/model/util/Page.ts'
 import { BOOL } from '@shared/model/constant/BOOL.ts'
 import Resource from '@shared/model/entity/Resource.ts'
 import ResourceWithWorkSetId from '@shared/model/domain/ResourceWithWorkSetId.ts'
+import { SearchCondition } from '@shared/model/util/SearchCondition.js'
+import { SearchConditionUtil } from '../util/SearchConditionUtil.ts'
 
 export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -258,6 +260,50 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       }
 
       return coverResourceMap
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+
+  /**
+   * 根据作品搜索条件分页查询作品集
+   * 当作品集中的任意作品符合条件时，将这个作品集放入结果集中
+   * @param page 分页查询参数
+   * @param searchConditions 作品搜索条件
+   */
+  public async queryPageByWorkConditions(
+    page: Page<WorkSetQueryDTO, WorkSet>,
+    searchConditions: SearchCondition[]
+  ): Promise<Page<WorkSetQueryDTO, WorkSet>> {
+    const modifiedPage = new Page(page)
+
+    // 生成作品子查询条件
+    const workWhereClause = SearchConditionUtil.generateExistsClause(searchConditions)
+
+    // 拼接查询语句
+    let statement = `SELECT work_set.* FROM work_set`
+    if (workWhereClause) {
+      statement = statement.concat(' WHERE ', workWhereClause)
+    }
+
+    // 获取排序字段
+    const sort = page.query?.sort ?? []
+
+    // 添加排序和分页
+    statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
+
+    if (modifiedPage.currentCount < 1) {
+      modifiedPage.data = []
+      return modifiedPage
+    }
+
+    const db = this.acquire()
+    try {
+      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
+      modifiedPage.data = this.toResultTypeDataList<WorkSet>(rows)
+      return modifiedPage
     } finally {
       if (!this.injectedDB) {
         db.release()
