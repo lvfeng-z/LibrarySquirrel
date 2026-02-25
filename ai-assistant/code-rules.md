@@ -289,6 +289,111 @@ function fromEntity(user: User, token: string): UserResponseDTO {
 - **DAO 模式**: 所有数据库操作通过 DAO 层进行
 - **SQL 文件**: 表结构定义在 YAML 配置文件中 (`src/main/resources/database/`)
 
+### 数据库连接使用规范
+
+#### 1. Service 之间的数据库连接传递原则
+
+**核心原则**: 数据库客户端实例的传递仅用于**事务功能**，普通查询不应传递。
+
+- **需要传递数据库连接的场景**:
+  - 多个 Service 需要在同一个事务中执行操作
+  - 需要保证数据一致性（如同时操作作品和作品集）
+
+- **不应传递数据库连接的场景**:
+  - 独立的查询操作
+  - 各 Service 独立管理自己的数据库连接和生命周期
+
+#### 2. Service 实例创建规范
+
+**❌ 错误示例**:
+```typescript
+// 错误：传入数据库连接但不用于事务，导致连接无法自动释放
+class SearchService {
+  queryWorkSetPage() {
+    // 传入 db 但不是为了事务，会导致 WorkSetService 无法释放连接
+    const workSetService = new WorkSetService(this.db)
+    return workSetService.queryPageByWorkConditionsWithCover(page, searchConditions)
+  }
+}
+```
+
+**✅ 正确示例**:
+```typescript
+// 正确：不传入数据库连接，让被调用的 Service 创建并管理自己的连接
+class SearchService {
+  queryWorkSetPage() {
+    // WorkSetService 会创建自己的数据库连接，查询完成后自动释放
+    const workSetService = new WorkSetService()
+    return workSetService.queryPageByWorkConditionsWithCover(page, searchConditions)
+  }
+}
+
+// 正确：需要事务时传入数据库连接
+class SomeTransactionService {
+  async doTransaction() {
+    const db = new DatabaseClient(this.constructor.name)
+    try {
+      const workService = new WorkService(db)
+      const workSetService = new WorkSetService(db)
+      // 在同一个事务中执行
+      await db.transaction(async (tx) => {
+        await workService.save(work)
+        await workSetService.save(workSet)
+      }, '操作描述')
+    } finally {
+      db.release()
+    }
+  }
+}
+```
+
+#### 3. BaseService 构造函数参数说明
+
+```typescript
+// BaseService 构造函数
+class BaseService {
+  constructor(
+    dao: new (db: DatabaseClient, injectedDB: boolean) => Dao,
+    db?: DatabaseClient,           // 可选：传入数据库客户端用于事务
+    injectedDB?: boolean            // 可选：显式指定是否为注入的连接
+  ) {
+    //...
+  }
+}
+```
+
+- **不传 db 参数**: Service 创建自己的数据库连接，查询完成后自动释放
+- **传入 db 参数**: 使用传入的数据库连接，通常仅用于事务场景
+
+#### 4. DAO 层连接管理
+
+DAO 层通过 `injectedDB` 标志管理连接释放：
+- `injectedDB = false`: Service 创建的连接，查询完成后在 `finally` 块中释放
+- `injectedDB = true`: 外部注入的连接（用于事务），不自动释放，由外部事务管理器控制
+
+**DAO 查询方法标准模式**:
+```typescript
+class demoDao {
+  async queryByConditions(params): Promise<Result> {
+    const db = this.acquire()
+    try {
+      const rows = await db.all(/*...*/)
+      return this.toResultTypeDataList(rows)
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
+}
+```
+
+#### 5. 常见错误避免
+
+1. **连接泄漏**: 不要在非事务场景下传递数据库连接
+2. **重复释放**: 确保只在 `injectedDB = false` 时释放连接
+3. **事务回滚**: 事务中使用 `throw` 触发回滚，避免手动处理
+
 ### 数据库布尔类型转换
 - **原则**: 数据库中使用整数（0/1）表示布尔值，转换为 JS 布尔值时必须使用 `BOOL` 常量进行比较
 - **常量位置**: `src/shared/model/constant/BOOL.ts`
