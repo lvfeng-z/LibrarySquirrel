@@ -480,47 +480,57 @@ async function handleTest() {
             <el-button v-if="workSetView" type="danger" class="topbar-items" @click="queryWorkSetPage(false)">搜索</el-button>
           </div>
           <div ref="workSpace" class="main-page-work-space">
-            <!-- 作品视图 -->
-            <el-scrollbar v-show="!workSetView" v-el-scrollbar-bottomed="() => queryWorkPage(true)">
-              <work-grid-for-main-page
-                ref="workGridRef"
-                v-model:current-work-index="currentWorkIndex"
-                class="main-page-work-grid"
-                :work-list="workList"
-              />
-            </el-scrollbar>
-            <span
-              v-show="!workSetView"
-              ref="loadMoreButton"
-              :class="{
-                'work-grid-load-more': true,
-                'work-grid-show-load-more': loadMore,
-                'work-grid-hide-load-more': !loadMore
-              }"
-              @click="queryWorkPage(true)"
-            >
-              加载更多...
-            </span>
-            <!-- 作品集视图 -->
-            <el-scrollbar v-show="workSetView" v-el-scrollbar-bottomed="() => queryWorkSetPage(true)">
-              <work-set-grid-for-main-page
-                ref="workSetGridRef"
-                v-model:current-work-set-index="currentWorkSetIndex"
-                class="main-page-work-grid"
-                :work-set-list="workSetList"
-              />
-            </el-scrollbar>
-            <span
-              v-show="workSetView"
-              :class="{
-                'work-grid-load-more': true,
-                'work-grid-show-load-more': loadMoreWorkSet,
-                'work-grid-hide-load-more': !loadMoreWorkSet
-              }"
-              @click="queryWorkSetPage(true)"
-            >
-              加载更多...
-            </span>
+            <div class="view-wrapper">
+              <!-- 作品视图 -->
+              <div
+                class="view-container"
+                :class="{ 'view-slide-left': workSetView }"
+              >
+                <el-scrollbar v-el-scrollbar-bottomed="() => queryWorkPage(true)">
+                  <work-grid-for-main-page
+                    ref="workGridRef"
+                    v-model:current-work-index="currentWorkIndex"
+                    class="main-page-work-grid"
+                    :work-list="workList"
+                  />
+                </el-scrollbar>
+                <span
+                  ref="loadMoreButton"
+                  :class="{
+                    'work-grid-load-more': true,
+                    'work-grid-show-load-more': loadMore,
+                    'work-grid-hide-load-more': !loadMore
+                  }"
+                  @click="queryWorkPage(true)"
+                >
+                  加载更多...
+                </span>
+              </div>
+              <!-- 作品集视图 -->
+              <div
+                class="view-container"
+                :class="{ 'view-slide-right': !workSetView }"
+              >
+                <el-scrollbar v-el-scrollbar-bottomed="() => queryWorkSetPage(true)">
+                  <work-set-grid-for-main-page
+                    ref="workSetGridRef"
+                    v-model:current-work-set-index="currentWorkSetIndex"
+                    class="main-page-work-grid"
+                    :work-set-list="workSetList"
+                  />
+                </el-scrollbar>
+                <span
+                  :class="{
+                    'work-grid-load-more': true,
+                    'work-grid-show-load-more': loadMoreWorkSet,
+                    'work-grid-hide-load-more': !loadMoreWorkSet
+                  }"
+                  @click="queryWorkSetPage(true)"
+                >
+                  加载更多...
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         <div v-if="pageStatesStore.pageStates.subPage.state" class="subPage">
@@ -704,5 +714,45 @@ async function handleTest() {
 .subPage {
   width: 100%;
   height: 100%;
+}
+
+/* 视图容器 - 使用相对定位作为参考 */
+.view-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 视图容器 - 使用绝对定位让两个视图重叠 */
+.view-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+/* 作品视图向左移动到左侧不可视区域 */
+.view-container.view-slide-left {
+  transform: translateX(-100%);
+}
+
+/* 作品集视图向右移动到右侧不可视区域 */
+.view-container.view-slide-right {
+  transform: translateX(100%);
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
 }
 </style>
