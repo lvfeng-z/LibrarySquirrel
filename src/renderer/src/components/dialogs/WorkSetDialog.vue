@@ -306,6 +306,8 @@ function handleSelectWorkCheckedChange(ids: number[]) {
 // 关闭弹窗的回调
 function beforeDialogClose(done: (shouldCancel?: boolean) => void) {
   viewMode.value = 'manage'
+  isCheckable.value = false
+  checkedWorkIds.value = []
   done()
 }
 
