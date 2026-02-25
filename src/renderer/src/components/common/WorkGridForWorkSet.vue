@@ -28,6 +28,20 @@ const workCardItemList: Ref<WorkCardItem[]> = computed(() => props.workList.map(
 
 // 方法
 function handleImageClicked(workCardItem: WorkCardItem) {
+  // 如果在管理模式(checkable为true)，则切换勾选状态，不打开详情
+  if (props.checkable) {
+    const workId = workCardItem.id
+    if (workId) {
+      const currentChecked = props.checkedWorkIds?.includes(workId) || false
+      // 触发选中状态变化
+      const newCheckedIds = currentChecked
+        ? props.checkedWorkIds?.filter((id) => id !== workId) || []
+        : [...(props.checkedWorkIds || []), workId]
+      emits('checkedChange', newCheckedIds)
+    }
+    return
+  }
+  // 非管理模式，打开作品详情
   currentWorkIndex.value = workCardItemList.value.indexOf(workCardItem)
   workDialogState.value = true
 }
