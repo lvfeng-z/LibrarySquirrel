@@ -131,6 +131,7 @@ declare global {
 
       // WorkSet
       workSetListWorkSetWithWorkByIds: function
+      workSetQueryPageWithCover: function
 
       // ReWorkWorkSet
       reWorkWorkSetLinkBatchToWorkSet: function

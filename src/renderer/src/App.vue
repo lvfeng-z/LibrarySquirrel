@@ -38,10 +38,13 @@ import { Settings as SettingsEntity } from '@renderer/model/util/Settings.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AskGotoPage, GotoPage } from '@renderer/utils/PageUtil.ts'
 import WorkGridForMainPage from '@renderer/components/common/WorkGridForMainPage.vue'
+import WorkSetGridForMainPage from '@renderer/components/common/WorkSetGridForMainPage.vue'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
+import WorkSetCoverDTO from '@shared/model/dto/WorkSetCoverDTO.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 import SearchConditionQueryDTO from '@shared/model/queryDTO/SearchConditionQueryDTO.ts'
 import WorkQueryDTO from '@shared/model/queryDTO/WorkQueryDTO.ts'
+import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import StringUtil from '@shared/util/StringUtil.ts'
 
 // onMounted
@@ -49,6 +52,7 @@ onMounted(async () => {
   // const request = apis.workQueryPage()
   // console.log(request)
   resizeObserver.observe(workGridRef.value.$el)
+  resizeObserver.observe(workSetGridRef.value.$el)
   window.addEventListener('keyup', handleKeyUp)
 
   // 首次使用软件的向导
@@ -125,6 +129,8 @@ const apis = {
 const workSpace = ref()
 // workGrid组件的实例
 const workGridRef = ref()
+// workSetGrid组件的实例
+const workSetGridRef = ref()
 // 向导按钮组件的实例
 const guideButton = ref()
 // 任务按钮组件的实例
@@ -148,12 +154,26 @@ const searchBarPanelState: Ref<boolean> = ref(false)
 const notificationListState: Ref<boolean> = ref(false)
 // 加载更多按钮开关
 const loadMore: Ref<boolean> = ref(false)
-// 监听workGrid组件的高度变化
+// 作品集视图加载更多按钮开关
+const loadMoreWorkSet: Ref<boolean> = ref(false)
+// 监听workGrid和workSetGrid组件的高度变化
 const resizeObserver = new ResizeObserver((entries) => {
-  loadMore.value = entries[0].contentRect.height < workSpace.value.clientHeight && workPage.value.pageNumber < workPage.value.pageCount
+  const entry = entries[0]
+  // 判断是作品视图还是作品集视图
+  if (workSetView.value) {
+    loadMoreWorkSet.value = entry.contentRect.height < workSpace.value.clientHeight && workSetPage.value.pageNumber < workSetPage.value.pageCount
+  } else {
+    loadMore.value = entry.contentRect.height < workSpace.value.clientHeight && workPage.value.pageNumber < workPage.value.pageCount
+  }
 })
 // 作品集视图开关
 const workSetView: Ref<boolean> = ref(false)
+// 需展示的作品集列表
+const workSetList: Ref<UnwrapRef<WorkSetCoverDTO[]>> = ref([])
+// 当前作品集的索引
+const currentWorkSetIndex = ref(0)
+// 作品集分页
+const workSetPage: Ref<UnwrapRef<Page<WorkSetQueryDTO, WorkSetCoverDTO>>> = ref(new Page<WorkSetQueryDTO, WorkSetCoverDTO>())
 // IpcRenderer相关
 // 路径解释
 const showExplainPath = ref(false) // 解释路径对话框的开关
@@ -258,7 +278,7 @@ async function queryWorkPage(next: boolean) {
   // 新查询重置查询条件
   if (!next) {
     workPage.value = new Page<SearchCondition[], WorkFullDTO>()
-    workPage.value.pageSize = 10
+    workPage.value.pageSize = 12
     workList.value.length = 0
   }
   //查询
@@ -272,6 +292,28 @@ async function queryWorkPage(next: boolean) {
     workPage.value.pageCount = nextPage.pageCount
     workPage.value.dataCount = nextPage.dataCount
     workList.value.push(...nextPage.data)
+  }
+}
+// 加载下一页作品集
+async function queryWorkSetPage(next: boolean) {
+  // 新查询重置查询条件
+  if (!next) {
+    workSetPage.value = new Page<WorkSetQueryDTO, WorkSetCoverDTO>()
+    workSetPage.value.pageSize = 12
+    workSetList.value.length = 0
+  }
+  // 查询
+  const tempPage = lodash.cloneDeep(workSetPage.value)
+  tempPage.data = undefined
+  const response = await window.api.workSetQueryPageWithCover(tempPage)
+  if (ApiUtil.check(response)) {
+    const nextPage = ApiUtil.data<Page<WorkSetQueryDTO, WorkSetCoverDTO>>(response)
+    if (NotNullish(nextPage) && ArrayNotEmpty(nextPage.data)) {
+      workSetPage.value.pageNumber++
+      workSetPage.value.pageCount = nextPage.pageCount
+      workSetPage.value.dataCount = nextPage.dataCount
+      workSetList.value.push(...nextPage.data)
+    }
   }
 }
 // 重新查询搜索条件
@@ -434,10 +476,12 @@ async function handleTest() {
                 </div>
               </collapse-panel>
             </div>
-            <el-button type="danger" class="topbar-items" @click="queryWorkPage(false)">搜索</el-button>
+            <el-button v-if="!workSetView" type="danger" class="topbar-items" @click="queryWorkPage(false)">搜索</el-button>
+            <el-button v-if="workSetView" type="danger" class="topbar-items" @click="queryWorkSetPage(false)">搜索</el-button>
           </div>
           <div ref="workSpace" class="main-page-work-space">
-            <el-scrollbar v-el-scrollbar-bottomed="() => queryWorkPage(true)">
+            <!-- 作品视图 -->
+            <el-scrollbar v-show="!workSetView" v-el-scrollbar-bottomed="() => queryWorkPage(true)">
               <work-grid-for-main-page
                 ref="workGridRef"
                 v-model:current-work-index="currentWorkIndex"
@@ -446,6 +490,7 @@ async function handleTest() {
               />
             </el-scrollbar>
             <span
+              v-show="!workSetView"
               ref="loadMoreButton"
               :class="{
                 'work-grid-load-more': true,
@@ -453,6 +498,26 @@ async function handleTest() {
                 'work-grid-hide-load-more': !loadMore
               }"
               @click="queryWorkPage(true)"
+            >
+              加载更多...
+            </span>
+            <!-- 作品集视图 -->
+            <el-scrollbar v-show="workSetView" v-el-scrollbar-bottomed="() => queryWorkSetPage(true)">
+              <work-set-grid-for-main-page
+                ref="workSetGridRef"
+                v-model:current-work-set-index="currentWorkSetIndex"
+                class="main-page-work-grid"
+                :work-set-list="workSetList"
+              />
+            </el-scrollbar>
+            <span
+              v-show="workSetView"
+              :class="{
+                'work-grid-load-more': true,
+                'work-grid-show-load-more': loadMoreWorkSet,
+                'work-grid-hide-load-more': !loadMoreWorkSet
+              }"
+              @click="queryWorkSetPage(true)"
             >
               加载更多...
             </span>
