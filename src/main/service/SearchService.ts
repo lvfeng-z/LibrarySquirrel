@@ -176,7 +176,7 @@ export default class SearchService {
       }
     }
 
-    const workSetService = new WorkSetService(this.db)
+    const workSetService = new WorkSetService()
     // 创建 WorkSetQueryDTO 用于分页
     const workSetPage = new Page<WorkSetQueryDTO, WorkSetCoverDTO>(page as unknown as Page<WorkSetQueryDTO, WorkSetCoverDTO>)
     return workSetService.queryPageByWorkConditionsWithCover(workSetPage, searchConditions).then((result) => {
