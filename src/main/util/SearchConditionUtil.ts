@@ -23,10 +23,11 @@ export class SearchConditionUtil {
       const fromAndWhere: { from: string[]; where: string[] } = { from: [], where: [] }
       searchConditions.forEach((query) => {
         if (query.type === SearchType.LOCAL_TAG) {
+          // 本地标签：同时匹配直接关联的本地标签和通过站点标签关联的本地标签
           fromAndWhere.from.push(
-            `INNER JOIN re_work_tag re_w_t_1 ON ${workTableAlias}.id = re_w_t_1.work_id`
+            `INNER JOIN re_work_tag re_w_t_1 ON ${workTableAlias}.id = re_w_t_1.work_id LEFT JOIN site_tag st ON re_w_t_1.site_tag_id = st.id`
           )
-          fromAndWhere.where.push(`re_w_t_1.local_tag_id = ${query.value}`)
+          fromAndWhere.where.push(`(re_w_t_1.local_tag_id = ${query.value} OR st.local_tag_id = ${query.value})`)
         }
         if (query.type === SearchType.SITE_TAG) {
           fromAndWhere.from.push(
@@ -35,10 +36,11 @@ export class SearchConditionUtil {
           fromAndWhere.where.push(`re_w_t_2.site_tag_id = ${query.value}`)
         }
         if (query.type === SearchType.LOCAL_AUTHOR) {
+          // 本地作者：同时匹配直接关联的本地作者和通过站点作者关联的本地作者
           fromAndWhere.from.push(
-            `INNER JOIN re_work_author re_w_a_1 ON ${workTableAlias}.id = re_w_a_1.work_id`
+            `INNER JOIN re_work_author re_w_a_1 ON ${workTableAlias}.id = re_w_a_1.work_id LEFT JOIN site_author sa ON re_w_a_1.site_author_id = sa.id`
           )
-          fromAndWhere.where.push(`re_w_a_1.local_author_id = ${query.value}`)
+          fromAndWhere.where.push(`(re_w_a_1.local_author_id = ${query.value} OR sa.local_author_id = ${query.value})`)
         }
         if (query.type === SearchType.SITE_AUTHOR) {
           fromAndWhere.from.push(

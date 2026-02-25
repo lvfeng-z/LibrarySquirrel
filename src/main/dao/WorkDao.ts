@@ -14,6 +14,8 @@ import { OriginType } from '../constant/OriginType.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
 import WorkWithWorkSetId from '@shared/model/domain/WorkWithWorkSetId.ts'
+import { Operator } from '../constant/CrudConstant.ts'
+import LogUtil from '../util/LogUtil.ts'
 
 export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -262,6 +264,202 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       })
       return { from: fromAndWhere.from.join(' '), where: fromAndWhere.where.join(' ') }
     }
+  }
+
+  /**
+   * 根据作品搜索条件分页查询作品（包含完整信息）
+   * @param page 分页查询参数
+   * @param searchConditions 作品搜索条件
+   */
+  public async queryPageByWorkConditions(
+    page: Page<WorkQueryDTO, WorkFullDTO>,
+    searchConditions: SearchCondition[]
+  ): Promise<Page<WorkQueryDTO, WorkFullDTO>> {
+    const modifiedPage = new Page(page)
+
+    const selectClause = `
+        SELECT t1.*,
+               CASE WHEN t2.id IS NOT NULL THEN
+                 JSON_OBJECT(
+                      'id', t2.id, 'workId', t2.work_id, 'taskId', t2.task_id, 'state', t2.state, 'filePath', t2.file_path, 'fileName', t2.file_name,
+                      'filenameExtension', t2.filename_extension, 'suggestedName', t2.suggest_name, 'workdir', t2.workdir, 'resourceComplete', t2.resource_complete)
+               END AS resource,
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+                            'id', rt1.id, 'workId', rt1.work_id, 'taskId', rt1.task_id, 'state', rt1.state, 'filePath', rt1.file_path, 'fileName', rt1.file_name, 'filenameExtension',
+                            rt1.filename_extension, 'suggestedName', rt1.suggest_name, 'workdir', rt1.workdir, 'resourceComplete', rt1.resource_complete))
+                FROM resource rt1
+                WHERE t1.id = rt1.work_id AND rt1.state = ${BOOL.FALSE}) AS inactiveResource,
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT('id', rt2.id, 'localTagName', rt2.local_tag_name, 'baseLocalTagId', rt2.base_local_tag_id, 'lastUse', rt2.last_use))
+                FROM re_work_tag rt1
+                         INNER JOIN local_tag rt2 ON rt1.local_tag_id = rt2.id
+                WHERE t1.id = rt1.work_id) AS localTags,
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+                            'id', rt2.id, 'siteId', rt2.site_id, 'siteTagId', rt2.site_tag_id, 'siteTagName', rt2.site_tag_name, 'baseSiteTagId', rt2.base_site_tag_id,
+                            'description', rt2.description, 'localTagId', rt2.local_tag_id, 'lastUse', rt2.last_use))
+                FROM re_work_tag rt1
+                         INNER JOIN site_tag rt2 ON rt1.site_tag_id = rt2.id
+                WHERE t1.id = rt1.work_id) AS siteTags,
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT('id', rt2.id, 'authorName', rt2.author_name, 'lastUse', rt2.last_use, 'authorRank', rt1.author_rank))
+                FROM re_work_author rt1
+                         INNER JOIN local_author rt2 ON rt1.local_author_id = rt2.id
+                WHERE t1.id = rt1.work_id) AS localAuthors,
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+                            'id', rt2.id, 'siteId', rt2.site_id, 'siteAuthorId', rt2.site_author_id, 'authorName', rt2.author_name, 'siteAuthorNameBefore',
+                            rt2.site_author_name_before, 'introduce', rt2.introduce, 'localAuthorId', rt2.local_author_id, 'lastUse', rt2.last_use, 'authorRank', rt1.author_rank))
+                FROM re_work_author rt1
+                         INNER JOIN site_author rt2 ON rt1.site_author_id = rt2.id
+                WHERE t1.id = rt1.work_id) AS siteAuthors,
+               (SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+                            'id', rt2.id, 'siteId', rt2.site_id, 'siteWorkSetId', rt2.site_work_set_id, 'siteWorkSetName', rt2.site_work_set_name, 'siteAuthorId', rt2.site_author_id,
+                            'siteUploadTime', rt2.site_upload_time, 'siteUpdateTime', rt2.site_update_time, 'nickName', rt2.nick_name, 'lastView', rt2.last_view))
+                FROM re_work_work_set rt1
+                         INNER JOIN work_set rt2 ON rt1.work_set_id = rt2.id
+                WHERE t1.id = rt1.work_id) AS workSets`
+    const fromClause = `
+        FROM work t1
+          LEFT JOIN resource t2 ON t1.id = t2.work_id AND t2.state = ${BOOL.TRUE}`
+
+    // 使用 SearchCondition[] 生成 WHERE 子句
+    const whereClauses: string[] = []
+    if (ArrayNotEmpty(searchConditions)) {
+      for (const searchCondition of searchConditions) {
+        switch (searchCondition.type) {
+          case SearchType.LOCAL_TAG:
+            // 本地标签：同时匹配直接关联的本地标签和通过站点标签关联的本地标签
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              // 排除
+              whereClauses.push(
+                `NOT EXISTS(SELECT 1 FROM re_work_tag rwt
+                 LEFT JOIN site_tag st ON rwt.site_tag_id = st.id
+                 WHERE rwt.work_id = t1.id AND (rwt.local_tag_id = ${searchCondition.value} OR st.local_tag_id = ${searchCondition.value}))`
+              )
+            } else {
+              // 包含（默认）
+              whereClauses.push(
+                `EXISTS(SELECT 1 FROM re_work_tag rwt
+                 LEFT JOIN site_tag st ON rwt.site_tag_id = st.id
+                 WHERE rwt.work_id = t1.id AND (rwt.local_tag_id = ${searchCondition.value} OR st.local_tag_id = ${searchCondition.value}))`
+              )
+            }
+            break
+          case SearchType.SITE_TAG:
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              // 排除
+              whereClauses.push(
+                `NOT EXISTS(SELECT 1 FROM re_work_tag rwt WHERE rwt.work_id = t1.id AND rwt.site_tag_id = ${searchCondition.value})`
+              )
+            } else {
+              // 包含（默认）
+              whereClauses.push(`EXISTS(SELECT 1 FROM re_work_tag rwt WHERE rwt.work_id = t1.id AND rwt.site_tag_id = ${searchCondition.value})`)
+            }
+            break
+          case SearchType.LOCAL_AUTHOR:
+            // 本地作者：同时匹配直接关联的本地作者和通过站点作者关联的本地作者
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              // 排除
+              whereClauses.push(
+                `NOT EXISTS(SELECT 1 FROM re_work_author rwa
+                 LEFT JOIN site_author sa ON rwa.site_author_id = sa.id
+                 WHERE rwa.work_id = t1.id AND (rwa.local_author_id = ${searchCondition.value} OR sa.local_author_id = ${searchCondition.value}))`
+              )
+            } else {
+              // 包含（默认）
+              whereClauses.push(
+                `EXISTS(SELECT 1 FROM re_work_author rwa
+                 LEFT JOIN site_author sa ON rwa.site_author_id = sa.id
+                 WHERE rwa.work_id = t1.id AND (rwa.local_author_id = ${searchCondition.value} OR sa.local_author_id = ${searchCondition.value}))`
+              )
+            }
+            break
+          case SearchType.SITE_AUTHOR:
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              // 排除
+              whereClauses.push(
+                `NOT EXISTS(SELECT 1 FROM re_work_author rwa WHERE rwa.work_id = t1.id AND rwa.site_author_id = ${searchCondition.value})`
+              )
+            } else {
+              // 包含（默认）
+              whereClauses.push(`EXISTS(SELECT 1 FROM re_work_author rwa WHERE rwa.work_id = t1.id AND rwa.site_author_id = ${searchCondition.value})`)
+            }
+            break
+          case SearchType.WORKS_SITE_NAME:
+            if (searchCondition.operator === Operator.LIKE) {
+              whereClauses.push(`t1.site_work_name LIKE '%${searchCondition.value}%'`)
+            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
+              whereClauses.push(`t1.site_work_name <> '${searchCondition.value}'`)
+            } else {
+              whereClauses.push(`t1.site_work_name = '${searchCondition.value}'`)
+            }
+            break
+          case SearchType.WORKS_NICKNAME:
+            if (searchCondition.operator === Operator.LIKE) {
+              whereClauses.push(`t1.nick_name LIKE '%${searchCondition.value}%'`)
+            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
+              whereClauses.push(`t1.nick_name <> '${searchCondition.value}'`)
+            } else {
+              whereClauses.push(`t1.nick_name = '${searchCondition.value}'`)
+            }
+            break
+          case SearchType.WORKS_UPLOAD_TIME:
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              whereClauses.push(`t1.site_upload_time <> '${searchCondition.value}'`)
+            } else {
+              whereClauses.push(`t1.site_upload_time = '${searchCondition.value}'`)
+            }
+            break
+          case SearchType.WORKS_LAST_VIEW:
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              whereClauses.push(`t1.last_view <> ${searchCondition.value}`)
+            } else {
+              whereClauses.push(`t1.last_view = ${searchCondition.value}`)
+            }
+            break
+          case SearchType.MEDIA_TYPE:
+            if (searchCondition.operator === Operator.NOT_EQUAL) {
+              const extList = MediaExtMapping[searchCondition.value as MediaType]
+              whereClauses.push(`t1.filename_extension NOT IN (${extList.join(',')})`)
+            } else {
+              const extList = MediaExtMapping[searchCondition.value as MediaType]
+              whereClauses.push(`t1.filename_extension IN (${extList.join(',')})`)
+            }
+            break
+          case SearchType.WORK_SET:
+            // 排除指定作品集下的作品
+            whereClauses.push(`NOT EXISTS(SELECT 1 FROM re_work_work_set rwws WHERE rwws.work_id = t1.id AND rwws.work_set_id = ${searchCondition.value})`)
+            break
+          default:
+            LogUtil.warn('WorkDao', `不支持查询参数类型${searchCondition.type}`)
+        }
+      }
+    }
+
+    // 拼接语句
+    let statement = selectClause.concat(' ', fromClause)
+    const whereClause = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : undefined
+    if (whereClause) {
+      statement = statement.concat(' ', whereClause)
+    }
+
+    // 分组
+    statement = statement + ' GROUP BY t1.id'
+
+    // 排序和分页子句
+    const sort = page.query?.sort ?? []
+    statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
+
+    const db = this.acquire()
+    return db
+      .all<unknown[], Record<string, unknown>>(statement, {})
+      .then((rows) => {
+        const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+        modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
+        return modifiedPage
+      })
+      .finally(() => {
+        if (!this.injectedDB) {
+          db.release()
+        }
+      })
   }
 
   public async listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds: { siteId: number; siteWorkId: string }[]): Promise<Work[]> {

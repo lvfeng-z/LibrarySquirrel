@@ -6,17 +6,12 @@ import { SearchTypes } from '../constant/SearchType.js'
 import SearchDao from '../dao/SearchDao.js'
 import { SearchCondition, SearchType } from '@shared/model/util/SearchCondition.js'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
-import WorkService from './WorkService.ts'
-import Work from '@shared/model/entity/Work.ts'
 import WorkQueryDTO from '@shared/model/queryDTO/WorkQueryDTO.ts'
 import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
-import LogUtil from '../util/LogUtil.js'
-import { Operator } from '../constant/CrudConstant.js'
 import LocalTagService from './LocalTagService.js'
 import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
-import WorkCommonQueryDTO from '@shared/model/queryDTO/WorkCommonQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.js'
 import { WorkDao } from '../dao/WorkDao.ts'
 import WorkSetService from './WorkSetService.ts'
@@ -67,107 +62,43 @@ export default class SearchService {
 
   /**
    * 分页查询作品
-   * @param page
+   * @param page 分页查询参数，query 为 SearchCondition[] 数组
    */
-  public async queryWorkPage(page: Page<SearchCondition[], WorkFullDTO>): Promise<Page<WorkQueryDTO, Work>> {
-    const searchConditions = page.query
-    page = new Page(page)
-    page.query = searchConditions
-    const workPage = page.copy<WorkQueryDTO, WorkFullDTO>()
-    const workService = new WorkService()
+  public async queryWorkPage(page: Page<SearchCondition[], WorkFullDTO>): Promise<Page<WorkQueryDTO, WorkFullDTO>> {
+    const searchConditions = page.query ?? []
+    // 创建 WorkQueryDTO 用于分页
+    const workPage = new Page<WorkQueryDTO, WorkFullDTO>(page as unknown as Page<WorkQueryDTO, WorkFullDTO>)
+    const workDao = new WorkDao(this.db, this.injectedDB)
 
-    const workCommonQueryDTO = new WorkCommonQueryDTO()
-    workCommonQueryDTO.includeLocalTagIds = []
-    workCommonQueryDTO.excludeLocalTagIds = []
-    workCommonQueryDTO.includeSiteTagIds = []
-    workCommonQueryDTO.excludeSiteTagIds = []
-    workCommonQueryDTO.includeLocalAuthorIds = []
-    workCommonQueryDTO.excludeLocalAuthorIds = []
-    workCommonQueryDTO.includeSiteAuthorIds = []
-    workCommonQueryDTO.excludeSiteAuthorIds = []
-    workCommonQueryDTO.operators = {}
+    // 记录使用的搜索条件用于更新最后使用时间
     const usedLocalTag: number[] = []
     const usedSiteTag: number[] = []
     const usedLocalAuthor: number[] = []
     const usedSiteAuthor: number[] = []
+
     if (ArrayNotEmpty(searchConditions)) {
       for (const searchCondition of searchConditions) {
         switch (searchCondition.type) {
           case SearchType.LOCAL_TAG:
-            if (searchCondition.operator === Operator.EQUAL) {
-              workCommonQueryDTO.includeLocalTagIds.push(searchCondition.value as number)
-            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              workCommonQueryDTO.excludeLocalTagIds.push(searchCondition.value as number)
-            } else {
-              LogUtil.warn('SearchService', `本地标签不支持这种匹配方式，operator: ${searchCondition.operator}`)
-            }
             usedLocalTag.push(searchCondition.value as number)
             break
           case SearchType.SITE_TAG:
-            if (searchCondition.operator === Operator.EQUAL) {
-              workCommonQueryDTO.includeSiteTagIds.push(searchCondition.value as number)
-            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              workCommonQueryDTO.excludeSiteTagIds.push(searchCondition.value as number)
-            } else {
-              LogUtil.warn('SearchService', `站点标签不支持这种匹配方式，operator: ${searchCondition.operator}`)
-            }
             usedSiteTag.push(searchCondition.value as number)
             break
           case SearchType.LOCAL_AUTHOR:
-            if (searchCondition.operator === Operator.EQUAL) {
-              workCommonQueryDTO.includeLocalAuthorIds.push(searchCondition.value as number)
-            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              workCommonQueryDTO.excludeLocalAuthorIds.push(searchCondition.value as number)
-            } else {
-              LogUtil.warn('SearchService', `本地作者不支持这种匹配方式，operator: ${searchCondition.operator}`)
-            }
             usedLocalAuthor.push(searchCondition.value as number)
             break
           case SearchType.SITE_AUTHOR:
-            if (searchCondition.operator === Operator.EQUAL) {
-              workCommonQueryDTO.includeSiteAuthorIds.push(searchCondition.value as number)
-            } else if (searchCondition.operator === Operator.NOT_EQUAL) {
-              workCommonQueryDTO.excludeSiteAuthorIds.push(searchCondition.value as number)
-            } else {
-              LogUtil.warn('SearchService', `站点作者不支持这种匹配方式，operator: ${searchCondition.operator}`)
-            }
             usedSiteAuthor.push(searchCondition.value as number)
             break
-          case SearchType.WORKS_SITE_NAME:
-            if (searchCondition.operator === Operator.EQUAL) {
-              workCommonQueryDTO.siteWorkName = searchCondition.value as string
-            } else if (searchCondition.operator === Operator.LIKE) {
-              workCommonQueryDTO.siteWorkName = searchCondition.value as string
-              workCommonQueryDTO.operators['siteWorkName'] = Operator.LIKE
-            } else {
-              LogUtil.warn('SearchService', `站点作品名称不支持这种匹配方式，operator: ${searchCondition.operator}`)
-            }
-            break
-          case SearchType.WORK_SET:
-            // 排除指定作品集下的作品
-            if (searchCondition.operator === Operator.NOT_EQUAL) {
-              const workSetId = searchCondition.value as number
-              const workDao = new WorkDao(this.db, true)
-              const worksWithWorkSetId = await workDao.listWorkWithWorkSetIdByWorkSetIds([workSetId])
-              const workIds = worksWithWorkSetId.map((w) => w.id as number)
-              if (ArrayNotEmpty(workIds)) {
-                if (ArrayNotEmpty(workCommonQueryDTO.excludeWorkIds)) {
-                  workCommonQueryDTO.excludeWorkIds.push(...workIds)
-                } else {
-                  workCommonQueryDTO.excludeWorkIds = workIds
-                }
-              }
-            } else {
-              LogUtil.warn('SearchService', `作品集仅支持NOT_EQUAL操作符，operator: ${searchCondition.operator}`)
-            }
-            break
           default:
-            LogUtil.error('SearchService', `不支持查询参数类型${searchCondition.type}`)
+            // 其他类型在 WorkDao 中处理
+            break
         }
       }
     }
-    workPage.query = workCommonQueryDTO
-    return workService.synthesisQueryPage(workPage).then((result) => {
+
+    return workDao.queryPageByWorkConditions(workPage, searchConditions).then((result) => {
       const used: Map<SearchType, number[]> = new Map<SearchType, number[]>()
       used.set(SearchType.LOCAL_TAG, usedLocalTag)
       used.set(SearchType.SITE_TAG, usedSiteTag)
@@ -215,10 +146,47 @@ export default class SearchService {
   public async queryWorkSetPage(
     page: Page<SearchCondition[], WorkSetCoverDTO>
   ): Promise<Page<SearchCondition[], WorkSetCoverDTO>> {
-    const workSetService = new WorkSetService()
     const searchConditions = page.query ?? []
+
+    // 记录使用的搜索条件用于更新最后使用时间
+    const usedLocalTag: number[] = []
+    const usedSiteTag: number[] = []
+    const usedLocalAuthor: number[] = []
+    const usedSiteAuthor: number[] = []
+
+    if (ArrayNotEmpty(searchConditions)) {
+      for (const searchCondition of searchConditions) {
+        switch (searchCondition.type) {
+          case SearchType.LOCAL_TAG:
+            usedLocalTag.push(searchCondition.value as number)
+            break
+          case SearchType.SITE_TAG:
+            usedSiteTag.push(searchCondition.value as number)
+            break
+          case SearchType.LOCAL_AUTHOR:
+            usedLocalAuthor.push(searchCondition.value as number)
+            break
+          case SearchType.SITE_AUTHOR:
+            usedSiteAuthor.push(searchCondition.value as number)
+            break
+          default:
+            // 其他类型不需要更新最后使用时间
+            break
+        }
+      }
+    }
+
+    const workSetService = new WorkSetService(this.db)
     // 创建 WorkSetQueryDTO 用于分页
     const workSetPage = new Page<WorkSetQueryDTO, WorkSetCoverDTO>(page as unknown as Page<WorkSetQueryDTO, WorkSetCoverDTO>)
-    return workSetService.queryPageByWorkConditionsWithCover(workSetPage, searchConditions) as unknown as Promise<Page<SearchCondition[], WorkSetCoverDTO>>
+    return workSetService.queryPageByWorkConditionsWithCover(workSetPage, searchConditions).then((result) => {
+      const used: Map<SearchType, number[]> = new Map<SearchType, number[]>()
+      used.set(SearchType.LOCAL_TAG, usedLocalTag)
+      used.set(SearchType.SITE_TAG, usedSiteTag)
+      used.set(SearchType.LOCAL_AUTHOR, usedLocalAuthor)
+      used.set(SearchType.SITE_AUTHOR, usedSiteAuthor)
+      this.updateLastUsed(used)
+      return result
+    }) as unknown as Promise<Page<SearchCondition[], WorkSetCoverDTO>>
   }
 }
