@@ -229,7 +229,7 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     for (const link of allLinks) {
       if (link.isCover) {
         link.isCover = false
-        await this.dao.save(link)
+        await this.dao.updateById(link)
       }
     }
 
@@ -241,7 +241,7 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     if (targetLinks.length > 0) {
       const targetLink = targetLinks[0]
       targetLink.isCover = true
-      await this.dao.save(targetLink)
+      await this.dao.updateById(targetLink)
       return 1
     }
     return 0
@@ -260,7 +260,7 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     if (links.length > 0) {
       const link = links[0]
       link.isCover = false
-      await this.dao.save(link)
+      await this.dao.updateById(link)
       return 1
     }
     return 0

@@ -8,7 +8,7 @@ import WorkQueryView from '@renderer/components/common/WorkQueryView.vue'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
-import { Edit, Delete, Close, Plus, ArrowLeft } from '@element-plus/icons-vue'
+import { Edit, Delete, Close, Plus, ArrowLeft, Picture } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import lodash from 'lodash'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
@@ -44,6 +44,7 @@ const apis = {
   workSetListWorkSetWithWorkByIds: window.api.workSetListWorkSetWithWorkByIds,
   reWorkWorkSetLinkBatchToWorkSet: window.api.reWorkWorkSetLinkBatchToWorkSet,
   reWorkWorkSetRemoveBatchFromWorkSet: window.api.reWorkWorkSetRemoveBatchFromWorkSet,
+  reWorkWorkSetSetCover: window.api.reWorkWorkSetSetCover,
   searchQueryWorkPage: window.api.searchQueryWorkPage,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage
 }
@@ -130,6 +131,53 @@ async function handleDelete() {
     ElMessage({
       type: 'error',
       message: `移除作品失败: ${error}`
+    })
+  }
+}
+
+// 设为封面按钮点击处理
+async function handleSetCover() {
+  if (checkedWorkIds.value.length === 0) {
+    ElMessage({
+      type: 'warning',
+      message: '请先选择要设为封面的作品'
+    })
+    return
+  }
+
+  if (checkedWorkIds.value.length > 1) {
+    ElMessage({
+      type: 'warning',
+      message: '只能选择一个作品设为封面'
+    })
+    return
+  }
+
+  try {
+    const workId = checkedWorkIds.value[0]
+    const workSetId = currentWorkSetId.value
+    const response = await apis.reWorkWorkSetSetCover({
+      workSetId,
+      workId
+    })
+
+    if (ApiUtil.check(response)) {
+      ElMessage({
+        type: 'success',
+        message: '封面设置成功'
+      })
+      // 清空选中状态
+      checkedWorkIds.value = []
+    } else {
+      ElMessage({
+        type: 'error',
+        message: `设置封面失败: ${response.msg || '未知错误'}`
+      })
+    }
+  } catch (error) {
+    ElMessage({
+      type: 'error',
+      message: `设置封面失败: ${error}`
     })
   }
 }
@@ -290,6 +338,10 @@ watch(isCheckable, (newValue) => {
           <el-button type="danger" @click="handleDelete">
             <el-icon><Delete /></el-icon>
             移除
+          </el-button>
+          <el-button type="success" :disabled="checkedWorkIds.length !== 1" @click="handleSetCover">
+            <el-icon><Picture /></el-icon>
+            设为封面
           </el-button>
           <el-button @click="isCheckable = false">
             <el-icon><Close /></el-icon>
