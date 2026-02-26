@@ -345,6 +345,23 @@ tables:
       create unique index work_site_id_site_work_id_index
       on work (site_id, site_work_id);
 
+  - name: secure_storage
+    sql: |
+      create table if not exists secure_storage (
+        id                integer not null
+          constraint secure_storage_pk
+            primary key autoincrement,
+        storage_key       text not null,
+        encrypted_value   text not null,
+        description       text,
+        create_time       integer,
+        update_time       integer,
+        constraint secure_storage_storage_key_uindex
+          unique (storage_key)
+      );
+      create index secure_storage_storage_key_index
+      on secure_storage (storage_key);
+
   - name: work_set
     sql: |
       create table if not exists work_set (

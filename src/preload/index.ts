@@ -139,7 +139,14 @@ const api = {
   reWorkWorkSetGetCoverWorkId: (args) => Electron.ipcRenderer.invoke('reWorkWorkSet-getCoverWorkId', args),
 
   // FileSysUtil
-  dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2)
+  dirSelect: (arg1, arg2) => Electron.ipcRenderer.invoke('fileSysUtil-dirSelect', arg1, arg2),
+
+  // SecureStorage
+  secureStorageSet: (args) => Electron.ipcRenderer.invoke('secureStorage-set', args),
+  secureStorageGet: (args) => Electron.ipcRenderer.invoke('secureStorage-get', args),
+  secureStorageDelete: (args) => Electron.ipcRenderer.invoke('secureStorage-delete', args),
+  secureStorageHasKey: (args) => Electron.ipcRenderer.invoke('secureStorage-hasKey', args),
+  secureStorageListKeys: () => Electron.ipcRenderer.invoke('secureStorage-listKeys')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

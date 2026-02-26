@@ -27,6 +27,7 @@ import PluginService from '../service/PluginService.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.ts'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.ts'
 import WorkSetService from '../service/WorkSetService.ts'
+import SecureStorageService, { SecureStorageErrorCode } from '../service/SecureStorageService.ts'
 import { IsNullish } from '@shared/util/CommonUtil.ts'
 
 function returnError(error: unknown) {
@@ -493,6 +494,73 @@ function exposeService() {
   // FileSysUtil
   Electron.ipcMain.handle('fileSysUtil-dirSelect', createHandler('fileSysUtil-dirSelect', (openFile, isModal) => {
     return DirSelect(openFile, isModal)
+  }))
+
+  // SecureStorageService
+  Electron.ipcMain.handle('secureStorage-set', createHandler('secureStorage-set', (args) => {
+    const service = new SecureStorageService()
+    const { storageKey, plainValue, description } = args
+    return service.set(storageKey, plainValue, description)
+  }, {
+    onError: (error) => {
+      const errorMsg = String(error)
+      if (errorMsg === SecureStorageErrorCode.NOT_AVAILABLE) {
+        return ApiUtil.error('安全存储不可用，请检查系统加密设置')
+      }
+      if (errorMsg === SecureStorageErrorCode.ENCRYPT_FAILED) {
+        return ApiUtil.error('加密失败，请重试')
+      }
+      if (errorMsg === SecureStorageErrorCode.INVALID_KEY) {
+        return ApiUtil.error('存储键无效')
+      }
+      return undefined
+    }
+  }))
+  Electron.ipcMain.handle('secureStorage-get', createHandler('secureStorage-get', (args) => {
+    const service = new SecureStorageService()
+    return service.getValue(args)
+  }, {
+    onError: (error) => {
+      const errorMsg = String(error)
+      if (errorMsg === SecureStorageErrorCode.NOT_AVAILABLE) {
+        return ApiUtil.error('安全存储不可用，请检查系统加密设置')
+      }
+      if (errorMsg === SecureStorageErrorCode.DECRYPT_FAILED) {
+        return ApiUtil.error('解密失败，数据可能已损坏')
+      }
+      if (errorMsg === SecureStorageErrorCode.INVALID_KEY) {
+        return ApiUtil.error('存储键无效')
+      }
+      return undefined
+    }
+  }))
+  Electron.ipcMain.handle('secureStorage-delete', createHandler('secureStorage-delete', (args) => {
+    const service = new SecureStorageService()
+    return service.remove(args)
+  }, {
+    onError: (error) => {
+      const errorMsg = String(error)
+      if (errorMsg === SecureStorageErrorCode.INVALID_KEY) {
+        return ApiUtil.error('存储键无效')
+      }
+      return undefined
+    }
+  }))
+  Electron.ipcMain.handle('secureStorage-hasKey', createHandler('secureStorage-hasKey', (args) => {
+    const service = new SecureStorageService()
+    return service.hasKey(args)
+  }, {
+    onError: (error) => {
+      const errorMsg = String(error)
+      if (errorMsg === SecureStorageErrorCode.INVALID_KEY) {
+        return ApiUtil.error('存储键无效')
+      }
+      return undefined
+    }
+  }))
+  Electron.ipcMain.handle('secureStorage-listKeys', createHandler('secureStorage-listKeys', () => {
+    const service = new SecureStorageService()
+    return service.listKeys()
   }))
 }
 
