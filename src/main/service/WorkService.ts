@@ -490,4 +490,17 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
   public async listWorkWithWorkSetIdByWorkSetIds(workSetIds: number[]): Promise<WorkWithWorkSetId[]> {
     return this.dao.listWorkWithWorkSetIdByWorkSetIds(workSetIds)
   }
+
+  /**
+   * 批量更新作品在作品集中的排序
+   * @param workSetId 作品集id
+   * @param workIds 排序后的作品id列表（索引即为sortOrder，从0开始）
+   */
+  public async updateWorkSortOrderInWorkSet(workSetId: number, workIds: number[]): Promise<void> {
+    const workIdsWithOrder = new Map<number, number>()
+    workIds.forEach((workId, index) => {
+      workIdsWithOrder.set(workId, index)
+    })
+    await this.dao.updateWorkSortOrderInWorkSet(workSetId, workIdsWithOrder)
+  }
 }

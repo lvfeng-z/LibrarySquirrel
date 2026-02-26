@@ -209,7 +209,7 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
       if (links.length > 0) {
         const link = links[0]
         link.sortOrder = i + 1
-        await this.dao.save(link)
+        await this.dao.updateById(link)
         updatedCount++
       }
     }

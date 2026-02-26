@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WorkDialog from '../dialogs/WorkDialog.vue'
-import { computed, Ref, ref } from 'vue'
+import { computed, Ref, ref, watch } from 'vue'
 import WorkGrid from '@renderer/components/common/WorkGrid.vue'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 
 // 事件
-const emits = defineEmits(['checkedChange'])
+const emits = defineEmits(['checkedChange', 'workListSorted'])
 
 // model
 const currentWorkIndex = defineModel<number>('currentWorkIndex', { required: true })
@@ -23,8 +23,24 @@ const currentWorkSetId = defineModel<number>('currentWorkSetId', { required: tru
 // 变量
 // workDialog开关
 const workDialogState: Ref<boolean> = ref(false)
+// 本地作品列表（用于拖拽排序）
+const localWorkList: Ref<WorkFullDTO[]> = ref([...props.workList])
+// 监听 props.workList 变化，同步到本地
+watch(
+  () => props.workList,
+  (newList) => {
+    localWorkList.value = [...newList]
+  },
+  { deep: true }
+)
 // 用于作品网格组件的WorkCardItem数组
-const workCardItemList: Ref<WorkCardItem[]> = computed(() => props.workList.map((work) => new WorkCardItem(work)))
+const workCardItemList: Ref<WorkCardItem[]> = computed(() => localWorkList.value.map((work) => new WorkCardItem(work)))
+
+// 拖拽相关状态
+// 被拖拽的元素索引
+const draggedIndex = ref<number | null>(null)
+// 拖拽目标元素索引
+const dragOverIndex = ref<number | null>(null)
 
 // 方法
 function handleImageClicked(workCardItem: WorkCardItem) {
@@ -55,6 +71,56 @@ async function openWorkSetDialog(workSetId: number) {
 function handleCheckedChange(checkedIds: number[]) {
   emits('checkedChange', checkedIds)
 }
+
+// 拖拽排序相关方法
+function handleDragStart(payload: { work: WorkCardItem; data: unknown; event: DragEvent }) {
+  const index = localWorkList.value.findIndex((w) => w.id === payload.work.id)
+  draggedIndex.value = index
+  console.log('[WorkGridForWorkSet] dragStart', { index, work: payload.work })
+}
+
+function handleDragOver(payload: { work: WorkCardItem; event: DragEvent }) {
+  const index = localWorkList.value.findIndex((w) => w.id === payload.work.id)
+  dragOverIndex.value = index
+}
+
+async function handleDragEnd() {
+  console.log('[WorkGridForWorkSet] dragEnd', {
+    draggedIndex: draggedIndex.value,
+    dragOverIndex: dragOverIndex.value
+  })
+  if (draggedIndex.value === null || dragOverIndex.value === null) {
+    resetDragState()
+    return
+  }
+  // 如果位置发生变化，执行排序
+  if (draggedIndex.value !== dragOverIndex.value) {
+    const newList = [...localWorkList.value]
+    const [removed] = newList.splice(draggedIndex.value, 1)
+    newList.splice(dragOverIndex.value, 0, removed)
+    localWorkList.value = newList
+    emits('workListSorted', newList)
+
+    // 保存排序到数据库
+    const workSetId = currentWorkSetId.value
+    if (workSetId) {
+      const workIds = newList.map((work) => work.id).filter((id): id is number => id !== undefined)
+      try {
+        await window.api.reWorkWorkSetUpdateSortOrders({ workSetId, workIds })
+        console.log('[WorkGridForWorkSet] sort order saved', { workSetId, workIds })
+      } catch (error) {
+        console.error('[WorkGridForWorkSet] failed to save sort order', error)
+      }
+    }
+    console.log('[WorkGridForWorkSet] sorted', { newList })
+  }
+  resetDragState()
+}
+
+function resetDragState() {
+  draggedIndex.value = null
+  dragOverIndex.value = null
+}
 </script>
 
 <template>
@@ -63,8 +129,12 @@ function handleCheckedChange(checkedIds: number[]) {
       :work-list="workCardItemList"
       :checkable="props.checkable ?? false"
       :checked-work-ids="props.checkedWorkIds"
+      draggable
       @image-clicked="handleImageClicked"
       @checked-change="handleCheckedChange"
+      @drag-start="handleDragStart"
+      @drag-end="handleDragEnd"
+      @drag-over="handleDragOver"
     />
     <work-dialog
       v-model:state="workDialogState"

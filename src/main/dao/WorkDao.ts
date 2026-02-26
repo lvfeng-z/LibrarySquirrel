@@ -411,4 +411,30 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       }
     }
   }
+
+  /**
+   * 批量更新作品在作品集中的排序
+   * @param workSetId 作品集id
+   * @param workIdsWithOrder 作品id和排序的映射，key为workId，value为sortOrder
+   */
+  async updateWorkSortOrderInWorkSet(workSetId: number, workIdsWithOrder: Map<number, number>): Promise<void> {
+    if (workIdsWithOrder.size === 0) {
+      return
+    }
+    const db = this.acquire()
+    try {
+      const updateTime = Date.now()
+      // 批量更新每个作品的排序
+      for (const [workId, sortOrder] of workIdsWithOrder) {
+        await db.run(
+          'UPDATE re_work_work_set SET sort_order = ?, update_time = ? WHERE work_id = ? AND work_set_id = ?',
+          [sortOrder, updateTime, workId, workSetId]
+        )
+      }
+    } finally {
+      if (!this.injectedDB) {
+        db.release()
+      }
+    }
+  }
 }

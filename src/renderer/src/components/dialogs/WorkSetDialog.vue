@@ -313,6 +313,12 @@ function beforeDialogClose(done: (shouldCancel?: boolean) => void) {
 
 // watch
 watch(currentWorkSetId, () => loadWorkList())
+// 监听对话框打开，重新加载数据以获取最新排序
+watch(state, (newValue) => {
+  if (newValue && currentWorkSetId.value) {
+    loadWorkList()
+  }
+})
 watch(isCheckable, (newValue) => {
   if (!newValue) {
     // 退出管理模式时清空选中状态

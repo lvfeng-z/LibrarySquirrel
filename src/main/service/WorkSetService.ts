@@ -71,13 +71,21 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     // 补全作品的作品信息
     const workIds = workWithWorkSetIdList.map((work) => work.id).filter(NotNullish)
     const fullWorkList = await workService.listFullWorkInfoByIds(workIds)
-    // 作品放入作品集中
+    // 作品放入作品集中（保持 sort_order 顺序）
     const workIdToWorkSetIdMap = Object.fromEntries(
       workWithWorkSetIdList
         .filter((item) => NotNullish(item.id) && NotNullish(item.workSetId))
         .map((item) => [item.id, item.workSetId])
     )
-    const workSetIdToWorkMap = lodash.groupBy(fullWorkList, (work) => {
+    // 创建 workId 到 sortOrder 的映射
+    const workIdToSortOrderMap = new Map(workWithWorkSetIdList.map((item) => [item.id, item.sortOrder ?? 0]))
+    // 根据 sort_order 排序 fullWorkList
+    const sortedFullWorkList = [...fullWorkList].sort((a, b) => {
+      const sortOrderA = workIdToSortOrderMap.get(a.id ?? -1) ?? 0
+      const sortOrderB = workIdToSortOrderMap.get(b.id ?? -1) ?? 0
+      return sortOrderA - sortOrderB
+    })
+    const workSetIdToWorkMap = lodash.groupBy(sortedFullWorkList, (work) => {
       const workId = work.id
       if (IsNullish(workId)) {
         return
