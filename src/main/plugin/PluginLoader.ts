@@ -12,6 +12,7 @@ import { BasePlugin } from '../base/BasePlugin.js'
 import PluginService from '../service/PluginService.js'
 import Plugin from '@shared/model/entity/Plugin.js'
 import WorkSetService from '../service/WorkSetService.ts'
+import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 
 export default class PluginLoader<T extends BasePlugin> {
@@ -47,6 +48,7 @@ export default class PluginLoader<T extends BasePlugin> {
       const pluginService = new PluginService()
       const pluginLoadDTO = await pluginService.getDTOById(pluginId)
       const pluginName = `Plugin[${pluginLoadDTO.author}-${pluginLoadDTO.name}-${pluginLoadDTO.version}]`
+      const secureStorageService = new SecureStorageService()
       const pluginTool = new PluginTool(
         pluginName,
         (dir: string) => this.requestExplainPath(dir),
@@ -57,7 +59,10 @@ export default class PluginLoader<T extends BasePlugin> {
           return this.pluginService.updateById(tempPlugin)
         },
         () => this.pluginService.getById(pluginId).then((plugin) => (IsNullish(plugin?.pluginData) ? undefined : plugin.pluginData)),
-        new WorkSetService()
+        new WorkSetService(),
+        (plainValue: string, description?: string) => secureStorageService.storeAndGetKey(plainValue, description),
+        (storageKey: string) => secureStorageService.getValueByKey(storageKey),
+        (storageKey: string) => secureStorageService.removeByKey(storageKey)
       )
       plugin = this.factory.create(pluginLoadDTO, pluginTool)
       this.pluginCache[pluginId] = plugin

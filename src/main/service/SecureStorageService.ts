@@ -4,6 +4,7 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import SecureStorage from '@shared/model/entity/SecureStorage.ts'
 import SecureStorageQueryDTO from '@shared/model/queryDTO/SecureStorageQueryDTO.ts'
 import Electron from 'electron'
+import { randomUUID } from 'crypto'
 
 /**
  * 安全存储错误码
@@ -193,5 +194,46 @@ export default class SecureStorageService extends BaseService<
     return list
       .filter((item) => item.storageKey)
       .map((item) => item.storageKey as string)
+  }
+
+  /**
+   * 存储加密值并返回存储键
+   * 自动生成唯一键，用于后续获取解密后的值
+   * @param plainValue 明文值
+   * @param description 描述（可选）
+   * @returns 存储键
+   */
+  async storeAndGetKey(plainValue: string, description?: string): Promise<string> {
+    // 生成唯一存储键
+    const storageKey = randomUUID()
+
+    const encryptedValue = this.encrypt(plainValue)
+
+    // 新增
+    const entity = new SecureStorage()
+    entity.storageKey = storageKey
+    entity.encryptedValue = encryptedValue
+    entity.description = description
+    await this.save(entity)
+
+    return storageKey
+  }
+
+  /**
+   * 根据存储键获取解密后的值
+   * @param storageKey 存储键
+   * @returns 解密后的明文值，如果不存在则返回 undefined
+   */
+  async getValueByKey(storageKey: string): Promise<string | undefined> {
+    return this.getValue(storageKey)
+  }
+
+  /**
+   * 删除存储键
+   * @param storageKey 存储键
+   * @returns 删除的行数
+   */
+  async removeByKey(storageKey: string): Promise<number> {
+    return this.remove(storageKey)
   }
 }
