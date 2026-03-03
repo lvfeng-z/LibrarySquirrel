@@ -6,7 +6,6 @@ import WorkService from '../../service/WorkService.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../../plugin/PluginLoader.ts'
-import { TaskHandler, TaskHandlerFactory } from '../../plugin/TaskHandler.ts'
 import ResourceWriter from '../../util/ResourceWriter.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
@@ -82,7 +81,7 @@ export class TaskQueue {
    * 插件加载器
    * @private
    */
-  private readonly pluginLoader: PluginLoader<TaskHandler>
+  private readonly pluginLoader: PluginLoader
 
   /**
    * 作为任务处理流程入口的流
@@ -147,7 +146,7 @@ export class TaskQueue {
     this.workService = new WorkService()
     // this.siteService = new SiteService()
     this.pluginService = new PluginService()
-    this.pluginLoader = new PluginLoader(new TaskHandlerFactory(), this.pluginService)
+    this.pluginLoader = new PluginLoader(this.pluginService)
     this.closed = false
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
@@ -1121,7 +1120,7 @@ class TaskRunInstance extends TaskStatus {
    * 插件加载器
    * @private
    */
-  private readonly pluginLoader: PluginLoader<TaskHandler>
+  private readonly pluginLoader: PluginLoader
   /**
    * 是否出现错误
    * @private
@@ -1141,7 +1140,7 @@ class TaskRunInstance extends TaskStatus {
     workInfoSaved: boolean,
     resSaveSuspended: boolean,
     taskService: TaskService,
-    pluginLoader: PluginLoader<TaskHandler>,
+    pluginLoader: PluginLoader,
     resourceWriter: ResourceWriter,
     localWorkId?: number
   ) {
