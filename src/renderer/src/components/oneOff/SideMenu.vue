@@ -74,7 +74,7 @@ function handleClickOutSide() {
       </div>
       <el-scrollbar class="side-menu-scrollbar">
         <el-menu :default-openeds="props.defaultActive" class="side-menu-main-menu" :collapse="folded">
-          <slot v-if="!hidden" name="default"></slot>
+          <slot name="default"></slot>
         </el-menu>
       </el-scrollbar>
       <div class="side-menu-hide-button" @click="hidden = !hidden">
