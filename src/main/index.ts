@@ -13,6 +13,7 @@ import { createTaskQueue, getTaskQueue } from './core/taskQueue.ts'
 import { createSettings, getSettings } from './core/settings.ts'
 import { createIniConfig } from './core/iniConfig.ts'
 import { setMainWindow } from './core/mainWindow.ts'
+import { PluginActivationManager } from './plugin/PluginActivationManager.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -180,10 +181,15 @@ Electron.app.whenReady().then(() => {
     Initialize()
     // 创建服务层的ipc通信
     MainProcessApi.exposeService()
+    // 激活启动时加载的插件
+    const pluginActivationManager = new PluginActivationManager()
+    pluginActivationManager.activateStartupPlugins()
   })
 
   // 初始化任务队列
   createTaskQueue()
+  // 初始化插件任务URL监听器管理器
+  createPluginTaskUrlListenerManager()
 
   Electron.app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the

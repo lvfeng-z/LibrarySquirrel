@@ -1,5 +1,4 @@
 import LogUtil from '../util/LogUtil.ts'
-import PluginTool from './PluginTool.ts'
 import Electron from 'electron'
 import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
@@ -12,6 +11,7 @@ import Plugin from '@shared/model/entity/Plugin.ts'
 import WorkSetService from '../service/WorkSetService.ts'
 import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
+import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap, TaskContribution } from './types/ContributionTypes.ts'
 import { PluginManifest } from './types/PluginManifest.ts'
 import { PluginContext } from './types/PluginContext.ts'
@@ -37,12 +37,6 @@ export default class PluginLoader {
    * @private
    */
   private readonly pluginCache: Map<number, CachedPlugin> = new Map()
-
-  /**
-   * 按贡献点类型缓存 - 用于快速查找
-   * @private
-   */
-  private readonly contributionCache: Map<`${number}:${ContributionKey}`, TaskContribution> = new Map()
 
   /**
    * 插件服务
@@ -85,9 +79,6 @@ export default class PluginLoader {
       const instance = await loaded
       cached.instance = instance
 
-      // 注册贡献点
-      this.registerContributions(pluginId, instance)
-
       // 调用激活函数
       if (instance.activate) {
         await instance.activate(context)
@@ -123,76 +114,14 @@ export default class PluginLoader {
     // 验证实现的贡献点
     this.validateContributions(instance)
 
-    // 将 pluginId 设置到 implementations 中的插件工具
+    // 将 pluginId 设置到 implementations 中
     if (instance.implementations.task) {
       const taskContribution = instance.implementations.task as TaskContribution
       taskContribution.pluginId = context.pluginId
-      // 创建 PluginTool 并赋值
-      taskContribution.pluginTool = this.buildPluginTool(context)
+      taskContribution.context = context
     }
 
     return instance
-  }
-
-  /**
-   * 构建插件工具
-   * @private
-   */
-  private buildPluginTool(context: PluginContext): PluginTool {
-    const pluginName = context.manifest.name
-    const pluginId = context.pluginId
-    const pluginService = this.pluginService
-    const secureStorageService = new SecureStorageService()
-
-    return new PluginTool(
-      pluginName,
-      (dir: string) => this.requestExplainPath(dir),
-      async (pluginData: string) => {
-        const tempPlugin = new Plugin()
-        tempPlugin.id = pluginId
-        tempPlugin.pluginData = pluginData
-        return pluginService.updateById(tempPlugin)
-      },
-      () => pluginService.getById(pluginId).then((plugin) => (IsNullish(plugin?.pluginData) ? undefined : plugin.pluginData)),
-      new WorkSetService(),
-      (plainValue: string, description?: string) => secureStorageService.storeAndGetKey(plainValue, description),
-      (storageKey: string) => secureStorageService.getValueByKey(storageKey),
-      (storageKey: string) => secureStorageService.removeByKey(storageKey)
-    )
-  }
-
-  /**
-   * 注册贡献点到缓存
-   * @private
-   */
-  private registerContributions(pluginId: number, instance: PluginInstance): void {
-    if (!instance.implementations) return
-
-    for (const key of Object.keys(instance.implementations) as ContributionKey[]) {
-      const cacheKey = `${pluginId}:${key}` as `${number}:${ContributionKey}`
-      this.contributionCache.set(cacheKey, instance.implementations[key] as TaskContribution)
-    }
-  }
-
-  /**
-   * 获取任务服务提供者
-   * @param pluginId 插件ID
-   * @returns 任务服务提供者
-   */
-  public async getTaskServiceProvider(pluginId: number): Promise<TaskContribution> {
-    const cacheKey = `${pluginId}:task` as `${number}:${ContributionKey}`
-    let contribution = this.contributionCache.get(cacheKey)
-
-    if (IsNullish(contribution)) {
-      await this.load(pluginId)
-      contribution = this.contributionCache.get(cacheKey)
-    }
-
-    if (IsNullish(contribution)) {
-      throw new Error(`插件 ${pluginId} 未实现 task 贡献点`)
-    }
-
-    return contribution
   }
 
   /**
@@ -202,13 +131,8 @@ export default class PluginLoader {
    * @returns 贡献点实现
    */
   public async getContribution<K extends ContributionKey>(pluginId: number, key: K): Promise<ContributionMap[K]> {
-    const cacheKey = `${pluginId}:${key}` as `${number}:${ContributionKey}`
-    let contribution = this.contributionCache.get(cacheKey)
-
-    if (IsNullish(contribution)) {
-      await this.load(pluginId)
-      contribution = this.contributionCache.get(cacheKey)
-    }
+    const pluginInstance = await this.load(pluginId)
+    const contribution = await pluginInstance.getContribution(key)
 
     if (IsNullish(contribution)) {
       throw new Error(`插件 ${pluginId} 未实现 ${key} 贡献点`)
@@ -225,10 +149,14 @@ export default class PluginLoader {
     const plugin = await this.pluginService.getById(pluginId)
     const secureStorageService = new SecureStorageService()
     const pluginService = this.pluginService
+    const pluginName = plugin?.name ?? ''
+    const pluginAuthor = plugin?.author ?? ''
 
-    const getContributionFn = <K extends ContributionKey>(key: K): ContributionMap[K] | undefined => {
-      const cacheKey = `${pluginId}:${key}` as `${number}:${ContributionKey}`
-      return this.contributionCache.get(cacheKey) as ContributionMap[K] | undefined
+    const logger = {
+      info: (...args: unknown[]) => LogUtil.info(`Plugin[${pluginAuthor}-${pluginName}]`, ...args),
+      debug: (...args: unknown[]) => LogUtil.debug(`Plugin[${pluginAuthor}-${pluginName}]`, ...args),
+      warn: (...args: unknown[]) => LogUtil.warn(`Plugin[${pluginAuthor}-${pluginName}]`, ...args),
+      error: (...args: unknown[]) => LogUtil.error(`Plugin[${pluginAuthor}-${pluginName}]`, ...args)
     }
 
     return {
@@ -250,14 +178,9 @@ export default class PluginLoader {
         removeEncryptedValue: (storageKey) => secureStorageService.removeByKey(storageKey),
         getWorkSetBySiteWorkSetId: (siteWorkSetId, siteName) =>
           new WorkSetService().getBySiteWorkSetIdAndSiteName(siteWorkSetId, siteName),
-        logger: {
-          info: (...args) => LogUtil.info(`Plugin[${plugin?.author}-${plugin?.name}]`, ...args),
-          debug: (...args) => LogUtil.debug(`Plugin[${plugin?.author}-${plugin?.name}]`, ...args),
-          warn: (...args) => LogUtil.warn(`Plugin[${plugin?.author}-${plugin?.name}]`, ...args),
-          error: (...args) => LogUtil.error(`Plugin[${plugin?.author}-${plugin?.name}]`, ...args)
-        }
-      },
-      getContribution: getContributionFn
+        getBrowserWindow: (width?: number, height?: number) => GetBrowserWindow(width, height),
+        logger
+      }
     }
   }
 

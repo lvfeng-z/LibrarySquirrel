@@ -1,6 +1,5 @@
 import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import { PluginManifest } from './PluginManifest.ts'
-import { ContributionKey, ContributionMap } from './ContributionTypes.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 
 /**
@@ -33,6 +32,8 @@ export interface PluginContext {
     removeEncryptedValue: (storageKey: string) => Promise<number>
     /** 根据作品集在站点的id和站点名称查询作品集 */
     getWorkSetBySiteWorkSetId: (siteWorkSetId: string, siteName: string) => Promise<WorkSet | undefined>
+    /** 获取浏览器窗口 */
+    getBrowserWindow: (width?: number, height?: number) => Electron.BrowserWindow
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void
@@ -41,7 +42,4 @@ export interface PluginContext {
       error: (message: string, ...args: unknown[]) => void
     }
   }
-
-  /** 获取指定贡献点的服务提供者 */
-  getContribution<K extends ContributionKey>(key: K): ContributionMap[K] | undefined
 }

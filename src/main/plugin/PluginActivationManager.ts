@@ -42,52 +42,12 @@ export class PluginActivationManager {
       return
     }
 
-    switch (activationType) {
-      case ActivationType.STARTUP:
-        await this.activateStartup(pluginId)
-        break
-      case ActivationType.LAZY:
-        await this.activateLazy(pluginId)
-        break
-      case ActivationType.MANUAL:
-        // 手动激活模式下，不自动加载，只记录状态
-        this.activatedPlugins.set(pluginId, activationType)
-        LogUtil.info('PluginActivationManager', `插件 ${pluginId} 标记为手动激活模式`)
-        break
-    }
-  }
-
-  /**
-   * 启动时激活插件
-   * @param pluginId 插件ID
-   * @private
-   */
-  private async activateStartup(pluginId: number): Promise<void> {
-    LogUtil.info('PluginActivationManager', `启动时激活插件 ${pluginId}`)
     try {
       await this.pluginLoader.load(pluginId)
-      this.activatedPlugins.set(pluginId, ActivationType.STARTUP)
-      LogUtil.info('PluginActivationManager', `插件 ${pluginId} 启动激活成功`)
+      this.activatedPlugins.set(pluginId, activationType)
+      LogUtil.info('PluginActivationManager', `插件 ${pluginId} 激活成功`)
     } catch (error) {
-      LogUtil.error('PluginActivationManager', `插件 ${pluginId} 启动激活失败`, error)
-      throw error
-    }
-  }
-
-  /**
-   * 按需激活插件
-   * 首次使用时触发加载
-   * @param pluginId 插件ID
-   * @private
-   */
-  private async activateLazy(pluginId: number): Promise<void> {
-    LogUtil.info('PluginActivationManager', `按需激活插件 ${pluginId}`)
-    try {
-      await this.pluginLoader.load(pluginId)
-      this.activatedPlugins.set(pluginId, ActivationType.LAZY)
-      LogUtil.info('PluginActivationManager', `插件 ${pluginId} 按需激活成功`)
-    } catch (error) {
-      LogUtil.error('PluginActivationManager', `插件 ${pluginId} 按需激活失败`, error)
+      LogUtil.error('PluginActivationManager', `插件 ${pluginId} 激活失败`, error)
       throw error
     }
   }
@@ -124,8 +84,10 @@ export class PluginActivationManager {
   public async activateStartupPlugins(): Promise<void> {
     LogUtil.info('PluginActivationManager', '开始激活启动时加载的插件')
 
-    // 获取所有已安装的插件
-    const plugins = await this.pluginService.list({} as PluginQueryDTO)
+    // 获取所有已安装且未卸载的插件
+    const query = new PluginQueryDTO()
+    query.activationType = ActivationType.STARTUP
+    const plugins = await this.pluginService.list(query)
     if (!plugins || plugins.length === 0) {
       LogUtil.info('PluginActivationManager', '没有已安装的插件')
       return
@@ -136,10 +98,7 @@ export class PluginActivationManager {
       if (!plugin.id) {
         continue
       }
-      // TODO: 从插件清单读取激活类型，暂时默认 LAZY
-      // 后续需要从 plugin.pluginData 或其他配置中读取
-      const activationType = ActivationType.LAZY
-      await this.activatePlugin(plugin.id, activationType)
+      await this.activatePlugin(plugin.id, ActivationType.STARTUP)
     }
 
     LogUtil.info('PluginActivationManager', '启动时插件激活完成')

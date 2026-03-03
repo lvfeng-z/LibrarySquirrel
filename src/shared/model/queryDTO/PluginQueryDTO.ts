@@ -1,6 +1,7 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
 import { NotNullish } from '../../util/CommonUtil.ts'
 import { BOOL } from '../constant/BOOL.ts'
+import { ActivationType } from '@shared/model/constant/ActivationType.ts'
 
 export default class PluginQueryDTO extends BaseQueryDTO {
   /**
@@ -42,6 +43,11 @@ export default class PluginQueryDTO extends BaseQueryDTO {
    * 安装包路径
    */
   packagePath?: string | undefined | null
+
+  /**
+   * 激活类型
+   */
+  activationType?: ActivationType | undefined | null
 
   /**
    * 排序号

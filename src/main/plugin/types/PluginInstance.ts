@@ -1,6 +1,6 @@
 import { PluginManifest } from './PluginManifest.ts'
 import { PluginContext } from './PluginContext.ts'
-import { ContributionMap } from './ContributionTypes.ts'
+import { BaseContribution, ContributionKey, ContributionMap } from './ContributionTypes.ts'
 
 /**
  * 插件实例
@@ -15,6 +15,7 @@ export interface PluginInstance {
   activate?: (context: PluginContext) => Promise<void>
   /** 停用函数 - 插件卸载前调用 */
   deactivate?: (context: PluginContext) => Promise<void>
+  getContribution: <T extends BaseContribution>(key: ContributionKey) => Promise<T>
 }
 
 /**

@@ -1,19 +1,23 @@
 import { Readable } from 'node:stream'
-import PluginTool from '../PluginTool.ts'
+import { PluginContext } from './PluginContext.ts'
 import { PluginTaskResParam } from '../PluginTaskResParam.ts'
 import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
 import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.ts'
 
+export interface BaseContribution {
+
+}
+
 /**
  * 任务贡献点接口
  * 定义插件处理任务所需的所有方法
  */
-export interface TaskContribution {
+export interface TaskContribution extends BaseContribution {
   /** 插件ID */
   pluginId: number
-  /** 插件工具 */
-  pluginTool: PluginTool
+  /** 插件上下文 */
+  context: PluginContext
 
   /**
    * 创建任务
@@ -61,6 +65,8 @@ export interface TaskContribution {
   resume(taskResParam: PluginTaskResParam): Promise<PluginWorkResponseDTO>
 }
 
+export interface SiteBrowser extends BaseContribution {}
+
 /**
  * 贡献点映射表
  * 键为贡献点名称，值为对应的接口类型
@@ -69,14 +75,11 @@ export interface TaskContribution {
 export interface ContributionMap {
   /** 任务贡献点 */
   task: TaskContribution
+  /** 任务贡献点 */
+  siteBrowser: SiteBrowser
 }
 
 /**
  * 贡献点键名类型
  */
 export type ContributionKey = keyof ContributionMap
-
-/**
- * 获取指定贡献点的实现类型
- */
-export type ContributionImplementation<K extends ContributionKey> = ContributionMap[K]

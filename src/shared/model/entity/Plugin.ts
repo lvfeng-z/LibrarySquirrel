@@ -1,6 +1,7 @@
 import BaseEntity from '../base/BaseEntity.ts'
 import { NotNullish } from '../../util/CommonUtil.ts'
 import { BOOL } from '../constant/BOOL.ts'
+import { ActivationType } from '../constant/ActivationType.ts'
 
 export default class Plugin extends BaseEntity {
   /**
@@ -44,6 +45,11 @@ export default class Plugin extends BaseEntity {
   packagePath: string | undefined | null
 
   /**
+   * 激活类型
+   */
+  activationType: ActivationType | undefined | null
+
+  /**
    * 排序号
    */
   sortNum: number | undefined | null
@@ -69,6 +75,7 @@ export default class Plugin extends BaseEntity {
       this.changelog = plugin.changelog
       this.fileName = plugin.fileName
       this.packagePath = plugin.packagePath
+      this.activationType = plugin.activationType
       this.sortNum = plugin.sortNum
       this.pluginData = plugin.pluginData
       this.uninstalled = plugin.uninstalled
