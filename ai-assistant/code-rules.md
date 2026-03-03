@@ -137,6 +137,211 @@ async function fetchWorkPage(page: Page) {
 - **空值处理**: 使用可选链 `?.` 和空值合并 `??` 运算符
 - **严格模式**: 启用 TypeScript 严格模式 (`strict: true`)
 
+### 空值判断规范
+
+#### 1. 必须使用语义化空值判断函数
+
+**原则**: 判断变量是否为 `undefined` 或 `null` 时，必须使用 `@shared/util/CommonUtil.ts` 中定义的 `NotNullish` 和 `IsNullish` 函数，避免使用"逻辑非"语法（`!value`），以保证语义清晰。
+
+**函数定义**:
+```typescript
+// 判断值是否不为 null 或 undefined
+export function NotNullish<T>(value: T | undefined | null): value is T
+
+// 判断值是否为 null 或 undefined
+export function IsNullish(value: unknown): value is undefined | null
+```
+
+**导入方式**:
+```typescript
+import { NotNullish, IsNullish } from '@shared/util/CommonUtil.ts'
+```
+
+**✅ 正确示例**:
+```typescript
+import { NotNullish, IsNullish } from '@shared/util/CommonUtil.ts'
+
+// 使用 NotNullish 判断非空
+if (NotNullish(user)) {
+  // TypeScript 会自动推断 user 不为 null 或 undefined
+  console.log(user.name)
+}
+
+// 使用 IsNullish 判断为空
+if (IsNullish(data)) {
+  return
+}
+
+// 结合可选链和空值合并
+const name = NotNullish(user) ? user.name : '默认值'
+
+// 在数组过滤中使用
+const validItems = items.filter(NotNullish)
+
+// 在条件断言中使用
+assertIsDefined(value: T): asserts value is T {
+  if (IsNullish(value)) {
+    throw new Error('Value is required')
+  }
+}
+```
+
+**❌ 错误示例**:
+```typescript
+// 禁止使用逻辑非判断空值（语义不清晰）
+if (!value) {  // ✗ 这会过滤掉 falsy 值（如 0, '', false）
+  return
+}
+
+// 禁止使用 != null 判断（会同时过滤 undefined 和 null，但语义不明确）
+if (value != null) {  // ✗ 语义不清晰，不知道是判断非空还是其他意图
+  // 处理
+}
+
+// 禁止使用双重否定（语义不清晰）
+if (!!value) {  // ✗
+  // 处理
+}
+```
+
+**🛠️ TypeScript 类型守卫优势**:
+
+使用 `NotNullish` 和 `IsNullish` 作为类型守卫函数，TypeScript 可以在条件分支中自动收窄类型：
+
+```typescript
+function processValue(value: string | undefined | null) {
+  if (IsNullish(value)) {
+    // TypeScript 自动推断 value 为 undefined | null
+    return
+  }
+  // TypeScript 自动推断 value 为 string（类型收窄）
+  console.log(value.toUpperCase())
+}
+```
+
+#### 2. 数组非空判断
+
+**原则**: 判断数组是否为空时，必须使用 `@shared/util/CommonUtil.ts` 中定义的 `ArrayNotEmpty` 和 `ArrayIsEmpty` 函数。
+
+**函数定义**:
+```typescript
+// 判断数组是否不为空
+export function ArrayNotEmpty(value: unknown): value is unknown[]
+
+// 判断数组是否为空
+export function ArrayIsEmpty(value: unknown): value is null | undefined | []
+```
+
+**✅ 正确示例**:
+```typescript
+import { ArrayNotEmpty, ArrayIsEmpty } from '@shared/util/CommonUtil.ts'
+
+// 判断数组非空
+if (ArrayNotEmpty(items)) {
+  // TypeScript 自动推断 items 为非空数组
+  console.log(items.length)
+}
+
+// 判断数组为空
+if (ArrayIsEmpty(items)) {
+  return
+}
+
+// 在条件中使用
+const hasItems = ArrayNotEmpty(items)
+```
+
+**❌ 错误示例**:
+```typescript
+// 禁止使用 length 属性直接判断
+if (items.length) {  // ✗ 语义不清晰
+  // 处理
+}
+
+if (items && items.length > 0) {  // ✗ 冗长且语义不明确
+  // 处理
+}
+```
+
+#### 3. 字符串空白判断
+
+**原则**: 判断字符串是否为空白时，必须使用 `@shared/util/StringUtil.ts` 中定义的 `isBlank` 和 `isNotBlank` 函数。
+
+**函数定义**:
+```typescript
+// 判断字符串是否为空白（null、undefined 或只包含空白字符）
+export function isBlank(input: string | null | undefined): input is undefined | null | ''
+
+// 判断字符串是否不为空白
+export function isNotBlank(input: string | null | undefined): input is string
+```
+
+**✅ 正确示例**:
+```typescript
+import { isBlank, isNotBlank } from '@shared/util/StringUtil.ts'
+
+// 判断字符串为空
+if (isBlank(input)) {
+  return
+}
+
+// 判断字符串非空
+if (isNotBlank(input)) {
+  // TypeScript 自动推断 input 为 string
+  console.log(input.trim())
+}
+
+// 在条件分支中类型收窄
+function process(input: string | undefined | null) {
+  if (isBlank(input)) {
+    return
+  }
+  // TypeScript 自动推断 input 为 string
+  console.log(input.length)
+}
+```
+
+**❌ 错误示例**:
+```typescript
+// 禁止使用逻辑非判断空字符串
+if (!input) {  // ✗ 会过滤掉 falsy 值
+  return
+}
+
+// 禁止使用 length 判断
+if (input && input.length === 0) {  // ✗ 没有判断空白字符
+  return
+}
+```
+
+#### 4. 适用场景汇总
+
+| 场景 | 推荐方式 | 导入来源 |
+|------|----------|----------|
+| 判断值是否为 null/undefined | `IsNullish(value)` | `@shared/util/CommonUtil.ts` |
+| 判断值是否不为 null/undefined | `NotNullish(value)` | `@shared/util/CommonUtil.ts` |
+| 判断数组是否为空 | `ArrayIsEmpty(value)` | `@shared/util/CommonUtil.ts` |
+| 判断数组是否不为空 | `ArrayNotEmpty(value)` | `@shared/util/CommonUtil.ts` |
+| 过滤数组中的 null/undefined | `array.filter(NotNullish)` | `@shared/util/CommonUtil.ts` |
+| 判断字符串是否为空白 | `isBlank(value)` | `@shared/util/StringUtil.ts` |
+| 判断字符串是否不为空白 | `isNotBlank(value)` | `@shared/util/StringUtil.ts` |
+| 条件分支中的类型收窄 | `if (NotNullish(value)) { ... }` | 对应工具类 |
+
+**⚠️ 尽量避免**:
+```typescript
+// 尽量避免简单的逻辑非
+if (!value) { ... }
+if (!items.length) { ... }
+if (!name) { ... }
+```
+
+#### 6. 例外情况
+
+以下情况可使用逻辑非：
+- 判断值为 falsy（如 `0`, `''`, `false`）而非仅 null/undefined
+- 布尔值取反（如 `!isLoading`）
+- 复杂布尔表达式（如 `!value || !value.enabled`）
+
 ### Vue 组件规范
 - **语法**: 使用 `<script setup lang="ts">` 组合式 API
 - **Props 定义**: Props 接口使用 `Props` 后缀
@@ -520,5 +725,5 @@ class demoDao {
 
 ---
 
-**最后更新**: 2026-02-24
+**最后更新**: 2026-03-03
 **维护者**: AI Assistant
