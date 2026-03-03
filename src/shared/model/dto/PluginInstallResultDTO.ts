@@ -11,14 +11,8 @@ export default class PluginInstallResultDTO {
    */
   domains: { domain: string; homepage: string }[]
 
-  /**
-   * 监听路径列表
-   */
-  listeners: string[]
-
-  constructor(plugin: Plugin, domains: { domain: string; homepage: string }[], listeners: string[]) {
+  constructor(plugin: Plugin, domains: { domain: string; homepage: string }[]) {
     this.plugin = plugin
     this.domains = domains
-    this.listeners = listeners
   }
 }

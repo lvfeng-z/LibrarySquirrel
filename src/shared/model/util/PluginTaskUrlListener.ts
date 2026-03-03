@@ -1,7 +1,6 @@
-import BaseEntity from '../base/BaseEntity.ts'
 import { NotNullish } from '../../util/CommonUtil.ts'
 
-export default class PluginTaskUrlListener extends BaseEntity {
+export default class PluginTaskUrlListener {
   /**
    * 插件id
    */
@@ -13,7 +12,6 @@ export default class PluginTaskUrlListener extends BaseEntity {
   listener: string | undefined | null
 
   constructor(pluginTaskUrlListener?: PluginTaskUrlListener) {
-    super(pluginTaskUrlListener)
     if (NotNullish(pluginTaskUrlListener)) {
       this.pluginId = pluginTaskUrlListener.pluginId
       this.listener = pluginTaskUrlListener.listener

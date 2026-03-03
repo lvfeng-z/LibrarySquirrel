@@ -279,21 +279,6 @@ tables:
       create unique index plugin_author_name_version_uindex
       on plugin (author, name, version);
 
-  - name: plugin_task_url_listener
-    sql: |
-      create table if not exists plugin_task_url_listener (
-        id          integer not null
-          constraint plugin_task_url_listener_pk
-            primary key,
-        plugin_id   integer
-          constraint plugin_task_url_listener_plugin_id_fk
-            references plugin
-            on delete cascade,
-        listener    text,
-        create_time integer,
-        update_time integer
-      );
-
   - name: resource
     sql: |
       create table if not exists resource (

@@ -12,6 +12,7 @@ import iniConfig from './resources/config/iniConfig.yml?asset'
 import { createTaskQueue, getTaskQueue } from './core/taskQueue.ts'
 import { createSettings, getSettings } from './core/settings.ts'
 import { createIniConfig } from './core/iniConfig.ts'
+import { createPluginTaskUrlListenerManager } from './core/pluginTaskUrlListener.ts'
 import { setMainWindow } from './core/mainWindow.ts'
 import { PluginActivationManager } from './plugin/PluginActivationManager.ts'
 

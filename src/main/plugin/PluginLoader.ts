@@ -11,12 +11,14 @@ import Plugin from '@shared/model/entity/Plugin.ts'
 import WorkSetService from '../service/WorkSetService.ts'
 import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
+import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap, TaskContribution } from './types/ContributionTypes.ts'
 import { PluginManifest } from './types/PluginManifest.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginInstance, PluginEntryPoint } from './types/PluginInstance.ts'
 import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.ts'
+import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 
 /**
  * 缓存的插件实例
@@ -147,6 +149,7 @@ export default class PluginLoader {
    */
   private async createPluginContext(pluginId: number, pluginLoadDTO: PluginLoadDTO): Promise<PluginContext> {
     const plugin = await this.pluginService.getById(pluginId)
+    AssertNotNullish(plugin, this.constructor.name, '创建插件上下文失败，插件id不可用')
     const secureStorageService = new SecureStorageService()
     const pluginService = this.pluginService
     const pluginName = plugin?.name ?? ''
@@ -179,6 +182,14 @@ export default class PluginLoader {
         getWorkSetBySiteWorkSetId: (siteWorkSetId, siteName) =>
           new WorkSetService().getBySiteWorkSetIdAndSiteName(siteWorkSetId, siteName),
         getBrowserWindow: (width?: number, height?: number) => GetBrowserWindow(width, height),
+        registerUrlListener: (listenerPatterns: string[]) => {
+          const listenerManager = getPluginTaskUrlListenerManager()
+          listenerManager.register(plugin, listenerPatterns)
+        },
+        unregisterUrlListener: () => {
+          const listenerManager = getPluginTaskUrlListenerManager()
+          listenerManager.unregister(pluginId)
+        },
         logger
       }
     }

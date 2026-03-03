@@ -1,5 +1,5 @@
 import Plugin from '../entity/Plugin.ts'
-import PluginTaskUrlListener from '../entity/PluginTaskUrlListener.ts'
+import PluginTaskUrlListener from '../util/PluginTaskUrlListener.ts'
 import lodash from 'lodash'
 import { NotNullish } from '../../util/CommonUtil.ts'
 

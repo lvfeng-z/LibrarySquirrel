@@ -34,6 +34,10 @@ export interface PluginContext {
     getWorkSetBySiteWorkSetId: (siteWorkSetId: string, siteName: string) => Promise<WorkSet | undefined>
     /** 获取浏览器窗口 */
     getBrowserWindow: (width?: number, height?: number) => Electron.BrowserWindow
+    /** 注册任务URL监听器 */
+    registerUrlListener: (listenerPatterns: string[]) => void
+    /** 取消注册任务URL监听器 */
+    unregisterUrlListener: () => void
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

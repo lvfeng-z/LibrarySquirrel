@@ -13,9 +13,6 @@ import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil
 import fs from 'fs'
 import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
-import PluginTaskUrlListenerService from './PluginTaskUrlListenerService.js'
-import PluginTaskUrlListener from '@shared/model/entity/PluginTaskUrlListener.js'
-import PluginTaskUrlListenerQueryDTO from '@shared/model/queryDTO/PluginTaskUrlListenerQueryDTO.js'
 import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
 import SiteDomainService from './SiteDomainService.js'
@@ -30,6 +27,7 @@ import PluginListenerDTO from '@shared/model/dto/PluginListenerDTO.js'
 import { BOOL } from '../constant/BOOL.js'
 import Page from '@shared/model/util/Page.js'
 import BackupService from './BackupService.js'
+import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rm } from 'node:fs/promises'
 import Backup from '@shared/model/entity/Backup.ts'
@@ -112,8 +110,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   public async listPluginListenerDTO(pluginQueryDTO: PluginQueryDTO): Promise<PluginListenerDTO[]> {
     const pluginList = await this.list(pluginQueryDTO)
     const pluginIds = pluginList.map((plugin) => plugin.id as number)
-    const pluginTaskUrlService = new PluginTaskUrlListenerService()
-    const pluginTaskUrlList = await pluginTaskUrlService.listByPluginIds(pluginIds)
+    const pluginTaskUrlList = await getPluginTaskUrlListenerManager().listByPluginIds(pluginIds)
     const pluginIdListenerListMap = lodash.groupBy(pluginTaskUrlList, (pluginTaskUrl) => pluginTaskUrl.pluginId)
     return pluginList.map((plugin) => {
       const temp = new PluginListenerDTO(plugin)
@@ -213,31 +210,13 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     return this.transaction(async (transactionDB) => {
       const tempPlugin = new Plugin(pluginInstallDTO)
       const pluginService = new PluginService(transactionDB)
-      let pluginId: number
       if (NotNullish(oldPlugin)) {
-        pluginId = oldPlugin.id as number
         tempPlugin.id = oldPlugin.id
         tempPlugin.pluginData = oldPlugin.pluginData
         tempPlugin.uninstalled = BOOL.FALSE
         await pluginService.updateById(tempPlugin)
-      } else {
-        pluginId = await pluginService.save(tempPlugin)
       }
 
-      // 任务创建监听器
-      const listeners: string[] = pluginInstallDTO.listeners
-      if (ArrayNotEmpty(listeners)) {
-        const pluginTaskUrlListenerService = new PluginTaskUrlListenerService(transactionDB)
-        const pluginTaskUrlListeners: PluginTaskUrlListener[] = []
-        let pluginTaskUrlListener: PluginTaskUrlListener
-        for (const listener of listeners) {
-          pluginTaskUrlListener = new PluginTaskUrlListener()
-          pluginTaskUrlListener.pluginId = pluginId
-          pluginTaskUrlListener.listener = listener
-          pluginTaskUrlListeners.push(pluginTaskUrlListener)
-        }
-        await pluginTaskUrlListenerService.saveBatch(pluginTaskUrlListeners)
-      }
       // 域名
       const domainConfigs = pluginInstallDTO.domains
       if (ArrayNotEmpty(domainConfigs)) {
@@ -278,7 +257,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         }
       }
       LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
-      return new PluginInstallResultDTO(tempPlugin, domainConfigs, listeners)
+      return new PluginInstallResultDTO(tempPlugin, domainConfigs)
     }, '保存插件、监听器和域名')
       .finally(() => {
         if (!this.injectedDB) {
@@ -407,10 +386,6 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     plugin.id = pluginId
     plugin.uninstalled = BOOL.TRUE
     return this.transaction<number>(async () => {
-      const listenerService = new PluginTaskUrlListenerService(this.db)
-      const query = new PluginTaskUrlListenerQueryDTO()
-      query.pluginId = pluginId
-      await listenerService.delete(query)
       return this.updateById(plugin)
     }, '卸载插件')
   }

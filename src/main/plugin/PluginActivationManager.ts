@@ -98,7 +98,9 @@ export class PluginActivationManager {
       if (!plugin.id) {
         continue
       }
-      await this.activatePlugin(plugin.id, ActivationType.STARTUP)
+      try {
+        await this.activatePlugin(plugin.id, ActivationType.STARTUP)
+      } catch (ignored) {}
     }
 
     LogUtil.info('PluginActivationManager', '启动时插件激活完成')
