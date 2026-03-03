@@ -7,6 +7,7 @@ const props = defineProps<{
   width: string
   foldWidth: string
   defaultActive: string[]
+  backgroundColor?: string
 }>()
 
 // 变量
@@ -89,12 +90,13 @@ function handleClickOutSide() {
 .side-menu-container {
   width: v-bind(containerWidth);
   transition: width 0.3s ease;
+  --el-menu-bg-color: var(--side-menu-background-color, white);
 }
 .side-menu-main {
   height: 100%;
   width: v-bind(mainWidth);
   overflow: visible;
-  background-color: var(--el-fill-color-blank);
+  background-color: var(--side-menu-background-color, white);
   border-right: solid 1px var(--el-border-color);
   transition: width 0.3s ease;
 }

@@ -162,7 +162,8 @@ const resizeObserver = new ResizeObserver((entries) => {
   const entry = entries[0]
   // 判断是作品视图还是作品集视图
   if (workSetView.value) {
-    loadMoreWorkSet.value = entry.contentRect.height < workSpace.value.clientHeight && workSetPage.value.pageNumber < workSetPage.value.pageCount
+    loadMoreWorkSet.value =
+      entry.contentRect.height < workSpace.value.clientHeight && workSetPage.value.pageNumber < workSetPage.value.pageCount
   } else {
     loadMore.value = entry.contentRect.height < workSpace.value.clientHeight && workPage.value.pageNumber < workPage.value.pageCount
   }
@@ -407,7 +408,7 @@ async function handleTest() {
     <el-container>
       <el-aside class="main-page-sidebar z-layer-4" width="auto">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-        <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']">
+        <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']" background-color="black">
           <template #default>
             <el-menu-item index="0" @click="closeSubpage">
               <template #title> 主页 </template>
@@ -531,10 +532,7 @@ async function handleTest() {
           <div ref="workSpace" class="main-page-work-space">
             <div class="view-wrapper">
               <!-- 作品视图 -->
-              <div
-                class="view-container"
-                :class="{ 'view-slide-left': workSetView }"
-              >
+              <div class="view-container" :class="{ 'view-slide-left': workSetView }">
                 <el-scrollbar v-el-scrollbar-bottomed="() => queryWorkPage(true)">
                   <work-grid-for-main-page
                     ref="workGridRef"
@@ -556,10 +554,7 @@ async function handleTest() {
                 </span>
               </div>
               <!-- 作品集视图 -->
-              <div
-                class="view-container"
-                :class="{ 'view-slide-right': !workSetView }"
-              >
+              <div class="view-container" :class="{ 'view-slide-right': !workSetView }">
                 <el-scrollbar v-el-scrollbar-bottomed="() => queryWorkSetPage(true)">
                   <work-set-grid-for-main-page
                     ref="workSetGridRef"
@@ -637,6 +632,7 @@ async function handleTest() {
   width: 100%;
   height: 100%;
   background-color: #fafafa;
+  --side-menu-background-color: #ebf0f5;
 }
 .close-subpage-button {
   display: flex;
