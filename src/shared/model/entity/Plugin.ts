@@ -35,9 +35,9 @@ export default class Plugin extends BaseEntity {
   changelog: string | undefined | null
 
   /**
-   * 入口文件名
+   * 入口路径
    */
-  entryFile: string | undefined | null
+  entryPath: string | undefined | null
 
   /**
    * 安装包路径
@@ -73,7 +73,7 @@ export default class Plugin extends BaseEntity {
       this.version = plugin.version
       this.description = plugin.description
       this.changelog = plugin.changelog
-      this.entryFile = plugin.entryFile
+      this.entryPath = plugin.entryPath
       this.packagePath = plugin.packagePath
       this.activationType = plugin.activationType
       this.sortNum = plugin.sortNum

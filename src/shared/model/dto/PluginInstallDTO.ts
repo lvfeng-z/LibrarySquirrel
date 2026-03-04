@@ -1,5 +1,6 @@
 import AdmZip from 'adm-zip'
 import { PluginManifest } from '../../../main/plugin/types/PluginManifest.ts'
+import { ActivationConfig } from '../../../main/plugin/types/ActivationTypes.ts'
 
 export default class PluginInstallDTO {
   /**
@@ -23,6 +24,11 @@ export default class PluginInstallDTO {
   version: string
 
   /**
+   * 加载配置
+   */
+  activation: ActivationConfig
+
+  /**
    * 入口文件名
    */
   entryFile: string
@@ -42,6 +48,7 @@ export default class PluginInstallDTO {
     this.author = src.author
     this.name = src.name
     this.version = src.version
+    this.activation = src.activation
     this.entryFile = src.entryFile
     this.packagePath = src.packagePath
     this.package = src.package

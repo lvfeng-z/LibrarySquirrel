@@ -102,7 +102,6 @@ src/
 ## Plugin System
 
 - **Loader**: `PluginLoader.ts` - loads plugins from `plugin/package/`
-- **Factory**: `PluginFactory.ts` - creates plugin instances via `create(pluginLoadDTO, pluginTool?)`
 - **Execution**: `TaskHandler.ts` in plugin module handles plugin task execution
 - Each plugin is a separate package with author, name, and version metadata
 - **BasePlugin**: Minimal interface with only `pluginId: number`

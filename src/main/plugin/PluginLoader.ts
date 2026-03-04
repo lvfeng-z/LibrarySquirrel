@@ -16,9 +16,11 @@ import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
-import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.ts'
-import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import Site from '@shared/model/entity/Site.ts'
+import { RootDir } from '../util/FileSysUtil.ts'
+import path from 'path'
+import { pathToFileURL } from 'node:url'
 
 /**
  * 缓存的插件实例
@@ -64,10 +66,13 @@ export default class PluginLoader {
     let cached = this.pluginCache.get(pluginId)
 
     if (IsNullish(cached)) {
-      const pluginLoadDTO = await this.pluginService.getDTOById(pluginId)
+      const plugin = await this.pluginService.getById(pluginId)
+      AssertNotBlank(plugin?.entryPath, '')
+      path.join(RootDir(), plugin?.entryPath)
+      AssertNotNullish(plugin, '加载插件失败，插件id不可用')
       const context = await this.createPluginContext(pluginId)
 
-      const loaded = this.loadPluginInstance(pluginLoadDTO, context)
+      const loaded = this.loadPluginInstance(plugin, context)
 
       cached = {
         instance: {} as PluginInstance,
@@ -94,17 +99,18 @@ export default class PluginLoader {
 
   /**
    * 加载插件实例
-   * @param pluginLoadDTO 插件加载DTO
+   * @param plugin 插件
    * @param context 插件上下文
    * @returns 插件实例
    * @private
    */
-  private async loadPluginInstance(pluginLoadDTO: PluginLoadDTO, context: PluginContext): Promise<PluginInstance> {
-    const loadPath = pluginLoadDTO.loadPath
-    if (!loadPath) {
-      throw new Error(`插件加载路径不能为空，pluginId: ${pluginLoadDTO.id}`)
+  private async loadPluginInstance(plugin: Plugin, context: PluginContext): Promise<PluginInstance> {
+    const entryPath = plugin.entryPath
+    if (!entryPath) {
+      throw new Error(`插件加载路径不能为空，pluginId: ${plugin.id}`)
     }
-    const module = await import(loadPath)
+    const moduleUrl = pathToFileURL(entryPath).href
+    const module = await import(moduleUrl)
     const entryPoint: PluginEntryPoint = module.default
 
     if (typeof entryPoint !== 'function') {

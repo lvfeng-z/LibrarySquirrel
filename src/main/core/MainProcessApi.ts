@@ -263,7 +263,7 @@ function exposeService() {
 
   // PluginTaskUrlListenerManager
   Electron.ipcMain.handle(
-    'pluginTaskUrlListenerManager',
+    'pluginTaskUrlListenerManager-listListener',
     createHandler('pluginTaskUrlListenerManager-listListener', (args) => {
       return getPluginTaskUrlListenerManager().listListener(args)
     })

@@ -251,7 +251,7 @@ tables:
         author          text,
         name            text,
         version         text,
-        file_name       text,
+        entry_path      text,
         package_path    text,
         create_time     integer,
         update_time     integer,

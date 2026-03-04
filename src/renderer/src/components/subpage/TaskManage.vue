@@ -188,6 +188,8 @@ const downloadInputPlaceholder: Ref<string> = ref('')
 const sourceUrl: Ref<string> = ref('')
 // 支持当前url的插件列表
 const supportedPluginListenerList: Ref<Plugin[]> = ref([])
+// 支持状态
+const supportStatus: Ref<string> = ref('')
 
 // 方法
 // 根据url或文件路径创建任务
@@ -480,6 +482,11 @@ async function getSupportedText() {
     }
   }
 }
+//
+async function handleSourceUrlInput() {
+  supportedPluginListenerList.value = await getUrlMatchedPlugin(sourceUrl.value)
+  supportStatus.value = await getSupportedText()
+}
 </script>
 
 <template>
@@ -577,8 +584,14 @@ async function getSupportedText() {
           <el-button type="primary" icon="FolderOpened" @click="selectDir(false)">选择文件夹导入</el-button>
           <el-button type="primary" icon="Document" @click="selectDir(true)">选择单个文件导入</el-button>
         </div>
-        <el-input v-model="sourceUrl" type="textarea" :rows="6" :placeholder="downloadInputPlaceholder"></el-input>
-        <span class="task-manage-download-dialog-supported-tips"> {{ getSupportedText() }} </span>
+        <el-input
+          v-model="sourceUrl"
+          type="textarea"
+          :rows="6"
+          :placeholder="downloadInputPlaceholder"
+          @input="handleSourceUrlInput"
+        />
+        <span class="task-manage-download-dialog-supported-tips"> {{ supportStatus }} </span>
         <template #footer>
           <el-tooltip :disabled="ArrayNotEmpty(supportedPluginListenerList)">
             <el-button type="primary" :disabled="ArrayIsEmpty(supportedPluginListenerList)" @click="createTaskFromSource">

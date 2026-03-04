@@ -6,14 +6,12 @@ import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { ArrayNotEmpty, NotNullish } from '@shared/util/CommonUtil.ts'
-import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '@shared/model/dto/PluginInstallDTO.js'
 import { AssertNotBlank, AssertNotNullish, AssertTrue } from '@shared/util/AssertUtil.ts'
 import fs from 'fs'
 import AdmZip from 'adm-zip'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
-import { pathToFileURL } from 'node:url'
 import lodash from 'lodash'
 import { BOOL } from '../constant/BOOL.js'
 import Page from '@shared/model/util/Page.js'
@@ -64,23 +62,6 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     } else {
       return undefined
     }
-  }
-
-  /**
-   * 根据id获取插件加载路径
-   */
-  public async getDTOById(id: number): Promise<PluginLoadDTO> {
-    const plugin = await this.dao.getById(id)
-    AssertNotNullish(plugin, `加载插件失败，pluginId: ${id}不可用`)
-    const loadDTO = new PluginLoadDTO(plugin)
-    AssertNotNullish(plugin.author, `生成插件加载路径失败，插件的作者为空，pluginId: ${id}`)
-    AssertNotNullish(plugin.name, `生成插件加载路径失败，插件的名称为空，pluginId: ${id}`)
-    AssertNotNullish(plugin.version, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
-    AssertNotNullish(plugin.entryFile, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
-    loadDTO.loadPath = pathToFileURL(
-      path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.entryFile)
-    ).href
-    return loadDTO
   }
 
   /**
@@ -170,18 +151,25 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     pluginInstallDTO.packagePath = fullBackupPath
 
     // 安装路径
-    const installPath: string = path.join(RootDir(), PLUGIN_RUNTIME, pluginInstallDTO.publicId, pluginInstallDTO.version)
+    const installPathRelative: string = path.join(PLUGIN_RUNTIME, pluginInstallDTO.publicId, pluginInstallDTO.version)
+    const entryPathRelative: string = path.join(installPathRelative, pluginInstallDTO.entryFile)
+    const installPath: string = path.join(RootDir(), installPathRelative)
     await CreateDirIfNotExists(installPath)
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
     return this.transaction(async (transactionDB) => {
       const tempPlugin = new Plugin()
       lodash.assignWith(tempPlugin, pluginInstallDTO)
+      tempPlugin.activationType = pluginInstallDTO.activation.type
+      tempPlugin.entryPath = entryPathRelative
+
       const pluginService = new PluginService(transactionDB)
       if (NotNullish(uninstalled)) {
         tempPlugin.pluginData = uninstalled.pluginData
         tempPlugin.uninstalled = BOOL.FALSE
         await pluginService.updateById(tempPlugin)
+      } else {
+        await pluginService.save(tempPlugin)
       }
 
       LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
