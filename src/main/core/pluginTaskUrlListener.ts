@@ -1,5 +1,4 @@
 import Plugin from '@shared/model/entity/Plugin.ts'
-import PluginTaskUrlListener from '@shared/model/util/PluginTaskUrlListener.ts'
 import { IsNullish } from '@shared/util/CommonUtil.ts'
 
 let pluginTaskUrlListenerManager: PluginTaskUrlListenerManager | undefined = undefined
@@ -40,28 +39,6 @@ class PluginTaskUrlListenerManager {
         }
       } catch {
         // 正则表达式无效，跳过
-      }
-    }
-
-    return result
-  }
-
-  /**
-   * 根据插件ID列表获取监听器
-   * @param pluginIds 插件ID列表
-   */
-  async listByPluginIds(pluginIds: number[]): Promise<PluginTaskUrlListener[]> {
-    const result: PluginTaskUrlListener[] = []
-    const pluginIdSet = new Set(pluginIds)
-
-    for (const [pattern, plugins] of this.listeners) {
-      for (const plugin of plugins) {
-        if (plugin.id !== undefined && plugin.id !== null && pluginIdSet.has(plugin.id)) {
-          const listener = new PluginTaskUrlListener()
-          listener.pluginId = plugin.id
-          listener.listener = pattern
-          result.push(listener)
-        }
       }
     }
 

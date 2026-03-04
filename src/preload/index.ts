@@ -50,7 +50,9 @@ const api = {
   pluginReinstall: (args) => Electron.ipcRenderer.invoke('plugin-reinstall', args),
   pluginReinstallFromPath: (arg1, arg2) => Electron.ipcRenderer.invoke('plugin-reinstallFromPath', arg1, arg2),
   pluginUnInstall: (args) => Electron.ipcRenderer.invoke('plugin-unInstall', args),
-  pluginListPluginListenerDTO: (args) => Electron.ipcRenderer.invoke('plugin-listPluginListenerDTO', args),
+
+  // PluginTaskUrlListenerManager
+  pluginTaskUrlListenerManagerListListener: (args) => Electron.ipcRenderer.invoke('pluginTaskUrlListenerManager-listListener', args),
 
   // SearchService
   searchQuerySearchConditionPage: (args) => Electron.ipcRenderer.invoke('search-querySearchConditionPage', args),

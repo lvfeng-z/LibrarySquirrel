@@ -23,11 +23,9 @@ import { pathToFileURL } from 'node:url'
 import PluginInstallResultDTO from '@shared/model/dto/PluginInstallResultDTO.js'
 import SiteService from './SiteService.js'
 import lodash from 'lodash'
-import PluginListenerDTO from '@shared/model/dto/PluginListenerDTO.js'
 import { BOOL } from '../constant/BOOL.js'
 import Page from '@shared/model/util/Page.js'
 import BackupService from './BackupService.js'
-import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rm } from 'node:fs/promises'
 import Backup from '@shared/model/entity/Backup.ts'
@@ -101,22 +99,6 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     query.name = name
     query.version = version
     return this.list(query)
-  }
-
-  /**
-   * 查询插件监听DTO列表
-   * @param pluginQueryDTO
-   */
-  public async listPluginListenerDTO(pluginQueryDTO: PluginQueryDTO): Promise<PluginListenerDTO[]> {
-    const pluginList = await this.list(pluginQueryDTO)
-    const pluginIds = pluginList.map((plugin) => plugin.id as number)
-    const pluginTaskUrlList = await getPluginTaskUrlListenerManager().listByPluginIds(pluginIds)
-    const pluginIdListenerListMap = lodash.groupBy(pluginTaskUrlList, (pluginTaskUrl) => pluginTaskUrl.pluginId)
-    return pluginList.map((plugin) => {
-      const temp = new PluginListenerDTO(plugin)
-      temp.pluginTaskUrlListeners = pluginIdListenerListMap[plugin.id as number]
-      return temp
-    })
   }
 
   /**

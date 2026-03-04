@@ -28,9 +28,8 @@ import TaskTreeDTO from '@shared/model/dto/TaskTreeDTO.ts'
 import TaskProgressTreeDTO from '@shared/model/dto/TaskProgressTreeDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
 import TaskQueryDTO from '@shared/model/queryDTO/TaskQueryDTO.ts'
-import PluginListenerDTO from '@shared/model/dto/PluginListenerDTO.ts'
+import Plugin from '@shared/model/entity/Plugin.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
 
 // onMounted
 onMounted(() => {
@@ -43,6 +42,7 @@ const emits = defineEmits(['openReplaceResConfirmDialog'])
 // 变量
 // 接口
 const apis = {
+  pluginTaskUrlListenerManagerListListener: window.api.pluginTaskUrlListenerManagerListListener,
   siteQuerySelectItemPage: window.api.siteQuerySelectItemPage,
   taskCreateTask: window.api.taskCreateTask,
   taskListStatus: window.api.taskListStatus,
@@ -54,8 +54,7 @@ const apis = {
   taskPauseTaskTree: window.api.taskPauseTaskTree,
   taskStopTaskTree: window.api.taskStopTaskTree,
   taskResumeTaskTree: window.api.taskResumeTaskTree,
-  dirSelect: window.api.dirSelect,
-  pluginListPluginListener: window.api.pluginListPluginListenerDTO
+  dirSelect: window.api.dirSelect
 }
 // taskManageSearchTable的组件实例
 const taskManageSearchTable = ref()
@@ -187,10 +186,8 @@ const downloadMode: Ref<boolean> = ref(true)
 const downloadInputPlaceholder: Ref<string> = ref('')
 // 资源的url或文件路径
 const sourceUrl: Ref<string> = ref('')
-// 插件监听DTO列表
-const pluginListenerDTOList: Ref<PluginListenerDTO[]> = ref([])
 // 支持当前url的插件列表
-const supportedPluginListenerList: Ref<PluginListenerDTO[]> = ref([])
+const supportedPluginListenerList: Ref<Plugin[]> = ref([])
 
 // 方法
 // 根据url或文件路径创建任务
@@ -372,7 +369,6 @@ async function selectDir(openFile: boolean) {
 // 打开下载dialog
 function handleDownloadDialog(_event: PointerEvent, isLocal: boolean, newState?: boolean) {
   downloadMode.value = isLocal
-  setPluginListenerList()
   if (isLocal) {
     downloadInputPlaceholder.value = '输入文件路径'
   } else {
@@ -453,38 +449,20 @@ async function deleteTask(ids: number[]) {
     await taskManageSearchTable.value.doSearch()
   }
 }
-// 设置插件监听DTO列表
-async function setPluginListenerList() {
-  const response = await apis.pluginListPluginListener()
-  if (ApiUtil.check(response)) {
-    const data = ApiUtil.data<PluginListenerDTO[]>(response)
-    pluginListenerDTOList.value = IsNullish(data) ? [] : data
-  }
-}
 // 获取url匹配的插件
-function getUrlMatchedPlugin(url: string): PluginListenerDTO[] {
-  if (StringUtil.isBlank(url)) {
-    return []
-  }
-  const result = pluginListenerDTOList.value.filter((pluginListenerDTO) => {
-    if (ArrayIsEmpty(pluginListenerDTO.pluginTaskUrlListeners)) {
-      return false
-    } else {
-      return pluginListenerDTO.pluginTaskUrlListeners.some((listener) => {
-        if (IsNullish(listener.listener)) {
-          return false
-        } else {
-          return ArrayNotEmpty(url.match(listener.listener))
-        }
-      })
+async function getUrlMatchedPlugin(url: string): Promise<Plugin[]> {
+  const response = await apis.pluginTaskUrlListenerManagerListListener(url)
+  if (ApiUtil.check(response)) {
+    const plugins = ApiUtil.data<Plugin[]>(response)
+    if (NotNullish(plugins)) {
+      return plugins
     }
-  })
-  supportedPluginListenerList.value = result
-  return result
+  }
+  return []
 }
 // 获取受支持提示文本
-function getSupportedText() {
-  const supportedPlugins = getUrlMatchedPlugin(sourceUrl.value)
+async function getSupportedText() {
+  const supportedPlugins = await getUrlMatchedPlugin(sourceUrl.value)
   if (ArrayIsEmpty(supportedPlugins)) {
     return ''
   } else {

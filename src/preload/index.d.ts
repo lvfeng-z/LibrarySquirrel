@@ -55,7 +55,9 @@ declare global {
       pluginReinstall: function
       pluginReinstallFromPath: function
       pluginUnInstall: function
-      pluginListPluginListenerDTO: function
+
+      // PluginTaskUrlListenerManager
+      pluginTaskUrlListenerManagerListListener: function
 
       // ReWorkTag
       reWorkTagLink: function

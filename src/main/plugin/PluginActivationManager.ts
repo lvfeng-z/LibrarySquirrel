@@ -4,6 +4,8 @@ import LogUtil from '../util/LogUtil.ts'
 import PluginLoader from './PluginLoader.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import { PluginContext } from './types/PluginContext.ts'
+import StringUtil from '@shared/util/StringUtil.ts'
+import { IsNullish } from '@shared/util/CommonUtil.ts'
 
 /**
  * 插件激活管理器
@@ -34,20 +36,22 @@ export class PluginActivationManager {
    * 根据激活类型激活插件
    * @param pluginId 插件ID
    * @param activationType 激活类型
+   * @param pluginName 插件名称
    */
-  public async activatePlugin(pluginId: number, activationType: ActivationType): Promise<void> {
+  public async activatePlugin(pluginId: number, activationType: ActivationType, pluginName?: string): Promise<void> {
     // 如果已经激活，直接返回
     if (this.activatedPlugins.has(pluginId)) {
       LogUtil.debug('PluginActivationManager', `插件 ${pluginId} 已激活，跳过`)
       return
     }
+    const finalName = StringUtil.isBlank(pluginName) ? pluginId : pluginName
 
     try {
       await this.pluginLoader.load(pluginId)
       this.activatedPlugins.set(pluginId, activationType)
-      LogUtil.info('PluginActivationManager', `插件 ${pluginId} 激活成功`)
+      LogUtil.info('PluginActivationManager', `插件 ${finalName} 激活成功`)
     } catch (error) {
-      LogUtil.error('PluginActivationManager', `插件 ${pluginId} 激活失败`, error)
+      LogUtil.error('PluginActivationManager', `插件 ${finalName} 激活失败`, error)
       throw error
     }
   }
@@ -89,7 +93,7 @@ export class PluginActivationManager {
     query.activationType = ActivationType.STARTUP
     const plugins = await this.pluginService.list(query)
     if (!plugins || plugins.length === 0) {
-      LogUtil.info('PluginActivationManager', '没有已安装的插件')
+      LogUtil.info('PluginActivationManager', '没有需要加载的插件')
       return
     }
 
@@ -99,7 +103,7 @@ export class PluginActivationManager {
         continue
       }
       try {
-        await this.activatePlugin(plugin.id, ActivationType.STARTUP)
+        await this.activatePlugin(plugin.id, ActivationType.STARTUP, IsNullish(plugin.name) ? undefined : plugin.name)
       } catch (ignored) {}
     }
 
