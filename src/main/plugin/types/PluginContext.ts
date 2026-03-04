@@ -1,5 +1,4 @@
 import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
-import { PluginManifest } from './PluginManifest.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import Site from '@shared/model/entity/Site.ts'
 
@@ -8,11 +7,6 @@ import Site from '@shared/model/entity/Site.ts'
  * 主程序提供给插件的 API 和工具
  */
 export interface PluginContext {
-  /** 插件清单 */
-  manifest: PluginManifest
-  /** 插件ID (数据库) */
-  pluginId: number
-
   /** 主程序API */
   app: {
     /** 获取主窗口 */
@@ -49,4 +43,7 @@ export interface PluginContext {
       error: (message: string, ...args: unknown[]) => void
     }
   }
+
+  /** 插件数据 */
+  pluginData: unknown
 }

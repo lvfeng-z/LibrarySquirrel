@@ -21,7 +21,5 @@ sites:
 
       Artists love us because we are an inclusive and supportive community. We help them find their identity through self-expression. We provide the tools, resources, and exposure to enable them to become better, more successful artists. We inspire people to create art by feeding their creativity. We can't help it - it runs through our veins and compels us to nurture it in others. This is DeviantArt.
 plugins:
-  - packagePath: initialization/localTaskHandler.zip
-    pathType: Relative
-  - packagePath: initialization/pixivTaskHandler.zip
+  - packagePath: initialization/pixivSuite.zip
     pathType: Relative

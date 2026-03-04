@@ -13,10 +13,9 @@ import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
-import { ContributionKey, ContributionMap, TaskContribution } from './types/ContributionTypes.ts'
-import { PluginManifest } from './types/PluginManifest.ts'
+import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
-import { PluginInstance, PluginEntryPoint } from './types/PluginInstance.ts'
+import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
 import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.ts'
 import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import Site from '@shared/model/entity/Site.ts'
@@ -66,7 +65,7 @@ export default class PluginLoader {
 
     if (IsNullish(cached)) {
       const pluginLoadDTO = await this.pluginService.getDTOById(pluginId)
-      const context = await this.createPluginContext(pluginId, pluginLoadDTO)
+      const context = await this.createPluginContext(pluginId)
 
       const loaded = this.loadPluginInstance(pluginLoadDTO, context)
 
@@ -112,19 +111,7 @@ export default class PluginLoader {
       throw new Error(`插件入口点必须是函数，但获取到了 ${typeof entryPoint}`)
     }
 
-    const instance = await entryPoint(context)
-
-    // 验证实现的贡献点
-    this.validateContributions(instance)
-
-    // 将 pluginId 设置到 implementations 中
-    if (instance.implementations.task) {
-      const taskContribution = instance.implementations.task as TaskContribution
-      taskContribution.pluginId = context.pluginId
-      taskContribution.context = context
-    }
-
-    return instance
+    return entryPoint(context)
   }
 
   /**
@@ -148,7 +135,7 @@ export default class PluginLoader {
    * 创建插件上下文
    * @private
    */
-  private async createPluginContext(pluginId: number, pluginLoadDTO: PluginLoadDTO): Promise<PluginContext> {
+  private async createPluginContext(pluginId: number): Promise<PluginContext> {
     const plugin = await this.pluginService.getById(pluginId)
     AssertNotNullish(plugin, '创建插件上下文失败，插件id不可用')
     const secureStorageService = new SecureStorageService()
@@ -164,8 +151,6 @@ export default class PluginLoader {
     }
 
     return {
-      manifest: this.buildManifest(plugin, pluginLoadDTO),
-      pluginId,
       app: {
         getMainWindow: () => getMainWindow(),
         createWindow: (options) => new Electron.BrowserWindow(options),
@@ -196,49 +181,8 @@ export default class PluginLoader {
           return siteService.saveBatchIfNotExist(site)
         },
         logger
-      }
-    }
-  }
-
-  /**
-   * 构建插件清单
-   * @private
-   */
-  private buildManifest(plugin: Plugin | undefined, _pluginLoadDTO: PluginLoadDTO): PluginManifest {
-    AssertNotNullish(plugin?.activationType, '构建构建插件清单失败，插件激活类型不能为空')
-    return {
-      id: `${plugin?.author}/${plugin?.name}`,
-      name: plugin?.name ?? '',
-      version: plugin?.version ?? '',
-      author: plugin?.author ?? '',
-      description: plugin?.description ?? '',
-      contributes: [],
-      activation: {
-        type: plugin?.activationType
       },
-      entryFile: plugin?.entryFile ?? ''
-    }
-  }
-
-  /**
-   * 验证贡献点实现
-   * @private
-   */
-  private validateContributions(instance: PluginInstance): void {
-    if (!instance.implementations || Object.keys(instance.implementations).length === 0) {
-      throw new Error('插件必须实现至少一个贡献点')
-    }
-
-    // 验证task贡献点
-    if (instance.implementations.task) {
-      const task = instance.implementations.task
-      const requiredMethods = ['create', 'createWorkInfo', 'start', 'retry', 'pause', 'stop', 'resume']
-
-      for (const method of requiredMethods) {
-        if (typeof (task as unknown as Record<string, unknown>)[method] !== 'function') {
-          throw new Error(`task贡献点缺少方法: ${method}`)
-        }
-      }
+      pluginData: plugin.pluginData
     }
   }
 
