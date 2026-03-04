@@ -1,6 +1,7 @@
 import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import { PluginManifest } from './PluginManifest.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
+import Site from '@shared/model/entity/Site.ts'
 
 /**
  * 插件上下文接口
@@ -38,6 +39,8 @@ export interface PluginContext {
     registerUrlListener: (listenerPatterns: string[]) => void
     /** 取消注册任务URL监听器 */
     unregisterUrlListener: () => void
+    /** 保存站点 */
+    addSite: (site: Site[]) => Promise<void>
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

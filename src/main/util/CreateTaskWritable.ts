@@ -82,8 +82,8 @@ export default class CreateTaskWritable extends Writable {
   ) {
     const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
     // 校验
-    if (isBlank(task.siteDomain)) {
-      LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
+    if (isBlank(task.siteName)) {
+      LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点名称')
       callback()
       return
     }
@@ -101,14 +101,14 @@ export default class CreateTaskWritable extends Writable {
     task.isCollection = false
     task.pid = this.parentTask.id
     // 根据站点域名查询站点id
-    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteDomain)
+    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteName)
     if (IsNullish(siteId)) {
-      const tempSite = this.siteService.getByDomain(task.siteDomain)
+      const tempSite = this.siteService.getByName(task.siteName)
       siteId = tempSite.then((site) => site?.id)
     }
     task.siteId = await siteId
     if (IsNullish(task.siteId)) {
-      LogUtil.error(this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+      LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
       callback()
       return
     }

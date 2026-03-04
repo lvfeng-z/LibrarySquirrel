@@ -74,14 +74,6 @@ const api = {
   siteSave: (args) => Electron.ipcRenderer.invoke('site-save', args),
   siteUpdateById: (args) => Electron.ipcRenderer.invoke('site-updateById', args),
 
-  // SiteDomainService
-  siteDomainDeleteById: (args) => Electron.ipcRenderer.invoke('siteDomain-deleteById', args),
-  siteDomainQueryPage: (args) => Electron.ipcRenderer.invoke('siteDomain-queryPage', args),
-  siteDomainSave: (args) => Electron.ipcRenderer.invoke('siteDomain-save', args),
-  siteDomainUpdateById: (args) => Electron.ipcRenderer.invoke('siteDomain-updateById', args),
-  siteDomainQueryDTOPage: (args) => Electron.ipcRenderer.invoke('siteDomain-queryDTOPage', args),
-  siteDomainQueryDTOPageBySite: (args) => Electron.ipcRenderer.invoke('siteDomain-queryDTOPageBySite', args),
-
   // SiteAuthor
   siteAuthorCreateAndBindSameNameLocalAuthor: (args) =>
     Electron.ipcRenderer.invoke('siteAuthor-createAndBindSameNameLocalAuthor', args),

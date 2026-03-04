@@ -22,7 +22,6 @@ import AppLauncherService from '../service/AppLauncherService.ts'
 import { OriginType } from '../constant/OriginType.ts'
 import SiteQueryDTO from '@shared/model/queryDTO/SiteQueryDTO.ts'
 import Site from '@shared/model/entity/Site.ts'
-import SiteDomainService from '../service/SiteDomainService.ts'
 import PluginService from '../service/PluginService.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.ts'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.ts'
@@ -413,53 +412,6 @@ function exposeService() {
     createHandler('site-updateById', (args) => {
       const service = new SiteService()
       return service.updateById(args)
-    })
-  )
-
-  // SiteDomain
-  Electron.ipcMain.handle(
-    'siteDomain-deleteById',
-    createHandler('siteDomain-deleteById', (args) => {
-      const service = new SiteDomainService()
-      return service.deleteById(args)
-    })
-  )
-  Electron.ipcMain.handle(
-    'siteDomain-queryPage',
-    createHandler('siteDomain-queryPage', (args) => {
-      const service = new SiteDomainService()
-      args = new Page<SiteQueryDTO, Site>(args)
-      return service.queryPage(args)
-    })
-  )
-  Electron.ipcMain.handle(
-    'siteDomain-save',
-    createHandler('siteDomain-save', (args) => {
-      const service = new SiteDomainService()
-      return service.save(args)
-    })
-  )
-  Electron.ipcMain.handle(
-    'siteDomain-updateById',
-    createHandler('siteDomain-updateById', (args) => {
-      const service = new SiteDomainService()
-      return service.updateById(args)
-    })
-  )
-  Electron.ipcMain.handle(
-    'siteDomain-queryDTOPage',
-    createHandler('siteDomain-queryDTOPage', (args) => {
-      const service = new SiteDomainService()
-      args = new Page(args)
-      return service.queryDTOPage(args)
-    })
-  )
-  Electron.ipcMain.handle(
-    'siteDomain-queryDTOPageBySite',
-    createHandler('siteDomain-queryDTOPageBySite', (args) => {
-      const service = new SiteDomainService()
-      args = new Page(args)
-      return service.queryDTOPageBySite(args)
     })
   )
 

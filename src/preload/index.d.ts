@@ -80,14 +80,6 @@ declare global {
       siteSave: function
       siteUpdateById: function
 
-      // SiteDomainService
-      siteDomainDeleteById: function
-      siteDomainQueryPage: function
-      siteDomainSave: function
-      siteDomainUpdateById: function
-      siteDomainQueryDTOPage: function
-      siteDomainQueryDTOPageBySite: function
-
       // SiteAuthor
       siteAuthorUpdateBindLocalAuthor: function
       siteAuthorCreateAndBindSameNameLocalAuthor: function

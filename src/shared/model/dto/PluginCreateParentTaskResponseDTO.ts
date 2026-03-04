@@ -31,9 +31,9 @@ export default class PluginCreateParentTaskResponseDTO {
   pluginData: { [key: string]: unknown } | string | undefined | null
 
   /**
-   * 站点domain
+   * 站点名称
    */
-  siteDomain: string | undefined | null
+  siteName: string | undefined | null
 
   /**
    * 子任务
@@ -46,7 +46,7 @@ export default class PluginCreateParentTaskResponseDTO {
     result.siteWorkId = pluginParentTaskResponseDTO.siteWorkId
     result.url = pluginParentTaskResponseDTO.url
     result.pluginData = pluginParentTaskResponseDTO.pluginData
-    result.siteDomain = pluginParentTaskResponseDTO.siteDomain
+    result.siteName = pluginParentTaskResponseDTO.siteName
     return result
   }
 }

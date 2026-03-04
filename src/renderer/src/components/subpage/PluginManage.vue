@@ -39,8 +39,6 @@ const apis = {
 }
 // 插件数据表组件的实例
 const pluginSearchTable = ref()
-// 插件域名数据表组件的实例
-const pluginDomainSearchTable = ref()
 // 插件分页参数
 const pluginPage: Ref<Page<PluginQueryDTO, Plugin>> = ref(new Page<PluginQueryDTO, Plugin>())
 // 插件操作栏按钮
@@ -139,7 +137,6 @@ async function handleSelectionChange(selections: Plugin[]) {
   if (selections.length > 0) {
     pluginSelected.value = selections[0]
   }
-  pluginDomainSearchTable.value.doSearch()
 }
 // 重新安装前询问安装来源
 async function beforeReInstall(pluginId: number) {

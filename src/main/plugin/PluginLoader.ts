@@ -19,6 +19,7 @@ import { PluginContext } from './types/PluginContext.ts'
 import { PluginInstance, PluginEntryPoint } from './types/PluginInstance.ts'
 import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.ts'
 import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import Site from '@shared/model/entity/Site.ts'
 
 /**
  * 缓存的插件实例
@@ -189,6 +190,10 @@ export default class PluginLoader {
         unregisterUrlListener: () => {
           const listenerManager = getPluginTaskUrlListenerManager()
           listenerManager.unregister(pluginId)
+        },
+        addSite: async (site: Site[]) => {
+          const siteService = new SiteService()
+          await siteService.saveBatch(site)
         },
         logger
       }

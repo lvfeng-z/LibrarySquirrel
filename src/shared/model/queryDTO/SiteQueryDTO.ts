@@ -17,11 +17,17 @@ export default class SiteQueryDTO extends BaseQueryDTO {
    */
   siteDescription?: string | undefined | null
 
+  /**
+   * 主页
+   */
+  homepage?: string | undefined | null
+
   constructor(siteQueryDTO?: SiteQueryDTO) {
     super(siteQueryDTO)
     if (NotNullish(siteQueryDTO)) {
-      this.id = siteQueryDTO.id
       this.siteName = siteQueryDTO.siteName
+      this.siteDescription = siteQueryDTO.siteDescription
+      this.homepage = siteQueryDTO.homepage
     }
   }
 }

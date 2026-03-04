@@ -43,11 +43,6 @@ export async function GotoPage(pageEnum: PageEnum) {
  * @param config
  */
 export function AskGotoPage(config: GotoPageConfig) {
-  const pageStatesStore = usePageStatesStore()
-  switch (config.page) {
-    case PageEnum.SiteManage:
-      pageStatesStore.pageStates.siteManage.setFocusOnDomains(config.extraData as string[])
-  }
   ElMessageBox.alert(config.content, config.title, config.options).then(async () => GotoPage(config.page))
   switch (config.page) {
     case PageEnum.Settings:

@@ -6,20 +6,14 @@ import { NotNullish } from '../../util/CommonUtil.ts'
  */
 export default class TaskCreateDTO extends Task {
   /**
-   * 是否已保存
+   * 站点名称
    */
-  saved: boolean | undefined | null
-
-  /**
-   * 站点domain
-   */
-  siteDomain: string | undefined | null
+  siteName: string | undefined | null
 
   constructor(taskCreateDTO?: TaskCreateDTO) {
     super(taskCreateDTO)
     if (NotNullish(taskCreateDTO)) {
-      this.saved = taskCreateDTO.saved
-      this.siteDomain = taskCreateDTO.siteDomain
+      this.siteName = taskCreateDTO.siteName
     }
   }
 }

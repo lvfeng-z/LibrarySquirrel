@@ -98,8 +98,8 @@ export default class CreateTaskWritable extends Writable {
         }
         const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
         // 校验
-        if (isBlank(task.siteDomain)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点域名')
+        if (isBlank(task.siteName)) {
+          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点名称')
           callback()
           return
         }
@@ -116,9 +116,9 @@ export default class CreateTaskWritable extends Writable {
         task.status = TaskStatusEnum.CREATED
         task.isCollection = false
         task.pid = truePid
-        task.siteId = await this.getSiteId(task.siteDomain)
+        task.siteId = await this.getSiteId(task.siteName)
         if (IsNullish(task.siteId)) {
-          LogUtil.error(this.constructor.name, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+          LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
           callback()
           return
         }
@@ -138,14 +138,14 @@ export default class CreateTaskWritable extends Writable {
           LogUtil.info(this.constructor.name, '保存父任务失败，插件返回了重复的pluginTaskId')
         } else {
           const parentTaskCreateDTO = PluginCreateParentTaskResponseDTO.toTaskCreateDTO(pluginCreateParentTaskResponseDTO)
-          if (isBlank(parentTaskCreateDTO.siteDomain)) {
-            LogUtil.error(this.constructor.name, '创建任务失败，插件返回的父任务信息中缺少站点域名')
+          if (isBlank(parentTaskCreateDTO.siteName)) {
+            LogUtil.error(this.constructor.name, '创建任务失败，插件返回的父任务信息中缺少站点名称')
             callback()
             return
           }
           parentTaskCreateDTO.isCollection = true
           parentTaskCreateDTO.status = TaskStatusEnum.CREATED
-          parentTaskCreateDTO.siteId = await this.getSiteId(parentTaskCreateDTO.siteDomain)
+          parentTaskCreateDTO.siteId = await this.getSiteId(parentTaskCreateDTO.siteName)
           const truePid = await this.taskService.save(parentTaskCreateDTO)
           this.pluginPidToTruePidMapping.set(pluginPid, truePid)
         }
@@ -191,10 +191,10 @@ export default class CreateTaskWritable extends Writable {
     }
   }
 
-  private async getSiteId(siteDomain: string): Promise<number | null | undefined> {
-    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(siteDomain)
+  private async getSiteId(siteName: string): Promise<number | null | undefined> {
+    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(siteName)
     if (IsNullish(siteId)) {
-      const tempSite = this.siteService.getByDomain(siteDomain)
+      const tempSite = this.siteService.getByName(siteName)
       siteId = tempSite.then((site) => site?.id)
     }
     return siteId

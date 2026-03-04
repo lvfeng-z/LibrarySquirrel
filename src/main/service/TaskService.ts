@@ -83,14 +83,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const taskHandler: TaskContribution = await pluginLoader.getContribution(taskPlugin.id as number, 'task')
 
         // 任务集
-        const parentTask = new TaskCreateDTO()
+        const parentTask = new Task()
         parentTask.pluginAuthor = taskPlugin.author
         parentTask.pluginName = taskPlugin.name
         parentTask.pluginVersion = taskPlugin.version
         parentTask.url = url
         parentTask.status = TaskStatusEnum.CREATED
         parentTask.isCollection = true
-        parentTask.saved = false
 
         // 创建任务
         const pluginResponse = await taskHandler.create(url)
@@ -155,7 +154,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 给任务赋值的函数
     const assignTask = async (task: TaskCreateDTO, pid?: number): Promise<void> => {
       // 校验
-      AssertNotBlank(task.siteDomain, '创建任务失败，插件返回的任务信息中缺少站点域名')
+      AssertNotBlank(task.siteName, '创建任务失败，插件返回的任务信息中缺少站点名称')
       AssertNotBlank(task.siteWorkId, '创建任务失败，插件返回的任务信息中缺少站点作品id')
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
@@ -163,14 +162,14 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       task.pluginAuthor = taskPlugin.author
       task.pluginName = taskPlugin.name
       task.pluginVersion = taskPlugin.version
-      // 根据站点域名查询站点id
-      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteDomain)
+      // 根据站点名称查询站点id
+      let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteName)
       if (IsNullish(siteId)) {
-        const tempSite = siteService.getByDomain(task.siteDomain)
+        const tempSite = siteService.getByName(task.siteName)
         siteId = tempSite.then((site) => site?.id)
       }
       task.siteId = await siteId
-      AssertNotNullish(task.siteId, `创建任务失败，没有找到域名${task.siteDomain}对应的站点`)
+      AssertNotNullish(task.siteId, `创建任务失败，没有找到${task.siteName}对应的站点`)
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
@@ -800,7 +799,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async queryParentPage(page: Page<TaskQueryDTO, Task>): Promise<Page<TaskQueryDTO, TaskProgressTreeDTO>> {
     if (NotNullish(page.query)) {
       page.query.operators = {
-        ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
+        ...{ taskName: Operator.LIKE },
         ...page.query.operators
       }
     }
@@ -860,7 +859,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     page = new Page(page)
     if (NotNullish(page.query)) {
       page.query.operators = {
-        ...{ taskName: Operator.LIKE, siteDomain: Operator.LIKE },
+        ...{ taskName: Operator.LIKE },
         ...page.query.operators
       }
       page.query.isCollection = false

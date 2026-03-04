@@ -30,9 +30,9 @@ export default class PluginCreateTaskResponseDTO {
   pluginData: { [key: string]: unknown } | string | undefined | null
 
   /**
-   * 站点domain
+   * 站点名称
    */
-  siteDomain: string | undefined | null
+  siteName: string | undefined | null
 
   /**
    * 资源是否支持续传
@@ -45,7 +45,7 @@ export default class PluginCreateTaskResponseDTO {
     result.siteWorkId = pluginTaskResponseDTO.siteWorkId
     result.url = pluginTaskResponseDTO.url
     result.pluginData = pluginTaskResponseDTO.pluginData
-    result.siteDomain = pluginTaskResponseDTO.siteDomain
+    result.siteName = pluginTaskResponseDTO.siteName
     result.continuable = pluginTaskResponseDTO.continuable
     return result
   }

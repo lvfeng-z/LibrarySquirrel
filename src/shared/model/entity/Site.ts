@@ -15,11 +15,17 @@ export default class Site extends BaseEntity {
    */
   siteDescription: string | undefined | null
 
+  /**
+   * 主页
+   */
+  homepage: string | undefined | null
+
   constructor(site?: Site) {
     super(site)
     if (NotNullish(site)) {
       this.siteName = site.siteName
       this.siteDescription = site.siteDescription
+      this.homepage = site.homepage
     }
   }
 }
