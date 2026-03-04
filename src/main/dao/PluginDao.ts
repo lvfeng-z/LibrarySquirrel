@@ -9,8 +9,8 @@ export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
     super('plugin', Plugin, db, injectedDB)
   }
 
-  public async checkInstalled(type: string, author: string, name: string, version: string) {
-    const statements = `SELECT COUNT(1) as NUM FROM plugin WHERE type = '${type}' AND name = '${name}' AND author = '${author}' AND version = '${version}'`
+  public async checkInstalled(publicId: string) {
+    const statements = `SELECT COUNT(1) as NUM FROM plugin WHERE public_id = '${publicId}'`
     const db = this.acquire()
     return db
       .get<unknown[], { NUM: number }>(statements)

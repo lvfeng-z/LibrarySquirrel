@@ -86,10 +86,6 @@ function exposeService() {
     createHandler('test-pLimitTest', () => test.pLimitTest())
   )
   Electron.ipcMain.handle(
-    'test-installPluginTest',
-    createHandler('test-installPluginTest', () => test.installPluginTest())
-  )
-  Electron.ipcMain.handle(
     'test-mainWindowMsgTest',
     createHandler('test-mainWindowMsgTest', () => test.mainWindowMsgTest())
   )

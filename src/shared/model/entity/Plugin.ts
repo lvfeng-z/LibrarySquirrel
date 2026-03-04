@@ -5,9 +5,9 @@ import { ActivationType } from '../constant/ActivationType.ts'
 
 export default class Plugin extends BaseEntity {
   /**
-   * 插件类型
+   * 公开id
    */
-  type: string | undefined | null
+  publicId: string | undefined | null
 
   /**
    * 作者
@@ -37,7 +37,7 @@ export default class Plugin extends BaseEntity {
   /**
    * 入口文件名
    */
-  fileName: string | undefined | null
+  entryFile: string | undefined | null
 
   /**
    * 安装包路径
@@ -67,13 +67,13 @@ export default class Plugin extends BaseEntity {
   constructor(plugin?: Plugin) {
     super(plugin)
     if (NotNullish(plugin)) {
-      this.type = plugin.type
+      this.publicId = plugin.publicId
       this.author = plugin.author
       this.name = plugin.name
       this.version = plugin.version
       this.description = plugin.description
       this.changelog = plugin.changelog
-      this.fileName = plugin.fileName
+      this.entryFile = plugin.entryFile
       this.packagePath = plugin.packagePath
       this.activationType = plugin.activationType
       this.sortNum = plugin.sortNum

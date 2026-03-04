@@ -5,9 +5,9 @@ import { ActivationType } from '@shared/model/constant/ActivationType.ts'
 
 export default class PluginQueryDTO extends BaseQueryDTO {
   /**
-   * 插件类型
+   * 公开id
    */
-  type?: string | undefined | null
+  publicId?: string | undefined | null
 
   /**
    * 作者
@@ -62,7 +62,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   constructor(plugin?: PluginQueryDTO) {
     super(plugin)
     if (NotNullish(plugin)) {
-      this.type = plugin.type
+      this.publicId = plugin.publicId
       this.author = plugin.author
       this.name = plugin.name
       this.version = plugin.version

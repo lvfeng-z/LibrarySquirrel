@@ -258,26 +258,25 @@ tables:
 
   - name: plugin
     sql: |
-      create table if not exists plugin
-      (
-        id               integer not null
+      create table plugin (
+        id              integer not null
           constraint plugin_pk
-            primary key autoincrement,
-        type             text,
-        author           text,
-        name             text,
-        version          text,
-        file_name        text,
-        package_path     text,
-        activation_type  text,
-        create_time      integer,
-        update_time      integer,
-        sort_num         integer,
-        plugin_data      text,
-        uninstalled      integer
+          primary key autoincrement,
+        public_id       text,
+        author          text,
+        name            text,
+        version         text,
+        file_name       text,
+        package_path    text,
+        create_time     integer,
+        update_time     integer,
+        sort_num        integer,
+        plugin_data     text,
+        uninstalled     integer,
+        activation_type text
       );
-      create unique index plugin_author_name_version_uindex
-      on plugin (author, name, version);
+      create unique index plugin_public_id_uindex
+      on plugin (public_id);
 
   - name: resource
     sql: |

@@ -1,12 +1,11 @@
-import Plugin from '../entity/Plugin.ts'
 import AdmZip from 'adm-zip'
-import PluginInstallConfig from '../constant/PluginInstallConfig.ts'
+import { PluginManifest } from '../../../main/plugin/types/PluginManifest.ts'
 
-export default class PluginInstallDTO extends Plugin {
+export default class PluginInstallDTO {
   /**
-   * 插件类型
+   * 公开id
    */
-  type: string
+  publicId: string
 
   /**
    * 作者
@@ -26,7 +25,7 @@ export default class PluginInstallDTO extends Plugin {
   /**
    * 入口文件名
    */
-  fileName: string
+  entryFile: string
 
   /**
    * 安装包路径
@@ -38,31 +37,18 @@ export default class PluginInstallDTO extends Plugin {
    */
   package: AdmZip
 
-  /**
-   * 域名列表
-   */
-  domains: { domain: string; homepage: string; site?: string }[]
-
-  /**
-   * 监听路径列表
-   */
-  listeners: string[]
-
-  constructor(pluginDTO: PluginInstallDTOConstr) {
-    super()
-    this.type = pluginDTO.type
-    this.author = pluginDTO.author
-    this.name = pluginDTO.name
-    this.version = pluginDTO.version
-    this.fileName = pluginDTO.fileName
-    this.packagePath = pluginDTO.packagePath
-    this.package = pluginDTO.package
-    this.domains = pluginDTO.domains
-    this.listeners = pluginDTO.listeners
+  constructor(src: PluginInstallDTOConstr) {
+    this.publicId = src.id
+    this.author = src.author
+    this.name = src.name
+    this.version = src.version
+    this.entryFile = src.entryFile
+    this.packagePath = src.packagePath
+    this.package = src.package
   }
 }
 
-interface PluginInstallDTOConstr extends PluginInstallConfig {
+interface PluginInstallDTOConstr extends PluginManifest {
   /**
    * 安装包路径
    */

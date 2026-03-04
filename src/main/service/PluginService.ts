@@ -5,23 +5,15 @@ import Plugin from '@shared/model/entity/Plugin.ts'
 import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { ArrayNotEmpty, NotNullish } from '@shared/util/CommonUtil.ts'
 import PluginLoadDTO from '@shared/model/dto/PluginLoadDTO.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '@shared/model/dto/PluginInstallDTO.js'
-import { AssertNotBlank, AssertNotNullish, AssertTrue } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish, AssertTrue } from '@shared/util/AssertUtil.ts'
 import fs from 'fs'
-import yaml from 'js-yaml'
 import AdmZip from 'adm-zip'
-import PluginInstallConfig from '../plugin/PluginInstallConfig.js'
 import { PLUGIN_PACKAGE, PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
-import SiteDomainService from './SiteDomainService.js'
-import SiteDomain from '@shared/model/entity/SiteDomain.js'
-import GotoPageConfig from '@shared/model/util/GotoPageConfig.js'
-import { PageEnum } from '../constant/PageEnum.js'
 import { pathToFileURL } from 'node:url'
-import PluginInstallResultDTO from '@shared/model/dto/PluginInstallResultDTO.js'
-import SiteService from './SiteService.js'
 import lodash from 'lodash'
 import { BOOL } from '../constant/BOOL.js'
 import Page from '@shared/model/util/Page.js'
@@ -29,7 +21,8 @@ import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import { rm } from 'node:fs/promises'
 import Backup from '@shared/model/entity/Backup.ts'
-import { getMainWindow } from '../core/mainWindow.ts'
+import { PluginManifest } from '../plugin/types/PluginManifest.ts'
+import { AssertArrayNotEmpty } from '@shared/util/AssertUtil.ts'
 
 /**
  * 主键查询
@@ -42,13 +35,19 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
 
   /**
    * 检查插件是否以及安装
-   * @param type 类型
-   * @param author 作者
-   * @param name 名称
-   * @param version 版本号
+   * @param publicId 插件公开id
    */
-  public async checkInstalled(type: string, author: string, name: string, version: string): Promise<boolean> {
-    return this.dao.checkInstalled(type, author, name, version)
+  public async checkInstalled(publicId: string): Promise<boolean> {
+    return this.dao.checkInstalled(publicId)
+  }
+
+  /**
+   * 根据公开id查询插件
+   */
+  public async getByPublicId(publicId: string): Promise<Plugin | undefined> {
+    const query = new PluginQueryDTO()
+    query.publicId = publicId
+    return this.get(query)
   }
 
   /**
@@ -72,14 +71,14 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    */
   public async getDTOById(id: number): Promise<PluginLoadDTO> {
     const plugin = await this.dao.getById(id)
-    AssertNotNullish(plugin, this.constructor.name, `加载插件失败，pluginId: ${id}不可用`)
+    AssertNotNullish(plugin, `加载插件失败，pluginId: ${id}不可用`)
     const loadDTO = new PluginLoadDTO(plugin)
     AssertNotNullish(plugin.author, `生成插件加载路径失败，插件的作者为空，pluginId: ${id}`)
     AssertNotNullish(plugin.name, `生成插件加载路径失败，插件的名称为空，pluginId: ${id}`)
     AssertNotNullish(plugin.version, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
-    AssertNotNullish(plugin.fileName, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
+    AssertNotNullish(plugin.entryFile, `生成插件加载路径失败，插件的版本为空，pluginId: ${id}`)
     loadDTO.loadPath = pathToFileURL(
-      path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.fileName)
+      path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version, plugin.entryFile)
     ).href
     return loadDTO
   }
@@ -91,9 +90,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * @param version
    */
   public async listByAuthorNameVersion(author: string, name: string, version: string): Promise<Plugin[]> {
-    AssertNotNullish(author, this.constructor.name, '查询插件失败，作者不能为空')
-    AssertNotNullish(name, this.constructor.name, '查询插件失败，插件名称不能为空')
-    AssertNotNullish(version, this.constructor.name, '查询插件失败，插件版本不能为空')
+    AssertNotNullish(author, '查询插件失败，作者不能为空')
+    AssertNotNullish(name, '查询插件失败，插件名称不能为空')
+    AssertNotNullish(version, '查询插件失败，插件版本不能为空')
     const query = new PluginQueryDTO()
     query.author = author
     query.name = name
@@ -109,29 +108,30 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const packageContent = new AdmZip(packagePath)
     const msgPrefix = '读取插件安装包出错，'
 
-    const yamlEntry = packageContent.getEntry(`pluginInfo.yml`)
-    AssertNotNullish(yamlEntry, this.constructor.name, `${msgPrefix}没有获取到必要的安装配置`)
-    const yamlContent = yamlEntry.getData().toString('utf8')
-    const config: PluginInstallConfig = yaml.load(yamlContent) as PluginInstallConfig
+    const rawEntry = packageContent.getEntry(`plugin.json`)
+    AssertNotNullish(rawEntry, `${msgPrefix}没有获取到必要的安装配置`)
+    const jsonContent = rawEntry.getData().toString('utf8')
+    const config: PluginManifest = JSON.parse(jsonContent) as PluginManifest
 
-    AssertNotNullish(config.type, this.constructor.name, `${msgPrefix}插件类型不能为空`)
-    AssertNotNullish(config.author, this.constructor.name, `${msgPrefix}插件作者不能为空`)
-    AssertNotNullish(config.name, this.constructor.name, `${msgPrefix}插件名称不能为空`)
-    AssertNotNullish(config.version, this.constructor.name, `${msgPrefix}插件版本不能为空`)
-    AssertNotNullish(config.fileName, this.constructor.name, `${msgPrefix}插件入口文件不能为空`)
+    AssertNotNullish(config.id, `${msgPrefix}插件id不能为空`)
+    AssertNotNullish(config.name, `${msgPrefix}插件名称不能为空`)
+    AssertNotNullish(config.version, `${msgPrefix}插件版本不能为空`)
+    AssertNotNullish(config.author, `${msgPrefix}插件作者不能为空`)
+    AssertArrayNotEmpty(config.contributes, `${msgPrefix}插件贡献点不能为空`)
+    AssertNotNullish(config.activation?.type, `${msgPrefix}插件启动类型不能为空`)
+    AssertNotNullish(config.entryFile, `${msgPrefix}插件入口文件不能为空`)
 
     return new PluginInstallDTO({
-      type: config.type,
-      author: config.author,
+      id: config.id,
       name: config.name,
       version: config.version,
+      author: config.author,
+      contributes: config.contributes,
+      activation: config.activation,
+      entryFile: config.entryFile,
       description: config.description,
-      changelog: config.changelog,
-      fileName: config.fileName,
       packagePath: packagePath,
-      package: packageContent,
-      domains: config.domains,
-      listeners: config.listeners
+      package: packageContent
     })
   }
 
@@ -139,27 +139,18 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 安装插件
    * @param pluginInstallDTO
    */
-  public async install(pluginInstallDTO: PluginInstallDTO): Promise<PluginInstallResultDTO> {
+  public async install(pluginInstallDTO: PluginInstallDTO): Promise<Plugin> {
     // 校验是否已安装
-    const existingList = await this.listByAuthorNameVersion(pluginInstallDTO.author, pluginInstallDTO.name, pluginInstallDTO.version)
-    let oldPlugin: Plugin | undefined = undefined
-    if (ArrayNotEmpty(existingList)) {
-      const installed: Plugin[] = []
-      const uninstalled: Plugin[] = []
-      for (const plugin of existingList) {
-        if (plugin.uninstalled === BOOL.TRUE) {
-          uninstalled.push(plugin)
-        } else {
-          installed.push(plugin)
-        }
-      }
-      if (installed.length > 0) {
-        const msg = `安装插件失败，已存在该插件author: ${pluginInstallDTO.author} name: ${pluginInstallDTO.name} version: ${pluginInstallDTO.version}`
+    AssertNotNullish(pluginInstallDTO.publicId, '安装插件失败，插件公开id不能为空')
+    const existing = await this.getByPublicId(pluginInstallDTO.publicId)
+    let uninstalled: Plugin | undefined = undefined
+    if (NotNullish(existing)) {
+      if (existing.uninstalled === BOOL.TRUE) {
+        uninstalled = existing
+      } else {
+        const msg = `安装插件失败，已存在该插件 name: ${pluginInstallDTO.name} author: ${pluginInstallDTO.author} version: ${pluginInstallDTO.version}`
         LogUtil.error(this.constructor.name, msg)
         throw new Error(msg)
-      }
-      if (uninstalled.length > 0) {
-        oldPlugin = uninstalled[0]
       }
     }
 
@@ -179,67 +170,22 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     pluginInstallDTO.packagePath = fullBackupPath
 
     // 安装路径
-    const installPath: string = path.join(
-      RootDir(),
-      PLUGIN_RUNTIME,
-      pluginInstallDTO.author,
-      pluginInstallDTO.name,
-      pluginInstallDTO.version
-    )
+    const installPath: string = path.join(RootDir(), PLUGIN_RUNTIME, pluginInstallDTO.publicId, pluginInstallDTO.version)
     await CreateDirIfNotExists(installPath)
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
     return this.transaction(async (transactionDB) => {
-      const tempPlugin = new Plugin(pluginInstallDTO)
+      const tempPlugin = new Plugin()
+      lodash.assignWith(tempPlugin, pluginInstallDTO)
       const pluginService = new PluginService(transactionDB)
-      if (NotNullish(oldPlugin)) {
-        tempPlugin.id = oldPlugin.id
-        tempPlugin.pluginData = oldPlugin.pluginData
+      if (NotNullish(uninstalled)) {
+        tempPlugin.pluginData = uninstalled.pluginData
         tempPlugin.uninstalled = BOOL.FALSE
         await pluginService.updateById(tempPlugin)
       }
 
-      // 域名
-      const domainConfigs = pluginInstallDTO.domains
-      if (ArrayNotEmpty(domainConfigs)) {
-        const siteDomainService = new SiteDomainService(transactionDB)
-        const siteDomains: SiteDomain[] = domainConfigs.map((domain) => {
-          const tempSiteDomain = new SiteDomain()
-          tempSiteDomain.domain = domain.domain
-          tempSiteDomain.homepage = domain.homepage
-          return tempSiteDomain
-        })
-        await siteDomainService.saveBatch(siteDomains, true)
-
-        // 插件的域名关联到站点上
-        const bindableConfig = domainConfigs.filter((domain) => NotNullish(domain.site))
-        if (ArrayNotEmpty(bindableConfig)) {
-          const bindableDomain = bindableConfig.map((domain) => domain.domain)
-          const newDomains = await siteDomainService.listByDomains(bindableDomain)
-          if (ArrayNotEmpty(newDomains)) {
-            const notBindDomains = newDomains.filter((newDomain) => IsNullish(newDomain.siteId))
-            if (ArrayNotEmpty(notBindDomains)) {
-              const siteNames = bindableConfig.map((domain) => domain.site).filter(NotNullish)
-              const siteService = new SiteService(transactionDB)
-              const siteList = await siteService.listByNames(siteNames)
-              const domainConfigMap = lodash.keyBy(bindableConfig, 'domain')
-              const nameSiteMap = lodash.keyBy(siteList, 'siteName')
-              notBindDomains.forEach((siteDomain) => {
-                if (NotNullish(siteDomain.domain)) {
-                  const tempConfig = domainConfigMap[siteDomain.domain]
-                  if (NotNullish(tempConfig.site)) {
-                    const targetSite = nameSiteMap[tempConfig.site]
-                    siteDomain.siteId = targetSite?.id
-                  }
-                }
-              })
-              await siteDomainService.updateBatchById(notBindDomains)
-            }
-          }
-        }
-      }
       LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
-      return new PluginInstallResultDTO(tempPlugin, domainConfigs)
+      return tempPlugin
     }, '保存插件、监听器和域名')
       .finally(() => {
         if (!this.injectedDB) {
@@ -253,8 +199,8 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 从插件包安装插件
    * @param packagePath
    */
-  public async installFromPath(packagePath: string): Promise<PluginInstallResultDTO> {
-    AssertNotNullish(packagePath, this.constructor.name, `插件包路径不能为空`)
+  public async installFromPath(packagePath: string): Promise<Plugin> {
+    AssertNotNullish(packagePath, `插件包路径不能为空`)
     try {
       await fs.promises.access(packagePath, fs.constants.F_OK)
     } catch (error) {
@@ -265,35 +211,12 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   }
 
   /**
-   * 从插件包安装插件
-   * @param packagePath
-   */
-  public async installAndNotice(packagePath: string) {
-    this.installFromPath(packagePath).then((installResult) => {
-      const tempDomains = installResult.domains.map((siteDomain) => siteDomain.domain)
-      const gotoPageConfig: GotoPageConfig = {
-        page: PageEnum.SiteManage,
-        title: '插件创建了新的域名',
-        content: '建议将新的域名绑定到站点，以免影响插件使用',
-        options: {
-          confirmButtonText: '去绑定',
-          cancelButtonText: '以后再说',
-          type: 'warning',
-          showClose: false
-        },
-        extraData: tempDomains
-      }
-      getMainWindow().webContents.send('goto-page', gotoPageConfig)
-    })
-  }
-
-  /**
    * 重新安装插件
    */
   public async reinstall(pluginId: number) {
     const plugin = await this.getById(pluginId)
-    AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    AssertNotBlank(plugin.packagePath, this.constructor.name, `重新安装插件失败，插件安装包路径不可用，pluginId: ${pluginId}`)
+    AssertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    AssertNotBlank(plugin.packagePath, `重新安装插件失败，插件安装包路径不可用，pluginId: ${pluginId}`)
     return this.reinstallFromPath(pluginId, plugin.packagePath)
   }
 
@@ -301,17 +224,13 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 重新安装插件
    */
   public async reinstallFromPath(pluginId: number, packagePath: string) {
-    AssertNotBlank(
-      packagePath,
-      this.constructor.name,
-      `重新安装插件失败，给定的安装包路径不可用，pluginId: ${pluginId}，packagePath: ${packagePath}`
-    )
+    AssertNotBlank(packagePath, `重新安装插件失败，给定的安装包路径不可用，pluginId: ${pluginId}，packagePath: ${packagePath}`)
     const plugin = await this.getById(pluginId)
     AssertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.author, `卸载插件失败，找不到插件所在目录，因为插件的作者为空，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.name, `卸载插件失败，找不到插件所在目录，因为插件的名称为空，pluginId: ${pluginId}`)
     AssertNotNullish(plugin.version, `卸载插件失败，找不到插件所在目录，因为插件的版本为空，pluginId: ${pluginId}`)
-    AssertNotNullish(plugin, this.constructor.name, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+    AssertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
     const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.author, plugin.name, plugin.version)
     const backupService = new BackupService(this.db)
     let backup: Backup | undefined
@@ -321,10 +240,13 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       LogUtil.warn(this.constructor.name, '重新安装插件时未能创建备份', error)
     }
     try {
-      await this.transaction<PluginInstallResultDTO>(async () => {
+      await this.transaction<Plugin>(async () => {
         await this.uninstall(pluginId)
         const installDTO = this.loadPluginPackage(packagePath)
-        this.assertSamePlugin(plugin, installDTO)
+        if (installDTO.publicId === plugin.publicId) {
+          throw new Error('')
+        }
+        AssertTrue(installDTO.publicId === plugin.publicId, `重新安装插件失败，插件公开id与原插件不符`)
         return await this.install(installDTO)
       }, '重新安装插件')
     } catch (error) {
@@ -388,13 +310,5 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       LogUtil.error('LocalTagService', error)
       throw error
     }
-  }
-
-  private assertSamePlugin(plugin1: Plugin, plugin2: Plugin): void {
-    AssertTrue(
-      plugin1.author === plugin2.author && plugin1.name === plugin2.name && plugin2.version === plugin2.version,
-      this.constructor.name,
-      `重新安装插件失败，插件[${plugin1.author}-${plugin1.name}-${plugin1.version}]与插件[${plugin2.author}-${plugin2.name}-${plugin2.version}]不符`
-    )
   }
 }

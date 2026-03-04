@@ -149,7 +149,7 @@ export default class PluginLoader {
    */
   private async createPluginContext(pluginId: number, pluginLoadDTO: PluginLoadDTO): Promise<PluginContext> {
     const plugin = await this.pluginService.getById(pluginId)
-    AssertNotNullish(plugin, this.constructor.name, '创建插件上下文失败，插件id不可用')
+    AssertNotNullish(plugin, '创建插件上下文失败，插件id不可用')
     const secureStorageService = new SecureStorageService()
     const pluginService = this.pluginService
     const pluginName = plugin?.name ?? ''
@@ -200,14 +200,18 @@ export default class PluginLoader {
    * @private
    */
   private buildManifest(plugin: Plugin | undefined, _pluginLoadDTO: PluginLoadDTO): PluginManifest {
+    AssertNotNullish(plugin?.activationType, '构建构建插件清单失败，插件激活类型不能为空')
     return {
       id: `${plugin?.author}/${plugin?.name}`,
       name: plugin?.name ?? '',
       version: plugin?.version ?? '',
       author: plugin?.author ?? '',
-      description: plugin?.description ?? undefined,
+      description: plugin?.description ?? '',
       contributes: [],
-      entryFile: plugin?.fileName ?? ''
+      activation: {
+        type: plugin?.activationType
+      },
+      entryFile: plugin?.entryFile ?? ''
     }
   }
 

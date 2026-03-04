@@ -7,7 +7,6 @@ const api = {
   testInsertLocalTag10W: (args) => Electron.ipcRenderer.invoke('test-insertLocalTag10W', args),
   testTransactionTest: (args) => Electron.ipcRenderer.invoke('test-transactionTest', args),
   testPLimitTest: (args) => Electron.ipcRenderer.invoke('test-pLimitTest', args),
-  testInstallPluginTest: (args) => Electron.ipcRenderer.invoke('test-installPluginTest', args),
   testMainWindowMsgTest: (args) => Electron.ipcRenderer.invoke('test-mainWindowMsgTest', args),
   testGotoPageSiteManage: (args) => Electron.ipcRenderer.invoke('test-gotoPageSiteManage', args),
   testListWorkSetWithWorkByIds: (args) => Electron.ipcRenderer.invoke('test-listWorkSetWithWorkByIds', args),

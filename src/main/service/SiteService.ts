@@ -9,6 +9,16 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util
 import SiteFullDTO from '@shared/model/dto/SiteFullDTO.js'
 import SiteDomainService from './SiteDomainService.js'
 import SiteDomain from '@shared/model/entity/SiteDomain.js'
+import lodash from 'lodash'
+
+/**
+ * 站点域名配置
+ */
+export interface SiteDomainConfig {
+  domain: string
+  homepage: string
+  site?: string
+}
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DatabaseClient) {
@@ -121,5 +131,50 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    */
   async listByNames(siteNames: string[]) {
     return this.dao.listByNames(siteNames)
+  }
+
+  /**
+   * 保存域名并绑定到站点
+   * @param domainConfigs 域名配置列表
+   */
+  public async saveAndBindDomains(domainConfigs: SiteDomainConfig[]): Promise<void> {
+    if (ArrayIsEmpty(domainConfigs)) {
+      return
+    }
+
+    const siteDomainService = new SiteDomainService(this.db)
+    const siteDomains: SiteDomain[] = domainConfigs.map((domainConfig) => {
+      const tempSiteDomain = new SiteDomain()
+      tempSiteDomain.domain = domainConfig.domain
+      tempSiteDomain.homepage = domainConfig.homepage
+      return tempSiteDomain
+    })
+    await siteDomainService.saveBatch(siteDomains, true)
+
+    // 插件的域名关联到站点上
+    const bindableConfig = domainConfigs.filter((domainConfig) => NotNullish(domainConfig.site))
+    if (ArrayNotEmpty(bindableConfig)) {
+      const bindableDomain = bindableConfig.map((domainConfig) => domainConfig.domain)
+      const newDomains = await siteDomainService.listByDomains(bindableDomain)
+      if (ArrayNotEmpty(newDomains)) {
+        const notBindDomains = newDomains.filter((newDomain) => IsNullish(newDomain.siteId))
+        if (ArrayNotEmpty(notBindDomains)) {
+          const siteNames = bindableConfig.map((domainConfig) => domainConfig.site).filter(NotNullish)
+          const siteList = await this.listByNames(siteNames)
+          const domainConfigMap = lodash.keyBy(bindableConfig, 'domain')
+          const nameSiteMap = lodash.keyBy(siteList, 'siteName')
+          notBindDomains.forEach((siteDomain) => {
+            if (NotNullish(siteDomain.domain)) {
+              const tempConfig = domainConfigMap[siteDomain.domain]
+              if (NotNullish(tempConfig.site)) {
+                const targetSite = nameSiteMap[tempConfig.site]
+                siteDomain.siteId = targetSite?.id
+              }
+            }
+          })
+          await siteDomainService.updateBatchById(notBindDomains)
+        }
+      }
+    }
   }
 }

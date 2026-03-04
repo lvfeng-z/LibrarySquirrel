@@ -3,10 +3,6 @@ import Database from 'better-sqlite3'
 import { DataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import pLimit from 'p-limit'
-import PluginService from '../service/PluginService.js'
-import path from 'path'
-import { RootDir } from '../util/FileSysUtil.js'
-import LogUtil from '../util/LogUtil.js'
 import GotoPageConfig from '@shared/model/util/GotoPageConfig.js'
 import { PageEnum } from '../constant/PageEnum.js'
 import WorkSetService from '../service/WorkSetService.ts'
@@ -64,22 +60,6 @@ async function pLimitTest() {
   await Promise.all(list)
 }
 
-async function installPluginTest() {
-  const pluginService = new PluginService()
-  const localPluginInstalled = await pluginService.checkInstalled('task', 'lvfeng', 'local', '1.0.0')
-  LogUtil.info('test----', localPluginInstalled ? '已安装' : '未安装')
-  if (!localPluginInstalled) {
-    let installPath: string
-    const NODE_ENV = process.env.NODE_ENV
-    if (NODE_ENV == 'development') {
-      installPath = path.join(RootDir(), '/resources/initialization/localTaskHandler.zip')
-    } else {
-      installPath = path.join(RootDir(), '/resources/app.asar.unpacked/initialization/localTaskHandler.zip')
-    }
-    pluginService.installFromPath(installPath)
-  }
-}
-
 async function mainWindowMsgTest() {
   const gotoPageProps = { title: '需要设置工作目录', content: '请先设置工作目录', buttonText: '去设置' }
   getMainWindow().webContents.send('goto-page', gotoPageProps)
@@ -111,7 +91,6 @@ export default {
   insertLocalTag10W,
   transactionTest,
   pLimitTest,
-  installPluginTest,
   mainWindowMsgTest,
   gotoPageSiteManage,
   listWorkSetWithWorkByIds

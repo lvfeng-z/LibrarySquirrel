@@ -117,7 +117,6 @@ const apis = {
   test: window.api.localAuthorListSelectItems,
   testMainWindowMsgTest: window.api.testMainWindowMsgTest,
   testPLimitTest: window.api.testPLimitTest,
-  testInstallPluginTest: window.api.testInstallPluginTest,
   localTagListSelectItems: window.api.localTagListSelectItems,
   searchQuerySearchConditionPage: window.api.searchQuerySearchConditionPage,
   workQueryPage: window.api.workQueryPage,

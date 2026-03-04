@@ -40,12 +40,7 @@ export async function Initialize() {
       packagePath = defaultPlugin.packagePath
     }
     const installDTO = pluginService.loadPluginPackage(packagePath)
-    const localPluginInstalled = await pluginService.checkInstalled(
-      installDTO.type,
-      installDTO.author,
-      installDTO.name,
-      installDTO.version
-    )
+    const localPluginInstalled = await pluginService.checkInstalled(installDTO.publicId)
     if (!localPluginInstalled) {
       let installPath: string
       if (defaultPlugin.pathType === 'Relative') {
