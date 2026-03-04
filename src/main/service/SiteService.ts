@@ -68,13 +68,14 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
 
   /**
    * 批量保存站点（如果不存在则创建）
-   * @param siteNames 站点名称列表
+   * @param sites 站点列表
    */
-  public async saveBatchIfNotExist(siteNames: string[]): Promise<Site[]> {
-    if (ArrayIsEmpty(siteNames)) {
-      return []
+  public async saveBatchIfNotExist(sites: Site[]): Promise<number> {
+    if (ArrayIsEmpty(sites)) {
+      return 0
     }
 
+    const siteNames = sites.map((site) => site.siteName).filter(NotNullish)
     const existSites = await this.listByNames(siteNames)
     const existSiteNames = existSites?.map((site) => site.siteName).filter(NotNullish) ?? []
     const notExistSiteNames = siteNames.filter((name) => !existSiteNames.includes(name))
@@ -85,10 +86,9 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
         site.siteName = siteName
         return site
       })
-      await super.saveBatch(newSites, true)
+      return super.saveBatch(newSites, true)
+    } else {
+      return 0
     }
-
-    // 重新查询所有站点
-    return (await this.listByNames(siteNames)) ?? []
   }
 }

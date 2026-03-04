@@ -193,7 +193,7 @@ export default class PluginLoader {
         },
         addSite: async (site: Site[]) => {
           const siteService = new SiteService()
-          await siteService.saveBatch(site)
+          return siteService.saveBatchIfNotExist(site)
         },
         logger
       }

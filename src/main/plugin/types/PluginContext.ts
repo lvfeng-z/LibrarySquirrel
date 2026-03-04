@@ -40,7 +40,7 @@ export interface PluginContext {
     /** 取消注册任务URL监听器 */
     unregisterUrlListener: () => void
     /** 保存站点 */
-    addSite: (site: Site[]) => Promise<void>
+    addSite: (site: Site[]) => Promise<number>
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void
