@@ -10,7 +10,7 @@ import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util
 import Page from '@shared/model/util/Page.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
 import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
-import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import SiteService from './SiteService.js'
 import PluginSiteAuthorDTO from '@shared/model/dto/PluginSiteAuthorDTO.ts'
 import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
@@ -84,8 +84,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     }
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
     const modifiedSiteAuthors = siteAuthors.map((siteAuthor) => {
-      AssertNotNullish(siteAuthor.siteAuthorId, this.constructor.name, '保存站点作者失败，站点作者的id不能为空')
-      AssertNotNullish(siteAuthor.siteId, this.constructor.name, '保存站点作者失败，站点作者的站点id不能为空')
+      AssertNotNullish(siteAuthor.siteAuthorId, '保存站点作者失败，站点作者的id不能为空')
+      AssertNotNullish(siteAuthor.siteId, '保存站点作者失败，站点作者的站点id不能为空')
       const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
       const modifiedSiteAuthor = new SiteAuthor(siteAuthor)
 
@@ -149,8 +149,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async createAndBindSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<boolean> {
     const siteAuthorName = siteAuthor.authorName
-    AssertNotNullish(siteAuthor.id, this.constructor.name, '创建同名本地作者失败，作者名称不能为空')
-    AssertNotBlank(siteAuthorName, this.constructor.name, '创建同名本地作者失败，作者名称不能为空')
+    AssertNotNullish(siteAuthor.id, '创建同名本地作者失败，作者名称不能为空')
+    AssertNotBlank(siteAuthorName, '创建同名本地作者失败，作者名称不能为空')
     const localAuthorId = await this.createSameNameLocalAuthor(siteAuthor)
     return this.updateBindLocalAuthor(localAuthorId, [siteAuthor.id])
   }

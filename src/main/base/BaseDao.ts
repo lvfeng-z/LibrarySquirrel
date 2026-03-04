@@ -6,7 +6,7 @@ import { ToObjAcceptedBySqlite3, toPlainParams } from '../util/DatabaseUtil.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
 import lodash from 'lodash'
 import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import { AssertArrayNotEmpty, AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty, AssertFalse, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import Page from '@shared/model/util/Page.js'
 import CoreDao from '../core/CoreDao.ts'
 import ForeignKeyConstraintError from '../error/ForeignKeyConstraintError.js'
@@ -70,7 +70,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ignore 是否使用ignore关键字
    */
   public async saveBatch(entities: Model[], ignore?: boolean): Promise<number> {
-    AssertArrayNotEmpty(entities, this.constructor.name, '批量保存的对象不能为空')
+    AssertArrayNotEmpty(entities, '批量保存的对象不能为空')
     const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     // 对齐所有属性
@@ -208,7 +208,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param ids id列表
    */
   public async deleteBatchById(ids: PrimaryKey[]): Promise<number> {
-    AssertArrayNotEmpty(ids, this.constructor.name, '批量删除失败，id列表不能为空')
+    AssertArrayNotEmpty(ids, '批量删除失败，id列表不能为空')
 
     const idsStr = ids.join(',')
     const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
@@ -228,7 +228,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entity
    */
   public async updateById(entity: Model): Promise<number> {
-    AssertNotNullish(entity.id, this.constructor.name, '更新失败，主键不能为空')
+    AssertNotNullish(entity.id, '更新失败，主键不能为空')
     const standardEntity = new this.entityConstr(entity)
     // 设置createTime和updateTime
     standardEntity.updateTime = Date.now()
@@ -254,7 +254,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param entities
    */
   public async updateBatchById(entities: Model[]): Promise<number> {
-    AssertArrayNotEmpty(entities, this.constructor.name, '批量更新失败，更新数据不能为空')
+    AssertArrayNotEmpty(entities, '批量更新失败，更新数据不能为空')
     const hasNullId = entities.some((entity) => IsNullish(entity.id))
     AssertFalse(hasNullId, '批量更新失败，更新数据中存在id为空的项')
     const standardEntities = entities.map((entity) => new this.entityConstr(entity))
@@ -323,7 +323,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    * @param conflicts
    */
   public async saveOrUpdateBatchById(entities: Model[], conflicts?: string[][]): Promise<number> {
-    AssertArrayNotEmpty(entities, this.constructor.name, '批量保存或更新失败，保存数据不能为空')
+    AssertArrayNotEmpty(entities, '批量保存或更新失败，保存数据不能为空')
     const standardEntities = entities.map((entity) => new this.entityConstr(entity))
 
     // 对齐所有属性

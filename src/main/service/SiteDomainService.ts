@@ -5,7 +5,7 @@ import SiteDomainDao from '../dao/SiteDomainDao.js'
 import DatabaseClient from '../database/DatabaseClient.js'
 import { Operator } from '../constant/CrudConstant.js'
 import Page from '@shared/model/util/Page.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import { IsNullish } from '@shared/util/CommonUtil.ts'
 import SiteDomainDTO from '@shared/model/dto/SiteDomainDTO.js'
 import LogUtil from '../util/LogUtil.js'
@@ -88,7 +88,7 @@ export default class SiteDomainService extends BaseService<SiteDomainQueryDTO, S
    * @param page
    */
   public async queryDTOPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
-    AssertNotNullish(page.query, this.constructor.name, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(page.query, '查询站点域名失败，查询参数为空')
     if (IsNullish(page.query.sort)) {
       page.query.sort = [
         { key: 'updateTime', asc: false },

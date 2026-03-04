@@ -4,7 +4,7 @@ import Page from '@shared/model/util/Page.ts'
 import BaseDao from './BaseDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish } from '@shared/util/CommonUtil.ts'
-import { AssertFalse, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertFalse, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import SelectItem from '@shared/model/util/SelectItem.js'
 
 /**
@@ -85,7 +85,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    * @param updateData
    */
   public async updateById(updateData: Model): Promise<number> {
-    AssertNotNullish(updateData.id, this.constructor.name, '更新数据失败，id不能为空')
+    AssertNotNullish(updateData.id, '更新数据失败，id不能为空')
     return this.dao.updateById(updateData)
   }
 
@@ -95,7 +95,7 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
    */
   public async updateBatchById(entities: Model[]) {
     const check = entities.some((entity) => IsNullish(entity.id))
-    AssertFalse(check, this.constructor.name, '批量更新数据失败，id不能为空')
+    AssertFalse(check, '批量更新数据失败，id不能为空')
     return this.dao.updateBatchById(entities)
   }
 

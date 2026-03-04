@@ -3,7 +3,7 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteDomain from '@shared/model/entity/SiteDomain.js'
 import SiteDomainQueryDTO from '@shared/model/queryDTO/SiteDomainQueryDTO.js'
 import Page from '@shared/model/util/Page.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import StringUtil from '@shared/util/StringUtil.ts'
 import SiteDomainDTO from '@shared/model/dto/SiteDomainDTO.js'
 import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
@@ -19,7 +19,7 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
    */
   public async queryDTOPage(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
     const modifiedPage = new Page(page)
-    AssertNotNullish(modifiedPage.query, this.constructor.name, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(modifiedPage.query, '查询站点域名失败，查询参数为空')
     const selectClause = `SELECT t1.*,
           CASE WHEN t2.id IS NULL THEN NULL ELSE JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description) END as site
         FROM ${this.tableName} t1
@@ -63,8 +63,8 @@ export default class SiteDomainDao extends BaseDao<SiteDomainQueryDTO, SiteDomai
    */
   public async queryPageBySite(page: Page<SiteDomainQueryDTO, SiteDomainDTO>): Promise<Page<SiteDomainQueryDTO, SiteDomainDTO>> {
     const modifiedPage = new Page(page)
-    AssertNotNullish(page.query, this.constructor.name, '查询站点域名失败，查询参数为空')
-    AssertNotNullish(modifiedPage.query, this.constructor.name, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(page.query, '查询站点域名失败，查询参数为空')
+    AssertNotNullish(modifiedPage.query, '查询站点域名失败，查询参数为空')
     const selectClause = `SELECT t1.*,
           JSON_OBJECT('id', t2.id, 'siteName', t2.site_name, 'siteDescription', site_description) as site
         FROM ${this.tableName} t1

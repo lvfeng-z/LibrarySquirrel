@@ -18,7 +18,7 @@ import WorkSet from '@shared/model/entity/WorkSet.ts'
 import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
 import WorkSaveDTO from '@shared/model/dto/WorkSaveDTO.ts'
 import { ReWorkTagService } from './ReWorkTagService.ts'
-import { AssertArrayNotEmpty, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import { SearchCondition } from '@shared/model/util/SearchCondition.js'
 import ReWorkAuthorService from './ReWorkAuthorService.ts'
 import { OriginType } from '../constant/OriginType.js'
@@ -479,7 +479,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
    * @param siteIdAndSiteWorkIds
    */
   public async listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds: { siteId: number; siteWorkId: string }[]): Promise<Work[]> {
-    AssertArrayNotEmpty(siteIdAndSiteWorkIds, this.constructor.name, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
+    AssertArrayNotEmpty(siteIdAndSiteWorkIds, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
     return this.dao.listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds)
   }
 

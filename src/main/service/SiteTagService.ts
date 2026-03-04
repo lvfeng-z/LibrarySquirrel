@@ -9,7 +9,7 @@ import BaseService from '../base/BaseService.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagFullDTO from '@shared/model/dto/SiteTagFullDTO.ts'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import SiteService from './SiteService.js'
 import PluginSiteTagDTO from '@shared/model/dto/PluginSiteTagDTO.ts'
@@ -45,8 +45,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     }
     const oldSiteTags = await this.listBySiteTag(tempParam)
     const newSiteTags = siteTags.map((siteTag) => {
-      AssertNotNullish(siteTag.siteTagId, this.constructor.name, '保存站点标签失败，站点标签的id不能为空')
-      AssertNotNullish(siteTag.siteId, this.constructor.name, '保存站点标签失败，站点标签的站点id不能为空')
+      AssertNotNullish(siteTag.siteTagId, '保存站点标签失败，站点标签的id不能为空')
+      AssertNotNullish(siteTag.siteId, '保存站点标签失败，站点标签的站点id不能为空')
       const oldSiteTag = oldSiteTags.find((oldSiteTag) => oldSiteTag.siteTagId === siteTag.siteTagId)
       const newSiteTag = new SiteTag(siteTag)
 
@@ -86,8 +86,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async createAndBindSameNameLocalTag(siteTag: SiteTag): Promise<boolean> {
     const siteTagName = siteTag.siteTagName
-    AssertNotNullish(siteTag.id, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
-    AssertNotBlank(siteTagName, this.constructor.name, '创建同名本地标签失败，标签名称不能为空')
+    AssertNotNullish(siteTag.id, '创建同名本地标签失败，标签名称不能为空')
+    AssertNotBlank(siteTagName, '创建同名本地标签失败，标签名称不能为空')
     const localTagId = await this.createSameNameLocalTag(siteTagName)
     return this.updateBindLocalTag(localTagId, [siteTag.id])
   }
@@ -129,7 +129,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page
    */
   public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
-    AssertNotNullish(page.query, this.constructor.name, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
+    AssertNotNullish(page.query, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 

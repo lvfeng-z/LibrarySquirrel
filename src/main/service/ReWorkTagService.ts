@@ -4,7 +4,7 @@ import { ReWorkTagQueryDTO } from '@shared/model/queryDTO/ReWorkTagQueryDTO.ts'
 import { ReWorkTagDao } from '../dao/ReWorkTagDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import { ArrayIsEmpty, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 /**
@@ -22,7 +22,7 @@ export class ReWorkTagService extends BaseService<ReWorkTagQueryDTO, ReWorkTag, 
    * @param workId
    */
   public async link(type: OriginType, tagIds: number[], workId: number) {
-    AssertNotNullish(workId, this.constructor.name, `关联作品和标签出错，作品id不能为空`)
+    AssertNotNullish(workId, `关联作品和标签出错，作品id不能为空`)
     if (tagIds.length === 0) {
       return 0
     }

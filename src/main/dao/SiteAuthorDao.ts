@@ -9,7 +9,7 @@ import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
 import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
 import SelectItem from '@shared/model/util/SelectItem.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
-import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty } from '@shared/util/AssertUtil.ts'
 import SiteAuthorFullDTO from '@shared/model/dto/SiteAuthorFullDTO.js'
 import lodash from 'lodash'
 import SiteAuthorLocalRelateDTO from '@shared/model/dto/SiteAuthorLocalRelateDTO.js'
@@ -194,7 +194,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param siteAuthors 站点作者
    */
   public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
-    AssertArrayNotEmpty(siteAuthors, this.constructor.name, '根据站点作者查询失败，参数不能为空')
+    AssertArrayNotEmpty(siteAuthors, '根据站点作者查询失败，参数不能为空')
     const whereClause = siteAuthors
       .map((siteAuthor) => `(site_author_id = ${siteAuthor.siteAuthorId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')

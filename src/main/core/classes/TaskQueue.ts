@@ -1,5 +1,5 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
-import { AssertNotNullish } from '../../util/AssertUtil.ts'
+import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import LogUtil from '../../util/LogUtil.ts'
 import TaskService from '../../service/TaskService.ts'
 import WorkService from '../../service/WorkService.ts'
@@ -701,7 +701,7 @@ export class TaskQueue {
       const existsWorkList = await this.workService.listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds)
       const existsWorkMap = new Map(existsWorkList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
       for (const parentInfo of parentList) {
-        AssertNotNullish(parentInfo.id, 'TaskQueue', `添加父任务${parentInfo.id}失败，父任务id不能为空`)
+        AssertNotNullish(parentInfo.id, `添加父任务${parentInfo.id}失败，父任务id不能为空`)
         if (IsNullish(parentInfo.status)) {
           this.removeTaskByPid(parentInfo.id)
           LogUtil.error(this.constructor.name, `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
@@ -1175,7 +1175,7 @@ class TaskRunInstance extends TaskStatus {
   public async saveInfo(update: boolean): Promise<void> {
     try {
       const task = await this.taskService.getById(this.taskId)
-      AssertNotNullish(task, 'TaskQueue', `保存任务${this.taskId}的信息失败，任务id无效`)
+      AssertNotNullish(task, `保存任务${this.taskId}的信息失败，任务id无效`)
       this.workId = await this.taskService.saveWorkInfo(task, this.pluginLoader, update, this.workId)
     } catch (error) {
       this.errorOccurred = true
@@ -1288,8 +1288,8 @@ class TaskRunInstance extends TaskStatus {
     if (this.status === TaskStatusEnum.WAITING) {
       try {
         this.changeStatus(TaskStatusEnum.PROCESSING)
-        AssertNotNullish(this.taskInfo, 'TaskQueue', `保存任务${this.taskId}的资源失败，任务id无效`)
-        AssertNotNullish(this.workId, 'TaskQueue', `保存任务${this.taskId}的资源失败，作品id不能为空`)
+        AssertNotNullish(this.taskInfo, `保存任务${this.taskId}的资源失败，任务id无效`)
+        AssertNotNullish(this.workId, `保存任务${this.taskId}的资源失败，作品id不能为空`)
 
         const resourceWriter = IsNullish(this.resourceWriter) ? new ResourceWriter() : this.resourceWriter
 

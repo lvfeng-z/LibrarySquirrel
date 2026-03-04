@@ -11,7 +11,7 @@ import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import { AssertTrue } from '../util/AssertUtil.js'
+import { AssertTrue } from '@shared/util/AssertUtil.ts'
 import LocalTagDTO from '@shared/model/dto/LocalTagDTO.js'
 
 export default class LocalTagService extends BaseService<LocalTagQueryDTO, LocalTag, LocalTagDao> {

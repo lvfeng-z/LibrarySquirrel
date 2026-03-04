@@ -83,8 +83,8 @@ export default class ResourceWriter {
       if (NotNullish(newWritable)) {
         this.writable = newWritable
       }
-      AssertNotNullish(this.readable, this.constructor.name, '写入任务资源失败，readable为空')
-      AssertNotNullish(this.writable, this.constructor.name, '写入任务资源失败，writable为空')
+      AssertNotNullish(this.readable, '写入任务资源失败，readable为空')
+      AssertNotNullish(this.writable, '写入任务资源失败，writable为空')
       const readable = this.readable
       const writable = this.writable
       this.errorOccurred = false

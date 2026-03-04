@@ -3,7 +3,7 @@ import WorkSet from '@shared/model/entity/WorkSet.ts'
 import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import WorkSetDao from '../dao/WorkSetDao.ts'
-import { AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import { IsNullish, NotNullish, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import WorkSetWithWorkDTO from '@shared/model/dto/WorkSetWithWorkDTO.ts'
 import { Operator } from '../constant/CrudConstant.ts'
@@ -108,8 +108,8 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const siteWorkSetIds = workSets.map((workSet) => workSet.siteWorkSetId) as string[]
     const oldWorkSets = await this.listBySiteWorkSetIds(siteWorkSetIds)
     const newWorkSets = workSets.map((workSet) => {
-      AssertNotNullish(workSet.siteAuthorId, this.constructor.name, '根据作品集在站点的id保存或更新失败，作品集的id不能为空')
-      AssertNotNullish(workSet.siteId, this.constructor.name, '根据作品集在站点的id保存或更新失败，作品集的站点id不能为空')
+      AssertNotNullish(workSet.siteAuthorId, '根据作品集在站点的id保存或更新失败，作品集的id不能为空')
+      AssertNotNullish(workSet.siteId, '根据作品集在站点的id保存或更新失败，作品集的站点id不能为空')
       const oldWorkSet = oldWorkSets.find((tempOldWorkSet) => tempOldWorkSet.siteWorkSetId === workSet.siteWorkSetId)
       const newWorkSet = new WorkSet(workSet)
 

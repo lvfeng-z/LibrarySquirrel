@@ -10,7 +10,7 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
 import lodash from 'lodash'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
-import { AssertArrayNotEmpty } from '../util/AssertUtil.js'
+import { AssertArrayNotEmpty } from '@shared/util/AssertUtil.ts'
 import SiteTagLocalRelateDTO from '@shared/model/dto/SiteTagLocalRelateDTO.js'
 import SiteTagFullWithWorkIdDTO from '@shared/model/dto/SiteTagFullWithWorkIdDTO.ts'
 
@@ -284,7 +284,7 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
    * @param siteTags 站点
    */
   public async listBySiteTag(siteTags: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
-    AssertArrayNotEmpty(siteTags, this.constructor.name, '根据站点标签查询失败，参数不能为空')
+    AssertArrayNotEmpty(siteTags, '根据站点标签查询失败，参数不能为空')
     const whereClause = siteTags
       .map((siteAuthor) => `(site_tag_id = '${siteAuthor.siteTagId}' AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')

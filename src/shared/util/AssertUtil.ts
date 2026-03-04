@@ -22,7 +22,7 @@ export function AssertFalse(value: boolean, msg?: string): void {
 /**
  * 断言值不为 null 或 undefined
  */
-export function AssertNotNullish<T>(value: T | null | undefined, _caller?: string, msg?: string): asserts value {
+export function AssertNotNullish<T>(value: T | null | undefined, msg?: string): asserts value {
   if (IsNullish(value)) {
     throw new Error(msg)
   }

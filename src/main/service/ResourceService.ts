@@ -3,7 +3,7 @@ import ResourceQueryDTO from '@shared/model/queryDTO/ResourceQueryDTO.js'
 import Resource from '@shared/model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
 import DatabaseClient from '../database/DatabaseClient.js'
-import { AssertNotBlank, AssertNotNullish } from '../util/AssertUtil.js'
+import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
 import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
 import StringUtil from '@shared/util/StringUtil.ts'
@@ -97,16 +97,14 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public async saveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
     const fullSavePath = resourceSaveDTO.fullSavePath
-    AssertNotNullish(resourceId, this.constructor.name, `保存作品资源失败，资源id不能为空`)
-    AssertNotNullish(resourceSaveDTO.taskId, this.constructor.name, `保存作品资源失败，任务id不能为空`)
+    AssertNotNullish(resourceId, `保存作品资源失败，资源id不能为空`)
+    AssertNotNullish(resourceSaveDTO.taskId, `保存作品资源失败，任务id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
-      this.constructor.name,
       `保存作品资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
     )
     AssertNotNullish(
       fullSavePath,
-      this.constructor.name,
       `保存作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`
     )
 
@@ -149,19 +147,18 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @param resourceWriter resourceWriter
    */
   public async resumeSaveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
-    AssertNotNullish(resourceSaveDTO.taskId, this.constructor.name, `恢复保存资源失败，任务id不能为空`)
+    AssertNotNullish(resourceSaveDTO.taskId, `恢复保存资源失败，任务id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
-      this.constructor.name,
       `恢复保存资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
     )
 
     const resourceId = resourceSaveDTO.id
-    AssertNotNullish(resourceId, this.constructor.name, `恢复保存资源失败，资源id不能为空`)
+    AssertNotNullish(resourceId, `恢复保存资源失败，资源id不能为空`)
 
     const oldRes = await this.getById(resourceId)
-    AssertNotNullish(oldRes, this.constructor.name, `恢复保存资源失败，资源信息不可用`)
-    AssertNotNullish(oldRes.filePath, this.constructor.name, `恢复保存资源失败，原有资源路径不能为空`)
+    AssertNotNullish(oldRes, `恢复保存资源失败，资源信息不可用`)
+    AssertNotNullish(oldRes.filePath, `恢复保存资源失败，原有资源路径不能为空`)
 
     const workdir = getSettings().get('workdir')
     const oldAbsolutePath = path.join(workdir, oldRes.filePath)
@@ -226,22 +223,19 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public async replaceResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
     const fullSavePath = resourceSaveDTO.fullSavePath
-    AssertNotNullish(resourceId, this.constructor.name, `替换资源失败，资源id不能为空`)
+    AssertNotNullish(resourceId, `替换资源失败，资源id不能为空`)
     AssertNotNullish(
       resourceSaveDTO.resourceStream,
-      this.constructor.name,
       `替换作品资源失败，资源不能为空，workId: ${resourceSaveDTO.workId}`
     )
     AssertNotNullish(
       fullSavePath,
-      this.constructor.name,
       `替换作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`
     )
     const oldResource = await this.getById(resourceId)
-    AssertNotNullish(oldResource, this.constructor.name, `替换资源失败，资源不存在`)
+    AssertNotNullish(oldResource, `替换资源失败，资源不存在`)
     AssertNotBlank(
       oldResource.filePath,
-      this.constructor.name,
       `替换作品资源失败，原作品资源的路径不能为空，workId: ${resourceSaveDTO.workId}`
     )
 
@@ -535,8 +529,8 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public async getFullResourcePath(resourceId: number) {
     const res = await this.getById(resourceId)
-    AssertNotNullish(res, this.constructor.name, `获取资源${resourceId}的绝对路径失败，资源id不可用`)
-    AssertNotNullish(res.filePath, this.constructor.name, `获取资源${resourceId}的绝对路径失败，资源的路径不能为空`)
+    AssertNotNullish(res, `获取资源${resourceId}的绝对路径失败，资源id不可用`)
+    AssertNotNullish(res.filePath, `获取资源${resourceId}的绝对路径失败，资源的路径不能为空`)
     const workdir = getSettings().store.workdir
     return path.join(workdir, res.filePath)
   }
