@@ -2,7 +2,7 @@
 import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import { ref } from 'vue'
 import { ElTreeSelect } from 'element-plus'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 // props
 const props = defineProps<{
@@ -30,7 +30,7 @@ function innerLoad(node, resolve) {
   if (node.isLeaf) {
     return resolve([])
   }
-  if (IsNullish(props.config.load)) {
+  if (isNullish(props.config.load)) {
     return resolve([])
   }
   props.config.load(node.data.id, node).then((children) => resolve(children))

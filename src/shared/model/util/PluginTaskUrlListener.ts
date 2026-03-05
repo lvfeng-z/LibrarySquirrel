@@ -1,4 +1,4 @@
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class PluginTaskUrlListener {
   /**
@@ -12,7 +12,7 @@ export default class PluginTaskUrlListener {
   listener: string | undefined | null
 
   constructor(pluginTaskUrlListener?: PluginTaskUrlListener) {
-    if (NotNullish(pluginTaskUrlListener)) {
+    if (notNullish(pluginTaskUrlListener)) {
       this.pluginId = pluginTaskUrlListener.pluginId
       this.listener = pluginTaskUrlListener.listener
     }

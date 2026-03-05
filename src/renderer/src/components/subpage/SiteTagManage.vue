@@ -10,7 +10,7 @@ import { Thead } from '../../model/util/Thead'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
@@ -24,7 +24,7 @@ import SiteTag from '@shared/model/entity/SiteTag.ts'
 
 // onMounted
 onMounted(() => {
-  if (IsNullish(page.value.query)) {
+  if (isNullish(page.value.query)) {
     page.value.query = new SiteTagQueryDTO()
   }
   page.value.query.sort = [
@@ -110,16 +110,16 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     remotePaging: true,
     remotePageMethod: localTagQuerySelectItemPageByName,
     getCacheData: (rowData: SiteTagFullDTO) => {
-      if (IsNullish(rowData.localTag?.id)) {
+      if (isNullish(rowData.localTag?.id)) {
         return undefined
       }
       return new SelectItem({
         value: rowData.localTag.id,
-        label: IsNullish(rowData.localTag?.localTagName) ? '' : rowData.localTag.localTagName
+        label: isNullish(rowData.localTag?.localTagName) ? '' : rowData.localTag.localTagName
       })
     },
     setCacheData: (rowData: SiteTagFullDTO, data: SelectItem) => {
-      if (IsNullish(rowData.localTag)) {
+      if (isNullish(rowData.localTag)) {
         rowData.localTag = new LocalTag()
       }
       rowData.localTag.id = Number(data.value)
@@ -143,16 +143,16 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     remotePaging: true,
     remotePageMethod: siteQuerySelectItemPageBySiteName,
     getCacheData: (rowData: SiteTagFullDTO) => {
-      if (IsNullish(rowData.site?.id)) {
+      if (isNullish(rowData.site?.id)) {
         return undefined
       }
       return new SelectItem({
         value: rowData.site.id,
-        label: IsNullish(rowData.site?.siteName) ? '' : rowData.site.siteName
+        label: isNullish(rowData.site?.siteName) ? '' : rowData.site.siteName
       })
     },
     setCacheData: (rowData: SiteTagFullDTO, data: SelectItem) => {
-      if (IsNullish(rowData.site)) {
+      if (isNullish(rowData.site)) {
         rowData.site = new Site()
       }
       rowData.site.id = Number(data.value)
@@ -192,7 +192,7 @@ async function siteTagQueryPage(
   const response = await apis.siteTagQueryLocalRelateDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>>(response)
-    if (IsNullish(responsePage)) {
+    if (isNullish(responsePage)) {
       return undefined
     }
     responsePage = new Page(responsePage)

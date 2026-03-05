@@ -6,10 +6,10 @@ import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import Page from '../../model/util/Page.ts'
 import lodash from 'lodash'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import TreeNode from '../../model/util/TreeNode'
 import { TreeNode as ElTreeNode } from 'element-plus'
-import { GetNode } from '@shared/util/TreeUtil.ts'
+import { getNode } from '@shared/util/TreeUtil.ts'
 import DataTable from '@renderer/components/common/DataTable.vue'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 
@@ -88,14 +88,14 @@ const treeRefreshMap: Map<number, { treeNode: ElTreeNode; resolve: (data: unknow
   { treeNode: ElTreeNode; resolve: (data: unknown[]) => void }
 >()
 // 把向treeRefreshMap写入数据和props.load封装在一起的函数
-const wrappedLoad = IsNullish(props.treeLoad)
+const wrappedLoad = isNullish(props.treeLoad)
   ? undefined
   : async (row: unknown, treeNode: ElTreeNode, resolve: (data: unknown[]) => void) => {
       const rowId = Number(lodash.pick(row, props.dataKey))
       if (!treeRefreshMap.has(rowId)) {
         treeRefreshMap.set(rowId, { treeNode: treeNode, resolve: resolve })
       }
-      if (NotNullish(props.treeLoad)) {
+      if (notNullish(props.treeLoad)) {
         const children = await props.treeLoad(row)
         resolve(children)
       }
@@ -113,16 +113,16 @@ async function doSearch() {
     ...toRaw(toolbarParams.value)
   } as Query
   const newPage: Page<Query, Data> | undefined = await props.search(tempPage)
-  if (NotNullish(newPage)) {
+  if (notNullish(newPage)) {
     data.value = newPage.data === undefined ? [] : newPage.data
     page.value.dataCount = newPage.dataCount
   }
   // 刷新子数据
-  if (NotNullish(props.treeLoad) && NotNullish(wrappedLoad)) {
-    if (NotNullish(data.value)) {
+  if (notNullish(props.treeLoad) && notNullish(wrappedLoad)) {
+    if (notNullish(data.value)) {
       data.value.forEach((row) => {
         const treeInitItem = treeRefreshMap.get(row[props.dataKey])
-        if (NotNullish(treeInitItem)) {
+        if (notNullish(treeInitItem)) {
           wrappedLoad(row, treeInitItem.treeNode, treeInitItem.resolve)
         }
       })
@@ -144,7 +144,7 @@ function handleScroll() {
 // 更新现有数据
 async function refreshData(waitingUpdateIds: number[] | string[], updateChildren: boolean) {
   // 校验
-  if (IsNullish(props.updateLoad) || ArrayIsEmpty(props.updateProperties)) {
+  if (isNullish(props.updateLoad) || arrayIsEmpty(props.updateProperties)) {
     return
   }
 
@@ -165,7 +165,7 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     for (let index = 0; index < tiledWaitingUpdate.length; index++) {
       if (
         Object.prototype.hasOwnProperty.call(tiledWaitingUpdate[index], 'children') &&
-        NotNullish(tiledWaitingUpdate[index].children)
+        notNullish(tiledWaitingUpdate[index].children)
       ) {
         const children = tiledWaitingUpdate[index].children
         if (Array.isArray(children)) {
@@ -184,8 +184,8 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
     // 利用树形工具找到叶子节点，列入waitingUpdateList
     const tempRoot = { id: undefined, pid: undefined, children: data.value as TreeNode[], isLeaf: false }
     for (const id of waitingUpdateChildIds) {
-      const child = GetNode(tempRoot, id) as Data
-      if (NotNullish(child)) {
+      const child = getNode(tempRoot, id) as Data
+      if (notNullish(child)) {
         waitingUpdateList.push(child)
       }
     }
@@ -194,11 +194,11 @@ async function refreshData(waitingUpdateIds: number[] | string[], updateChildren
 
   // 请求更新接口
   const newDataList = await props.updateLoad(originalIds)
-  if (ArrayNotEmpty(newDataList)) {
+  if (arrayNotEmpty(newDataList)) {
     // 更新updateParamName指定的属性
     for (const newData of newDataList) {
       const waitingUpdate = waitingUpdateList.find((waitingUpdate) => newData[props.dataKey] === waitingUpdate[props.dataKey])
-      if (NotNullish(waitingUpdate)) {
+      if (notNullish(waitingUpdate)) {
         props.updateProperties.forEach((paramName) => {
           waitingUpdate[paramName] = newData[paramName]
         })

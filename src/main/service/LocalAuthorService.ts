@@ -8,7 +8,7 @@ import { Operator } from '../constant/CrudConstant.ts'
 import Page from '@shared/model/util/Page.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import RankedLocalAuthor from '@shared/model/domain/RankedLocalAuthor.ts'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import RankedLocalAuthorWithWorkId from '@shared/model/domain/RankedLocalAuthorWithWorkId.ts'
 
 /**
@@ -39,7 +39,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
    */
   public async queryPage(page: Page<LocalAuthorQueryDTO, LocalAuthor>): Promise<Page<LocalAuthorQueryDTO, LocalAuthor>> {
     try {
-      if (NotNullish(page.query)) {
+      if (notNullish(page.query)) {
         page.query.operators = {
           ...{ authorName: Operator.LIKE },
           ...page.query.operators

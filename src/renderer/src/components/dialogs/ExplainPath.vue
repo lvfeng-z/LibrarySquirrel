@@ -7,7 +7,7 @@ import AutoLoadSelect from '../common/AutoLoadSelect.vue'
 import ApiUtil from '../../utils/ApiUtil'
 import { PathTypeEnum } from '../../constants/PathTypeEnum'
 import Page from '../../model/util/Page.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import { localAuthorQuerySelectItemPageByName } from '@renderer/apis/LocalAuthorApi.ts'
@@ -15,7 +15,7 @@ import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import AutoExplainPath from '@shared/model/entity/AutoExplainPath.ts'
 import AutoExplainPathQueryDTO from '@shared/model/queryDTO/AutoExplainPathQueryDTO.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 // props
 const props = defineProps<{
@@ -62,14 +62,14 @@ function confirmExplain() {
 }
 // 确认解释
 async function loadAutoExplain() {
-  const stringToExplain = StringUtil.isBlank(props.stringToExplain) ? 'Artist[test]' : props.stringToExplain
+  const stringToExplain = isBlank(props.stringToExplain) ? 'Artist[test]' : props.stringToExplain
   autoExplainPage.value.query = new AutoExplainPathQueryDTO()
   autoExplainPage.value.query.path = stringToExplain
   const tempPage = lodash.cloneDeep(autoExplainPage.value)
   const response = await apis.autoExplainPathGetListenerPage(tempPage)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data(response) as Page<AutoExplainPathQueryDTO, AutoExplainPath>
-    autoExplains.value = IsNullish(newPage.data) ? [] : newPage.data
+    autoExplains.value = isNullish(newPage.data) ? [] : newPage.data
   }
 }
 // 增加一行输入栏
@@ -133,7 +133,7 @@ function resetInputData(meaningOfPath: MeaningOfPath) {
 }
 //
 function getOptions(str: string, reg: string) {
-  if (StringUtil.isBlank(str)) {
+  if (isBlank(str)) {
     str = 'Artist[test]'
   }
   const temp = str.match(new RegExp(reg as string))

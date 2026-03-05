@@ -1,5 +1,5 @@
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
-import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 /**
  * 设置搜索标签颜色
@@ -7,7 +7,7 @@ import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
  */
 export function setSearchTagColor(segmentedTagItem: SegmentedTagItem): void {
   const subLabels = segmentedTagItem.subLabels
-  if (ArrayNotEmpty(subLabels)) {
+  if (arrayNotEmpty(subLabels)) {
     switch (subLabels[0]) {
       case 'author':
         switch (subLabels[1]) {

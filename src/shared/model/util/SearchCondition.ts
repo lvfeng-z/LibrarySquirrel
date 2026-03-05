@@ -1,5 +1,5 @@
 import { Operator } from './Operator.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 export class SearchCondition {
   /**
@@ -20,7 +20,7 @@ export class SearchCondition {
   constructor(searchCondition: SearchCondition) {
     this.value = searchCondition.value
     this.type = searchCondition.type
-    this.operator = IsNullish(searchCondition.operator) ? Operator.EQUAL : searchCondition.operator
+    this.operator = isNullish(searchCondition.operator) ? Operator.EQUAL : searchCondition.operator
   }
 }
 

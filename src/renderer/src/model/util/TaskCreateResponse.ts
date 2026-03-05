@@ -1,4 +1,4 @@
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import Plugin from '@shared/model/entity/Plugin.ts'
 
 /**
@@ -25,7 +25,7 @@ export default class TaskCreateResponse {
   plugin: Plugin | undefined | null
 
   constructor(taskCreateResponse?: TaskCreateResponse) {
-    if (IsNullish(taskCreateResponse)) {
+    if (isNullish(taskCreateResponse)) {
       this.succeed = undefined
       this.addedQuantity = undefined
       this.msg = undefined

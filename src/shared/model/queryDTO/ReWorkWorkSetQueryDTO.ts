@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品-作品集关联表QueryDTO
@@ -24,7 +24,7 @@ export default class ReWorkWorkSetQueryDTO extends BaseQueryDTO {
 
   constructor(reWorkWorkSetQueryDTO?: ReWorkWorkSetQueryDTO) {
     super(reWorkWorkSetQueryDTO)
-    if (NotNullish(reWorkWorkSetQueryDTO)) {
+    if (notNullish(reWorkWorkSetQueryDTO)) {
       this.workId = reWorkWorkSetQueryDTO.workId
       this.workSetId = reWorkWorkSetQueryDTO.workSetId
       this.isCover = reWorkWorkSetQueryDTO.isCover

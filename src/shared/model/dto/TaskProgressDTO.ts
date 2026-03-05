@@ -1,6 +1,6 @@
 import lodash from 'lodash'
 import Task from '../entity/Task.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class TaskProgressDTO extends Task {
   /**
@@ -20,7 +20,7 @@ export default class TaskProgressDTO extends Task {
 
   constructor(taskProcessingDTO?: Task) {
     super(taskProcessingDTO)
-    if (NotNullish(taskProcessingDTO)) {
+    if (notNullish(taskProcessingDTO)) {
       lodash.assign(this, lodash.pick(taskProcessingDTO, ['total', 'finished', 'siteName']))
     }
   }

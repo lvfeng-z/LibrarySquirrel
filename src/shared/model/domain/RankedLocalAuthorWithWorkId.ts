@@ -1,4 +1,4 @@
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 import RankedLocalAuthor from './RankedLocalAuthor.ts'
 
 export default class RankedLocalAuthorWithWorkId extends RankedLocalAuthor {
@@ -8,7 +8,7 @@ export default class RankedLocalAuthorWithWorkId extends RankedLocalAuthor {
   workId: number | undefined | null
 
   constructor(rankedLocalAuthorWithWorkId?: RankedLocalAuthorWithWorkId) {
-    if (IsNullish(rankedLocalAuthorWithWorkId)) {
+    if (isNullish(rankedLocalAuthorWithWorkId)) {
       super()
       this.workId = undefined
     } else {

@@ -6,8 +6,8 @@ import { Thead } from '../../model/util/Thead'
 import { TaskStatusEnum } from '../../constants/TaskStatusEnum.ts'
 import { ElTag } from 'element-plus'
 import ApiUtil from '../../utils/ApiUtil'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import { GetNode } from '@shared/util/TreeUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
+import { getNode } from '@shared/util/TreeUtil.ts'
 import { throttle } from 'lodash'
 import TaskOperationBarActive from '@renderer/components/common/TaskOperationBarActive.vue'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
@@ -20,7 +20,7 @@ import TaskProgressTreeDTO from '@shared/model/dto/TaskProgressTreeDTO.ts'
 import TaskQueryDTO from '@shared/model/queryDTO/TaskQueryDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 // props
 const props = defineProps<{
@@ -159,13 +159,13 @@ let refreshing: boolean = false
 // 防抖动refreshTask
 const throttleRefreshTask = throttle(() => refreshTask(), 500, { leading: true, trailing: true })
 // 是否为父任务
-const isParent = computed(() => NotNullish(formData.value.isCollection) && Boolean(formData.value.isCollection))
+const isParent = computed(() => notNullish(formData.value.isCollection) && Boolean(formData.value.isCollection))
 let parentCache: TaskTreeDTO | undefined = undefined
 
 // 方法
 // 分页查询子任务的函数
 async function taskQueryChildrenTaskPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new TaskQueryDTO()
   }
   page.query.pid = formData.value.id
@@ -182,7 +182,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   const response = await apis.taskListSchedule(ids)
   if (ApiUtil.check(response)) {
     const scheduleList = ApiUtil.data(response) as TaskScheduleDTO[]
-    return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
+    return arrayNotEmpty(scheduleList) ? scheduleList : undefined
   } else {
     return undefined
   }
@@ -190,7 +190,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
 // 开关dialog
 function handleOpen() {
   nextTick(() => {
-    if (NotNullish(childTaskSearchTable.value)) {
+    if (notNullish(childTaskSearchTable.value)) {
       childTaskSearchTable.value.doSearch()
     }
   })
@@ -207,9 +207,9 @@ async function refreshTask() {
       const tempRoot = new TaskTreeDTO()
       tempRoot.children = children.value
       return visibleRowsId.filter((id: number) => {
-        const task = GetNode<TaskTreeDTO>(tempRoot, id)
+        const task = getNode<TaskTreeDTO>(tempRoot, id)
         return (
-          NotNullish(task) &&
+          notNullish(task) &&
           (task.status === TaskStatusEnum.WAITING || task.status === TaskStatusEnum.PROCESSING || task.status === TaskStatusEnum.PAUSE)
         )
       })
@@ -220,7 +220,7 @@ async function refreshTask() {
     while (refreshTasks.length > 0) {
       await childTaskSearchTable.value.refreshData(refreshTasks, false)
       await new Promise((resolve) => setTimeout(resolve, 500))
-      if (IsNullish(childTaskSearchTable.value)) {
+      if (isNullish(childTaskSearchTable.value)) {
         break
       }
       refreshTasks = getRefreshTasks()
@@ -310,7 +310,7 @@ function startTask(row: TaskTreeDTO, retry: boolean) {
     apis.taskStartTask([row.id])
   }
   row.status = TaskStatusEnum.WAITING
-  if (row.isCollection && NotNullish(row.children)) {
+  if (row.isCollection && notNullish(row.children)) {
     row.children.forEach((child) => (child.status = TaskStatusEnum.WAITING))
   }
 }
@@ -324,7 +324,7 @@ async function deleteTask(ids: number[]) {
 }
 // 转到父任务
 function toParent() {
-  if (NotNullish(parentCache)) formData.value = parentCache
+  if (notNullish(parentCache)) formData.value = parentCache
   nextTick(() => childTaskSearchTable.value.doSearch())
 }
 </script>
@@ -396,7 +396,7 @@ function toParent() {
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row v-if="StringUtil.isNotBlank(formData.errorMessage)">
+        <el-row v-if="isNotBlank(formData.errorMessage)">
           <el-col>
             <el-form-item label="异常信息">
               <el-input v-model="formData.errorMessage" type="textarea" autosize />

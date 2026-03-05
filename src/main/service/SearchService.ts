@@ -7,7 +7,7 @@ import SearchDao from '../dao/SearchDao.js'
 import { SearchCondition, SearchType } from '@shared/model/util/SearchCondition.js'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 import WorkQueryDTO from '@shared/model/queryDTO/WorkQueryDTO.ts'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import LocalTagService from './LocalTagService.js'
 import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
@@ -41,7 +41,7 @@ export default class SearchService {
   protected readonly injectedDB: boolean
 
   constructor(db?: DatabaseClient) {
-    if (IsNullish(db)) {
+    if (isNullish(db)) {
       this.db = new DatabaseClient(this.constructor.name)
       this.injectedDB = false
     } else {
@@ -76,7 +76,7 @@ export default class SearchService {
     const usedLocalAuthor: number[] = []
     const usedSiteAuthor: number[] = []
 
-    if (ArrayNotEmpty(searchConditions)) {
+    if (arrayNotEmpty(searchConditions)) {
       for (const searchCondition of searchConditions) {
         switch (searchCondition.type) {
           case SearchType.LOCAL_TAG:
@@ -116,22 +116,22 @@ export default class SearchService {
   public async updateLastUsed(used: Map<SearchType, number[]>) {
     const usedLocalTag = used.get(SearchType.LOCAL_TAG)
     const process: Promise<number>[] = []
-    if (ArrayNotEmpty(usedLocalTag)) {
+    if (arrayNotEmpty(usedLocalTag)) {
       const localTagService = new LocalTagService()
       process.push(localTagService.updateLastUse(usedLocalTag))
     }
     const usedSiteTag = used.get(SearchType.SITE_TAG)
-    if (ArrayNotEmpty(usedSiteTag)) {
+    if (arrayNotEmpty(usedSiteTag)) {
       const siteTagService = new SiteTagService()
       process.push(siteTagService.updateLastUse(usedSiteTag))
     }
     const usedLocalAuthor = used.get(SearchType.LOCAL_AUTHOR)
-    if (ArrayNotEmpty(usedLocalAuthor)) {
+    if (arrayNotEmpty(usedLocalAuthor)) {
       const localAuthorService = new LocalAuthorService()
       process.push(localAuthorService.updateLastUse(usedLocalAuthor))
     }
     const usedSiteAuthor = used.get(SearchType.SITE_AUTHOR)
-    if (ArrayNotEmpty(usedSiteAuthor)) {
+    if (arrayNotEmpty(usedSiteAuthor)) {
       const siteAuthorService = new SiteAuthorService()
       process.push(siteAuthorService.updateLastUse(usedSiteAuthor))
     }
@@ -143,9 +143,7 @@ export default class SearchService {
    * 当作品集中的任意作品符合条件时，将这个作品集放入结果集中
    * @param page 分页查询参数，query 为 SearchCondition[] 数组
    */
-  public async queryWorkSetPage(
-    page: Page<SearchCondition[], WorkSetCoverDTO>
-  ): Promise<Page<SearchCondition[], WorkSetCoverDTO>> {
+  public async queryWorkSetPage(page: Page<SearchCondition[], WorkSetCoverDTO>): Promise<Page<SearchCondition[], WorkSetCoverDTO>> {
     const searchConditions = page.query ?? []
 
     // 记录使用的搜索条件用于更新最后使用时间
@@ -154,7 +152,7 @@ export default class SearchService {
     const usedLocalAuthor: number[] = []
     const usedSiteAuthor: number[] = []
 
-    if (ArrayNotEmpty(searchConditions)) {
+    if (arrayNotEmpty(searchConditions)) {
       for (const searchCondition of searchConditions) {
         switch (searchCondition.type) {
           case SearchType.LOCAL_TAG:

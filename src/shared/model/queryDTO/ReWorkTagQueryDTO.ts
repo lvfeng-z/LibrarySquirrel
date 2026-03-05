@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品与标签关联查询DTO
@@ -24,7 +24,7 @@ export class ReWorkTagQueryDTO extends BaseQueryDTO {
 
   constructor(reWorkTagQueryDTO?: ReWorkTagQueryDTO) {
     super(reWorkTagQueryDTO)
-    if (NotNullish(reWorkTagQueryDTO)) {
+    if (notNullish(reWorkTagQueryDTO)) {
       this.workId = reWorkTagQueryDTO.workId
       this.tagType = reWorkTagQueryDTO.tagType
       this.localTagId = reWorkTagQueryDTO.localTagId

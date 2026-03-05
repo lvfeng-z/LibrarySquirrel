@@ -1,6 +1,6 @@
 import LocalAuthor from '../entity/LocalAuthor.ts'
 import { AuthorRank } from '../constant/AuthorRank.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 import RankAuthor from '../interface/RankAuthor.ts'
 
 export default class RankedLocalAuthor extends LocalAuthor implements RankAuthor {
@@ -10,7 +10,7 @@ export default class RankedLocalAuthor extends LocalAuthor implements RankAuthor
   authorRank: AuthorRank | undefined | null
 
   constructor(localAuthorRankDTO?: RankedLocalAuthor) {
-    if (IsNullish(localAuthorRankDTO)) {
+    if (isNullish(localAuthorRankDTO)) {
       super()
       this.authorRank = undefined
     } else {

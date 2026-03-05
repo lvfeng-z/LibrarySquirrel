@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import { BOOL } from '../constant/BOOL.ts'
 import { ActivationType } from '../constant/ActivationType.ts'
 
@@ -71,7 +71,7 @@ export default class Plugin extends BaseEntity {
 
   constructor(plugin?: Plugin) {
     super(plugin)
-    if (NotNullish(plugin)) {
+    if (notNullish(plugin)) {
       this.publicId = plugin.publicId
       this.author = plugin.author
       this.name = plugin.name

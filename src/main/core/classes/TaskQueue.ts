@@ -1,9 +1,9 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
-import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { assertNotNullish } from '@shared/util/AssertUtil.ts'
 import LogUtil from '../../util/LogUtil.ts'
 import TaskService from '../../service/TaskService.ts'
 import WorkService from '../../service/WorkService.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
 import PluginLoader from '../../plugin/PluginLoader.ts'
 import ResourceWriter from '../../util/ResourceWriter.ts'
@@ -11,7 +11,7 @@ import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
 import { RenderEvent, SendMsgToRender } from '../EventToRender.ts'
 import TaskProgressMapTreeDTO from '@shared/model/dto/TaskProgressMapTreeDTO.ts'
-import { CopyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
+import { copyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
 import TaskTreeDTO from '@shared/model/dto/TaskTreeDTO.ts'
 import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
 import lodash from 'lodash'
@@ -168,10 +168,10 @@ export class TaskQueue {
     this.readyToClose = new Promise<void>((resolve, reject) => {
       const handleError = (error: Error, taskRunInstance?: TaskRunInstance) => {
         LogUtil.error(this.constructor.name, `处理任务失败，taskId: ${taskRunInstance?.taskId}，error: ${error.message}`)
-        if (NotNullish(taskRunInstance)) {
+        if (notNullish(taskRunInstance)) {
           taskRunInstance.failed()
           this.taskPersistStream.addTask([taskRunInstance])
-          if (IsNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
+          if (isNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
             // 单个的任务直接清除
             this.removeTask([taskRunInstance.taskId])
           } else {
@@ -217,7 +217,7 @@ export class TaskQueue {
           taskRunInstance.resSaveSuspended = false
           LogUtil.info(this.constructor.name, `任务${taskRunInstance.taskId}失败`)
         }
-        if (IsNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
+        if (isNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
           // 单个的任务直接清除
           this.removeTask([taskRunInstance.taskId])
         } else {
@@ -262,7 +262,7 @@ export class TaskQueue {
             .filter((task) => !task.taskChangeStored)
             .toArray()
           notPersistedTasks.forEach((notPersistedTask) => clearTimeout(notPersistedTask.clearTimeoutId))
-          if (ArrayNotEmpty(notPersistedTasks)) {
+          if (arrayNotEmpty(notPersistedTasks)) {
             await this.taskService.updateBatchById(notPersistedTasks.map((notPersistedTask) => notPersistedTask.getTaskInfo()))
           }
           resolve()
@@ -285,17 +285,17 @@ export class TaskQueue {
       await this.processTask(tasks)
     } else if (taskOperation === TaskOperation.PAUSE) {
       await this.pauseTask(tasks.map((task) => task.id as number))
-      const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
+      const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh)).catch((error) =>
         LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
       )
     } else if (taskOperation === TaskOperation.STOP) {
       await this.stopTask(tasks)
       // 清除单个的任务
-      const singleTasks = tasks.filter((task) => IsNullish(task.pid)).map((task) => task.id as number)
+      const singleTasks = tasks.filter((task) => isNullish(task.pid)).map((task) => task.id as number)
       this.removeTask(singleTasks)
       // 刷新父任务
-      const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(NotNullish))
+      const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh)).catch((error) =>
         LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
       )
@@ -310,7 +310,7 @@ export class TaskQueue {
   public getSchedule(taskId: number): TaskScheduleDTO | undefined {
     // 父任务的进度
     const parentRunInstance = this.parentMap.get(taskId)
-    if (NotNullish(parentRunInstance)) {
+    if (notNullish(parentRunInstance)) {
       let finished = 0
       parentRunInstance.children.forEach((child) => {
         if (child.status === TaskStatusEnum.FINISHED) {
@@ -329,7 +329,7 @@ export class TaskQueue {
 
     // 子任务的进度
     const taskRunInstance = this.taskMap.get(taskId)
-    if (IsNullish(taskRunInstance)) {
+    if (isNullish(taskRunInstance)) {
       return undefined
     }
     if (TaskStatusEnum.FINISHED === taskRunInstance.status) {
@@ -338,7 +338,7 @@ export class TaskQueue {
         pid: taskRunInstance.parentId,
         status: TaskStatusEnum.FINISHED,
         total: taskRunInstance.resourceWriter.resourceSize,
-        finished: IsNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
+        finished: isNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
       })
     }
     if (TaskStatusEnum.PROCESSING === taskRunInstance.status || TaskStatusEnum.PAUSE === taskRunInstance.status) {
@@ -347,7 +347,7 @@ export class TaskQueue {
         pid: taskRunInstance.parentId,
         status: taskRunInstance.status,
         total: taskRunInstance.resourceWriter.resourceSize,
-        finished: IsNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
+        finished: isNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
       })
     }
     return undefined
@@ -360,29 +360,29 @@ export class TaskQueue {
     if (this.taskSchedulePushing) {
       return
     }
-    while (NotNullish(this.taskMap) && this.taskMap.size > 0) {
+    while (notNullish(this.taskMap) && this.taskMap.size > 0) {
       this.taskSchedulePushing = true
       const taskScheduleList = this.taskMap
         .values()
         .toArray()
         .map((taskRunInstance) => {
           const taskId = taskRunInstance.taskId
-          if (TaskStatusEnum.PROCESSING === taskRunInstance.status && NotNullish(taskRunInstance.resourceWriter.writable)) {
+          if (TaskStatusEnum.PROCESSING === taskRunInstance.status && notNullish(taskRunInstance.resourceWriter.writable)) {
             return new TaskScheduleDTO({
               id: taskId,
               pid: taskRunInstance.parentId,
               status: taskRunInstance.status,
               total: taskRunInstance.resourceWriter.resourceSize,
-              finished: IsNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
+              finished: isNullish(taskRunInstance.resourceWriter.writable) ? 0 : taskRunInstance.resourceWriter.writable.bytesWritten
             })
           }
           return undefined
         })
-        .filter(NotNullish)
+        .filter(notNullish)
       if (this.closed) {
         break
       }
-      if (ArrayNotEmpty(taskScheduleList)) {
+      if (arrayNotEmpty(taskScheduleList)) {
         SendMsgToRender(RenderEvent.TASK_STATUS_UPDATE_SCHEDULE, taskScheduleList)
       }
       await new Promise((resolve) => setTimeout(resolve, 500))
@@ -397,7 +397,7 @@ export class TaskQueue {
     if (this.parentSchedulePushing) {
       return
     }
-    while (NotNullish(this.parentMap) && this.parentMap.size > 0) {
+    while (notNullish(this.parentMap) && this.parentMap.size > 0) {
       this.parentSchedulePushing = true
       const taskScheduleList = this.parentMap
         .values()
@@ -435,14 +435,14 @@ export class TaskQueue {
    */
   public async listTaskTree(ids: number[], includeStatus?: TaskStatusEnum[]): Promise<TaskTreeDTO[]> {
     const fullTree = await this.taskService.listTaskTree(ids)
-    if (ArrayIsEmpty(includeStatus)) {
+    if (arrayIsEmpty(includeStatus)) {
       return fullTree
     }
     const result: TaskTreeDTO[] = []
 
     // 遍历任务树，寻找符合条件的任务
     for (const tempParent of fullTree) {
-      if (ArrayIsEmpty(tempParent.children)) {
+      if (arrayIsEmpty(tempParent.children)) {
         if (!tempParent.isCollection) {
           result.push(tempParent)
         }
@@ -452,12 +452,12 @@ export class TaskQueue {
       tempParent.children = []
       let parentPushed = false
       for (const tempChild of tempChildren) {
-        if (IsNullish(tempChild.id)) {
+        if (isNullish(tempChild.id)) {
           continue
         }
         // 优先使用运行实例的任务状态判断任务状态，同时把运行实例的状态作为任务的状态
         const tempRunInst = this.taskMap.get(tempChild.id)
-        if (NotNullish(tempRunInst)) {
+        if (notNullish(tempRunInst)) {
           if (includeStatus.includes(tempRunInst.status)) {
             if (!parentPushed) {
               result.push(tempParent)
@@ -535,7 +535,7 @@ export class TaskQueue {
     const tempPidSet: Set<number> = new Set<number>()
     tasks.forEach((task) => {
       const taskRunInstance = this.taskMap.get(task.id as number)
-      if (NotNullish(taskRunInstance)) {
+      if (notNullish(taskRunInstance)) {
         clearTimeout(taskRunInstance.clearTimeoutId)
         tempPidSet.add(taskRunInstance.parentId)
         existsTasks.push(taskRunInstance)
@@ -545,7 +545,7 @@ export class TaskQueue {
     })
     tempPidSet.forEach((pid) => {
       const tempTimeout = this.parentMap.get(pid)?.clearTimeoutId
-      if (NotNullish(tempTimeout)) {
+      if (notNullish(tempTimeout)) {
         clearTimeout(tempTimeout)
       }
     })
@@ -557,7 +557,7 @@ export class TaskQueue {
       }
     }
 
-    if (ArrayNotEmpty(notExistsTasks)) {
+    if (arrayNotEmpty(notExistsTasks)) {
       // 查询已经下载过的作品列表
       const siteIdAndSiteWorkIds = notExistsTasks.map((notExistsTask) => {
         return {
@@ -571,11 +571,11 @@ export class TaskQueue {
         // 判断这个作品是否已经保存过
         let infoSaved = false
         let localWorkId: number | undefined
-        const resSaveSuspended = NotNullish(task.pendingResourceId)
+        const resSaveSuspended = notNullish(task.pendingResourceId)
         const existsWork = existsWorkMap.get(`${task.siteId}_${task.siteWorkId}`)
-        infoSaved = NotNullish(existsWork)
-        if (NotNullish(existsWork)) {
-          AssertNotNullish(existsWork.id)
+        infoSaved = notNullish(existsWork)
+        if (notNullish(existsWork)) {
+          assertNotNullish(existsWork.id)
           localWorkId = existsWork.id
         }
         const taskRunInstance = new TaskRunInstance(
@@ -616,7 +616,7 @@ export class TaskQueue {
     const result: Promise<boolean>[] = []
     for (const taskId of taskIds) {
       const taskRunInstance = this.taskMap.get(taskId)
-      if (IsNullish(taskRunInstance)) {
+      if (isNullish(taskRunInstance)) {
         LogUtil.error(this.constructor.name, `无法暂停任务${taskId}，队列中没有这个任务`)
         continue
       }
@@ -641,13 +641,13 @@ export class TaskQueue {
   private async stopTask(tasks: Task[]) {
     const taskSaveResultList: TaskRunInstance[] = []
     for (const task of tasks) {
-      if (IsNullish(task.id)) {
+      if (isNullish(task.id)) {
         LogUtil.error(this.constructor.name, `停止任务失败，任务id不能为空`)
         continue
       }
       const taskId = task.id
       const taskRunInstance = this.taskMap.get(taskId)
-      if (IsNullish(taskRunInstance)) {
+      if (isNullish(taskRunInstance)) {
         LogUtil.error(this.constructor.name, `无法停止任务${taskId}，队列中没有这个任务`)
         continue
       }
@@ -674,20 +674,20 @@ export class TaskQueue {
       ...new Set(
         runInstances
           .map((runInstance) => {
-            if (NotNullish(runInstance.parentId) && runInstance.parentId !== 0 && !existingPid.includes(runInstance.parentId)) {
+            if (notNullish(runInstance.parentId) && runInstance.parentId !== 0 && !existingPid.includes(runInstance.parentId)) {
               return runInstance.parentId
             } else {
               return undefined
             }
           })
-          .filter(NotNullish)
+          .filter(notNullish)
       )
     ]
     let parentList: Task[] = []
-    if (ArrayNotEmpty(notExistingPid)) {
+    if (arrayNotEmpty(notExistingPid)) {
       parentList = await this.taskService.listByIds(notExistingPid)
     }
-    if (ArrayNotEmpty(parentList)) {
+    if (arrayNotEmpty(parentList)) {
       const allChildren = await this.taskService.listChildrenByParentsTask(notExistingPid)
       const pidChildrenMap: Map<number, Task[]> = Map.groupBy(allChildren, (child) => child.pid as number)
       const pidChildrenInstMap: object = lodash.keyBy(runInstances, 'taskId')
@@ -701,27 +701,27 @@ export class TaskQueue {
       const existsWorkList = await this.workService.listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds)
       const existsWorkMap = new Map(existsWorkList.map((w) => [`${w.siteId}_${w.siteWorkId}`, w]))
       for (const parentInfo of parentList) {
-        AssertNotNullish(parentInfo.id, `添加父任务${parentInfo.id}失败，父任务id不能为空`)
-        if (IsNullish(parentInfo.status)) {
+        assertNotNullish(parentInfo.id, `添加父任务${parentInfo.id}失败，父任务id不能为空`)
+        if (isNullish(parentInfo.status)) {
           this.removeTaskByPid(parentInfo.id)
           LogUtil.error(this.constructor.name, `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
           continue
         }
         const tempChildren = pidChildrenMap.get(parentInfo.id)
-        if (ArrayNotEmpty(tempChildren)) {
+        if (arrayNotEmpty(tempChildren)) {
           const tempInstList = tempChildren.map((tempChild) => {
             const tempInst = pidChildrenInstMap[String(tempChild.id)]
-            if (NotNullish(tempInst)) {
+            if (notNullish(tempInst)) {
               // 处理已经添加到taskMap的
               return tempInst as TaskRunInstance
             } else {
               // 处理没有添加到taskMap的
               // 判断这个作品是否已经保存过
-              const resSaveSuspended = NotNullish(tempChild.pendingResourceId)
+              const resSaveSuspended = notNullish(tempChild.pendingResourceId)
               const infoSaved = existsWorkMap.has(`${tempChild.siteId}_${tempChild.siteWorkId}`)
               let localWorkId: number | undefined
               if (infoSaved) {
-                AssertNotNullish(existsWorkList[0].id)
+                assertNotNullish(existsWorkList[0].id)
                 localWorkId = existsWorkList[0].id
               }
               const tempRunInstance = new TaskRunInstance(
@@ -755,7 +755,7 @@ export class TaskQueue {
   private async refreshParentStatus(parentIds: number[]) {
     for (const id of parentIds) {
       const parentRunInstance = this.parentMap.get(id)
-      if (NotNullish(parentRunInstance)) {
+      if (notNullish(parentRunInstance)) {
         const children = Array.from(parentRunInstance.children.values())
         let newStatus: TaskStatusEnum = parentRunInstance.status
         let created = 0
@@ -831,7 +831,7 @@ export class TaskQueue {
         // 清除不再活跃的父任务
         if (processing === 0 && paused === 0 && waiting === 0 && waitingUserInput === 0) {
           this.removeParentTask(id)
-        } else if (NotNullish(parentRunInstance.clearTimeoutId)) {
+        } else if (notNullish(parentRunInstance.clearTimeoutId)) {
           clearTimeout(parentRunInstance.clearTimeoutId)
         }
       }
@@ -848,13 +848,13 @@ export class TaskQueue {
   private inletTask(taskRunInstance: TaskRunInstance, task: Task) {
     // 清除原有的删除定时器
     const oldInst = this.taskMap.get(taskRunInstance.taskId)
-    if (NotNullish(oldInst)) {
+    if (notNullish(oldInst)) {
       clearTimeout(oldInst.clearTimeoutId)
     }
     this.taskMap.set(taskRunInstance.taskId, taskRunInstance)
     // 任务运行信息推送到渲染进程
     const taskProgressDTO = new TaskProgressDTO()
-    CopyIgnoreUndefined(taskProgressDTO, task)
+    copyIgnoreUndefined(taskProgressDTO, task)
     // // 补充taskProgressDTO的站点名称，否则完成任务时的提示中，站点名称显示undefined
     // const siteId = taskProgressDTO.siteId
     // if (NotNullish(siteId)) {
@@ -872,13 +872,13 @@ export class TaskQueue {
   private inletParentTask(parentRunInstance: ParentRunInstance, task: Task) {
     // 清除原有的删除定时器
     const oldInst = this.taskMap.get(parentRunInstance.taskId)
-    if (NotNullish(oldInst)) {
+    if (notNullish(oldInst)) {
       clearTimeout(oldInst.clearTimeoutId)
     }
     this.parentMap.set(parentRunInstance.taskId, parentRunInstance)
     // 任务状态推送到渲染进程
     const taskProgressMapTreeDTO = new TaskProgressMapTreeDTO()
-    CopyIgnoreUndefined(taskProgressMapTreeDTO, task)
+    copyIgnoreUndefined(taskProgressMapTreeDTO, task)
     SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_SET_PARENT_TASK, [taskProgressMapTreeDTO])
   }
 
@@ -903,7 +903,7 @@ export class TaskQueue {
     for (let i = 0; i < taskIds.length; i++) {
       const taskId = taskIds[i]
       const runInstance = this.taskMap.get(taskId)
-      if (NotNullish(runInstance)) {
+      if (notNullish(runInstance)) {
         delayedRemoval(runInstance, 5000, 0)
       } else {
         LogUtil.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
@@ -922,7 +922,7 @@ export class TaskQueue {
       .filter((entry) => entry[1].parentId === pid)
       .map((entry) => entry[0])
       .toArray()
-    if (ArrayNotEmpty(waitingRemove)) {
+    if (arrayNotEmpty(waitingRemove)) {
       this.removeTask(waitingRemove)
     }
   }
@@ -934,9 +934,9 @@ export class TaskQueue {
    */
   private removeParentTask(taskId: number) {
     const runInstance = this.parentMap.get(taskId)
-    if (NotNullish(runInstance)) {
+    if (notNullish(runInstance)) {
       const childrenIds = runInstance.children.keys().toArray()
-      if (ArrayNotEmpty(childrenIds)) {
+      if (arrayNotEmpty(childrenIds)) {
         this.removeTask(childrenIds)
       }
       runInstance.clearTimeoutId = setTimeout(() => {
@@ -955,7 +955,7 @@ export class TaskQueue {
    */
   private getNext(): TaskRunInstance | undefined {
     // 如果没有更多的数组或当前数组已经处理完毕，尝试切换到下一个数组
-    while (ArrayNotEmpty(this.runInstBuffer)) {
+    while (arrayNotEmpty(this.runInstBuffer)) {
       if (this.currentBufferIndex >= this.runInstBuffer[0].length) {
         this.runInstBuffer.shift()
         this.currentBufferIndex = 0
@@ -965,7 +965,7 @@ export class TaskQueue {
     }
 
     // 如果所有数组都已经处理完毕，等待新数据推入数据源
-    if (ArrayIsEmpty(this.runInstBuffer)) {
+    if (arrayIsEmpty(this.runInstBuffer)) {
       return
     }
 
@@ -1151,9 +1151,9 @@ class TaskRunInstance extends TaskStatus {
     this.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
     this.taskService = taskService
     this.pluginLoader = pluginLoader
-    this.parentId = IsNullish(parentId) ? 0 : parentId
-    this.infoSaved = IsNullish(workInfoSaved) ? false : workInfoSaved
-    this.resSaveSuspended = IsNullish(resSaveSuspended) ? false : resSaveSuspended
+    this.parentId = isNullish(parentId) ? 0 : parentId
+    this.infoSaved = isNullish(workInfoSaved) ? false : workInfoSaved
+    this.resSaveSuspended = isNullish(resSaveSuspended) ? false : resSaveSuspended
     this.inStream = false
     this.workId = localWorkId
     this.errorOccurred = false
@@ -1175,7 +1175,7 @@ class TaskRunInstance extends TaskStatus {
   public async saveInfo(update: boolean): Promise<void> {
     try {
       const task = await this.taskService.getById(this.taskId)
-      AssertNotNullish(task, `保存任务${this.taskId}的信息失败，任务id无效`)
+      assertNotNullish(task, `保存任务${this.taskId}的信息失败，任务id无效`)
       this.workId = await this.taskService.saveWorkInfo(task, this.pluginLoader, update, this.workId)
     } catch (error) {
       this.errorOccurred = true
@@ -1241,7 +1241,7 @@ class TaskRunInstance extends TaskStatus {
           result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.resourceWriter)
         }
         // 判断是否已经在数据库中创建资源信息
-        if (NotNullish(this.taskInfo.pendingResourceId)) {
+        if (notNullish(this.taskInfo.pendingResourceId)) {
           this.resSaveSuspended = true
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
@@ -1288,10 +1288,10 @@ class TaskRunInstance extends TaskStatus {
     if (this.status === TaskStatusEnum.WAITING) {
       try {
         this.changeStatus(TaskStatusEnum.PROCESSING)
-        AssertNotNullish(this.taskInfo, `保存任务${this.taskId}的资源失败，任务id无效`)
-        AssertNotNullish(this.workId, `保存任务${this.taskId}的资源失败，作品id不能为空`)
+        assertNotNullish(this.taskInfo, `保存任务${this.taskId}的资源失败，任务id无效`)
+        assertNotNullish(this.workId, `保存任务${this.taskId}的资源失败，作品id不能为空`)
 
-        const resourceWriter = IsNullish(this.resourceWriter) ? new ResourceWriter() : this.resourceWriter
+        const resourceWriter = isNullish(this.resourceWriter) ? new ResourceWriter() : this.resourceWriter
 
         let result: Promise<TaskProcessResponseDTO>
         if (this.resSaveSuspended && this.taskInfo.continuable) {
@@ -1345,7 +1345,7 @@ class ParentRunInstance extends TaskStatus {
 
   constructor(taskId: number, status: TaskStatusEnum, children?: (TaskRunInstance | TaskStatus)[]) {
     super(taskId, status, true)
-    if (ArrayIsEmpty(children)) {
+    if (arrayIsEmpty(children)) {
       this.children = new Map<number, TaskRunInstance | TaskStatus>()
     } else {
       this.children = new Map<number, TaskRunInstance | TaskStatus>(children.map((child) => [child.taskId, child]))
@@ -1418,7 +1418,7 @@ class TaskQueueEntrance extends Readable {
     Electron.ipcMain.on('task-queue-resource-replace-confirm-echo', (_event, receivedIds: number[], confirmed: boolean) => {
       receivedIds.map((taskId: number) => {
         const taskRunInstance = this.waitingMap.get(taskId)
-        if (NotNullish(taskRunInstance)) {
+        if (notNullish(taskRunInstance)) {
           taskRunInstance.confirmReplaceRes = confirmed ? ConfirmReplaceResStateEnum.CONFIRM : ConfirmReplaceResStateEnum.REFUSE
           this.waitingMap.delete(taskId)
           this.resolvedList.push(taskRunInstance)
@@ -1463,7 +1463,7 @@ class TaskQueueEntrance extends Readable {
    * @private
    */
   private async isResourceSaved(taskRunInstance: TaskRunInstance): Promise<boolean> {
-    if (NotNullish(taskRunInstance.workId)) {
+    if (notNullish(taskRunInstance.workId)) {
       return this.resourceService.hasActiveByWorkId(taskRunInstance.workId)
     } else {
       return false
@@ -1479,9 +1479,9 @@ class TaskQueueEntrance extends Readable {
     try {
       while (true) {
         taskRunInstance = this.getNext()
-        if (IsNullish(taskRunInstance)) {
+        if (isNullish(taskRunInstance)) {
           taskRunInstance = this.resolvedList.shift()
-          if (IsNullish(taskRunInstance)) {
+          if (isNullish(taskRunInstance)) {
             break
           }
         }
@@ -1631,7 +1631,7 @@ class ResourceSaveStream extends Transform {
     this.resSaveQueue.saturated(() => (this.queueFull = true))
     this.resSaveQueue.unsaturated(() => {
       this.queueFull = false
-      if (ArrayNotEmpty(this.blockedCallback)) {
+      if (arrayNotEmpty(this.blockedCallback)) {
         while (this.blockedCallback.length > 0 && !this.queueFull) {
           this.blockedCallback.shift()?.()
         }
@@ -1732,7 +1732,7 @@ class TaskPersistStream extends Writable {
       } else {
         this.batchUpdateBuffer.push(chunk)
       }
-      if (this.batchUpdateBuffer.length >= 100 || ArrayIsEmpty(this.runInstances)) {
+      if (this.batchUpdateBuffer.length >= 100 || arrayIsEmpty(this.runInstances)) {
         const aBatch = this.batchUpdateBuffer.splice(0, this.batchUpdateBuffer.length)
         const temp = aBatch.map(this.createTaskFromRunInst)
         await this.taskService.updateBatchById(temp)
@@ -1776,7 +1776,7 @@ class TaskPersistStream extends Writable {
   private processNext(): boolean {
     const deleteCount = Math.min(100, this.runInstances.length)
     const next = this.runInstances.splice(0, deleteCount)
-    if (ArrayNotEmpty(next)) {
+    if (arrayNotEmpty(next)) {
       return this.write(next)
     } else {
       return false

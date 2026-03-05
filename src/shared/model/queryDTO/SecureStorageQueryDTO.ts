@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 
 export default class SecureStorageQueryDTO extends BaseQueryDTO {
@@ -15,7 +15,7 @@ export default class SecureStorageQueryDTO extends BaseQueryDTO {
 
   constructor(baseQueryDTO?: BaseQueryDTO) {
     super()
-    if (NotNullish(baseQueryDTO)) {
+    if (notNullish(baseQueryDTO)) {
       lodash.assign(this, lodash.pick(baseQueryDTO, ['storageKey', 'description']))
     }
   }

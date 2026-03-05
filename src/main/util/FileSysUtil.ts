@@ -4,7 +4,7 @@ import fsPromise from 'fs/promises'
 import LogUtil from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { getSettings } from '../core/settings.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 
@@ -101,17 +101,17 @@ export async function GetWorkResource(
     })
   ).then(async (data) => {
     const resource = sharp(data)
-    if (IsNullish(height) && NotNullish(width)) {
+    if (isNullish(height) && notNullish(width)) {
       return resource.resize({ width: width, fit: 'contain' }).toBuffer()
-    } else if (NotNullish(height) && IsNullish(width)) {
+    } else if (notNullish(height) && isNullish(width)) {
       return resource.resize({ height: height, fit: 'contain' }).toBuffer()
-    } else if (NotNullish(height) && NotNullish(width)) {
+    } else if (notNullish(height) && notNullish(width)) {
       return resource.resize({ height: height, width: width, fit: 'contain' }).toBuffer()
-    } else if (NotNullish(visualHeight) && NotNullish(visualWidth)) {
+    } else if (notNullish(visualHeight) && notNullish(visualWidth)) {
       const metadata = await resource.metadata()
       const imageHeight = metadata.height
       const imageWidth = metadata.width
-      if (NotNullish(imageHeight) && NotNullish(imageWidth)) {
+      if (notNullish(imageHeight) && notNullish(imageWidth)) {
         if (imageHeight <= visualHeight && imageWidth <= visualWidth) {
           return resource.toBuffer()
         } else if (imageHeight > visualHeight && imageWidth <= visualWidth) {

@@ -1,7 +1,7 @@
 import SelectItem from './SelectItem.ts'
 import { VNode } from 'vue'
 import TreeSelectNode from '@renderer/model/util/TreeSelectNode.ts'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 
 export class CommonInputConfig implements ICommonInputConfig {
@@ -48,7 +48,7 @@ export class CommonInputConfig implements ICommonInputConfig {
   }
 
   public refreshSelectData(query?: unknown) {
-    if (this.remote && NotNullish(this.remoteMethod)) {
+    if (this.remote && notNullish(this.remoteMethod)) {
       this.remoteMethod(query).then((data) => (this.selectList = data))
     }
   }

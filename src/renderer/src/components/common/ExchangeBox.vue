@@ -3,7 +3,7 @@ import SearchToolbarV1 from '@renderer/components/common/SearchToolbarV1.vue'
 import { Ref, ref, UnwrapRef } from 'vue'
 import SelectItem from '../../model/util/SelectItem'
 import TagBox from './TagBox.vue'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import Page from '@renderer/model/util/Page.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
@@ -51,12 +51,12 @@ async function doSearch(isUpper: boolean) {
   resetScrollBarPosition(isUpper)
   if (isUpper) {
     await upperTagBox.value.newSearch()
-    if (NotNullish(upperData.value)) {
+    if (notNullish(upperData.value)) {
       upperData.value = leachBufferData(upperData.value, isUpper)
     }
   } else {
     await lowerTagBox.value.newSearch()
-    if (NotNullish(lowerData.value)) {
+    if (notNullish(lowerData.value)) {
       lowerData.value = leachBufferData(lowerData.value, isUpper)
     }
   }
@@ -99,21 +99,21 @@ function exchange(source: SelectItem[], target: SelectItem[], item: SelectItem) 
 }
 // 处理确认交换事件
 function handleExchangeConfirm(isUpper?: boolean) {
-  if (IsNullish(isUpper) ? true : isUpper) {
+  if (isNullish(isUpper) ? true : isUpper) {
     emits('upperConfirm', upperBufferData.value, lowerBufferData.value)
   }
-  if (IsNullish(isUpper) ? true : !isUpper) {
+  if (isNullish(isUpper) ? true : !isUpper) {
     emits('lowerConfirm', upperBufferData.value, lowerBufferData.value)
   }
 }
 // 处理清空按钮点击
 function handleClearButtonClicked(isUpper?: boolean) {
-  if (IsNullish(isUpper) ? true : isUpper) {
+  if (isNullish(isUpper) ? true : isUpper) {
     lowerData.value.push(...upperBufferData.value)
     upperBufferData.value = []
     upperBufferId.value.clear()
   }
-  if (IsNullish(isUpper) ? true : !isUpper) {
+  if (isNullish(isUpper) ? true : !isUpper) {
     upperData.value.push(...lowerBufferData.value)
     lowerBufferData.value = []
     lowerBufferId.value.clear()
@@ -123,12 +123,12 @@ function handleClearButtonClicked(isUpper?: boolean) {
 }
 // 刷新内容
 function refreshData(isUpper: boolean | undefined) {
-  if (IsNullish(isUpper) ? true : isUpper) {
+  if (isNullish(isUpper) ? true : isUpper) {
     upperBufferData.value = []
     upperBufferId.value.clear()
     upperTagBox.value.newSearch()
   }
-  if (IsNullish(isUpper) ? true : !isUpper) {
+  if (isNullish(isUpper) ? true : !isUpper) {
     lowerBufferData.value = []
     lowerBufferId.value.clear()
     lowerTagBox.value.newSearch()
@@ -150,7 +150,7 @@ async function requestNextPage(page: IPage<Query, SelectItem>, isUpper: boolean)
 
   return newPagePromise.then((newPage) => {
     const resultPage = new Page(newPage).transform<SegmentedTagItem>()
-    if (ArrayNotEmpty(newPage.data)) {
+    if (arrayNotEmpty(newPage.data)) {
       const segTagItems = newPage.data.map((selectItem) => new SegmentedTagItem(selectItem))
       resultPage.data = segTagItems
       newPage.data = leachBufferData(segTagItems, isUpper)
@@ -185,8 +185,8 @@ function leachBufferData(increment: SegmentedTagItem[], isUpper: boolean) {
 }
 // 处理buffer是否折叠
 function handleBufferToggle() {
-  upperBufferState.value = ArrayNotEmpty(upperBufferData.value)
-  lowerBufferState.value = ArrayNotEmpty(lowerBufferData.value)
+  upperBufferState.value = arrayNotEmpty(upperBufferData.value)
+  lowerBufferState.value = arrayNotEmpty(lowerBufferData.value)
 }
 </script>
 

@@ -1,4 +1,4 @@
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 import SiteAuthorFullDTO from './SiteAuthorFullDTO.ts'
 import SiteAuthor from '../entity/SiteAuthor.ts'
@@ -14,7 +14,7 @@ export default class SiteAuthorLocalRelateDTO extends SiteAuthorFullDTO {
 
   constructor(siteAuthor?: SiteAuthor) {
     super(siteAuthor)
-    if (NotNullish(siteAuthor)) {
+    if (notNullish(siteAuthor)) {
       lodash.assign(this, lodash.pick(siteAuthor, ['hasSameNameLocalAuthor']))
       this.hasSameNameLocalAuthor = Boolean(this.hasSameNameLocalAuthor)
     }

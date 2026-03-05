@@ -7,14 +7,14 @@ import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 import lodash from 'lodash'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { SearchCondition, SearchType } from '@shared/model/util/SearchCondition.js'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
 import WorkWithWorkSetId from '@shared/model/domain/WorkWithWorkSetId.ts'
 import { SearchConditionUtil } from '../util/SearchConditionUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -79,7 +79,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       modifiedPage.query = whereClausesAndQuery.query
 
       // 补充虚拟列的where子句
-      if (ArrayNotEmpty(page.query.includeLocalTagIds)) {
+      if (arrayNotEmpty(page.query.includeLocalTagIds)) {
         for (const [index, includeLocalTagId] of page.query.includeLocalTagIds.entries()) {
           whereClauses.push(
             `EXISTS(SELECT 1 FROM re_work_tag ct1_1_${index}
@@ -88,7 +88,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
           )
         }
       }
-      if (ArrayNotEmpty(page.query.excludeLocalTagIds)) {
+      if (arrayNotEmpty(page.query.excludeLocalTagIds)) {
         for (const [index, excludeLocalTagIds] of page.query.excludeLocalTagIds.entries()) {
           whereClauses.push(
             `NOT EXISTS(SELECT 1 FROM re_work_tag ct2_1_${index}
@@ -97,18 +97,18 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
           )
         }
       }
-      if (ArrayNotEmpty(page.query.includeSiteTagIds)) {
+      if (arrayNotEmpty(page.query.includeSiteTagIds)) {
         const tagNum = page.query.includeSiteTagIds.length
         whereClauses.push(
           `${tagNum} = (SELECT COUNT(1) FROM re_work_tag ct3 WHERE ct3.work_id = t1.id AND ct3.site_tag_id IN (${page.query.includeSiteTagIds.join()}) AND ct3.tag_type = ${OriginType.SITE})`
         )
       }
-      if (ArrayNotEmpty(page.query.excludeSiteTagIds)) {
+      if (arrayNotEmpty(page.query.excludeSiteTagIds)) {
         whereClauses.push(
           `0 = (SELECT COUNT(1) FROM re_work_tag ct4 WHERE ct4.work_id = t1.id AND ct4.site_tag_id IN (${page.query.excludeSiteTagIds.join()}) AND ct4.tag_type = ${OriginType.SITE})`
         )
       }
-      if (ArrayNotEmpty(page.query.includeLocalAuthorIds)) {
+      if (arrayNotEmpty(page.query.includeLocalAuthorIds)) {
         for (const [index, includeLocalAuthorIds] of page.query.includeLocalAuthorIds.entries()) {
           whereClauses.push(
             `EXISTS(SELECT 1 FROM re_work_author ct5_1_${index}
@@ -117,7 +117,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
           )
         }
       }
-      if (ArrayNotEmpty(page.query.excludeLocalAuthorIds)) {
+      if (arrayNotEmpty(page.query.excludeLocalAuthorIds)) {
         for (const [index, excludeLocalAuthorIds] of page.query.excludeLocalAuthorIds.entries()) {
           whereClauses.push(
             `NOT EXISTS(SELECT 1 FROM re_work_author ct6_1_${index}
@@ -126,19 +126,19 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
           )
         }
       }
-      if (ArrayNotEmpty(page.query.includeSiteAuthorIds)) {
+      if (arrayNotEmpty(page.query.includeSiteAuthorIds)) {
         const tagNum = page.query.includeSiteAuthorIds.length
         whereClauses.push(
           `${tagNum} = (SELECT COUNT(1) FROM re_work_author ct7 WHERE ct7.work_id = t1.id AND ct7.site_author_id IN (${page.query.includeSiteAuthorIds.join()}) AND ct7.author_type = ${OriginType.SITE})`
         )
       }
-      if (ArrayNotEmpty(page.query.excludeSiteAuthorIds)) {
+      if (arrayNotEmpty(page.query.excludeSiteAuthorIds)) {
         whereClauses.push(
           `0 = (SELECT COUNT(1) FROM re_work_author ct8 WHERE ct8.work_id = t1.id AND ct8.site_author_id IN (${page.query.excludeSiteAuthorIds.join()}) AND ct8.author_type = ${OriginType.SITE})`
         )
       }
       // 排除作品ID
-      if (ArrayNotEmpty(page.query.excludeWorkIds)) {
+      if (arrayNotEmpty(page.query.excludeWorkIds)) {
         whereClauses.push(`t1.id NOT IN (${page.query.excludeWorkIds.join()})`)
       }
 
@@ -159,11 +159,11 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     statement = statement + ' GROUP BY t1.id'
 
     // 排序和分页子句
-    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
     let query: Record<string, unknown> | undefined = undefined
-    if (NotNullish(modifiedPage.query)) {
+    if (notNullish(modifiedPage.query)) {
       query = toPlainParams(modifiedPage.query)
     }
 
@@ -199,7 +199,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     const selectClause = `SELECT work_m.* `
     const fromClause = `FROM work work_m ` + fromAndWhere.from
     const whereClause = fromAndWhere.where
-    const statement = selectClause + fromClause + StringUtil.isBlank(whereClause) ? '' : `WHERE ${whereClause}`
+    const statement = selectClause + fromClause + isBlank(whereClause) ? '' : `WHERE ${whereClause}`
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement)
@@ -218,7 +218,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
   }
 
   private generateClause(searchConditions: SearchCondition[]): { from: string; where: string } {
-    if (ArrayIsEmpty(searchConditions)) {
+    if (arrayIsEmpty(searchConditions)) {
       return { from: '', where: '' }
     } else {
       const fromAndWhere: { from: string[]; where: string[] } = { from: [], where: [] }
@@ -362,7 +362,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
         batch
           .map(
             (siteIdAndSiteWorkId) =>
-              `(site_id ${IsNullish(siteIdAndSiteWorkId.siteId) ? 'IS NULL' : `= ${siteIdAndSiteWorkId.siteId}`} AND site_work_id = '${siteIdAndSiteWorkId.siteWorkId}')`
+              `(site_id ${isNullish(siteIdAndSiteWorkId.siteId) ? 'IS NULL' : `= ${siteIdAndSiteWorkId.siteId}`} AND site_work_id = '${siteIdAndSiteWorkId.siteWorkId}')`
           )
           .join(' OR ')
       clauses.push(whereClause)
@@ -384,7 +384,7 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
    * @param workSetIds 作品集id列表
    */
   async listWorkWithWorkSetIdByWorkSetIds(workSetIds: number[]): Promise<WorkWithWorkSetId[]> {
-    if (ArrayIsEmpty(workSetIds)) {
+    if (arrayIsEmpty(workSetIds)) {
       return []
     }
     const clause = `
@@ -426,10 +426,12 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       const updateTime = Date.now()
       // 批量更新每个作品的排序
       for (const [workId, sortOrder] of workIdsWithOrder) {
-        await db.run(
-          'UPDATE re_work_work_set SET sort_order = ?, update_time = ? WHERE work_id = ? AND work_set_id = ?',
-          [sortOrder, updateTime, workId, workSetId]
-        )
+        await db.run('UPDATE re_work_work_set SET sort_order = ?, update_time = ? WHERE work_id = ? AND work_set_id = ?', [
+          sortOrder,
+          updateTime,
+          workId,
+          workSetId
+        ])
       }
     } finally {
       if (!this.injectedDB) {

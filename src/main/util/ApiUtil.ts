@@ -6,7 +6,7 @@ export interface ApiResponse {
   data?: unknown
 }
 
-export default class ApiUtil implements ApiResponse {
+export class ApiUtil implements ApiResponse {
   /**
    * 是否成功
    */
@@ -28,27 +28,25 @@ export default class ApiUtil implements ApiResponse {
     this.data = undefined
   }
 
-  public static response(data?: unknown, msg?: string): ApiUtil {
+  public static response(data?: unknown, msg?: string): ApiResponse {
     // 返回纯对象以确保Electron IPC可克隆，但类型断言为ApiUtil
     return {
       success: true,
       msg: isBlank(msg) ? '操作成功' : msg,
       data
-    } as ApiUtil
+    }
   }
 
-  // setMsg方法已移除，因为Electron IPC无法克隆函数
-
-  public static error(msg: string): ApiUtil {
+  public static error(msg: string): ApiResponse {
     // 返回纯对象以确保Electron IPC可克隆，但类型断言为ApiUtil
     return {
       success: false,
       msg,
       data: undefined
-    } as ApiUtil
+    }
   }
 
-  public static check(state: boolean): ApiUtil {
+  public static check(state: boolean): ApiResponse {
     if (state) {
       return this.response(undefined)
     } else {

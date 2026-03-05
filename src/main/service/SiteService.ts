@@ -5,7 +5,7 @@ import BaseService from '../base/BaseService.ts'
 import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
   constructor(db?: DatabaseClient) {
@@ -17,11 +17,11 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param page
    */
   public async queryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQueryDTO, Site>> {
-    if (IsNullish(page)) {
+    if (isNullish(page)) {
       page = new Page()
     }
     page.query = new SiteQueryDTO(page.query)
-    if (IsNullish(page.query.operators)) {
+    if (isNullish(page.query.operators)) {
       page.query.operators = { siteName: Operator.LIKE }
     }
     if (!Object.hasOwn(page.query.operators, 'siteName')) {
@@ -35,11 +35,11 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param page
    */
   public async querySelectItemPage(page: Page<SiteQueryDTO, Site>) {
-    if (IsNullish(page)) {
+    if (isNullish(page)) {
       page = new Page()
     }
     page.query = new SiteQueryDTO(page.query)
-    if (IsNullish(page.query.operators)) {
+    if (isNullish(page.query.operators)) {
       page.query.operators = { siteName: Operator.LIKE }
     }
     if (!Object.hasOwn(page.query.operators, 'siteName')) {
@@ -71,16 +71,16 @@ export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao
    * @param sites 站点列表
    */
   public async saveBatchIfNotExist(sites: Site[]): Promise<number> {
-    if (ArrayIsEmpty(sites)) {
+    if (arrayIsEmpty(sites)) {
       return 0
     }
 
-    const siteNames = sites.map((site) => site.siteName).filter(NotNullish)
+    const siteNames = sites.map((site) => site.siteName).filter(notNullish)
     const existSites = await this.listByNames(siteNames)
-    const existSiteNames = existSites?.map((site) => site.siteName).filter(NotNullish) ?? []
+    const existSiteNames = existSites?.map((site) => site.siteName).filter(notNullish) ?? []
     const notExistSiteNames = siteNames.filter((name) => !existSiteNames.includes(name))
 
-    if (ArrayNotEmpty(notExistSiteNames)) {
+    if (arrayNotEmpty(notExistSiteNames)) {
       const newSites = notExistSiteNames.map((siteName) => {
         const site = new Site()
         site.siteName = siteName

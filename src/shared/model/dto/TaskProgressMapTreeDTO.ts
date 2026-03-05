@@ -1,5 +1,5 @@
 import lodash from 'lodash'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import TaskProgressDTO from './TaskProgressDTO.ts'
 
 export default class TaskProgressMapTreeDTO extends TaskProgressDTO {
@@ -20,7 +20,7 @@ export default class TaskProgressMapTreeDTO extends TaskProgressDTO {
 
   constructor(task?: TaskProgressDTO) {
     super(task)
-    if (NotNullish(task)) {
+    if (notNullish(task)) {
       lodash.assign(this, lodash.pick(task, ['children', 'hasChildren', 'isLeaf']))
     }
   }

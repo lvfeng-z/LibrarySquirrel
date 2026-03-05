@@ -3,8 +3,8 @@ import WorkSet from '@shared/model/entity/WorkSet.ts'
 import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import WorkSetDao from '../dao/WorkSetDao.ts'
-import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
-import { IsNullish, NotNullish, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { assertNotNullish } from '@shared/util/AssertUtil.ts'
+import { isNullish, notNullish, arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import WorkSetWithWorkDTO from '@shared/model/dto/WorkSetWithWorkDTO.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import WorkService from './WorkService.ts'
@@ -66,15 +66,15 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const workSetList = await this.list(query)
     // 查询作品集的作品
     const workService = new WorkService()
-    const workSetIds: number[] = workSetList.map((workSet) => workSet.id).filter(NotNullish)
+    const workSetIds: number[] = workSetList.map((workSet) => workSet.id).filter(notNullish)
     const workWithWorkSetIdList = await workService.listWorkWithWorkSetIdByWorkSetIds(workSetIds)
     // 补全作品的作品信息
-    const workIds = workWithWorkSetIdList.map((work) => work.id).filter(NotNullish)
+    const workIds = workWithWorkSetIdList.map((work) => work.id).filter(notNullish)
     const fullWorkList = await workService.listFullWorkInfoByIds(workIds)
     // 作品放入作品集中（保持 sort_order 顺序）
     const workIdToWorkSetIdMap = Object.fromEntries(
       workWithWorkSetIdList
-        .filter((item) => NotNullish(item.id) && NotNullish(item.workSetId))
+        .filter((item) => notNullish(item.id) && notNullish(item.workSetId))
         .map((item) => [item.id, item.workSetId])
     )
     // 创建 workId 到 sortOrder 的映射
@@ -87,7 +87,7 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     })
     const workSetIdToWorkMap = lodash.groupBy(sortedFullWorkList, (work) => {
       const workId = work.id
-      if (IsNullish(workId)) {
+      if (isNullish(workId)) {
         return
       } else {
         return workIdToWorkSetIdMap[workId]
@@ -95,7 +95,7 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     })
     return workSetList.map((workSet: WorkSet) => {
       const tempWorkSetId = workSet.id
-      const tempWorkList = IsNullish(tempWorkSetId) ? [] : workSetIdToWorkMap[tempWorkSetId]
+      const tempWorkList = isNullish(tempWorkSetId) ? [] : workSetIdToWorkMap[tempWorkSetId]
       return new WorkSetWithWorkDTO(workSet, tempWorkList)
     })
   }
@@ -108,12 +108,12 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const siteWorkSetIds = workSets.map((workSet) => workSet.siteWorkSetId) as string[]
     const oldWorkSets = await this.listBySiteWorkSetIds(siteWorkSetIds)
     const newWorkSets = workSets.map((workSet) => {
-      AssertNotNullish(workSet.siteAuthorId, '根据作品集在站点的id保存或更新失败，作品集的id不能为空')
-      AssertNotNullish(workSet.siteId, '根据作品集在站点的id保存或更新失败，作品集的站点id不能为空')
+      assertNotNullish(workSet.siteAuthorId, '根据作品集在站点的id保存或更新失败，作品集的id不能为空')
+      assertNotNullish(workSet.siteId, '根据作品集在站点的id保存或更新失败，作品集的站点id不能为空')
       const oldWorkSet = oldWorkSets.find((tempOldWorkSet) => tempOldWorkSet.siteWorkSetId === workSet.siteWorkSetId)
       const newWorkSet = new WorkSet(workSet)
 
-      if (NotNullish(oldWorkSet)) {
+      if (notNullish(oldWorkSet)) {
         newWorkSet.id = oldWorkSet.id
       }
       return newWorkSet
@@ -146,17 +146,17 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     // 用于查询和缓存站点id
     const siteService = new SiteService()
     const sites = await siteService.listByNames(
-      pluginWorkSetDTOS.map((pluginWorkSetDTO) => pluginWorkSetDTO.siteName).filter(NotNullish)
+      pluginWorkSetDTOS.map((pluginWorkSetDTO) => pluginWorkSetDTO.siteName).filter(notNullish)
     )
     const siteNameToSiteMap = lodash.keyBy(sites, 'siteName')
     for (const pluginWorkSetDTO of pluginWorkSetDTOS) {
-      if (IsNullish(pluginWorkSetDTO.siteName)) {
+      if (isNullish(pluginWorkSetDTO.siteName)) {
         result.push(new WorkSet(pluginWorkSetDTO.workSet))
         continue
       }
       const tempSite = siteNameToSiteMap[pluginWorkSetDTO.siteName]
       const tempWorkSet = new WorkSet(pluginWorkSetDTO.workSet)
-      if (NotNullish(tempSite)) {
+      if (notNullish(tempSite)) {
         tempWorkSet.siteId = tempSite.id
       }
       result.push(tempWorkSet)
@@ -181,17 +181,18 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const resultPage = await this.dao.queryPageWithCover(page)
 
     // 获取作品集id列表
-    const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(NotNullish) as number[]
+    const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(notNullish) as number[]
 
     // 查询封面资源
     const coverResourceMap = await this.dao.listCoverResourceByWorkSetIds(workSetIds)
 
     // 组合作品集和封面
-    const workSetCoverList = resultPage.data?.map((workSet) => {
-      const workSetId = workSet.id
-      const coverResource = workSetId ? coverResourceMap.get(workSetId) : undefined
-      return new WorkSetCoverDTO(workSet, coverResource)
-    }) ?? []
+    const workSetCoverList =
+      resultPage.data?.map((workSet) => {
+        const workSetId = workSet.id
+        const coverResource = workSetId ? coverResourceMap.get(workSetId) : undefined
+        return new WorkSetCoverDTO(workSet, coverResource)
+      }) ?? []
 
     // 转换结果
     const coverPage = resultPage.transform<WorkSetCoverDTO>()
@@ -214,10 +215,10 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const resultPage = await this.dao.queryPageByWorkConditions(page, searchConditions)
 
     // 获取作品集id列表
-    const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(NotNullish) as number[]
+    const workSetIds = resultPage.data?.map((workSet) => workSet.id).filter(notNullish) as number[]
 
     // 如果没有作品集，直接返回空结果
-    if (!ArrayNotEmpty(workSetIds)) {
+    if (!arrayNotEmpty(workSetIds)) {
       const emptyPage = resultPage.transform<WorkSetCoverDTO>()
       emptyPage.data = []
       return emptyPage
@@ -227,11 +228,12 @@ export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet
     const coverResourceMap = await this.dao.listCoverResourceByWorkSetIds(workSetIds)
 
     // 组合作品集和封面
-    const workSetCoverList = resultPage.data?.map((workSet) => {
-      const workSetId = workSet.id
-      const coverResource = workSetId ? coverResourceMap.get(workSetId) : undefined
-      return new WorkSetCoverDTO(workSet, coverResource)
-    }) ?? []
+    const workSetCoverList =
+      resultPage.data?.map((workSet) => {
+        const workSetId = workSet.id
+        const coverResource = workSetId ? coverResourceMap.get(workSetId) : undefined
+        return new WorkSetCoverDTO(workSet, coverResource)
+      }) ?? []
 
     // 转换结果
     const coverPage = resultPage.transform<WorkSetCoverDTO>()

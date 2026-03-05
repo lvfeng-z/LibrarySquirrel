@@ -1,7 +1,7 @@
 import BaseEntity from '../base/BaseEntity.ts'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.ts'
 import lodash from 'lodash'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class Backup extends BaseEntity {
   /**
@@ -31,7 +31,7 @@ export default class Backup extends BaseEntity {
 
   constructor(backup?: Backup) {
     super()
-    if (NotNullish(backup)) {
+    if (notNullish(backup)) {
       lodash.assign(this, lodash.pick(backup, ['sourceType', 'sourceId', 'fileName', 'filePath']))
     }
   }

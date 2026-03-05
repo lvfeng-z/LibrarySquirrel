@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import { computed, Ref } from 'vue'
 import TaskProgressTreeDTO from '@shared/model/dto/TaskProgressTreeDTO.ts'
@@ -75,7 +75,7 @@ const taskStatusMapping: {
 const schedule: Ref<number> = computed(() => {
   const finished = props.row.finished
   const total = props.row.total
-  if (IsNullish(finished) || IsNullish(total) || total === 0) {
+  if (isNullish(finished) || isNullish(total) || total === 0) {
     return 0
   }
   return Math.round((finished / total) * 100)
@@ -84,16 +84,16 @@ const schedule: Ref<number> = computed(() => {
 const scheduleByte: Ref<string> = computed(() => {
   const finishedBytes = props.row.finished
   let finished: string | undefined
-  if (NotNullish(finishedBytes)) {
+  if (notNullish(finishedBytes)) {
     finished = formatBytes(finishedBytes)
   }
   const totalBytes = props.row.total
   let total: string | undefined
-  if (NotNullish(totalBytes)) {
+  if (notNullish(totalBytes)) {
     total = formatBytes(totalBytes)
   }
-  if (IsNullish(total)) {
-    return IsNullish(finished) ? '...' : finished
+  if (isNullish(total)) {
+    return isNullish(finished) ? '...' : finished
   } else {
     return finished + ' / ' + total
   }
@@ -107,7 +107,7 @@ function mapToButtonStatus(row: TaskTreeDTO): {
   operation: TaskOperationCodeEnum
   processing: boolean
 } {
-  if (NotNullish(row.status)) {
+  if (notNullish(row.status)) {
     return taskStatusMapping[row.status]
   } else {
     return taskStatusMapping['0']

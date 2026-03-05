@@ -2,15 +2,14 @@ import BaseService from '../base/BaseService.ts'
 import SiteAuthor from '@shared/model/entity/SiteAuthor.ts'
 import SiteAuthorQueryDTO from '@shared/model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorDao from '../dao/SiteAuthorDao.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import Page from '@shared/model/util/Page.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
 import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
-import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import SiteService from './SiteService.js'
 import PluginSiteAuthorDTO from '@shared/model/dto/PluginSiteAuthorDTO.ts'
 import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
@@ -18,6 +17,7 @@ import SiteAuthorLocalRelateDTO from '@shared/model/dto/SiteAuthorLocalRelateDTO
 import LocalAuthorService from './LocalAuthorService.js'
 import LocalAuthorQueryDTO from '@shared/model/queryDTO/LocalAuthorQueryDTO.js'
 import LocalAuthor from '@shared/model/entity/LocalAuthor.js'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 站点作者Service
@@ -32,11 +32,11 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthor
    */
   public async saveOrUpdateBySiteAuthorId(siteAuthor: SiteAuthor): Promise<number> {
-    if (IsNullish(siteAuthor.siteId)) {
+    if (isNullish(siteAuthor.siteId)) {
       const msg = '保存作品失败，作品的站点id不能为空'
       LogUtil.error('SiteAuthorService', msg)
       throw new Error(msg)
-    } else if (IsNullish(siteAuthor.siteAuthorId)) {
+    } else if (isNullish(siteAuthor.siteAuthorId)) {
       const msg = '保存作品失败，站点作者的id不能为空'
       LogUtil.error('SiteAuthorService', '保存作品失败，站点作者的id不能为空')
       throw new Error(msg)
@@ -73,30 +73,30 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   public async saveOrUpdateBatchBySiteAuthorId(siteAuthors: SiteAuthor[]): Promise<number> {
     const tempParam = siteAuthors
       .map((siteAuthor) => {
-        if (IsNullish(siteAuthor.siteAuthorId) || IsNullish(siteAuthor.siteId)) {
+        if (isNullish(siteAuthor.siteAuthorId) || isNullish(siteAuthor.siteId)) {
           return
         }
         return { siteAuthorId: siteAuthor.siteAuthorId, siteId: siteAuthor.siteId }
       })
-      .filter(NotNullish)
-    if (ArrayIsEmpty(tempParam)) {
+      .filter(notNullish)
+    if (arrayIsEmpty(tempParam)) {
       return SAVE_FAILED
     }
     const oldSiteAuthors = await this.dao.listBySiteAuthor(tempParam)
     const modifiedSiteAuthors = siteAuthors.map((siteAuthor) => {
-      AssertNotNullish(siteAuthor.siteAuthorId, '保存站点作者失败，站点作者的id不能为空')
-      AssertNotNullish(siteAuthor.siteId, '保存站点作者失败，站点作者的站点id不能为空')
+      assertNotNullish(siteAuthor.siteAuthorId, '保存站点作者失败，站点作者的id不能为空')
+      assertNotNullish(siteAuthor.siteId, '保存站点作者失败，站点作者的站点id不能为空')
       const oldSiteAuthor = oldSiteAuthors.find((oldSiteAuthor) => oldSiteAuthor.siteAuthorId === siteAuthor.siteAuthorId)
       const modifiedSiteAuthor = new SiteAuthor(siteAuthor)
 
-      if (NotNullish(oldSiteAuthor)) {
+      if (notNullish(oldSiteAuthor)) {
         // 调整新数据
         modifiedSiteAuthor.id = oldSiteAuthor.id
         modifiedSiteAuthor.siteAuthorNameBefore = oldSiteAuthor.siteAuthorNameBefore
         modifiedSiteAuthor.createTime = undefined
         modifiedSiteAuthor.updateTime = undefined
         // 如果站点作者的名称变更，对原本的名称写入到siteAuthorNameBefore
-        if (modifiedSiteAuthor.authorName !== oldSiteAuthor.authorName && NotNullish(oldSiteAuthor.authorName)) {
+        if (modifiedSiteAuthor.authorName !== oldSiteAuthor.authorName && notNullish(oldSiteAuthor.authorName)) {
           ;(modifiedSiteAuthor.siteAuthorNameBefore as string[]).push(oldSiteAuthor.authorName)
         }
       }
@@ -133,7 +133,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     const localAuthorQuery = new LocalAuthorQueryDTO()
     localAuthorQuery.authorName = siteAuthor.authorName
     const sameNameLocalAuthors = await localAuthorService.list(localAuthorQuery)
-    if (ArrayNotEmpty(sameNameLocalAuthors)) {
+    if (arrayNotEmpty(sameNameLocalAuthors)) {
       return sameNameLocalAuthors[0].id as number
     }
     // 新增同名作者
@@ -149,8 +149,8 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async createAndBindSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<boolean> {
     const siteAuthorName = siteAuthor.authorName
-    AssertNotNullish(siteAuthor.id, '创建同名本地作者失败，作者名称不能为空')
-    AssertNotBlank(siteAuthorName, '创建同名本地作者失败，作者名称不能为空')
+    assertNotNullish(siteAuthor.id, '创建同名本地作者失败，作者名称不能为空')
+    assertNotBlank(siteAuthorName, '创建同名本地作者失败，作者名称不能为空')
     const localAuthorId = await this.createSameNameLocalAuthor(siteAuthor)
     return this.updateBindLocalAuthor(localAuthorId, [siteAuthor.id])
   }
@@ -170,7 +170,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
           extraData: undefined,
           label: siteAuthorFullDTO.authorName,
           rootId: undefined,
-          subLabels: [StringUtil.isNotBlank(siteAuthorFullDTO.site?.siteName) ? siteAuthorFullDTO.site?.siteName : '?'],
+          subLabels: [isNotBlank(siteAuthorFullDTO.site?.siteName) ? siteAuthorFullDTO.site?.siteName : '?'],
           value: String(siteAuthorFullDTO.id)
         })
     )
@@ -200,7 +200,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteId
    */
   public async getBySiteAuthorId(siteAuthorId: string, siteId: number): Promise<SiteAuthor | undefined> {
-    if (StringUtil.isNotBlank(siteAuthorId)) {
+    if (isNotBlank(siteAuthorId)) {
       const queryDTO = new SiteAuthorQueryDTO()
       queryDTO.siteAuthorId = siteAuthorId
       queryDTO.siteId = siteId
@@ -228,7 +228,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    */
   public async querySelectItemPage(page: Page<SiteAuthorQueryDTO, SiteAuthor>): Promise<Page<SiteAuthorQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (NotNullish(page.query)) {
+    if (notNullish(page.query)) {
       page.query.operators = {
         ...{ authorName: Operator.LIKE },
         ...page.query.operators
@@ -242,7 +242,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthors 站点作者
    */
   public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
-    if (ArrayIsEmpty(siteAuthors)) {
+    if (arrayIsEmpty(siteAuthors)) {
       return []
     }
     return this.dao.listBySiteAuthor(siteAuthors)
@@ -271,17 +271,17 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
     const result: RankedSiteAuthor[] = []
     const siteService = new SiteService()
     const sites = await siteService.listByNames(
-      pluginSiteAuthorDTOS.map((pluginSiteAuthorDTO) => pluginSiteAuthorDTO.siteName).filter(NotNullish)
+      pluginSiteAuthorDTOS.map((pluginSiteAuthorDTO) => pluginSiteAuthorDTO.siteName).filter(notNullish)
     )
     const siteNameToSiteMap = lodash.keyBy(sites, 'siteName')
     for (const pluginSiteAuthorDTO of pluginSiteAuthorDTOS) {
-      if (IsNullish(pluginSiteAuthorDTO.siteName)) {
+      if (isNullish(pluginSiteAuthorDTO.siteName)) {
         result.push(new RankedSiteAuthor(pluginSiteAuthorDTO.siteAuthor))
         continue
       }
       const tempSite = siteNameToSiteMap[pluginSiteAuthorDTO.siteName]
       const tempSiteAuthor = new RankedSiteAuthor(pluginSiteAuthorDTO.siteAuthor)
-      if (NotNullish(tempSite)) {
+      if (notNullish(tempSite)) {
         tempSiteAuthor.siteId = tempSite.id
       }
       tempSiteAuthor.authorRank = pluginSiteAuthorDTO.authorRank
@@ -299,7 +299,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>> {
     try {
       page = new Page(page)
-      if (NotNullish(page.query)) {
+      if (notNullish(page.query)) {
         page.query.operators = {
           ...{ authorName: Operator.LIKE },
           ...page.query.operators

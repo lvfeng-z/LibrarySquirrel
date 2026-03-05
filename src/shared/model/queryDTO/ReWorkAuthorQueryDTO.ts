@@ -1,6 +1,6 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
 import { AuthorRank } from '../constant/AuthorRank.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class ReWorkAuthorQueryDTO extends BaseQueryDTO {
   /**
@@ -30,7 +30,7 @@ export default class ReWorkAuthorQueryDTO extends BaseQueryDTO {
 
   constructor(reWorkAuthorQueryDTO?: ReWorkAuthorQueryDTO) {
     super(reWorkAuthorQueryDTO)
-    if (NotNullish(reWorkAuthorQueryDTO)) {
+    if (notNullish(reWorkAuthorQueryDTO)) {
       this.authorType = reWorkAuthorQueryDTO.authorType
       this.workId = reWorkAuthorQueryDTO.workId
       this.localAuthorId = reWorkAuthorQueryDTO.localAuthorId

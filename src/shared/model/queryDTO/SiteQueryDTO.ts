@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * QueryDTO
@@ -24,7 +24,7 @@ export default class SiteQueryDTO extends BaseQueryDTO {
 
   constructor(siteQueryDTO?: SiteQueryDTO) {
     super(siteQueryDTO)
-    if (NotNullish(siteQueryDTO)) {
+    if (notNullish(siteQueryDTO)) {
       this.siteName = siteQueryDTO.siteName
       this.siteDescription = siteQueryDTO.siteDescription
       this.homepage = siteQueryDTO.homepage

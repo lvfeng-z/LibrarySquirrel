@@ -4,8 +4,8 @@ import { ReWorkTagQueryDTO } from '@shared/model/queryDTO/ReWorkTagQueryDTO.ts'
 import { ReWorkTagDao } from '../dao/ReWorkTagDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { OriginType } from '../constant/OriginType.js'
-import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
-import { ArrayIsEmpty, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { assertNotNullish } from '@shared/util/AssertUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 /**
  * 作品与标签关联Service
@@ -22,7 +22,7 @@ export class ReWorkTagService extends BaseService<ReWorkTagQueryDTO, ReWorkTag, 
    * @param workId
    */
   public async link(type: OriginType, tagIds: number[], workId: number) {
-    AssertNotNullish(workId, `关联作品和标签出错，作品id不能为空`)
+    assertNotNullish(workId, `关联作品和标签出错，作品id不能为空`)
     if (tagIds.length === 0) {
       return 0
     }
@@ -52,16 +52,16 @@ export class ReWorkTagService extends BaseService<ReWorkTagQueryDTO, ReWorkTag, 
    * @param workId
    */
   public async updateLinks(type: OriginType, tagIds: number[], workId: number) {
-    if (ArrayIsEmpty(tagIds)) {
+    if (arrayIsEmpty(tagIds)) {
       return 0
     }
 
     const oldReList = await this.listByWorkId(workId, type)
 
     // 删除已经不存在的关联
-    if (ArrayNotEmpty(oldReList)) {
+    if (arrayNotEmpty(oldReList)) {
       const notExistingList = oldReList.filter((oldRe) => !tagIds.some((tagId) => tagId === oldRe.id))
-      if (ArrayNotEmpty(notExistingList)) {
+      if (arrayNotEmpty(notExistingList)) {
         await this.deleteBatchById(notExistingList.map((notExisting) => notExisting.id as number))
       }
     }

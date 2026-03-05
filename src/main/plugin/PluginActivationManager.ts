@@ -3,8 +3,8 @@ import PluginService from '../service/PluginService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PluginLoader from './PluginLoader.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 插件激活管理器
@@ -43,7 +43,7 @@ export class PluginActivationManager {
       LogUtil.debug('PluginActivationManager', `插件 ${pluginId} 已激活，跳过`)
       return
     }
-    const finalName = StringUtil.isBlank(pluginName) ? pluginId : pluginName
+    const finalName = isBlank(pluginName) ? pluginId : pluginName
 
     try {
       await this.pluginLoader.load(pluginId)
@@ -101,7 +101,7 @@ export class PluginActivationManager {
         continue
       }
       try {
-        await this.activatePlugin(plugin.id, ActivationType.STARTUP, IsNullish(plugin.name) ? undefined : plugin.name)
+        await this.activatePlugin(plugin.id, ActivationType.STARTUP, isNullish(plugin.name) ? undefined : plugin.name)
       } catch (ignored) {}
     }
 

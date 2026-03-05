@@ -9,14 +9,14 @@ import { Thead } from '@renderer/model/util/Thead.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
 import lodash from 'lodash'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import SiteDialog from '@renderer/components/dialogs/SiteDialog.vue'
 import SiteQueryDTO from '@shared/model/queryDTO/SiteQueryDTO.ts'
 import Site from '@shared/model/entity/Site.ts'
 
 // onMounted
 onMounted(() => {
-  if (IsNullish(sitePage.value.query)) {
+  if (isNullish(sitePage.value.query)) {
     sitePage.value.query = new SiteQueryDTO()
   }
   sitePage.value.query.sort = [
@@ -131,7 +131,7 @@ const siteDialogData: Ref<UnwrapRef<Site>> = ref(new Site())
 // 方法
 // 分页查询站点
 async function siteQueryPage(page: Page<SiteQueryDTO, Site>): Promise<Page<SiteQueryDTO, Site> | undefined> {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new SiteQueryDTO()
   }
   const response = await apis.siteQueryPage(page)

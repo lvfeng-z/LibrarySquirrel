@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="Query extends object">
 import SelectItem from '../../model/util/SelectItem'
 import { nextTick, Ref, ref, UnwrapRef, watch } from 'vue'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
@@ -49,7 +49,7 @@ const hasNextPage: Ref<UnwrapRef<boolean>> = ref(false)
 // 方法
 // 处理DataScroll滚动事件
 async function handleDataScroll() {
-  if (IsNullish(props.load)) {
+  if (isNullish(props.load)) {
     return
   }
   try {
@@ -73,7 +73,7 @@ async function handleDataScroll() {
 }
 // 处理DataScroll滚动事件
 async function nextPage(newSearch: boolean) {
-  if (NotNullish(props.load)) {
+  if (notNullish(props.load)) {
     // 新查询重置查询条件
     if (newSearch) {
       page.value.pageNumber = 1
@@ -88,13 +88,13 @@ async function nextPage(newSearch: boolean) {
       tempPage.data = undefined
       const nextPage = await wrappedLoad(tempPage)
 
-      if (NotNullish(nextPage)) {
+      if (notNullish(nextPage)) {
         // 新数据加入到分页数据中
         page.value.pageCount = nextPage.pageCount
         page.value.dataCount = nextPage.dataCount
         if (nextPage.pageNumber <= nextPage.pageCount) {
           hasNextPage.value = nextPage.pageNumber !== nextPage.pageCount
-          if (ArrayNotEmpty(nextPage.data)) {
+          if (arrayNotEmpty(nextPage.data)) {
             data.value.push(...nextPage.data)
           } else {
             refreshLoadButton()
@@ -128,7 +128,7 @@ function handleTagClose(tag: SelectItem) {
 // 刷新加载按钮状态
 function refreshLoadButton() {
   let notFull: boolean
-  if (NotNullish(scrollbar.value) && NotNullish(container.value)) {
+  if (notNullish(scrollbar.value) && notNullish(container.value)) {
     const scrollHeight = scrollbar.value.wrapRef.clientHeight
     const containerHeight = container.value.offsetHeight
     const loadMoreButtonHeight = loadMoreButton.value.$el.clientHeight
@@ -140,7 +140,7 @@ function refreshLoadButton() {
 }
 // 包装过的load
 function wrappedLoad(page: IPage<Query, SegmentedTagItem>): Promise<IPage<Query, SegmentedTagItem> | undefined> | undefined {
-  if (NotNullish(props.load)) {
+  if (notNullish(props.load)) {
     return props
       .load(page)
       .then((result) => result)

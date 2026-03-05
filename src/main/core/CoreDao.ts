@@ -1,15 +1,15 @@
 import lodash from 'lodash'
-import StringUtil from '@shared/util/StringUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import Page from '@shared/model/util/Page.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { QuerySortOption } from '../constant/QuerySortOption.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import BaseEntity from '@shared/model/base/BaseEntity.ts'
 import LogUtil from '../util/LogUtil.ts'
 import DatabaseClientNotFoundError from '../error/DatabaseClientNotFoundError.ts'
+import { camelToSnakeCase, isBlank, isNotBlank, snakeToCamelCase } from '@shared/util/StringUtil.ts'
 
 export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
   /**
@@ -34,7 +34,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param whereClauses
    */
   protected splicingWhereClauses(whereClauses: string[]): string {
-    if (ArrayNotEmpty(whereClauses)) {
+    if (arrayNotEmpty(whereClauses)) {
       return `WHERE ${whereClauses.join(' AND ')}`
     } else {
       return ''
@@ -79,10 +79,10 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     // 确认运算符后被修改的查询参数（比如like运算符在前后增加%）
     // 根据每一个属性生成where字句，不包含值为undefined的属性和operators、keyword、sort属性
     Object.entries(modifiedQuery)
-      .filter(([, value]) => value !== undefined && (typeof value === 'string' ? StringUtil.isNotBlank(value) : true))
+      .filter(([, value]) => value !== undefined && (typeof value === 'string' ? isNotBlank(value) : true))
       .forEach(([key, value]) => {
         if (value !== undefined && value !== '') {
-          const snakeCaseKey = StringUtil.camelToSnakeCase(key)
+          const snakeCaseKey = camelToSnakeCase(key)
           const comparator = this.getComparator(key, queryConditions.operators)
           // 根据运算符的不同给出不同的where子句和查询参数
           let modifiedValue: unknown
@@ -182,9 +182,9 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     // 指定运算符的对象转换为数组
     const assignComparatorList = assignComparator === undefined ? undefined : Object.entries(assignComparator)
     let comparator = Operator.EQUAL
-    if (ArrayNotEmpty(assignComparatorList)) {
+    if (arrayNotEmpty(assignComparatorList)) {
       const comparatorTarget = assignComparatorList.find((item) => item[0] === property)
-      if (NotNullish(comparatorTarget)) {
+      if (notNullish(comparatorTarget)) {
         comparator = comparatorTarget[1]
       }
     }
@@ -198,7 +198,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected async pager(statement: string, page: Page<Query, Model>): Promise<string> {
-    if (IsNullish(page.paging) || page.paging) {
+    if (isNullish(page.paging) || page.paging) {
       statement += ' ' + (await this.getPagingClause(statement, page))
     }
     return statement
@@ -211,14 +211,14 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected async getPagingClause(statement: string, page: Page<Query, Model>): Promise<string> {
-    if (StringUtil.isBlank(statement)) {
+    if (isBlank(statement)) {
       return statement
     }
     const db = this.acquire()
     try {
       // 查询数据总量，计算页码数量
       let notNullishValue: Record<string, unknown> | undefined = undefined
-      if (NotNullish(page.query)) {
+      if (notNullish(page.query)) {
         notNullishValue = toPlainParams(page.query)
       }
       const countSql = `SELECT COUNT(*) AS total FROM (${statement})`
@@ -264,11 +264,11 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     let sortClauses: string
     sortClauses = sortOption
       .map(({ key, asc }) => {
-        const tempColumn = StringUtil.camelToSnakeCase(key)
-        return IsNullish(alias) ? tempColumn + ' ' + (asc ? 'ASC' : 'DESC') : alias + '.' + tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
+        const tempColumn = camelToSnakeCase(key)
+        return isNullish(alias) ? tempColumn + ' ' + (asc ? 'ASC' : 'DESC') : alias + '.' + tempColumn + ' ' + (asc ? 'ASC' : 'DESC')
       })
       .join(',')
-    if (StringUtil.isNotBlank(sortClauses)) {
+    if (isNotBlank(sortClauses)) {
       sortClauses = 'ORDER BY ' + sortClauses
     }
     return sortClauses
@@ -280,7 +280,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @protected
    */
   protected toResultTypeDataList<Result>(dataList: Record<string, unknown>[]): Result[] {
-    if (ArrayIsEmpty(dataList)) {
+    if (arrayIsEmpty(dataList)) {
       return []
     }
     return dataList.map((row) => this.toResultTypeData(row))
@@ -292,11 +292,11 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    * @param data
    */
   protected toResultTypeData<Result>(data: Record<string, unknown>): Result {
-    return Object.fromEntries(Object.entries(data).map(([k, v]) => [StringUtil.snakeToCamelCase(k), v])) as Result
+    return Object.fromEntries(Object.entries(data).map(([k, v]) => [snakeToCamelCase(k), v])) as Result
   }
 
   protected acquire() {
-    if (IsNullish(this.db)) {
+    if (isNullish(this.db)) {
       throw new DatabaseClientNotFoundError()
     }
     return this.db
@@ -312,7 +312,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
    */
   protected async sortAndPage(statement: string, page: Page<Query, Model>, sort?: QuerySortOption[], alias?: string): Promise<string> {
     let tempStatement = statement
-    if (NotNullish(sort)) {
+    if (notNullish(sort)) {
       tempStatement = this.sorter(tempStatement, sort, alias)
     }
     tempStatement = await this.pager(tempStatement, page)

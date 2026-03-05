@@ -1,9 +1,9 @@
 import SiteAuthor from '../entity/SiteAuthor.ts'
 import LocalAuthor from '../entity/LocalAuthor.ts'
 import Site from '../entity/Site.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
-import { ParsePropertyFromJson } from '../../util/ObjectUtil.ts'
+import { parsePropertyFromJson } from '../../util/ObjectUtil.ts'
 
 /**
  * 站点作者DTO
@@ -21,9 +21,9 @@ export default class SiteAuthorFullDTO extends SiteAuthor {
 
   constructor(siteAuthorDTO?: SiteAuthor) {
     super(siteAuthorDTO)
-    if (NotNullish(siteAuthorDTO)) {
+    if (notNullish(siteAuthorDTO)) {
       lodash.assign(this, lodash.pick(siteAuthorDTO, ['localAuthor', 'site']))
-      ParsePropertyFromJson(this, [
+      parsePropertyFromJson(this, [
         { property: 'localAuthor', builder: (src) => new LocalAuthor(src) },
         { property: 'site', builder: (src) => new Site(src) }
       ])

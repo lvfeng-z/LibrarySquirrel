@@ -3,7 +3,7 @@ import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import WorkSetWithWorkId from '@shared/model/domain/WorkSetWithWorkId.ts'
 import Page from '@shared/model/util/Page.ts'
@@ -29,7 +29,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     const whereClauseAndQuery = super.getWhereClause(queryDTO)
     const whereClause = whereClauseAndQuery.whereClause
     let modifiedQuery
-    if (NotNullish(whereClauseAndQuery.query)) {
+    if (notNullish(whereClauseAndQuery.query)) {
       modifiedQuery = toPlainParams(whereClauseAndQuery.query)
     }
     const statement = `SELECT *
@@ -72,7 +72,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     try {
       const row = await db.get<unknown[], Record<string, unknown>>(statement, { siteWorkSetId, siteName })
 
-      if (NotNullish(row)) {
+      if (notNullish(row)) {
         return this.toResultTypeData<WorkSet>(row)
       }
       return undefined
@@ -165,7 +165,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     }
 
     // 拼接排序和分页字句
-    const sort = NotNullish(page.query?.sort) ? page.query.sort : []
+    const sort = notNullish(page.query?.sort) ? page.query.sort : []
     statement = await this.sortAndPage(statement, modifiedPage, sort, this.tableName)
 
     if (modifiedPage.currentCount < 1) {
@@ -175,7 +175,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
-    if (NotNullish(modifiedPage.query)) {
+    if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
 
@@ -223,7 +223,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       // 处理封面资源
       for (const resourceWithWorkSetId of coverResourceList) {
         const workSetId = resourceWithWorkSetId.workSetId
-        if (NotNullish(workSetId) && !coverResourceMap.has(workSetId)) {
+        if (notNullish(workSetId) && !coverResourceMap.has(workSetId)) {
           coverResourceMap.set(workSetId, resourceWithWorkSetId)
         }
       }
@@ -250,7 +250,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
         const processedWorkSetIds = new Set<number>()
         for (const resourceWithWorkSetId of defaultResourceList) {
           const workSetId = resourceWithWorkSetId.workSetId
-          if (NotNullish(workSetId) && !processedWorkSetIds.has(workSetId)) {
+          if (notNullish(workSetId) && !processedWorkSetIds.has(workSetId)) {
             processedWorkSetIds.add(workSetId)
             if (!coverResourceMap.has(workSetId)) {
               coverResourceMap.set(workSetId, resourceWithWorkSetId)

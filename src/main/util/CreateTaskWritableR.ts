@@ -2,7 +2,7 @@ import { Writable } from 'node:stream'
 import { isBlank } from '@shared/util/StringUtil.ts'
 import LogUtil from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import Task from '@shared/model/entity/Task.js'
 import TaskService from '../service/TaskService.js'
 import SiteService from '../service/SiteService.js'
@@ -72,7 +72,7 @@ export default class CreateTaskWritable extends Writable {
     this.siteService = siteService
     this.taskPlugin = taskPlugin
     this.pluginInfo = JSON.stringify(taskPlugin)
-    this.batchSize = IsNullish(batchSize) ? 32 : batchSize
+    this.batchSize = isNullish(batchSize) ? 32 : batchSize
     this.siteCache = new Map<string, Promise<number>>()
   }
 
@@ -91,7 +91,7 @@ export default class CreateTaskWritable extends Writable {
           return
         }
         const truePid = this.pluginPidToTruePidMapping.get(pluginPid)
-        if (IsNullish(truePid)) {
+        if (isNullish(truePid)) {
           LogUtil.error(this.constructor.name, '创建任务失败，插件返回的子任务中的pluginPid不可用')
           callback()
           return
@@ -117,7 +117,7 @@ export default class CreateTaskWritable extends Writable {
         task.isCollection = false
         task.pid = truePid
         task.siteId = await this.getSiteId(task.siteName)
-        if (IsNullish(task.siteId)) {
+        if (isNullish(task.siteId)) {
           LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
           callback()
           return
@@ -165,7 +165,7 @@ export default class CreateTaskWritable extends Writable {
 
   async _final(callback: (error?: Error | null) => void) {
     try {
-      if (ArrayNotEmpty(this.taskBuffer)) {
+      if (arrayNotEmpty(this.taskBuffer)) {
         await this.saveTasks()
       }
     } catch (error) {
@@ -193,7 +193,7 @@ export default class CreateTaskWritable extends Writable {
 
   private async getSiteId(siteName: string): Promise<number | null | undefined> {
     let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(siteName)
-    if (IsNullish(siteId)) {
+    if (isNullish(siteId)) {
       const tempSite = this.siteService.getByName(siteName)
       siteId = tempSite.then((site) => site?.id)
     }

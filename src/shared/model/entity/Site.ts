@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 站点
@@ -22,7 +22,7 @@ export default class Site extends BaseEntity {
 
   constructor(site?: Site) {
     super(site)
-    if (NotNullish(site)) {
+    if (notNullish(site)) {
       this.siteName = site.siteName
       this.siteDescription = site.siteDescription
       this.homepage = site.homepage

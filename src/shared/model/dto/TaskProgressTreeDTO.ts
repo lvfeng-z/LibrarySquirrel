@@ -1,5 +1,5 @@
 import TaskTreeDTO from './TaskTreeDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 import TreeNode from '../util/TreeNode.ts'
 import TaskProgressDTO from './TaskProgressDTO.ts'
@@ -23,7 +23,7 @@ export default class TaskProgressTreeDTO extends TaskProgressDTO implements Tree
 
   constructor(taskProcessingDTO?: TaskProgressDTO | Task) {
     super(taskProcessingDTO)
-    if (NotNullish(taskProcessingDTO)) {
+    if (notNullish(taskProcessingDTO)) {
       lodash.assign(this, lodash.pick(taskProcessingDTO, ['children', 'hasChildren', 'isLeaf']))
     }
   }

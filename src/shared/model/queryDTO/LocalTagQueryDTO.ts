@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * QueryDTO
@@ -33,7 +33,7 @@ export default class LocalTagQueryDTO extends BaseQueryDTO {
 
   constructor(localTagQueryDTO?: LocalTagQueryDTO) {
     super(localTagQueryDTO)
-    if (NotNullish(localTagQueryDTO)) {
+    if (notNullish(localTagQueryDTO)) {
       this.localTagName = localTagQueryDTO.localTagName
       this.baseLocalTagId = localTagQueryDTO.baseLocalTagId
       this.lastUse = localTagQueryDTO.lastUse

@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 站点标签
@@ -36,7 +36,7 @@ export default class SiteTag extends BaseEntity {
 
   constructor(siteTag?: SiteTag) {
     super(siteTag)
-    if (NotNullish(siteTag)) {
+    if (notNullish(siteTag)) {
       this.siteId = siteTag.siteId
       this.siteTagId = siteTag.siteTagId
       this.siteTagName = siteTag.siteTagName

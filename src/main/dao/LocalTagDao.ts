@@ -1,15 +1,15 @@
 import LocalTag from '@shared/model/entity/LocalTag.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
 import LocalTagQueryDTO from '@shared/model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '@shared/model/util/Page.js'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import lodash from 'lodash'
 import LocalTagDTO from '@shared/model/dto/LocalTagDTO.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import LocalTagWithWorkId from '@shared/model/domain/LocalTagWithWorkId.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
   constructor(db: DatabaseClient, injectedDB: boolean) {
@@ -22,7 +22,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const columns: string[] = []
     const values: string[] = []
 
-    if (queryDTO.nonFieldKeyword != undefined && StringUtil.isNotBlank(queryDTO.nonFieldKeyword)) {
+    if (queryDTO.nonFieldKeyword != undefined && isNotBlank(queryDTO.nonFieldKeyword)) {
       columns.push('local_tag_name LIKE ?')
       values.push('%' + queryDTO.nonFieldKeyword + '%')
     }
@@ -147,7 +147,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
    * @param page
    */
   async queryPageByWorkId(page: Page<LocalTagQueryDTO, LocalTag>): Promise<Page<LocalTagQueryDTO, LocalTag>> {
-    if (IsNullish(page.query)) {
+    if (isNullish(page.query)) {
       page.query = new LocalTagQueryDTO()
     }
     const query = lodash.cloneDeep(page.query)
@@ -176,7 +176,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await super.sortAndPage(statement, page, sort)
     const db = this.acquire()
     return db
@@ -219,7 +219,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
       statement = statement.concat(' ', whereClause)
     }
     // 拼接排序和分页字句
-    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, modifiedPage, sort, 't1')
     if (modifiedPage.currentCount < 1) {
       modifiedPage.data = []
@@ -228,7 +228,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
     // 查询
     let plainParams: Record<string, unknown> | undefined = undefined
-    if (NotNullish(modifiedPage.query)) {
+    if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
     const db = this.acquire()

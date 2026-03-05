@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 任务-QueryDTO
@@ -77,7 +77,7 @@ export default class TaskQueryDTO extends BaseQueryDTO {
 
   constructor(task?: TaskQueryDTO) {
     super(task)
-    if (NotNullish(task)) {
+    if (notNullish(task)) {
       this.isCollection = task.isCollection
       this.pid = task.pid
       this.taskName = task.taskName

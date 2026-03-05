@@ -5,7 +5,7 @@ import CollapseForm from './CollapseForm.vue'
 import ScrollTextBox from './ScrollTextBox.vue'
 import CommonInput from './CommentInput/CommonInput.vue'
 import lodash from 'lodash'
-import { ArrayNotEmpty, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, notNullish } from '@shared/util/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -44,7 +44,7 @@ const state: Ref<UnwrapRef<boolean>> = ref(false) // 开关状态
 // 处理主搜索栏和下拉搜索框
 function calculateSpan() {
   let spanRest = 24 - (props.createButton ? barButtonSpan.value * 2 : barButtonSpan.value)
-  if (NotNullish(props.mainInputBoxes)) {
+  if (notNullish(props.mainInputBoxes)) {
     for (const inputBox of props.mainInputBoxes) {
       // 储存当前box的长度
       let boxSpan = 0
@@ -86,7 +86,7 @@ function calculateSpan() {
     }
   }
 
-  if (NotNullish(props.dropDownInputBoxes)) {
+  if (notNullish(props.dropDownInputBoxes)) {
     const tempDropdownInputBoxes = lodash.cloneDeep(props.dropDownInputBoxes)
     innerDropdownInputBoxes.value.push(...tempDropdownInputBoxes)
   }
@@ -145,7 +145,7 @@ function expandCollapsePanel(event) {
       </el-col>
     </el-row>
     <collapse-form
-      v-if="ArrayNotEmpty(innerDropdownInputBoxes)"
+      v-if="arrayNotEmpty(innerDropdownInputBoxes)"
       v-model:form-data="params"
       v-model:state="state"
       class="dropdown-menu rounded-borders"

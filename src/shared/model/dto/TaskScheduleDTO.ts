@@ -1,5 +1,5 @@
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 
 export default class TaskScheduleDTO {
@@ -29,7 +29,7 @@ export default class TaskScheduleDTO {
   finished: number | undefined | null
 
   constructor(taskScheduleDTO?: TaskScheduleDTO) {
-    if (NotNullish(taskScheduleDTO)) {
+    if (notNullish(taskScheduleDTO)) {
       lodash.assign(this, lodash.pick(taskScheduleDTO, ['id', 'pid', 'status', 'total', 'finished']))
     }
   }

@@ -3,13 +3,13 @@ import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
 import SiteTagDao from '../dao/SiteTagDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 import Page from '@shared/model/util/Page.ts'
 import BaseService from '../base/BaseService.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagFullDTO from '@shared/model/dto/SiteTagFullDTO.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
+import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { Operator, SAVE_FAILED } from '../constant/CrudConstant.js'
 import SiteService from './SiteService.js'
 import PluginSiteTagDTO from '@shared/model/dto/PluginSiteTagDTO.ts'
@@ -34,19 +34,19 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   public async saveOrUpdateBatchBySiteTagId(siteTags: SiteTagFullDTO[]) {
     const tempParam = siteTags
       .map((siteTag) => {
-        if (IsNullish(siteTag.siteTagId) || IsNullish(siteTag.siteId)) {
+        if (isNullish(siteTag.siteTagId) || isNullish(siteTag.siteId)) {
           return
         }
         return { siteTagId: siteTag.siteTagId, siteId: siteTag.siteId }
       })
-      .filter(NotNullish)
-    if (ArrayIsEmpty(tempParam)) {
+      .filter(notNullish)
+    if (arrayIsEmpty(tempParam)) {
       return SAVE_FAILED
     }
     const oldSiteTags = await this.listBySiteTag(tempParam)
     const newSiteTags = siteTags.map((siteTag) => {
-      AssertNotNullish(siteTag.siteTagId, '保存站点标签失败，站点标签的id不能为空')
-      AssertNotNullish(siteTag.siteId, '保存站点标签失败，站点标签的站点id不能为空')
+      assertNotNullish(siteTag.siteTagId, '保存站点标签失败，站点标签的id不能为空')
+      assertNotNullish(siteTag.siteId, '保存站点标签失败，站点标签的站点id不能为空')
       const oldSiteTag = oldSiteTags.find((oldSiteTag) => oldSiteTag.siteTagId === siteTag.siteTagId)
       const newSiteTag = new SiteTag(siteTag)
 
@@ -71,7 +71,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     const localTagQuery = new LocalTagQueryDTO()
     localTagQuery.localTagName = siteTagName
     const sameNameLocalTags = await localTagService.list(localTagQuery)
-    if (ArrayNotEmpty(sameNameLocalTags)) {
+    if (arrayNotEmpty(sameNameLocalTags)) {
       return sameNameLocalTags[0].id as number
     }
     // 新增同名标签
@@ -86,8 +86,8 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async createAndBindSameNameLocalTag(siteTag: SiteTag): Promise<boolean> {
     const siteTagName = siteTag.siteTagName
-    AssertNotNullish(siteTag.id, '创建同名本地标签失败，标签名称不能为空')
-    AssertNotBlank(siteTagName, '创建同名本地标签失败，标签名称不能为空')
+    assertNotNullish(siteTag.id, '创建同名本地标签失败，标签名称不能为空')
+    assertNotBlank(siteTagName, '创建同名本地标签失败，标签名称不能为空')
     const localTagId = await this.createSameNameLocalTag(siteTagName)
     return this.updateBindLocalTag(localTagId, [siteTag.id])
   }
@@ -129,7 +129,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param page
    */
   public async queryBoundOrUnboundToLocalTagPage(page: Page<SiteTagQueryDTO, SiteTag>) {
-    AssertNotNullish(page.query, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
+    assertNotNullish(page.query, '查询绑定或未绑定在本地标签的站点标签失败，查询条件不能为空')
     // 使用构造函数创建对象，补充缺失的方法和属性
     page = new Page(page)
 
@@ -140,7 +140,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
           extraData: undefined,
           label: siteTagDTO.siteTagName,
           rootId: siteTagDTO.baseSiteTagId,
-          subLabels: [StringUtil.isNotBlank(siteTagDTO.site?.siteName) ? siteTagDTO.site?.siteName : '?'],
+          subLabels: [isNotBlank(siteTagDTO.site?.siteName) ? siteTagDTO.site?.siteName : '?'],
           value: String(siteTagDTO.id)
         })
     )
@@ -181,7 +181,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   public async queryPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTag>> {
     try {
       page = new Page(page)
-      if (NotNullish(page.query)) {
+      if (notNullish(page.query)) {
         page.query.operators = {
           ...{ siteTagName: Operator.LIKE },
           ...page.query.operators
@@ -200,7 +200,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async queryPageByWorkId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagFullDTO>> {
     page = new Page(page)
-    if (NotNullish(page.query)) {
+    if (notNullish(page.query)) {
       page.query.operators = {
         ...{ siteTagName: Operator.LIKE },
         ...page.query.operators
@@ -215,7 +215,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async querySelectItemPageByWorkId(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (NotNullish(page.query)) {
+    if (notNullish(page.query)) {
       page.query.operators = {
         ...{ siteTagName: Operator.LIKE },
         ...page.query.operators
@@ -226,14 +226,14 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     // 根据SiteTag数据生成SelectItem
     const sourceData = sourcePage.data
     const resultPage = sourcePage.transform<SelectItem>()
-    if (NotNullish(sourceData)) {
+    if (notNullish(sourceData)) {
       resultPage.data = sourceData.map(
         (siteTag) =>
           new SelectItem({
             extraData: undefined,
             label: siteTag.siteTagName,
             rootId: siteTag.baseSiteTagId,
-            subLabels: [StringUtil.isNotBlank(siteTag.site?.siteName) ? siteTag.site?.siteName : '?'],
+            subLabels: [isNotBlank(siteTag.site?.siteName) ? siteTag.site?.siteName : '?'],
             value: String(siteTag.id)
           })
       )
@@ -247,7 +247,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    */
   public async querySelectItemPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SelectItem>> {
     page = new Page(page)
-    if (NotNullish(page.query)) {
+    if (notNullish(page.query)) {
       page.query.operators = {
         ...{ siteTagName: Operator.LIKE },
         ...page.query.operators
@@ -263,7 +263,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
   public async queryLocalRelateDTOPage(page: Page<SiteTagQueryDTO, SiteTag>): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>> {
     try {
       page = new Page(page)
-      if (NotNullish(page.query)) {
+      if (notNullish(page.query)) {
         page.query.operators = {
           ...{ siteTagName: Operator.LIKE },
           ...page.query.operators
@@ -281,7 +281,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param siteTags 站点标签
    */
   public async listBySiteTag(siteTags: { siteTagId: string; siteId: number }[]): Promise<SiteTag[]> {
-    if (ArrayIsEmpty(siteTags)) {
+    if (arrayIsEmpty(siteTags)) {
       return []
     }
     return this.dao.listBySiteTag(siteTags)
@@ -294,17 +294,17 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
     const result: SiteTagFullDTO[] = []
     const siteService = new SiteService()
     const sites = await siteService.listByNames(
-      pluginSiteTagDTOS.map((pluginSiteTagDTO) => pluginSiteTagDTO.siteName).filter(NotNullish)
+      pluginSiteTagDTOS.map((pluginSiteTagDTO) => pluginSiteTagDTO.siteName).filter(notNullish)
     )
     const siteNameToSiteMap = lodash.keyBy(sites, 'siteName')
     for (const pluginSiteTagDTO of pluginSiteTagDTOS) {
-      if (IsNullish(pluginSiteTagDTO.siteName)) {
+      if (isNullish(pluginSiteTagDTO.siteName)) {
         result.push(new SiteTagFullDTO(pluginSiteTagDTO.siteTag))
         continue
       }
       const tempSite = siteNameToSiteMap[pluginSiteTagDTO.siteName]
       const tempSiteTag = new SiteTagFullDTO(pluginSiteTagDTO.siteTag)
-      if (NotNullish(tempSite)) {
+      if (notNullish(tempSite)) {
         tempSiteTag.siteId = tempSite.id
       }
       result.push(tempSiteTag)

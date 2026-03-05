@@ -8,8 +8,8 @@ import CommonInputDate from '@renderer/components/common/CommentInput/CommonInpu
 import CommonInputSelect from '@renderer/components/common/CommentInput/CommonInputSelect.vue'
 import CommonInputTreeSelect from '@renderer/components/common/CommentInput/CommonInputTreeSelect.vue'
 import CommonInputAutoLoadSelect from '@renderer/components/common/CommentInput/CommonInputAutoLoadSelect.vue'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import { GetNode } from '@shared/util/TreeUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
+import { getNode } from '@shared/util/TreeUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 
 // props
@@ -63,7 +63,7 @@ const dynamicComponent = computed(() => {
       case 'autoLoadSelect':
         return CommonInputAutoLoadSelect
       case 'custom':
-        if (NotNullish(props.config.render)) {
+        if (notNullish(props.config.render)) {
           return props.config.render(data.value, props.extraData)
         }
         break
@@ -93,23 +93,23 @@ const spanText = computed(() => {
     }
   } else if (type === 'select') {
     let target
-    if (NotNullish(props.config.selectList)) {
+    if (notNullish(props.config.selectList)) {
       target = props.config.selectList.find((selectData) => selectData.value === tempData)
     }
-    return IsNullish(target) ? '-' : target.value
+    return isNullish(target) ? '-' : target.value
   } else if (type === 'treeSelect') {
     let tempRoot = new TreeSelectNode()
     tempRoot.children = props.config.selectList as TreeSelectNode[]
     tempRoot = new TreeSelectNode(tempRoot)
-    const node = GetNode(tempRoot, tempData as number)
-    return IsNullish(node) ? '-' : node.label
+    const node = getNode(tempRoot, tempData as number)
+    return isNullish(node) ? '-' : node.label
   } else if (type === 'autoLoadSelect') {
     if (cacheData.value?.value === tempData) {
-      return IsNullish(cacheData.value) ? '-' : cacheData.value.label
+      return isNullish(cacheData.value) ? '-' : cacheData.value.label
     }
-    if (ArrayNotEmpty(selectList.value)) {
+    if (arrayNotEmpty(selectList.value)) {
       const target = selectList.value.find((selectData) => selectData.value === tempData)
-      return IsNullish(target) ? '-' : target.label
+      return isNullish(target) ? '-' : target.label
     }
     return '-'
   } else {
@@ -123,7 +123,7 @@ const cursor = ref(props.config.dblclickToEdit ? 'pointer' : 'default')
 function enable() {
   disabled.value = false
   nextTick(() => {
-    if (NotNullish(inputRef.value)) {
+    if (notNullish(inputRef.value)) {
       inputRef.value.focus()
     }
   })

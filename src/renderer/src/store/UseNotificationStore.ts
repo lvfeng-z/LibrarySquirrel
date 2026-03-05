@@ -3,7 +3,7 @@ import NotificationItem from '@renderer/model/util/NotificationItem.ts'
 import { v4 } from 'uuid'
 import { ElNotification } from 'element-plus'
 import { h } from 'vue'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 
 export const useNotificationStore = defineStore('notification', {
   state: (): {
@@ -62,11 +62,11 @@ export const useNotificationStore = defineStore('notification', {
       this.notificationMap.delete(id)
       const index = this.notificationList.findIndex((notification) => notification.id === id)
       this.notificationList.splice(index, 1)
-      if (NotNullish(notificationConfig)) {
+      if (notNullish(notificationConfig)) {
         startNotify({
           msg: notificationConfig.msg,
-          type: IsNullish(notificationConfig.type) ? 'info' : notificationConfig.type,
-          duration: IsNullish(notificationConfig.duration) ? 3000 : notificationConfig.duration
+          type: isNullish(notificationConfig.type) ? 'info' : notificationConfig.type,
+          duration: isNullish(notificationConfig.duration) ? 3000 : notificationConfig.duration
         })
       }
     }

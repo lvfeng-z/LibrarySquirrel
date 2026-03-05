@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import BaseAuthor from '../interface/BaseAuthor.ts'
 
 /**
@@ -41,7 +41,7 @@ export default class SiteAuthor extends BaseEntity implements BaseAuthor {
 
   constructor(siteAuthor?: SiteAuthor) {
     super(siteAuthor)
-    if (NotNullish(siteAuthor)) {
+    if (notNullish(siteAuthor)) {
       this.siteId = siteAuthor.siteId
       this.siteAuthorId = siteAuthor.siteAuthorId
       this.authorName = siteAuthor.authorName

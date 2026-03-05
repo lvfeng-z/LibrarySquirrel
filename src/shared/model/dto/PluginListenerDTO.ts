@@ -1,7 +1,7 @@
 import Plugin from '../entity/Plugin.ts'
 import PluginTaskUrlListener from '../util/PluginTaskUrlListener.ts'
 import lodash from 'lodash'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class PluginListenerDTO extends Plugin {
   /**
@@ -11,7 +11,7 @@ export default class PluginListenerDTO extends Plugin {
 
   constructor(pluginListenerDTO?: Plugin) {
     super(pluginListenerDTO)
-    if (NotNullish(pluginListenerDTO)) {
+    if (notNullish(pluginListenerDTO)) {
       lodash.assign(this, lodash.pick(pluginListenerDTO, ['pluginTaskUrlListeners']))
     }
   }

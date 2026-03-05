@@ -1,5 +1,5 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 资源
@@ -57,7 +57,7 @@ export default class ResourceQueryDTO extends BaseQueryDTO {
 
   constructor(resourceQueryDTO?: ResourceQueryDTO) {
     super(resourceQueryDTO)
-    if (NotNullish(resourceQueryDTO)) {
+    if (notNullish(resourceQueryDTO)) {
       this.workId = resourceQueryDTO.workId
       this.taskId = resourceQueryDTO.taskId
       this.state = resourceQueryDTO.state

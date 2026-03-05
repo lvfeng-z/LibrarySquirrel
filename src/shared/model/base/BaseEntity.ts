@@ -1,4 +1,4 @@
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 基础模型
@@ -27,7 +27,7 @@ export default class BaseEntity {
   public static readonly UPDATE_TIME = 'update_time'
 
   constructor(baseEntity?: BaseEntity) {
-    if (IsNullish(baseEntity)) {
+    if (isNullish(baseEntity)) {
       this.id = undefined
       this.createTime = undefined
       this.updateTime = undefined

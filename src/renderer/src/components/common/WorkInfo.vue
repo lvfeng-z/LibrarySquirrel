@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, Ref } from 'vue'
 import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 // props
 const props = withDefaults(
   defineProps<{
@@ -20,10 +20,10 @@ const props = withDefaults(
 // 方法
 // 获取要展示的作品名称
 function getWorkNameForDisplay(): string {
-  if (StringUtil.isNotBlank(props.work.nickName)) {
+  if (isNotBlank(props.work.nickName)) {
     return props.work.nickName as string
   }
-  if (StringUtil.isNotBlank(props.work.siteItemName)) {
+  if (isNotBlank(props.work.siteItemName)) {
     return props.work.siteItemName as string
   }
   return '?'

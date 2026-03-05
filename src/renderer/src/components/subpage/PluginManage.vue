@@ -8,17 +8,17 @@ import DialogMode from '@renderer/model/util/DialogMode.ts'
 import { Thead } from '@renderer/model/util/Thead.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import DataTableOperationResponse from '@renderer/model/util/DataTableOperationResponse.ts'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PluginDialog from '@renderer/components/dialogs/PluginDialog.vue'
 import Electron from 'electron'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import Plugin from '@shared/model/entity/Plugin.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 // onMounted
 onMounted(() => {
-  if (IsNullish(pluginPage.value.query)) {
+  if (isNullish(pluginPage.value.query)) {
     pluginPage.value.query = new PluginQueryDTO()
   }
   pluginPage.value.query.sort = [
@@ -150,7 +150,7 @@ async function beforeReInstall(pluginId: number) {
     .catch(async (action: 'cancel' | 'close') => {
       if (action === 'cancel') {
         const packagePath = await selectPackage()
-        if (StringUtil.isNotBlank(packagePath)) {
+        if (isNotBlank(packagePath)) {
           return reInstallFromPath(pluginId, packagePath)
         }
       }
@@ -193,7 +193,7 @@ async function selectPackage(): Promise<string | undefined> {
   const response = await apis.dirSelect(true, true)
   if (ApiUtil.check(response)) {
     const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
-    if (!dirSelectResult.canceled && ArrayNotEmpty(dirSelectResult.filePaths)) {
+    if (!dirSelectResult.canceled && arrayNotEmpty(dirSelectResult.filePaths)) {
       return dirSelectResult.filePaths[0]
     }
   }
@@ -201,7 +201,7 @@ async function selectPackage(): Promise<string | undefined> {
 }
 async function handleInstallClicked() {
   const packagePath = await selectPackage()
-  if (StringUtil.isNotBlank(packagePath)) {
+  if (isNotBlank(packagePath)) {
     return installFromPath(packagePath)
   }
 }

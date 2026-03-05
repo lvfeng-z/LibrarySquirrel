@@ -1,4 +1,4 @@
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 
 export class PageState {
   readonly page: PageEnum
@@ -11,7 +11,7 @@ export class PageState {
   }
 
   async close(): Promise<boolean> {
-    if (NotNullish(this.beforeClose)) {
+    if (notNullish(this.beforeClose)) {
       const closed = await this.beforeClose()
       if (closed) {
         this.state = false

@@ -3,10 +3,9 @@ import ResourceQueryDTO from '@shared/model/queryDTO/ResourceQueryDTO.js'
 import Resource from '@shared/model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
 import DatabaseClient from '../database/DatabaseClient.js'
-import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
 import { AddSuffix, CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
 import path from 'path'
@@ -27,6 +26,7 @@ import { SendNotifyToWindow } from '../util/MainWindowUtil.js'
 import { Operator } from '../constant/CrudConstant.ts'
 import { getSettings } from '../core/settings.ts'
 import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 资源服务
@@ -50,25 +50,25 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const result = new ResourceSaveDTO()
     // 读取设置中的工作目录信息
     const workdir = getSettings().store.workdir
-    if (StringUtil.isBlank(workdir)) {
+    if (isBlank(workdir)) {
       const msg = `保存资源失败，工作目录不能为空，taskId: ${result.taskId}`
       LogUtil.error(this.constructor.name, msg)
       throw new Error(msg)
     }
     const pluginResDTO = pluginResponse.resource
-    AssertNotNullish(pluginResDTO, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
+    assertNotNullish(pluginResDTO, `保存资源失败，资源信息不能为空，taskId: ${result.taskId}`)
 
     // 作者信息
     const authorName = ResourceService.getAuthorName(workInfo)
 
     // 保存路径
     const standardAuthorName = SanitizeFileName(authorName)
-    const finalAuthorName = StringUtil.isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
+    const finalAuthorName = isBlank(standardAuthorName) ? 'InvalidAuthorName' : standardAuthorName
     const filenameExtension = pluginResDTO.filenameExtension
 
     const fileName = this.createFileName(workInfo)
     const standardFileName = SanitizeFileName(fileName)
-    const finalFileName = StringUtil.isBlank(standardFileName) ? 'noname' : `${standardFileName}${filenameExtension}`
+    const finalFileName = isBlank(standardFileName) ? 'noname' : `${standardFileName}${filenameExtension}`
 
     const relativeSavePath = path.join('/includeDir', finalAuthorName)
 
@@ -97,18 +97,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public async saveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
     const fullSavePath = resourceSaveDTO.fullSavePath
-    AssertNotNullish(resourceId, `保存作品资源失败，资源id不能为空`)
-    AssertNotNullish(resourceSaveDTO.taskId, `保存作品资源失败，任务id不能为空`)
-    AssertNotNullish(
-      resourceSaveDTO.resourceStream,
-      `保存作品资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
-    )
-    AssertNotNullish(
-      fullSavePath,
-      `保存作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`
-    )
+    assertNotNullish(resourceId, `保存作品资源失败，资源id不能为空`)
+    assertNotNullish(resourceSaveDTO.taskId, `保存作品资源失败，任务id不能为空`)
+    assertNotNullish(resourceSaveDTO.resourceStream, `保存作品资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`)
+    assertNotNullish(fullSavePath, `保存作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`)
 
-    if (NotNullish(resourceSaveDTO.resourceSize)) {
+    if (notNullish(resourceSaveDTO.resourceSize)) {
       resourceWriter.resourceSize = resourceSaveDTO.resourceSize
     } else {
       LogUtil.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
@@ -147,23 +141,20 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @param resourceWriter resourceWriter
    */
   public async resumeSaveResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
-    AssertNotNullish(resourceSaveDTO.taskId, `恢复保存资源失败，任务id不能为空`)
-    AssertNotNullish(
-      resourceSaveDTO.resourceStream,
-      `恢复保存资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`
-    )
+    assertNotNullish(resourceSaveDTO.taskId, `恢复保存资源失败，任务id不能为空`)
+    assertNotNullish(resourceSaveDTO.resourceStream, `恢复保存资源失败，资源不能为空，taskId: ${resourceSaveDTO.taskId}`)
 
     const resourceId = resourceSaveDTO.id
-    AssertNotNullish(resourceId, `恢复保存资源失败，资源id不能为空`)
+    assertNotNullish(resourceId, `恢复保存资源失败，资源id不能为空`)
 
     const oldRes = await this.getById(resourceId)
-    AssertNotNullish(oldRes, `恢复保存资源失败，资源信息不可用`)
-    AssertNotNullish(oldRes.filePath, `恢复保存资源失败，原有资源路径不能为空`)
+    assertNotNullish(oldRes, `恢复保存资源失败，资源信息不可用`)
+    assertNotNullish(oldRes.filePath, `恢复保存资源失败，原有资源路径不能为空`)
 
     const workdir = getSettings().get('workdir')
     const oldAbsolutePath = path.join(workdir, oldRes.filePath)
 
-    const newFullSavePath = StringUtil.isBlank(resourceSaveDTO.fullSavePath) ? oldAbsolutePath : resourceSaveDTO.fullSavePath
+    const newFullSavePath = isBlank(resourceSaveDTO.fullSavePath) ? oldAbsolutePath : resourceSaveDTO.fullSavePath
 
     // 如果保存路径发生改变，移动到新路径
     if (oldAbsolutePath !== newFullSavePath) {
@@ -195,7 +186,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       writeable.bytesWritten = (await fs.promises.stat(newFullSavePath)).size
 
       // 配置resourceWriter
-      resourceWriter.resourceSize = IsNullish(resourceSaveDTO.resourceSize) ? -1 : resourceSaveDTO.resourceSize
+      resourceWriter.resourceSize = isNullish(resourceSaveDTO.resourceSize) ? -1 : resourceSaveDTO.resourceSize
       resourceWriter.readable = resourceSaveDTO.resourceStream
       resourceWriter.writable = writeable
       resourceWriter.resource = new Resource(resourceSaveDTO)
@@ -223,23 +214,14 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
   public async replaceResource(resourceSaveDTO: ResourceSaveDTO, resourceWriter: ResourceWriter): Promise<FileSaveResult> {
     const resourceId = resourceSaveDTO.id
     const fullSavePath = resourceSaveDTO.fullSavePath
-    AssertNotNullish(resourceId, `替换资源失败，资源id不能为空`)
-    AssertNotNullish(
-      resourceSaveDTO.resourceStream,
-      `替换作品资源失败，资源不能为空，workId: ${resourceSaveDTO.workId}`
-    )
-    AssertNotNullish(
-      fullSavePath,
-      `替换作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`
-    )
+    assertNotNullish(resourceId, `替换资源失败，资源id不能为空`)
+    assertNotNullish(resourceSaveDTO.resourceStream, `替换作品资源失败，资源不能为空，workId: ${resourceSaveDTO.workId}`)
+    assertNotNullish(fullSavePath, `替换作品资源失败，资源的保存路径不能为空，workId: ${resourceSaveDTO.workId}`)
     const oldResource = await this.getById(resourceId)
-    AssertNotNullish(oldResource, `替换资源失败，资源不存在`)
-    AssertNotBlank(
-      oldResource.filePath,
-      `替换作品资源失败，原作品资源的路径不能为空，workId: ${resourceSaveDTO.workId}`
-    )
+    assertNotNullish(oldResource, `替换资源失败，资源不存在`)
+    assertNotBlank(oldResource.filePath, `替换作品资源失败，原作品资源的路径不能为空，workId: ${resourceSaveDTO.workId}`)
 
-    if (NotNullish(resourceSaveDTO.resourceSize)) {
+    if (notNullish(resourceSaveDTO.resourceSize)) {
       resourceWriter.resourceSize = resourceSaveDTO.resourceSize
     } else {
       LogUtil.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
@@ -295,7 +277,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const backup = await backupPromise
       let recovered = false
-      if (NotNullish(backup)) {
+      if (notNullish(backup)) {
         await backupService.recoverToPath(backup.id as number, oldResAbsolutePath, true).catch((recoverError) => {
           LogUtil.error(this.constructor.name, '恢复资源失败', recoverError)
         })
@@ -314,10 +296,10 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @param resource
    */
   public async saveActive(resource: Resource): Promise<number> {
-    AssertNotNullish(resource.workId, `资源设置为启用失败，workId不能为空`)
+    assertNotNullish(resource.workId, `资源设置为启用失败，workId不能为空`)
     resource.state = BOOL.TRUE
     const oldRes = await this.listByWorkId(resource.workId)
-    if (ArrayNotEmpty(oldRes)) {
+    if (arrayNotEmpty(oldRes)) {
       oldRes.forEach((res) => (res.state = BOOL.FALSE))
       await this.updateBatchById(oldRes)
     }
@@ -331,10 +313,10 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public async setActive(id: number, workId?: number): Promise<number> {
     let allRes: Resource[]
-    if (IsNullish(workId)) {
+    if (isNullish(workId)) {
       const target = await this.getById(id)
-      AssertNotNullish(target, `资源设置为启用失败，资源id: ${id}不可用`)
-      AssertNotNullish(target.workId, `资源设置为启用失败，workId不能为空`)
+      assertNotNullish(target, `资源设置为启用失败，资源id: ${id}不可用`)
+      assertNotNullish(target.workId, `资源设置为启用失败，workId不能为空`)
       allRes = await this.listByWorkId(target.workId)
     } else {
       allRes = await this.listByWorkId(workId)
@@ -430,11 +412,11 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
         case ResFileNameFormatEnum.SITE_AUTHOR_ID.token:
           return this.getSiteAuthorId(workFullInfo)
         case ResFileNameFormatEnum.SITE_WORK_ID.token:
-          return IsNullish(workFullInfo.siteWorkId) ? 'invalidSiteWorkId' : workFullInfo.siteWorkId
+          return isNullish(workFullInfo.siteWorkId) ? 'invalidSiteWorkId' : workFullInfo.siteWorkId
         case ResFileNameFormatEnum.SITE_WORK_NAME.token:
-          return IsNullish(workFullInfo.siteWorkName) ? 'invalidSiteWorkName' : workFullInfo.siteWorkName
+          return isNullish(workFullInfo.siteWorkName) ? 'invalidSiteWorkName' : workFullInfo.siteWorkName
         case ResFileNameFormatEnum.DESCRIPTION.token:
-          return IsNullish(workFullInfo.siteWorkDescription) ? '' : workFullInfo.siteWorkDescription
+          return isNullish(workFullInfo.siteWorkDescription) ? '' : workFullInfo.siteWorkDescription
         case ResFileNameFormatEnum.DOWNLOAD_TIME_DAY.token:
           return Date.now().toString()
         default:
@@ -450,26 +432,26 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getAuthorName(workFullInfo: WorkFullDTO): string {
-    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(workFullInfo.localAuthors)
+    const mainLocalAuthors: RankedLocalAuthor[] = arrayIsEmpty(workFullInfo.localAuthors)
       ? []
       : workFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
-    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(workFullInfo.siteAuthors)
+    const mainSiteAuthors: RankedSiteAuthor[] = arrayIsEmpty(workFullInfo.siteAuthors)
       ? []
       : workFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
-    const localAuthorName = ArrayIsEmpty(mainLocalAuthors)
+    const localAuthorName = arrayIsEmpty(mainLocalAuthors)
       ? undefined
-      : StringUtil.isBlank(mainLocalAuthors[0].authorName)
+      : isBlank(mainLocalAuthors[0].authorName)
         ? undefined
         : mainLocalAuthors[0].authorName
-    const siteAuthorName = ArrayIsEmpty(mainSiteAuthors)
+    const siteAuthorName = arrayIsEmpty(mainSiteAuthors)
       ? undefined
-      : StringUtil.isBlank(mainSiteAuthors[0].authorName)
+      : isBlank(mainSiteAuthors[0].authorName)
         ? undefined
         : mainSiteAuthors[0].authorName
-    if (NotNullish(localAuthorName)) {
+    if (notNullish(localAuthorName)) {
       return localAuthorName
     }
-    if (NotNullish(siteAuthorName)) {
+    if (notNullish(siteAuthorName)) {
       return siteAuthorName
     }
     return 'invalidAuthorName'
@@ -481,12 +463,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getLocalAuthorName(workFullInfo: WorkFullDTO): string {
-    const mainLocalAuthors: RankedLocalAuthor[] = ArrayIsEmpty(workFullInfo.localAuthors)
+    const mainLocalAuthors: RankedLocalAuthor[] = arrayIsEmpty(workFullInfo.localAuthors)
       ? []
       : workFullInfo.localAuthors.filter((localAuthor) => localAuthor.authorRank === AuthorRank.RANK_0)
-    return ArrayIsEmpty(mainLocalAuthors)
+    return arrayIsEmpty(mainLocalAuthors)
       ? 'invalidAuthorName'
-      : StringUtil.isBlank(mainLocalAuthors[0].authorName)
+      : isBlank(mainLocalAuthors[0].authorName)
         ? ''
         : mainLocalAuthors[0].authorName
   }
@@ -497,12 +479,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getSiteAuthorName(workFullInfo: WorkFullDTO): string {
-    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(workFullInfo.siteAuthors)
+    const mainSiteAuthors: RankedSiteAuthor[] = arrayIsEmpty(workFullInfo.siteAuthors)
       ? []
       : workFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
-    return ArrayIsEmpty(mainSiteAuthors)
+    return arrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorName'
-      : StringUtil.isBlank(mainSiteAuthors[0].authorName)
+      : isBlank(mainSiteAuthors[0].authorName)
         ? ''
         : mainSiteAuthors[0].authorName
   }
@@ -513,12 +495,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    * @private
    */
   private static getSiteAuthorId(workFullInfo: WorkFullDTO): string {
-    const mainSiteAuthors: RankedSiteAuthor[] = ArrayIsEmpty(workFullInfo.siteAuthors)
+    const mainSiteAuthors: RankedSiteAuthor[] = arrayIsEmpty(workFullInfo.siteAuthors)
       ? []
       : workFullInfo.siteAuthors.filter((siteAuthor) => siteAuthor.authorRank === AuthorRank.RANK_0)
-    return ArrayIsEmpty(mainSiteAuthors)
+    return arrayIsEmpty(mainSiteAuthors)
       ? 'invalidAuthorId'
-      : StringUtil.isBlank(mainSiteAuthors[0].siteAuthorId)
+      : isBlank(mainSiteAuthors[0].siteAuthorId)
         ? ''
         : mainSiteAuthors[0].siteAuthorId
   }
@@ -529,8 +511,8 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
    */
   public async getFullResourcePath(resourceId: number) {
     const res = await this.getById(resourceId)
-    AssertNotNullish(res, `获取资源${resourceId}的绝对路径失败，资源id不可用`)
-    AssertNotNullish(res.filePath, `获取资源${resourceId}的绝对路径失败，资源的路径不能为空`)
+    assertNotNullish(res, `获取资源${resourceId}的绝对路径失败，资源id不可用`)
+    assertNotNullish(res.filePath, `获取资源${resourceId}的绝对路径失败，资源的路径不能为空`)
     const workdir = getSettings().store.workdir
     return path.join(workdir, res.filePath)
   }

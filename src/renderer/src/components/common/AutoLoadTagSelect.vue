@@ -5,12 +5,12 @@ import SelectItem from '../../model/util/SelectItem'
 import TagBox from '@renderer/components/common/TagBox.vue'
 import lodash, { throttle } from 'lodash'
 import { Close } from '@element-plus/icons-vue'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import SegmentedTag from '@renderer/components/common/SegmentedTag.vue'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import Page from '@renderer/model/util/Page.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 // props
 const props = withDefaults(
@@ -60,7 +60,7 @@ onMounted(() => {
 
 // onUnmounted
 onUnmounted(() => {
-  if (NotNullish(wrapper.value)) {
+  if (notNullish(wrapper.value)) {
     resizeObserver.unobserve(wrapper.value)
   }
 })
@@ -105,13 +105,13 @@ async function innerLoad(page: IPage<BaseQueryDTO, SegmentedTagItem>): Promise<I
       const checked = optionalCheckedIdBuffer.has(String(selectItem.value))
       if (checked) {
         const result = new SegmentedTagItem({ disabled: true, ...selectItem })
-        if (NotNullish(props.colorResolver)) {
+        if (notNullish(props.colorResolver)) {
           props.colorResolver(result)
         }
         return result
       } else {
         const result = new SegmentedTagItem(selectItem)
-        if (NotNullish(props.colorResolver)) {
+        if (notNullish(props.colorResolver)) {
           props.colorResolver(result)
         }
         return result
@@ -135,7 +135,7 @@ function handleInputFocus(focus: boolean) {
 function handelTagClicked(tag: SegmentedTagItem, optional: boolean) {
   if (optional) {
     // 待选栏
-    if (IsNullish(tag.disabled) || !tag.disabled) {
+    if (isNullish(tag.disabled) || !tag.disabled) {
       // 如果标签未禁用，则把这个标签放进已选栏，待选栏中的这个标签设为禁用，同时清除输入文本
       const tempTag = lodash.cloneDeep(tag)
       selectedData.value.push(tempTag)
@@ -192,7 +192,7 @@ function clear() {
 }
 function handleKeyPress(event: KeyboardEvent) {
   // 按下Enter键时根据输入框内容创建一个自定义标签
-  if (event.key === 'Enter' && StringUtil.isNotBlank(input.value)) {
+  if (event.key === 'Enter' && isNotBlank(input.value)) {
     customData.value.push(
       new SegmentedTagItem({
         value: input.value,

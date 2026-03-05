@@ -10,7 +10,7 @@ import { AddSuffix, CreateDirIfNotExists } from '../util/FileSysUtil.js'
 import path from 'path'
 import { BackupRootDirName } from '../constant/BackupConstants.js'
 import { cp } from 'node:fs/promises'
-import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { getSettings } from '../core/settings.ts'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
@@ -87,9 +87,9 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
    */
   public async recoverToPath(backUpId: number, targetPath: string, deleteAfterFinish: boolean = false): Promise<void> {
     const targetDirname = path.dirname(targetPath)
-    AssertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的路径为空`)
+    assertNotBlank(targetDirname, `无法恢复备份到${targetPath}，给定的路径为空`)
     const backup = await this.getById(backUpId)
-    AssertNotNullish(backup, `无法恢复备份到${targetPath}，备份不存在，backupId: ${backUpId}`)
+    assertNotNullish(backup, `无法恢复备份到${targetPath}，备份不存在，backupId: ${backUpId}`)
     const workdir = getSettings().store.workdir
     const absoluteBackupPath = path.join(workdir, backup.filePath as string)
     try {
@@ -114,7 +114,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
 
   public async deleteBackup(backUpId: number): Promise<number> {
     const backup = await this.getById(backUpId)
-    AssertNotNullish(backup, `删除备份失败，备份id不可用，backupId: ${backUpId}`)
+    assertNotNullish(backup, `删除备份失败，备份id不可用，backupId: ${backUpId}`)
     const workdir = getSettings().store.workdir
     const absoluteBackupPath = path.join(workdir, backup.filePath as string)
     try {

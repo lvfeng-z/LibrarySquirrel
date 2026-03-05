@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { TaskOperationCodeEnum } from '@renderer/constants/TaskOperationCodeEnum.ts'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
@@ -85,17 +85,17 @@ const status: Ref<number | undefined | null> = computed(() => {
   } else {
     tempStatus = taskStore.getTask(props.row.id as number)?.status
   }
-  return IsNullish(tempStatus) ? props.row.status : tempStatus
+  return isNullish(tempStatus) ? props.row.status : tempStatus
 })
 // 进度（百分比）
 const schedule: Ref<number> = computed(() => {
   const tempStatus = props.row.hasChildren
     ? parentTaskStore.getTask(props.row.id as number)
     : taskStore.getTask(props.row.id as number)
-  if (NotNullish(tempStatus)) {
+  if (notNullish(tempStatus)) {
     const finished = tempStatus.finished
     const total = tempStatus.total
-    if (IsNullish(finished) || IsNullish(total) || total === 0) {
+    if (isNullish(finished) || isNullish(total) || total === 0) {
       return 0
     }
     return Math.round((finished / total) * 100)
@@ -106,19 +106,19 @@ const schedule: Ref<number> = computed(() => {
 // 进度（数据量）
 const scheduleByte: Ref<string> = computed(() => {
   const tempStatus = taskStore.getTask(props.row.id as number)
-  if (NotNullish(tempStatus)) {
+  if (notNullish(tempStatus)) {
     const finishedBytes = tempStatus.finished
     let finished: string | undefined
-    if (NotNullish(finishedBytes)) {
+    if (notNullish(finishedBytes)) {
       finished = formatBytes(finishedBytes)
     }
     const totalBytes = tempStatus.total
     let total: string | undefined
-    if (NotNullish(totalBytes)) {
+    if (notNullish(totalBytes)) {
       total = formatBytes(totalBytes)
     }
-    if (IsNullish(total)) {
-      return IsNullish(finished) ? '...' : finished
+    if (isNullish(total)) {
+      return isNullish(finished) ? '...' : finished
     } else {
       return finished + ' / ' + total
     }
@@ -129,10 +129,10 @@ const scheduleByte: Ref<string> = computed(() => {
 const fractions: Ref<string> = computed(() => {
   if (props.row.hasChildren) {
     const parentTask = parentTaskStore.getTask(props.row.id as number)
-    if (IsNullish(parentTask?.total)) {
+    if (isNullish(parentTask?.total)) {
       return ''
     }
-    return (IsNullish(parentTask?.finished) ? 0 : parentTask.finished) + '/' + parentTask.total
+    return (isNullish(parentTask?.finished) ? 0 : parentTask.finished) + '/' + parentTask.total
   } else {
     return ''
   }
@@ -145,7 +145,7 @@ function mapToButtonStatus(): {
   operation: TaskOperationCodeEnum
   processing: boolean
 } {
-  if (NotNullish(status.value)) {
+  if (notNullish(status.value)) {
     return taskStatusMapping[status.value]
   } else {
     return taskStatusMapping['0']

@@ -1,6 +1,6 @@
 import { SearchCondition, SearchType } from '@shared/model/util/SearchCondition.js'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
-import { ArrayIsEmpty } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty } from '@shared/util/CommonUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 
 /**
@@ -18,7 +18,7 @@ export class SearchConditionUtil {
     searchConditions: SearchCondition[],
     workTableAlias: string = 'work_m'
   ): { from: string; where: string } {
-    if (ArrayIsEmpty(searchConditions)) {
+    if (arrayIsEmpty(searchConditions)) {
       return { from: '', where: '' }
     } else {
       const fromAndWhere: { from: string[]; where: string[] } = { from: [], where: [] }
@@ -39,14 +39,10 @@ export class SearchConditionUtil {
         }
         if (query.type === SearchType.SITE_TAG) {
           if (query.operator === Operator.NOT_EQUAL) {
-            fromAndWhere.from.push(
-              `INNER JOIN re_work_tag re_w_t_2 ON ${workTableAlias}.id = re_w_t_2.work_id`
-            )
+            fromAndWhere.from.push(`INNER JOIN re_work_tag re_w_t_2 ON ${workTableAlias}.id = re_w_t_2.work_id`)
             fromAndWhere.where.push(`re_w_t_2.site_tag_id <> ${query.value}`)
           } else {
-            fromAndWhere.from.push(
-              `INNER JOIN re_work_tag re_w_t_2 ON ${workTableAlias}.id = re_w_t_2.work_id`
-            )
+            fromAndWhere.from.push(`INNER JOIN re_work_tag re_w_t_2 ON ${workTableAlias}.id = re_w_t_2.work_id`)
             fromAndWhere.where.push(`re_w_t_2.site_tag_id = ${query.value}`)
           }
         }
@@ -66,14 +62,10 @@ export class SearchConditionUtil {
         }
         if (query.type === SearchType.SITE_AUTHOR) {
           if (query.operator === Operator.NOT_EQUAL) {
-            fromAndWhere.from.push(
-              `INNER JOIN re_work_author re_w_a_2 ON ${workTableAlias}.id = re_w_a_2.work_id`
-            )
+            fromAndWhere.from.push(`INNER JOIN re_work_author re_w_a_2 ON ${workTableAlias}.id = re_w_a_2.work_id`)
             fromAndWhere.where.push(`re_w_a_2.site_author_id <> ${query.value}`)
           } else {
-            fromAndWhere.from.push(
-              `INNER JOIN re_work_author re_w_a_2 ON ${workTableAlias}.id = re_w_a_2.work_id`
-            )
+            fromAndWhere.from.push(`INNER JOIN re_work_author re_w_a_2 ON ${workTableAlias}.id = re_w_a_2.work_id`)
             fromAndWhere.where.push(`re_w_a_2.site_author_id = ${query.value}`)
           }
         }
@@ -112,13 +104,9 @@ export class SearchConditionUtil {
         if (query.type === SearchType.MEDIA_TYPE) {
           const extList = MediaExtMapping[query.value as MediaType]
           if (query.operator === Operator.NOT_EQUAL) {
-            fromAndWhere.where.push(
-              `${workTableAlias}.filename_extension NOT IN (${extList.join(',')})`
-            )
+            fromAndWhere.where.push(`${workTableAlias}.filename_extension NOT IN (${extList.join(',')})`)
           } else {
-            fromAndWhere.where.push(
-              `${workTableAlias}.filename_extension IN (${extList.join(',')})`
-            )
+            fromAndWhere.where.push(`${workTableAlias}.filename_extension IN (${extList.join(',')})`)
           }
         }
         if (query.type === SearchType.WORK_SET) {
@@ -140,11 +128,8 @@ export class SearchConditionUtil {
    * @param workTableAlias 作品表的别名
    * @returns WHERE 子句数组
    */
-  public static generateWhereClauses(
-    searchConditions: SearchCondition[],
-    workTableAlias: string = 't1'
-  ): string[] {
-    if (ArrayIsEmpty(searchConditions)) {
+  public static generateWhereClauses(searchConditions: SearchCondition[], workTableAlias: string = 't1'): string[] {
+    if (arrayIsEmpty(searchConditions)) {
       return []
     }
     const whereClauses: string[] = []
@@ -245,7 +230,9 @@ export class SearchConditionUtil {
       }
       if (query.type === SearchType.WORK_SET) {
         // 排除指定作品集下的作品
-        whereClauses.push(`NOT EXISTS(SELECT 1 FROM re_work_work_set rwws WHERE rwws.work_id = ${workTableAlias}.id AND rwws.work_set_id = ${query.value})`)
+        whereClauses.push(
+          `NOT EXISTS(SELECT 1 FROM re_work_work_set rwws WHERE rwws.work_id = ${workTableAlias}.id AND rwws.work_set_id = ${query.value})`
+        )
       }
     })
     return whereClauses

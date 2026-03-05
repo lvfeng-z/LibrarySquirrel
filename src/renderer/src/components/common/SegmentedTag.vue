@@ -2,7 +2,7 @@
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'
 import { Close } from '@element-plus/icons-vue'
 import { computed, ref, Ref, UnwrapRef } from 'vue'
-import { ArrayIsEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -17,21 +17,21 @@ const props = withDefaults(
 
 // 变量
 const subLabelsLength: Ref<UnwrapRef<number>> = computed(() => {
-  return IsNullish(props.item.subLabels) ? 0 : props.item.subLabels.length
+  return isNullish(props.item.subLabels) ? 0 : props.item.subLabels.length
 })
 const tagLabelWrapperMaxWidth: Ref<UnwrapRef<string>> = computed(() => {
   return props.closeable ? 'calc(100% - 18px)' : '100%'
 })
 const colorConfig = ref({
-  mainBackground: IsNullish(props.item.mainBackGround) ? 'rgb(133.4, 206.2, 97.4, 30%)' : props.item.mainBackGround,
-  mainBackgroundHover: IsNullish(props.item.mainBackGroundHover) ? 'rgb(133.4, 206.2, 97.4, 15%)' : props.item.mainBackGroundHover,
-  mainTextColor: IsNullish(props.item.mainTextColor) ? 'rgb(78.1, 141.8, 46.6, 75%)' : props.item.mainTextColor,
-  sub1BackGround: IsNullish(props.item.sub1BackGround) ? 'rgb(166.2, 168.6, 173.4, 20%)' : props.item.sub1BackGround,
-  sub1BackGroundHover: IsNullish(props.item.sub1BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub1BackGroundHover,
-  sub1TextColor: IsNullish(props.item.sub1TextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.sub1TextColor,
-  sub2BackGround: IsNullish(props.item.sub2BackGround) ? 'rgb(166.2, 168.6, 173.4, 30%)' : props.item.sub2BackGround,
-  sub2BackGroundHover: IsNullish(props.item.sub2BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub2BackGroundHover,
-  sub2TextColor: IsNullish(props.item.sub2TextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.sub2TextColor
+  mainBackground: isNullish(props.item.mainBackGround) ? 'rgb(133.4, 206.2, 97.4, 30%)' : props.item.mainBackGround,
+  mainBackgroundHover: isNullish(props.item.mainBackGroundHover) ? 'rgb(133.4, 206.2, 97.4, 15%)' : props.item.mainBackGroundHover,
+  mainTextColor: isNullish(props.item.mainTextColor) ? 'rgb(78.1, 141.8, 46.6, 75%)' : props.item.mainTextColor,
+  sub1BackGround: isNullish(props.item.sub1BackGround) ? 'rgb(166.2, 168.6, 173.4, 20%)' : props.item.sub1BackGround,
+  sub1BackGroundHover: isNullish(props.item.sub1BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub1BackGroundHover,
+  sub1TextColor: isNullish(props.item.sub1TextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.sub1TextColor,
+  sub2BackGround: isNullish(props.item.sub2BackGround) ? 'rgb(166.2, 168.6, 173.4, 30%)' : props.item.sub2BackGround,
+  sub2BackGroundHover: isNullish(props.item.sub2BackGroundHover) ? 'rgb(166.2, 168.6, 173.4, 10%)' : props.item.sub2BackGroundHover,
+  sub2TextColor: isNullish(props.item.sub2TextColor) ? 'rgb(166.2, 168.6, 173.4, 100%)' : props.item.sub2TextColor
 })
 
 // 事件
@@ -68,7 +68,7 @@ function handleCloseButtonClicked() {
           :class="{
             'segmented-tag-main-text': true,
             'segmented-tag-ellipsis': true,
-            'segmented-tag-sub-text-last': ArrayIsEmpty(props.item.subLabels),
+            'segmented-tag-sub-text-last': arrayIsEmpty(props.item.subLabels),
             'segmented-tag-main-text-checked': !item.disabled,
             'segmented-tag-main-text-unchecked': item.disabled
           }"
@@ -89,7 +89,7 @@ function handleCloseButtonClicked() {
               'segmented-tag-sub-1-text': index % 2 === 0,
               'segmented-tag-sub-2-text': !(index % 2 === 0),
               'segmented-tag-ellipsis': true,
-              'segmented-tag-sub-text-last': IsNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
+              'segmented-tag-sub-text-last': isNullish(props.item.subLabels) ? false : index === props.item.subLabels.length - 1
             }"
           >
             {{ subLabel }}

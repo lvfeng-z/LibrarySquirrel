@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, Ref, ref } from 'vue'
-import { ArrayNotEmpty, NotNullish } from '@shared/util/CommonUtil'
+import { arrayNotEmpty, notNullish } from '@shared/util/CommonUtil'
 import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
 import RankedLocalAuthor from '@shared/model/domain/RankedLocalAuthor.ts'
 import RankAuthor from '@shared/model/interface/RankAuthor.ts'
@@ -25,17 +25,17 @@ const props = withDefaults(
 // 作者
 const authors = computed(() => {
   let noLocalAuthorList: RankedSiteAuthor[] = []
-  if (ArrayNotEmpty(props.siteAuthors)) {
-    const localAuthors = ArrayNotEmpty(props.localAuthors) ? props.localAuthors : []
+  if (arrayNotEmpty(props.siteAuthors)) {
+    const localAuthors = arrayNotEmpty(props.localAuthors) ? props.localAuthors : []
     noLocalAuthorList = props.siteAuthors.filter(
       (siteAuthor) => !localAuthors.some((localAuthor) => siteAuthor.localAuthorId === localAuthor.id)
     )
   }
   let authorList: (RankedLocalAuthor | RankedSiteAuthor)[] = []
-  if (ArrayNotEmpty(props.localAuthors)) {
+  if (arrayNotEmpty(props.localAuthors)) {
     authorList.push(...props.localAuthors)
   }
-  if (ArrayNotEmpty(noLocalAuthorList)) {
+  if (arrayNotEmpty(noLocalAuthorList)) {
     authorList.push(...noLocalAuthorList)
   }
   return authorList
@@ -43,18 +43,18 @@ const authors = computed(() => {
 // 作者名称列表
 const authorNames = computed(() => {
   let noLocalAuthorList: RankedSiteAuthor[] = []
-  if (ArrayNotEmpty(props.siteAuthors)) {
-    const localAuthors = ArrayNotEmpty(props.localAuthors) ? props.localAuthors : []
+  if (arrayNotEmpty(props.siteAuthors)) {
+    const localAuthors = arrayNotEmpty(props.localAuthors) ? props.localAuthors : []
     noLocalAuthorList = props.siteAuthors.filter(
       (siteAuthor) => !localAuthors.some((localAuthor) => siteAuthor.localAuthorId === localAuthor.id)
     )
   }
   let nameList: string[] = []
-  if (ArrayNotEmpty(props.localAuthors)) {
-    nameList.push(...props.localAuthors.map((author) => author.authorName).filter(NotNullish))
+  if (arrayNotEmpty(props.localAuthors)) {
+    nameList.push(...props.localAuthors.map((author) => author.authorName).filter(notNullish))
   }
-  if (ArrayNotEmpty(noLocalAuthorList)) {
-    nameList.push(...noLocalAuthorList.map((author) => author.authorName).filter(NotNullish))
+  if (arrayNotEmpty(noLocalAuthorList)) {
+    nameList.push(...noLocalAuthorList.map((author) => author.authorName).filter(notNullish))
   }
   return nameList
 })

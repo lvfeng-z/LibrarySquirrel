@@ -5,7 +5,7 @@ import path from 'path'
 import { RootDir } from '../util/FileSysUtil.ts'
 import { RESOURCE_PATH } from '../constant/CommonConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import { getIniConfig } from './iniConfig.ts'
 
 export async function Initialize() {
@@ -24,7 +24,7 @@ export async function Initialize() {
       tempSite.siteDescription = siteConfig.description
       return tempSite
     })
-  if (ArrayNotEmpty(notExistingSites)) {
+  if (arrayNotEmpty(notExistingSites)) {
     await siteService.saveBatch(notExistingSites)
   }
 

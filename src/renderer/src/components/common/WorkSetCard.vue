@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
 import WorkSetCoverDTO from '@shared/model/dto/WorkSetCoverDTO.ts'
@@ -37,10 +37,10 @@ const srcParamStr: Ref<UnwrapRef<string>> = computed(() => {
     return ''
   }
   const params: string[] = []
-  if (NotNullish(props.maxHeight)) {
+  if (notNullish(props.maxHeight)) {
     params.push(`visualHeight=${props.maxHeight}`)
   }
-  if (NotNullish(props.maxWidth)) {
+  if (notNullish(props.maxWidth)) {
     params.push(`visualWidth=${props.maxWidth}`)
   }
   return params.length > 0 ? '?' + params.join('&') : ''
@@ -60,7 +60,7 @@ function handleImageClicked() {
 // 处理图片双击事件
 function handlePictureClicked() {
   clearTimeout(clickTimeout)
-  if (NotNullish(props.workSet.coverResource?.filePath)) {
+  if (notNullish(props.workSet.coverResource?.filePath)) {
     apis.appLauncherOpenImage(props.workSet.coverResource.filePath)
   } else {
     ElMessage({

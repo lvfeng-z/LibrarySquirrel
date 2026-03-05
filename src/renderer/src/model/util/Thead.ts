@@ -1,5 +1,5 @@
 // DataTable的表头
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import { IPopperInputConfig, PopperInputConfig } from '@renderer/model/util/PopperInputConfig.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 
@@ -22,17 +22,17 @@ export class Thead<Data> extends PopperInputConfig implements IThead<Data> {
     super(thead)
     this.key = thead.key
     this.title = thead.title
-    this.hide = IsNullish(thead.hide) ? false : thead.hide
+    this.hide = isNullish(thead.hide) ? false : thead.hide
     this.width = thead.width
     this.minWidth = thead.minWidth
     this.headerAlign = thead.headerAlign
     this.headerTagType = thead.headerTagType
     this.dataAlign = thead.dataAlign
-    this.fixed = IsNullish(thead.fixed) ? false : thead.fixed
-    this.showOverflowTooltip = IsNullish(thead.showOverflowTooltip) ? false : thead.showOverflowTooltip
-    this.editMethod = IsNullish(thead.editMethod) ? 'replace' : thead.editMethod
-    this.getCacheData = IsNullish(thead.getCacheData) ? () => undefined : thead.getCacheData
-    this.setCacheData = IsNullish(thead.setCacheData) ? () => {} : thead.setCacheData
+    this.fixed = isNullish(thead.fixed) ? false : thead.fixed
+    this.showOverflowTooltip = isNullish(thead.showOverflowTooltip) ? false : thead.showOverflowTooltip
+    this.editMethod = isNullish(thead.editMethod) ? 'replace' : thead.editMethod
+    this.getCacheData = isNullish(thead.getCacheData) ? () => undefined : thead.getCacheData
+    this.setCacheData = isNullish(thead.setCacheData) ? () => {} : thead.setCacheData
   }
 }
 

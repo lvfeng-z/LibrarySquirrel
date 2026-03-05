@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { PageState, PageStates } from '@renderer/constants/PageState.ts'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 
 export const usePageStatesStore = defineStore('pageStates', {
   state: (): { pageStates: PageStates; currentPage: PageState } => {
@@ -18,7 +18,7 @@ export const usePageStatesStore = defineStore('pageStates', {
         this.pageStates.mainPage.state = false
         this.currentPage = page
       } else {
-        if (NotNullish(this.currentPage)) {
+        if (notNullish(this.currentPage)) {
           const closed = await this.currentPage.close()
           if (closed) {
             this.currentPage = page

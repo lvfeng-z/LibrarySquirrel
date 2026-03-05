@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 任务
@@ -77,7 +77,7 @@ export default class Task extends BaseEntity {
 
   constructor(task?: Task) {
     super(task)
-    if (NotNullish(task)) {
+    if (notNullish(task)) {
       this.id = task.id
       this.isCollection = task.isCollection
       this.pid = task.pid

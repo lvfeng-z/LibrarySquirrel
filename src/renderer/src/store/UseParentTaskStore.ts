@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
-import { CopyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
+import { copyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
 
 export const useParentTaskStore = defineStore('parentTask', {
   state: (): { parentTasks: Map<number, TaskProgressDTO> } => {
@@ -18,7 +18,7 @@ export const useParentTaskStore = defineStore('parentTask', {
     setParentTask(taskList: TaskProgressDTO[]): void {
       const taskStatus = this.parentTasks
       taskList.forEach((task) => {
-        if (IsNullish(task.id)) {
+        if (isNullish(task.id)) {
           throw new Error('UseTaskStatusStore: 赋值父任务失败，任务id为空')
         }
         taskStatus.set(task.id, task)
@@ -27,23 +27,23 @@ export const useParentTaskStore = defineStore('parentTask', {
     updateParentTask(taskList: TaskProgressDTO[]): void {
       const taskStatus = this.parentTasks
       taskList.forEach((task) => {
-        if (IsNullish(task.id)) {
+        if (isNullish(task.id)) {
           throw new Error('UseTaskStatusStore: 更新父任务失败，任务id为空')
         }
         const oldTask = taskStatus.get(task.id)
-        if (NotNullish(oldTask)) {
-          CopyIgnoreUndefined(oldTask, task)
+        if (notNullish(oldTask)) {
+          copyIgnoreUndefined(oldTask, task)
         }
       })
     },
     updateParentTaskSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
       const taskStatus = this.parentTasks
       scheduleDTOList.forEach((scheduleDTO) => {
-        if (IsNullish(scheduleDTO.id)) {
+        if (isNullish(scheduleDTO.id)) {
           throw new Error('UseTaskStatusStore: 更新父任务进度失败，任务id为空')
         }
         const task = taskStatus.get(scheduleDTO.id)
-        if (NotNullish(task)) {
+        if (notNullish(task)) {
           task.status = scheduleDTO.status
           task.total = scheduleDTO.total
           task.finished = scheduleDTO.finished
@@ -52,7 +52,7 @@ export const useParentTaskStore = defineStore('parentTask', {
     },
     removeParentTask(ids: number[]) {
       const taskStatus = this.parentTasks
-      if (ArrayNotEmpty(ids)) {
+      if (arrayNotEmpty(ids)) {
         ids.forEach((id) => taskStatus.delete(id))
       }
     }

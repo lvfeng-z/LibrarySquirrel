@@ -1,5 +1,5 @@
 import Plugin from '../entity/Plugin.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 创建任务的响应
@@ -25,7 +25,7 @@ export default class TaskCreateResponse {
   plugin: Plugin | undefined | null
 
   constructor(taskCreateResponse?: TaskCreateResponse) {
-    if (IsNullish(taskCreateResponse)) {
+    if (isNullish(taskCreateResponse)) {
       this.succeed = undefined
       this.addedQuantity = undefined
       this.msg = undefined

@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { CommonInputConfig } from '@renderer/model/util/CommonInputConfig.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import IPage from '@renderer/model/util/IPage.ts'
-import { AssertNotNullish } from '@renderer/utils/AssertUtil.ts'
+import { assertNotNullish } from '@shared/util/AssertUtil'
 
 // props
 const props = defineProps<{
@@ -27,12 +27,12 @@ function focus() {
   input.value.focus()
 }
 function load(page: IPage<unknown, SelectItem>, input: string) {
-  AssertNotNullish(props.config.remotePageMethod)
+  assertNotNullish(props.config.remotePageMethod)
   return props.config.remotePageMethod(page, input)
 }
 function handleChange(newData: string | number) {
   const newCache = selectList.value.find((selectData) => selectData.value === newData)
-  if (NotNullish(newCache)) {
+  if (notNullish(newCache)) {
     cacheData.value = newCache
   }
   emits('change', newData)
@@ -57,7 +57,7 @@ defineExpose({ focus })
     @change="handleChange"
   >
     <template #default>
-      <el-option v-if="NotNullish(cacheData)" :hidden="true" :value="cacheData.value" :label="cacheData.label" />
+      <el-option v-if="notNullish(cacheData)" :hidden="true" :value="cacheData.value" :label="cacheData.label" />
       <el-option v-for="item in selectList" :key="item.value" :value="item.value" :label="item.label" />
     </template>
   </auto-load-select>

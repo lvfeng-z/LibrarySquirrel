@@ -1,6 +1,6 @@
 import Resource from '../entity/Resource.ts'
 import { Readable } from 'node:stream'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 
 export default class ResourceSaveDTO extends Resource {
@@ -16,7 +16,7 @@ export default class ResourceSaveDTO extends Resource {
 
   constructor(resource?: Resource) {
     super(resource)
-    if (NotNullish(resource)) {
+    if (notNullish(resource)) {
       lodash.assign(this, lodash.pick(resource, ['fullSavePath', 'resourceStream', 'resourceSize']))
     }
   }

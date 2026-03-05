@@ -4,7 +4,7 @@ import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LocalTagService from '../service/LocalTagService.ts'
 import SiteService from '../service/SiteService.ts'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
 import PluginService from '../service/PluginService.ts'
 import Plugin from '@shared/model/entity/Plugin.ts'
@@ -16,7 +16,7 @@ import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
-import { AssertNotBlank, AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import Site from '@shared/model/entity/Site.ts'
 import { RootDir } from '../util/FileSysUtil.ts'
 import path from 'path'
@@ -65,11 +65,11 @@ export default class PluginLoader {
   public async load(pluginId: number): Promise<PluginInstance> {
     let cached = this.pluginCache.get(pluginId)
 
-    if (IsNullish(cached)) {
+    if (isNullish(cached)) {
       const plugin = await this.pluginService.getById(pluginId)
-      AssertNotBlank(plugin?.entryPath, '')
+      assertNotBlank(plugin?.entryPath, '')
       path.join(RootDir(), plugin?.entryPath)
-      AssertNotNullish(plugin, '加载插件失败，插件id不可用')
+      assertNotNullish(plugin, '加载插件失败，插件id不可用')
       const context = await this.createPluginContext(pluginId)
 
       const loaded = this.loadPluginInstance(plugin, context)
@@ -130,7 +130,7 @@ export default class PluginLoader {
     const pluginInstance = await this.load(pluginId)
     const contribution = await pluginInstance.getContribution(key)
 
-    if (IsNullish(contribution)) {
+    if (isNullish(contribution)) {
       throw new Error(`插件 ${pluginId} 未实现 ${key} 贡献点`)
     }
 
@@ -143,7 +143,7 @@ export default class PluginLoader {
    */
   private async createPluginContext(pluginId: number): Promise<PluginContext> {
     const plugin = await this.pluginService.getById(pluginId)
-    AssertNotNullish(plugin, '创建插件上下文失败，插件id不可用')
+    assertNotNullish(plugin, '创建插件上下文失败，插件id不可用')
     const secureStorageService = new SecureStorageService()
     const pluginService = this.pluginService
     const pluginName = plugin?.name ?? ''
@@ -203,9 +203,9 @@ export default class PluginLoader {
         for (const meaningOfPath of meaningOfPaths) {
           if (meaningOfPath.type === PathTypeEnum.AUTHOR) {
             const localAuthorService = new LocalAuthorService()
-            if (NotNullish(meaningOfPath.id)) {
+            if (notNullish(meaningOfPath.id)) {
               const localAuthor = await localAuthorService.getById(meaningOfPath.id)
-              if (IsNullish(localAuthor)) {
+              if (isNullish(localAuthor)) {
                 const msg = '附加目录含义中的作者信息失败，作者id不可用'
                 LogUtil.error('PluginLoader', msg)
                 reject(msg)
@@ -217,9 +217,9 @@ export default class PluginLoader {
           }
           if (meaningOfPath.type === PathTypeEnum.TAG) {
             const localTagService = new LocalTagService()
-            if (NotNullish(meaningOfPath.id)) {
+            if (notNullish(meaningOfPath.id)) {
               const localTag = await localTagService.getById(meaningOfPath.id)
-              if (IsNullish(localTag)) {
+              if (isNullish(localTag)) {
                 const msg = '附加目录含义中的标签信息失败，标签id不可用'
                 LogUtil.error('PluginLoader', msg)
                 reject(msg)
@@ -231,9 +231,9 @@ export default class PluginLoader {
           }
           if (meaningOfPath.type === PathTypeEnum.SITE) {
             const siteService = new SiteService()
-            if (NotNullish(meaningOfPath.id)) {
+            if (notNullish(meaningOfPath.id)) {
               const site = await siteService.getById(meaningOfPath.id)
-              if (IsNullish(site)) {
+              if (isNullish(site)) {
                 const msg = '附加目录含义中的站点信息失败，站点id不可用'
                 LogUtil.error('PluginLoader', msg)
                 reject(msg)

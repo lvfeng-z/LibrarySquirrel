@@ -1,6 +1,6 @@
 import BaseEntity from '../base/BaseEntity.ts'
 import lodash from 'lodash'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class SecureStorage extends BaseEntity {
   /**
@@ -20,11 +20,8 @@ export default class SecureStorage extends BaseEntity {
 
   constructor(secureStorage?: SecureStorage) {
     super()
-    if (NotNullish(secureStorage)) {
-      lodash.assign(
-        this,
-        lodash.pick(secureStorage, ['storageKey', 'encryptedValue', 'description'])
-      )
+    if (notNullish(secureStorage)) {
+      lodash.assign(this, lodash.pick(secureStorage, ['storageKey', 'encryptedValue', 'description']))
     }
   }
 }

@@ -4,16 +4,16 @@ import SiteAuthor from '@shared/model/entity/SiteAuthor.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
 import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import SelectItem from '@shared/model/util/SelectItem.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
-import { AssertArrayNotEmpty } from '@shared/util/AssertUtil.ts'
+import { assertArrayNotEmpty } from '@shared/util/AssertUtil.ts'
 import SiteAuthorFullDTO from '@shared/model/dto/SiteAuthorFullDTO.js'
 import lodash from 'lodash'
 import SiteAuthorLocalRelateDTO from '@shared/model/dto/SiteAuthorLocalRelateDTO.js'
 import RankedSiteAuthorWithWorkId from '@shared/model/domain/RankedSiteAuthorWithWorkId.ts'
+import { isBlank, isNotBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 站点作者Dao
@@ -110,17 +110,17 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     // 拼接sql语句
     let statement = selectClause.concat(' ', fromClause)
     const whereClause = super.splicingWhereClauses(whereClauseArray)
-    if (StringUtil.isNotBlank(whereClause)) {
+    if (isNotBlank(whereClause)) {
       statement = statement.concat(' ', whereClause)
     }
-    const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
+    const sort = isNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
     const query = toPlainParams(modifiedQuery)
     // 查询
     const db = super.acquire()
     return db
-      .all<unknown[], Record<string, unknown>>(statement, IsNullish(query) ? {} : query)
+      .all<unknown[], Record<string, unknown>>(statement, isNullish(query) ? {} : query)
       .then((rows) => {
         const rawList = super.toResultTypeDataList<SiteAuthorFullDTO>(rows)
         const resultPage = modifiedPage.transform<SiteAuthorFullDTO>()
@@ -149,16 +149,16 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           LEFT JOIN site t3 ON t1.site_id = t3.id`
     let whereClause: string = ''
     let query: SiteAuthorQueryDTO | undefined
-    if (NotNullish(page.query)) {
+    if (notNullish(page.query)) {
       const whereClausesAndQuery = this.getWhereClause(page.query, 't1')
-      if (NotNullish(whereClausesAndQuery.whereClause)) {
+      if (notNullish(whereClausesAndQuery.whereClause)) {
         whereClause += whereClausesAndQuery.whereClause
       }
       query = whereClausesAndQuery.query
     }
 
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
-    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, page, sort, 't1')
 
     const db = this.acquire()
@@ -171,7 +171,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
           selectItem.value = siteAuthorDTO.id
           selectItem.label = siteAuthorDTO.authorName
           // 站点名称列入副标题中
-          if (NotNullish(siteAuthorDTO.site?.siteName)) {
+          if (notNullish(siteAuthorDTO.site?.siteName)) {
             selectItem.subLabels = [siteAuthorDTO.site?.siteName]
           }
           // 本地作者和站点信息保存在额外数据中
@@ -194,7 +194,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param siteAuthors 站点作者
    */
   public async listBySiteAuthor(siteAuthors: { siteAuthorId: string; siteId: number }[]): Promise<SiteAuthor[]> {
-    AssertArrayNotEmpty(siteAuthors, '根据站点作者查询失败，参数不能为空')
+    assertArrayNotEmpty(siteAuthors, '根据站点作者查询失败，参数不能为空')
     const whereClause = siteAuthors
       .map((siteAuthor) => `(site_author_id = ${siteAuthor.siteAuthorId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')
@@ -259,7 +259,7 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
   ): Promise<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>> {
     // 创建一个新的PageModel实例存储修改过的查询条件
     const modifiedPage = new Page(page)
-    if (IsNullish(modifiedPage.query)) {
+    if (isNullish(modifiedPage.query)) {
       modifiedPage.query = new SiteAuthorQueryDTO()
     }
     const query = lodash.cloneDeep(modifiedPage.query)
@@ -284,8 +284,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
-    let statement = selectClause + ' ' + fromClause + (StringUtil.isBlank(whereClause) ? '' : ' ' + whereClause) + ' GROUP BY t1.id'
-    const sort = IsNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
+    let statement = selectClause + ' ' + fromClause + (isBlank(whereClause) ? '' : ' ' + whereClause) + ' GROUP BY t1.id'
+    const sort = isNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
     const db = this.acquire()
     return db

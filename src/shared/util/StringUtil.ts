@@ -94,13 +94,3 @@ export function createObjectsFromRegexMatches(regexPattern: string, targetString
 
   return resultObjects
 }
-
-export default {
-  isBlank,
-  isNotBlank,
-  camelToSnakeCase,
-  snakeToCamelCase,
-  removePrefixIfPresent,
-  concatPrefixIfNotPresent,
-  createObjectsFromRegexMatches
-}

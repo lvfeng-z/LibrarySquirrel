@@ -14,7 +14,7 @@ import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import IPage from '@renderer/model/util/IPage.ts'
 import Page from '@renderer/model/util/Page.ts'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
@@ -26,7 +26,7 @@ import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
 
 // onMounted
 onMounted(() => {
-  if (IsNullish(page.value.query)) {
+  if (isNullish(page.value.query)) {
     page.value.query = new LocalTagQueryDTO()
   }
   page.value.query.sort = [
@@ -101,16 +101,16 @@ const localTagThead: Ref<Thead<LocalTagDTO>[]> = ref([
     remotePaging: true,
     remotePageMethod: localTagQuerySelectItemPageByName,
     getCacheData: (rowData: LocalTagDTO) => {
-      if (IsNullish(rowData.baseTag?.id)) {
+      if (isNullish(rowData.baseTag?.id)) {
         return undefined
       }
       return new SelectItem({
         value: rowData.baseTag.id,
-        label: IsNullish(rowData.baseTag?.localTagName) ? '' : rowData.baseTag.localTagName
+        label: isNullish(rowData.baseTag?.localTagName) ? '' : rowData.baseTag.localTagName
       })
     },
     setCacheData: (rowData: LocalTagDTO, data: SelectItem) => {
-      if (IsNullish(rowData.baseTag)) {
+      if (isNullish(rowData.baseTag)) {
         rowData.baseTag = new LocalTag()
       }
       rowData.baseTag.id = Number(data.value)
@@ -154,7 +154,7 @@ async function localTagQueryPage(page: Page<LocalTagQueryDTO, LocalTagDTO>): Pro
   const response = await apis.localTagQueryDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<LocalTagQueryDTO, LocalTagDTO>>(response)
-    if (IsNullish(responsePage)) {
+    if (isNullish(responsePage)) {
       return undefined
     }
     return new Page(responsePage)
@@ -226,7 +226,7 @@ async function deleteLocalTag(id: string) {
 }
 // 处理站点标签ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: SelectItem[], lower: SelectItem[]) {
-  if (IsNullish(localTagSelected.value)) {
+  if (isNullish(localTagSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地作者',
       type: 'warning'
@@ -234,9 +234,9 @@ async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: Sel
     return
   }
 
-  if (IsNullish(isUpper) ? true : isUpper) {
+  if (isNullish(isUpper) ? true : isUpper) {
     let upperResponse: ApiResponse
-    if (ArrayNotEmpty(upper)) {
+    if (arrayNotEmpty(upper)) {
       const boundIds = upper.map((item) => item.value)
       upperResponse = await apis.siteTagUpdateBindLocalTag(localTagSelected.value.id, boundIds)
     } else {
@@ -244,9 +244,9 @@ async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: Sel
     }
     ApiUtil.failedMsg(upperResponse)
   }
-  if (IsNullish(isUpper) ? true : !isUpper) {
+  if (isNullish(isUpper) ? true : !isUpper) {
     let lowerResponse: ApiResponse
-    if (ArrayNotEmpty(lower)) {
+    if (arrayNotEmpty(lower)) {
       const unBoundIds = lower.map((item) => item.value)
       lowerResponse = await apis.siteTagUpdateBindLocalTag(null, unBoundIds)
     } else {
@@ -261,7 +261,7 @@ async function requestSiteTagSelectItemPage(
   page: IPage<SiteTagQueryDTO, SelectItem>,
   bounded: boolean
 ): Promise<IPage<SiteTagQueryDTO, SelectItem>> {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new SiteTagQueryDTO()
   }
   page.query.localTagId = localTagSelected.value.id
@@ -269,7 +269,7 @@ async function requestSiteTagSelectItemPage(
   return apis.siteTagQueryBoundOrUnboundToLocalTagPage(lodash.cloneDeep(page)).then((response) => {
     if (ApiUtil.check(response)) {
       const newPage = ApiUtil.data<IPage<SiteTagQueryDTO, SelectItem>>(response)
-      return IsNullish(newPage) ? page : newPage
+      return isNullish(newPage) ? page : newPage
     } else {
       return page
     }

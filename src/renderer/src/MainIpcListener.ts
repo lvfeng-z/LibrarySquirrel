@@ -5,7 +5,7 @@ import ConfirmConfig from '@renderer/model/util/ConfirmConfig.ts'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { h } from 'vue'
 import NotifyConfig from '@renderer/model/util/NotifyConfig.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import { AskGotoPage } from '@renderer/utils/PageUtil.ts'
 import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
@@ -62,7 +62,7 @@ export function iniListener() {
           style: {
             display: '-webkit-box',
             '-webkit-box-orient': 'vertical',
-            '-webkit-line-clamp': IsNullish(config.maxRow) ? 3 : config.maxRow,
+            '-webkit-line-clamp': isNullish(config.maxRow) ? 3 : config.maxRow,
             overflow: 'hidden',
             'text-overflow': 'ellipsis'
           }

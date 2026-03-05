@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品
@@ -44,7 +44,7 @@ export default class Work extends BaseEntity {
 
   constructor(work?: Work) {
     super(work)
-    if (NotNullish(work)) {
+    if (notNullish(work)) {
       this.siteId = work.siteId
       this.siteWorkId = work.siteWorkId
       this.siteWorkName = work.siteWorkName

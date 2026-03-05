@@ -1,16 +1,16 @@
 import Plugin from '@shared/model/entity/Plugin.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 let pluginTaskUrlListenerManager: PluginTaskUrlListenerManager | undefined = undefined
 
 function createPluginTaskUrlListenerManager() {
-  if (IsNullish(pluginTaskUrlListenerManager)) {
+  if (isNullish(pluginTaskUrlListenerManager)) {
     pluginTaskUrlListenerManager = new PluginTaskUrlListenerManager()
   }
 }
 
 function getPluginTaskUrlListenerManager() {
-  if (IsNullish(pluginTaskUrlListenerManager)) {
+  if (isNullish(pluginTaskUrlListenerManager)) {
     throw new Error('插件任务URL监听器管理器未初始化！')
   }
   return pluginTaskUrlListenerManager
@@ -53,7 +53,7 @@ class PluginTaskUrlListenerManager {
   register(plugin: Plugin, listenerPatterns: string[]): void {
     for (const pattern of listenerPatterns) {
       const plugins = this.listeners.get(pattern)
-      if (IsNullish(plugins)) {
+      if (isNullish(plugins)) {
         this.listeners.set(pattern, [plugin])
       } else {
         plugins.push(plugin)

@@ -2,7 +2,7 @@ import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import Page from '@renderer/model/util/Page.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import LocalTagQueryDTO from '@shared/model/queryDTO/LocalTagQueryDTO.ts'
 
@@ -27,7 +27,7 @@ export async function siteQuerySelectItemPage(sitePage: IPage<unknown, SelectIte
   const response = await window.api.siteQuerySelectItemPage(sitePage)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<Page<LocalTagQueryDTO, SelectItem>>(response)
-    if (IsNullish(newPage)) {
+    if (isNullish(newPage)) {
       const msg = '分页查询站点选择列表失败，没有返回分页数据'
       ElMessage({ message: msg, type: 'error' })
       throw new Error(msg)

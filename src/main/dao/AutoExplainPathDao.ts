@@ -4,9 +4,9 @@ import AutoExplainPath from '@shared/model/entity/AutoExplainPath.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '@shared/model/util/Page.ts'
 import lodash from 'lodash'
-import StringUtil from '@shared/util/StringUtil.ts'
 import LogUtil from '../util/LogUtil.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 自动解释路径含义Dao
@@ -25,7 +25,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
   ): Promise<Page<AutoExplainPathQueryDTO, AutoExplainPath>> {
     const path = page.query?.path
     // 校验
-    if (StringUtil.isBlank(path)) {
+    if (isBlank(path)) {
       const msg = '分页查询自动解释失败，path不能为空'
       LogUtil.error('', msg)
       throw new Error(msg)
@@ -38,7 +38,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
 
     // 查询和转换
     const resultPage = lodash.cloneDeep(page)
-    const sort = IsNullish(page.query?.sort) ? [] : page.query.sort
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await super.sortAndPage(statement, resultPage, sort)
     const db = this.acquire()
     return db

@@ -12,13 +12,13 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { AuthorRank } from '../constant/AuthorRank.ts'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import WorkSetService from './WorkSetService.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
 import WorkSaveDTO from '@shared/model/dto/WorkSaveDTO.ts'
 import { ReWorkTagService } from './ReWorkTagService.ts'
-import { AssertArrayNotEmpty, AssertNotNullish } from '@shared/util/AssertUtil.ts'
+import { assertArrayNotEmpty, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { SearchCondition } from '@shared/model/util/SearchCondition.js'
 import ReWorkAuthorService from './ReWorkAuthorService.ts'
 import { OriginType } from '../constant/OriginType.js'
@@ -28,11 +28,11 @@ import ResourceService from './ResourceService.js'
 import { BOOL } from '../constant/BOOL.js'
 import ReWorkWorkSetService from './ReWorkWorkSetService.ts'
 import path from 'path'
-import StringUtil from '@shared/util/StringUtil.ts'
 import fs from 'fs/promises'
 import WorkWithWorkSetId from '@shared/model/domain/WorkWithWorkSetId.ts'
 import lodash from 'lodash'
 import { getSettings } from '../core/settings.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao> {
   constructor(db?: DatabaseClient) {
@@ -51,7 +51,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     workId?: number
   ): Promise<WorkSaveDTO> {
     // 校验
-    AssertNotNullish(pluginWorkResponseDTO.work.siteWorkId, '生成作品信息失败，siteWorkId不能为空')
+    assertNotNullish(pluginWorkResponseDTO.work.siteWorkId, '生成作品信息失败，siteWorkId不能为空')
     const workFullDTO = new WorkFullDTO(pluginWorkResponseDTO.work)
     // 在创建更新使用的作品信息时，插件返回的作品id中不包含作品id，手动赋值
     workFullDTO.id = workId
@@ -62,9 +62,9 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     // 生成站点作者保存信息
     if (pluginWorkResponseDTO.siteAuthors === undefined) {
       const siteAuthorService = new SiteAuthorService()
-      AssertNotNullish(workId, '生成作品信息失败，获取作品原站点作者时，workId不能为空')
+      assertNotNullish(workId, '生成作品信息失败，获取作品原站点作者时，workId不能为空')
       result.siteAuthors = await siteAuthorService.listByWorkId(workId)
-    } else if (ArrayNotEmpty(pluginWorkResponseDTO.siteAuthors)) {
+    } else if (arrayNotEmpty(pluginWorkResponseDTO.siteAuthors)) {
       result.siteAuthors = await SiteAuthorService.createSaveInfosFromPlugin(pluginWorkResponseDTO.siteAuthors)
     } else {
       result.siteAuthors = []
@@ -72,10 +72,10 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     // 生成站点标签保存信息
     if (pluginWorkResponseDTO.siteTags === undefined) {
       const siteTagService = new SiteTagService()
-      AssertNotNullish(workId, '生成作品信息失败，获取作品原站点标签时，workId不能为空')
+      assertNotNullish(workId, '生成作品信息失败，获取作品原站点标签时，workId不能为空')
       const tempSiteTags = await siteTagService.listByWorkId(workId)
       result.siteTags = tempSiteTags.map((siteTag) => new SiteTagFullDTO(siteTag))
-    } else if (ArrayNotEmpty(pluginWorkResponseDTO.siteTags)) {
+    } else if (arrayNotEmpty(pluginWorkResponseDTO.siteTags)) {
       result.siteTags = await SiteTagService.createSaveInfosFromPlugin(pluginWorkResponseDTO.siteTags)
     } else {
       result.siteTags = []
@@ -83,9 +83,9 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     // 生成作品集保存信息
     if (pluginWorkResponseDTO.workSets === undefined) {
       const workSetService = new WorkSetService()
-      AssertNotNullish(workId, '生成作品信息失败，获取作品原作品集时，workId不能为空')
+      assertNotNullish(workId, '生成作品信息失败，获取作品原作品集时，workId不能为空')
       result.workSets = await workSetService.listByWorkId(workId)
-    } else if (ArrayNotEmpty(pluginWorkResponseDTO.workSets)) {
+    } else if (arrayNotEmpty(pluginWorkResponseDTO.workSets)) {
       result.workSets = await WorkSetService.createSaveInfosFromPlugin(pluginWorkResponseDTO.workSets)
     } else {
       result.workSets = []
@@ -102,11 +102,11 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     await this.saveSurroundingData(workDTO.workSets, workDTO.siteAuthors, workDTO.siteTags)
 
     // 查询数据库补全作品集、站点作者、站点标签的信息
-    if (ArrayNotEmpty(workDTO.workSets)) {
+    if (arrayNotEmpty(workDTO.workSets)) {
       const workSetService = new WorkSetService()
       const tempParam = workDTO.workSets
         .map((workSet) => {
-          if (IsNullish(workSet.siteWorkSetId) || IsNullish(workSet.siteId)) {
+          if (isNullish(workSet.siteWorkSetId) || isNullish(workSet.siteId)) {
             return
           }
           return {
@@ -114,14 +114,14 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
             siteId: workSet.siteId
           }
         })
-        .filter(NotNullish)
+        .filter(notNullish)
       workDTO.workSets = await workSetService.listBySiteWorkSet(tempParam)
     }
-    if (ArrayNotEmpty(workDTO.siteAuthors)) {
+    if (arrayNotEmpty(workDTO.siteAuthors)) {
       const siteAuthorService = new SiteAuthorService()
       const tempParam = workDTO.siteAuthors
         .map((siteAuthor) => {
-          if (IsNullish(siteAuthor.siteAuthorId) || IsNullish(siteAuthor.siteId)) {
+          if (isNullish(siteAuthor.siteAuthorId) || isNullish(siteAuthor.siteId)) {
             return
           }
           return {
@@ -129,14 +129,14 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
             siteId: siteAuthor.siteId
           }
         })
-        .filter(NotNullish)
+        .filter(notNullish)
       workDTO.siteAuthors = (await siteAuthorService.listBySiteAuthor(tempParam)).map((siteAuthor) => new RankedSiteAuthor(siteAuthor))
     }
-    if (ArrayNotEmpty(workDTO.siteTags)) {
+    if (arrayNotEmpty(workDTO.siteTags)) {
       const siteTagService = new SiteTagService()
       const tempParam = workDTO.siteTags
         .map((siteTag) => {
-          if (IsNullish(siteTag.siteTagId) || IsNullish(siteTag.siteId)) {
+          if (isNullish(siteTag.siteTagId) || isNullish(siteTag.siteId)) {
             return
           }
           return {
@@ -144,7 +144,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
             siteId: siteTag.siteId
           }
         })
-        .filter(NotNullish)
+        .filter(notNullish)
       workDTO.siteTags = (await siteTagService.listBySiteTag(tempParam)).map((siteTag) => new SiteTagFullDTO(siteTag))
     }
     return this.saveOrUpdateAndLink(workDTO, update)
@@ -172,59 +172,59 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
         const workService = new WorkService(transactionDB)
         workSaveDTO.id = await workService.save(workSaveDTO)
       }
-      AssertNotNullish(workSaveDTO.id, '保存作品的周边信息失败，作品id不能为空')
+      assertNotNullish(workSaveDTO.id, '保存作品的周边信息失败，作品id不能为空')
 
       // 关联作品和作品集
-      if (ArrayNotEmpty(workSets)) {
+      if (arrayNotEmpty(workSets)) {
         const reWorkWorkSetService = new ReWorkWorkSetService(transactionDB)
-        const workSetIds = workSets.map((workSet) => workSet.id).filter(NotNullish)
+        const workSetIds = workSets.map((workSet) => workSet.id).filter(notNullish)
         await reWorkWorkSetService.updateLinks(workSaveDTO.id, workSetIds)
       }
       // 作者
-      if (ArrayNotEmpty(localAuthors) || ArrayNotEmpty(siteAuthors)) {
+      if (arrayNotEmpty(localAuthors) || arrayNotEmpty(siteAuthors)) {
         const reWorkAuthorService = new ReWorkAuthorService(transactionDB)
         // 关联作品和本地作者
-        if (ArrayNotEmpty(localAuthors)) {
+        if (arrayNotEmpty(localAuthors)) {
           const localAuthorIds = localAuthors
             .map((localAuthor) => {
-              if (IsNullish(localAuthor.id)) {
+              if (isNullish(localAuthor.id)) {
                 return
               }
               return {
                 authorId: String(localAuthor.id),
-                rank: IsNullish(localAuthor.authorRank) ? AuthorRank.RANK_0 : localAuthor.authorRank
+                rank: isNullish(localAuthor.authorRank) ? AuthorRank.RANK_0 : localAuthor.authorRank
               }
             })
-            .filter(NotNullish)
+            .filter(notNullish)
           await reWorkAuthorService.updateLinks(OriginType.LOCAL, localAuthorIds, workSaveDTO.id)
         }
         // 关联作品和站点作者
-        if (ArrayNotEmpty(siteAuthors)) {
+        if (arrayNotEmpty(siteAuthors)) {
           const siteAuthorIds = siteAuthors
             .map((siteAuthor) => {
-              if (IsNullish(siteAuthor.id)) {
+              if (isNullish(siteAuthor.id)) {
                 return
               }
               return {
                 authorId: String(siteAuthor.id),
-                rank: IsNullish(siteAuthor.authorRank) ? AuthorRank.RANK_0 : siteAuthor.authorRank
+                rank: isNullish(siteAuthor.authorRank) ? AuthorRank.RANK_0 : siteAuthor.authorRank
               }
             })
-            .filter(NotNullish)
+            .filter(notNullish)
           await reWorkAuthorService.updateLinks(OriginType.SITE, siteAuthorIds, workSaveDTO.id)
         }
       }
       // 标签
-      if (ArrayNotEmpty(localTags) || ArrayNotEmpty(siteTags)) {
+      if (arrayNotEmpty(localTags) || arrayNotEmpty(siteTags)) {
         const reWorkTagService = new ReWorkTagService(transactionDB)
         // 关联作品和本地标签
-        if (ArrayNotEmpty(localTags)) {
-          const localTagIds = localTags.map((localTag) => localTag.id).filter(NotNullish)
+        if (arrayNotEmpty(localTags)) {
+          const localTagIds = localTags.map((localTag) => localTag.id).filter(notNullish)
           await reWorkTagService.updateLinks(OriginType.LOCAL, localTagIds, workSaveDTO.id)
         }
         // 关联作品和站点标签
-        if (ArrayNotEmpty(siteTags)) {
-          const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter(NotNullish)
+        if (arrayNotEmpty(siteTags)) {
+          const siteTagIds = siteTags.map((siteTag) => siteTag.id).filter(notNullish)
           await reWorkTagService.updateLinks(OriginType.SITE, siteTagIds, workSaveDTO.id)
         }
       }
@@ -255,17 +255,17 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     siteTags: SiteTagFullDTO[] | undefined | null
   ): Promise<void> {
     // 保存作品集
-    if (ArrayNotEmpty(workSets)) {
+    if (arrayNotEmpty(workSets)) {
       const workSetService = new WorkSetService()
       await workSetService.saveOrUpdateBatchBySiteWorkSetId(workSets)
     }
     // 保存站点作者
-    if (ArrayNotEmpty(siteAuthors)) {
+    if (arrayNotEmpty(siteAuthors)) {
       const siteAuthorService = new SiteAuthorService()
       await siteAuthorService.saveOrUpdateBatchBySiteAuthorId(siteAuthors)
     }
     // 保存站点标签
-    if (ArrayNotEmpty(siteTags)) {
+    if (arrayNotEmpty(siteTags)) {
       const siteTagService = new SiteTagService()
       await siteTagService.saveOrUpdateBatchBySiteTagId(siteTags)
     }
@@ -294,7 +294,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
       const resultPage = await this.dao.multipleConditionQueryPage(page, query)
 
       // 给每个作品附加作者信息
-      if (NotNullish(resultPage.data)) {
+      if (notNullish(resultPage.data)) {
         const workIds = resultPage.data.map((workDTO) => workDTO.id) as number[]
         if (workIds.length > 0) {
           const localAuthorService = new LocalAuthorService()
@@ -314,7 +314,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
   public async updateWithResById(workFullDTO: WorkFullDTO): Promise<number> {
     return this.transaction<number>(async (transactionDB) => {
       const resService = new ResourceService(transactionDB)
-      if (NotNullish(workFullDTO.resource)) {
+      if (notNullish(workFullDTO.resource)) {
         await resService.updateById(workFullDTO.resource)
       }
       return this.updateById(workFullDTO)
@@ -330,17 +330,17 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
       const resService = new ResourceService(transactionDB)
       const resList = await resService.listByWorkId(workId)
       await this.deleteById(workId)
-      if (ArrayNotEmpty(resList)) {
+      if (arrayNotEmpty(resList)) {
         const workdir = getSettings().store.workdir
         const resFiles = resList
           .map((res) => {
-            if (StringUtil.isNotBlank(res.filePath)) {
+            if (isNotBlank(res.filePath)) {
               return path.join(workdir, res.filePath)
             } else {
               return undefined
             }
           })
-          .filter(NotNullish)
+          .filter(notNullish)
         const resDeletePromiseList: Promise<void>[] = []
         for (const resFile of resFiles) {
           resDeletePromiseList.push(fs.unlink(resFile))
@@ -388,7 +388,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
 
     // 站点信息
     const siteService = new SiteService()
-    if (NotNullish(fullInfo.siteId)) {
+    if (notNullish(fullInfo.siteId)) {
       fullInfo.site = await siteService.getById(fullInfo.siteId)
     }
 
@@ -429,8 +429,8 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
 
     // 站点信息
     const siteService = new SiteService()
-    const siteIds = fullInfos.map((fullInfo) => fullInfo.siteId).filter(NotNullish)
-    const sites = ArrayNotEmpty(siteIds) ? await siteService.listByIds(siteIds) : []
+    const siteIds = fullInfos.map((fullInfo) => fullInfo.siteId).filter(notNullish)
+    const sites = arrayNotEmpty(siteIds) ? await siteService.listByIds(siteIds) : []
     const siteIdToSiteMap = lodash.keyBy(sites, 'id')
 
     // 作品集
@@ -440,7 +440,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     for (const fullInfo of fullInfos) {
       fullInfo.inactiveResource = []
       const tempWorkId = fullInfo.id
-      if (NotNullish(tempWorkId)) {
+      if (notNullish(tempWorkId)) {
         const tempResourceList = workIdToResourceMap[tempWorkId]
         for (const resource of tempResourceList) {
           if (resource.state === BOOL.TRUE) {
@@ -456,7 +456,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
         fullInfo.workSets = workIdToWorkSetMap[tempWorkId]
       }
       const tempSiteId = fullInfo.siteId
-      fullInfo.site = IsNullish(tempSiteId) ? undefined : siteIdToSiteMap[tempSiteId]
+      fullInfo.site = isNullish(tempSiteId) ? undefined : siteIdToSiteMap[tempSiteId]
     }
 
     return fullInfos
@@ -479,7 +479,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
    * @param siteIdAndSiteWorkIds
    */
   public async listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds: { siteId: number; siteWorkId: string }[]): Promise<Work[]> {
-    AssertArrayNotEmpty(siteIdAndSiteWorkIds, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
+    assertArrayNotEmpty(siteIdAndSiteWorkIds, '根据站点id和作品在站点的id查询作品列表失败，查询参数不能为空')
     return this.dao.listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds)
   }
 

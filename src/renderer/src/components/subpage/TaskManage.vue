@@ -7,10 +7,10 @@ import SearchTable from '../common/SearchTable.vue'
 import { Thead } from '../../model/util/Thead'
 import DialogMode from '../../model/util/DialogMode'
 import { ElTag } from 'element-plus'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { throttle } from 'lodash'
 import { TaskStatusEnum } from '../../constants/TaskStatusEnum.ts'
-import { GetNode } from '@shared/util/TreeUtil.ts'
+import { getNode } from '@shared/util/TreeUtil.ts'
 import TaskDialog from '../dialogs/TaskDialog.vue'
 import Page from '../../model/util/Page.ts'
 import TaskCreateResponse from '../../model/util/TaskCreateResponse'
@@ -208,7 +208,7 @@ function handleCreatTaskResponse(response: ApiResponse, notificationId: string) 
   let msg: string
   if (ApiUtil.check(response)) {
     const data = ApiUtil.data<TaskCreateResponse>(response)
-    if (NotNullish(data)) {
+    if (notNullish(data)) {
       // 刷新一次列表
       taskManageSearchTable.value.doSearch()
       if (data.succeed) {
@@ -233,10 +233,10 @@ function handleCreatTaskResponse(response: ApiResponse, notificationId: string) 
 }
 // 分页查询父任务的函数
 async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Page<TaskQueryDTO, object> | undefined> {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new TaskQueryDTO()
   }
-  if (ArrayNotEmpty(page.query.sort)) {
+  if (arrayNotEmpty(page.query.sort)) {
     page.query.sort = [
       ...page.query.sort,
       ...[
@@ -273,7 +273,7 @@ async function load(row: unknown): Promise<TaskTreeDTO[]> {
       const data = (page.data === undefined ? [] : page.data) as TaskTreeDTO[]
       // 子任务列表赋值给对应的父任务的children
       const parent = dataList.value.find((task) => (row as TaskTreeDTO).id === task.id)
-      if (NotNullish(parent)) {
+      if (notNullish(parent)) {
         parent.children = data
       }
       return data
@@ -289,32 +289,32 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   const notFoundList: (number | string)[] = []
   for (const id of ids) {
     let tempStatus = useParentTaskStore().getTask(Number(id))
-    if (NotNullish(tempStatus)) {
+    if (notNullish(tempStatus)) {
       scheduleList.push(tempStatus)
       continue
     }
     tempStatus = useTaskStore().getTask(Number(id))
-    if (NotNullish(tempStatus)) {
+    if (notNullish(tempStatus)) {
       scheduleList.push(tempStatus)
       continue
     }
     notFoundList.push(id)
   }
-  if (ArrayNotEmpty(notFoundList)) {
+  if (arrayNotEmpty(notFoundList)) {
     const response = await apis.taskListStatus(notFoundList)
     if (ApiUtil.check(response)) {
       const responseScheduleList = ApiUtil.data<TaskScheduleDTO[]>(response)
-      if (ArrayNotEmpty(responseScheduleList)) {
+      if (arrayNotEmpty(responseScheduleList)) {
         scheduleList.push(...responseScheduleList)
       }
     }
   }
-  return ArrayNotEmpty(scheduleList) ? scheduleList : undefined
+  return arrayNotEmpty(scheduleList) ? scheduleList : undefined
 }
 // 给行添加选择器，用于区分父任务和子任务
 function tableRowClassName(data: { row: unknown; rowIndex: number }) {
   const row = data.row as TaskTreeDTO
-  if (row.hasChildren || IsNullish(row.pid) || row.pid === 0) {
+  if (row.hasChildren || isNullish(row.pid) || row.pid === 0) {
     return 'task-manage-search-table-parent-row'
   } else {
     return 'task-manage-search-table-child-row'
@@ -376,7 +376,7 @@ function handleDownloadDialog(_event: PointerEvent, isLocal: boolean, newState?:
   } else {
     downloadInputPlaceholder.value = '输入url'
   }
-  if (NotNullish(newState)) {
+  if (notNullish(newState)) {
     downloadDialogState.value = newState
   } else {
     downloadDialogState.value = !downloadDialogState.value
@@ -394,9 +394,9 @@ async function refreshTask() {
       const tempRoot = new TaskTreeDTO()
       tempRoot.children = dataList.value
       return visibleRowsId.filter((id: number) => {
-        const task = GetNode<TaskTreeDTO>(tempRoot, id)
+        const task = getNode<TaskTreeDTO>(tempRoot, id)
         return (
-          NotNullish(task) &&
+          notNullish(task) &&
           (task.status === TaskStatusEnum.WAITING ||
             task.status === TaskStatusEnum.PROCESSING ||
             task.status === TaskStatusEnum.PAUSE ||
@@ -411,7 +411,7 @@ async function refreshTask() {
     while (refreshTasks.length > 0) {
       await taskManageSearchTable.value.refreshData(refreshTasks, false)
       await new Promise((resolve) => setTimeout(resolve, 500))
-      if (IsNullish(taskManageSearchTable.value)) {
+      if (isNullish(taskManageSearchTable.value)) {
         break
       }
       refreshTasks = getRefreshTasks()
@@ -439,7 +439,7 @@ function startTask(row: TaskTreeDTO, retry: boolean) {
     })
   }
   row.status = TaskStatusEnum.WAITING
-  if (row.isCollection && NotNullish(row.children)) {
+  if (row.isCollection && notNullish(row.children)) {
     row.children.forEach((child) => (child.status = TaskStatusEnum.WAITING))
   }
 }
@@ -456,7 +456,7 @@ async function getUrlMatchedPlugin(url: string): Promise<Plugin[]> {
   const response = await apis.pluginTaskUrlListenerManagerListListener(url)
   if (ApiUtil.check(response)) {
     const plugins = ApiUtil.data<Plugin[]>(response)
-    if (NotNullish(plugins)) {
+    if (notNullish(plugins)) {
       return plugins
     }
   }
@@ -465,7 +465,7 @@ async function getUrlMatchedPlugin(url: string): Promise<Plugin[]> {
 // 获取受支持提示文本
 async function getSupportedText() {
   const supportedPlugins = await getUrlMatchedPlugin(sourceUrl.value)
-  if (ArrayIsEmpty(supportedPlugins)) {
+  if (arrayIsEmpty(supportedPlugins)) {
     return ''
   } else {
     const pluginNumber = supportedPlugins.length
@@ -593,8 +593,8 @@ async function handleSourceUrlInput() {
         />
         <span class="task-manage-download-dialog-supported-tips"> {{ supportStatus }} </span>
         <template #footer>
-          <el-tooltip :disabled="ArrayNotEmpty(supportedPluginListenerList)">
-            <el-button type="primary" :disabled="ArrayIsEmpty(supportedPluginListenerList)" @click="createTaskFromSource">
+          <el-tooltip :disabled="arrayNotEmpty(supportedPluginListenerList)">
+            <el-button type="primary" :disabled="arrayIsEmpty(supportedPluginListenerList)" @click="createTaskFromSource">
               创建任务
             </el-button>
             <template #content> 当前输入的url不受支持 </template>

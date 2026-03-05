@@ -7,8 +7,8 @@ import SiteTagFullDTO from './SiteTagFullDTO.ts'
 import WorkSet from '../entity/WorkSet.ts'
 import Resource from '../entity/Resource.ts'
 import lodash from 'lodash'
-import { NotNullish } from '../../util/CommonUtil.ts'
-import { ParsePropertyFromJson } from '../../util/ObjectUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
+import { parsePropertyFromJson } from '../../util/ObjectUtil.ts'
 
 /**
  * 作品
@@ -56,8 +56,8 @@ export default class WorkFullDTO extends Work {
 
   constructor(work?: Work) {
     super(work)
-    if (NotNullish(work)) {
-      ParsePropertyFromJson(work, [
+    if (notNullish(work)) {
+      parsePropertyFromJson(work, [
         {
           property: 'resource',
           builder: (src) => new Resource(src)

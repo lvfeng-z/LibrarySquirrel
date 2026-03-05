@@ -2,9 +2,9 @@
 import { computed, Ref, ref } from 'vue'
 import CollapsePanel from '@renderer/components/common/CollapsePanel.vue'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import NotificationItem from '@renderer/model/util/NotificationItem.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 // model
 // 开关状态
@@ -34,10 +34,10 @@ const currentPage: Ref<NotificationItem[]> = computed(() => {
         <template v-for="item in currentPage" :key="item.title">
           <div class="notification-list-item">
             <span class="notification-list-item-title" :title="item.title">{{ item.title }}</span>
-            <span v-if="StringUtil.isNotBlank(item.description)" class="notification-list-item-description">
+            <span v-if="isNotBlank(item.description)" class="notification-list-item-description">
               {{ item.description }}
             </span>
-            <component :is="item.render()" v-if="NotNullish(item.render)"></component>
+            <component :is="item.render()" v-if="notNullish(item.render)"></component>
           </div>
         </template>
       </el-scrollbar>

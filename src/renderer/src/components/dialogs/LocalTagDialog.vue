@@ -3,7 +3,7 @@ import DialogMode from '../../model/util/DialogMode'
 import ApiUtil from '../../utils/ApiUtil'
 import lodash from 'lodash'
 import FormDialog from '@renderer/components/dialogs/FormDialog.vue'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
 import LocalTagDTO from '@shared/model/dto/LocalTagDTO.ts'
@@ -99,7 +99,7 @@ async function handleSaveButtonClicked() {
             <auto-load-select v-model="formData.baseLocalTagId" :load="localTagQuerySelectItemPageByName" remote filterable clearable>
               <template #default="{ list }">
                 <el-option
-                  v-if="NotNullish(formData.baseTag)"
+                  v-if="notNullish(formData.baseTag)"
                   :hidden="true"
                   :value="formData.baseTag.id"
                   :label="formData.baseTag.localTagName"

@@ -6,8 +6,8 @@ import DataTableOperationResponse from '../../model/util/DataTableOperationRespo
 import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
 import { TreeNode } from 'element-plus'
-import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
-import { GetPropByPath, SetPropByPath } from '@shared/util/ObjectUtil.ts'
+import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { getPropByPath, setPropByPath } from '@shared/util/ObjectUtil.ts'
 
 // props
 const props = withDefaults(
@@ -59,7 +59,7 @@ defineExpose({
 const dataTable = ref() // el-table组件的实例
 const currentSelect: Ref<Data[]> = ref([])
 const currentSelectKey: Ref<unknown | undefined> = computed(() => {
-  if (ArrayNotEmpty(currentSelect.value)) {
+  if (arrayNotEmpty(currentSelect.value)) {
     return currentSelect.value[0][props.dataKey]
   } else {
     return undefined
@@ -200,12 +200,12 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
           <template #default="scope">
             <component
               :is="item.editMethod === 'popper' ? PopperInput : CommonInput"
-              :data="GetPropByPath(scope.row, item.key)"
+              :data="getPropByPath(scope.row, item.key)"
               :config="item"
               :cache-data="item.getCacheData(scope.row)"
               :extra-data="scope.row"
               @data-changed="handleRowChange(scope.row)"
-              @update:data="(newValue: unknown) => SetPropByPath(scope.row, item.key, newValue)"
+              @update:data="(newValue: unknown) => setPropByPath(scope.row, item.key, newValue)"
               @update:cache-data="(newData) => item.setCacheData(scope.row, newData)"
             />
           </template>

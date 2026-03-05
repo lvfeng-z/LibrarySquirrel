@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 export default class Resource extends BaseEntity {
   /**
@@ -59,7 +59,7 @@ export default class Resource extends BaseEntity {
 
   constructor(resource?: Resource) {
     super(resource)
-    if (NotNullish(resource)) {
+    if (notNullish(resource)) {
       this.workId = resource.workId
       this.taskId = resource.taskId
       this.state = resource.state

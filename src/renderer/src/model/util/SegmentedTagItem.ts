@@ -1,5 +1,5 @@
 import SelectItem, { CSelectItem } from './SelectItem.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 export default class SegmentedTagItem extends SelectItem {
   disabled: boolean
@@ -15,7 +15,7 @@ export default class SegmentedTagItem extends SelectItem {
 
   constructor(cSegmentedTagItem: CSegmentedTagItem) {
     super(cSegmentedTagItem)
-    this.disabled = IsNullish(cSegmentedTagItem.disabled) ? false : cSegmentedTagItem.disabled
+    this.disabled = isNullish(cSegmentedTagItem.disabled) ? false : cSegmentedTagItem.disabled
     this.mainBackGround = cSegmentedTagItem.mainBackGround
     this.mainBackGroundHover = cSegmentedTagItem.mainBackGroundHover
     this.mainTextColor = cSegmentedTagItem.mainTextColor

@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 
 /**
@@ -45,7 +45,7 @@ export default class WorkSet extends BaseEntity {
 
   constructor(workSet?: WorkSet) {
     super(workSet)
-    if (NotNullish(workSet)) {
+    if (notNullish(workSet)) {
       lodash.assign(
         this,
         lodash.pick(workSet, [

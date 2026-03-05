@@ -5,7 +5,7 @@ import DatabaseClient from '../database/DatabaseClient.ts'
 import ReWorkAuthorDao from '../dao/ReWorkAuthorDao.ts'
 import { OriginType } from '../constant/OriginType.js'
 import { AuthorRank } from '../constant/AuthorRank.js'
-import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 export default class ReWorkAuthorService extends BaseService<ReWorkAuthorQueryDTO, ReWorkAuthor, ReWorkAuthorDao> {
   constructor(db?: DatabaseClient) {
@@ -57,7 +57,7 @@ export default class ReWorkAuthorService extends BaseService<ReWorkAuthorQueryDT
     const oldReList = await this.listByWorkId(workId, type)
 
     // 删除已经不存在的关联
-    if (ArrayNotEmpty(oldReList)) {
+    if (arrayNotEmpty(oldReList)) {
       let notExistingList: ReWorkAuthor[]
       if (type === OriginType.LOCAL) {
         notExistingList = oldReList.filter(
@@ -66,7 +66,7 @@ export default class ReWorkAuthorService extends BaseService<ReWorkAuthorQueryDT
       } else {
         notExistingList = oldReList.filter((oldRe) => !authorIdRanks.some((authorRank) => authorRank.authorId === oldRe.siteAuthorId))
       }
-      if (ArrayNotEmpty(notExistingList)) {
+      if (arrayNotEmpty(notExistingList)) {
         await this.deleteBatchById(notExistingList.map((notExisting) => notExisting.id as number))
       }
     }

@@ -2,12 +2,12 @@ import Electron from 'electron'
 import { v4 } from 'uuid'
 import NotifyConfig from '@shared/model/util/NotifyConfig.js'
 import { getMainWindow } from '../core/mainWindow.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 export function GetBrowserWindow(width?: number, height?: number): Electron.BrowserWindow {
   return new Electron.BrowserWindow({
-    width: IsNullish(width) ? 800 : width,
-    height: IsNullish(height) ? 600 : height,
+    width: isNullish(width) ? 800 : width,
+    height: isNullish(height) ? 600 : height,
     webPreferences: {
       nodeIntegration: true
     }

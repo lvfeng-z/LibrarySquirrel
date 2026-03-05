@@ -1,16 +1,16 @@
 import { TaskQueue } from './classes/TaskQueue.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 let taskQueue: TaskQueue | undefined = undefined
 
 function createTaskQueue() {
-  if (IsNullish(taskQueue)) {
+  if (isNullish(taskQueue)) {
     taskQueue = new TaskQueue()
   }
 }
 
 function getTaskQueue() {
-  if (IsNullish(taskQueue)) {
+  if (isNullish(taskQueue)) {
     throw new Error('任务队列未初始化！')
   }
   return taskQueue

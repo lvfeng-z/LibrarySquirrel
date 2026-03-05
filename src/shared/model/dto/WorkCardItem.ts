@@ -3,7 +3,7 @@ import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
 import RankedSiteAuthor from '../domain/RankedSiteAuthor.ts'
 import WorkFullDTO from './WorkFullDTO.ts'
 import WorkSetWithWorkDTO from './WorkSetWithWorkDTO.ts'
-import { ArrayNotEmpty, NotNullish } from '../../util/CommonUtil.ts'
+import { arrayNotEmpty, notNullish } from '../../util/CommonUtil.ts'
 
 export default class WorkCardItem {
   /**
@@ -54,12 +54,12 @@ export default class WorkCardItem {
       this.localAuthors = []
       // 从作品中提取本地作者并去重
       source.workList.forEach((workFullInfo) => {
-        if (ArrayNotEmpty(workFullInfo.localAuthors)) {
+        if (arrayNotEmpty(workFullInfo.localAuthors)) {
           workFullInfo.localAuthors.forEach((localAuthor) => {
-            if (NotNullish(localAuthor.id)) {
+            if (notNullish(localAuthor.id)) {
               if (!seenIds.has(localAuthor.id)) {
                 seenIds.add(localAuthor.id)
-                if (NotNullish(this.localAuthors)) {
+                if (notNullish(this.localAuthors)) {
                   this.localAuthors.push(localAuthor)
                 }
               }
@@ -71,12 +71,12 @@ export default class WorkCardItem {
       this.siteAuthors = []
       seenIds.clear()
       source.workList.forEach((workFullInfo) => {
-        if (ArrayNotEmpty(workFullInfo.siteAuthors)) {
+        if (arrayNotEmpty(workFullInfo.siteAuthors)) {
           workFullInfo.siteAuthors.forEach((siteAuthor) => {
-            if (NotNullish(siteAuthor.id)) {
+            if (notNullish(siteAuthor.id)) {
               if (!seenIds.has(siteAuthor.id)) {
                 seenIds.add(siteAuthor.id)
-                if (NotNullish(this.siteAuthors)) {
+                if (notNullish(this.siteAuthors)) {
                   this.siteAuthors.push(siteAuthor)
                 }
               }

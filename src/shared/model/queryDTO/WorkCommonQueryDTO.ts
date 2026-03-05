@@ -1,4 +1,4 @@
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import WorkQueryDTO from './WorkQueryDTO.ts'
 import lodash from 'lodash'
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
@@ -47,7 +47,7 @@ export default class WorkCommonQueryDTO extends WorkQueryDTO {
 
   constructor(workQueryDTO?: WorkQueryDTO) {
     super(workQueryDTO)
-    if (NotNullish(workQueryDTO)) {
+    if (notNullish(workQueryDTO)) {
       lodash.assign(
         this,
         lodash.pick(workQueryDTO, [

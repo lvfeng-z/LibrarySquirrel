@@ -3,7 +3,7 @@ import TaskCreateDTO from '@shared/model/dto/TaskCreateDTO.js'
 import { isBlank } from '@shared/util/StringUtil.ts'
 import LogUtil from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import Task from '@shared/model/entity/Task.js'
 import TaskService from '../service/TaskService.js'
 import SiteService from '../service/SiteService.js'
@@ -71,7 +71,7 @@ export default class CreateTaskWritable extends Writable {
     this.siteService = siteService
     this.taskPlugin = taskPlugin
     this.pluginInfo = JSON.stringify(taskPlugin)
-    this.batchSize = IsNullish(batchSize) ? 32 : batchSize
+    this.batchSize = isNullish(batchSize) ? 32 : batchSize
     this.siteCache = new Map<string, Promise<number>>()
   }
 
@@ -102,12 +102,12 @@ export default class CreateTaskWritable extends Writable {
     task.pid = this.parentTask.id
     // 根据站点域名查询站点id
     let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteName)
-    if (IsNullish(siteId)) {
+    if (isNullish(siteId)) {
       const tempSite = this.siteService.getByName(task.siteName)
       siteId = tempSite.then((site) => site?.id)
     }
     task.siteId = await siteId
-    if (IsNullish(task.siteId)) {
+    if (isNullish(task.siteId)) {
       LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
       callback()
       return
@@ -143,7 +143,7 @@ export default class CreateTaskWritable extends Writable {
       // 更新pid
       this.taskBuffer.forEach((task) => (task.pid = this.parentTask.id as number))
     }
-    if (ArrayNotEmpty(this.taskBuffer)) {
+    if (arrayNotEmpty(this.taskBuffer)) {
       await this.saveTasks()
     }
     callback(null)

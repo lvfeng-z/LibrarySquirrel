@@ -4,7 +4,7 @@ import lodash from 'lodash'
  * 去除值为undefined的属性
  * @param obj
  */
-function NonUndefinedValue(obj: object | undefined): object {
+export function nonUndefinedValue(obj: object | undefined): object {
   if (obj === undefined) {
     return {}
   }
@@ -19,7 +19,7 @@ function NonUndefinedValue(obj: object | undefined): object {
  * 把所有undefined的值改为null
  * @param obj
  */
-function UndefinedToNull(obj: object | undefined): object {
+export function undefinedToNull(obj: object | undefined): object {
   if (obj === undefined) {
     return {}
   }
@@ -39,7 +39,7 @@ function UndefinedToNull(obj: object | undefined): object {
  * @param objects 对象列表
  * @param fill 如何填充被对齐的值
  */
-function AlignProperties(objects: object[], fill: unknown) {
+export function alignProperties(objects: object[], fill: unknown) {
   // 所有可能的属性名集合
   const allPossibleProperties = [...new Set(objects.flatMap(Object.keys))]
   // 创建一个模板对象，所有属性设为fill
@@ -58,7 +58,7 @@ function AlignProperties(objects: object[], fill: unknown) {
  * @param obj2
  * @param constr
  */
-function MergeObjects<T>(obj1: object, obj2: object, constr: (src) => T): T {
+export function mergeObjects<T>(obj1: object, obj2: object, constr: (src) => T): T {
   // 创建一个新的对象用于存放合并后的结果
   const merged = {}
 
@@ -86,13 +86,19 @@ function MergeObjects<T>(obj1: object, obj2: object, constr: (src) => T): T {
   return constr(merged)
 }
 
+export function assignExisting(target: object, source: object): void {
+  // 过滤 source：只保留 target 中也有的 key
+  const filteredSource = lodash.pickBy(source, (_value, key) => lodash.has(target, key))
+  lodash.assignWith(target, filteredSource)
+}
+
 /**
  * 将指定属性从json字符串解析为指定对象
  * @param source
  * @param properties
  * @constructor
  */
-export function ParsePropertyFromJson(source: object, properties: { property: string; builder: (arg) => unknown }[]) {
+export function parsePropertyFromJson(source: object, properties: { property: string; builder: (arg) => unknown }[]) {
   for (const property of properties) {
     if (typeof source[property.property] === 'string') {
       const tempObj = JSON.parse(source[property.property])
@@ -101,7 +107,7 @@ export function ParsePropertyFromJson(source: object, properties: { property: st
   }
 }
 
-export function CopyIgnoreUndefined(target: object, source: object) {
+export function copyIgnoreUndefined(target: object, source: object) {
   lodash.assignWith(target, source, (targetValue, sourceValue) => {
     if (sourceValue === undefined) {
       return targetValue
@@ -111,7 +117,7 @@ export function CopyIgnoreUndefined(target: object, source: object) {
   })
 }
 
-export function GetPropByPath(obj: object, path: string) {
+export function getPropByPath(obj: object, path: string) {
   // 将路径字符串按照'.'分割成数组
   const properties = path.split('.')
 
@@ -127,7 +133,7 @@ export function GetPropByPath(obj: object, path: string) {
   return result
 }
 
-export function SetPropByPath(obj: object, path: string, val: unknown) {
+export function setPropByPath(obj: object, path: string, val: unknown) {
   // 将路径字符串按照'.'分割成数组
   const properties = path.split('.')
 
@@ -146,12 +152,4 @@ export function SetPropByPath(obj: object, path: string, val: unknown) {
     result = result[prop]
     index++
   }
-}
-
-export default {
-  nonUndefinedValue: NonUndefinedValue,
-  undefinedToNull: UndefinedToNull,
-  alignProperties: AlignProperties,
-  mergeObjects: MergeObjects,
-  ParsePropertyFromJson
 }

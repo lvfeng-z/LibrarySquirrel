@@ -5,7 +5,7 @@ import { nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '@renderer/model/util/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
@@ -48,7 +48,7 @@ async function loadSettings() {
   const response = await apis.settingsGetSettings()
   if (ApiUtil.check(response)) {
     const data = ApiUtil.data<Settings>(response)
-    settings.value = IsNullish(data) ? emptySettings : data
+    settings.value = isNullish(data) ? emptySettings : data
     oldSettings = lodash.cloneDeep(settings.value)
   } else {
     ElMessage({
@@ -59,7 +59,7 @@ async function loadSettings() {
 }
 // 保存或重置设置
 async function saveOrReset(fun: (arg?: unknown) => Promise<ApiResponse>) {
-  if (NotNullish(settings.value)) {
+  if (notNullish(settings.value)) {
     const changed = getChangedProperties(settings.value, oldSettings)
     const response = await fun(changed)
     if (ApiUtil.check(response)) {
@@ -115,7 +115,7 @@ async function selectDir() {
   const response = await apis.dirSelect(false, true)
   if (ApiUtil.check(response)) {
     const dirSelectResult = ApiUtil.data(response) as Electron.OpenDialogReturnValue
-    if (!dirSelectResult.canceled && ArrayNotEmpty(dirSelectResult.filePaths) && NotNullish(settings.value)) {
+    if (!dirSelectResult.canceled && arrayNotEmpty(dirSelectResult.filePaths) && notNullish(settings.value)) {
       settings.value.workdir = dirSelectResult.filePaths[0]
     }
   }
@@ -172,7 +172,7 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
     const startPos = inputElement.selectionStart // 光标起始位置
     const endPos = inputElement.selectionEnd // 光标结束位置
 
-    if (NotNullish(startPos) && NotNullish(endPos)) {
+    if (notNullish(startPos) && notNullish(endPos)) {
       // 插入字符串到光标位置
       settings.value.workSettings.fileNameFormat =
         settings.value.workSettings.fileNameFormat.slice(0, startPos) +

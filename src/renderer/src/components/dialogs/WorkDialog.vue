@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, h, nextTick, onBeforeMount, onBeforeUnmount, onMounted, Ref, ref, UnwrapRef } from 'vue'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import TagBox from '../common/TagBox.vue'
 import SelectItem from '../../model/util/SelectItem'
 import ApiUtil from '../../utils/ApiUtil'
@@ -23,8 +23,8 @@ import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
 import LocalTag from '@shared/model/entity/LocalTag.ts'
 import SiteTag from '@shared/model/entity/SiteTag.ts'
 import SiteTagFullDTO from '@shared/model/dto/SiteTagFullDTO.ts'
-import { CopyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { copyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 // props
 const props = defineProps<{
@@ -112,8 +112,8 @@ async function getWorkInfo() {
   const response = await apis.workGetFullWorkInfoById(currentWorkFullInfo.value.id)
   if (ApiUtil.check(response)) {
     const temp = ApiUtil.data<WorkFullDTO>(response)
-    if (NotNullish(temp)) {
-      CopyIgnoreUndefined(currentWorkFullInfo.value, temp)
+    if (notNullish(temp)) {
+      copyIgnoreUndefined(currentWorkFullInfo.value, temp)
     } else {
       ElMessage({
         type: 'error',
@@ -133,18 +133,18 @@ function refreshTags() {
         disabled: false
       })
   )
-  localTags.value = IsNullish(tempLocalTags) ? [] : tempLocalTags
+  localTags.value = isNullish(tempLocalTags) ? [] : tempLocalTags
   // 站点标签
   const tempSiteTags = currentWorkFullInfo.value.siteTags?.map(
     (siteTag) =>
       new SegmentedTagItem({
         value: siteTag.id as number,
         label: siteTag.siteTagName as string,
-        subLabels: [(StringUtil.isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string],
+        subLabels: [(isBlank(siteTag.site?.siteName) ? '?' : siteTag.site?.siteName) as string],
         disabled: false
       })
   )
-  siteTags.value = IsNullish(tempSiteTags) ? [] : tempSiteTags
+  siteTags.value = isNullish(tempSiteTags) ? [] : tempSiteTags
 }
 // 刷新作品集
 function refreshWorkSets() {
@@ -156,7 +156,7 @@ function refreshWorkSets() {
         disabled: false
       })
   )
-  workSets.value = IsNullish(tempWorkSets) ? [] : tempWorkSets
+  workSets.value = isNullish(tempWorkSets) ? [] : tempWorkSets
 }
 // 刷新作品
 async function refreshWorkInfo() {
@@ -167,14 +167,14 @@ async function refreshWorkInfo() {
 // 处理本地标签exchangeBox确认交换事件
 async function handleTagExchangeConfirm(type: OriginType, upper: SelectItem[], lower: SelectItem[], isUpper?: boolean) {
   const workId = currentWorkFullInfo.value.id
-  if (IsNullish(isUpper) ? true : isUpper) {
+  if (isNullish(isUpper) ? true : isUpper) {
     const boundIds = upper.map((item) => item.value)
     const boundResponse: ApiResponse = await apis.reWorkTagLink(type, boundIds, workId)
     if (ApiUtil.check(boundResponse)) {
       ApiUtil.msg(boundResponse)
     }
   }
-  if (IsNullish(isUpper) ? true : !isUpper) {
+  if (isNullish(isUpper) ? true : !isUpper) {
     const unboundIds = lower.map((item) => item.value)
     const unboundResponse: ApiResponse = await apis.reWorkTagUnlink(type, unboundIds, workId)
     if (ApiUtil.check(unboundResponse)) {
@@ -205,13 +205,13 @@ async function updateWorkTags(type: OriginType) {
     const response = await apis.siteTagQueryPageByWorkId(tempSiteTagPage)
     if (ApiUtil.check(response)) {
       const tempResultPage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagFullDTO>>(response)
-      currentWorkFullInfo.value.siteTags = IsNullish(tempResultPage?.data) ? [] : tempResultPage.data
+      currentWorkFullInfo.value.siteTags = isNullish(tempResultPage?.data) ? [] : tempResultPage.data
     }
   }
 }
 // 请求作品绑定的本地标签接口的函数
 async function requestWorkLocalTagPage(page: IPage<LocalTagQueryDTO, SelectItem>, bounded: boolean) {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new LocalTagQueryDTO()
   }
   page.query.workId = currentWorkFullInfo.value.id
@@ -220,14 +220,14 @@ async function requestWorkLocalTagPage(page: IPage<LocalTagQueryDTO, SelectItem>
   const response = await apis.localTagQuerySelectItemPageByWorkId(tempPage)
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<LocalTagQueryDTO, SelectItem>>(response)
-    return IsNullish(newPage) ? tempPage : newPage
+    return isNullish(newPage) ? tempPage : newPage
   } else {
     throw new Error()
   }
 }
 // 请求作品绑定的站点标签接口的函数
 async function requestWorkSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>, bounded: boolean) {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new SiteTagQueryDTO()
   }
   page.query.workId = currentWorkFullInfo.value.id
@@ -235,14 +235,14 @@ async function requestWorkSiteTagPage(page: IPage<SiteTagQueryDTO, SelectItem>, 
   const response = await apis.siteTagQuerySelectItemPageByWorkId(lodash.cloneDeep(page))
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<IPage<SiteTagQueryDTO, SelectItem>>(response)
-    return IsNullish(newPage) ? page : newPage
+    return isNullish(newPage) ? page : newPage
   } else {
     throw new Error()
   }
 }
 // 处理图片点击事件
 function handlePictureClicked() {
-  if (NotNullish(currentWorkFullInfo.value.resource?.filePath)) {
+  if (notNullish(currentWorkFullInfo.value.resource?.filePath)) {
     apis.appLauncherOpenImage(currentWorkFullInfo.value.resource.filePath)
   } else {
     ElMessage({
@@ -309,7 +309,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 // 删除作品
 async function deleteWork() {
-  if (NotNullish(currentWorkFullInfo.value.id)) {
+  if (notNullish(currentWorkFullInfo.value.id)) {
     const response = await apis.workDeleteWorkAndSurroundingData(currentWorkFullInfo.value.id)
     ApiUtil.msg(response)
   }
@@ -323,7 +323,7 @@ function handleWorkSetClicked(workSetTag: SegmentedTagItem) {
   <auto-height-dialog v-model:state="state" :width="props.width" @open="refreshWorkInfo">
     <template #header>
       <span class="work-dialog-work-name">
-        {{ StringUtil.isBlank(currentWorkFullInfo.nickName) ? currentWorkFullInfo.siteWorkName : currentWorkFullInfo.nickName }}
+        {{ isBlank(currentWorkFullInfo.nickName) ? currentWorkFullInfo.siteWorkName : currentWorkFullInfo.nickName }}
       </span>
     </template>
     <div class="work-dialog-container">

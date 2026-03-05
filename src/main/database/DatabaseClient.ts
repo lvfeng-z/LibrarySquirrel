@@ -1,9 +1,9 @@
 import BetterSqlite3 from 'better-sqlite3'
 import Database from 'better-sqlite3'
 import LogUtil from '../util/LogUtil.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
 import { Connection, RequestWeight } from '../core/classes/ConnectionPool.ts'
 import { getConnectionPool } from '../core/connectionPool.ts'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 数据库客户端
@@ -52,7 +52,7 @@ export default class DatabaseClient {
   private holdingLock: boolean
 
   constructor(caller: string) {
-    if (StringUtil.isNotBlank(caller)) {
+    if (isNotBlank(caller)) {
       this.caller = caller
     } else {
       this.caller = 'unknown'

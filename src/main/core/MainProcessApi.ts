@@ -8,7 +8,7 @@ import SiteTag from '@shared/model/entity/SiteTag.ts'
 import test from '../test/test.ts'
 import SettingsService from '../service/SettingsService.ts'
 import WorkService from '../service/WorkService.ts'
-import ApiUtil from '../util/ApiUtil.ts'
+import { ApiResponse, ApiUtil } from '../util/ApiUtil.ts'
 import TaskService from '../service/TaskService.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
@@ -27,7 +27,7 @@ import { GetBrowserWindow } from '../util/MainWindowUtil.ts'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.ts'
 import WorkSetService from '../service/WorkSetService.ts'
 import SecureStorageService, { SecureStorageErrorCode } from '../service/SecureStorageService.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import { getPluginTaskUrlListenerManager } from './pluginTaskUrlListener.ts'
 
 function returnError(error: unknown) {
@@ -45,9 +45,9 @@ function createHandler<T>(
     /** 是否禁用日志记录 */
     silent?: boolean
     /** 自定义错误处理 */
-    onError?: (error: unknown) => ApiUtil | undefined
+    onError?: (error: unknown) => ApiResponse | undefined
     /** 自定义响应处理 */
-    transformResponse?: (result: T) => ApiUtil
+    transformResponse?: (result: T) => ApiResponse
   }
 ) {
   return async (_event: Electron.IpcMainInvokeEvent, ...args: any[]) => {
@@ -664,7 +664,7 @@ function exposeService() {
   Electron.ipcMain.handle(
     'work-getFullWorkInfoById',
     createHandler('work-getFullWorkInfoById', (args) => {
-      if (IsNullish(args)) {
+      if (isNullish(args)) {
         throw new Error('作品id不能为空')
       }
       const service = new WorkService()

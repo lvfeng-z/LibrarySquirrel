@@ -2,7 +2,7 @@
 import WorkInfo from './WorkInfo.vue'
 import AuthorInfo from './AuthorInfo.vue'
 import { computed, Ref, ref, UnwrapRef } from 'vue'
-import { ArrayNotEmpty, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, notNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
 import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
@@ -33,13 +33,13 @@ const caseHeight: Ref<UnwrapRef<string>> = computed(() => (props.maxHeight === u
 // src的参数
 const srcParamStr: Ref<UnwrapRef<string>> = computed(() => {
   const params: string[] = []
-  if (NotNullish(props.maxHeight)) {
+  if (notNullish(props.maxHeight)) {
     params.push(`visualHeight=${props.maxHeight}`)
   }
-  if (NotNullish(props.maxWidth)) {
+  if (notNullish(props.maxWidth)) {
     params.push(`visualWidth=${props.maxWidth}`)
   }
-  return ArrayNotEmpty(params) ? '?' + params.join('&') : ''
+  return arrayNotEmpty(params) ? '?' + params.join('&') : ''
 })
 let clickTimeout
 
@@ -58,7 +58,7 @@ function handleImageClicked() {
 // 处理图片双击事件
 function handlePictureClicked() {
   clearTimeout(clickTimeout)
-  if (NotNullish(props.work.resource?.filePath)) {
+  if (notNullish(props.work.resource?.filePath)) {
     apis.appLauncherOpenImage(props.work.resource.filePath)
   } else {
     ElMessage({

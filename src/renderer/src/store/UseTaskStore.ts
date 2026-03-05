@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
-import { ArrayNotEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 import NotificationItem from '@renderer/model/util/NotificationItem.ts'
 import { h } from 'vue'
 import { TaskStatusEnum } from '@renderer/constants/TaskStatusEnum.ts'
 import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
-import { CopyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
+import { copyIgnoreUndefined } from '@shared/util/ObjectUtil.ts'
 
 export const useTaskStore = defineStore('task', {
   state: (): { tasks: Map<number, TaskStoreObj> } => {
@@ -25,7 +25,7 @@ export const useTaskStore = defineStore('task', {
           const notificationItem = createNotificationItem(task)
           notificationId = useNotificationStore().add(notificationItem)
         }
-        if (IsNullish(task.id)) {
+        if (isNullish(task.id)) {
           throw new Error('UseTaskStore: 赋值任务失败，任务id为空')
         }
         taskStatus.set(task.id, { task, notificationId })
@@ -36,14 +36,14 @@ export const useTaskStore = defineStore('task', {
     },
     updateTask(taskList: TaskProgressDTO[]): void {
       taskList.forEach((task) => {
-        if (IsNullish(task.id)) {
+        if (isNullish(task.id)) {
           throw new Error('UseTaskStore: 更新任务失败，任务id为空')
         }
         const taskStoreObj = this.tasks.get(task.id)
-        if (NotNullish(taskStoreObj)) {
+        if (notNullish(taskStoreObj)) {
           if (task.status !== taskStoreObj.task.status) {
             // 任务状态变化为完成或失败，解决通知Store中该任务的Promise
-            if (NotNullish(taskStoreObj.notificationId)) {
+            if (notNullish(taskStoreObj.notificationId)) {
               if (task.status === TaskStatusEnum.FINISHED) {
                 useNotificationStore().remove(taskStoreObj.notificationId, {
                   type: 'success',
@@ -58,24 +58,24 @@ export const useTaskStore = defineStore('task', {
             }
             // 如果状态为进行中、等待中，就推送到通知Store中
             if (
-              IsNullish(taskStoreObj.notificationId) &&
+              isNullish(taskStoreObj.notificationId) &&
               (TaskStatusEnum.PROCESSING === task.status || TaskStatusEnum.WAITING === task.status)
             ) {
               const notificationItem = createNotificationItem(taskStoreObj.task)
               taskStoreObj.notificationId = useNotificationStore().add(notificationItem)
             }
           }
-          CopyIgnoreUndefined(taskStoreObj.task, task)
+          copyIgnoreUndefined(taskStoreObj.task, task)
         }
       })
     },
     updateTaskSchedule(scheduleDTOList: TaskScheduleDTO[]): void {
       scheduleDTOList.forEach((scheduleDTO) => {
-        if (IsNullish(scheduleDTO.id)) {
+        if (isNullish(scheduleDTO.id)) {
           throw new Error('UseTaskStore: 更新任务进度失败，任务id为空')
         }
         const task = this.getTask(scheduleDTO.id)
-        if (NotNullish(task)) {
+        if (notNullish(task)) {
           task.status = scheduleDTO.status
           task.total = scheduleDTO.total
           task.finished = scheduleDTO.finished
@@ -84,7 +84,7 @@ export const useTaskStore = defineStore('task', {
     },
     removeTask(ids: number[]) {
       const taskStatus = this.tasks
-      if (ArrayNotEmpty(ids)) {
+      if (arrayNotEmpty(ids)) {
         ids.forEach((id) => taskStatus.delete(id))
       }
     }

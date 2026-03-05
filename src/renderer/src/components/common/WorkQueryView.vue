@@ -7,7 +7,7 @@ import Page from '@renderer/model/util/Page.ts'
 import IPage from '@renderer/model/util/IPage.ts'
 import { ref, UnwrapRef, Ref, watch, onMounted, onUnmounted } from 'vue'
 import lodash from 'lodash'
-import { NotNullish, ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { notNullish, arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import { SearchCondition, SearchType } from '@renderer/model/util/SearchCondition.ts'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import WorkCardItem from '@shared/model/dto/WorkCardItem.ts'
@@ -149,24 +149,24 @@ async function buildSearchConditions(): Promise<SearchCondition[]> {
   // 处理选中的标签
   selectedTagList.value.forEach((searchCondition) => {
     let operator: CrudOperator | undefined = undefined
-    if (NotNullish(searchCondition.disabled) && searchCondition.disabled) {
+    if (notNullish(searchCondition.disabled) && searchCondition.disabled) {
       operator = CrudOperator.NOT_EQUAL
     }
-    if (NotNullish(searchCondition.extraData)) {
+    if (notNullish(searchCondition.extraData)) {
       const extraData = searchCondition.extraData as { type: SearchType; id: number }
       conditions.push(new SearchCondition({ type: extraData.type, value: extraData.id, operator: operator }))
     }
   })
 
   // 处理自定义标签
-  if (ArrayNotEmpty(customTagList.value)) {
+  if (arrayNotEmpty(customTagList.value)) {
     customTagList.value.forEach((tag) => {
       conditions.push(new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: tag.value, operator: CrudOperator.LIKE }))
     })
   }
 
   // 处理搜索框输入的文本
-  if (NotNullish(autoLoadInput.value) && autoLoadInput.value.trim()) {
+  if (notNullish(autoLoadInput.value) && autoLoadInput.value.trim()) {
     const workName = autoLoadInput.value.trim()
     conditions.push(new SearchCondition({ type: SearchType.WORKS_SITE_NAME, value: workName, operator: CrudOperator.LIKE }))
     conditions.push(new SearchCondition({ type: SearchType.WORKS_NICKNAME, value: workName, operator: CrudOperator.LIKE }))
@@ -200,7 +200,7 @@ async function queryWork(reset: boolean = true): Promise<void> {
     const nextPage = await doFetchWorkPage(tempPage)
 
     // 没有新数据时，不再增加页码
-    if (ArrayNotEmpty(nextPage.data)) {
+    if (arrayNotEmpty(nextPage.data)) {
       workPage.value.pageNumber++
       workPage.value.pageCount = nextPage.pageCount
       workPage.value.dataCount = nextPage.dataCount

@@ -1,5 +1,5 @@
 import SiteTag from '../entity/SiteTag.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import lodash from 'lodash'
 import SiteTagFullDTO from './SiteTagFullDTO.ts'
 
@@ -14,7 +14,7 @@ export default class SiteTagLocalRelateDTO extends SiteTagFullDTO {
 
   constructor(siteTag?: SiteTag) {
     super(siteTag)
-    if (NotNullish(siteTag)) {
+    if (notNullish(siteTag)) {
       lodash.assign(this, lodash.pick(siteTag, ['hasSameNameLocalTag']))
       this.hasSameNameLocalTag = Boolean(this.hasSameNameLocalTag)
     }

@@ -1,4 +1,4 @@
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import ElectronStore from 'electron-store'
 import { DefaultSettings } from '../util/SettingsUtil.ts'
 import { Settings } from './types/Settings.ts'
@@ -6,7 +6,7 @@ import { Settings } from './types/Settings.ts'
 let settings: ElectronStore<Settings> | undefined = undefined
 
 function createSettings(): void {
-  if (IsNullish(settings)) {
+  if (isNullish(settings)) {
     settings = new ElectronStore<Settings>()
     if (!settings.get('initialized')) {
       DefaultSettings()
@@ -15,7 +15,7 @@ function createSettings(): void {
 }
 
 function getSettings(): ElectronStore<Settings> {
-  if (IsNullish(settings)) {
+  if (isNullish(settings)) {
     throw new Error('设置未初始化！')
   }
   return settings

@@ -4,7 +4,7 @@ import LocalTag from '../entity/LocalTag.ts'
 import RankedLocalAuthor from '../domain/RankedLocalAuthor.ts'
 import PluginSiteAuthorDTO from './PluginSiteAuthorDTO.ts'
 import PluginWorkSetDTO from './PluginWorkSetDTO.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import PluginResourceDTO from './PluginResourceDTO.ts'
 import PluginSiteTagDTO from './PluginSiteTagDTO.ts'
 
@@ -53,7 +53,7 @@ export default class PluginWorkResponseDTO {
   resource: PluginResourceDTO | undefined | null
 
   constructor(pluginWorkResponseDTO?: PluginWorkResponseDTO) {
-    if (NotNullish(pluginWorkResponseDTO)) {
+    if (notNullish(pluginWorkResponseDTO)) {
       this.work = pluginWorkResponseDTO.work
       this.site = pluginWorkResponseDTO.site
       this.localAuthors = pluginWorkResponseDTO.localAuthors

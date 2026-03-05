@@ -1,12 +1,12 @@
 import { ConnectionPool } from './classes/ConnectionPool.ts'
 import { DataBasePath } from '../util/DatabaseUtil.ts'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 let connectionPool: ConnectionPool | undefined = undefined
 
 function createConnectionPool(): void {
-  if (IsNullish(connectionPool)) {
+  if (isNullish(connectionPool)) {
     connectionPool = new ConnectionPool({
       maxRead: 10, // 最大连接数
       maxWrite: 10, // 最大连接数
@@ -17,7 +17,7 @@ function createConnectionPool(): void {
 }
 
 function getConnectionPool(): ConnectionPool {
-  if (IsNullish(connectionPool)) {
+  if (isNullish(connectionPool)) {
     throw new Error('连接池未初始化！')
   }
   return connectionPool

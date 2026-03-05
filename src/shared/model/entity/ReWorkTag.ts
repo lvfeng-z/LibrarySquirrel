@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 作品-标签关联表
@@ -24,7 +24,7 @@ export default class ReWorkTag extends BaseEntity {
 
   constructor(reWorkTag?: ReWorkTag) {
     super(reWorkTag)
-    if (NotNullish(reWorkTag)) {
+    if (notNullish(reWorkTag)) {
       this.workId = reWorkTag.workId
       this.tagType = reWorkTag.tagType
       this.localTagId = reWorkTag.localTagId

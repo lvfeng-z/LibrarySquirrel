@@ -2,7 +2,7 @@ import IPage from '@renderer/model/util/IPage.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import Page from '@renderer/model/util/Page.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 
 /**
@@ -15,7 +15,7 @@ export async function localTagQuerySelectItemPage(page: IPage<unknown, SelectIte
   // 解析响应值
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<Page<unknown, SelectItem>>(response)
-    if (IsNullish(newPage)) {
+    if (isNullish(newPage)) {
       const msg = '分页查询本地标签选择列表，没有返回分页数据'
       ElMessage({ message: msg, type: 'error' })
       throw new Error(msg)

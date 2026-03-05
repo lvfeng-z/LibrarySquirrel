@@ -1,4 +1,4 @@
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import RankedSiteAuthor from './RankedSiteAuthor.ts'
 
 /**
@@ -12,7 +12,7 @@ export default class RankedSiteAuthorWithWorkId extends RankedSiteAuthor {
 
   constructor(rankedSiteAuthorWithWorkId?: RankedSiteAuthorWithWorkId) {
     super(rankedSiteAuthorWithWorkId)
-    if (NotNullish(rankedSiteAuthorWithWorkId)) {
+    if (notNullish(rankedSiteAuthorWithWorkId)) {
       this.workId = rankedSiteAuthorWithWorkId['workId']
     }
   }

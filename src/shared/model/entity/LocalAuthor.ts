@@ -1,5 +1,5 @@
 import BaseEntity from '../base/BaseEntity.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import BaseAuthor from '../interface/BaseAuthor.ts'
 
 /**
@@ -21,7 +21,7 @@ export default class LocalAuthor extends BaseEntity implements BaseAuthor {
 
   constructor(localAuthor?: LocalAuthor) {
     super(localAuthor)
-    if (NotNullish(localAuthor)) {
+    if (notNullish(localAuthor)) {
       this.authorName = localAuthor.authorName
       this.introduce = localAuthor.introduce
       this.lastUse = localAuthor.lastUse

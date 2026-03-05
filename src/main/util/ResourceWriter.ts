@@ -1,8 +1,8 @@
 import { Readable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
 import LogUtil from './LogUtil.js'
-import { AssertNotNullish } from '@shared/util/AssertUtil.ts'
-import { IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
+import { assertNotNullish } from '@shared/util/AssertUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import fs from 'fs'
 import Resource from '@shared/model/entity/Resource.js'
 
@@ -80,11 +80,11 @@ export default class ResourceWriter {
         }
       }
 
-      if (NotNullish(newWritable)) {
+      if (notNullish(newWritable)) {
         this.writable = newWritable
       }
-      AssertNotNullish(this.readable, '写入任务资源失败，readable为空')
-      AssertNotNullish(this.writable, '写入任务资源失败，writable为空')
+      assertNotNullish(this.readable, '写入任务资源失败，readable为空')
+      assertNotNullish(this.writable, '写入任务资源失败，writable为空')
       const readable = this.readable
       const writable = this.writable
       this.errorOccurred = false
@@ -122,12 +122,12 @@ export default class ResourceWriter {
   public pause(): boolean {
     if (!this.readableFinished) {
       this.paused = true
-      if (NotNullish(this.readable)) {
+      if (notNullish(this.readable)) {
         this.readable.unpipe(this.writable)
       }
-      if (NotNullish(this.writable)) {
+      if (notNullish(this.writable)) {
         this.writable?.end()
-        this.bytesWritten = IsNullish(this.writable) ? 0 : this.writable.bytesWritten
+        this.bytesWritten = isNullish(this.writable) ? 0 : this.writable.bytesWritten
       }
       return false
     } else {

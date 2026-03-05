@@ -4,7 +4,7 @@ import ReWorkWorkSet from '@shared/model/entity/ReWorkWorkSet.ts'
 import ReWorkWorkSetDao from '../dao/ReWorkWorkSetDao.ts'
 import { WorkDao } from '../dao/WorkDao.ts'
 import DatabaseClient from '../database/DatabaseClient.ts'
-import { ArrayIsEmpty, ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayIsEmpty, arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
 import Work from '@shared/model/entity/Work.ts'
 
@@ -62,11 +62,11 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
   public async link(work: Work[], workSetId: number): Promise<number> {
     // 校验
     const legalWorkList = work.filter((tempWork) => {
-      if (IsNullish(tempWork)) {
+      if (isNullish(tempWork)) {
         LogUtil.warn(this.constructor.name, `关联作品集和作品失败，作品信息不能为空`)
         return false
       }
-      if (IsNullish(!Object.hasOwn(tempWork, 'id') || tempWork.id)) {
+      if (isNullish(!Object.hasOwn(tempWork, 'id') || tempWork.id)) {
         const siteWorkName = Object.hasOwn(tempWork, 'siteWorkName') ? tempWork.siteWorkName : 'unknown'
         LogUtil.warn(this.constructor.name, `关联作品集和作品失败，作品id不能为空，siteWorkName: ${siteWorkName}`)
         return false
@@ -105,7 +105,7 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
    * @param workSetIds
    */
   public async linkByWork(workId: number, workSetIds: number[]): Promise<number> {
-    if (ArrayIsEmpty(workSetIds)) {
+    if (arrayIsEmpty(workSetIds)) {
       return 0
     }
 
@@ -126,16 +126,16 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
    * @param workSetIds
    */
   public async updateLinks(workId: number, workSetIds: number[]) {
-    if (ArrayIsEmpty(workSetIds)) {
+    if (arrayIsEmpty(workSetIds)) {
       return 0
     }
 
     const oldReList = await this.listByWorkId(workId)
 
     // 删除已经不存在的关联
-    if (ArrayNotEmpty(oldReList)) {
+    if (arrayNotEmpty(oldReList)) {
       const notExistingList = oldReList.filter((oldRe) => !workSetIds.some((workSetId) => workSetId === oldRe.id))
-      if (ArrayNotEmpty(notExistingList)) {
+      if (arrayNotEmpty(notExistingList)) {
         await this.deleteBatchById(notExistingList.map((notExisting) => notExisting.id as number))
       }
     }

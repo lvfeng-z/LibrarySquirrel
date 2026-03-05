@@ -3,7 +3,7 @@ import path from 'path'
 import DatabaseClient from '../database/DatabaseClient.ts'
 import { RootDir } from './FileSysUtil.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
-import { NotNullish } from '@shared/util/CommonUtil.ts'
+import { notNullish } from '@shared/util/CommonUtil.ts'
 
 /**
  * 查询数据库所有数据表的名称
@@ -61,7 +61,7 @@ export function queryDtoNonFieldProperties(): string[] {
  */
 export function toPlainParams<T extends BaseQueryDTO>(queryDTO: T, ignore?: string[]) {
   const fullIgnore = queryDtoNonFieldProperties()
-  if (NotNullish(ignore)) {
+  if (notNullish(ignore)) {
     fullIgnore.push(...ignore)
   }
   return ToObjAcceptedBySqlite3(queryDTO, fullIgnore)

@@ -9,7 +9,7 @@ import { Thead } from '../../model/util/Thead'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { IsNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 import SiteAuthorDialog from '@renderer/components/dialogs/SiteAuthorDialog.vue'
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
@@ -23,7 +23,7 @@ import SiteAuthor from '@shared/model/entity/SiteAuthor.ts'
 
 // onMounted
 onMounted(() => {
-  if (IsNullish(page.value.query)) {
+  if (isNullish(page.value.query)) {
     page.value.query = new SiteAuthorQueryDTO()
   }
   page.value.query.sort = [
@@ -109,16 +109,16 @@ const siteAuthorThead: Ref<Thead<SiteAuthorLocalRelateDTO>[]> = ref([
     remotePaging: true,
     remotePageMethod: localAuthorQuerySelectItemPageByName,
     getCacheData: (rowData: SiteAuthorLocalRelateDTO) => {
-      if (IsNullish(rowData.localAuthor?.id)) {
+      if (isNullish(rowData.localAuthor?.id)) {
         return undefined
       }
       return new SelectItem({
         value: rowData.localAuthor.id,
-        label: IsNullish(rowData.localAuthor?.authorName) ? '' : rowData.localAuthor.authorName
+        label: isNullish(rowData.localAuthor?.authorName) ? '' : rowData.localAuthor.authorName
       })
     },
     setCacheData: (rowData: SiteAuthorLocalRelateDTO, data: SelectItem) => {
-      if (IsNullish(rowData.localAuthor)) {
+      if (isNullish(rowData.localAuthor)) {
         rowData.localAuthor = new LocalAuthor()
       }
       rowData.localAuthor.id = Number(data.value)
@@ -142,16 +142,16 @@ const siteAuthorThead: Ref<Thead<SiteAuthorLocalRelateDTO>[]> = ref([
     remotePaging: true,
     remotePageMethod: siteQuerySelectItemPageBySiteName,
     getCacheData: (rowData: SiteAuthorLocalRelateDTO) => {
-      if (IsNullish(rowData.site?.id)) {
+      if (isNullish(rowData.site?.id)) {
         return undefined
       }
       return new SelectItem({
         value: rowData.site.id,
-        label: IsNullish(rowData.site?.siteName) ? '' : rowData.site.siteName
+        label: isNullish(rowData.site?.siteName) ? '' : rowData.site.siteName
       })
     },
     setCacheData: (rowData: SiteAuthorLocalRelateDTO, data: SelectItem) => {
-      if (IsNullish(rowData.site)) {
+      if (isNullish(rowData.site)) {
         rowData.site = new Site()
       }
       rowData.site.id = Number(data.value)
@@ -193,7 +193,7 @@ async function siteAuthorQueryPage(
   const response = await apis.siteAuthorQueryLocalRelateDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<SiteAuthorQueryDTO, SiteAuthorLocalRelateDTO>>(response)
-    if (IsNullish(responsePage)) {
+    if (isNullish(responsePage)) {
       return undefined
     }
     return new Page(responsePage)

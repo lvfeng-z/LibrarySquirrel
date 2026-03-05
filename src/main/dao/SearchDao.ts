@@ -8,10 +8,10 @@ import SearchConditionQueryDTO from '@shared/model/queryDTO/SearchConditionQuery
 import SelectItem from '@shared/model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
 import { SearchType } from '@shared/model/util/SearchCondition.js'
-import { ArrayIsEmpty, IsNullish, NotNullish } from '@shared/util/CommonUtil.ts'
-import StringUtil from '@shared/util/StringUtil.ts'
+import { arrayIsEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
 import Site from '@shared/model/entity/Site.js'
+import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 作品查询Dao
@@ -24,14 +24,14 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
     const query = page.query
     const statements: string[] = []
-    const hasKeyword = StringUtil.isNotBlank(query?.nonFieldKeyword)
+    const hasKeyword = isNotBlank(query?.nonFieldKeyword)
     const keyword = hasKeyword ? '%' + query?.nonFieldKeyword + '%' : undefined
-    if (hasKeyword && NotNullish(query)) {
+    if (hasKeyword && notNullish(query)) {
       query.keyword = keyword
     }
 
     // 本地标签
-    if (ArrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_TAG)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_TAG)) {
       statements.push(
         hasKeyword
           ? `SELECT id || 'localTag' AS value, local_tag_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_TAG}, 'id', id) AS extraData FROM local_tag WHERE local_tag_name LIKE @keyword`
@@ -40,7 +40,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 站点标签
-    if (ArrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_TAG)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_TAG)) {
       const statement =
         `SELECT t1.id || 'siteTag' AS value, t1.site_tag_name AS label, t1.last_use,
                   JSON_OBJECT(
@@ -58,7 +58,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 本地作者
-    if (ArrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_AUTHOR)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.LOCAL_AUTHOR)) {
       statements.push(
         hasKeyword
           ? `SELECT id || 'localAuthor' AS value, author_name AS label, last_use, JSON_OBJECT('type', ${SearchType.LOCAL_AUTHOR}, 'id', id) AS extraData FROM local_author WHERE author_name LIKE @keyword`
@@ -67,7 +67,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     }
 
     // 站点作者
-    if (ArrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_AUTHOR)) {
+    if (arrayIsEmpty(query?.types) || query?.types.includes(SearchType.SITE_AUTHOR)) {
       const statement =
         `SELECT t1.id || 'siteAuthor' AS value, t1.author_name AS label, t1.last_use,
                   JSON_OBJECT(
@@ -89,7 +89,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
     statement = await super.sortAndPage(statement, page, [{ key: 'lastUse', asc: false }], 't')
 
     let plainParams: Record<string, unknown> | undefined = undefined
-    if (NotNullish(query)) {
+    if (notNullish(query)) {
       plainParams = toPlainParams(query, ['types'])
     }
 
@@ -98,13 +98,13 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
       .all<unknown[], SelectItem>(statement, plainParams)
       .then((rows) => {
         rows.forEach((selectItem) => {
-          if (NotNullish(selectItem.extraData)) {
+          if (notNullish(selectItem.extraData)) {
             try {
               selectItem.extraData = JSON.parse(selectItem.extraData as string)
             } catch (error) {
               LogUtil.error(`解析查询配置项${selectItem.label}的额外数据失败，error`, error)
             }
-            if (NotNullish(selectItem.extraData)) {
+            if (notNullish(selectItem.extraData)) {
               const extra = selectItem.extraData as { type: SearchType; id: number }
               const subLabels: string[] = []
               switch (extra.type) {
@@ -115,7 +115,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                   const localTag = (extra as { type: SearchType; id: number; localTag: string }).localTag
                   const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
                   selectItem.extraData = { type: extra.type, id: extra.id, localTag: localTag, site: site }
-                  subLabels.push(...['tag', IsNullish(site.siteName) ? '?' : site.siteName])
+                  subLabels.push(...['tag', isNullish(site.siteName) ? '?' : site.siteName])
                   break
                 }
                 case SearchType.LOCAL_AUTHOR:
@@ -125,7 +125,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
                   const localAuthor = (extra as { type: SearchType; id: number; localAuthor: string }).localAuthor
                   const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
                   selectItem.extraData = { type: extra.type, id: extra.id, localAuthor: localAuthor, site: site }
-                  subLabels.push(...['author', IsNullish(site.siteName) ? '?' : site.siteName])
+                  subLabels.push(...['author', isNullish(site.siteName) ? '?' : site.siteName])
                   break
                 }
                 default:

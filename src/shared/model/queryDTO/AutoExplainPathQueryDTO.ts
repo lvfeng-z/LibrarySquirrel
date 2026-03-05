@@ -1,6 +1,6 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
 import { PathTypeEnum } from '../constant/PathTypeEnum.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 
 /**
  * 自动解释路径含义QueryDTO
@@ -28,7 +28,7 @@ export default class AutoExplainPathQueryDTO extends BaseQueryDTO {
 
   constructor(autoExplainPathQueryDTO?: AutoExplainPathQueryDTO) {
     super(autoExplainPathQueryDTO)
-    if (NotNullish(autoExplainPathQueryDTO)) {
+    if (notNullish(autoExplainPathQueryDTO)) {
       this.name = autoExplainPathQueryDTO.name
       this.type = autoExplainPathQueryDTO.type
       this.regularExpression = autoExplainPathQueryDTO.regularExpression

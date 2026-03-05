@@ -4,7 +4,7 @@ import Page from '@renderer/model/util/Page.ts'
 import { Ref, ref } from 'vue'
 import lodash from 'lodash'
 import SelectItem from '../../model/util/SelectItem'
-import { ArrayNotEmpty } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 // props
 const props = withDefaults(
@@ -42,7 +42,7 @@ async function queryPage(newQuery: boolean, input: string) {
   const nextPage = await props.load(tempPage, input)
 
   // 没有新数据时，不再增加页码
-  if (ArrayNotEmpty(nextPage.data)) {
+  if (arrayNotEmpty(nextPage.data)) {
     page.value.pageNumber++
     page.value.pageCount = nextPage.pageCount
     page.value.dataCount = nextPage.dataCount

@@ -13,7 +13,7 @@ import SelectItem from '../../model/util/SelectItem'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage } from 'element-plus'
 import IPage from '@renderer/model/util/IPage.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
@@ -24,7 +24,7 @@ import SiteAuthorQueryDTO from '@shared/model/queryDTO/SiteAuthorQueryDTO.ts'
 
 // onMounted
 onMounted(() => {
-  if (IsNullish(page.value.query)) {
+  if (isNullish(page.value.query)) {
     page.value.query = new LocalAuthorQueryDTO()
   }
   page.value.query.sort = [
@@ -211,7 +211,7 @@ async function deleteLocalAuthor(id: string) {
 }
 // 处理站点作者ExchangeBox确认交换的事件
 async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: SelectItem[], lower: SelectItem[]) {
-  if (IsNullish(localAuthorSelected.value)) {
+  if (isNullish(localAuthorSelected.value)) {
     ElMessage({
       message: '确认修改时必须选中一个本地作者',
       type: 'warning'
@@ -219,9 +219,9 @@ async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: Sel
     return
   }
 
-  if (IsNullish(isUpper) ? true : isUpper) {
+  if (isNullish(isUpper) ? true : isUpper) {
     let upperResponse: ApiResponse
-    if (ArrayNotEmpty(upper)) {
+    if (arrayNotEmpty(upper)) {
       const boundIds = upper.map((item) => item.value)
       upperResponse = await apis.siteAuthorUpdateBindLocalAuthor(localAuthorSelected.value.id, boundIds)
     } else {
@@ -229,9 +229,9 @@ async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: Sel
     }
     ApiUtil.failedMsg(upperResponse)
   }
-  if (IsNullish(isUpper) ? true : !isUpper) {
+  if (isNullish(isUpper) ? true : !isUpper) {
     let lowerResponse: ApiResponse
-    if (ArrayNotEmpty(lower)) {
+    if (arrayNotEmpty(lower)) {
       const unBoundIds = lower.map((item) => item.value)
       lowerResponse = await apis.siteAuthorUpdateBindLocalAuthor(null, unBoundIds)
     } else {
@@ -243,7 +243,7 @@ async function handleExchangeBoxConfirm(isUpper: boolean | undefined, upper: Sel
 }
 // 请求站点作者分页选择列表的函数
 async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, SelectItem>, bounded: boolean) {
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = new LocalAuthorQueryDTO()
   }
   page.query.localAuthorId = localAuthorSelected.value.id
@@ -251,7 +251,7 @@ async function requestSiteAuthorSelectItemPage(page: IPage<SiteAuthorQueryDTO, S
   const response = await apis.siteAuthorQueryBoundOrUnboundInLocalAuthorPage(lodash.cloneDeep(page))
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<Page<LocalAuthorQueryDTO, SelectItem>>(response)
-    return IsNullish(newPage) ? page : newPage
+    return isNullish(newPage) ? page : newPage
   } else {
     throw new Error()
   }

@@ -1,6 +1,6 @@
 import SiteAuthor from '../entity/SiteAuthor.ts'
 import { AuthorRank } from '../constant/AuthorRank.ts'
-import { NotNullish } from '../../util/CommonUtil.ts'
+import { notNullish } from '../../util/CommonUtil.ts'
 import RankAuthor from '../interface/RankAuthor.ts'
 
 /**
@@ -14,7 +14,7 @@ export default class RankedSiteAuthor extends SiteAuthor implements RankAuthor {
 
   constructor(siteAuthorDTO?: SiteAuthor) {
     super(siteAuthorDTO)
-    if (NotNullish(siteAuthorDTO)) {
+    if (notNullish(siteAuthorDTO)) {
       this.authorRank = siteAuthorDTO['authorRank']
     }
   }

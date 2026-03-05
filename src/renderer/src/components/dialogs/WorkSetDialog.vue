@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, ref, watch, computed } from 'vue'
-import { ArrayNotEmpty, IsNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import StaticHeightDialog from '@renderer/components/dialogs/StaticHeightDialog.vue'
 import WorkGridForWorkSet from '@renderer/components/common/WorkGridForWorkSet.vue'
@@ -67,14 +67,14 @@ const isSelectPanelVisible = computed(() => viewMode.value === 'select')
 
 // 方法
 async function loadWorkList() {
-  if (IsNullish(currentWorkSetId.value)) {
+  if (isNullish(currentWorkSetId.value)) {
     return
   }
   const workSetId = currentWorkSetId.value
   const response = await apis.workSetListWorkSetWithWorkByIds([workSetId])
   if (ApiUtil.check(response)) {
     const workSetList = ApiUtil.data<WorkSetWithWorkDTO[]>(response)
-    if (ArrayNotEmpty(workSetList)) {
+    if (arrayNotEmpty(workSetList)) {
       currentWorkSet.value = workSetList[0].workSet
       workList.value = workSetList[0].workList.map((origin) => new WorkFullDTO(origin))
       currentWorkIndex.value = 0
@@ -197,7 +197,7 @@ async function loadSearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?:
   }
   if (ApiUtil.check(response)) {
     const newPage = ApiUtil.data<Page<BaseQueryDTO, SelectItem>>(response)
-    if (IsNullish(newPage)) {
+    if (isNullish(newPage)) {
       ApiUtil.msg(response)
       throw new Error(response.msg)
     }
@@ -221,7 +221,7 @@ function handleAdd() {
 // 作品查询函数 - 支持排除当前作品集的作品
 async function fetchWorkPageForAdd(page: Page<SearchCondition[], WorkCardItem>): Promise<Page<SearchCondition[], WorkCardItem>> {
   // 使用 WORK_SET 类型的 SearchCondition 排除当前作品集的作品
-  if (IsNullish(page.query)) {
+  if (isNullish(page.query)) {
     page.query = []
   }
   page.query.push(
@@ -236,7 +236,7 @@ async function fetchWorkPageForAdd(page: Page<SearchCondition[], WorkCardItem>):
   const response = await apis.searchQueryWorkPage(page)
   if (ApiUtil.check(response)) {
     const resultPage = ApiUtil.data<Page<SearchCondition[], WorkFullDTO>>(response)
-    if (IsNullish(resultPage)) {
+    if (isNullish(resultPage)) {
       return new Page<SearchCondition[], WorkCardItem>()
     }
     resultPage.data = resultPage.data?.map((origin: WorkFullDTO) => new WorkFullDTO(origin))

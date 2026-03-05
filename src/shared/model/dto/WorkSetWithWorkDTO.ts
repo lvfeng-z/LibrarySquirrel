@@ -1,6 +1,6 @@
 import WorkSet from '../entity/WorkSet.ts'
 import WorkFullDTO from './WorkFullDTO.ts'
-import { IsNullish } from '../../util/CommonUtil.ts'
+import { isNullish } from '../../util/CommonUtil.ts'
 
 export default class WorkSetWithWorkDTO {
   /**
@@ -15,6 +15,6 @@ export default class WorkSetWithWorkDTO {
 
   constructor(workSet: WorkSet, workList?: WorkFullDTO[]) {
     this.workSet = workSet
-    this.workList = IsNullish(workList) ? [] : workList
+    this.workList = isNullish(workList) ? [] : workList
   }
 }
