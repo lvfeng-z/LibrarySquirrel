@@ -40,9 +40,9 @@ export default class PluginQueryDTO extends BaseQueryDTO {
   fileName?: string | undefined | null
 
   /**
-   * 安装包路径
+   * 备份id
    */
-  packagePath?: string | undefined | null
+  backupId?: number | undefined | null
 
   /**
    * 激活类型
@@ -67,7 +67,7 @@ export default class PluginQueryDTO extends BaseQueryDTO {
       this.name = plugin.name
       this.version = plugin.version
       this.fileName = plugin.fileName
-      this.packagePath = plugin.packagePath
+      this.backupId = plugin.backupId
       this.sortNum = plugin.sortNum
       this.uninstalled = plugin.uninstalled
     }

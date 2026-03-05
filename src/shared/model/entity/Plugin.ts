@@ -40,9 +40,14 @@ export default class Plugin extends BaseEntity {
   entryPath: string | undefined | null
 
   /**
-   * 安装包路径
+   * 插件根目录相对路径
    */
-  packagePath: string | undefined | null
+  rootPath: string | undefined | null
+
+  /**
+   * 备份id
+   */
+  backupId: number | undefined | null
 
   /**
    * 激活类型
@@ -74,7 +79,8 @@ export default class Plugin extends BaseEntity {
       this.description = plugin.description
       this.changelog = plugin.changelog
       this.entryPath = plugin.entryPath
-      this.packagePath = plugin.packagePath
+      this.rootPath = plugin.rootPath
+      this.backupId = plugin.backupId
       this.activationType = plugin.activationType
       this.sortNum = plugin.sortNum
       this.pluginData = plugin.pluginData
