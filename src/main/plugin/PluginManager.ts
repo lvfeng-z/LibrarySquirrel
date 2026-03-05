@@ -16,7 +16,10 @@ import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
+import { ActivationType } from './types/ActivationTypes.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
+import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 import Site from '@shared/model/entity/Site.ts'
 import { RootDir } from '../util/FileSysUtil.ts'
 import path from 'path'
@@ -29,13 +32,14 @@ interface CachedPlugin {
   instance: PluginInstance | undefined
   context: PluginContext
   loaded: Promise<PluginInstance>
+  activationType?: ActivationType
 }
 
 /**
  * 插件加载器
  * 支持多贡献点、单入口文件加载
  */
-export default class PluginLoader {
+export default class PluginManager {
   /**
    * 插件缓存
    * @private
@@ -207,7 +211,7 @@ export default class PluginLoader {
               const localAuthor = await localAuthorService.getById(meaningOfPath.id)
               if (isNullish(localAuthor)) {
                 const msg = '附加目录含义中的作者信息失败，作者id不可用'
-                LogUtil.error('PluginLoader', msg)
+                LogUtil.error(this.constructor.name, msg)
                 reject(msg)
               } else {
                 meaningOfPath.name = localAuthor.authorName
@@ -221,7 +225,7 @@ export default class PluginLoader {
               const localTag = await localTagService.getById(meaningOfPath.id)
               if (isNullish(localTag)) {
                 const msg = '附加目录含义中的标签信息失败，标签id不可用'
-                LogUtil.error('PluginLoader', msg)
+                LogUtil.error(this.constructor.name, msg)
                 reject(msg)
               } else {
                 meaningOfPath.name = localTag.localTagName
@@ -235,7 +239,7 @@ export default class PluginLoader {
               const site = await siteService.getById(meaningOfPath.id)
               if (isNullish(site)) {
                 const msg = '附加目录含义中的站点信息失败，站点id不可用'
-                LogUtil.error('PluginLoader', msg)
+                LogUtil.error(this.constructor.name, msg)
                 reject(msg)
               } else {
                 meaningOfPath.name = site.siteName
@@ -249,5 +253,107 @@ export default class PluginLoader {
       // 向渲染进程发送explain-path-request事件
       this.mainWindow.webContents.send('explain-path-request', dir)
     })
+  }
+
+  // ==================== 插件激活管理 ====================
+
+  /**
+   * 根据激活类型激活插件
+   * @param pluginId 插件ID
+   * @param activationType 激活类型
+   * @param pluginName 插件名称
+   */
+  public async activatePlugin(pluginId: number, activationType: ActivationType, pluginName?: string): Promise<void> {
+    // 如果已经激活，直接返回
+    const cached = this.pluginCache.get(pluginId)
+    if (cached?.activationType) {
+      LogUtil.debug('PluginManager', `插件 ${pluginId} 已激活，跳过`)
+      return
+    }
+    const finalName = isBlank(pluginName) ? String(pluginId) : pluginName
+
+    try {
+      await this.load(pluginId)
+      // 设置激活类型
+      const pluginCached = this.pluginCache.get(pluginId)
+      if (pluginCached) {
+        pluginCached.activationType = activationType
+      }
+      LogUtil.info('PluginManager', `插件 ${finalName} 激活成功`)
+    } catch (error) {
+      LogUtil.error('PluginManager', `插件 ${finalName} 激活失败`, error)
+      throw error
+    }
+  }
+
+  /**
+   * 停用插件
+   * @param pluginId 插件ID
+   */
+  public async deactivatePlugin(pluginId: number): Promise<void> {
+    const cached = this.pluginCache.get(pluginId)
+    if (!cached?.activationType) {
+      LogUtil.debug('PluginManager', `插件 ${pluginId} 未激活，无需停用`)
+      return
+    }
+
+    LogUtil.info('PluginManager', `停用插件 ${pluginId}`)
+
+    try {
+      // 获取插件实例并调用 deactivate 方法
+      const instance = await this.load(pluginId)
+      if (instance.deactivate) {
+        await instance.deactivate()
+      }
+    } catch (error) {
+      LogUtil.error('PluginManager', `插件 ${pluginId} 停用失败`, error)
+    } finally {
+      // 清除激活类型
+      cached.activationType = undefined
+    }
+  }
+
+  /**
+   * 激活所有启动时加载的插件
+   */
+  public async activateStartupPlugins(): Promise<void> {
+    LogUtil.info('PluginManager', '开始激活启动时加载的插件')
+
+    // 获取所有已安装且未卸载的插件
+    const query = new PluginQueryDTO()
+    query.activationType = ActivationType.STARTUP
+    const plugins = await this.pluginService.list(query)
+    if (!plugins || plugins.length === 0) {
+      LogUtil.info('PluginManager', '没有需要加载的插件')
+      return
+    }
+
+    for (const plugin of plugins) {
+      // 跳过没有有效 id 的插件
+      if (isNullish(plugin.id)) {
+        continue
+      }
+      try {
+        await this.activatePlugin(plugin.id, ActivationType.STARTUP, isNullish(plugin.name) ? undefined : plugin.name)
+      } catch (_ignored) {}
+    }
+
+    LogUtil.info('PluginManager', '启动时插件激活完成')
+  }
+
+  /**
+   * 获取插件激活类型
+   * @param pluginId 插件ID
+   */
+  public getActivationType(pluginId: number): ActivationType | undefined {
+    return this.pluginCache.get(pluginId)?.activationType
+  }
+
+  /**
+   * 检查插件是否已激活
+   * @param pluginId 插件ID
+   */
+  public isActivated(pluginId: number): boolean {
+    return !!this.pluginCache.get(pluginId)?.activationType
   }
 }

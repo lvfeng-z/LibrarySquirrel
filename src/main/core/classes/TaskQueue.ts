@@ -5,7 +5,6 @@ import TaskService from '../../service/TaskService.ts'
 import WorkService from '../../service/WorkService.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { Readable, Transform, TransformCallback, Writable } from 'node:stream'
-import PluginLoader from '../../plugin/PluginLoader.ts'
 import ResourceWriter from '../../util/ResourceWriter.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
@@ -19,7 +18,6 @@ import { queue, QueueObject } from 'async'
 import ResourceService from '../../service/ResourceService.ts'
 import Electron from 'electron'
 import TaskProcessResponseDTO from '@shared/model/dto/TaskProcessResponseDTO.ts'
-import PluginService from '../../service/PluginService.ts'
 import { getSettings } from '../settings.ts'
 import { getMainWindow } from '../mainWindow.ts'
 
@@ -64,24 +62,6 @@ export class TaskQueue {
    * @private
    */
   private workService: WorkService
-
-  // /**
-  //  * 站点服务
-  //  * @private
-  //  */
-  // private siteService: SiteService
-
-  /**
-   * 插件服务
-   * @private
-   */
-  private readonly pluginService: PluginService
-
-  /**
-   * 插件加载器
-   * @private
-   */
-  private readonly pluginLoader: PluginLoader
 
   /**
    * 作为任务处理流程入口的流
@@ -131,12 +111,6 @@ export class TaskQueue {
    */
   private parentSchedulePushing: boolean
 
-  // /**
-  //  * 站点信息缓存
-  //  * @private
-  //  */
-  // private siteCache: Map<number, Site>
-
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
@@ -144,9 +118,6 @@ export class TaskQueue {
     this.currentBufferIndex = 0
     this.taskService = new TaskService()
     this.workService = new WorkService()
-    // this.siteService = new SiteService()
-    this.pluginService = new PluginService()
-    this.pluginLoader = new PluginLoader(this.pluginService)
     this.closed = false
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
@@ -587,7 +558,6 @@ export class TaskQueue {
           infoSaved,
           resSaveSuspended,
           this.taskService,
-          this.pluginLoader,
           new ResourceWriter(),
           localWorkId
         )
@@ -732,7 +702,6 @@ export class TaskQueue {
                 infoSaved,
                 resSaveSuspended,
                 this.taskService,
-                this.pluginLoader,
                 new ResourceWriter(),
                 localWorkId
               )
@@ -1117,11 +1086,6 @@ class TaskRunInstance extends TaskStatus {
    */
   private readonly taskInfo: Task
   /**
-   * 插件加载器
-   * @private
-   */
-  private readonly pluginLoader: PluginLoader
-  /**
    * 是否出现错误
    * @private
    */
@@ -1140,7 +1104,6 @@ class TaskRunInstance extends TaskStatus {
     workInfoSaved: boolean,
     resSaveSuspended: boolean,
     taskService: TaskService,
-    pluginLoader: PluginLoader,
     resourceWriter: ResourceWriter,
     localWorkId?: number
   ) {
@@ -1150,7 +1113,6 @@ class TaskRunInstance extends TaskStatus {
     this.taskChangeStored = true
     this.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
     this.taskService = taskService
-    this.pluginLoader = pluginLoader
     this.parentId = isNullish(parentId) ? 0 : parentId
     this.infoSaved = isNullish(workInfoSaved) ? false : workInfoSaved
     this.resSaveSuspended = isNullish(resSaveSuspended) ? false : resSaveSuspended
@@ -1176,7 +1138,7 @@ class TaskRunInstance extends TaskStatus {
     try {
       const task = await this.taskService.getById(this.taskId)
       assertNotNullish(task, `保存任务${this.taskId}的信息失败，任务id无效`)
-      this.workId = await this.taskService.saveWorkInfo(task, this.pluginLoader, update, this.workId)
+      this.workId = await this.taskService.saveWorkInfo(task, update, this.workId)
     } catch (error) {
       this.errorOccurred = true
       this.error = error as Error
@@ -1238,7 +1200,7 @@ class TaskRunInstance extends TaskStatus {
         let result: Promise<boolean> = Promise.resolve(true)
         // 对于已开始的任务，调用taskService的pauseTask进行暂停
         if (this.processing()) {
-          result = this.taskService.pauseTask(this.taskInfo, this.pluginLoader, this.resourceWriter)
+          result = this.taskService.pauseTask(this.taskInfo, this.resourceWriter)
         }
         // 判断是否已经在数据库中创建资源信息
         if (notNullish(this.taskInfo.pendingResourceId)) {
@@ -1266,7 +1228,7 @@ class TaskRunInstance extends TaskStatus {
         let result: Promise<boolean> = Promise.resolve(true)
         // 对于已开始的任务，调用taskService的pauseTask进行暂停
         if (this.processing()) {
-          result = this.taskService.stopTask(this.taskInfo, this.pluginLoader, this.resourceWriter)
+          result = this.taskService.stopTask(this.taskInfo, this.resourceWriter)
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
         LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
@@ -1295,9 +1257,9 @@ class TaskRunInstance extends TaskStatus {
 
         let result: Promise<TaskProcessResponseDTO>
         if (this.resSaveSuspended && this.taskInfo.continuable) {
-          result = this.taskService.resumeTask(this.taskInfo, this.workId, this.pluginLoader, resourceWriter)
+          result = this.taskService.resumeTask(this.taskInfo, this.workId, resourceWriter)
         } else {
-          result = this.taskService.startTask(this.taskInfo, this.workId, this.pluginLoader, resourceWriter)
+          result = this.taskService.startTask(this.taskInfo, this.workId, resourceWriter)
         }
         const saveResult = await result
         this.changeStatus(saveResult.taskStatus)

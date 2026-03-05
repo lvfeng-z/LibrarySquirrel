@@ -14,7 +14,7 @@ import { createSettings, getSettings } from './core/settings.ts'
 import { createIniConfig } from './core/iniConfig.ts'
 import { createPluginTaskUrlListenerManager } from './core/pluginTaskUrlListener.ts'
 import { setMainWindow } from './core/mainWindow.ts'
-import { PluginActivationManager } from './plugin/PluginActivationManager.ts'
+import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -186,11 +186,12 @@ Electron.app.whenReady().then(() => {
     createTaskQueue()
     // 初始化插件任务URL监听器管理器
     createPluginTaskUrlListenerManager()
+    // 初始化插件管理器
+    createPluginManager()
     // 初始化站点和内置插件
     await Initialize()
     // 激活启动时加载的插件
-    const pluginActivationManager = new PluginActivationManager()
-    await pluginActivationManager.activateStartupPlugins()
+    await getPluginManager().activateStartupPlugins()
   })
 
   Electron.app.on('activate', function () {

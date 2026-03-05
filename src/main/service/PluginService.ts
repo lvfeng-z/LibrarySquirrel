@@ -20,6 +20,7 @@ import { rm } from 'node:fs/promises'
 import { PluginManifest } from '../plugin/types/PluginManifest.ts'
 import { getSettings } from '../core/settings.ts'
 import { assignExisting } from '@shared/util/ObjectUtil.ts'
+import { getPluginManager } from '../core/pluginManager.ts'
 
 /**
  * 主键查询
@@ -222,6 +223,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
    * 卸载插件
    */
   public async uninstall(pluginId: number): Promise<number> {
+    await getPluginManager().deactivatePlugin(pluginId)
     const plugin = await this.getById(pluginId)
     assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
     assertNotNullish(plugin.rootPath, `卸载插件失败，插件根目录路径不存在，pluginId: ${pluginId}`)
