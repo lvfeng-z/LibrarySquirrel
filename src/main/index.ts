@@ -172,25 +172,26 @@ Electron.app.whenReady().then(() => {
       return new Response('Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
     }
   })
+
   // 初始化INI_CONFIG
   createIniConfig(iniConfig)
   // 初始化设置
   createSettings()
 
   // 初始化数据库
-  InitializeDB().then(() => {
-    Initialize()
+  InitializeDB().then(async () => {
     // 创建服务层的ipc通信
     MainProcessApi.exposeService()
+    // 初始化任务队列
+    createTaskQueue()
+    // 初始化插件任务URL监听器管理器
+    createPluginTaskUrlListenerManager()
+    // 初始化站点和内置插件
+    await Initialize()
     // 激活启动时加载的插件
     const pluginActivationManager = new PluginActivationManager()
-    pluginActivationManager.activateStartupPlugins()
+    await pluginActivationManager.activateStartupPlugins()
   })
-
-  // 初始化任务队列
-  createTaskQueue()
-  // 初始化插件任务URL监听器管理器
-  createPluginTaskUrlListenerManager()
 
   Electron.app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the
