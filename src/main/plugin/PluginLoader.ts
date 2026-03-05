@@ -147,13 +147,12 @@ export default class PluginLoader {
     const secureStorageService = new SecureStorageService()
     const pluginService = this.pluginService
     const pluginName = plugin?.name ?? ''
-    const pluginAuthor = plugin?.author ?? ''
 
     const logger = {
-      info: (...args: unknown[]) => LogUtil.info(`Plugin[${pluginAuthor}-${pluginName}]`, ...args),
-      debug: (...args: unknown[]) => LogUtil.debug(`Plugin[${pluginAuthor}-${pluginName}]`, ...args),
-      warn: (...args: unknown[]) => LogUtil.warn(`Plugin[${pluginAuthor}-${pluginName}]`, ...args),
-      error: (...args: unknown[]) => LogUtil.error(`Plugin[${pluginAuthor}-${pluginName}]`, ...args)
+      info: (...args: unknown[]) => LogUtil.info(`Plugin[${pluginName}]`, ...args),
+      debug: (...args: unknown[]) => LogUtil.debug(`Plugin[${pluginName}]`, ...args),
+      warn: (...args: unknown[]) => LogUtil.warn(`Plugin[${pluginName}]`, ...args),
+      error: (...args: unknown[]) => LogUtil.error(`Plugin[${pluginName}]`, ...args)
     }
 
     return {
