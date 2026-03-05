@@ -10,9 +10,9 @@ export interface PluginInstance {
   /** 插件清单 */
   manifest: PluginManifest
   /** 激活函数 - 插件加载完成后调用 */
-  activate?: (context: PluginContext) => Promise<void>
+  activate?: () => Promise<void>
   /** 停用函数 - 插件卸载前调用 */
-  deactivate?: (context: PluginContext) => Promise<void>
+  deactivate?: () => Promise<void>
   getContribution: <T extends BaseContribution>(key: ContributionKey) => Promise<T>
 }
 

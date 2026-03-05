@@ -3,7 +3,6 @@ import PluginService from '../service/PluginService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import PluginLoader from './PluginLoader.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
-import { PluginContext } from './types/PluginContext.ts'
 import StringUtil from '@shared/util/StringUtil.ts'
 import { IsNullish } from '@shared/util/CommonUtil.ts'
 
@@ -72,8 +71,7 @@ export class PluginActivationManager {
       // 获取插件实例并调用 deactivate 方法
       const instance = await this.pluginLoader.load(pluginId)
       if (instance.deactivate) {
-        const context = await this.createPluginContext(pluginId)
-        await instance.deactivate(context)
+        await instance.deactivate()
       }
     } catch (error) {
       LogUtil.error('PluginActivationManager', `插件 ${pluginId} 停用失败`, error)
@@ -124,17 +122,5 @@ export class PluginActivationManager {
    */
   public isActivated(pluginId: number): boolean {
     return this.activatedPlugins.has(pluginId)
-  }
-
-  /**
-   * 创建插件上下文（用于 deactivate）
-   * @param pluginId 插件ID
-   * @private
-   */
-  private async createPluginContext(_pluginId: number): Promise<PluginContext> {
-    // 这里需要创建完整的 PluginContext，但由于 deactivate 只需要基本功能
-    // 可以简化处理 - 返回一个空对象
-    // TODO: 实现完整的上下文创建
-    return {} as PluginContext
   }
 }

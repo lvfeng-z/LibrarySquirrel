@@ -26,7 +26,7 @@ import { pathToFileURL } from 'node:url'
  * 缓存的插件实例
  */
 interface CachedPlugin {
-  instance: PluginInstance
+  instance: PluginInstance | undefined
   context: PluginContext
   loaded: Promise<PluginInstance>
 }
@@ -75,7 +75,7 @@ export default class PluginLoader {
       const loaded = this.loadPluginInstance(plugin, context)
 
       cached = {
-        instance: {} as PluginInstance,
+        instance: undefined,
         context,
         loaded
       }
@@ -88,7 +88,7 @@ export default class PluginLoader {
 
       // 调用激活函数
       if (instance.activate) {
-        await instance.activate(context)
+        await instance.activate()
       }
 
       return instance
