@@ -13,6 +13,9 @@ export class Thead<Data> extends PopperInputConfig implements IThead<Data> {
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   fixed?: 'left' | 'right' | boolean // 是否固定列
+  sortable?: boolean | 'custom'
+  sortMethod?: <T = unknown>(a: T, b: T) => number
+  sortBy?: ((row: unknown, index: number) => string) | [] | string
   showOverflowTooltip?: boolean // 是否隐藏额外内容并在单元格悬停时使用 Tooltip 显示它们
   editMethod?: 'replace' | 'popper'
   getCacheData: (rowData: Data) => SelectItem | undefined // 获取行数据中的缓存数据（用于选择组件在没有获取选择列表前的数据回显）
@@ -29,6 +32,9 @@ export class Thead<Data> extends PopperInputConfig implements IThead<Data> {
     this.headerTagType = thead.headerTagType
     this.dataAlign = thead.dataAlign
     this.fixed = isNullish(thead.fixed) ? false : thead.fixed
+    this.sortable = isNullish(thead.sortable) ? false : thead.sortable
+    this.sortMethod = thead.sortMethod
+    this.sortBy = thead.sortBy
     this.showOverflowTooltip = isNullish(thead.showOverflowTooltip) ? false : thead.showOverflowTooltip
     this.editMethod = isNullish(thead.editMethod) ? 'replace' : thead.editMethod
     this.getCacheData = isNullish(thead.getCacheData) ? () => undefined : thead.getCacheData
@@ -46,6 +52,9 @@ export interface IThead<Data> extends IPopperInputConfig {
   headerTagType?: 'warning' | 'info' | 'success' | 'primary' | 'danger' // 标题使用的el-tag样式
   dataAlign?: 'center' | 'left' | 'right' // 数据停靠位置
   fixed?: 'left' | 'right' | boolean // 是否固定列
+  sortable?: boolean | 'custom'
+  sortMethod?: <T = unknown>(a: T, b: T) => number
+  sortBy?: ((row: unknown, index: number) => string) | [] | string
   showOverflowTooltip?: boolean // 列超出长度时是否省略
   editMethod?: 'replace' | 'popper'
   getCacheData?: (rowData: Data) => SelectItem | undefined

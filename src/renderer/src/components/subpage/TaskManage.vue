@@ -312,7 +312,7 @@ async function updateLoad(ids: (number | string)[]): Promise<TaskScheduleDTO[] |
   return arrayNotEmpty(scheduleList) ? scheduleList : undefined
 }
 // 给行添加选择器，用于区分父任务和子任务
-function tableRowClassName(data: { row: unknown; rowIndex: number }) {
+function rowClassName(data: { row: unknown; rowIndex: number }) {
   const row = data.row as TaskTreeDTO
   if (row.hasChildren || isNullish(row.pid) || row.pid === 0) {
     return 'task-manage-search-table-parent-row'
@@ -530,7 +530,7 @@ async function handleSourceUrlInput() {
         :update-load="updateLoad"
         :update-properties="['status']"
         data-key="id"
-        :table-row-class-name="tableRowClassName"
+        :row-class-name="rowClassName"
         :tree-lazy="true"
         :tree-load="load"
         :multi-select="true"

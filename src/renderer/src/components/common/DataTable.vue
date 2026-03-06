@@ -5,7 +5,7 @@ import { Thead } from '../../model/util/Thead'
 import DataTableOperationResponse from '../../model/util/DataTableOperationResponse'
 import PopperInput from './CommentInput/PopperInput.vue'
 import CommonInput from '@renderer/components/common/CommentInput/CommonInput.vue'
-import { TreeNode } from 'element-plus'
+import { TableColumnCtx, TreeNode } from 'element-plus'
 import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import { getPropByPath, setPropByPath } from '@shared/util/ObjectUtil.ts'
 
@@ -17,7 +17,7 @@ const props = withDefaults(
     clickRowSelect?: boolean // 点击行的任意位置进行选中（仅单选生效）
     thead: Thead<Data>[] // 表头信息
     dataKey: string // 数据的唯一标识
-    tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
+    rowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     operationButton?: OperationItem<OpParam>[] // 操作列按钮的文本、图标和代号
     operationWidth?: number // 操作栏宽度
     customOperationButton?: boolean // 是否使用自定义操作栏
@@ -25,6 +25,7 @@ const props = withDefaults(
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown, treeNode: TreeNode, resolve: (data: unknown[]) => void) => void // 懒加载处理函数
     border?: boolean
+    stripe?: boolean
   }>(),
   { customOperationButton: false, treeData: false, treeLazy: false, border: false, clickRowSelect: false }
 )
@@ -45,7 +46,7 @@ onMounted(() => {
 const data = defineModel<unknown[]>('data', { required: true })
 
 // 事件
-const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll'])
+const emits = defineEmits(['selectionChange', 'buttonClicked', 'rowChanged', 'scroll', 'sortChange'])
 
 // 暴露
 defineExpose({
@@ -80,6 +81,10 @@ async function initializeThead() {
 function handleSelectionChange(event: Data[]) {
   currentSelect.value = event
   emits('selectionChange', currentSelect.value)
+}
+// 处理排序变化事件
+function handleSortChange(column: TableColumnCtx, prop: string, order: never) {
+  emits('sortChange', column, prop, order)
 }
 // 获取当前选中
 function getSelectionRows() {
@@ -165,11 +170,14 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
     :load="props.treeLoad"
     :data="data"
     :row-key="dataKey"
-    :row-class-name="tableRowClassName"
+    :row-class-name="rowClassName"
     :selectable="props.selectable"
     :border="props.border"
+    :stripe="props.stripe"
+    :header-cell-class-name="'data-table-header-cell'"
     @current-change="(current: Data) => (clickRowSelect ? handleSelectionChange([current]) : undefined)"
     @selection-change="handleSelectionChange"
+    @sort-change="handleSortChange"
   >
     <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="26" :reserve-selection="props.multiSelect" />
     <el-table-column v-if="props.selectable && !props.multiSelect" :fixed="true" width="26">
@@ -188,6 +196,9 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
           :min-width="item.minWidth"
           :align="item.dataAlign"
           :fixed="item.fixed"
+          :sortable="true"
+          :sort-method="item.sortMethod"
+          :sort-by="item.sortBy"
           :show-overflow-tooltip="item.showOverflowTooltip"
         >
           <template #header>
@@ -252,4 +263,11 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
   </el-table>
 </template>
 
-<style scoped></style>
+<style scoped>
+:deep(.data-table-header-cell .cell) {
+  display: flex;
+  justify-content: center; /* 水平居中，根据需求可改为 space-between 或 flex-start */
+  align-items: center; /* 垂直居中 */
+  gap: 1px; /* 两个元素之间的间距 */
+}
+</style>

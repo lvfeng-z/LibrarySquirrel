@@ -74,7 +74,6 @@ const siteThead: Ref<Thead<Site>[]> = ref([
     key: 'siteDescription',
     title: '描述',
     hide: false,
-    width: 400,
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
@@ -198,30 +197,28 @@ function handleSiteDialogRequestSuccess() {
 <template>
   <base-subpage>
     <template #default>
-      <div :class="{ 'site-manage-container': true, 'site-manage-container-reverse': reversed }">
-        <div :class="{ 'site-manage-left': true, 'site-manage-left-reverse': reversed }">
-          <search-table
-            ref="siteSearchTable"
-            v-model:page="sitePage"
-            v-model:toolbar-params="siteSearchParams"
-            v-model:changed-rows="siteChangedRows"
-            class="site-manage-left-search-table"
-            data-key="id"
-            :operation-button="siteOperationButton"
-            :operation-width="140"
-            :thead="siteThead"
-            :search="siteQueryPage"
-            :selectable="true"
-            :multi-select="reversed"
-            :page-sizes="[10, 20, 50, 100]"
-            @row-button-clicked="handleSiteRowButtonClicked"
-          >
-            <template #toolbarMain>
-              <el-button type="primary" @click="handleSiteCreateButtonClicked">新增</el-button>
-              <el-input v-model="siteSearchParams.siteName" placeholder="输入站点名称" clearable />
-            </template>
-          </search-table>
-        </div>
+      <div class="site-manage-container">
+        <search-table
+          ref="siteSearchTable"
+          v-model:page="sitePage"
+          v-model:toolbar-params="siteSearchParams"
+          v-model:changed-rows="siteChangedRows"
+          class="site-manage-left-search-table"
+          data-key="id"
+          :operation-button="siteOperationButton"
+          :operation-width="140"
+          :thead="siteThead"
+          :search="siteQueryPage"
+          :selectable="true"
+          :multi-select="reversed"
+          :page-sizes="[10, 20, 50, 100]"
+          @row-button-clicked="handleSiteRowButtonClicked"
+        >
+          <template #toolbarMain>
+            <el-button type="primary" @click="handleSiteCreateButtonClicked">新增</el-button>
+            <el-input v-model="siteSearchParams.siteName" placeholder="输入站点名称" clearable />
+          </template>
+        </search-table>
       </div>
     </template>
     <template #dialog>
@@ -236,29 +233,6 @@ function handleSiteDialogRequestSuccess() {
 </template>
 
 <style scoped>
-.site-manage-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 5px;
-}
-.site-manage-title-reverse {
-  flex-direction: row-reverse;
-}
-.site-manage-left-title {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  width: 100%;
-}
-.site-manage-right-title {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  width: 100%;
-}
 .site-manage-container {
   display: flex;
   flex-direction: row;
@@ -272,31 +246,7 @@ function handleSiteDialogRequestSuccess() {
   margin: 5px;
 }
 
-.site-manage-container-reverse {
-  flex-direction: row-reverse;
-}
-
-.site-manage-left {
-  width: calc(50% - 5px);
-  height: 100%;
-  margin-right: 5px;
-}
-.site-manage-left-reverse {
-  margin-left: 5px;
-}
 .site-manage-left-search-table {
-  height: 100%;
-  width: 100%;
-}
-.site-manage-right {
-  width: calc(50% - 5px);
-  height: 100%;
-  margin-left: 5px;
-}
-.site-manage-right-reverse {
-  margin-right: 5px;
-}
-.site-manage-right-search-table {
   height: 100%;
   width: 100%;
 }

@@ -8,7 +8,7 @@ import Page from '../../model/util/Page.ts'
 import lodash from 'lodash'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import TreeNode from '../../model/util/TreeNode'
-import { TreeNode as ElTreeNode } from 'element-plus'
+import { TableColumnCtx, TreeNode as ElTreeNode } from 'element-plus'
 import { getNode } from '@shared/util/TreeUtil.ts'
 import DataTable from '@renderer/components/common/DataTable.vue'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
@@ -20,7 +20,7 @@ const props = withDefaults(
     multiSelect: boolean // 列表是否多选
     clickRowSelect?: boolean // 点击行的任意位置进行选中（仅单选生效）
     dataKey: string // 数据的唯一标识
-    tableRowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
+    rowClassName?: (data: { row: unknown; rowIndex: number }) => string // 给行添加class的函数
     thead: Thead<Data>[] // 表头
     operationButton?: OperationItem<Data>[] // 数据行的操作按钮
     operationWidth?: number // 操作栏宽度
@@ -29,6 +29,7 @@ const props = withDefaults(
     treeLazy?: boolean // 树形数据是否懒加载
     treeLoad?: (row: unknown) => Promise<unknown[]> // 懒加载处理函数
     border?: boolean // 是否带有纵向边框
+    stripe?: boolean // 是否开启斑马纹
     search: (page: Page<Query, Data>) => Promise<Page<Query, Data> | undefined> // 查询函数
     updateLoad?: (ids: (number | string)[]) => Promise<object[] | undefined> // 更新数据的函数
     updateProperties?: string[] // 要更新的属性名
@@ -62,7 +63,8 @@ const emits = defineEmits([
   'pageNumberChanged',
   'pageSizeChanged',
   'query',
-  'scroll'
+  'scroll',
+  'sortChange'
 ])
 
 // 暴露
@@ -140,6 +142,10 @@ function handleDataTableSelectionChange(selections: []) {
 // 处理滚动事件
 function handleScroll() {
   emits('scroll')
+}
+// 处理排序变化事件
+function handleSortChange(column: TableColumnCtx, prop: string, order: never) {
+  emits('sortChange', column, prop, order)
 }
 // 更新现有数据
 async function refreshData(waitingUpdateIds: number[] | string[], updateChildren: boolean) {
@@ -262,7 +268,7 @@ function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: bo
         :multi-select="multiSelect"
         :click-row-select="clickRowSelect"
         :data-key="dataKey"
-        :table-row-class-name="tableRowClassName"
+        :row-class-name="rowClassName"
         :operation-button="operationButton"
         :operation-width="operationWidth"
         :custom-operation-button="customOperationButton"
@@ -270,10 +276,12 @@ function toggleRowSelection(row: Data, selected?: boolean, ignoreSelectable?: bo
         :lazy="props.treeLazy"
         :load="wrappedLoad"
         :border="border"
+        :stripe="stripe"
         @button-clicked="handleDataTableButtonClicked"
         @selection-change="handleDataTableSelectionChange"
         @row-changed="handleRowChange"
         @scroll="handleScroll"
+        @sort-change="handleSortChange"
       >
         <template #customOperations="{ row }">
           <slot name="customOperations" :row="row" />
