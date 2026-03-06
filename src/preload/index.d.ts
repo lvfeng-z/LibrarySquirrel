@@ -89,6 +89,9 @@ declare global {
       siteAuthorQueryBoundOrUnboundInLocalAuthorPage: function
       siteAuthorQueryLocalRelateDTOPage: function
 
+      // SiteBrowser
+      siteBrowserQueryPage: function
+
       // SiteTag
       siteTagSave: function
       siteTagCreateAndBindSameNameLocalTag: function

@@ -29,6 +29,8 @@ import WorkSetService from '../service/WorkSetService.ts'
 import SecureStorageService, { SecureStorageErrorCode } from '../service/SecureStorageService.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { getPluginTaskUrlListenerManager } from './pluginTaskUrlListener.ts'
+import { getSiteBrowserManager } from './siteBrowserManager.ts'
+import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 
 function returnError(error: unknown) {
   LogUtil.error('MainProcessApi', error)
@@ -847,6 +849,14 @@ function exposeService() {
     createHandler('secureStorage-listKeys', () => {
       const service = new SecureStorageService()
       return service.listKeys()
+    })
+  )
+  // SiteBrowser
+  Electron.ipcMain.handle(
+    'siteBrowser-queryPage',
+    createHandler('siteBrowser-queryPage', (page: Page<object, SiteBrowserDTO>) => {
+      page = new Page(page)
+      return getSiteBrowserManager().queryPage(page)
     })
   )
 }

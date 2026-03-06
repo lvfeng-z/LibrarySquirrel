@@ -98,6 +98,9 @@ const api = {
   siteTagQuerySelectItemPageByWorkId: (args) => Electron.ipcRenderer.invoke('siteTag-querySelectItemPageByWorkId', args),
   siteAuthorQueryLocalRelateDTOPage: (args) => Electron.ipcRenderer.invoke('siteAuthor-queryLocalRelateDTOPage', args),
 
+  // SiteBrowser
+  siteBrowserQueryPage: (args) => Electron.ipcRenderer.invoke('siteBrowser-queryPage', args),
+
   // Task
   taskCreateTask: (args) => Electron.ipcRenderer.invoke('task-createTask', args),
   taskStartTaskTree: (args) => Electron.ipcRenderer.invoke('task-startTaskTree', args),

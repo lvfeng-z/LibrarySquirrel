@@ -1,62 +1,40 @@
 <script setup lang="ts">
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, toRaw, UnwrapRef } from 'vue'
 import { Picture } from '@element-plus/icons-vue'
+import ApiUtil from '@renderer/utils/ApiUtil.ts'
+import Page from '@renderer/model/util/Page.ts'
 
-// 模拟的站点浏览器数据接口
+// 站点浏览器数据接口
 interface SiteBrowserItem {
-  id: string
+  pluginPublicId: string
   name: string
   imagePath: string
   pluginId: number
 }
 
-// 模拟数据 - 实际应该从后端获取
-const siteBrowserList = ref<SiteBrowserItem[]>([
-  {
-    id: '1',
-    name: 'Pixiv',
-    imagePath: '/plugins/pixiv/icon.png',
-    pluginId: 1
-  },
-  {
-    id: '2',
-    name: 'Bilibili',
-    imagePath: '/plugins/bilibili/icon.png',
-    pluginId: 2
-  },
-  {
-    id: '3',
-    name: 'Twitter',
-    imagePath: '/plugins/twitter/icon.png',
-    pluginId: 3
-  },
-  {
-    id: '4',
-    name: 'Danbooru',
-    imagePath: '/plugins/danbooru/icon.png',
-    pluginId: 4
-  },
-  {
-    id: '5',
-    name: 'ArtStation',
-    imagePath: '/plugins/artstation/icon.png',
-    pluginId: 5
-  },
-  {
-    id: '6',
-    name: 'DeviantArt',
-    imagePath: '/plugins/deviantart/icon.png',
-    pluginId: 6
+// 站点浏览器列表
+const siteBrowserList = ref<SiteBrowserItem[]>([])
+
+// 分页参数
+const page = ref<UnwrapRef<Page<object, SiteBrowserItem>>>(new Page<object, SiteBrowserItem>())
+
+// 查询站点浏览器列表
+async function querySiteBrowserList() {
+  page.value.pageSize = 100 // 获取所有数据
+  const response = await window.api.siteBrowserQueryPage(toRaw(page.value))
+  if (ApiUtil.check(response)) {
+    const resultPage = ApiUtil.data<Page<object, SiteBrowserItem>>(response)
+    if (resultPage?.data) {
+      siteBrowserList.value = resultPage.data
+    }
+  } else {
+    ApiUtil.msg(response)
   }
-])
+}
 
 onMounted(() => {
-  // 实际项目中，这里应该调用后端 API 获取站点浏览器列表
-  // const response = await window.api.siteBrowserList()
-  // if (ApiUtil.check(response)) {
-  //   siteBrowserList.value = ApiUtil.data(response)
-  // }
+  querySiteBrowserList()
 })
 
 // 处理卡片点击事件
@@ -72,7 +50,7 @@ function handleCardClick(item: SiteBrowserItem) {
       <div class="site-browser-manage-container">
         <el-scrollbar>
           <div class="site-browser-grid">
-            <div v-for="item in siteBrowserList" :key="item.id" class="site-browser-card" @click="handleCardClick(item)">
+            <div v-for="item in siteBrowserList" :key="item.pluginPublicId" class="site-browser-card" @click="handleCardClick(item)">
               <div class="site-browser-card-image">
                 <el-image :src="`resource://workdir${item.imagePath}`" fit="cover" class="site-browser-image">
                   <template #error>
