@@ -196,7 +196,7 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
           :min-width="item.minWidth"
           :align="item.dataAlign"
           :fixed="item.fixed"
-          :sortable="true"
+          :sortable="item.sortable"
           :sort-method="item.sortMethod"
           :sort-by="item.sortBy"
           :show-overflow-tooltip="item.showOverflowTooltip"

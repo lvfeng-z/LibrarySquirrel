@@ -54,6 +54,11 @@ const page = defineModel<Page<Query, Data>>('page', { required: true })
 const toolbarParams = defineModel<object>('toolbarParams', { default: {}, required: false })
 // 已编辑的行
 const changedRows = defineModel<Data[]>('changedRows', { default: [], required: false })
+// 排序配置
+const sort = defineModel<{ prop: string; order: 'ascending' | 'descending' | null }>('sort', {
+  default: { prop: '', order: null },
+  required: false
+})
 
 // 事件
 const emits = defineEmits([
@@ -144,8 +149,9 @@ function handleScroll() {
   emits('scroll')
 }
 // 处理排序变化事件
-function handleSortChange(column: TableColumnCtx, prop: string, order: never) {
-  emits('sortChange', column, prop, order)
+function handleSortChange(sortData: { column: TableColumnCtx; prop: string; order: never }) {
+  sort.value = { prop: sortData.prop, order: sortData.order as 'ascending' | 'descending' | null }
+  emits('sortChange', sortData)
 }
 // 更新现有数据
 async function refreshData(waitingUpdateIds: number[] | string[], updateChildren: boolean) {

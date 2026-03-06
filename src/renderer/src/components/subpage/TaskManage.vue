@@ -30,6 +30,7 @@ import Task from '@shared/model/entity/Task.ts'
 import TaskQueryDTO from '@shared/model/queryDTO/TaskQueryDTO.ts'
 import Plugin from '@shared/model/entity/Plugin.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
+import type { QuerySortOption } from '@renderer/model/util/QuerySortOption.ts'
 
 // onMounted
 onMounted(() => {
@@ -75,7 +76,8 @@ const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
     minWidth: 380,
     headerAlign: 'center',
     dataAlign: 'left',
-    showOverflowTooltip: true
+    showOverflowTooltip: true,
+    sortable: 'custom'
   }),
   new Thead({
     type: 'text',
@@ -85,8 +87,7 @@ const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
     hide: false,
     width: 100,
     headerAlign: 'center',
-    dataAlign: 'center',
-    showOverflowTooltip: true
+    dataAlign: 'center'
   }),
   new Thead({
     type: 'datetime',
@@ -97,7 +98,8 @@ const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
     width: 152,
     headerAlign: 'center',
     dataAlign: 'center',
-    showOverflowTooltip: true
+    showOverflowTooltip: true,
+    sortable: 'custom'
   }),
   new Thead({
     type: 'text',
@@ -108,7 +110,8 @@ const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
     width: 380,
     headerAlign: 'center',
     dataAlign: 'center',
-    showOverflowTooltip: true
+    showOverflowTooltip: true,
+    sortable: 'custom'
   }),
   new Thead({
     type: 'custom',
@@ -121,6 +124,7 @@ const thead: Ref<Thead<TaskProgressTreeDTO>[]> = ref([
     dataAlign: 'center',
     fixed: 'right',
     showOverflowTooltip: false,
+    sortable: 'custom',
     editMethod: 'replace',
     render: (data: TaskStatusEnum): VNode => {
       let tagType: 'success' | 'warning' | 'info' | 'primary' | 'danger' | undefined
@@ -170,6 +174,8 @@ const page: Ref<Page<TaskQueryDTO, Task>> = ref(new Page<TaskQueryDTO, Task>())
 const taskSearchParams: Ref<TaskQueryDTO> = ref(new TaskQueryDTO())
 // 改变的行数据
 const changedRows: Ref<object[]> = ref([])
+// 排序配置
+const sort: Ref<{ prop: string; order: 'ascending' | 'descending' | null }> = ref({ prop: '', order: null })
 // 是否正在刷新数据
 let refreshing: boolean = false
 // 防抖动refreshTask
@@ -236,8 +242,19 @@ async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Pa
   if (isNullish(page.query)) {
     page.query = new TaskQueryDTO()
   }
+  // 根据用户选择的排序构建排序配置
+  const userSort: QuerySortOption[] = []
+  // 添加用户选择的排序（如果存在）
+  if (sort.value.prop && sort.value.order) {
+    userSort.push({
+      key: sort.value.prop,
+      asc: sort.value.order === 'ascending'
+    })
+  }
+  // 添加默认排序（按创建时间和更新时间降序）
   if (arrayNotEmpty(page.query.sort)) {
     page.query.sort = [
+      ...userSort,
       ...page.query.sort,
       ...[
         { key: 'createTime', asc: false },
@@ -245,10 +262,7 @@ async function taskQueryParentPage(page: Page<TaskQueryDTO, object>): Promise<Pa
       ]
     ]
   } else {
-    page.query.sort = [
-      { key: 'createTime', asc: false },
-      { key: 'updateTime', asc: false }
-    ]
+    page.query.sort = [...userSort, { key: 'createTime', asc: false }, { key: 'updateTime', asc: false }]
   }
   const response = await apis.taskQueryParentPage(page)
   if (ApiUtil.check(response)) {
@@ -523,6 +537,7 @@ async function handleSourceUrlInput() {
         v-model:page="page"
         v-model:toolbar-params="taskSearchParams"
         v-model:changed-rows="changedRows"
+        v-model:sort="sort"
         class="task-manage-search-table"
         :selectable="true"
         :thead="thead as Thead<object>[]"
@@ -539,6 +554,7 @@ async function handleSourceUrlInput() {
         :operation-width="163"
         :tree-data="true"
         @scroll="handleScroll"
+        @sort-change="taskManageSearchTable.doSearch()"
       >
         <template #toolbarMain>
           <el-row class="task-manage-search-bar">
