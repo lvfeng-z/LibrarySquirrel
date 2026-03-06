@@ -8,7 +8,7 @@ import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
  * 页面跳转
  * @param pageEnum
  */
-export async function GotoPage(pageEnum: PageEnum) {
+export async function gotoPage(pageEnum: PageEnum) {
   const pageStatesStore = usePageStatesStore()
   switch (pageEnum) {
     case PageEnum.MainPage:
@@ -27,6 +27,8 @@ export async function GotoPage(pageEnum: PageEnum) {
       return pageStatesStore.showPage(pageStatesStore.pageStates.pluginManage)
     case PageEnum.SiteManage:
       return pageStatesStore.showPage(pageStatesStore.pageStates.siteManage)
+    case PageEnum.SiteBrowserManage:
+      return pageStatesStore.showPage(pageStatesStore.pageStates.siteBrowserManage)
     case PageEnum.TaskManage:
       return pageStatesStore.showPage(pageStatesStore.pageStates.taskManage)
     case PageEnum.Settings:
@@ -42,8 +44,8 @@ export async function GotoPage(pageEnum: PageEnum) {
  * 页面跳转
  * @param config
  */
-export function AskGotoPage(config: GotoPageConfig) {
-  ElMessageBox.alert(config.content, config.title, config.options).then(async () => GotoPage(config.page))
+export function askGotoPage(config: GotoPageConfig) {
+  ElMessageBox.alert(config.content, config.title, config.options).then(async () => gotoPage(config.page))
   switch (config.page) {
     case PageEnum.Settings:
       if (config.extraData as boolean) {

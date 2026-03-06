@@ -8,6 +8,7 @@ import Settings from '@renderer/components/subpage/Settings.vue'
 import TaskManage from '@renderer/components/subpage/TaskManage.vue'
 import Developing from '@renderer/components/subpage/Developing.vue'
 import SiteManage from '@renderer/components/subpage/SiteManage.vue'
+import SiteBrowserManage from '@renderer/components/subpage/SiteBrowserManage.vue'
 import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 import GuidePage from '@renderer/components/subpage/Guide.vue'
@@ -36,7 +37,7 @@ import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import { Settings as SettingsEntity } from '@renderer/model/util/Settings.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { AskGotoPage, GotoPage } from '@renderer/utils/PageUtil.ts'
+import { askGotoPage, gotoPage } from '@renderer/utils/PageUtil.ts'
 import WorkGridForMainPage from '@renderer/components/common/WorkGridForMainPage.vue'
 import WorkSetGridForMainPage from '@renderer/components/common/WorkSetGridForMainPage.vue'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
@@ -61,7 +62,7 @@ onMounted(async () => {
     const data = ApiUtil.data<SettingsEntity>(response)
     const workDirIsBlank = isBlank(data?.workdir)
     const askSetWorkDir = () =>
-      AskGotoPage({
+      askGotoPage({
         page: PageEnum.Settings,
         title: '请设置工作目录',
         content: 'LibrarySquirrel需要工作目录才能正常使用',
@@ -79,7 +80,7 @@ onMounted(async () => {
         cancelButtonText: '取消'
       })
         .then(async () => {
-          await GotoPage(PageEnum.Guide)
+          await gotoPage(PageEnum.Guide)
           await apis.settingsSaveSettings([{ path: 'tour.firstTimeTourPassed', value: true }])
           await usePageStatesStore().waitPage(usePageStatesStore().pageStates.mainPage)
           if (workDirIsBlank) {
@@ -433,14 +434,18 @@ async function handleTest() {
               <template #title>收藏</template>
               <el-icon><Star /></el-icon>
             </el-menu-item>
-            <el-menu-item index="4" @click="showSubpage(pageStatesStore.pageStates.siteManage)">
-              <template #title>站点</template>
-              <el-icon><Link /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="5" @click="showSubpage(pageStatesStore.pageStates.taskManage)">
+            <el-menu-item index="4" @click="showSubpage(pageStatesStore.pageStates.taskManage)">
               <template #title>任务</template>
               <el-icon ref="taskButton"><List /></el-icon>
             </el-menu-item>
+            <el-sub-menu index="5">
+              <template #title>
+                <el-icon><Link /></el-icon>
+                <span>站点</span>
+              </template>
+              <el-menu-item index="5-1" @click="showSubpage(pageStatesStore.pageStates.siteManage)">站点管理</el-menu-item>
+              <el-menu-item index="5-2" @click="showSubpage(pageStatesStore.pageStates.siteBrowserManage)">站点浏览</el-menu-item>
+            </el-sub-menu>
             <el-menu-item index="6" @click="showSubpage(pageStatesStore.pageStates.pluginManage)">
               <template #title>插件</template>
               <el-icon><TakeawayBox /></el-icon>
@@ -588,6 +593,7 @@ async function handleTest() {
           />
           <settings v-if="pageStatesStore.pageStates.settings.state" :state="pageStatesStore.pageStates.settings" />
           <site-manage v-if="pageStatesStore.pageStates.siteManage.state" />
+          <site-browser-manage v-if="pageStatesStore.pageStates.siteBrowserManage.state" />
           <guide-page v-if="pageStatesStore.pageStates.guide.state" />
           <developing v-if="pageStatesStore.pageStates.developing.state" />
           <test v-if="pageStatesStore.pageStates.test.state" />

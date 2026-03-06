@@ -203,7 +203,7 @@ function handleSiteDialogRequestSuccess() {
           v-model:page="sitePage"
           v-model:toolbar-params="siteSearchParams"
           v-model:changed-rows="siteChangedRows"
-          class="site-manage-left-search-table"
+          class="site-manage-search-table"
           data-key="id"
           :operation-button="siteOperationButton"
           :operation-width="140"
@@ -246,7 +246,7 @@ function handleSiteDialogRequestSuccess() {
   margin: 5px;
 }
 
-.site-manage-left-search-table {
+.site-manage-search-table {
   height: 100%;
   width: 100%;
 }

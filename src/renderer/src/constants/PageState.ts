@@ -38,6 +38,7 @@ export class PageStates {
   siteAuthorManage = new PageState(PageEnum.SiteAuthorManage, false)
   pluginManage = new PageState(PageEnum.PluginManage, false)
   siteManage = new PageState(PageEnum.SiteManage, false)
+  siteBrowserManage = new PageState(PageEnum.SiteBrowserManage, false)
   taskManage = new PageState(PageEnum.TaskManage, false)
   settings = new PageState(PageEnum.Settings, false)
   guide = new PageState(PageEnum.Guide, false)
@@ -58,5 +59,6 @@ export enum PageEnum {
   Settings = 10,
   Guide = 11,
   Developing = 12,
-  Test = 13
+  Test = 13,
+  SiteBrowserManage = 14
 }
