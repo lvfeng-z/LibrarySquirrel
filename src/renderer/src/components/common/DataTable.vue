@@ -171,13 +171,13 @@ function getVisibleRows(offsetTop?: number, offsetBottom?: number) {
     @current-change="(current: Data) => (clickRowSelect ? handleSelectionChange([current]) : undefined)"
     @selection-change="handleSelectionChange"
   >
-    <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="30" :reserve-selection="props.multiSelect" />
-    <el-table-column v-if="props.selectable && !props.multiSelect" :fixed="true" width="30">
+    <el-table-column v-if="props.selectable && props.multiSelect" type="selection" width="26" :reserve-selection="props.multiSelect" />
+    <el-table-column v-if="props.selectable && !props.multiSelect" :fixed="true" width="26">
       <template #default="{ row }">
         <el-radio v-model="currentSelectKey" :value="row[dataKey]" @click="handleSelectionChange([row])" />
       </template>
     </el-table-column>
-    <el-table-column v-if="props.treeData" :fixed="true" width="25" />
+    <el-table-column v-if="props.treeData" :fixed="true" width="28" />
     <template v-for="(item, index) in props.thead">
       <template v-if="!item.hide">
         <el-table-column
