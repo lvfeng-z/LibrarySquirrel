@@ -10,13 +10,14 @@ import { Thead } from '../../model/util/Thead'
 import OperationItem from '../../model/util/OperationItem'
 import DialogMode from '../../model/util/DialogMode'
 import Page from '@renderer/model/util/Page.ts'
-import { isNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import AutoLoadSelect from '@renderer/components/common/AutoLoadSelect.vue'
 import { siteQuerySelectItemPageBySiteName } from '@renderer/apis/SiteApi.ts'
 import { localTagQuerySelectItemPageByName } from '@renderer/apis/LocalTagApi.ts'
 import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
 import SiteTagLocalRelateDTO from '@shared/model/dto/SiteTagLocalRelateDTO.ts'
+import type { QuerySortOption } from '@renderer/model/util/QuerySortOption.ts'
 import SiteTagFullDTO from '@shared/model/dto/SiteTagFullDTO.ts'
 import LocalTag from '@shared/model/entity/LocalTag.ts'
 import Site from '@shared/model/entity/Site.ts'
@@ -47,6 +48,8 @@ const apis = {
 const siteTagSearchTable = ref()
 // 被改变的数据行
 const changedRows: Ref<SiteTagLocalRelateDTO[]> = ref([])
+// 排序配置
+const sort: Ref<{ prop: string; order: 'ascending' | 'descending' | null }> = ref({ prop: '', order: null })
 // 站点标签SearchTable的operationButton
 const operationButton: OperationItem<SiteTagLocalRelateDTO>[] = [
   {
@@ -79,7 +82,8 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     width: 250,
     headerAlign: 'center',
     dataAlign: 'center',
-    showOverflowTooltip: true
+    showOverflowTooltip: true,
+    sortable: 'custom'
   }),
   new Thead({
     type: 'textarea',
@@ -139,6 +143,7 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     headerTagType: 'success',
     dataAlign: 'center',
     showOverflowTooltip: true,
+    sortable: 'custom',
     remote: true,
     remotePaging: true,
     remotePageMethod: siteQuerySelectItemPageBySiteName,
@@ -170,7 +175,8 @@ const siteTagThead: Ref<Thead<SiteTagFullDTO>[]> = ref([
     headerAlign: 'center',
     headerTagType: 'success',
     dataAlign: 'center',
-    showOverflowTooltip: true
+    showOverflowTooltip: true,
+    sortable: 'custom'
   })
 ])
 // 站点标签SearchTable的查询参数
@@ -189,6 +195,24 @@ const dialogData: Ref<SiteTagLocalRelateDTO> = ref(new SiteTagLocalRelateDTO())
 async function siteTagQueryPage(
   page: Page<SiteTagQueryDTO, object>
 ): Promise<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO> | undefined> {
+  // 根据用户选择的排序构建排序配置
+  const userSort: QuerySortOption[] = []
+  // 添加用户选择的排序（如果存在）
+  if (sort.value.prop && sort.value.order) {
+    userSort.push({
+      key: sort.value.prop,
+      asc: sort.value.order === 'ascending'
+    })
+  }
+  // 添加默认排序（按修改时间和创建时间降序）
+  if (isNullish(page.query)) {
+    page.query = new SiteTagQueryDTO()
+  }
+  if (arrayNotEmpty(page.query.sort)) {
+    page.query.sort = [...userSort, ...page.query.sort]
+  } else {
+    page.query.sort = [...userSort, { key: 'updateTime', asc: false }, { key: 'createTime', asc: false }]
+  }
   const response = await apis.siteTagQueryLocalRelateDTOPage(page)
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<SiteTagQueryDTO, SiteTagLocalRelateDTO>>(response)
@@ -277,6 +301,7 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
           v-model:page="page"
           v-model:toolbar-params="siteTagSearchParams"
           v-model:changed-rows="changedRows"
+          v-model:sort="sort"
           class="tag-manage-search-table"
           data-key="id"
           :operation-button="operationButton"
@@ -287,6 +312,7 @@ async function creatSameNameLocalTagAndBind(siteTag: SiteTag) {
           :page-sizes="[10, 20, 50, 100, 1000]"
           :operation-width="205"
           @row-button-clicked="handleRowButtonClicked"
+          @sort-change="siteTagSearchTable.doSearch()"
         >
           <template #toolbarMain>
             <el-button type="primary" @click="handleCreateButtonClicked">新增</el-button>

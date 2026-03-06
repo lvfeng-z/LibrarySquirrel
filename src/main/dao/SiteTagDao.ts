@@ -260,8 +260,8 @@ export default class SiteTagDao extends BaseDao<SiteTagQueryDTO, SiteTag> {
     const whereClause = super.splicingWhereClauses(whereClauses.values().toArray())
 
     let statement = selectClause + ' ' + fromClause + (isBlank(whereClause) ? '' : ' ' + whereClause) + ' GROUP BY t1.id'
-    const sort = isNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
-    statement = await super.sortAndPage(statement, modifiedPage, sort)
+    const sort = isNullish(page.query?.sort) ? [] : page.query.sort
+    statement = await super.sortAndPage(statement, modifiedPage, sort, 't1')
     const db = this.acquire()
     return db
       .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
