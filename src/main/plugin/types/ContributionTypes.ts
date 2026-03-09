@@ -1,24 +1,16 @@
 import { Readable } from 'node:stream'
-import { PluginContext } from './PluginContext.ts'
 import { PluginTaskResParam } from '../PluginTaskResParam.ts'
 import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
 import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.ts'
 
-export interface BaseContribution {
-
-}
+export interface BaseContribution {}
 
 /**
- * 任务贡献点接口
+ * 任务处理器
  * 定义插件处理任务所需的所有方法
  */
-export interface TaskContribution extends BaseContribution {
-  /** 插件ID */
-  pluginId: number
-  /** 插件上下文 */
-  context: PluginContext
-
+export interface TaskHandler extends BaseContribution {
   /**
    * 创建任务
    * @param url 需解析的url
@@ -65,7 +57,20 @@ export interface TaskContribution extends BaseContribution {
   resume(taskResParam: PluginTaskResParam): Promise<PluginWorkResponseDTO>
 }
 
-export interface SiteBrowser extends BaseContribution {}
+/**
+ * 站点浏览器
+ */
+export interface SiteBrowser extends BaseContribution {
+  /**
+   * 打开浏览器
+   */
+  open(): Promise<void>
+
+  /**
+   * 关闭浏览器
+   */
+  close(): Promise<void>
+}
 
 /**
  * 贡献点映射表
@@ -73,9 +78,9 @@ export interface SiteBrowser extends BaseContribution {}
  * 可在此扩展新的贡献点类型
  */
 export interface ContributionMap {
-  /** 任务贡献点 */
-  task: TaskContribution
-  /** 任务贡献点 */
+  /** 任务处理器 */
+  task: TaskHandler
+  /** 站点浏览器 */
   siteBrowser: SiteBrowser
 }
 

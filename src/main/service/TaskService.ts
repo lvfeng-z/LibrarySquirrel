@@ -36,7 +36,7 @@ import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreatePar
 import PluginResourceDTO from '@shared/model/dto/PluginResourceDTO.ts'
 import TaskProcessResponseDTO from '@shared/model/dto/TaskProcessResponseDTO.js'
 import { getTaskQueue } from '../core/taskQueue.ts'
-import { TaskContribution } from '../plugin/types/ContributionTypes.ts'
+import { TaskHandler } from '../plugin/types/ContributionTypes.ts'
 import { mergeObjects } from '@shared/util/ObjectUtil.ts'
 import { getPluginManager } from '../core/pluginManager.ts'
 
@@ -77,7 +77,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           LogUtil.error(this.constructor.name, msg)
           continue
         }
-        const taskHandler: TaskContribution = await getPluginManager().getContribution(taskPlugin.id as number, 'task')
+        const taskHandler: TaskHandler = await getPluginManager().getContribution(taskPlugin.id as number, 'task')
 
         // 任务集
         const parentTask = new Task()
@@ -250,7 +250,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     task.pluginAuthor = plugin.author
     task.pluginName = plugin.name
     task.pluginVersion = plugin.version
-    const taskHandler: TaskContribution = await getPluginManager().getContribution(pluginId, 'task')
+    const taskHandler: TaskHandler = await getPluginManager().getContribution(pluginId, 'task')
 
     // 调用插件的createWorkInfo方法，获取作品信息
     let pluginWorkResponseDTO: PluginWorkResponseDTO
@@ -296,7 +296,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 调用插件的start方法，获取资源
     let pluginResponse: PluginWorkResponseDTO
     try {
-      const taskHandler: TaskContribution = await getPluginManager().getContribution(plugin.id, 'task')
+      const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.id, 'task')
       pluginResponse = await taskHandler.start(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件开始时失败`, error)
@@ -539,7 +539,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 加载插件
     const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '恢复任务失败')
     assertNotNullish(plugin?.id, `暂停任务失败，创建任务的插件id不能为空，taskId: ${taskId}`)
-    const taskHandler: TaskContribution = await getPluginManager().getContribution(plugin.id, 'task')
+    const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.id, 'task')
 
     // 插件用于恢复下载的任务信息
     const taskPluginDTO = new PluginTaskResParam(task)

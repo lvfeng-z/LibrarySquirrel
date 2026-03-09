@@ -1,6 +1,7 @@
 import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import Site from '@shared/model/entity/Site.ts'
+import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 
 /**
  * 插件上下文接口
@@ -35,6 +36,10 @@ export interface PluginContext {
     unregisterUrlListener: () => void
     /** 保存站点 */
     addSite: (site: Site[]) => Promise<number>
+    /** 注册站点浏览器 */
+    registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => void
+    /** 取消注册站点浏览器 */
+    unregisterSiteBrowser: (siteBrowserId: string) => void
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

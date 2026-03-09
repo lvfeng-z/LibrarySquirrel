@@ -12,6 +12,7 @@ import WorkSetService from '../service/WorkSetService.ts'
 import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
+import { getSiteBrowserManager } from '../core/siteBrowserManager.ts'
 import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
@@ -21,6 +22,7 @@ import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import { isBlank } from '@shared/util/StringUtil.ts'
 import Site from '@shared/model/entity/Site.ts'
+import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 import { RootDir } from '../util/FileSysUtil.ts'
 import path from 'path'
 import { pathToFileURL } from 'node:url'
@@ -188,6 +190,14 @@ export default class PluginManager {
         addSite: async (site: Site[]) => {
           const siteService = new SiteService()
           return siteService.saveBatchIfNotExist(site)
+        },
+        registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => {
+          const manager = getSiteBrowserManager()
+          manager.register(siteBrowser)
+        },
+        unregisterSiteBrowser: (siteBrowserId: string) => {
+          const manager = getSiteBrowserManager()
+          manager.unregister(siteBrowserId)
         },
         logger
       },
