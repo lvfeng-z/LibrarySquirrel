@@ -20,7 +20,6 @@ import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
 import { ActivationType } from './types/ActivationTypes.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
-import { isBlank } from '@shared/util/StringUtil.ts'
 import Site from '@shared/model/entity/Site.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 import { RootDir } from '../util/FileSysUtil.ts'
@@ -271,28 +270,20 @@ export default class PluginManager {
    * 根据激活类型激活插件
    * @param pluginId 插件ID
    * @param activationType 激活类型
-   * @param pluginName 插件名称
    */
-  public async activatePlugin(pluginId: number, activationType: ActivationType, pluginName?: string): Promise<void> {
+  public async activatePlugin(pluginId: number, activationType: ActivationType): Promise<void> {
     // 如果已经激活，直接返回
     const cached = this.pluginCache.get(pluginId)
     if (cached?.activationType) {
       LogUtil.debug('PluginManager', `插件 ${pluginId} 已激活，跳过`)
       return
     }
-    const finalName = isBlank(pluginName) ? String(pluginId) : pluginName
 
-    try {
-      await this.load(pluginId)
-      // 设置激活类型
-      const pluginCached = this.pluginCache.get(pluginId)
-      if (pluginCached) {
-        pluginCached.activationType = activationType
-      }
-      LogUtil.info('PluginManager', `插件 ${finalName} 激活成功`)
-    } catch (error) {
-      LogUtil.error('PluginManager', `插件 ${finalName} 激活失败`, error)
-      throw error
+    await this.load(pluginId)
+    // 设置激活类型
+    const pluginCached = this.pluginCache.get(pluginId)
+    if (pluginCached) {
+      pluginCached.activationType = activationType
     }
   }
 
@@ -344,8 +335,12 @@ export default class PluginManager {
         continue
       }
       try {
-        await this.activatePlugin(plugin.id, ActivationType.STARTUP, isNullish(plugin.name) ? undefined : plugin.name)
-      } catch (_ignored) {}
+        await this.activatePlugin(plugin.id, ActivationType.STARTUP)
+        LogUtil.info('PluginManager', `插件 ${plugin.name} 激活成功`)
+      } catch (error) {
+        LogUtil.error('PluginManager', `插件 ${plugin.name} 激活失败`, error)
+        throw error
+      }
     }
 
     LogUtil.info('PluginManager', '启动时插件激活完成')
