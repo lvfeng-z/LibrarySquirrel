@@ -13,7 +13,7 @@ export interface PluginInstance {
   activate?: () => Promise<void>
   /** 停用函数 - 插件卸载前调用 */
   deactivate?: () => Promise<void>
-  getContribution: <T extends BaseContribution>(key: ContributionKey) => Promise<T>
+  getContribution: <T extends BaseContribution>(key: ContributionKey, contributionId: string) => Promise<T>
 }
 
 /**

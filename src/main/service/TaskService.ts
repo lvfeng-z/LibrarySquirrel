@@ -29,7 +29,7 @@ import { TaskOperation } from '../core/classes/TaskQueue.ts'
 import TaskProgressTreeDTO from '@shared/model/dto/TaskProgressTreeDTO.js'
 import SiteService from './SiteService.js'
 import Site from '@shared/model/entity/Site.js'
-import CreateTaskWritable from '../util/CreateTaskWritableR.js'
+import CreateTaskWritable from '../util/CreateTaskWritable.ts'
 import ResourceService from './ResourceService.js'
 import PluginCreateTaskResponseDTO from '@shared/model/dto/PluginCreateTaskResponseDTO.js'
 import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.js'
@@ -39,6 +39,7 @@ import { getTaskQueue } from '../core/taskQueue.ts'
 import { TaskHandler } from '../plugin/types/ContributionTypes.ts'
 import { mergeObjects } from '@shared/util/ObjectUtil.ts'
 import { getPluginManager } from '../core/pluginManager.ts'
+import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
   constructor(db?: DatabaseClient) {
@@ -53,7 +54,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 查询监听此url的插件
     const taskPlugins = await getPluginTaskUrlListenerManager().listListener(url)
 
-    if (taskPlugins.length === 0) {
+    if (arrayIsEmpty(taskPlugins)) {
       const msg = `url不受支持，url: ${url}`
       LogUtil.info(this.constructor.name, msg)
       return new TaskCreateResponse({
@@ -66,10 +67,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     // 按照排序尝试每个插件
     for (const taskPlugin of taskPlugins) {
-      // 查询插件信息，用于输出日志
-      const pluginService = new PluginService()
-      const pluginInfo = JSON.stringify(await pluginService.getById(taskPlugin.id as number))
-
       try {
         // 加载插件
         if (isNullish(taskPlugin.id)) {
@@ -77,13 +74,16 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           LogUtil.error(this.constructor.name, msg)
           continue
         }
-        const taskHandler: TaskHandler = await getPluginManager().getContribution(taskPlugin.id as number, 'taskHandler')
+        const taskHandler: TaskHandler = await getPluginManager().getContribution(
+          taskPlugin.id as number,
+          'taskHandler',
+          taskPlugin.contributionId
+        )
 
         // 任务集
         const parentTask = new Task()
-        parentTask.pluginAuthor = taskPlugin.author
-        parentTask.pluginName = taskPlugin.name
-        parentTask.pluginVersion = taskPlugin.version
+        parentTask.pluginPublicId = taskPlugin.publicId
+        parentTask.pluginContributionId = taskPlugin.contributionId
         parentTask.url = url
         parentTask.status = TaskStatusEnum.CREATED
         parentTask.isCollection = true
@@ -118,7 +118,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           return pluginProcessResult
         }
       } catch (error) {
-        LogUtil.error(this.constructor.name, `插件创建任务失败，url: ${url}，plugin: ${pluginInfo}，error:`, error)
+        LogUtil.error(this.constructor.name, `插件创建任务失败，url: ${url}，error:`, error)
       }
     }
 
@@ -137,12 +137,10 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   public async handleCreateTaskArray(
     pluginParentTaskResponseDTOS: PluginCreateParentTaskResponseDTO[],
     url: string,
-    taskPlugin: Plugin
+    taskPlugin: PluginWithContribution
   ): Promise<number> {
-    // 查询插件信息，用于输出日志
-    const pluginInfo = JSON.stringify(taskPlugin)
     // 校验是否返回了空数据或非数组
-    assertArrayNotEmpty(pluginParentTaskResponseDTOS, `插件未创建任务，url: ${url}，plugin: ${pluginInfo}`)
+    assertArrayNotEmpty(pluginParentTaskResponseDTOS, `插件未创建任务，url: ${url}`)
     const childrenSavePromise: Promise<number>[] = []
     let childrenCount = 0
     // 用于查询和缓存站点id
@@ -156,9 +154,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       task.status = TaskStatusEnum.CREATED
       task.isCollection = false
       task.pid = pid
-      task.pluginAuthor = taskPlugin.author
-      task.pluginName = taskPlugin.name
-      task.pluginVersion = taskPlugin.version
+      task.pluginPublicId = taskPlugin.publicId
+      task.pluginContributionId = taskPlugin.contributionId
       // 根据站点名称查询站点id
       let siteId: Promise<number | null | undefined> | null | undefined = siteCache.get(task.siteName)
       if (isNullish(siteId)) {
@@ -170,11 +167,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
-        LogUtil.error(
-          this.constructor.name,
-          `序列化插件保存的pluginData失败，url: ${url}，plugin: ${pluginInfo}，pluginData: ${task.pluginData}，error:`,
-          error
-        )
+        LogUtil.error(this.constructor.name, `序列化插件保存的pluginData失败，url: ${url}，error:`, error)
         return
       }
     }
@@ -216,7 +209,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param taskPlugin 插件信息
    * @param batchSize 每次保存任务的数量
    */
-  public async handleCreateTaskStream(createTaskStream: Readable, taskPlugin: Plugin, batchSize: number): Promise<number> {
+  public async handleCreateTaskStream(
+    createTaskStream: Readable,
+    taskPlugin: PluginWithContribution,
+    batchSize: number
+  ): Promise<number> {
     // 最终用于返回的Promise
     return new Promise<number>((resolve, reject) => {
       const writable = new CreateTaskWritable(this, new SiteService(this.db), taskPlugin, batchSize)
@@ -243,14 +240,12 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     assertNotNullish(task.id, `保存作品信息失败，任务id不能为空`)
     const taskId = task.id
     // 加载插件
-    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '保存作品信息失败')
-    assertNotNullish(plugin, `保存作品信息失败，创建任务的插件不可用`)
+    const pluginContributionId = task.pluginContributionId
+    assertNotNullish(pluginContributionId, `保存作品信息失败，任务贡献点id不能为空`)
+    const plugin = await this.getPlugin(task.pluginPublicId, '保存作品信息失败')
     const pluginId = plugin.id
     assertNotNullish(pluginId, `保存作品信息失败，创建任务的插件id不能为空`)
-    task.pluginAuthor = plugin.author
-    task.pluginName = plugin.name
-    task.pluginVersion = plugin.version
-    const taskHandler: TaskHandler = await getPluginManager().getContribution(pluginId, 'taskHandler')
+    const taskHandler: TaskHandler = await getPluginManager().getContribution(pluginId, 'taskHandler', pluginContributionId)
 
     // 调用插件的createWorkInfo方法，获取作品信息
     let pluginWorkResponseDTO: PluginWorkResponseDTO
@@ -290,13 +285,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const workService = new WorkService()
 
     // 加载插件
-    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '开始任务失败')
+    const pluginContributionId = task.pluginContributionId
+    assertNotNullish(pluginContributionId, `保存作品信息失败，任务贡献点id不能为空`)
+    const plugin = await this.getPlugin(task.pluginPublicId, '保存作品信息失败')
     assertNotNullish(plugin?.id, `开始任务失败，创建任务的插件id不能为空`)
 
     // 调用插件的start方法，获取资源
     let pluginResponse: PluginWorkResponseDTO
     try {
-      const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler')
+      const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler', pluginContributionId)
       pluginResponse = await taskHandler.start(task)
     } catch (error) {
       LogUtil.error(this.constructor.name, `任务${taskId}调用插件开始时失败`, error)
@@ -413,9 +410,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async pauseTask(task: Task, resourceWriter: ResourceWriter): Promise<boolean> {
     // 加载插件
-    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '暂停任务失败')
+    const pluginContributionId = task.pluginContributionId
+    assertNotNullish(pluginContributionId, `保存作品信息失败，任务贡献点id不能为空`)
+    const plugin = await this.getPlugin(task.pluginPublicId, '保存作品信息失败')
     assertNotNullish(plugin?.id, `暂停任务失败，创建任务的插件id不能为空，taskId: ${task.id}`)
-    const taskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler')
+    const taskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler', pluginContributionId)
 
     // 创建TaskPluginDTO对象
     const taskPluginDTO = new PluginTaskResParam(task)
@@ -473,9 +472,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    */
   public async stopTask(task: Task, resourceWriter: ResourceWriter): Promise<boolean> {
     // 加载插件
-    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '停止任务失败')
+    const pluginContributionId = task.pluginContributionId
+    assertNotNullish(pluginContributionId, `保存作品信息失败，任务贡献点id不能为空`)
+    const plugin = await this.getPlugin(task.pluginPublicId, '保存作品信息失败')
     assertNotNullish(plugin?.id, `停止任务失败，创建任务的插件id不能为空，taskId: ${task.id}`)
-    const taskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler')
+    const taskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler', pluginContributionId)
 
     // 创建TaskPluginDTO对象
     const taskPluginDTO = new PluginTaskResParam(task)
@@ -537,9 +538,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const taskId = task.id
     assertNotNullish(task.pendingResourceId, `恢复任务失败，任务的处理中的资源id不能为空，taskId: ${taskId}`)
     // 加载插件
-    const plugin = await this.getPluginInfo(task.pluginAuthor, task.pluginName, task.pluginVersion, '恢复任务失败')
+    const pluginContributionId = task.pluginContributionId
+    assertNotNullish(pluginContributionId, `保存作品信息失败，任务贡献点id不能为空`)
+    const plugin = await this.getPlugin(task.pluginPublicId, '保存作品信息失败')
     assertNotNullish(plugin?.id, `暂停任务失败，创建任务的插件id不能为空，taskId: ${taskId}`)
-    const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler')
+    const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.id, 'taskHandler', pluginContributionId)
 
     // 插件用于恢复下载的任务信息
     const taskPluginDTO = new PluginTaskResParam(task)
@@ -966,22 +969,15 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
   /**
    * 获取插件信息
-   * @param author
-   * @param name
-   * @param version
+   * @param pluginPublicId
    * @param logPrefix
    * @private
    */
-  private async getPluginInfo(
-    author: string | undefined | null,
-    name: string | undefined | null,
-    version: string | undefined | null,
-    logPrefix: string
-  ): Promise<Plugin | undefined> {
+  private async getPlugin(pluginPublicId: string | undefined | null, logPrefix: string): Promise<Plugin> {
+    assertNotNullish(pluginPublicId, `${logPrefix}，任务的插件公开id不能为空`)
     const pluginService = new PluginService()
-    assertNotBlank(author, `${logPrefix}，创建任务的插件的作者不能为空`)
-    assertNotBlank(name, `${logPrefix}，创建任务的插件的名称不能为空`)
-    assertNotBlank(version, `${logPrefix}，创建任务的插件的版本不能为空`)
-    return pluginService.getByInfo(author, name, version)
+    const plugin = await pluginService.getByPublicId(pluginPublicId)
+    assertNotNullish(plugin, `${logPrefix}，任务的插件公开id不能为空`)
+    return plugin
   }
 }

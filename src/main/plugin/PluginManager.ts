@@ -24,6 +24,7 @@ import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 import { RootDir } from '../util/FileSysUtil.ts'
 import path from 'path'
 import { pathToFileURL } from 'node:url'
+import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 
 /**
  * 缓存的插件实例
@@ -128,11 +129,16 @@ export default class PluginManager {
    * 获取指定贡献点
    * @param pluginId 插件ID
    * @param key 贡献点键名
+   * @param contributionId 贡献点id
    * @returns 贡献点实现
    */
-  public async getContribution<K extends ContributionKey>(pluginId: number, key: K): Promise<ContributionMap[K]> {
+  public async getContribution<K extends ContributionKey>(
+    pluginId: number,
+    key: K,
+    contributionId: string
+  ): Promise<ContributionMap[K]> {
     const pluginInstance = await this.load(pluginId)
-    const contribution = await pluginInstance.getContribution(key)
+    const contribution = await pluginInstance.getContribution(key, contributionId)
 
     if (isNullish(contribution)) {
       throw new Error(`插件 ${pluginId} 未实现 ${key} 贡献点`)
@@ -176,9 +182,12 @@ export default class PluginManager {
         removeEncryptedValue: (storageKey) => secureStorageService.removeByKey(storageKey),
         getWorkSetBySiteWorkSetId: (siteWorkSetId, siteName) =>
           new WorkSetService().getBySiteWorkSetIdAndSiteName(siteWorkSetId, siteName),
-        registerUrlListener: (listenerPatterns: string[]) => {
+        registerUrlListener: (conditions: { contributionId: string; listenerPatterns: RegExp[] }[]) => {
           const listenerManager = getPluginTaskUrlListenerManager()
-          listenerManager.register(plugin, listenerPatterns)
+          for (const condition of conditions) {
+            const pluginWithContribution = new PluginWithContribution(plugin, 'taskHandler', condition.contributionId)
+            listenerManager.register(pluginWithContribution, condition.listenerPatterns)
+          }
         },
         unregisterUrlListener: () => {
           const listenerManager = getPluginTaskUrlListenerManager()
@@ -193,9 +202,9 @@ export default class PluginManager {
           siteBrowser = new SiteBrowserDTO(siteBrowser)
           manager.register(siteBrowser)
         },
-        unregisterSiteBrowser: (siteBrowserId: string) => {
+        unregisterSiteBrowser: (contributionId: string) => {
           const manager = getSiteBrowserManager()
-          manager.unregister(siteBrowserId)
+          manager.unregister(contributionId)
         },
         logger
       },

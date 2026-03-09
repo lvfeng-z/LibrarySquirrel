@@ -51,19 +51,14 @@ export default class Task extends BaseEntity {
   continuable: boolean | undefined | null
 
   /**
-   * 插件作者
+   * 插件公开id
    */
-  pluginAuthor: string | undefined | null
+  pluginPublicId: string | undefined | null
 
   /**
-   * 插件名称
+   * 插件贡献点id
    */
-  pluginName: string | undefined | null
-
-  /**
-   * 插件版本
-   */
-  pluginVersion: string | undefined | null
+  pluginContributionId: string | undefined | null
 
   /**
    * 插件数据
@@ -88,9 +83,8 @@ export default class Task extends BaseEntity {
       this.status = task.status
       this.pendingResourceId = task.pendingResourceId
       this.continuable = task.continuable
-      this.pluginAuthor = task.pluginAuthor
-      this.pluginName = task.pluginName
-      this.pluginVersion = task.pluginVersion
+      this.pluginPublicId = task.pluginPublicId
+      this.pluginContributionId = task.pluginContributionId
       if (typeof task.pluginData === 'string') {
         this.pluginData = JSON.parse(task.pluginData)
       } else {

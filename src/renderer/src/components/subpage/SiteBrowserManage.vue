@@ -8,7 +8,7 @@ import Page from '@renderer/model/util/Page.ts'
 // 站点浏览器数据接口
 interface SiteBrowserItem {
   pluginPublicId: string
-  siteBrowserId: string
+  contributionId: string
   name: string
   imagePath: string
   pluginId: number
@@ -40,7 +40,7 @@ onMounted(() => {
 
 // 处理卡片点击事件 - 打开站点浏览器
 async function handleCardClick(item: SiteBrowserItem) {
-  const response = await window.api.siteBrowserOpen(item.pluginPublicId, item.siteBrowserId)
+  const response = await window.api.siteBrowserOpen(item.pluginPublicId, item.contributionId)
   if (!ApiUtil.check(response)) {
     ApiUtil.msg(response)
   }
@@ -55,7 +55,7 @@ async function handleCardClick(item: SiteBrowserItem) {
           <div class="site-browser-grid">
             <div
               v-for="item in siteBrowserList"
-              :key="item.pluginPublicId + item.siteBrowserId"
+              :key="item.pluginPublicId + item.contributionId"
               class="site-browser-card"
               @click="handleCardClick(item)"
             >

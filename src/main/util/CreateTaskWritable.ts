@@ -1,5 +1,4 @@
 import { Writable } from 'node:stream'
-import TaskCreateDTO from '@shared/model/dto/TaskCreateDTO.js'
 import { isBlank } from '@shared/util/StringUtil.ts'
 import LogUtil from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
@@ -7,8 +6,10 @@ import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import Task from '@shared/model/entity/Task.js'
 import TaskService from '../service/TaskService.js'
 import SiteService from '../service/SiteService.js'
-import Plugin from '@shared/model/entity/Plugin.js'
 import PluginCreateTaskResponseDTO from '@shared/model/dto/PluginCreateTaskResponseDTO.js'
+import PluginStreamCreateTaskResponseDTO from '@shared/model/dto/PluginStreamCreateTaskResponseDTO.js'
+import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.js'
+import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 
 export default class CreateTaskWritable extends Writable {
   /**
@@ -27,9 +28,9 @@ export default class CreateTaskWritable extends Writable {
   parentTaskSave: Promise<number> | undefined
 
   /**
-   * 父任务
+   * 插件Pid-真实Pid映射表
    */
-  parentTask: TaskCreateDTO
+  pluginPidToTruePidMapping: Map<string, number>
 
   /**
    * 任务服务
@@ -44,7 +45,7 @@ export default class CreateTaskWritable extends Writable {
   /**
    * 插件信息
    */
-  taskPlugin: Plugin
+  taskPlugin: PluginWithContribution
 
   /**
    * 插件信息
@@ -61,12 +62,12 @@ export default class CreateTaskWritable extends Writable {
    */
   siteCache: Map<string, Promise<number>>
 
-  constructor(parentTask: TaskCreateDTO, taskService: TaskService, siteService: SiteService, taskPlugin: Plugin, batchSize?: number) {
+  constructor(taskService: TaskService, siteService: SiteService, taskPlugin: PluginWithContribution, batchSize?: number) {
     super({ objectMode: true, highWaterMark: 500 })
     this.taskCount = 0
     this.taskBuffer = []
     this.parentTaskSave = undefined
-    this.parentTask = parentTask
+    this.pluginPidToTruePidMapping = new Map<string, number>()
     this.taskService = taskService
     this.siteService = siteService
     this.taskPlugin = taskPlugin
@@ -76,85 +77,101 @@ export default class CreateTaskWritable extends Writable {
   }
 
   async _write(
-    pluginTaskResponseDTO: PluginCreateTaskResponseDTO,
+    pluginResponse: PluginStreamCreateTaskResponseDTO,
     _encoding: BufferEncoding,
     callback: (error?: Error | null) => void
   ) {
-    const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
-    // 校验
-    if (isBlank(task.siteName)) {
-      LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点名称')
-      callback()
-      return
-    }
-    if (isBlank(task.siteWorkId)) {
-      LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
-      callback()
-      return
-    }
+    try {
+      if (pluginResponse.taskType === 'child') {
+        const pluginTaskResponseDTO = pluginResponse.task as PluginCreateTaskResponseDTO
+        const pluginPid = pluginTaskResponseDTO.pluginPid
+        if (isBlank(pluginPid)) {
+          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的子任务信息中缺少pluginPid')
+          callback()
+          return
+        }
+        const truePid = this.pluginPidToTruePidMapping.get(pluginPid)
+        if (isNullish(truePid)) {
+          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的子任务中的pluginPid不可用')
+          callback()
+          return
+        }
+        const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
+        // 校验
+        if (isBlank(task.siteName)) {
+          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点名称')
+          callback()
+          return
+        }
+        if (isBlank(task.siteWorkId)) {
+          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
+          callback()
+          return
+        }
 
-    // 创建任务对象
-    task.pluginAuthor = this.taskPlugin.author
-    task.pluginName = this.taskPlugin.name
-    task.pluginVersion = this.taskPlugin.version
-    task.status = TaskStatusEnum.CREATED
-    task.isCollection = false
-    task.pid = this.parentTask.id
-    // 根据站点域名查询站点id
-    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(task.siteName)
-    if (isNullish(siteId)) {
-      const tempSite = this.siteService.getByName(task.siteName)
-      siteId = tempSite.then((site) => site?.id)
-    }
-    task.siteId = await siteId
-    if (isNullish(task.siteId)) {
-      LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
-      callback()
-      return
-    }
+        // 创建任务对象
+        task.pluginPublicId = this.taskPlugin.publicId
+        task.pluginContributionId = this.taskPlugin.name
+        task.status = TaskStatusEnum.CREATED
+        task.isCollection = false
+        task.pid = truePid
+        task.siteId = await this.getSiteId(task.siteName)
+        if (isNullish(task.siteId)) {
+          LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
+          callback()
+          return
+        }
 
-    // 将任务添加到缓冲区
-    this.taskBuffer.push(new Task(task))
-    this.taskCount++
-
-    // 每batchSize个任务处理一次
-    if (this.taskBuffer.length % this.batchSize === 0) {
-      // 如果父任务尚未保存且任务数大于1，则先保存父任务
-      if (this.parentTaskSave === undefined && this.taskCount > 1) {
-        // 父任务使用第一个子任务的站点id
-        this.parentTask.siteId = task.siteId
-        this.parentTaskSave = this.saveParentTask()
-        this.parentTask.id = await this.parentTaskSave
-        // 更新pid
-        this.taskBuffer.forEach((task) => (task.pid = this.parentTask.id as number))
+        // 将任务添加到缓冲区
+        this.taskBuffer.push(new Task(task))
+        this.taskCount++
+      } else if (pluginResponse.taskType === 'parent') {
+        const pluginCreateParentTaskResponseDTO = pluginResponse.task as PluginCreateParentTaskResponseDTO
+        const pluginPid = pluginCreateParentTaskResponseDTO.pluginTaskId
+        if (isBlank(pluginPid)) {
+          LogUtil.info(this.constructor.name, '创建父任务失败，插件返回的父任务的pluginTaskId为空')
+          callback()
+          return
+        }
+        if (this.pluginPidToTruePidMapping.has(pluginPid)) {
+          LogUtil.info(this.constructor.name, '保存父任务失败，插件返回了重复的pluginTaskId')
+        } else {
+          const parentTaskCreateDTO = PluginCreateParentTaskResponseDTO.toTaskCreateDTO(pluginCreateParentTaskResponseDTO)
+          if (isBlank(parentTaskCreateDTO.siteName)) {
+            LogUtil.error(this.constructor.name, '创建任务失败，插件返回的父任务信息中缺少站点名称')
+            callback()
+            return
+          }
+          parentTaskCreateDTO.isCollection = true
+          parentTaskCreateDTO.status = TaskStatusEnum.CREATED
+          parentTaskCreateDTO.siteId = await this.getSiteId(parentTaskCreateDTO.siteName)
+          const truePid = await this.taskService.save(parentTaskCreateDTO)
+          this.pluginPidToTruePidMapping.set(pluginPid, truePid)
+        }
+        callback()
+        return
       }
-      await this.saveTasks()
+
+      // 每batchSize个任务处理一次
+      if (this.taskBuffer.length % this.batchSize === 0) {
+        await this.saveTasks()
+      }
+      callback()
+    } catch (error) {
+      this.emit('error', error)
     }
-    callback()
   }
 
   async _final(callback: (error?: Error | null) => void) {
-    // 如果父任务尚未保存且任务数大于1，则先保存父任务
-    if (this.parentTaskSave === undefined && this.taskCount > 1) {
-      // 父任务使用第一个子任务的站点id
-      this.parentTask.siteId = this.taskBuffer[0].siteId
-      this.parentTaskSave = this.saveParentTask()
-      this.parentTask.id = await this.parentTaskSave
-      // 更新pid
-      this.taskBuffer.forEach((task) => (task.pid = this.parentTask.id as number))
+    try {
+      if (arrayNotEmpty(this.taskBuffer)) {
+        await this.saveTasks()
+      }
+    } catch (error) {
+      this.emit('error', error)
+    } finally {
+      callback()
     }
-    if (arrayNotEmpty(this.taskBuffer)) {
-      await this.saveTasks()
-    }
-    callback(null)
-  }
-
-  /**
-   * 保存父任务
-   * @private
-   */
-  private saveParentTask(): Promise<number> {
-    return this.taskService.save(this.parentTask)
   }
 
   /**
@@ -171,5 +188,14 @@ export default class CreateTaskWritable extends Writable {
     } else {
       return 0
     }
+  }
+
+  private async getSiteId(siteName: string): Promise<number | null | undefined> {
+    let siteId: Promise<number | null | undefined> | null | undefined = this.siteCache.get(siteName)
+    if (isNullish(siteId)) {
+      const tempSite = this.siteService.getByName(siteName)
+      siteId = tempSite.then((site) => site?.id)
+    }
+    return siteId
   }
 }

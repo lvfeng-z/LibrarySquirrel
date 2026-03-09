@@ -29,7 +29,7 @@ export interface PluginContext {
     /** 根据作品集在站点的id和站点名称查询作品集 */
     getWorkSetBySiteWorkSetId: (siteWorkSetId: string, siteName: string) => Promise<WorkSet | undefined>
     /** 注册任务URL监听器 */
-    registerUrlListener: (listenerPatterns: string[]) => void
+    registerUrlListener: (conditions: { contributionId: string; listenerPatterns: RegExp[] }[]) => void
     /** 取消注册任务URL监听器 */
     unregisterUrlListener: () => void
     /** 保存站点 */
@@ -37,7 +37,7 @@ export interface PluginContext {
     /** 注册站点浏览器 */
     registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => void
     /** 取消注册站点浏览器 */
-    unregisterSiteBrowser: (siteBrowserId: string) => void
+    unregisterSiteBrowser: (contributionId: string) => void
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

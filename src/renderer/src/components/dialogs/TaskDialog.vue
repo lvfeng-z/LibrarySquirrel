@@ -363,23 +363,6 @@ function toParent() {
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="8">
-            <el-form-item label="插件作者">
-              <el-input v-model="formData.pluginAuthor" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="插件名称">
-              <el-input v-model="formData.pluginName" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="插件版本">
-              <el-input v-model="formData.pluginVersion" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
           <el-col :span="3">
             <el-form-item label="状态">
               <component :is="getTaskStatusElTag(formData.status as TaskStatusEnum)" />

@@ -124,7 +124,7 @@ interface PluginContext {
 
     // 站点浏览器管理
     registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => void
-    unregisterSiteBrowser: (siteBrowserId: string) => void
+    unregisterSiteBrowser: (contributionId: string) => void
 
     // 日志
     logger: {
@@ -257,7 +257,7 @@ class PluginManager {
 ```typescript
 class SiteBrowserManager {
     register(siteBrowser: SiteBrowserDTO): void
-    unregister(siteBrowserId: string): void
+    unregister(contributionId: string): void
     list(): SiteBrowserDTO[]
     getById(id: string): SiteBrowserDTO | undefined
     getByPluginId(pluginId: number): SiteBrowserDTO | undefined

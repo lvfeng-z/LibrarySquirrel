@@ -853,14 +853,14 @@ function exposeService() {
   )
   Electron.ipcMain.handle(
     'siteBrowser-open',
-    createHandler('siteBrowser-open', async (pluginPublicId: string, siteBrowserId: string) => {
+    createHandler('siteBrowser-open', async (pluginPublicId: string, contributionId: string) => {
       const siteBrowserManager = getSiteBrowserManager()
-      const siteBrowser = siteBrowserManager.getById(`${pluginPublicId}-${siteBrowserId}`)
+      const siteBrowser = siteBrowserManager.getById(`${pluginPublicId}-${contributionId}`)
       if (!siteBrowser) {
-        throw new Error(`站点浏览器不存在: ${pluginPublicId}-${siteBrowserId}`)
+        throw new Error(`站点浏览器不存在: ${pluginPublicId}-${contributionId}`)
       }
       const pluginManager = getPluginManager()
-      const siteBrowserInstance = await pluginManager.getContribution(siteBrowser.pluginId, 'siteBrowser')
+      const siteBrowserInstance = await pluginManager.getContribution(siteBrowser.pluginId, 'siteBrowser', contributionId)
       if (!siteBrowserInstance) {
         throw new Error(`获取站点浏览器插件失败: ${pluginPublicId}`)
       }

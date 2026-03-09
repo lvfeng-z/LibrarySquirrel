@@ -1,5 +1,5 @@
-import Plugin from '@shared/model/entity/Plugin.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
+import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 
 let pluginTaskUrlListenerManager: PluginTaskUrlListenerManager | undefined = undefined
 
@@ -22,14 +22,14 @@ class PluginTaskUrlListenerManager {
    * key: 正则表达式字符串
    * value: 插件对象列表
    */
-  private readonly listeners: Map<string, Plugin[]> = new Map()
+  private readonly listeners: Map<RegExp, PluginWithContribution[]> = new Map()
 
   /**
    * 获取监听此链接的插件
    * @param url URL
    */
-  async listListener(url: string): Promise<Plugin[]> {
-    const result: Plugin[] = []
+  async listListener(url: string): Promise<PluginWithContribution[]> {
+    const result: PluginWithContribution[] = []
 
     for (const [pattern, plugins] of this.listeners) {
       try {
@@ -50,7 +50,7 @@ class PluginTaskUrlListenerManager {
    * @param plugin 插件对象
    * @param listenerPatterns 监听表达式数组（正则表达式）
    */
-  register(plugin: Plugin, listenerPatterns: string[]): void {
+  register(plugin: PluginWithContribution, listenerPatterns: RegExp[]): void {
     for (const pattern of listenerPatterns) {
       const plugins = this.listeners.get(pattern)
       if (isNullish(plugins)) {
@@ -66,7 +66,7 @@ class PluginTaskUrlListenerManager {
    * @param pluginId 插件ID
    */
   unregister(pluginId: number): void {
-    for (const [_pattern, plugins] of this.listeners) {
+    for (const [, plugins] of this.listeners) {
       const index = plugins.findIndex((p) => p.id === pluginId)
       if (index !== -1) {
         plugins.splice(index, 1)

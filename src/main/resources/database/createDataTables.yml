@@ -220,25 +220,24 @@ tables:
   - name: task
     sql: |
       create table if not exists task (
-        id                    integer not null
+        id                     integer not null
           constraint task_pk
             primary key autoincrement,
-        is_collection         integer,
-        pid                   integer,
-        task_name             text,
-        site_id               number,
-        site_work_id         text,
-        url                   text,
-        create_time           integer,
-        update_time           integer,
-        status                integer not null,
-        pending_resource_id   integer,
-        continuable           integer,
-        plugin_author         text,
-        plugin_name           text,
-        plugin_version        text,
-        plugin_data           text,
-        error_message         text
+        is_collection          integer,
+        pid                    integer,
+        task_name              text,
+        site_id                number,
+        site_work_id           text,
+        url                    text,
+        create_time            integer,
+        update_time            integer,
+        status                 integer not null,
+        pending_resource_id    integer,
+        continuable            integer,
+        plugin_public_id       text,
+        plugin_contribution_id text,
+        plugin_data            text,
+        error_message          text
       );
 
   - name: plugin

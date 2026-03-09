@@ -21,7 +21,7 @@ export default class SiteBrowserManager {
    */
   public async register(siteBrowser: SiteBrowserDTO): Promise<void> {
     assertNotNullish(siteBrowser?.pluginPublicId, '注册站点浏览器失败，pluginId不能为空')
-    assertNotNullish(siteBrowser?.siteBrowserId, '注册站点浏览器失败，siteBrowserId不能为空')
+    assertNotNullish(siteBrowser?.contributionId, '注册站点浏览器失败，contributionId不能为空')
     const pluginService = new PluginService()
     const plugin = await pluginService.getByPublicId(siteBrowser.pluginPublicId)
     assertNotNullish(plugin?.id, '注册站点浏览器失败，pluginId不可用')
@@ -31,10 +31,10 @@ export default class SiteBrowserManager {
 
   /**
    * 注销站点浏览器
-   * @param siteBrowserId 站点浏览器 ID
+   * @param contributionId 贡献点id
    */
-  public unregister(siteBrowserId: string): void {
-    this.siteBrowserCache.delete(siteBrowserId)
+  public unregister(contributionId: string): void {
+    this.siteBrowserCache.delete(contributionId)
   }
 
   /**
