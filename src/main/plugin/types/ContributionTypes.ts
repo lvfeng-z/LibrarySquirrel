@@ -79,7 +79,7 @@ export interface SiteBrowser extends BaseContribution {
  */
 export interface ContributionMap {
   /** 任务处理器 */
-  task: TaskHandler
+  taskHandler: TaskHandler
   /** 站点浏览器 */
   siteBrowser: SiteBrowser
 }
