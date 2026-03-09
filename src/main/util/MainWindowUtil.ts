@@ -2,17 +2,6 @@ import Electron from 'electron'
 import { v4 } from 'uuid'
 import NotifyConfig from '@shared/model/util/NotifyConfig.js'
 import { getMainWindow } from '../core/mainWindow.ts'
-import { isNullish } from '@shared/util/CommonUtil.ts'
-
-export function GetBrowserWindow(width?: number, height?: number): Electron.BrowserWindow {
-  return new Electron.BrowserWindow({
-    width: isNullish(width) ? 800 : width,
-    height: isNullish(height) ? 600 : height,
-    webPreferences: {
-      nodeIntegration: true
-    }
-  })
-}
 
 export interface ConfirmConfigConstruct {
   title: string

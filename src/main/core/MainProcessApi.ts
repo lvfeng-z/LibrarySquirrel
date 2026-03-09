@@ -23,7 +23,6 @@ import { OriginType } from '../constant/OriginType.ts'
 import SiteQueryDTO from '@shared/model/queryDTO/SiteQueryDTO.ts'
 import Site from '@shared/model/entity/Site.ts'
 import PluginService from '../service/PluginService.ts'
-import { GetBrowserWindow } from '../util/MainWindowUtil.ts'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.ts'
 import WorkSetService from '../service/WorkSetService.ts'
 import SecureStorageService, { SecureStorageErrorCode } from '../service/SecureStorageService.ts'
@@ -253,14 +252,6 @@ function exposeService() {
     createHandler('localTag-querySelectItemPageByWorkId', (args) => {
       const service = new LocalTagService()
       return service.querySelectItemPageByWorkId(args)
-    })
-  )
-
-  // GetBrowserWindow
-  Electron.ipcMain.handle(
-    'getBrowserWindow',
-    createHandler('getBrowserWindow', (args) => {
-      GetBrowserWindow(args)
     })
   )
 
@@ -873,7 +864,7 @@ function exposeService() {
       if (!siteBrowserInstance) {
         throw new Error(`获取站点浏览器插件失败: ${pluginPublicId}`)
       }
-      return siteBrowserInstance.open(siteBrowserId)
+      return siteBrowserInstance.open()
     })
   )
 }

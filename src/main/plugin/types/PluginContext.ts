@@ -28,8 +28,6 @@ export interface PluginContext {
     removeEncryptedValue: (storageKey: string) => Promise<number>
     /** 根据作品集在站点的id和站点名称查询作品集 */
     getWorkSetBySiteWorkSetId: (siteWorkSetId: string, siteName: string) => Promise<WorkSet | undefined>
-    /** 获取浏览器窗口 */
-    getBrowserWindow: (width?: number, height?: number) => Electron.BrowserWindow
     /** 注册任务URL监听器 */
     registerUrlListener: (listenerPatterns: string[]) => void
     /** 取消注册任务URL监听器 */

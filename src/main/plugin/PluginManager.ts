@@ -13,7 +13,6 @@ import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
 import { getSiteBrowserManager } from '../core/siteBrowserManager.ts'
-import { GetBrowserWindow } from '../util/MainWindowUtil.js'
 import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
@@ -177,7 +176,6 @@ export default class PluginManager {
         removeEncryptedValue: (storageKey) => secureStorageService.removeByKey(storageKey),
         getWorkSetBySiteWorkSetId: (siteWorkSetId, siteName) =>
           new WorkSetService().getBySiteWorkSetIdAndSiteName(siteWorkSetId, siteName),
-        getBrowserWindow: (width?: number, height?: number) => GetBrowserWindow(width, height),
         registerUrlListener: (listenerPatterns: string[]) => {
           const listenerManager = getPluginTaskUrlListenerManager()
           listenerManager.register(plugin, listenerPatterns)
