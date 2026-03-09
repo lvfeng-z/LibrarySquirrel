@@ -8,6 +8,7 @@ import Page from '@renderer/model/util/Page.ts'
 // 站点浏览器数据接口
 interface SiteBrowserItem {
   pluginPublicId: string
+  siteBrowserId: string
   name: string
   imagePath: string
   pluginId: number
@@ -37,10 +38,12 @@ onMounted(() => {
   querySiteBrowserList()
 })
 
-// 处理卡片点击事件
-function handleCardClick(item: SiteBrowserItem) {
-  console.log('Clicked site browser:', item.name)
-  // 实际项目中，这里应该打开站点浏览器或执行相应操作
+// 处理卡片点击事件 - 打开站点浏览器
+async function handleCardClick(item: SiteBrowserItem) {
+  const response = await window.api.siteBrowserOpen(item.pluginPublicId, item.siteBrowserId)
+  if (!ApiUtil.check(response)) {
+    ApiUtil.msg(response)
+  }
 }
 </script>
 
@@ -50,7 +53,12 @@ function handleCardClick(item: SiteBrowserItem) {
       <div class="site-browser-manage-container">
         <el-scrollbar>
           <div class="site-browser-grid">
-            <div v-for="item in siteBrowserList" :key="item.pluginPublicId" class="site-browser-card" @click="handleCardClick(item)">
+            <div
+              v-for="item in siteBrowserList"
+              :key="item.pluginPublicId + item.siteBrowserId"
+              class="site-browser-card"
+              @click="handleCardClick(item)"
+            >
               <div class="site-browser-card-image">
                 <el-image :src="`resource://workdir${item.imagePath}`" fit="cover" class="site-browser-image">
                   <template #error>

@@ -1,6 +1,8 @@
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 import Page from '@shared/model/util/Page.ts'
 import { PageUtil } from '@shared/util/PageUtil.ts'
+import { assertNotNullish } from '@shared/util/AssertUtil.ts'
+import PluginService from '../../service/PluginService.ts'
 
 /**
  * 站点浏览器管理器
@@ -17,8 +19,14 @@ export default class SiteBrowserManager {
    * 注册站点浏览器
    * @param siteBrowser 站点浏览器信息
    */
-  public register(siteBrowser: SiteBrowserDTO): void {
-    this.siteBrowserCache.set(siteBrowser.pluginPublicId, siteBrowser)
+  public async register(siteBrowser: SiteBrowserDTO): Promise<void> {
+    assertNotNullish(siteBrowser?.pluginPublicId, '注册站点浏览器失败，pluginId不能为空')
+    assertNotNullish(siteBrowser?.siteBrowserId, '注册站点浏览器失败，siteBrowserId不能为空')
+    const pluginService = new PluginService()
+    const plugin = await pluginService.getByPublicId(siteBrowser.pluginPublicId)
+    assertNotNullish(plugin?.id, '注册站点浏览器失败，pluginId不可用')
+    siteBrowser.pluginId = plugin.id
+    this.siteBrowserCache.set(siteBrowser.id, siteBrowser)
   }
 
   /**
@@ -49,15 +57,16 @@ export default class SiteBrowserManager {
   /**
    * 根据插件 ID 获取站点浏览器
    * @param pluginId 插件 ID
-   * @returns 站点浏览器信息
+   * @returns 站点浏览器列表
    */
-  public getByPluginId(pluginId: number): SiteBrowserDTO | undefined {
+  public getByPluginId(pluginId: number): SiteBrowserDTO[] {
+    const result: SiteBrowserDTO[] = []
     for (const siteBrowser of this.siteBrowserCache.values()) {
       if (siteBrowser.pluginId === pluginId) {
-        return siteBrowser
+        result.push(siteBrowser)
       }
     }
-    return undefined
+    return result
   }
 
   /**

@@ -91,6 +91,7 @@ declare global {
 
       // SiteBrowser
       siteBrowserQueryPage: function
+      siteBrowserOpen: function
 
       // SiteTag
       siteTagSave: function

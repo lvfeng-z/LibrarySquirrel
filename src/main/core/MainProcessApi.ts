@@ -30,6 +30,7 @@ import SecureStorageService, { SecureStorageErrorCode } from '../service/SecureS
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { getPluginTaskUrlListenerManager } from './pluginTaskUrlListener.ts'
 import { getSiteBrowserManager } from './siteBrowserManager.ts'
+import { getPluginManager } from './pluginManager.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 
 function returnError(error: unknown) {
@@ -857,6 +858,22 @@ function exposeService() {
     createHandler('siteBrowser-queryPage', (page: Page<object, SiteBrowserDTO>) => {
       page = new Page(page)
       return getSiteBrowserManager().queryPage(page)
+    })
+  )
+  Electron.ipcMain.handle(
+    'siteBrowser-open',
+    createHandler('siteBrowser-open', async (pluginPublicId: string, siteBrowserId: string) => {
+      const siteBrowserManager = getSiteBrowserManager()
+      const siteBrowser = siteBrowserManager.getById(`${pluginPublicId}-${siteBrowserId}`)
+      if (!siteBrowser) {
+        throw new Error(`站点浏览器不存在: ${pluginPublicId}-${siteBrowserId}`)
+      }
+      const pluginManager = getPluginManager()
+      const siteBrowserInstance = await pluginManager.getContribution(siteBrowser.pluginId, 'siteBrowser')
+      if (!siteBrowserInstance) {
+        throw new Error(`获取站点浏览器插件失败: ${pluginPublicId}`)
+      }
+      return siteBrowserInstance.open(siteBrowserId)
     })
   )
 }

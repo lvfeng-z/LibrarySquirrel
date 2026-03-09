@@ -192,6 +192,7 @@ export default class PluginManager {
         },
         registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => {
           const manager = getSiteBrowserManager()
+          siteBrowser = new SiteBrowserDTO(siteBrowser)
           manager.register(siteBrowser)
         },
         unregisterSiteBrowser: (siteBrowserId: string) => {

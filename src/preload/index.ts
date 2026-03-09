@@ -100,6 +100,7 @@ const api = {
 
   // SiteBrowser
   siteBrowserQueryPage: (args) => Electron.ipcRenderer.invoke('siteBrowser-queryPage', args),
+  siteBrowserOpen: (pluginPublicId: string, siteBrowserId: string) => Electron.ipcRenderer.invoke('siteBrowser-open', pluginPublicId, siteBrowserId),
 
   // Task
   taskCreateTask: (args) => Electron.ipcRenderer.invoke('task-createTask', args),
