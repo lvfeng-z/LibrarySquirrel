@@ -26,6 +26,8 @@ import path from 'path'
 import { pathToFileURL } from 'node:url'
 import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
+import TaskService from '../service/TaskService.ts'
+import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
 
 /**
  * 缓存的插件实例
@@ -209,6 +211,10 @@ export default class PluginManager {
         unregisterSiteBrowser: (contributionId: string) => {
           const manager = getSiteBrowserManager()
           manager.unregister(contributionId)
+        },
+        createTask: async (url: string): Promise<TaskCreateResponse> => {
+          const taskService = new TaskService()
+          return taskService.createTask(url)
         },
         logger
       },

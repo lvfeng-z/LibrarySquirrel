@@ -2,6 +2,7 @@ import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import Site from '@shared/model/entity/Site.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
+import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
 
 /**
  * 插件上下文接口
@@ -38,6 +39,8 @@ export interface PluginContext {
     registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => void
     /** 取消注册站点浏览器 */
     unregisterSiteBrowser: (contributionId: string) => void
+    /** 创建任务 */
+    createTask: (url: string) => Promise<TaskCreateResponse>
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

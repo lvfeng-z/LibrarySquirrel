@@ -170,9 +170,10 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       finalPluginId = await pluginService.save(newPlugin)
     }
 
-    await getPluginManager().onInstallPlugin(finalPluginId, installType)
+    const pluginManager = getPluginManager()
+    await pluginManager.onInstallPlugin(finalPluginId, installType)
     if (newPlugin.activationType === ActivationType.STARTUP) {
-      await getPluginManager().activatePlugin(finalPluginId, ActivationType.STARTUP)
+      await pluginManager.activatePlugin(finalPluginId, ActivationType.STARTUP)
     }
     LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
     return newPlugin
