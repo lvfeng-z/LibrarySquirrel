@@ -1,6 +1,7 @@
 import { PluginManifest } from './PluginManifest.ts'
 import { PluginContext } from './PluginContext.ts'
 import { BaseContribution, ContributionKey } from './ContributionTypes.ts'
+import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 
 /**
  * 插件实例
@@ -10,9 +11,12 @@ export interface PluginInstance {
   /** 插件清单 */
   manifest: PluginManifest
   /** 激活函数 - 插件加载完成后调用 */
-  activate?: () => Promise<void>
+  activate: () => Promise<void>
   /** 停用函数 - 插件卸载前调用 */
-  deactivate?: () => Promise<void>
+  deactivate: () => Promise<void>
+  /** 安装后钩子 */
+  onInstall: (type: InstallType, oldManifest?: PluginManifest) => Promise<void>
+  /** 获取贡献点实例 */
   getContribution: <T extends BaseContribution>(key: ContributionKey, contributionId: string) => Promise<T>
 }
 

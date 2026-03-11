@@ -282,21 +282,21 @@ function exposeService() {
     'plugin-installFromPath',
     createHandler('plugin-installFromPath', (args) => {
       const service = new PluginService()
-      return service.installFromPath(args)
+      return service.installFromPath(args, 'manual')
     })
   )
   Electron.ipcMain.handle(
     'plugin-reinstall',
     createHandler('plugin-reinstall', (args) => {
       const service = new PluginService()
-      return service.reinstall(args)
+      return service.reinstall(args, 'reinstall')
     })
   )
   Electron.ipcMain.handle(
     'plugin-reinstallFromPath',
     createHandler('plugin-reinstallFromPath', (arg1, arg2) => {
       const service = new PluginService()
-      return service.reinstallFromPath(arg1, arg2)
+      return service.reinstallFromPath(arg1, arg2, 'reinstall')
     })
   )
   Electron.ipcMain.handle(

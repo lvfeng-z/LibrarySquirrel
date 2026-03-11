@@ -6,7 +6,7 @@ import { InitializeDB } from './database/InitializeDatabase.ts'
 import MainProcessApi from './core/MainProcessApi.ts'
 import LogUtil from './util/LogUtil.ts'
 import { ConvertPath, GetWorkResource } from './util/FileSysUtil.ts'
-import { Initialize } from './core/Initialize.ts'
+import { initializeByConfig } from './core/InitializeByConfig.ts'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 import iniConfig from './resources/config/iniConfig.yml?asset'
 import { createTaskQueue, getTaskQueue } from './core/taskQueue.ts'
@@ -192,7 +192,7 @@ Electron.app.whenReady().then(() => {
     // 初始化插件管理器
     createPluginManager()
     // 初始化站点和内置插件
-    await Initialize()
+    await initializeByConfig()
     // 激活启动时加载的插件
     await getPluginManager().activateStartupPlugins()
   })

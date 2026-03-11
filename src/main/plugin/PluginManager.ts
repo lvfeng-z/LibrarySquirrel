@@ -25,6 +25,7 @@ import { RootDir } from '../util/FileSysUtil.ts'
 import path from 'path'
 import { pathToFileURL } from 'node:url'
 import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
+import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 
 /**
  * 缓存的插件实例
@@ -34,6 +35,7 @@ interface CachedPlugin {
   context: PluginContext
   loaded: Promise<PluginInstance>
   activationType?: ActivationType
+  justInstalled: boolean
 }
 
 /**
@@ -65,9 +67,10 @@ export default class PluginManager {
   /**
    * 加载插件
    * @param pluginId 插件ID
+   * @param justInstalled
    * @returns 插件实例
    */
-  public async load(pluginId: number): Promise<PluginInstance> {
+  public async load(pluginId: number, justInstalled?: boolean): Promise<PluginInstance> {
     let cached = this.pluginCache.get(pluginId)
 
     if (isNullish(cached)) {
@@ -82,7 +85,8 @@ export default class PluginManager {
       cached = {
         instance: undefined,
         context,
-        loaded
+        loaded,
+        justInstalled: isNullish(justInstalled) ? false : justInstalled
       }
 
       this.pluginCache.set(pluginId, cached)
@@ -277,6 +281,19 @@ export default class PluginManager {
   /**
    * 根据激活类型激活插件
    * @param pluginId 插件ID
+   * @param installType 安装类型
+   */
+  public async onInstallPlugin(pluginId: number, installType: InstallType): Promise<void> {
+    // 替换已有缓存
+    this.pluginCache.delete(pluginId)
+    const pluginInstance = await this.load(pluginId, true)
+    // 调用安装后钩子
+    return pluginInstance.onInstall(installType)
+  }
+
+  /**
+   * 根据激活类型激活插件
+   * @param pluginId 插件ID
    * @param activationType 激活类型
    */
   public async activatePlugin(pluginId: number, activationType: ActivationType): Promise<void> {
@@ -290,7 +307,7 @@ export default class PluginManager {
     await this.load(pluginId)
     // 设置激活类型
     const pluginCached = this.pluginCache.get(pluginId)
-    if (pluginCached) {
+    if (notNullish(pluginCached)) {
       pluginCached.activationType = activationType
     }
   }

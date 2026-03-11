@@ -8,7 +8,7 @@ import LogUtil from '../util/LogUtil.ts'
 import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import { getIniConfig } from './iniConfig.ts'
 
-export async function Initialize() {
+export async function initializeByConfig() {
   const iniConfig = getIniConfig()
 
   // 初始化站点
@@ -49,7 +49,7 @@ export async function Initialize() {
         installPath = defaultPlugin.packagePath
       }
       try {
-        await pluginService.installFromPath(installPath)
+        await pluginService.installFromPath(installPath, 'initialization')
       } catch (error) {
         LogUtil.error('Initialize', '安装插件失败', error)
       }

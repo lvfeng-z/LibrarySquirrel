@@ -21,6 +21,8 @@ import { PluginManifest } from '../plugin/types/PluginManifest.ts'
 import { getSettings } from '../core/settings.ts'
 import { assignExisting } from '@shared/util/ObjectUtil.ts'
 import { getPluginManager } from '../core/pluginManager.ts'
+import { ActivationType } from '@shared/model/constant/ActivationType.ts'
+import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 
 /**
  * 主键查询
@@ -119,8 +121,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 安装插件
    * @param pluginInstallDTO
+   * @param installType
    */
-  public async install(pluginInstallDTO: PluginInstallDTO): Promise<Plugin> {
+  public async install(pluginInstallDTO: PluginInstallDTO, installType: InstallType): Promise<Plugin> {
     // 校验是否已安装
     assertNotNullish(pluginInstallDTO.publicId, '安装插件失败，插件公开id不能为空')
     const existing = await this.getByPublicId(pluginInstallDTO.publicId)
@@ -155,15 +158,22 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     newPlugin.backupId = backup.id as number
 
     const pluginService = new PluginService()
+    let finalPluginId: number
     if (notNullish(uninstalled)) {
-      newPlugin.id = uninstalled.id
+      assertNotNullish(uninstalled?.id, '安装插件失败，原插件id不能为空')
+      finalPluginId = uninstalled.id
+      newPlugin.id = finalPluginId
       newPlugin.pluginData = uninstalled.pluginData
       newPlugin.uninstalled = BOOL.FALSE
       await pluginService.updateById(newPlugin)
     } else {
-      await pluginService.save(newPlugin)
+      finalPluginId = await pluginService.save(newPlugin)
     }
 
+    await getPluginManager().onInstallPlugin(finalPluginId, installType)
+    if (newPlugin.activationType === ActivationType.STARTUP) {
+      await getPluginManager().activatePlugin(finalPluginId, ActivationType.STARTUP)
+    }
     LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
     return newPlugin
   }
@@ -171,8 +181,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 从插件包安装插件
    * @param packagePath
+   * @param installType
    */
-  public async installFromPath(packagePath: string): Promise<Plugin> {
+  public async installFromPath(packagePath: string, installType: InstallType): Promise<Plugin> {
     assertNotNullish(packagePath, `插件包路径不能为空`)
     try {
       await fs.promises.access(packagePath, fs.constants.F_OK)
@@ -180,13 +191,13 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       LogUtil.error(this.constructor.name, `安装插件失败，找不到插件包"${packagePath}"`)
       throw error
     }
-    return this.install(this.loadPluginPackage(packagePath))
+    return this.install(this.loadPluginPackage(packagePath), installType)
   }
 
   /**
    * 重新安装插件
    */
-  public async reinstall(pluginId: number) {
+  public async reinstall(pluginId: number, installType: InstallType) {
     const plugin = await this.getById(pluginId)
     assertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
     assertNotNullish(plugin.backupId, `重新安装插件失败，插件备份id不可用，pluginId: ${pluginId}`)
@@ -195,13 +206,13 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     assertNotNullish(backup, `重新安装插件失败，备份不存在，backupId: ${plugin.backupId}`)
     const workdir = getSettings().store.workdir
     const packagePath = path.join(workdir, backup.filePath as string)
-    return this.reinstallFromPath(pluginId, packagePath)
+    return this.reinstallFromPath(pluginId, packagePath, installType)
   }
 
   /**
    * 重新安装插件
    */
-  public async reinstallFromPath(pluginId: number, packagePath: string) {
+  public async reinstallFromPath(pluginId: number, packagePath: string, installType: InstallType) {
     assertNotBlank(packagePath, `重新安装插件失败，给定的安装包路径不可用，pluginId: ${pluginId}，packagePath: ${packagePath}`)
     const plugin = await this.getById(pluginId)
     assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
@@ -216,7 +227,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     // 安装
     const installDTO = this.loadPluginPackage(packagePath)
     assertTrue(installDTO.publicId === plugin.publicId, `重新安装插件失败，插件公开id与原插件不符`)
-    return this.install(installDTO)
+    return this.install(installDTO, installType)
   }
 
   /**
