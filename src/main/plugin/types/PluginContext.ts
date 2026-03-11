@@ -41,6 +41,8 @@ export interface PluginContext {
     unregisterSiteBrowser: (contributionId: string) => void
     /** 创建任务 */
     createTask: (url: string) => Promise<TaskCreateResponse>
+    /** 获取插件根目录 */
+    getPluginRoot: () => string
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

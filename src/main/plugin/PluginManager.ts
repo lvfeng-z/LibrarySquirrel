@@ -28,6 +28,7 @@ import PluginWithContribution from '@shared/model/domain/PluginWithContribution.
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 import TaskService from '../service/TaskService.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
+import { PLUGIN_RUNTIME } from '../constant/PluginConstant.ts'
 
 /**
  * 缓存的插件实例
@@ -215,6 +216,9 @@ export default class PluginManager {
         createTask: async (url: string): Promise<TaskCreateResponse> => {
           const taskService = new TaskService()
           return taskService.createTask(url)
+        },
+        getPluginRoot: () => {
+          return path.join(RootDir(), PLUGIN_RUNTIME, plugin?.rootPath as string)
         },
         logger
       },

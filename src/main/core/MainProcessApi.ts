@@ -864,7 +864,8 @@ export function registerMainIpcHandlers() {
       if (!siteBrowserInstance) {
         throw new Error(`获取站点浏览器插件失败: ${pluginPublicId}`)
       }
-      return siteBrowserInstance.open()
+      await siteBrowserInstance.open()
+      return
     })
   )
 }
