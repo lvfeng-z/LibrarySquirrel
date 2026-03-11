@@ -3,7 +3,7 @@ import path from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
-import MainProcessApi from './core/MainProcessApi.ts'
+import { registerMainIpcHandlers } from './core/MainProcessApi.ts'
 import LogUtil from './util/LogUtil.ts'
 import { ConvertPath, GetWorkResource } from './util/FileSysUtil.ts'
 import { initializeByConfig } from './core/InitializeByConfig.ts'
@@ -182,7 +182,7 @@ Electron.app.whenReady().then(() => {
   // 初始化数据库
   InitializeDB().then(async () => {
     // 创建服务层的ipc通信
-    MainProcessApi.exposeService()
+    registerMainIpcHandlers()
     // 初始化任务队列
     createTaskQueue()
     // 初始化插件任务URL监听器管理器

@@ -1,5 +1,5 @@
 import LocalTagService from '../service/LocalTagService.ts'
-import Electron from 'electron'
+import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import SiteTagService from '../service/SiteTagService.ts'
 import SiteService from '../service/SiteService.ts'
 import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
@@ -52,7 +52,7 @@ function createHandler<T>(
     transformResponse?: (result: T) => ApiResponse
   }
 ) {
-  return async (_event: Electron.IpcMainInvokeEvent, ...args: any[]) => {
+  return async (_event: IpcMainInvokeEvent, ...args: any[]) => {
     if (!options?.silent) {
       LogUtil.info('MainProcessApi', channel)
     }
@@ -72,35 +72,35 @@ function createHandler<T>(
   }
 }
 
-function exposeService() {
+export function registerMainIpcHandlers() {
   // test
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'test-insertLocalTag10W',
     createHandler('test-insertLocalTag10W', () => test.insertLocalTag10W())
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'test-transactionTest',
     createHandler('test-transactionTest', () => test.transactionTest())
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'test-pLimitTest',
     createHandler('test-pLimitTest', () => test.pLimitTest())
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'test-mainWindowMsgTest',
     createHandler('test-mainWindowMsgTest', () => test.mainWindowMsgTest())
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'test-gotoPageSiteManage',
     createHandler('test-gotoPageSiteManage', () => test.gotoPageSiteManage())
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'test-listWorkSetWithWorkByIds',
     createHandler('test-listWorkSetWithWorkByIds', (args) => test.listWorkSetWithWorkByIds(args))
   )
 
   // AppLauncher
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'appLauncher-openImage',
     createHandler('appLauncher-openImage', (args) => {
       const service = new AppLauncherService()
@@ -109,14 +109,14 @@ function exposeService() {
   )
 
   // AutoExplainPath
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'autoExplainPath-getListenerPage',
     createHandler('autoExplainPath-getListenerPage', (args) => {
       const service = new AutoExplainPathService()
       return service.getListenerPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'autoExplainPath-getListenerList',
     createHandler('autoExplainPath-getListenerList', (args) => {
       const service = new AutoExplainPathService()
@@ -125,35 +125,35 @@ function exposeService() {
   )
 
   // LocalAuthor
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-save',
     createHandler('localAuthor-save', (args) => {
       const service = new LocalAuthorService()
       return service.save(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-deleteById',
     createHandler('localAuthor-deleteById', (args) => {
       const service = new LocalAuthorService()
       return service.deleteById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-updateById',
     createHandler('localAuthor-updateById', (args) => {
       const service = new LocalAuthorService()
       return service.updateById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-getById',
     createHandler('localAuthor-getById', (args) => {
       const service = new LocalAuthorService()
       return service.getById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-queryPage',
     createHandler('localAuthor-queryPage', (args) => {
       const service = new LocalAuthorService()
@@ -161,14 +161,14 @@ function exposeService() {
       return service.queryPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-listSelectItems',
     createHandler('localAuthor-listSelectItems', (args) => {
       const service = new LocalAuthorService()
       return service.listSelectItems(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localAuthor-querySelectItemPage',
     createHandler('localAuthor-querySelectItemPage', (args) => {
       const service = new LocalAuthorService()
@@ -177,77 +177,77 @@ function exposeService() {
   )
 
   // LocalTag
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-save',
     createHandler('localTag-save', (args) => {
       const service = new LocalTagService()
       return service.save(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-deleteById',
     createHandler('localTag-deleteById', (args) => {
       const service = new LocalTagService()
       return service.deleteById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-updateById',
     createHandler('localTag-updateById', (args) => {
       const service = new LocalTagService()
       return service.updateById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-queryPage',
     createHandler('localTag-queryPage', (args) => {
       const service = new LocalTagService()
       return service.queryPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-queryDTOPage',
     createHandler('localTag-queryDTOPage', (args) => {
       const service = new LocalTagService()
       return service.queryDTOPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-getById',
     createHandler('localTag-getById', (args) => {
       const service = new LocalTagService()
       return service.getById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-getTree',
     createHandler('localTag-getTree', (arg1, arg2) => {
       const service = new LocalTagService()
       return service.getTree(arg1, arg2)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-listSelectItems',
     createHandler('localTag-listSelectItems', (args) => {
       const service = new LocalTagService()
       return service.listSelectItems(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-querySelectItemPage',
     createHandler('localTag-querySelectItemPage', (args) => {
       const service = new LocalTagService()
       return service.querySelectItemPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-listByWorkId',
     createHandler('localTag-listByWorkId', (args) => {
       const service = new LocalTagService()
       return service.listByWorkId(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'localTag-querySelectItemPageByWorkId',
     createHandler('localTag-querySelectItemPageByWorkId', (args) => {
       const service = new LocalTagService()
@@ -256,7 +256,7 @@ function exposeService() {
   )
 
   // PluginTaskUrlListenerManager
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'pluginTaskUrlListenerManager-listListener',
     createHandler('pluginTaskUrlListenerManager-listListener', (args) => {
       return getPluginTaskUrlListenerManager().listListener(args)
@@ -264,42 +264,42 @@ function exposeService() {
   )
 
   // Plugin
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'plugin-updateById',
     createHandler('plugin-updateById', (args) => {
       const service = new PluginService()
       return service.updateById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'plugin-queryPage',
     createHandler('plugin-queryPage', (args) => {
       const service = new PluginService()
       return service.queryPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'plugin-installFromPath',
     createHandler('plugin-installFromPath', (args) => {
       const service = new PluginService()
       return service.installFromPath(args, 'manual')
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'plugin-reinstall',
     createHandler('plugin-reinstall', (args) => {
       const service = new PluginService()
       return service.reinstall(args, 'reinstall')
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'plugin-reinstallFromPath',
     createHandler('plugin-reinstallFromPath', (arg1, arg2) => {
       const service = new PluginService()
       return service.reinstallFromPath(arg1, arg2, 'reinstall')
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'plugin-unInstall',
     createHandler('plugin-unInstall', (args) => {
       const service = new PluginService()
@@ -308,14 +308,14 @@ function exposeService() {
   )
 
   // ReWorkTag
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkTag-link',
     createHandler('reWorkTag-link', (type: OriginType, localTagIds: number[], workId: number) => {
       const service = new ReWorkTagService()
       return service.link(type, localTagIds, workId)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkTag-unlink',
     createHandler('reWorkTag-unlink', (type: OriginType, localTagIds: number[], workId: number) => {
       const service = new ReWorkTagService()
@@ -324,21 +324,21 @@ function exposeService() {
   )
 
   // Search
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'search-querySearchConditionPage',
     createHandler('search-querySearchConditionPage', (args) => {
       const service = new SearchService()
       return service.querySearchConditionPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'search-queryWorkPage',
     createHandler('search-queryWorkPage', (args) => {
       const service = new SearchService()
       return service.queryWorkPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'search-queryWorkSetPage',
     createHandler('search-queryWorkSetPage', (args) => {
       const service = new SearchService()
@@ -347,21 +347,21 @@ function exposeService() {
   )
 
   //SettingsService
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'settings-getSettings',
     createHandler('settings-getSettings', () => SettingsService.getSettings())
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'settings-saveSettings',
     createHandler('settings-saveSettings', (args) => SettingsService.saveSettings(args))
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'settings-resetSettings',
     createHandler('settings-resetSettings', () => SettingsService.resetSettings())
   )
 
   // Site
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'site-deleteById',
     createHandler(
       'site-deleteById',
@@ -379,7 +379,7 @@ function exposeService() {
       }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'site-queryPage',
     createHandler('site-queryPage', (args) => {
       const service = new SiteService()
@@ -387,21 +387,21 @@ function exposeService() {
       return service.queryPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'site-querySelectItemPage',
     createHandler('site-querySelectItemPage', (args) => {
       const service = new SiteService()
       return service.querySelectItemPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'site-save',
     createHandler('site-save', (args) => {
       const service = new SiteService()
       return service.save(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'site-updateById',
     createHandler('site-updateById', (args) => {
       const service = new SiteService()
@@ -410,49 +410,49 @@ function exposeService() {
   )
 
   // SiteAuthor
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-deleteById',
     createHandler('siteAuthor-deleteById', (args) => {
       const service = new SiteAuthorService()
       return service.deleteById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-save',
     createHandler('siteAuthor-save', (args) => {
       const service = new SiteAuthorService()
       return service.save(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-updateById',
     createHandler('siteAuthor-updateById', (args) => {
       const service = new SiteAuthorService()
       return service.updateById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-updateBindLocalAuthor',
     createHandler('siteAuthor-updateBindLocalAuthor', (arg1, arg2) => {
       const service = new SiteAuthorService()
       return service.updateBindLocalAuthor(arg1, arg2)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-createAndBindSameNameLocalAuthor',
     createHandler('siteAuthor-createAndBindSameNameLocalAuthor', (args) => {
       const service = new SiteAuthorService()
       return service.createAndBindSameNameLocalAuthor(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-queryBoundOrUnboundInLocalAuthorPage',
     createHandler('siteAuthor-queryBoundOrUnboundInLocalAuthorPage', (args) => {
       const service = new SiteAuthorService()
       return service.queryBoundOrUnboundInLocalAuthorPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteAuthor-queryLocalRelateDTOPage',
     createHandler('siteAuthor-queryLocalRelateDTOPage', (args) => {
       const service = new SiteAuthorService()
@@ -461,70 +461,70 @@ function exposeService() {
   )
 
   // SiteTag
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-save',
     createHandler('siteTag-save', (args) => {
       const service = new SiteTagService()
       return service.save(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-createAndBindSameNameLocalTag',
     createHandler('siteTag-createAndBindSameNameLocalTag', (args) => {
       const service = new SiteTagService()
       return service.createAndBindSameNameLocalTag(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-updateById',
     createHandler('siteTag-updateById', (args) => {
       const service = new SiteTagService()
       return service.updateById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-deleteById',
     createHandler('siteTag-deleteById', (args) => {
       const service = new SiteTagService()
       return service.deleteById(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-updateBindLocalTag',
     createHandler('siteTag-updateBindLocalTag', (localTagId: number, siteTagIds: number[]) => {
       const service = new SiteTagService()
       return service.updateBindLocalTag(localTagId, siteTagIds)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-queryPage',
     createHandler('siteTag-queryPage', (page: Page<SiteTagQueryDTO, SiteTag>) => {
       const service = new SiteTagService()
       return service.queryPage(page)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-queryBoundOrUnboundToLocalTagPage',
     createHandler('siteTag-queryBoundOrUnboundToLocalTagPage', (page: Page<SiteTagQueryDTO, SiteTag>) => {
       const service = new SiteTagService()
       return service.queryBoundOrUnboundToLocalTagPage(page)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-queryPageByWorkId',
     createHandler('siteTag-queryPageByWorkId', (page: Page<SiteTagQueryDTO, SiteTag>) => {
       const service = new SiteTagService()
       return service.queryPageByWorkId(page)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-queryLocalRelateDTOPage',
     createHandler('siteTag-queryLocalRelateDTOPage', (page: Page<SiteTagQueryDTO, SiteTag>) => {
       const service = new SiteTagService()
       return service.queryLocalRelateDTOPage(page)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteTag-querySelectItemPageByWorkId',
     createHandler('siteTag-querySelectItemPageByWorkId', (page: Page<SiteTagQueryDTO, SiteTag>) => {
       const service = new SiteTagService()
@@ -533,77 +533,77 @@ function exposeService() {
   )
 
   // Task
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-createTask',
     createHandler('task-createTask', (args) => {
       const service = new TaskService()
       return service.createTask(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-startTaskTree',
     createHandler('task-startTaskTree', (args) => {
       const service = new TaskService()
       return service.startTaskTree(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-retryTaskTree',
     createHandler('task-retryTaskTree', (args) => {
       const service = new TaskService()
       return service.retryTaskTree(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-deleteTask',
     createHandler('task-deleteTask', (args) => {
       const service = new TaskService()
       return service.deleteTask(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-queryPage',
     createHandler('task-queryPage', (args) => {
       const service = new TaskService()
       return service.queryPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-queryParentPage',
     createHandler('task-queryParentPage', (args) => {
       const service = new TaskService()
       return service.queryParentPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-queryTreeDataPage',
     createHandler('task-queryTreeDataPage', (args) => {
       const service = new TaskService()
       return service.queryTreeDataPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-listChildrenTask',
     createHandler('task-listChildrenTask', (args) => {
       const service = new TaskService()
       return service.listChildrenTask(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-queryChildrenTaskPage',
     createHandler('task-queryChildrenTaskPage', (args) => {
       const service = new TaskService()
       return service.queryChildrenTaskPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-listStatus',
     createHandler('task-listStatus', (args) => {
       const service = new TaskService()
       return service.listStatus(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-listSchedule',
     createHandler(
       'task-listSchedule',
@@ -614,21 +614,21 @@ function exposeService() {
       { silent: true }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-stopTaskTree',
     createHandler('task-stopTaskTree', (args) => {
       const service = new TaskService()
       return service.stopTaskTree(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-pauseTaskTree',
     createHandler('task-pauseTaskTree', (args) => {
       const service = new TaskService()
       return service.pauseTaskTree(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'task-resumeTaskTree',
     createHandler('task-resumeTaskTree', (args) => {
       const service = new TaskService()
@@ -637,7 +637,7 @@ function exposeService() {
   )
 
   // Work
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'work-deleteWorkAndSurroundingData',
     createHandler(
       'work-deleteWorkAndSurroundingData',
@@ -648,14 +648,14 @@ function exposeService() {
       { transformResponse: (result) => ApiUtil.check(result) }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'work-queryPage',
     createHandler('work-queryPage', (args) => {
       const service = new WorkService()
       return service.queryPage(args)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'work-getFullWorkInfoById',
     createHandler('work-getFullWorkInfoById', (args) => {
       if (isNullish(args)) {
@@ -667,7 +667,7 @@ function exposeService() {
   )
 
   // WorkSet
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'workSet-listWorkSetWithWorkByIds',
     createHandler('workSet-listWorkSetWithWorkByIds', (args) => {
       const service = new WorkSetService()
@@ -675,7 +675,7 @@ function exposeService() {
     })
   )
 
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'workSet-queryPageWithCover',
     createHandler('workSet-queryPageWithCover', (args) => {
       const service = new WorkSetService()
@@ -684,7 +684,7 @@ function exposeService() {
   )
 
   // ReWorkWorkSet
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkWorkSet-linkBatchToWorkSet',
     createHandler('reWorkWorkSet-linkBatchToWorkSet', (args) => {
       const service = new ReWorkWorkSetService()
@@ -693,7 +693,7 @@ function exposeService() {
     })
   )
 
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkWorkSet-removeBatchFromWorkSet',
     createHandler('reWorkWorkSet-removeBatchFromWorkSet', (args) => {
       const service = new ReWorkWorkSetService()
@@ -702,7 +702,7 @@ function exposeService() {
     })
   )
 
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkWorkSet-updateSortOrders',
     createHandler('reWorkWorkSet-updateSortOrders', (args) => {
       const service = new ReWorkWorkSetService()
@@ -711,7 +711,7 @@ function exposeService() {
     })
   )
 
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkWorkSet-setCover',
     createHandler('reWorkWorkSet-setCover', (args) => {
       const service = new ReWorkWorkSetService()
@@ -720,7 +720,7 @@ function exposeService() {
     })
   )
 
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkWorkSet-unsetCover',
     createHandler('reWorkWorkSet-unsetCover', (args) => {
       const service = new ReWorkWorkSetService()
@@ -729,7 +729,7 @@ function exposeService() {
     })
   )
 
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'reWorkWorkSet-getCoverWorkId',
     createHandler('reWorkWorkSet-getCoverWorkId', (args) => {
       const service = new ReWorkWorkSetService()
@@ -739,7 +739,7 @@ function exposeService() {
   )
 
   // FileSysUtil
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'fileSysUtil-dirSelect',
     createHandler('fileSysUtil-dirSelect', (openFile, isModal) => {
       return DirSelect(openFile, isModal)
@@ -747,7 +747,7 @@ function exposeService() {
   )
 
   // SecureStorage
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'secureStorage-set',
     createHandler(
       'secureStorage-set',
@@ -773,7 +773,7 @@ function exposeService() {
       }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'secureStorage-get',
     createHandler(
       'secureStorage-get',
@@ -798,7 +798,7 @@ function exposeService() {
       }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'secureStorage-delete',
     createHandler(
       'secureStorage-delete',
@@ -817,7 +817,7 @@ function exposeService() {
       }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'secureStorage-hasKey',
     createHandler(
       'secureStorage-hasKey',
@@ -836,7 +836,7 @@ function exposeService() {
       }
     )
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'secureStorage-listKeys',
     createHandler('secureStorage-listKeys', () => {
       const service = new SecureStorageService()
@@ -844,14 +844,14 @@ function exposeService() {
     })
   )
   // SiteBrowser
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteBrowser-queryPage',
     createHandler('siteBrowser-queryPage', (page: Page<object, SiteBrowserDTO>) => {
       page = new Page(page)
       return getSiteBrowserManager().queryPage(page)
     })
   )
-  Electron.ipcMain.handle(
+  ipcMain.handle(
     'siteBrowser-open',
     createHandler('siteBrowser-open', async (pluginPublicId: string, contributionId: string) => {
       const siteBrowserManager = getSiteBrowserManager()
@@ -867,8 +867,4 @@ function exposeService() {
       return siteBrowserInstance.open()
     })
   )
-}
-
-export default {
-  exposeService
 }
