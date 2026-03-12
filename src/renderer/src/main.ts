@@ -13,6 +13,7 @@ import clickOutSide from './directives/clickOutSide.ts'
 import elSelectBottomed from './directives/elSelectBottomed.ts'
 import elScrollbarBottomed from './directives/elScrollbarBottomed.ts'
 import { iniListener } from '@renderer/MainIpcListener.ts'
+import { initBuiltinMenus } from './composables/useBuiltinMenus.ts'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -26,6 +27,10 @@ app.directive('clickOutSide', clickOutSide)
 app.directive('elSelectBottomed', elSelectBottomed)
 // 注册el-scrollbar触底的自定义指令
 app.directive('elScrollbarBottomed', elScrollbarBottomed)
+
+// 初始化内置菜单（在 pinia store 初始化之后）
+initBuiltinMenus()
+
 app.mount('#app')
 
 iniListener()

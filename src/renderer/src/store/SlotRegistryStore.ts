@@ -2,11 +2,26 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ViewSlot, MicroSlot, PanelSlot } from '@renderer/model/slot'
 
+// 菜单项类型
+export interface MenuSlotItem {
+  id: string
+  index: string
+  icon?: unknown
+  label: string
+  order?: number
+  children?: MenuSlotItem[]
+  // 如果是叶子菜单项，指向对应的视图
+  viewId?: string
+  // 如果是叶子菜单项，指向对应的页面状态
+  pageStateKey?: string
+}
+
 export const useSlotRegistryStore = defineStore('slotRegistry', {
   state: () => ({
     viewSlots: new Map<string, ViewSlot>(),
     microSlots: new Map<string, MicroSlot>(),
     panelSlots: new Map<string, PanelSlot>(),
+    menuSlots: new Map<string, MenuSlotItem>(),
     activeViewId: ref<string | null>(null)
   }),
 
@@ -30,7 +45,12 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       (state) =>
       (position: string): PanelSlot[] => {
         return Array.from(state.panelSlots.values()).filter((slot) => slot.position === position)
-      }
+      },
+
+    // 获取所有菜单项（已排序）
+    allMenuSlots: (state): MenuSlotItem[] => {
+      return Array.from(state.menuSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
+    }
   },
 
   actions: {
@@ -82,11 +102,29 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.activeViewId = null
     },
 
+    // 注册菜单位点
+    registerMenuSlot(item: MenuSlotItem) {
+      this.menuSlots.set(item.id, item)
+    },
+
+    // 批量注册菜单位点
+    registerMenuSlots(items: MenuSlotItem[]) {
+      items.forEach((item) => {
+        this.menuSlots.set(item.id, item)
+      })
+    },
+
+    // 取消注册菜单位点
+    unregisterMenuSlot(id: string) {
+      this.menuSlots.delete(id)
+    },
+
     // 重置所有注册（用于测试或清理）
     reset() {
       this.viewSlots.clear()
       this.microSlots.clear()
       this.panelSlots.clear()
+      this.menuSlots.clear()
       this.activeViewId = null
     }
   }

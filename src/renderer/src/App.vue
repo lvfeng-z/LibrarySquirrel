@@ -13,8 +13,9 @@ import PluginManage from '@renderer/components/subpage/PluginManage.vue'
 import SiteAuthorManage from '@renderer/components/subpage/SiteAuthorManage.vue'
 import GuidePage from '@renderer/components/subpage/Guide.vue'
 import Test from '@renderer/components/subpage/Test.vue'
-import SideMenu from './components/oneOff/SideMenu.vue'
-import { Close, Coordinate, Discount, HomeFilled, Link, List, Setting, Star, TakeawayBox, User } from '@element-plus/icons-vue'
+import DynamicSideMenu from '@renderer/components/slot/DynamicSideMenu.vue'
+import ViewSlotRenderer from '@renderer/components/slot/ViewSlotRenderer.vue'
+import { Close } from '@element-plus/icons-vue'
 import ApiUtil from './utils/ApiUtil'
 import Page from './model/util/Page.ts'
 import SelectItem from './model/util/SelectItem.ts'
@@ -31,7 +32,7 @@ import { SearchCondition, SearchType } from '@renderer/model/util/SearchConditio
 import lodash from 'lodash'
 import { CrudOperator } from '@renderer/constants/CrudOperator.ts'
 import NotificationList from '@renderer/components/oneOff/NotificationList.vue'
-import { PageEnum, PageState } from '@renderer/constants/PageState.ts'
+import { PageEnum } from '@renderer/constants/PageState.ts'
 import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
@@ -210,10 +211,6 @@ async function querySearchItemPage(page: IPage<BaseQueryDTO, SelectItem>, input?
     throw new Error(response.msg)
   }
 }
-// 开启副页面
-async function showSubpage(page: PageState) {
-  return pageStatesStore.showPage(page)
-}
 // 关闭副页面
 async function closeSubpage() {
   return pageStatesStore.closePage()
@@ -316,9 +313,8 @@ async function searchWorkSet(page: Page<SearchCondition[], WorkSetCoverDTO>): Pr
 
   return apis.searchQueryWorkSetPage(page).then((response: ApiResponse) => {
     if (ApiUtil.check(response)) {
-      const resultPage = ApiUtil.data<Page<WorkSetQueryDTO, WorkSetCoverDTO>>(response)
       // WorkSetCoverDTO 没有继承 WorkSet，直接使用返回的数据即可
-      return resultPage
+      return ApiUtil.data<Page<WorkSetQueryDTO, WorkSetCoverDTO>>(response)
     } else {
       return page
     }
@@ -408,62 +404,7 @@ async function handleTest() {
     <el-container>
       <el-aside class="main-page-sidebar z-layer-4" width="auto">
         <!-- 为了不被TagManage中的SearchToolbar的3层z轴遮挡，此处为4层z轴 -->
-        <side-menu class="aside-side-menu" width="160px" fold-width="64px" :default-active="['0']" background-color="black">
-          <template #default>
-            <el-menu-item index="0" @click="closeSubpage">
-              <template #title> 主页 </template>
-              <el-icon><HomeFilled /></el-icon>
-            </el-menu-item>
-            <el-sub-menu index="1">
-              <template #title>
-                <el-icon><Discount /></el-icon>
-                <span>标签</span>
-              </template>
-              <el-menu-item index="1-1" @click="showSubpage(pageStatesStore.pageStates.localTagManage)">本地标签</el-menu-item>
-              <el-menu-item index="1-2" @click="showSubpage(pageStatesStore.pageStates.siteTagManage)">站点标签</el-menu-item>
-            </el-sub-menu>
-            <el-sub-menu index="2">
-              <template #title>
-                <el-icon><User /></el-icon>
-                <span>作者</span>
-              </template>
-              <el-menu-item index="2-1" @click="showSubpage(pageStatesStore.pageStates.localAuthorManage)"> 本地作者 </el-menu-item>
-              <el-menu-item index="2-2" @click="showSubpage(pageStatesStore.pageStates.siteAuthorManage)">站点作者</el-menu-item>
-            </el-sub-menu>
-            <el-menu-item index="3" @click="showSubpage(pageStatesStore.pageStates.developing)">
-              <template #title>收藏</template>
-              <el-icon><Star /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="4" @click="showSubpage(pageStatesStore.pageStates.taskManage)">
-              <template #title>任务</template>
-              <el-icon ref="taskButton"><List /></el-icon>
-            </el-menu-item>
-            <el-sub-menu index="5">
-              <template #title>
-                <el-icon><Link /></el-icon>
-                <span>站点</span>
-              </template>
-              <el-menu-item index="5-1" @click="showSubpage(pageStatesStore.pageStates.siteManage)">站点管理</el-menu-item>
-              <el-menu-item index="5-2" @click="showSubpage(pageStatesStore.pageStates.siteBrowserManage)">站点浏览</el-menu-item>
-            </el-sub-menu>
-            <el-menu-item index="6" @click="showSubpage(pageStatesStore.pageStates.pluginManage)">
-              <template #title>插件</template>
-              <el-icon><TakeawayBox /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="7" @click="showSubpage(pageStatesStore.pageStates.settings)">
-              <template #title>设置</template>
-              <el-icon><Setting /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="8" @click="showSubpage(pageStatesStore.pageStates.guide)">
-              <template #title>向导</template>
-              <el-icon ref="guideButton"><Guide /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="9" @click="showSubpage(pageStatesStore.pageStates.test)">
-              <template #title>测试按钮</template>
-              <el-icon><Coordinate /></el-icon>
-            </el-menu-item>
-          </template>
-        </side-menu>
+        <dynamic-side-menu class="aside-side-menu" width="160px" fold-width="64px" />
       </el-aside>
       <el-main style="padding: 0">
         <div v-show="pageStatesStore.pageStates.mainPage.state" class="main-page">
@@ -597,6 +538,10 @@ async function handleTest() {
           <guide-page v-if="pageStatesStore.pageStates.guide.state" />
           <developing v-if="pageStatesStore.pageStates.developing.state" />
           <test v-if="pageStatesStore.pageStates.test.state" />
+        </div>
+        <!-- 插件视图渲染区 -->
+        <div v-if="pageStatesStore.pluginViewId" class="plugin-view">
+          <view-slot-renderer />
         </div>
       </el-main>
     </el-container>
@@ -762,6 +707,11 @@ async function handleTest() {
   color: rgb(164, 158, 255, 95%);
 }
 .subPage {
+  width: 100%;
+  height: 100%;
+}
+
+.plugin-view {
   width: 100%;
   height: 100%;
 }
