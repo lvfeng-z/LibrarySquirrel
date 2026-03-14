@@ -47,7 +47,7 @@ const currentPage: Ref<NotificationItem[]> = computed(() => {
           v-model:page-size="pageSize"
           layout="prev, pager, next"
           :default-page-size="10"
-          :pager-count="4"
+          :pager-count="5"
           :total="useNotificationStore().count"
         />
       </div>
