@@ -54,7 +54,8 @@ export const usePageStatesStore = defineStore('pageStates', {
     // 返回主页
     async backToMainPage(): Promise<void> {
       const slotStore = useSlotRegistryStore()
-      slotStore.clearActiveView()
+      // 切换到主页视图
+      slotStore.switchView('mainPage')
       this.pluginViewId = null
       this.pageStates.mainPage.state = true
       this.pageStates.subPage.state = false

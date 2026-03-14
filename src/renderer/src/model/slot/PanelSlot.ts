@@ -3,6 +3,7 @@ export interface PanelSlot {
   position: 'left-sidebar' | 'right-sidebar' | 'bottom'
   width?: number // 面板宽度（仅 sidebar 生效）
   height?: number // 面板高度（仅 bottom 生效）
-  component: () => Promise<unknown>
-  props?: Record<string, unknown>
+  component: () => Promise<any>
+  props?: Record<string, any>
+  order?: number
 }

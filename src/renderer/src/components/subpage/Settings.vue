@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
-import { nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
+import { computed, nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '@renderer/model/util/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
@@ -11,13 +11,18 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
 import { PageState } from '@renderer/constants/PageState.ts'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
+import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 
-// props
-const props = defineProps<{ state: PageState }>()
+// 从 Store 获取当前页面的 state
+const pageStatesStore = usePageStatesStore()
+const props = defineProps<{ state?: PageState }>()
+
+// 如果没有传入 state，则从 store 获取当前页面的 state
+const currentState = computed(() => props.state ?? pageStatesStore.pageStates.settings)
 
 // onBeforeMount
 onBeforeMount(() => {
-  props.state.setBeforeClose(checkChangeSaved)
+  currentState.value.setBeforeClose(checkChangeSaved)
   loadSettings()
 })
 

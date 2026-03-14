@@ -36,18 +36,10 @@ async function handleSelect(index: string) {
 
   if (!menuItem) return
 
-  // 优先检查是否有 viewId（插件视图）
+  // 优先检查是否有 viewId（插件视图或内置视图）
   if (menuItem.viewId) {
     await pageStore.showPluginView(menuItem.viewId)
     return
-  }
-
-  // 否则检查 pageStateKey（内置页面）
-  if (menuItem.pageStateKey) {
-    const pageState = pageStore.pageStates[menuItem.pageStateKey as keyof typeof pageStore.pageStates]
-    if (pageState) {
-      await pageStore.showPage(pageState)
-    }
   }
 }
 </script>

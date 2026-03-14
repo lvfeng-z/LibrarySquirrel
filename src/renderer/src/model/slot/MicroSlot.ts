@@ -1,6 +1,7 @@
 export interface MicroSlot {
   id: string
   position: 'topbar' | 'statusbar' | 'toolbar'
-  component: () => Promise<unknown>
-  props?: Record<string, unknown>
+  component: () => Promise<any>
+  props?: Record<string, any>
+  order?: number
 }
