@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, h, type Component } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
-import { usePageStatesStore } from '@renderer/store/UsePageStatesStore'
 import { Loading } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   showHeader?: boolean
 }>()
 
+const router = useRouter()
 const store = useSlotRegistryStore()
-const pageStore = usePageStatesStore()
 
 const activeView = computed(() => store.activeView)
 
@@ -57,7 +57,7 @@ const activeComponent = computed<Component | null>(() => {
       <component :is="activeComponent" v-if="activeComponent && activeView" v-bind="activeView.props" />
       <div v-else class="view-slot-empty">
         <el-empty description="请选择一个视图">
-          <el-button type="primary" @click="pageStore.backToMainPage()">返回主页</el-button>
+          <el-button type="primary" @click="router.push('/')">返回主页</el-button>
         </el-empty>
       </div>
     </div>

@@ -40,7 +40,8 @@
     "pinia": "^3.0.4",
     "sharp": "^0.34.5",
     "sqlite3": "^5.1.7",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "vue-router": "^5.0.3"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.1.0",

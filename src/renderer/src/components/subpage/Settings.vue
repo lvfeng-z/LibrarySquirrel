@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
-import { computed, nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
+import { nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '@renderer/model/util/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
@@ -9,20 +9,10 @@ import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import ResFileNameFormatEnum from '@renderer/constants/ResFileNameFormatEnum.ts'
-import { PageState } from '@renderer/constants/PageState.ts'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
-import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
-
-// 从 Store 获取当前页面的 state
-const pageStatesStore = usePageStatesStore()
-const props = defineProps<{ state?: PageState }>()
-
-// 如果没有传入 state，则从 store 获取当前页面的 state
-const currentState = computed(() => props.state ?? pageStatesStore.pageStates.settings)
 
 // onBeforeMount
 onBeforeMount(() => {
-  currentState.value.setBeforeClose(checkChangeSaved)
   loadSettings()
 })
 
@@ -125,26 +115,8 @@ async function selectDir() {
     }
   }
 }
-// 在关闭前检查设置是否已经更改
-async function checkChangeSaved(): Promise<boolean> {
-  if (!lodash.isEqual(settings.value, oldSettings)) {
-    return new Promise<boolean>((resolve) => {
-      ElMessageBox.confirm('是否保存更改?', '更改未保存', {
-        confirmButtonText: '是',
-        cancelButtonText: '否',
-        type: 'warning'
-      })
-        .then(() => {
-          saveSettings()
-          resolve(true)
-        })
-        .catch(() => {
-          resolve(true)
-        })
-    })
-  }
-  return true
-}
+// TODO: 使用路由守卫实现离开前检查未保存的更改
+// 可以使用 router.beforeEach 守卫来实现在离开页面时检查未保存的更改
 // 重置前询问
 async function askBeforeReset(): Promise<boolean> {
   return new Promise<boolean>((resolve) => {

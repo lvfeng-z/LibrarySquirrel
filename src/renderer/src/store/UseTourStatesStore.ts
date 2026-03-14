@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { Settings } from '@renderer/model/util/Settings.ts'
 import mitt, { Emitter } from 'mitt'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
-import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 
 export const useTourStatesStore = defineStore('tourStates', {
   state: (): { tourStates: TourStates } => {
@@ -75,9 +74,8 @@ export class TourStates {
 
   public async startTaskTour(): Promise<void> {
     this.taskMenuTour = true
-    const step1 = this.waitUserFinish('taskMenuTour')
-    const step2 = usePageStatesStore().waitPage(usePageStatesStore().pageStates.taskManage)
-    await Promise.all([step1, step2])
+    // 等待用户完成向导
+    await this.waitUserFinish('taskMenuTour')
     this.taskTour = true
   }
 

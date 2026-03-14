@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ViewSlot, MicroSlot, PanelSlot } from '@renderer/model/slot'
+import type { RouteRecordRaw } from 'vue-router'
+import type { Router } from 'vue-router'
 
 // 菜单项类型
 export interface MenuSlotItem {
@@ -14,6 +16,24 @@ export interface MenuSlotItem {
   viewId?: string
   // 如果是叶子菜单项，指向对应的页面状态
   pageStateKey?: string
+}
+
+// Router 实例管理
+let routerInstance: Router | null = null
+
+/**
+ * 设置 Router 实例
+ * 在应用启动时调用
+ */
+export function setRouterInstance(router: Router) {
+  routerInstance = router
+}
+
+/**
+ * 获取当前的 Router 实例
+ */
+export function getRouterInstance(): Router | null {
+  return routerInstance
 }
 
 export const useSlotRegistryStore = defineStore('slotRegistry', {
@@ -50,6 +70,26 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     // 获取所有菜单项（已排序）
     allMenuSlots: (state): MenuSlotItem[] => {
       return Array.from(state.menuSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
+    },
+
+    // 获取用于菜单的路由配置
+    routeConfigs(): RouteRecordRaw[] {
+      const routes: RouteRecordRaw[] = []
+
+      // 从 viewSlots 生成路由
+      this.viewSlots.forEach((slot) => {
+        routes.push({
+          path: `/${slot.id}`,
+          name: slot.id,
+          component: slot.component,
+          meta: {
+            title: slot.name,
+            order: slot.order ?? 100
+          }
+        })
+      })
+
+      return routes.sort((a, b) => (a.meta?.order as number ?? 100) - (b.meta?.order as number ?? 100))
     }
   },
 
@@ -57,10 +97,41 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     // 注册视图位点
     registerViewSlot(slot: ViewSlot) {
       this.viewSlots.set(slot.id, slot)
+
+      // 如果是插件视图且 router 可用，自动添加路由
+      if (slot.isPlugin && routerInstance) {
+        routerInstance.addRoute('MainLayout', {
+          path: slot.id,
+          name: slot.id,
+          component: slot.component,
+          meta: { title: slot.name, order: slot.order ?? 100, isPlugin: true }
+        })
+      }
+    },
+
+    // 注册视图位点并同步到路由
+    registerViewSlotWithRoute(slot: ViewSlot) {
+      this.registerViewSlot(slot)
+
+      // 如果提供了 router 实例，添加路由
+      if (routerInstance) {
+        routerInstance.addRoute('MainLayout', {
+          path: slot.id,
+          name: slot.id,
+          component: slot.component,
+          meta: { title: slot.name, order: slot.order ?? 100 }
+        })
+      }
     },
 
     // 取消注册视图位点
     unregisterViewSlot(id: string) {
+      const slot = this.viewSlots.get(id)
+      // 如果是插件视图且 router 可用，自动移除路由
+      if (slot?.isPlugin && routerInstance) {
+        routerInstance.removeRoute(id)
+      }
+
       if (this.activeViewId === id) {
         this.activeViewId = null
       }

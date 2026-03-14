@@ -1,5 +1,4 @@
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type'
-import { PageEnum } from '@renderer/constants/PageState.ts'
 
 export default interface GotoPageConfig {
   /**
@@ -18,9 +17,9 @@ export default interface GotoPageConfig {
   options: ElMessageBoxOptions
 
   /**
-   * 页面
+   * 路由路径
    */
-  page: PageEnum
+  path: string
 
   /**
    * 额外数据

@@ -1,55 +1,49 @@
+import { getCurrentInstance } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { PageEnum } from '@renderer/constants/PageState.ts'
-import { usePageStatesStore } from '@renderer/store/UsePageStatesStore.ts'
 import GotoPageConfig from '@renderer/model/util/GotoPageConfig.ts'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 
 /**
- * 页面跳转
- * @param pageEnum
+ * 获取 router 实例
  */
-export async function gotoPage(pageEnum: PageEnum) {
-  const pageStatesStore = usePageStatesStore()
-  switch (pageEnum) {
-    case PageEnum.MainPage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.mainPage)
-    case PageEnum.SubPage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.subPage)
-    case PageEnum.LocalTagManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.localTagManage)
-    case PageEnum.SiteTagManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.siteTagManage)
-    case PageEnum.LocalAuthorManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.localAuthorManage)
-    case PageEnum.SiteAuthorManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.siteAuthorManage)
-    case PageEnum.PluginManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.pluginManage)
-    case PageEnum.SiteManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.siteManage)
-    case PageEnum.SiteBrowserManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.siteBrowserManage)
-    case PageEnum.TaskManage:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.taskManage)
-    case PageEnum.Settings:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.settings)
-    case PageEnum.Guide:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.guide)
-    case PageEnum.Developing:
-      return pageStatesStore.showPage(pageStatesStore.pageStates.developing)
+function getRouter() {
+  // 优先从 globalProperties 获取
+  const instance = getCurrentInstance()
+  if (instance?.appContext.config.globalProperties.$router) {
+    return instance.appContext.config.globalProperties.$router
   }
+  // 备用：从 window 获取
+  return (window as any).__vueRouter__
 }
 
 /**
- * 页面跳转
- * @param config
+ * 导航到指定路径
  */
+export async function gotoPath(path: string) {
+  const router = getRouter()
+  if (router) {
+    await router.push(path)
+  }
+}
+
 export function askGotoPage(config: GotoPageConfig) {
-  ElMessageBox.alert(config.content, config.title, config.options).then(async () => gotoPage(config.page))
-  switch (config.page) {
-    case PageEnum.Settings:
+  ElMessageBox.alert(config.content, config.title, config.options).then(async () => {
+    await gotoPath(config.path)
+  })
+  switch (config.path) {
+    case '/settings':
       if (config.extraData as boolean) {
         useTourStatesStore().tourStates.startWorkdirTour()
       }
   }
+}
+
+/**
+ * 获取当前路由路径
+ */
+export function getCurrentPath(): string | null {
+  const router = getRouter()
+  if (!router) return null
+
+  return router.currentRoute.value.path
 }

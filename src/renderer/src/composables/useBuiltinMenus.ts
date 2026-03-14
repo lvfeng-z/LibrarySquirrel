@@ -1,6 +1,21 @@
-import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
-import { usePageStatesStore } from '@renderer/store/UsePageStatesStore'
+import { useSlotRegistryStore, setRouterInstance, getRouterInstance } from '@renderer/store/SlotRegistryStore'
 import { HomeFilled, Discount, User, Star, List, Link, TakeawayBox, Setting, Guide, Coordinate } from '@element-plus/icons-vue'
+import type { Router } from 'vue-router'
+
+/**
+ * 设置 Router 实例
+ * 在应用启动时调用
+ */
+export function initRouterInstance(router: Router) {
+  setRouterInstance(router)
+}
+
+/**
+ * 获取 Router 实例
+ */
+export function useRouterInstance(): Router | null {
+  return getRouterInstance()
+}
 
 /**
  * 初始化内置菜单项
@@ -8,7 +23,6 @@ import { HomeFilled, Discount, User, Star, List, Link, TakeawayBox, Setting, Gui
  */
 export function initBuiltinMenus() {
   const store = useSlotRegistryStore()
-  const pageStore = usePageStatesStore()
 
   // 注册内置视图（主页和所有子页面）
   const builtinViews = [
@@ -17,130 +31,91 @@ export function initBuiltinMenus() {
       name: '主页',
       component: () => import('@renderer/components/main/MainPageWrapper.vue'),
       order: 0,
-      isBuiltin: true,
-      onClose: async () => {
-        // 关闭主页时不做特殊处理
-      }
+      isBuiltin: true
     },
     {
       id: 'localTagManage',
       name: '本地标签',
       component: () => import('@renderer/components/subpage/LocalTagManage.vue'),
       order: 10,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'siteTagManage',
       name: '站点标签',
       component: () => import('@renderer/components/subpage/SiteTagManage.vue'),
       order: 11,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'localAuthorManage',
       name: '本地作者',
       component: () => import('@renderer/components/subpage/LocalAuthorManage.vue'),
       order: 20,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'siteAuthorManage',
       name: '站点作者',
       component: () => import('@renderer/components/subpage/SiteAuthorManage.vue'),
       order: 21,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'developing',
       name: '收藏',
       component: () => import('@renderer/components/subpage/Developing.vue'),
       order: 30,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'taskManage',
       name: '任务',
       component: () => import('@renderer/components/subpage/TaskManage.vue'),
       order: 40,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'siteManage',
       name: '站点管理',
       component: () => import('@renderer/components/subpage/SiteManage.vue'),
       order: 50,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'siteBrowserManage',
       name: '站点浏览',
       component: () => import('@renderer/components/subpage/SiteBrowserManage.vue'),
       order: 51,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'pluginManage',
       name: '插件',
       component: () => import('@renderer/components/subpage/PluginManage.vue'),
       order: 60,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'settings',
       name: '设置',
       component: () => import('@renderer/components/subpage/Settings.vue'),
       order: 70,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'guide',
       name: '向导',
       component: () => import('@renderer/components/subpage/Guide.vue'),
       order: 80,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     },
     {
       id: 'test',
       name: '测试按钮',
       component: () => import('@renderer/components/subpage/Test.vue'),
       order: 90,
-      isBuiltin: true,
-      onClose: async () => {
-        await pageStore.closePage()
-      }
+      isBuiltin: true
     }
   ]
 
