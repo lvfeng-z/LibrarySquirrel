@@ -10,6 +10,7 @@ import { askGotoPage } from '@renderer/utils/PageUtil.ts'
 import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
 import TaskProgressMapTreeDTO from '@shared/model/dto/TaskProgressMapTreeDTO.ts'
+import { initSlotSyncListener } from '@renderer/composables/useSlotSyncListener'
 
 export function iniListener() {
   // 任务队列
@@ -111,4 +112,7 @@ export function iniListener() {
   // )
 
   window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => askGotoPage(config))
+
+  // 初始化位点同步监听器
+  initSlotSyncListener()
 }

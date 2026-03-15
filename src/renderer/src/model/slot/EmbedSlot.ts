@@ -1,4 +1,4 @@
-export interface MicroSlot {
+export interface EmbedSlot {
   id: string
   position: 'topbar' | 'statusbar' | 'toolbar'
   component: () => Promise<any>

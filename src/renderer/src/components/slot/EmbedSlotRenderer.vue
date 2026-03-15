@@ -2,7 +2,7 @@
 import { computed, defineAsyncComponent, h, type Component } from 'vue'
 import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
 import { Loading } from '@element-plus/icons-vue'
-import type { MicroSlot } from '@renderer/model/slot'
+import type { EmbedSlot } from '@renderer/model/slot'
 
 const props = defineProps<{
   position: 'topbar' | 'statusbar' | 'toolbar'
@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const store = useSlotRegistryStore()
 
-const slots = computed(() => store.microSlotsByPosition(props.position))
+const slots = computed(() => store.embedSlotsByPosition(props.position))
 
 // 加载中组件
 const LoadingComponent: Component = {
@@ -27,7 +27,7 @@ const ErrorComponent: Component = {
 }
 
 // 创建异步组件渲染器
-const createSlotRenderer = (slot: MicroSlot) => {
+const createSlotRenderer = (slot: EmbedSlot) => {
   return defineAsyncComponent({
     loader: () => slot.component(),
     loadingComponent: LoadingComponent,
@@ -39,7 +39,7 @@ const createSlotRenderer = (slot: MicroSlot) => {
 </script>
 
 <template>
-  <div class="micro-slot-container">
+  <div class="embed-slot-container">
     <template v-for="slot in slots" :key="slot.id">
       <component :is="createSlotRenderer(slot)" v-bind="slot.props" />
     </template>
@@ -47,7 +47,7 @@ const createSlotRenderer = (slot: MicroSlot) => {
 </template>
 
 <style scoped>
-.micro-slot-container {
+.embed-slot-container {
   display: flex;
   align-items: center;
   height: 100%;

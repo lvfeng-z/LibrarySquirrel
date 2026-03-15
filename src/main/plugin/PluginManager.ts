@@ -13,6 +13,7 @@ import SecureStorageService from '../service/SecureStorageService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
 import { getPluginTaskUrlListenerManager } from '../core/pluginTaskUrlListener.ts'
 import { getSiteBrowserManager } from '../core/siteBrowserManager.ts'
+import { getSlotSyncService } from '../core/SlotSyncService.ts'
 import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
@@ -28,6 +29,7 @@ import PluginWithContribution from '@shared/model/domain/PluginWithContribution.
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 import TaskService from '../service/TaskService.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
+import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig, SlotConfig } from './types/SlotTypes.ts'
 import { PLUGIN_RUNTIME } from '../constant/PluginConstant.ts'
 
 /**
@@ -222,7 +224,36 @@ export default class PluginManager {
         },
         logger
       },
-      pluginData: plugin.pluginData
+      pluginData: plugin.pluginData,
+      slots: {
+        registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginId' | 'type'>) => {
+          const fullConfig: EmbedSlotConfig = { ...config, pluginId, type: 'embed' }
+          getSlotSyncService().registerSlot(fullConfig)
+        },
+        registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => {
+          const fullConfig: PanelSlotConfig = { ...config, pluginId, type: 'panel' }
+          getSlotSyncService().registerSlot(fullConfig)
+        },
+        registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => {
+          const fullConfig: ViewSlotConfig = { ...config, pluginId, type: 'view' }
+          getSlotSyncService().registerSlot(fullConfig)
+        },
+        unregisterSlot: (slotId: string) => {
+          getSlotSyncService().unregisterSlot(slotId)
+        },
+        registerSlots: (configs: Omit<SlotConfig, 'pluginId' | 'type'>[]) => {
+          const fullConfigs = configs.map((config) => {
+            if ('position' in config) {
+              if (config.position === 'topbar' || config.position === 'statusbar' || config.position === 'toolbar') {
+                return { ...config, pluginId, type: 'embed' as const }
+              }
+              return { ...config, pluginId, type: 'panel' as const }
+            }
+            return { ...config, pluginId, type: 'view' as const }
+          })
+          getSlotSyncService().registerSlots(fullConfigs as SlotConfig[])
+        }
+      }
     }
   }
 
@@ -346,6 +377,8 @@ export default class PluginManager {
     } finally {
       // 清除激活类型
       cached.activationType = undefined
+      // 注销插件贡献的所有位点
+      getSlotSyncService().unregisterSlotsByPluginId(pluginId)
     }
   }
 

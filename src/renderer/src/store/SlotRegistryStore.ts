@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { ViewSlot, MicroSlot, PanelSlot } from '@renderer/model/slot'
+import type { ViewSlot, EmbedSlot, PanelSlot } from '@renderer/model/slot'
 import type { RouteRecordRaw } from 'vue-router'
 import type { Router } from 'vue-router'
 
@@ -39,10 +39,12 @@ export function getRouterInstance(): Router | null {
 export const useSlotRegistryStore = defineStore('slotRegistry', {
   state: () => ({
     viewSlots: new Map<string, ViewSlot>(),
-    microSlots: new Map<string, MicroSlot>(),
+    embedSlots: new Map<string, EmbedSlot>(),
     panelSlots: new Map<string, PanelSlot>(),
     menuSlots: new Map<string, MenuSlotItem>(),
-    activeViewId: ref<string | null>(null)
+    activeViewId: ref<string | null>(null),
+    // 视图替换状态
+    replacedViewId: ref<string | null>(null)
   }),
 
   getters: {
@@ -55,10 +57,10 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       return state.viewSlots.get(state.activeViewId) || null
     },
 
-    microSlotsByPosition:
+    embedSlotsByPosition:
       (state) =>
-      (position: string): MicroSlot[] => {
-        return Array.from(state.microSlots.values()).filter((slot) => slot.position === position)
+      (position: string): EmbedSlot[] => {
+        return Array.from(state.embedSlots.values()).filter((slot) => slot.position === position)
       },
 
     panelSlotsByPosition:
@@ -139,13 +141,14 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     },
 
     // 注册微件位点
-    registerMicroSlot(slot: MicroSlot) {
-      this.microSlots.set(slot.id, slot)
+    // 注册嵌入位点
+    registerEmbedSlot(slot: EmbedSlot) {
+      this.embedSlots.set(slot.id, slot)
     },
 
-    // 取消注册微件位点
-    unregisterMicroSlot(id: string) {
-      this.microSlots.delete(id)
+    // 取消注册嵌入位点
+    unregisterEmbedSlot(id: string) {
+      this.embedSlots.delete(id)
     },
 
     // 注册面板位点
@@ -173,6 +176,22 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.activeViewId = null
     },
 
+    // 替换视图 (面板位点替换主程序页面)
+    replaceView(panelSlotId: string, originalViewId: string) {
+      // 记录被替换的视图ID
+      this.replacedViewId = originalViewId
+      // 切换到面板对应的视图
+      this.switchView(panelSlotId)
+    },
+
+    // 恢复被替换的视图
+    restoreView() {
+      if (this.replacedViewId) {
+        this.switchView(this.replacedViewId)
+        this.replacedViewId = null
+      }
+    },
+
     // 注册菜单位点
     registerMenuSlot(item: MenuSlotItem) {
       this.menuSlots.set(item.id, item)
@@ -193,10 +212,11 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     // 重置所有注册（用于测试或清理）
     reset() {
       this.viewSlots.clear()
-      this.microSlots.clear()
+      this.embedSlots.clear()
       this.panelSlots.clear()
       this.menuSlots.clear()
       this.activeViewId = null
+      this.replacedViewId = null
     }
   }
 })

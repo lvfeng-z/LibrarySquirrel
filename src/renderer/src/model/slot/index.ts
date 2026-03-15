@@ -1,3 +1,3 @@
 export * from './ViewSlot'
-export * from './MicroSlot'
+export * from './EmbedSlot'
 export * from './PanelSlot'

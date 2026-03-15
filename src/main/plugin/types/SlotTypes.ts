@@ -1,0 +1,84 @@
+/**
+ * 插件位点类型定义
+ * 定义插件贡献UI位点的配置类型
+ */
+
+/** 位点内容类型 */
+export type SlotContentType = 'component' | 'code' | 'menuItem'
+
+/** 位点基础配置 */
+export interface BaseSlotConfig {
+  /** 唯一标识: "plugin-{pluginId}-{name}" */
+  id: string
+  /** 所属插件ID */
+  pluginId: number
+  /** 显示名称 */
+  name: string
+  /** 排序权重 */
+  order?: number
+}
+
+/** 嵌入位点配置 (对应 EmbedSlot) */
+export interface EmbedSlotConfig extends BaseSlotConfig {
+  /** 位点类型 */
+  type: 'embed'
+  /** 位置 */
+  position: 'topbar' | 'statusbar' | 'toolbar'
+  /** 内容类型 */
+  contentType: SlotContentType
+  /** 内容: 组件路径 / 代码片段 */
+  content: string
+  /** 传递给组件的额外属性 */
+  props?: Record<string, unknown>
+}
+
+/** 面板位点配置 (对应 PanelSlot) */
+export interface PanelSlotConfig extends BaseSlotConfig {
+  /** 位点类型 */
+  type: 'panel'
+  /** 位置 */
+  position: 'left-sidebar' | 'right-sidebar' | 'bottom'
+  /** 面板宽度 (仅 sidebar 生效) */
+  width?: number
+  /** 面板高度 (仅 bottom 生效) */
+  height?: number
+  /** 内容类型 */
+  contentType: SlotContentType
+  /** 内容: 组件路径 / 代码片段 */
+  content: string
+  /** 传递给组件的额外属性 */
+  props?: Record<string, unknown>
+  /** 替换的主程序视图ID (可选) */
+  replaceViewId?: string
+}
+
+/** 视图位点配置 (对应 ViewSlot) */
+export interface ViewSlotConfig extends BaseSlotConfig {
+  /** 位点类型 */
+  type: 'view'
+  /** 图标 (Element Plus 图标名) */
+  icon?: string
+  /** 内容类型 */
+  contentType: SlotContentType
+  /** 内容: 组件路径 / 代码片段 */
+  content: string
+  /** 传递给组件的额外属性 */
+  props?: Record<string, unknown>
+  /** 菜单项配置 (可选) */
+  menuItem?: MenuItemConfig
+}
+
+/** 约定接口 - 菜单项配置 (对应 DynamicSideMenu 的 MenuItem) */
+export interface MenuItemConfig {
+  /** 显示标签 */
+  label: string
+  /** 图标 */
+  icon?: string
+  /** 排序权重 */
+  order?: number
+  /** 子菜单项 */
+  children?: MenuItemConfig[]
+}
+
+/** 所有位点配置的联合类型 */
+export type SlotConfig = EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig
