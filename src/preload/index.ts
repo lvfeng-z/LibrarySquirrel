@@ -147,19 +147,37 @@ const api = {
   secureStorageListKeys: () => Electron.ipcRenderer.invoke('secureStorage-listKeys')
 }
 
+// 添加 slot 事件监听方法到 electronAPI
+const slotEventHandlers = {
+  onSlotRegister: (callback: (...args: unknown[]) => void) => {
+    Electron.ipcRenderer.on('slot-register', (_event, ...args) => callback(...args))
+  },
+  onSlotUnregister: (callback: (...args: unknown[]) => void) => {
+    Electron.ipcRenderer.on('slot-unregister', (_event, ...args) => callback(...args))
+  },
+  onSlotBatchRegister: (callback: (...args: unknown[]) => void) => {
+    Electron.ipcRenderer.on('slot-batch-register', (_event, ...args) => callback(...args))
+  },
+  // 获取所有已注册的位点
+  getAllSlots: () => Electron.ipcRenderer.invoke('slot-getAllSlots')
+}
+
+// 合并 electronAPI 和 slotEventHandlers
+const mergedElectronAPI = { ...electronAPI, ...slotEventHandlers }
+
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    Electron.contextBridge.exposeInMainWorld('electron', electronAPI)
+    Electron.contextBridge.exposeInMainWorld('electron', mergedElectronAPI)
     Electron.contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
 } else {
   // @ts-ignore (define in dts)
-  window.electron = electronAPI
+  window.electron = mergedElectronAPI
   // @ts-ignore (define in dts)
   window.api = api
 }

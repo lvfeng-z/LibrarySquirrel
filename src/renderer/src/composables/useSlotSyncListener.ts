@@ -11,21 +11,28 @@ interface SyncSlotConfig {
   pluginId: number
   name: string
   order?: number
-  type: 'embed' | 'panel' | 'view'
+  type: 'embed' | 'panel' | 'view' | 'menu'
   position?: string
   width?: number
   height?: number
-  contentType: 'component' | 'code' | 'menuItem'
+  contentType: 'component' | 'code'
   content: string
   props?: Record<string, unknown>
   replaceViewId?: string
   icon?: string
-  menuItem?: {
-    label: string
-    icon?: string
-    order?: number
-    children?: { label: string; icon?: string; order?: number }[]
-  }
+  // 菜单位点专用
+  viewId?: string
+  children?: SyncMenuChildConfig[]
+}
+
+/** 子菜单配置 */
+interface SyncMenuChildConfig {
+  id: string
+  name: string
+  order?: number
+  icon?: string
+  viewId?: string
+  children?: SyncMenuChildConfig[]
 }
 
 /**
@@ -73,17 +80,31 @@ function convertToPanelSlot(config: SyncSlotConfig): PanelSlot {
 }
 
 /**
- * 转换菜单项配置
+ * 转换菜单位点配置
  */
-function convertToMenuItem(config: SyncSlotConfig): MenuSlotItem | undefined {
-  if (!config.menuItem) return undefined
+function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
+  // 递归转换子菜单
+  const convertChildren = (children?: SyncMenuChildConfig[]): MenuSlotItem[] | undefined => {
+    if (!children || children.length === 0) return undefined
+    return children.map((child) => ({
+      id: child.id,
+      index: child.id,
+      label: child.name,
+      icon: child.icon,
+      order: child.order ?? 100,
+      viewId: child.viewId,
+      children: convertChildren(child.children)
+    }))
+  }
+
   return {
     id: config.id,
     index: config.id,
-    label: config.menuItem.label,
-    icon: config.menuItem.icon,
-    order: config.menuItem.order ?? config.order ?? 100,
-    viewId: config.id
+    label: config.name,
+    icon: config.icon,
+    order: config.order ?? 100,
+    viewId: config.viewId,
+    children: convertChildren(config.children)
   }
 }
 
@@ -100,11 +121,6 @@ async function loadPluginComponent(contentType: string, content: string): Promis
   if (contentType === 'code') {
     // 代码片段: 执行代码并返回 Vue 组件
     return createCodeComponent(content)
-  }
-
-  if (contentType === 'menuItem') {
-    // 约定接口: 菜单项不需要组件渲染
-    return () => Promise.resolve(null)
   }
 
   throw new Error(`未知的内容类型: ${contentType}`)
@@ -135,18 +151,15 @@ export function initSlotSyncListener() {
   const store = useSlotRegistryStore()
 
   // 监听位点注册
-  window.electron.ipcRenderer.on('slot-register', (_event, config: SyncSlotConfig) => {
-    console.log('[SlotSync] 收到位点注册:', config.id, config.type)
+  window.electron.onSlotRegister((...args: unknown[]) => {
+    const config = args[0] as SyncSlotConfig
 
     if (config.type === 'view') {
       const slot = convertToViewSlot(config)
       store.registerViewSlot(slot)
-
-      // 注册菜单项
-      const menuItem = convertToMenuItem(config)
-      if (menuItem) {
-        store.registerMenuSlot(menuItem)
-      }
+    } else if (config.type === 'menu') {
+      const menuItem = convertToMenuSlot(config)
+      store.registerMenuSlot(menuItem)
     } else if (config.type === 'embed') {
       store.registerEmbedSlot(convertToEmbedSlot(config))
     } else if (config.type === 'panel') {
@@ -160,11 +173,12 @@ export function initSlotSyncListener() {
   })
 
   // 监听位点注销
-  window.electron.ipcRenderer.on('slot-unregister', (_event, data: { id: string; type: string }) => {
-    console.log('[SlotSync] 收到位点注销:', data.id, data.type)
+  window.electron.onSlotUnregister((...args: unknown[]) => {
+    const data = args[0] as { id: string; type: string }
 
     if (data.type === 'view') {
       store.unregisterViewSlot(data.id)
+    } else if (data.type === 'menu') {
       store.unregisterMenuSlot(data.id)
     } else if (data.type === 'embed') {
       store.unregisterEmbedSlot(data.id)
@@ -174,18 +188,14 @@ export function initSlotSyncListener() {
   })
 
   // 监听批量位点注册
-  window.electron.ipcRenderer.on('slot-batch-register', (_event, configs: SyncSlotConfig[]) => {
-    console.log('[SlotSync] 收到批量位点注册:', configs.length)
+  window.electron.onSlotBatchRegister((...args: unknown[]) => {
+    const configs = args[0] as SyncSlotConfig[]
 
     configs.forEach((config) => {
       if (config.type === 'view') {
-        const slot = convertToViewSlot(config)
-        store.registerViewSlot(slot)
-
-        const menuItem = convertToMenuItem(config)
-        if (menuItem) {
-          store.registerMenuSlot(menuItem)
-        }
+        store.registerViewSlot(convertToViewSlot(config))
+      } else if (config.type === 'menu') {
+        store.registerMenuSlot(convertToMenuSlot(config))
       } else if (config.type === 'embed') {
         store.registerEmbedSlot(convertToEmbedSlot(config))
       } else if (config.type === 'panel') {
@@ -194,5 +204,19 @@ export function initSlotSyncListener() {
     })
   })
 
-  console.log('[SlotSync] 位点同步监听器已初始化')
+  // 同步所有已注册的位点（插件激活时可能渲染进程还未准备好）
+  window.electron.getAllSlots().then((slots: unknown[]) => {
+    slots.forEach((config: unknown) => {
+      const syncConfig = config as SyncSlotConfig
+      if (syncConfig.type === 'view') {
+        store.registerViewSlot(convertToViewSlot(syncConfig))
+      } else if (syncConfig.type === 'menu') {
+        store.registerMenuSlot(convertToMenuSlot(syncConfig))
+      } else if (syncConfig.type === 'embed') {
+        store.registerEmbedSlot(convertToEmbedSlot(syncConfig))
+      } else if (syncConfig.type === 'panel') {
+        store.registerPanelSlot(convertToPanelSlot(syncConfig))
+      }
+    })
+  })
 }

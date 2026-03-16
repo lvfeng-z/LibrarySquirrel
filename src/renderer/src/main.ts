@@ -15,6 +15,7 @@ import elSelectBottomed from './directives/elSelectBottomed.ts'
 import elScrollbarBottomed from './directives/elScrollbarBottomed.ts'
 import { iniListener } from '@renderer/MainIpcListener.ts'
 import { initBuiltinMenus } from './composables/useBuiltinMenus.ts'
+import { initSlotSyncListener } from './composables/useSlotSyncListener.ts'
 import { setRouterInstance } from './store/SlotRegistryStore.ts'
 
 const app = createApp(App)
@@ -40,6 +41,9 @@ setRouterInstance(router)
 
 // 初始化内置菜单（在 pinia store 初始化之后）
 initBuiltinMenus()
+
+// 初始化插槽同步监听器（监听主进程发来的位点注册消息）
+initSlotSyncListener()
 
 app.mount('#app')
 

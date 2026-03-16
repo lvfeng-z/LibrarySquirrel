@@ -3,7 +3,12 @@ import { GetBrowserWindow } from '../main/util/MainWindowUtil'
 
 declare global {
   interface Window {
-    electron: ElectronAPI
+    electron: ElectronAPI & {
+      onSlotRegister: (callback: (...args: unknown[]) => void) => void
+      onSlotUnregister: (callback: (...args: unknown[]) => void) => void
+      onSlotBatchRegister: (callback: (...args: unknown[]) => void) => void
+      getAllSlots: () => Promise<unknown[]>
+    }
     api: {
       // test
       testInsertLocalTag10W: function

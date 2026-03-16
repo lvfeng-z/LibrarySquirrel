@@ -3,7 +3,7 @@ import WorkSet from '@shared/model/entity/WorkSet.ts'
 import Site from '@shared/model/entity/Site.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
-import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig } from './SlotTypes.ts'
+import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig, MenuSlotConfig } from './SlotTypes.ts'
 
 /**
  * 插件上下文接口
@@ -64,9 +64,11 @@ export interface PluginContext {
     registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => void
     /** 注册视图位点 (对应 ViewSlot) */
     registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => void
+    /** 注册菜单位点 (对应 MenuSlot) */
+    registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => void
     /** 注销位点 */
     unregisterSlot: (slotId: string) => void
     /** 批量注册位点 */
-    registerSlots: (configs: Omit<EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig, 'pluginId' | 'type'>[]) => void
+    registerSlots: (configs: Omit<EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig, 'pluginId' | 'type'>[]) => void
   }
 }

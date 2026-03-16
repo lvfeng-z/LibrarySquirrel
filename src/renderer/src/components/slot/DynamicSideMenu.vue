@@ -2,8 +2,8 @@
 import { computed, Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import SideMenu from '@renderer/components/oneOff/SideMenu.vue'
-import type { RouteRecordRaw } from 'vue-router'
-import { isNullish } from '@shared/util/CommonUtil.ts'
+import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
+import type { MenuSlotItem } from '@renderer/store/SlotRegistryStore'
 
 const props = defineProps<{
   width?: string
@@ -12,41 +12,42 @@ const props = defineProps<{
 
 const router = useRouter()
 const route = useRoute()
+const slotStore = useSlotRegistryStore()
 
 interface MenuItem {
   id: string
   index: string
   name: string
-  path: string
   label: string
   icon: unknown
   order: number
   isGroup: boolean
   children: MenuItem[]
+  // 插槽菜单关联的视图ID
+  viewId?: string
 }
 
-// 从路由配置生成菜单项（支持嵌套结构）
-function buildMenuItems(routes: RouteRecordRaw[]): MenuItem[] {
+// 从插槽菜单配置生成菜单项
+function buildMenuItems(menuSlots: MenuSlotItem[]): MenuItem[] {
   const result: MenuItem[] = []
 
-  routes.forEach((r) => {
-    if (isNullish(r.meta)) return
-
+  menuSlots.forEach((menu) => {
     const item: MenuItem = {
-      id: r.path,
-      index: r.path,
-      name: r.name as string,
-      path: r.path,
-      label: r.meta.title as string,
-      icon: r.meta.icon,
-      order: (r.meta.order as number) ?? 100,
-      isGroup: (r.meta.isGroup as boolean) ?? false,
+      id: menu.id,
+      index: menu.index,
+      name: menu.id,
+      label: menu.label,
+      icon: menu.icon,
+      order: menu.order ?? 100,
+      isGroup: false,
+      viewId: menu.viewId,
       children: []
     }
 
-    // 如果有 children，递归构建
-    if (r.children?.length) {
-      item.children = buildMenuItems(r.children)
+    // 递归处理子菜单
+    if (menu.children?.length) {
+      item.children = buildMenuItems(menu.children)
+      item.isGroup = item.children.length > 0
     }
 
     result.push(item)
@@ -55,20 +56,20 @@ function buildMenuItems(routes: RouteRecordRaw[]): MenuItem[] {
   return result.sort((a, b) => a.order - b.order)
 }
 
-// 从路由配置生成菜单项
+// 只从 menuSlots 生成菜单项
 const menuItems: Ref<MenuItem[]> = computed(() => {
-  const routes = router.getRoutes()
-  // 找到 MainLayout 的子路由
-  const mainLayout = routes.find((r) => r.name === 'MainLayout')
-  if (!mainLayout || !mainLayout.children) return []
-
-  return buildMenuItems(mainLayout.children)
+  const slots = slotStore.allMenuSlots
+  return buildMenuItems(slots)
 })
 
 const activeIndex = computed(() => route.path)
 
-function handleMenuClick(routeName: string) {
-  router.push({ name: routeName })
+// 处理菜单点击
+function handleMenuClick(item: MenuItem) {
+  if (item.viewId) {
+    // 通过 viewId 跳转到视图
+    router.push({ name: item.viewId })
+  }
 }
 </script>
 
@@ -80,6 +81,7 @@ function handleMenuClick(routeName: string) {
     background-color="black"
   >
     <template #default>
+      <div v-if="menuItems.length === 0">菜单为空</div>
       <template v-for="item in menuItems" :key="item.id">
         <!-- 分组菜单（有子菜单） -->
         <el-sub-menu v-if="item.children.length > 0" :index="item.index">
@@ -87,14 +89,14 @@ function handleMenuClick(routeName: string) {
             <el-icon><component :is="item.icon" /></el-icon>
             <span>{{ item.label }}</span>
           </template>
-          <el-menu-item v-for="child in item.children" :key="child.index" :index="child.index" @click="handleMenuClick(child.name)">
+          <el-menu-item v-for="child in item.children" :key="child.index" :index="child.index" @click="handleMenuClick(child)">
             <el-icon><component :is="child.icon" /></el-icon>
             <span>{{ child.label }}</span>
           </el-menu-item>
         </el-sub-menu>
 
         <!-- 单个菜单项 -->
-        <el-menu-item v-else :index="item.index" @click="handleMenuClick(item.name)">
+        <el-menu-item v-else :index="item.index" @click="handleMenuClick(item)">
           <el-icon><component :is="item.icon" /></el-icon>
           <span>{{ item.label }}</span>
         </el-menu-item>

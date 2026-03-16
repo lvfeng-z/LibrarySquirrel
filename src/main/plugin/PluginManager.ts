@@ -29,8 +29,7 @@ import PluginWithContribution from '@shared/model/domain/PluginWithContribution.
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 import TaskService from '../service/TaskService.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
-import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig, SlotConfig } from './types/SlotTypes.ts'
-import { PLUGIN_RUNTIME } from '../constant/PluginConstant.ts'
+import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig, MenuSlotConfig, SlotConfig } from './types/SlotTypes.ts'
 
 /**
  * 缓存的插件实例
@@ -220,7 +219,8 @@ export default class PluginManager {
           return taskService.createTask(url)
         },
         getPluginRoot: () => {
-          return path.join(RootDir(), PLUGIN_RUNTIME, plugin?.rootPath as string)
+          // 返回相对于 plugin/runtime 的路径，例如 "pixiv"
+          return plugin?.rootPath as string
         },
         logger
       },
@@ -238,6 +238,10 @@ export default class PluginManager {
           const fullConfig: ViewSlotConfig = { ...config, pluginId, type: 'view' }
           getSlotSyncService().registerSlot(fullConfig)
         },
+        registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => {
+          const fullConfig: MenuSlotConfig = { ...config, pluginId, type: 'menu' }
+          getSlotSyncService().registerSlot(fullConfig)
+        },
         unregisterSlot: (slotId: string) => {
           getSlotSyncService().unregisterSlot(slotId)
         },
@@ -248,6 +252,9 @@ export default class PluginManager {
                 return { ...config, pluginId, type: 'embed' as const }
               }
               return { ...config, pluginId, type: 'panel' as const }
+            }
+            if ('viewId' in config || 'children' in config) {
+              return { ...config, pluginId, type: 'menu' as const }
             }
             return { ...config, pluginId, type: 'view' as const }
           })

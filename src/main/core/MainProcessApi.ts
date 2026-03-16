@@ -30,6 +30,7 @@ import { isNullish } from '@shared/util/CommonUtil.ts'
 import { getPluginTaskUrlListenerManager } from './pluginTaskUrlListener.ts'
 import { getSiteBrowserManager } from './siteBrowserManager.ts'
 import { getPluginManager } from './pluginManager.ts'
+import { getSlotSyncService } from './SlotSyncService.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 
 function returnError(error: unknown) {
@@ -73,6 +74,15 @@ function createHandler<T>(
 }
 
 export function registerMainIpcHandlers() {
+  // Slot 同步
+  ipcMain.handle('slot-getAllSlots', async () => {
+    try {
+      return getSlotSyncService().getAllSlots()
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
   // test
   ipcMain.handle(
     'test-transactionTest',

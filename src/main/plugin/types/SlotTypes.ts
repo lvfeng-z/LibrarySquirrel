@@ -4,7 +4,7 @@
  */
 
 /** 位点内容类型 */
-export type SlotContentType = 'component' | 'code' | 'menuItem'
+export type SlotContentType = 'component' | 'code'
 
 /** 位点基础配置 */
 export interface BaseSlotConfig {
@@ -64,21 +64,19 @@ export interface ViewSlotConfig extends BaseSlotConfig {
   content: string
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
-  /** 菜单项配置 (可选) */
-  menuItem?: MenuItemConfig
 }
 
-/** 约定接口 - 菜单项配置 (对应 DynamicSideMenu 的 MenuItem) */
-export interface MenuItemConfig {
-  /** 显示标签 */
-  label: string
-  /** 图标 */
+/** 菜单位点配置 (对应 MenuSlot) */
+export interface MenuSlotConfig extends BaseSlotConfig {
+  /** 位点类型 */
+  type: 'menu'
+  /** 图标 (Element Plus 图标名) */
   icon?: string
-  /** 排序权重 */
-  order?: number
+  /** 关联的视图ID (点击菜单时打开的视图) */
+  viewId?: string
   /** 子菜单项 */
-  children?: MenuItemConfig[]
+  children?: MenuSlotConfig[]
 }
 
 /** 所有位点配置的联合类型 */
-export type SlotConfig = EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig
+export type SlotConfig = EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig

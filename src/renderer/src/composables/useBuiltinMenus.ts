@@ -1,5 +1,6 @@
 import { useSlotRegistryStore, setRouterInstance, getRouterInstance } from '@renderer/store/SlotRegistryStore'
 import { HomeFilled, Discount, User, Star, List, Link, TakeawayBox, Setting, Guide, Coordinate } from '@element-plus/icons-vue'
+import { markRaw } from 'vue'
 import type { Router } from 'vue-router'
 
 /**
@@ -119,15 +120,15 @@ export function initBuiltinMenus() {
     }
   ]
 
-  // 注册视图
-  builtinViews.forEach((view) => store.registerViewSlot(view))
+  // 注册视图（使用 registerViewSlotWithRoute 确保路由被添加）
+  builtinViews.forEach((view) => store.registerViewSlotWithRoute(view))
 
-  // 批量注册内置菜单
+  // 批量注册内置菜单（icon 使用 markRaw 避免 reactive 警告）
   store.registerMenuSlots([
     {
       id: 'builtin-main',
       index: 'main',
-      icon: HomeFilled,
+      icon: markRaw(HomeFilled),
       label: '主页',
       order: 0,
       viewId: 'mainPage'
@@ -135,14 +136,14 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-tag',
       index: 'tag',
-      icon: Discount,
+      icon: markRaw(Discount),
       label: '标签',
       order: 10,
       children: [
         {
           id: 'builtin-localTag',
           index: 'localTag',
-          icon: Discount,
+          icon: markRaw(Discount),
           label: '本地标签',
           order: 11,
           viewId: 'localTagManage'
@@ -150,7 +151,7 @@ export function initBuiltinMenus() {
         {
           id: 'builtin-siteTag',
           index: 'siteTag',
-          icon: Discount,
+          icon: markRaw(Discount),
           label: '站点标签',
           order: 12,
           viewId: 'siteTagManage'
@@ -160,14 +161,14 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-author',
       index: 'author',
-      icon: User,
+      icon: markRaw(User),
       label: '作者',
       order: 20,
       children: [
         {
           id: 'builtin-localAuthor',
           index: 'localAuthor',
-          icon: User,
+          icon: markRaw(User),
           label: '本地作者',
           order: 21,
           viewId: 'localAuthorManage'
@@ -175,7 +176,7 @@ export function initBuiltinMenus() {
         {
           id: 'builtin-siteAuthor',
           index: 'siteAuthor',
-          icon: User,
+          icon: markRaw(User),
           label: '站点作者',
           order: 22,
           viewId: 'siteAuthorManage'
@@ -185,7 +186,7 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-favorite',
       index: 'favorite',
-      icon: Star,
+      icon: markRaw(Star),
       label: '收藏',
       order: 30,
       viewId: 'developing'
@@ -193,7 +194,7 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-task',
       index: 'task',
-      icon: List,
+      icon: markRaw(List),
       label: '任务',
       order: 40,
       viewId: 'taskManage'
@@ -201,14 +202,14 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-site',
       index: 'site',
-      icon: Link,
+      icon: markRaw(Link),
       label: '站点',
       order: 50,
       children: [
         {
           id: 'builtin-siteManage',
           index: 'siteManage',
-          icon: Link,
+          icon: markRaw(Link),
           label: '站点管理',
           order: 51,
           viewId: 'siteManage'
@@ -216,7 +217,7 @@ export function initBuiltinMenus() {
         {
           id: 'builtin-siteBrowser',
           index: 'siteBrowser',
-          icon: Link,
+          icon: markRaw(Link),
           label: '站点浏览',
           order: 52,
           viewId: 'siteBrowserManage'
@@ -226,7 +227,7 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-plugin',
       index: 'plugin',
-      icon: TakeawayBox,
+      icon: markRaw(TakeawayBox),
       label: '插件',
       order: 60,
       viewId: 'pluginManage'
@@ -234,7 +235,7 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-settings',
       index: 'settings',
-      icon: Setting,
+      icon: markRaw(Setting),
       label: '设置',
       order: 70,
       viewId: 'settings'
@@ -242,7 +243,7 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-guide',
       index: 'guide',
-      icon: Guide,
+      icon: markRaw(Guide),
       label: '向导',
       order: 80,
       viewId: 'guide'
@@ -250,7 +251,7 @@ export function initBuiltinMenus() {
     {
       id: 'builtin-test',
       index: 'test',
-      icon: Coordinate,
+      icon: markRaw(Coordinate),
       label: '测试按钮',
       order: 90,
       viewId: 'test'

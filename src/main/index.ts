@@ -1,11 +1,12 @@
 import Electron from 'electron'
 import path from 'path'
+import fs from 'fs/promises'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import { registerMainIpcHandlers } from './core/MainProcessApi.ts'
 import LogUtil from './util/LogUtil.ts'
-import { ConvertPath, GetWorkResource } from './util/FileSysUtil.ts'
+import { ConvertPath, GetWorkResource, RootDir } from './util/FileSysUtil.ts'
 import { initializeByConfig } from './core/InitializeByConfig.ts'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 import iniConfig from './resources/config/iniConfig.yml?asset'
@@ -16,6 +17,7 @@ import { createPluginTaskUrlListenerManager } from './core/pluginTaskUrlListener
 import { setMainWindow } from './core/mainWindow.ts'
 import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 import { createSiteBrowserManager } from './core/siteBrowserManager.ts'
+import { PLUGIN_RUNTIME } from './constant/PluginConstant.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -146,32 +148,69 @@ Electron.app.whenReady().then(() => {
   Electron.protocol.handle('resource', async (request): Promise<Response> => {
     const workdir: string = getSettings().store.workdir
 
-    // 使用正则表达式测试URL是否符合预期格式
-    if (!/^resource:\/\/workdir\//i.test(request.url)) {
-      LogUtil.error('main/index.ts', 'Invalid protocol request format:', request.url)
-      return new Response('Invalid request format', { status: 400 }) // 返回错误状态码
+    // 处理 workdir 资源请求
+    if (/^resource:\/\/workdir\//i.test(request.url)) {
+      try {
+        const url = new URL(request.url)
+        const decodedUrl = decodeURIComponent(path.join(workdir, url.pathname))
+        const fullPath = process.platform === 'win32' ? ConvertPath(decodedUrl) : decodedUrl
+        const heightStr = url.searchParams.get('height')
+        const height = heightStr === null ? undefined : parseInt(heightStr)
+        const widthStr = url.searchParams.get('width')
+        const width = widthStr === null ? undefined : parseInt(widthStr)
+        const visualHeightStr = url.searchParams.get('visualHeight')
+        const visualHeight = visualHeightStr === null ? undefined : parseInt(visualHeightStr)
+        const visualWidthStr = url.searchParams.get('visualWidth')
+        const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
+
+        const data = await GetWorkResource(fullPath, height, width, visualHeight, visualWidth)
+        return new Response(data as BodyInit)
+      } catch (error) {
+        LogUtil.error('scheme-resource', 'Error handling workdir request:', String(error))
+        return new Response('Failed to read file', { status: 500 })
+      }
     }
 
-    try {
-      // 确保格式正确后，继续处理请求
-      const url = new URL(request.url)
-      const decodedUrl = decodeURIComponent(path.join(workdir, url.pathname))
-      const fullPath = process.platform === 'win32' ? ConvertPath(decodedUrl) : decodedUrl
-      const heightStr = url.searchParams.get('height')
-      const height = heightStr === null ? undefined : parseInt(heightStr)
-      const widthStr = url.searchParams.get('width')
-      const width = widthStr === null ? undefined : parseInt(widthStr)
-      const visualHeightStr = url.searchParams.get('visualHeight')
-      const visualHeight = visualHeightStr === null ? undefined : parseInt(visualHeightStr)
-      const visualWidthStr = url.searchParams.get('visualWidth')
-      const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
+    // 处理插件资源请求: resource://plugin/{plugin-path}
+    if (/^resource:\/\/plugin\//i.test(request.url)) {
+      try {
+        const url = new URL(request.url)
+        // 提取插件路径 (去掉开头的 /)
+        const pluginPath = decodeURIComponent(url.pathname.substring(1))
+        const pluginDir = path.join(RootDir(), PLUGIN_RUNTIME)
+        const fullPath = path.join(pluginDir, pluginPath)
+        const fullPathNormalized = process.platform === 'win32' ? ConvertPath(fullPath) : fullPath
 
-      const data = await GetWorkResource(fullPath, height, width, visualHeight, visualWidth) // 异步读取文件
-      return new Response(data as BodyInit) // 返回文件
-    } catch (error) {
-      LogUtil.error('scheme-resource', 'Error handling protocol request:', String(error))
-      return new Response('Failed to read file', { status: 500 }) // 文件读取失败或其他错误时的响应
+        // 读取文件内容
+        const content = await fs.readFile(fullPathNormalized)
+        // 根据文件扩展名设置 Content-Type
+        const ext = path.extname(pluginPath).toLowerCase()
+        const contentTypes: Record<string, string> = {
+          '.vue': 'application/javascript',
+          '.js': 'application/javascript',
+          '.mjs': 'application/javascript',
+          '.json': 'application/json',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.gif': 'image/gif',
+          '.svg': 'image/svg+xml',
+          '.css': 'text/css',
+          '.html': 'text/html'
+        }
+        const contentType = contentTypes[ext] || 'text/plain'
+
+        return new Response(content, {
+          headers: { 'Content-Type': contentType }
+        })
+      } catch (error) {
+        LogUtil.error('scheme-resource', 'Error handling plugin request:', String(error))
+        return new Response('Plugin file not found', { status: 404 })
+      }
     }
+
+    LogUtil.error('main/index.ts', 'Invalid protocol request format:', request.url)
+    return new Response('Invalid request format', { status: 400 })
   })
 
   // 初始化INI_CONFIG
