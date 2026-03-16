@@ -63,16 +63,16 @@ class TransactionContext {
     return conn
   }
 
-  /**
-   * 注册 REGEXP 函数到数据库连接
-   * @private
-   */
-  private static registerRegexpFunction(connection: Connection): void {
-    connection.connection.function('REGEXP', (pattern, string) => {
-      const regex = new RegExp(pattern as string)
-      return regex.test(string as string) ? 1 : 0
-    })
-  }
+  // /**
+  //  * 注册 REGEXP 函数到数据库连接
+  //  * @private
+  //  */
+  // private static registerRegexpFunction(connection: Connection): void {
+  //   connection.connection.function('REGEXP', (pattern, string) => {
+  //     const regex = new RegExp(pattern as string)
+  //     return regex.test(string as string) ? 1 : 0
+  //   })
+  // }
 
   /**
    * 执行事务
@@ -108,9 +108,6 @@ class TransactionContext {
     // 最外层事务：创建新上下文
     const pool = getConnectionPool()
     const connection = await pool.acquire(false, RequestWeight.HIGH)
-
-    // 注册 REGEXP 函数（保持现有行为）
-    this.registerRegexpFunction(connection)
 
     // 获取排他锁
     await pool.acquireLock(caller, operation)
