@@ -2,7 +2,6 @@ import BaseService from '../base/BaseService.js'
 import ResourceQueryDTO from '@shared/model/queryDTO/ResourceQueryDTO.js'
 import Resource from '@shared/model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
-import DatabaseClient from '../database/DatabaseClient.js'
 import { transactional } from '../database/Transactional.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
@@ -33,8 +32,8 @@ import { isBlank } from '@shared/util/StringUtil.ts'
  * 资源服务
  */
 export default class ResourceService extends BaseService<ResourceQueryDTO, Resource, ResourceDao> {
-  constructor(db?: DatabaseClient) {
-    super(ResourceDao, db)
+  constructor() {
+    super(ResourceDao)
   }
 
   /**

@@ -2,15 +2,14 @@ import BaseService from '../base/BaseService.ts'
 import AutoExplainPathQueryDTO from '@shared/model/queryDTO/AutoExplainPathQueryDTO.ts'
 import AutoExplainPath from '@shared/model/entity/AutoExplainPath.ts'
 import AutoExplainPathDao from '../dao/AutoExplainPathDao.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import Page from '@shared/model/util/Page.ts'
 
 /**
  * 自动解释路径含义Service
  */
 export default class AutoExplainPathService extends BaseService<AutoExplainPathQueryDTO, AutoExplainPath, AutoExplainPathDao> {
-  constructor(db?: DatabaseClient) {
-    super(AutoExplainPathDao, db)
+  constructor() {
+    super(AutoExplainPathDao)
   }
 
   /**

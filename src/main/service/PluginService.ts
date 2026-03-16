@@ -4,7 +4,6 @@ import { CreateDirIfNotExists, RootDir } from '../util/FileSysUtil.ts'
 import Plugin from '@shared/model/entity/Plugin.ts'
 import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import { arrayNotEmpty, notNullish } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
 import PluginInstallDTO from '@shared/model/dto/PluginInstallDTO.js'
@@ -30,8 +29,8 @@ import { transactional } from '../database/Transactional.ts'
  * @param id
  */
 export default class PluginService extends BaseService<PluginQueryDTO, Plugin, PluginDao> {
-  constructor(db?: DatabaseClient) {
-    super(PluginDao, db)
+  constructor() {
+    super(PluginDao)
   }
 
   /**
@@ -142,7 +141,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const pathRelative: string = path.join(pluginInstallDTO.publicId, pluginInstallDTO.version)
 
     // 创建安装包备份
-    const backupService = new BackupService(this.db)
+    const backupService = new BackupService()
     const packagePath = pluginInstallDTO.packagePath
     const backup = await backupService.createBackup(BackupSourceTypeEnum.PLUGIN, 0, packagePath)
 
@@ -203,7 +202,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const plugin = await this.getById(pluginId)
     assertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
     assertNotNullish(plugin.backupId, `重新安装插件失败，插件备份id不可用，pluginId: ${pluginId}`)
-    const backupService = new BackupService(this.db)
+    const backupService = new BackupService()
     const backup = await backupService.getById(plugin.backupId as number)
     assertNotNullish(backup, `重新安装插件失败，备份不存在，backupId: ${plugin.backupId}`)
     const workdir = getSettings().store.workdir

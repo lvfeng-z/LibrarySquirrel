@@ -4,12 +4,11 @@ import SiteQueryDTO from '@shared/model/queryDTO/SiteQueryDTO.ts'
 import BaseService from '../base/BaseService.ts'
 import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 
 export default class SiteService extends BaseService<SiteQueryDTO, Site, SiteDao> {
-  constructor(db?: DatabaseClient) {
-    super(SiteDao, db)
+  constructor() {
+    super(SiteDao)
   }
 
   /**

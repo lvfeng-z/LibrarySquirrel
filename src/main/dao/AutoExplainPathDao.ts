@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import AutoExplainPathQueryDTO from '@shared/model/queryDTO/AutoExplainPathQueryDTO.ts'
 import AutoExplainPath from '@shared/model/entity/AutoExplainPath.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import Page from '@shared/model/util/Page.ts'
 import lodash from 'lodash'
 import LogUtil from '../util/LogUtil.ts'
@@ -12,8 +12,8 @@ import { isBlank } from '@shared/util/StringUtil.ts'
  * 自动解释路径含义Dao
  */
 export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO, AutoExplainPath> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('auto_explain_path', AutoExplainPath, db, injectedDB)
+  constructor() {
+    super('auto_explain_path', AutoExplainPath)
   }
 
   /**
@@ -40,18 +40,9 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     const resultPage = lodash.cloneDeep(page)
     const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await super.sortAndPage(statement, resultPage, sort)
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => {
-        resultPage.data = super.toResultTypeDataList<AutoExplainPath>(rows)
-        return resultPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    resultPage.data = super.toResultTypeDataList<AutoExplainPath>(rows)
+    return resultPage
   }
 
   /**
@@ -60,14 +51,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
    */
   async getListenerList(path: string): Promise<AutoExplainPath[]> {
     const statement = `SELECT * FROM auto_explain_path WHERE '${path}' REGEXP regular_expression`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => super.toResultTypeDataList<AutoExplainPath>(rows))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<AutoExplainPath>(rows)
   }
 }

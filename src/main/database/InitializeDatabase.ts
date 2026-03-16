@@ -2,10 +2,10 @@ import { DataBasePath, ListAllDataTables } from '../util/DatabaseUtil.ts'
 import * as fs from 'fs'
 import yaml from 'js-yaml'
 import { CreateDirIfNotExists } from '../util/FileSysUtil.ts'
-import Database from 'better-sqlite3'
+import BetterSqlite3 from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import LogUtil from '../util/LogUtil.ts'
-import DatabaseClient from './DatabaseClient.ts'
+import { Database } from './Database.ts'
 import { createConnectionPool } from '../core/connectionPool.ts'
 import tableYml from '../resources/database/createDataTables.yml?asset'
 
@@ -19,7 +19,7 @@ export async function InitializeDB() {
   await CreateDirIfNotExists(dbPath)
 
   // 创建数据库
-  const tempDB = new Database(dbPath + DataBaseConstant.DB_FILE_NAME, {})
+  const tempDB = new BetterSqlite3(dbPath + DataBaseConstant.DB_FILE_NAME, {})
   tempDB.close()
   LogUtil.info('InitializeDataBase', '已创建数据库文件')
 
@@ -28,35 +28,29 @@ export async function InitializeDB() {
 
   // 创建数据表
   // 读取当前数据库的数据表
-  return ListAllDataTables().then((currentTables) => {
-    let tableNameSqlStatements: { tables: { name: string; sql: string }[] }
-    // 读取初始化yml
-    try {
-      const yamlContent = fs.readFileSync(tableYml, 'utf-8')
-      tableNameSqlStatements = yaml.load(yamlContent) as { tables: { name: string; sql: string }[] }
-    } catch (e) {
-      LogUtil.error('InitializeDataBase', String(e))
-      throw e
-    }
+  const currentTables = await ListAllDataTables()
 
-    // 对于当前数据库中不存在的数据表，进行创建
-    const processList: Promise<unknown>[] = []
-    if (tableNameSqlStatements.tables.length > 0) {
-      const db = new DatabaseClient('InitializeDatabase')
-      try {
-        for (const tableNameSql of tableNameSqlStatements.tables) {
-          if (!currentTables.includes(tableNameSql.name)) {
-            const process = db.exec(tableNameSql.sql)
-            processList.push(process)
-            LogUtil.info('InitializeDataBase', '已创建数据表' + tableNameSql.name)
-          }
-        }
-      } catch (e) {
-        LogUtil.error('InitializeDataBase', String(e))
-      } finally {
-        db.release()
+  let tableNameSqlStatements: { tables: { name: string; sql: string }[] }
+  // 读取初始化yml
+  try {
+    const yamlContent = fs.readFileSync(tableYml, 'utf-8')
+    tableNameSqlStatements = yaml.load(yamlContent) as { tables: { name: string; sql: string }[] }
+  } catch (e) {
+    LogUtil.error('InitializeDataBase', String(e))
+    throw e
+  }
+
+  // 对于当前数据库中不存在的数据表，进行创建
+  if (tableNameSqlStatements.tables.length > 0) {
+    const notExistsTableNames: string[] = []
+    const notExistsTableSql: string[] = []
+    for (const tableNameSql of tableNameSqlStatements.tables) {
+      if (!currentTables.includes(tableNameSql.name)) {
+        notExistsTableNames.push(tableNameSql.name)
+        notExistsTableSql.push(tableNameSql.sql)
       }
     }
-    return Promise.allSettled(processList)
-  })
+    await Database.exec(notExistsTableSql.join(';'))
+    LogUtil.info('InitializeDataBase', '已创建数据表' + notExistsTableNames.join())
+  }
 }

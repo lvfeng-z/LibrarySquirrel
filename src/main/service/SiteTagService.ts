@@ -6,7 +6,6 @@ import SelectItem from '@shared/model/util/SelectItem.ts'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
 import Page from '@shared/model/util/Page.ts'
 import BaseService from '../base/BaseService.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagFullDTO from '@shared/model/dto/SiteTagFullDTO.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
@@ -23,8 +22,8 @@ import lodash from 'lodash'
  * 站点标签Service
  */
 export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag, SiteTagDao> {
-  constructor(db?: DatabaseClient) {
-    super(SiteTagDao, db)
+  constructor() {
+    super(SiteTagDao)
   }
 
   /**
@@ -66,7 +65,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
    * @param siteTagName
    */
   public async createSameNameLocalTag(siteTagName: string): Promise<number> {
-    const localTagService = new LocalTagService(this.db)
+    const localTagService = new LocalTagService()
     // 查询是否已有同名标签
     const localTagQuery = new LocalTagQueryDTO()
     localTagQuery.localTagName = siteTagName

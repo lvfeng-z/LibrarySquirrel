@@ -1,10 +1,9 @@
-import BaseDao from '../base/BaseDao.js'
-import SecureStorage from '@shared/model/entity/SecureStorage.js'
-import SecureStorageQueryDTO from '@shared/model/queryDTO/SecureStorageQueryDTO.js'
-import DatabaseClient from '../database/DatabaseClient.js'
+import BaseDao from '../base/BaseDao.ts'
+import SecureStorage from '@shared/model/entity/SecureStorage.ts'
+import SecureStorageQueryDTO from '@shared/model/queryDTO/SecureStorageQueryDTO.ts'
 
 export default class SecureStorageDao extends BaseDao<SecureStorageQueryDTO, SecureStorage> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('secure_storage', SecureStorage, db, injectedDB)
+  constructor() {
+    super('secure_storage', SecureStorage)
   }
 }

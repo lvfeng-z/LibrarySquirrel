@@ -1,15 +1,15 @@
 import BaseDao from '../base/BaseDao.ts'
 import ReWorkAuthorQueryDTO from '@shared/model/queryDTO/ReWorkAuthorQueryDTO.ts'
 import ReWorkAuthor from '@shared/model/entity/ReWorkAuthor.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import { OriginType } from '../constant/OriginType.js'
 
 /**
  * 作品与作者关联Dao
  */
 export default class ReWorkAuthorDao extends BaseDao<ReWorkAuthorQueryDTO, ReWorkAuthor> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('re_work_author', ReWorkAuthor, db, injectedDB)
+  constructor() {
+    super('re_work_author', ReWorkAuthor)
   }
 
   /**
@@ -26,7 +26,7 @@ export default class ReWorkAuthorDao extends BaseDao<ReWorkAuthorQueryDTO, ReWor
     } else {
       statement = `DELETE FROM ${this.tableName} WHERE work_id = ${workId} AND site_author_id IN (${authorIdsStr})`
     }
-    const db = this.acquire()
-    return db.run(statement).then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement)
+    return runResult.changes
   }
 }

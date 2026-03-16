@@ -8,7 +8,6 @@ import BaseService from '../base/BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import SiteService from './SiteService.ts'
 import LocalTagService from './LocalTagService.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import SiteTagService from './SiteTagService.ts'
 import LocalAuthorService from './LocalAuthorService.ts'
 import { AuthorRank } from '../constant/AuthorRank.ts'
@@ -36,8 +35,8 @@ import { isNotBlank } from '@shared/util/StringUtil.ts'
 import { transactional } from '../database/Transactional.ts'
 
 export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao> {
-  constructor(db?: DatabaseClient) {
-    super(WorkDao, db)
+  constructor() {
+    super(WorkDao)
   }
 
   /**

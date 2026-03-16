@@ -1,6 +1,5 @@
 import BaseService from '../base/BaseService.ts'
 import SecureStorageDao from '../dao/SecureStorageDao.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import SecureStorage from '@shared/model/entity/SecureStorage.ts'
 import SecureStorageQueryDTO from '@shared/model/queryDTO/SecureStorageQueryDTO.ts'
 import Electron from 'electron'
@@ -47,8 +46,8 @@ export enum SecureStorageErrorCode {
  * 使用 Electron safeStorage 进行加密和解密
  */
 export default class SecureStorageService extends BaseService<SecureStorageQueryDTO, SecureStorage, SecureStorageDao> {
-  constructor(db?: DatabaseClient) {
-    super(SecureStorageDao, db)
+  constructor() {
+    super(SecureStorageDao)
   }
 
   /**

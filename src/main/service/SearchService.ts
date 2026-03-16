@@ -7,12 +7,11 @@ import SearchDao from '../dao/SearchDao.js'
 import { SearchCondition, SearchType } from '@shared/model/util/SearchCondition.js'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 import WorkQueryDTO from '@shared/model/queryDTO/WorkQueryDTO.ts'
-import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
+import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import LocalTagService from './LocalTagService.js'
 import SiteTagService from './SiteTagService.js'
 import LocalAuthorService from './LocalAuthorService.js'
 import SiteAuthorService from './SiteAuthorService.js'
-import DatabaseClient from '../database/DatabaseClient.js'
 import { WorkDao } from '../dao/WorkDao.ts'
 import WorkSetService from './WorkSetService.ts'
 import WorkSetCoverDTO from '@shared/model/dto/WorkSetCoverDTO.ts'
@@ -23,32 +22,13 @@ import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
  */
 export default class SearchService {
   /**
-   * 数据库客户端
-   * @private
-   */
-  protected db: DatabaseClient
-
-  /**
    * Dao
    * @private
    */
   private dao: SearchDao
 
-  /**
-   * 是否为注入的数据库客户端
-   * @private
-   */
-  protected readonly injectedDB: boolean
-
-  constructor(db?: DatabaseClient) {
-    if (isNullish(db)) {
-      this.db = new DatabaseClient(this.constructor.name)
-      this.injectedDB = false
-    } else {
-      this.db = db
-      this.injectedDB = true
-    }
-    this.dao = new SearchDao(this.db, this.injectedDB)
+  constructor() {
+    this.dao = new SearchDao()
   }
 
   /**
@@ -68,7 +48,7 @@ export default class SearchService {
     const searchConditions = page.query ?? []
     // 创建 WorkQueryDTO 用于分页
     const workPage = new Page<WorkQueryDTO, WorkFullDTO>(page as unknown as Page<WorkQueryDTO, WorkFullDTO>)
-    const workDao = new WorkDao(this.db, this.injectedDB)
+    const workDao = new WorkDao()
 
     // 记录使用的搜索条件用于更新最后使用时间
     const usedLocalTag: number[] = []

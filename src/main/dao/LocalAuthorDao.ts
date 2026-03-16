@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import LocalAuthor from '@shared/model/entity/LocalAuthor.ts'
 import LocalAuthorQueryDTO from '@shared/model/queryDTO/LocalAuthorQueryDTO.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import RankedLocalAuthor from '@shared/model/domain/RankedLocalAuthor.ts'
 import RankedLocalAuthorWithWorkId from '@shared/model/domain/RankedLocalAuthorWithWorkId.ts'
 
@@ -9,8 +9,8 @@ import RankedLocalAuthorWithWorkId from '@shared/model/domain/RankedLocalAuthorW
  * 本地作者Dao
  */
 export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAuthor> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('local_author', LocalAuthor, db, injectedDB)
+  constructor() {
+    super('local_author', LocalAuthor)
   }
 
   /**
@@ -25,8 +25,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                        FROM local_author t1
                               INNER JOIN re_work_author t2 ON t1.id = t2.local_author_id
                        WHERE t2.work_id IN (${workIds.join(',')})`
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
         type relationShipType = RankedLocalAuthor & { workId: number }
@@ -42,11 +41,6 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
           return map
         }, new Map<number, RankedLocalAuthor[]>())
       })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -59,15 +53,9 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                               INNER JOIN re_work_author t2 ON t1.id = t2.local_author_id
                               INNER JOIN work t3 ON t2.work_id = t3.id
                        WHERE t3.id = ${workId}`
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement)
       .then((runResult) => super.toResultTypeDataList<RankedLocalAuthor>(runResult))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -80,14 +68,8 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                               INNER JOIN re_work_author t2 ON t1.id = t2.local_author_id
                               INNER JOIN work t3 ON t2.work_id = t3.id
                        WHERE t3.id IN (${workIds.join(',')})`
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement)
       .then((runResult) => super.toResultTypeDataList<RankedLocalAuthorWithWorkId>(runResult))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 }

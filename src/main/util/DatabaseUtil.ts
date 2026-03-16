@@ -1,6 +1,6 @@
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import path from 'path'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import { RootDir } from './FileSysUtil.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 import { notNullish } from '@shared/util/CommonUtil.ts'
@@ -9,15 +9,10 @@ import { notNullish } from '@shared/util/CommonUtil.ts'
  * 查询数据库所有数据表的名称
  */
 export async function ListAllDataTables(): Promise<string[]> {
-  const db = new DatabaseClient('DatabaseUtil')
-  try {
-    const statement = "SELECT name FROM sqlite_master WHERE name != 'sqlite_sequence'"
+  const statement = "SELECT name FROM sqlite_master WHERE name != 'sqlite_sequence'"
 
-    const rows = (await db.all(statement)) as { name: string }[]
-    return rows.map((row) => row.name)
-  } finally {
-    db.release()
-  }
+  const rows = (await Database.all(statement)) as { name: string }[]
+  return rows.map((row) => row.name)
 }
 
 /**

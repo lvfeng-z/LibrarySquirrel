@@ -2,7 +2,6 @@ import BaseService from '../base/BaseService.js'
 import BackupQueryDTO from '@shared/model/queryDTO/BackupQueryDTO.js'
 import Backup from '@shared/model/entity/Backup.js'
 import BackupDao from '../dao/BackupDao.js'
-import DatabaseClient from '../database/DatabaseClient.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import fs from 'fs/promises'
 import LogUtil from '../util/LogUtil.js'
@@ -15,8 +14,8 @@ import { getSettings } from '../core/settings.ts'
 import { transactional } from '../database/Transactional.ts'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
-  constructor(db?: DatabaseClient) {
-    super(BackupDao, db)
+  constructor() {
+    super(BackupDao)
   }
 
   /**

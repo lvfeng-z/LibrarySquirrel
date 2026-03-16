@@ -1,7 +1,7 @@
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import BaseEntity from '@shared/model/base/BaseEntity.ts'
-import DatabaseClient from '../database/DatabaseClient.js'
+import { Database } from '../database/Database.ts'
 import CoreDao from '../core/CoreDao.ts'
 import Page from '@shared/model/util/Page.js'
 import SearchConditionQueryDTO from '@shared/model/queryDTO/SearchConditionQueryDTO.js'
@@ -17,8 +17,8 @@ import { isNotBlank } from '@shared/util/StringUtil.ts'
  * 作品查询Dao
  */
 export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super(db, injectedDB)
+  constructor() {
+    super()
   }
 
   public async querySearchConditionPage(page: Page<SearchConditionQueryDTO, BaseEntity>): Promise<Page<SearchTypes, SelectItem>> {
@@ -93,61 +93,52 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
       plainParams = toPlainParams(query, ['types'])
     }
 
-    const db = this.acquire()
-    return db
-      .all<unknown[], SelectItem>(statement, plainParams)
-      .then((rows) => {
-        rows.forEach((selectItem) => {
-          if (notNullish(selectItem.extraData)) {
-            try {
-              selectItem.extraData = JSON.parse(selectItem.extraData as string)
-            } catch (error) {
-              LogUtil.error(`解析查询配置项${selectItem.label}的额外数据失败，error`, error)
-            }
-            if (notNullish(selectItem.extraData)) {
-              const extra = selectItem.extraData as { type: SearchType; id: number }
-              const subLabels: string[] = []
-              switch (extra.type) {
-                case SearchType.LOCAL_TAG:
-                  subLabels.push(...['tag', 'local'])
-                  break
-                case SearchType.SITE_TAG: {
-                  const localTag = (extra as { type: SearchType; id: number; localTag: string }).localTag
-                  const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
-                  selectItem.extraData = { type: extra.type, id: extra.id, localTag: localTag, site: site }
-                  subLabels.push(...['tag', isNullish(site.siteName) ? '?' : site.siteName])
-                  break
-                }
-                case SearchType.LOCAL_AUTHOR:
-                  subLabels.push(...['author', 'local'])
-                  break
-                case SearchType.SITE_AUTHOR: {
-                  const localAuthor = (extra as { type: SearchType; id: number; localAuthor: string }).localAuthor
-                  const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
-                  selectItem.extraData = { type: extra.type, id: extra.id, localAuthor: localAuthor, site: site }
-                  subLabels.push(...['author', isNullish(site.siteName) ? '?' : site.siteName])
-                  break
-                }
-                default:
-                  LogUtil.error(
-                    this.constructor.name,
-                    `解析查询配置项${selectItem.label}的额外数据失败，出现了不支持的类型，type: ${extra.type}`
-                  )
-              }
-              selectItem.subLabels = subLabels
-            } else {
-              LogUtil.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据不能为空`)
-            }
-          }
-        })
-        const resultPage = page.copy<SearchTypes, SelectItem>()
-        resultPage.data = rows
-        return resultPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
+    const rows = await Database.all<unknown[], SelectItem>(statement, plainParams)
+    rows.forEach((selectItem) => {
+      if (notNullish(selectItem.extraData)) {
+        try {
+          selectItem.extraData = JSON.parse(selectItem.extraData as string)
+        } catch (error) {
+          LogUtil.error(`解析查询配置项${selectItem.label}的额外数据失败，error`, error)
         }
-      })
+        if (notNullish(selectItem.extraData)) {
+          const extra = selectItem.extraData as { type: SearchType; id: number }
+          const subLabels: string[] = []
+          switch (extra.type) {
+            case SearchType.LOCAL_TAG:
+              subLabels.push(...['tag', 'local'])
+              break
+            case SearchType.SITE_TAG: {
+              const localTag = (extra as { type: SearchType; id: number; localTag: string }).localTag
+              const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
+              selectItem.extraData = { type: extra.type, id: extra.id, localTag: localTag, site: site }
+              subLabels.push(...['tag', isNullish(site.siteName) ? '?' : site.siteName])
+              break
+            }
+            case SearchType.LOCAL_AUTHOR:
+              subLabels.push(...['author', 'local'])
+              break
+            case SearchType.SITE_AUTHOR: {
+              const localAuthor = (extra as { type: SearchType; id: number; localAuthor: string }).localAuthor
+              const site = new Site((extra as { type: SearchType; id: number; site: Site }).site)
+              selectItem.extraData = { type: extra.type, id: extra.id, localAuthor: localAuthor, site: site }
+              subLabels.push(...['author', isNullish(site.siteName) ? '?' : site.siteName])
+              break
+            }
+            default:
+              LogUtil.error(
+                this.constructor.name,
+                `解析查询配置项${selectItem.label}的额外数据失败，出现了不支持的类型，type: ${extra.type}`
+              )
+          }
+          selectItem.subLabels = subLabels
+        } else {
+          LogUtil.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据不能为空`)
+        }
+      }
+    })
+    const resultPage = page.copy<SearchTypes, SelectItem>()
+    resultPage.data = rows
+    return resultPage
   }
 }

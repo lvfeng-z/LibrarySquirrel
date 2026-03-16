@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import Task from '@shared/model/entity/Task.ts'
 import TaskQueryDTO from '@shared/model/queryDTO/TaskQueryDTO.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import Page from '@shared/model/util/Page.ts'
 import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
@@ -11,8 +11,8 @@ import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('task', Task, db, injectedDB)
+  constructor() {
+    super('task', Task)
   }
 
   /**
@@ -33,15 +33,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
             end)
         WHERE id = ${taskId}`
 
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -84,17 +78,11 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
     // 查询
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement, modifiedPage.query)
       .then((rows) => {
         modifiedPage.data = super.toResultTypeDataList<Task>(rows)
         return modifiedPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
       })
   }
 
@@ -124,15 +112,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                           FROM task
                           WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        )`
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -161,17 +143,11 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        FROM task
                        WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
     let sourceTasks: TaskTreeDTO[]
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => {
         sourceTasks = super.toResultTypeDataList<TaskTreeDTO>(rows)
         return buildTree(sourceTasks, 0)
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
       })
   }
 
@@ -184,14 +160,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     const statement = `SELECT id, pid, status, CASE WHEN status = ${TaskStatusEnum.FINISHED} THEN 100 END AS schedule
                        FROM "${this.tableName}"
                        WHERE id in (${idsStr})`
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => super.toResultTypeDataList<TaskScheduleDTO>(rows))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 }

@@ -205,7 +205,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
       notNullishValue = toPlainParams(page.query)
     }
     const countSql = `SELECT COUNT(*) AS total FROM (${statement})`
-    const countResult = (await Database.get<Record<string, unknown>, { total: number }>(countSql, notNullishValue)) as { total: number }
+    const countResult = (await Database.get<unknown[], { total: number }>(countSql, notNullishValue)) as { total: number }
     page.dataCount = countResult.total
     page.pageCount = Math.ceil(countResult.total / page.pageSize)
     page.currentCount = Math.max(0, page.dataCount - page.pageSize * (page.pageNumber - 1))

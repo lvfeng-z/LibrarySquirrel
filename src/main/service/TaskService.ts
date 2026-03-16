@@ -9,7 +9,6 @@ import WorkService from './WorkService.ts'
 import Plugin from '@shared/model/entity/Plugin.ts'
 import { Readable } from 'node:stream'
 import BaseService from '../base/BaseService.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import lodash from 'lodash'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import Page from '@shared/model/util/Page.ts'
@@ -43,8 +42,8 @@ import { getPluginManager } from '../core/pluginManager.ts'
 import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 
 export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao> {
-  constructor(db?: DatabaseClient) {
-    super(TaskDao, db)
+  constructor() {
+    super(TaskDao)
   }
 
   /**
@@ -217,7 +216,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   ): Promise<number> {
     // 最终用于返回的Promise
     return new Promise<number>((resolve, reject) => {
-      const writable = new CreateTaskWritable(this, new SiteService(this.db), taskPlugin, batchSize)
+      const writable = new CreateTaskWritable(this, new SiteService(), taskPlugin, batchSize)
       createTaskStream.on('error', (error) => {
         LogUtil.error(this.constructor.name, '创建任务失败，ReadableError: ', error)
         reject(error)

@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { notNullish } from '@shared/util/CommonUtil.ts'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
@@ -14,8 +14,8 @@ import { SearchCondition } from '@shared/model/util/SearchCondition.js'
 import { SearchConditionUtil } from '../util/SearchConditionUtil.ts'
 
 export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('work_set', WorkSet, db, injectedDB)
+  constructor() {
+    super('work_set', WorkSet)
   }
 
   /**
@@ -34,28 +34,19 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     }
     const statement = `SELECT *
                        FROM work_set ${whereClause}`
-    const db = super.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
-      .then((rows) => {
-        const result = super.toResultTypeDataList(rows) as WorkSet[]
-        if (result.length > 1) {
-          LogUtil.warn(
-            this.constructor.name,
-            `同一站点作品集id和导入任务id下，存在多个作品集，siteWorkSetId: ${siteWorkSetId}，taskId: ${taskId}`
-          )
-        }
-        if (result.length > 0) {
-          return result[0]
-        } else {
-          return undefined
-        }
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+    const result = super.toResultTypeDataList(rows) as WorkSet[]
+    if (result.length > 1) {
+      LogUtil.warn(
+        this.constructor.name,
+        `同一站点作品集id和导入任务id下，存在多个作品集，siteWorkSetId: ${siteWorkSetId}，taskId: ${taskId}`
+      )
+    }
+    if (result.length > 0) {
+      return result[0]
+    } else {
+      return undefined
+    }
   }
 
   /**
@@ -68,19 +59,12 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
                        FROM work_set ws
                          INNER JOIN site ON ws.site_id = site.id
                        WHERE ws.site_work_set_id = @siteWorkSetId AND site.name = @siteName`
-    const db = this.acquire()
-    try {
-      const row = await db.get<unknown[], Record<string, unknown>>(statement, { siteWorkSetId, siteName })
+    const row = await Database.get<unknown[], Record<string, unknown>>(statement, { siteWorkSetId, siteName })
 
-      if (notNullish(row)) {
-        return this.toResultTypeData<WorkSet>(row)
-      }
-      return undefined
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    if (notNullish(row)) {
+      return this.toResultTypeData<WorkSet>(row)
     }
+    return undefined
   }
 
   public async listBySiteWorkSet(siteWorkSets: { siteWorkSetId: string; siteId: number }[]): Promise<WorkSet[]> {
@@ -90,15 +74,8 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     const statement = `SELECT *
                        FROM work_set
                        WHERE ${whereClause}`
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
-      return this.toResultTypeDataList<WorkSet>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return this.toResultTypeDataList<WorkSet>(rows)
   }
 
   /**
@@ -112,15 +89,8 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
                INNER JOIN re_work_work_set rwws ON ws.id = rwws.work_set_id
                INNER JOIN work w ON rwws.work_id = w.id
       WHERE w.id IN (${workIds.join(',')})`
-    const db = this.acquire()
-    try {
-      const row = await db.all<unknown[], Record<string, unknown>>(clause)
-      return this.toResultTypeDataList<WorkSetWithWorkId>(row)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const row = await Database.all<unknown[], Record<string, unknown>>(clause)
+    return this.toResultTypeDataList<WorkSetWithWorkId>(row)
   }
 
   /**
@@ -133,15 +103,8 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       FROM work_set ws
                INNER JOIN re_work_work_set rwws ON ws.id = rwws.work_set_id
       WHERE rwws.work_id = @workId`
-    const db = this.acquire()
-    try {
-      const row = await db.all<unknown[], Record<string, unknown>>(clause, workId)
-      return this.toResultTypeDataList<WorkSet>(row)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const row = await Database.all<unknown[], Record<string, unknown>>(clause, workId)
+    return this.toResultTypeDataList<WorkSet>(row)
   }
 
   /**
@@ -179,16 +142,9 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       plainParams = toPlainParams(modifiedPage.query)
     }
 
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement, plainParams)
-      modifiedPage.data = this.toResultTypeDataList<WorkSet>(rows)
-      return modifiedPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, plainParams)
+    modifiedPage.data = this.toResultTypeDataList<WorkSet>(rows)
+    return modifiedPage
   }
 
   /**
@@ -212,27 +168,25 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
         AND rwws.is_cover = ${BOOL.TRUE}
         AND r.state = ${BOOL.TRUE}`
 
-    const db = this.acquire()
-    try {
-      const coverResult = await db.all<unknown[], Record<string, unknown>>(coverStatement)
-      const coverResourceMap = new Map<number, Resource>()
+    const coverResult = await Database.all<unknown[], Record<string, unknown>>(coverStatement)
+    const coverResourceMap = new Map<number, Resource>()
 
-      // 转换为 ResourceWithWorkSetId 后提取 workSetId，避免使用 as 类型断言
-      const coverResourceList = super.toResultTypeDataList<ResourceWithWorkSetId>(coverResult)
+    // 转换为 ResourceWithWorkSetId 后提取 workSetId，避免使用 as 类型断言
+    const coverResourceList = super.toResultTypeDataList<ResourceWithWorkSetId>(coverResult)
 
-      // 处理封面资源
-      for (const resourceWithWorkSetId of coverResourceList) {
-        const workSetId = resourceWithWorkSetId.workSetId
-        if (notNullish(workSetId) && !coverResourceMap.has(workSetId)) {
-          coverResourceMap.set(workSetId, resourceWithWorkSetId)
-        }
+    // 处理封面资源
+    for (const resourceWithWorkSetId of coverResourceList) {
+      const workSetId = resourceWithWorkSetId.workSetId
+      if (notNullish(workSetId) && !coverResourceMap.has(workSetId)) {
+        coverResourceMap.set(workSetId, resourceWithWorkSetId)
       }
+    }
 
-      // 获取没有封面的作品集，查询默认封面
-      const workSetIdsWithoutCover = workSetIds.filter((id) => !coverResourceMap.has(id))
-      if (workSetIdsWithoutCover.length > 0) {
-        const workSetIdClauseWithoutCover = workSetIdsWithoutCover.join(',')
-        const defaultCoverClauses = `
+    // 获取没有封面的作品集，查询默认封面
+    const workSetIdsWithoutCover = workSetIds.filter((id) => !coverResourceMap.has(id))
+    if (workSetIdsWithoutCover.length > 0) {
+      const workSetIdClauseWithoutCover = workSetIdsWithoutCover.join(',')
+      const defaultCoverClauses = `
           SELECT r.*, rwws.work_set_id as work_set_id
           FROM resource r
                    INNER JOIN work w ON r.work_id = w.id
@@ -241,30 +195,25 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
             AND r.state = ${BOOL.TRUE}
           ORDER BY rwws.sort_order ASC, rwws.id ASC`
 
-        const defaultResult = await db.all<unknown[], Record<string, unknown>>(defaultCoverClauses)
+      const defaultResult = await Database.all<unknown[], Record<string, unknown>>(defaultCoverClauses)
 
-        // 转换为 ResourceWithWorkSetId 后提取 workSetId
-        const defaultResourceList = super.toResultTypeDataList<ResourceWithWorkSetId>(defaultResult)
+      // 转换为 ResourceWithWorkSetId 后提取 workSetId
+      const defaultResourceList = super.toResultTypeDataList<ResourceWithWorkSetId>(defaultResult)
 
-        // 取每个作品集的第一个资源作为默认封面
-        const processedWorkSetIds = new Set<number>()
-        for (const resourceWithWorkSetId of defaultResourceList) {
-          const workSetId = resourceWithWorkSetId.workSetId
-          if (notNullish(workSetId) && !processedWorkSetIds.has(workSetId)) {
-            processedWorkSetIds.add(workSetId)
-            if (!coverResourceMap.has(workSetId)) {
-              coverResourceMap.set(workSetId, resourceWithWorkSetId)
-            }
+      // 取每个作品集的第一个资源作为默认封面
+      const processedWorkSetIds = new Set<number>()
+      for (const resourceWithWorkSetId of defaultResourceList) {
+        const workSetId = resourceWithWorkSetId.workSetId
+        if (notNullish(workSetId) && !processedWorkSetIds.has(workSetId)) {
+          processedWorkSetIds.add(workSetId)
+          if (!coverResourceMap.has(workSetId)) {
+            coverResourceMap.set(workSetId, resourceWithWorkSetId)
           }
         }
       }
-
-      return coverResourceMap
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
     }
+
+    return coverResourceMap
   }
 
   /**
@@ -299,15 +248,8 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
       return modifiedPage
     }
 
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
-      modifiedPage.data = this.toResultTypeDataList<WorkSet>(rows)
-      return modifiedPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    modifiedPage.data = this.toResultTypeDataList<WorkSet>(rows)
+    return modifiedPage
   }
 }

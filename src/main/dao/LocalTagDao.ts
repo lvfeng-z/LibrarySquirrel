@@ -2,7 +2,7 @@ import LocalTag from '@shared/model/entity/LocalTag.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
 import LocalTagQueryDTO from '@shared/model/queryDTO/LocalTagQueryDTO.ts'
 import BaseDao from '../base/BaseDao.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import Page from '@shared/model/util/Page.js'
 import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import lodash from 'lodash'
@@ -12,8 +12,8 @@ import LocalTagWithWorkId from '@shared/model/domain/LocalTagWithWorkId.ts'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
 
 export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('local_tag', LocalTag, db, injectedDB)
+  constructor() {
+    super('local_tag', LocalTag)
   }
 
   public async listSelectItems(queryDTO: LocalTagQueryDTO): Promise<SelectItem[]> {
@@ -35,12 +35,7 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
 
     const sql: string = selectFrom + where
 
-    const db = this.acquire()
-    return db.all<unknown[], SelectItem>(sql, values).finally(() => {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    })
+    return Database.all<unknown[], SelectItem>(sql, values)
   }
 
   /**
@@ -64,15 +59,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
            WHERE treeNode.level < @depth
          )
          SELECT * FROM treeNode`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth })
-      .then((result) => this.toResultTypeDataList<LocalTagDTO>(result))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    return Database.all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth }).then(
+      (result) => this.toResultTypeDataList<LocalTagDTO>(result)
+    )
   }
 
   /**
@@ -91,15 +80,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
             JOIN parentNode ON local_tag.id = parentNode.base_local_tag_id
         )
         SELECT * FROM parentNode`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, { nodeId: nodeId })
-      .then((result) => this.toResultTypeDataList<LocalTag>(result))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    return Database.all<unknown[], Record<string, unknown>>(statement, { nodeId: nodeId }).then((result) =>
+      this.toResultTypeDataList<LocalTag>(result)
+    )
   }
 
   /**
@@ -111,15 +94,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
                        FROM local_tag t1
                               INNER JOIN re_work_tag t2 ON t1.id = t2.local_tag_id
                        WHERE t2.work_id = ${workId}`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<LocalTag>(runResult))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    return Database.all<unknown[], Record<string, unknown>>(statement).then((runResult) =>
+      super.toResultTypeDataList<LocalTag>(runResult)
+    )
   }
 
   /**
@@ -131,15 +108,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
                        FROM local_tag t1
                               INNER JOIN re_work_tag t2 ON t1.id = t2.local_tag_id
                        WHERE t2.work_id IN (${workIds.join(',')})`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<LocalTagWithWorkId>(runResult))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    return Database.all<unknown[], Record<string, unknown>>(statement).then((runResult) =>
+      super.toResultTypeDataList<LocalTagWithWorkId>(runResult)
+    )
   }
 
   /**
@@ -178,18 +149,10 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
     const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await super.sortAndPage(statement, page, sort)
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
-      .then((rows) => {
-        page.data = super.toResultTypeDataList<LocalTag>(rows)
-        return page
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    return Database.all<unknown[], Record<string, unknown>>(statement, modifiedQuery).then((rows) => {
+      page.data = super.toResultTypeDataList<LocalTag>(rows)
+      return page
+    })
   }
 
   /**
@@ -231,17 +194,10 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement, plainParams)
-      const resultList = rows.map((row) => new LocalTagDTO(super.toResultTypeData<LocalTagDTO>(row)))
-      const resultPage = modifiedPage.transform<LocalTagDTO>()
-      resultPage.data = resultList
-      return resultPage
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, plainParams)
+    const resultList = rows.map((row) => new LocalTagDTO(super.toResultTypeData<LocalTagDTO>(row)))
+    const resultPage = modifiedPage.transform<LocalTagDTO>()
+    resultPage.data = resultList
+    return resultPage
   }
 }

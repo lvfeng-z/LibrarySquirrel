@@ -1,7 +1,7 @@
 import BaseDao from '../base/BaseDao.ts'
 import SiteAuthorQueryDTO from '@shared/model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthor from '@shared/model/entity/SiteAuthor.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import RankedSiteAuthor from '@shared/model/domain/RankedSiteAuthor.ts'
@@ -19,8 +19,8 @@ import { isBlank, isNotBlank } from '@shared/util/StringUtil.ts'
  * 站点作者Dao
  */
 export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAuthor> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('site_author', SiteAuthor, db, injectedDB)
+  constructor() {
+    super('site_author', SiteAuthor)
   }
 
   /**
@@ -28,16 +28,9 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
    * @param siteAuthorIs
    */
   async listBySiteAuthorIds(siteAuthorIs: string[]) {
-    const db = this.acquire()
     const statement = `SELECT * FROM "${this.tableName}" WHERE site_author_id IN (${siteAuthorIs.join(',')})`
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => this.toResultTypeDataList<SiteAuthor>(rows))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return this.toResultTypeDataList<SiteAuthor>(rows)
   }
 
   /**
@@ -52,15 +45,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
         setClause.push(`WHEN ${siteAuthorId} THEN ${localAuthorId} `)
       })
       const statement = `UPDATE ${this.tableName} SET local_author_id = (CASE ${setClause.join('')} END) WHERE id IN (${siteAuthorIds.join()})`
-      const db = super.acquire()
-      return db
-        .run(statement)
-        .then((runResult) => runResult.changes)
-        .finally(() => {
-          if (!this.injectedDB) {
-            db.release()
-          }
-        })
+      const runResult = await Database.run(statement)
+      return runResult.changes
     } else {
       return 0
     }
@@ -118,21 +104,12 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
 
     const query = toPlainParams(modifiedQuery)
     // 查询
-    const db = super.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, isNullish(query) ? {} : query)
-      .then((rows) => {
-        const rawList = super.toResultTypeDataList<SiteAuthorFullDTO>(rows)
-        const resultPage = modifiedPage.transform<SiteAuthorFullDTO>()
-        // 利用构造方法反序列化本地作者和站点的json
-        resultPage.data = rawList.map((result) => new SiteAuthorFullDTO(result))
-        return resultPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, isNullish(query) ? {} : query)
+    const rawList = super.toResultTypeDataList<SiteAuthorFullDTO>(rows)
+    const resultPage = modifiedPage.transform<SiteAuthorFullDTO>()
+    // 利用构造方法反序列化本地作者和站点的json
+    resultPage.data = rawList.map((result) => new SiteAuthorFullDTO(result))
+    return resultPage
   }
 
   /**
@@ -161,32 +138,23 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await this.sortAndPage(statement, page, sort, 't1')
 
-    const db = this.acquire()
-    return db
-      .all<unknown[], RankedSiteAuthor>(statement, query)
-      .then((rows) => {
-        const selectItems = rows.map((row) => {
-          const siteAuthorDTO = new SiteAuthorFullDTO(row)
-          const selectItem = new SelectItem()
-          selectItem.value = siteAuthorDTO.id
-          selectItem.label = siteAuthorDTO.authorName
-          // 站点名称列入副标题中
-          if (notNullish(siteAuthorDTO.site?.siteName)) {
-            selectItem.subLabels = [siteAuthorDTO.site?.siteName]
-          }
-          // 本地作者和站点信息保存在额外数据中
-          selectItem.extraData = { ...siteAuthorDTO }
-          return selectItem
-        })
-        const result = page.transform<SelectItem>()
-        result.data = selectItems
-        return result
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], RankedSiteAuthor>(statement, query)
+    const selectItems = rows.map((row) => {
+      const siteAuthorDTO = new SiteAuthorFullDTO(row)
+      const selectItem = new SelectItem()
+      selectItem.value = siteAuthorDTO.id
+      selectItem.label = siteAuthorDTO.authorName
+      // 站点名称列入副标题中
+      if (notNullish(siteAuthorDTO.site?.siteName)) {
+        selectItem.subLabels = [siteAuthorDTO.site?.siteName]
+      }
+      // 本地作者和站点信息保存在额外数据中
+      selectItem.extraData = { ...siteAuthorDTO }
+      return selectItem
+    })
+    const result = page.transform<SelectItem>()
+    result.data = selectItems
+    return result
   }
 
   /**
@@ -199,15 +167,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
       .map((siteAuthor) => `(site_author_id = ${siteAuthor.siteAuthorId} AND site_id = ${siteAuthor.siteId})`)
       .join(' OR ')
     const statement = `SELECT * FROM site_author WHERE ${whereClause}`
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
-      return this.toResultTypeDataList<SiteAuthor>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return this.toResultTypeDataList<SiteAuthor>(rows)
   }
 
   /**
@@ -219,15 +180,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
                        FROM site_author t1
                               INNER JOIN re_work_author t2 ON t1.id = t2.site_author_id
                        WHERE t2.work_id = ${workId}`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<RankedSiteAuthor>(runResult))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const runResult = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<RankedSiteAuthor>(runResult)
   }
 
   /**
@@ -239,15 +193,8 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
                        FROM site_author t1
                               INNER JOIN re_work_author t2 ON t1.id = t2.site_author_id
                        WHERE t2.work_id IN (${workIds.join(',')})`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<RankedSiteAuthorWithWorkId>(runResult))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const runResult = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<RankedSiteAuthorWithWorkId>(runResult)
   }
 
   /**
@@ -287,20 +234,11 @@ export default class SiteAuthorDao extends BaseDao<SiteAuthorQueryDTO, SiteAutho
     let statement = selectClause + ' ' + fromClause + (isBlank(whereClause) ? '' : ' ' + whereClause) + ' GROUP BY t1.id'
     const sort = isNullish(modifiedPage.query?.sort) ? [] : modifiedPage.query.sort
     statement = await super.sortAndPage(statement, modifiedPage, sort)
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
-      .then((rows) => {
-        const rawList = super.toResultTypeDataList<SiteAuthorLocalRelateDTO>(rows)
-        const resultPage = modifiedPage.transform<SiteAuthorLocalRelateDTO>()
-        // 利用构造方法反序列化本地标签和站点的json
-        resultPage.data = rawList.map((result) => new SiteAuthorLocalRelateDTO(result))
-        return resultPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+    const rawList = super.toResultTypeDataList<SiteAuthorLocalRelateDTO>(rows)
+    const resultPage = modifiedPage.transform<SiteAuthorLocalRelateDTO>()
+    // 利用构造方法反序列化本地标签和站点的json
+    resultPage.data = rawList.map((result) => new SiteAuthorLocalRelateDTO(result))
+    return resultPage
   }
 }

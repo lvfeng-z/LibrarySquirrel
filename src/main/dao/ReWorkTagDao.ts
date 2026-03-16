@@ -1,15 +1,15 @@
 import BaseDao from '../base/BaseDao.ts'
 import { ReWorkTagQueryDTO } from '@shared/model/queryDTO/ReWorkTagQueryDTO.ts'
 import ReWorkTag from '@shared/model/entity/ReWorkTag.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import { OriginType } from '../constant/OriginType.js'
 
 /**
  * 作品与标签关联Dao
  */
 export class ReWorkTagDao extends BaseDao<ReWorkTagQueryDTO, ReWorkTag> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('re_work_tag', ReWorkTag, db, injectedDB)
+  constructor() {
+    super('re_work_tag', ReWorkTag)
   }
 
   /**
@@ -26,7 +26,7 @@ export class ReWorkTagDao extends BaseDao<ReWorkTagQueryDTO, ReWorkTag> {
     } else {
       statement = `DELETE FROM ${this.tableName} WHERE work_id = ${workId} AND site_tag_id IN (${tagIdsStr})`
     }
-    const db = this.acquire()
-    return db.run(statement).then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement)
+    return runResult.changes
   }
 }

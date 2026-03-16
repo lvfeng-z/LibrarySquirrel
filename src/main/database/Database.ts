@@ -15,7 +15,7 @@ const borrowedConnections = new WeakMap<BetterSqlite3.Database, Connection>()
  * 数据库访问入口
  * 提供静态方法，自动检测事务上下文并获取对应连接
  */
-class Database {
+export class Database {
   private static readonly caller = 'Database'
 
   /**
@@ -88,8 +88,7 @@ class Database {
     const connection = await this.acquireConnection(false)
     try {
       LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      const result = connection.prepare(statement).run(...params)
-      return result as BetterSqlite3.RunResult
+      return connection.prepare(statement).run(...params)
     } catch (error) {
       LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
@@ -143,6 +142,22 @@ class Database {
   }
 
   /**
+   * 执行语句
+   */
+  public static async exec(statement: string): Promise<BetterSqlite3.Database> {
+    const connection = await this.acquireConnection(true)
+    try {
+      LogUtil.debug(this.caller, `[SQL] ${statement}`)
+      return connection.exec(statement)
+    } catch (error) {
+      LogUtil.error(this.caller, error, `\n[SQL] ${statement}`)
+      throw error
+    } finally {
+      this.releaseConnection(connection)
+    }
+  }
+
+  /**
    * 执行预处理
    * @param statement SQL 语句
    * @param read 是否为读操作
@@ -163,8 +178,3 @@ class Database {
     return TransactionContext.inTransaction()
   }
 }
-
-// 导出 better-sqlite3 类型供外部使用
-export type { Database as DatabaseNamespace }
-
-export { Database }

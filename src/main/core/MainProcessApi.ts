@@ -75,10 +75,6 @@ function createHandler<T>(
 export function registerMainIpcHandlers() {
   // test
   ipcMain.handle(
-    'test-insertLocalTag10W',
-    createHandler('test-insertLocalTag10W', () => test.insertLocalTag10W())
-  )
-  ipcMain.handle(
     'test-transactionTest',
     createHandler('test-transactionTest', () => test.transactionTest())
   )

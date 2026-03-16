@@ -1,7 +1,6 @@
 import BaseService from '../base/BaseService.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import WorkSetDao from '../dao/WorkSetDao.ts'
 import { assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { isNullish, notNullish, arrayNotEmpty } from '@shared/util/CommonUtil.ts'
@@ -21,8 +20,8 @@ import { SearchCondition } from '@shared/model/util/SearchCondition.js'
  * 作品集Service
  */
 export default class WorkSetService extends BaseService<WorkSetQueryDTO, WorkSet, WorkSetDao> {
-  constructor(db?: DatabaseClient) {
-    super(WorkSetDao, db)
+  constructor() {
+    super(WorkSetDao)
   }
 
   /**

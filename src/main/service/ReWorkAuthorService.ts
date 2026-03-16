@@ -1,15 +1,14 @@
 import BaseService from '../base/BaseService.ts'
 import ReWorkAuthorQueryDTO from '@shared/model/queryDTO/ReWorkAuthorQueryDTO.ts'
 import ReWorkAuthor from '@shared/model/entity/ReWorkAuthor.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import ReWorkAuthorDao from '../dao/ReWorkAuthorDao.ts'
 import { OriginType } from '../constant/OriginType.js'
 import { AuthorRank } from '../constant/AuthorRank.js'
 import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 
 export default class ReWorkAuthorService extends BaseService<ReWorkAuthorQueryDTO, ReWorkAuthor, ReWorkAuthorDao> {
-  constructor(db?: DatabaseClient) {
-    super(ReWorkAuthorDao, db)
+  constructor() {
+    super(ReWorkAuthorDao)
   }
 
   /**

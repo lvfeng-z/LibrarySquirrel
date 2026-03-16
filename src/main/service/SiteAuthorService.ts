@@ -4,7 +4,6 @@ import SiteAuthorQueryDTO from '@shared/model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorDao from '../dao/SiteAuthorDao.ts'
 import LogUtil from '../util/LogUtil.ts'
 import lodash from 'lodash'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import Page from '@shared/model/util/Page.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
@@ -23,8 +22,8 @@ import { isNotBlank } from '@shared/util/StringUtil.ts'
  * 站点作者Service
  */
 export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, SiteAuthor, SiteAuthorDao> {
-  constructor(db?: DatabaseClient) {
-    super(SiteAuthorDao, db)
+  constructor() {
+    super(SiteAuthorDao)
   }
 
   /**
@@ -128,7 +127,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
    * @param siteAuthor
    */
   public async createSameNameLocalAuthor(siteAuthor: SiteAuthor): Promise<number> {
-    const localAuthorService = new LocalAuthorService(this.db)
+    const localAuthorService = new LocalAuthorService()
     // 查询是否已有同名作者
     const localAuthorQuery = new LocalAuthorQueryDTO()
     localAuthorQuery.authorName = siteAuthor.authorName

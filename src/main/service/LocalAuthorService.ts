@@ -6,7 +6,6 @@ import SelectItem from '@shared/model/util/SelectItem.ts'
 import LogUtil from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import Page from '@shared/model/util/Page.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import RankedLocalAuthor from '@shared/model/domain/RankedLocalAuthor.ts'
 import { notNullish } from '@shared/util/CommonUtil.ts'
 import RankedLocalAuthorWithWorkId from '@shared/model/domain/RankedLocalAuthorWithWorkId.ts'
@@ -15,8 +14,8 @@ import RankedLocalAuthorWithWorkId from '@shared/model/domain/RankedLocalAuthorW
  * 本地作者Service
  */
 export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO, LocalAuthor, LocalAuthorDao> {
-  constructor(db?: DatabaseClient) {
-    super(LocalAuthorDao, db)
+  constructor() {
+    super(LocalAuthorDao)
   }
 
   /**

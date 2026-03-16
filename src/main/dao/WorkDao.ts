@@ -5,7 +5,7 @@ import Work from '@shared/model/entity/Work.ts'
 import Page from '@shared/model/util/Page.ts'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 import lodash from 'lodash'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import { SearchCondition, SearchType } from '@shared/model/util/SearchCondition.js'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
@@ -17,8 +17,8 @@ import { SearchConditionUtil } from '../util/SearchConditionUtil.ts'
 import { isBlank } from '@shared/util/StringUtil.ts'
 
 export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
-  constructor(db: DatabaseClient, injectedDB: boolean) {
-    super('work', Work, db, injectedDB)
+  constructor() {
+    super('work', Work)
   }
 
   /**
@@ -167,21 +167,13 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       query = toPlainParams(modifiedPage.query)
     }
 
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
-      .then((rows) => {
-        const result = this.toResultTypeDataList<WorkFullDTO>(rows)
-        // 利用构造函数处理JSON字符串
-        modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
+    return Database.all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query).then((rows) => {
+      const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+      // 利用构造函数处理JSON字符串
+      modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
 
-        return modifiedPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+      return modifiedPage
+    })
   }
 
   /**
@@ -200,21 +192,13 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     const fromClause = `FROM work work_m ` + fromAndWhere.from
     const whereClause = fromAndWhere.where
     const statement = selectClause + fromClause + isBlank(whereClause) ? '' : `WHERE ${whereClause}`
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => {
-        const result = this.toResultTypeDataList<WorkFullDTO>(rows)
-        // 利用构造函数处理JSON字符串
-        modifiedPage.data = result.map((workDTO) => new WorkFullDTO(workDTO))
+    return Database.all<unknown[], Record<string, unknown>>(statement).then((rows) => {
+      const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+      // 利用构造函数处理JSON字符串
+      modifiedPage.data = result.map((workDTO) => new WorkFullDTO(workDTO))
 
-        return modifiedPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+      return modifiedPage
+    })
   }
 
   private generateClause(searchConditions: SearchCondition[]): { from: string; where: string } {
@@ -335,19 +319,11 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     const sort = page.query?.sort ?? []
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
-    const db = this.acquire()
-    return db
-      .all<unknown[], Record<string, unknown>>(statement, {})
-      .then((rows) => {
-        const result = this.toResultTypeDataList<WorkFullDTO>(rows)
-        modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
-        return modifiedPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
+    return Database.all<unknown[], Record<string, unknown>>(statement, {}).then((rows) => {
+      const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+      modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
+      return modifiedPage
+    })
   }
 
   public async listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds: { siteId: number; siteWorkId: string }[]): Promise<Work[]> {
@@ -368,15 +344,8 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       clauses.push(whereClause)
     }
     const statement = clauses.map((whereClause) => selectClause + ' ' + whereClause).join(' UNION ALL ')
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(statement)
-      return super.toResultTypeDataList<Work>(rows)
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
-    }
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<Work>(rows)
   }
 
   /**
@@ -393,23 +362,16 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
           INNER JOIN work_set ws ON ws.id = rwws.work_set_id
         WHERE rwws.work_set_id IN (${workSetIds.join(',')})
         ORDER BY rwws.sort_order ASC`
-    const db = this.acquire()
-    try {
-      const rows = await db.all<unknown[], Record<string, unknown>>(clause)
-      const result = this.toResultTypeDataList<WorkWithWorkSetId>(rows)
-      // 将 is_cover 从 number 转换为 boolean
-      for (const item of result) {
-        const isCoverValue = (item as unknown as { isCover: number | boolean | null | undefined }).isCover
-        if (isCoverValue !== undefined && isCoverValue !== null) {
-          item.isCover = isCoverValue === BOOL.TRUE
-        }
-      }
-      return result
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
+    const rows = await Database.all<unknown[], Record<string, unknown>>(clause)
+    const result = this.toResultTypeDataList<WorkWithWorkSetId>(rows)
+    // 将 is_cover 从 number 转换为 boolean
+    for (const item of result) {
+      const isCoverValue = (item as unknown as { isCover: number | boolean | null | undefined }).isCover
+      if (isCoverValue !== undefined && isCoverValue !== null) {
+        item.isCover = isCoverValue === BOOL.TRUE
       }
     }
+    return result
   }
 
   /**
@@ -421,22 +383,15 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     if (workIdsWithOrder.size === 0) {
       return
     }
-    const db = this.acquire()
-    try {
-      const updateTime = Date.now()
-      // 批量更新每个作品的排序
-      for (const [workId, sortOrder] of workIdsWithOrder) {
-        await db.run('UPDATE re_work_work_set SET sort_order = ?, update_time = ? WHERE work_id = ? AND work_set_id = ?', [
-          sortOrder,
-          updateTime,
-          workId,
-          workSetId
-        ])
-      }
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    const updateTime = Date.now()
+    // 批量更新每个作品的排序
+    for (const [workId, sortOrder] of workIdsWithOrder) {
+      await Database.run('UPDATE re_work_work_set SET sort_order = ?, update_time = ? WHERE work_id = ? AND work_set_id = ?', [
+        sortOrder,
+        updateTime,
+        workId,
+        workSetId
+      ])
     }
   }
 }

@@ -3,14 +3,13 @@ import ReWorkWorkSetQueryDTO from '@shared/model/queryDTO/ReWorkWorkSetQueryDTO.
 import ReWorkWorkSet from '@shared/model/entity/ReWorkWorkSet.ts'
 import ReWorkWorkSetDao from '../dao/ReWorkWorkSetDao.ts'
 import { WorkDao } from '../dao/WorkDao.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import LogUtil from '../util/LogUtil.js'
 import Work from '@shared/model/entity/Work.ts'
 
 export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQueryDTO, ReWorkWorkSet, ReWorkWorkSetDao> {
-  constructor(db?: DatabaseClient) {
-    super(ReWorkWorkSetDao, db)
+  constructor() {
+    super(ReWorkWorkSetDao)
   }
 
   /**
@@ -30,14 +29,14 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     const duplicateWorkIds = workIds.filter((id) => existingWorkIds.has(id))
 
     if (duplicateWorkIds.length > 0) {
-      const workDao = new WorkDao(this.db, false)
+      const workDao = new WorkDao()
       const works = await workDao.listByIds(duplicateWorkIds)
       const workNames = works.map((w) => w.siteWorkName || w.siteWorkId).join(', ')
       throw new Error(`以下作品已存在于作品集中: ${workNames}`)
     }
 
     // 获取作品信息
-    const workDao = new WorkDao(this.db, false)
+    const workDao = new WorkDao()
     const works = await workDao.listByIds(workIds)
 
     // 关联作品集和作品
