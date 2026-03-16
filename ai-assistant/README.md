@@ -103,10 +103,17 @@
 - **本地标签** ↔ **站点标签** = 跨站点标签统一检索
 - **业务价值**：一次检索，全站结果
 
+### Vue Router 前端路由
+- 使用 `createWebHashHistory()` 实现 hash 路由
+- 路由配置在 `src/renderer/src/router/` 目录
+- 路由定义在 `routes.ts`，实例在 `index.ts`
+- App.vue 简化为只包含 `<router-view>`
+
 ### 插件化架构
 - 插件在`plugin/package/`目录
 - 每个插件是独立包
 - 预置：本地导入 + pixiv插件
+- BasePlugin 接口简化为只包含 `pluginId: number`
 
 ### IPC通信模式
 - 主进程：`Electron.ipcMain.handle('service-method', args)`
@@ -114,9 +121,9 @@
 - 响应格式：统一使用`ApiUtil.response()`/`.error()`
 
 ### 数据库设计
-- DAO模式 + BaseDao基类
-- SAVEPOINT事务（支持嵌套）
-- 表结构在YAML配置中定义
+- Database 类 + BaseDao 基类（继承自 CoreDao）
+- SAVEPOINT 事务（支持嵌套）
+- 表结构在 YAML 配置中定义
 
 ### 共享代码架构
 - **src/shared/** 目录包含主进程和渲染进程共用的代码
@@ -132,7 +139,9 @@
 | 共用实体/DTO | `src/shared/model/` |
 | 数据库操作 | `src/main/dao/` |
 | 插件开发 | `src/main/plugin/` |
+| 前端路由 | `src/renderer/src/router/` |
 | 前端组件 | `src/renderer/src/components/` |
+| 前端视图 | `src/renderer/src/views/` |
 | 状态管理 | `src/renderer/src/store/` |
 | IPC注册 | `src/main/core/MainProcessApi.ts` |
 | 任务队列 | `src/main/core/taskQueue.ts` |

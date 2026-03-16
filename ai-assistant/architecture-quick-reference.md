@@ -38,6 +38,10 @@ URL输入 → 任务创建 → 插件执行 → 获取作品信息 → 保存作
 ### 前端架构 (Renderer)
 
 - **框架**：Vue 3 + Composition API + Element Plus
+- **路由系统**：Vue Router (hash 模式，使用 `createWebHashHistory()`)
+- **路由配置**：`src/renderer/src/router/` 目录
+  - `index.ts` - Router 实例配置
+  - `routes.ts` - 路由定义
 - **状态管理**：Pinia stores (`Use*Store.ts`)
 - **组件模式**：`<script setup lang="ts">` + Props后缀
 - **路径别名**：
@@ -76,6 +80,8 @@ src/
 │   └── util/                # 共用工具函数
 ├── preload/                 # 预加载脚本 (IPC桥接)
 └── renderer/src/           # 渲染进程 (Vue 3)
+    ├── router/              # Vue Router 路由配置
+    ├── views/               # 视图组件（如 MainLayout.vue）
     ├── components/          # Vue组件
     ├── store/               # Pinia状态管理
     ├── apis/                # IPC API包装器
@@ -105,12 +111,43 @@ await db.transaction(async (tx) => {
 - 成功：`ApiUtil.response(data)`
 - 错误：`ApiUtil.error(message)`
 
+### 页面导航 (Vue Router)
+
+```typescript
+import router from '@renderer/router'
+
+// 编程式导航
+await router.push('/settings')
+
+// 或使用路由名称
+await router.push({ name: 'Settings' })
+```
+
+路由配置示例（`routes.ts`）:
+```typescript
+export const routes = [
+  {
+    path: '/',
+    component: () => import('@renderer/src/views/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('@renderer/components/main/MainPageWrapper.vue'),
+        meta: { title: '主页', icon: 'HomeFilled', order: 0 }
+      }
+    ]
+  }
+]
+```
+
 ## 插件系统要点
 
 - 插件存储在 `plugin/package/` 目录
 - 每个插件是独立包（作者、名称、版本）
-- 插件通过 `PluginFactory.ts` 实例化
-- 任务执行由 `TaskHandler.ts` 处理
+- 插件通过 `PluginManager.ts` 管理
+- `BasePlugin` 接口简化为只包含 `pluginId: number`
+- 任务执行由 `PluginTaskResParam.ts` 处理
 
 ## 典型开发场景
 

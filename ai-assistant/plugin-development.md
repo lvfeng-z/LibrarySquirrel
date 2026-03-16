@@ -1,0 +1,259 @@
+# LibrarySquirrel 插件系统开发指南
+
+## 概述
+
+插件系统是 LibrarySquirrel 扩展性的核心，允许通过插件支持不同的站点（如 pixiv、bilibili）。本指南介绍插件的架构和开发方法。
+
+## 核心概念
+
+### 插件目录结构
+
+```
+plugin/package/
+└── [插件名]/
+    ├── package.json           # 插件元信息
+    ├── index.js               # 插件入口文件
+    └── views/                 # 插件视图（可选）
+```
+
+### 插件清单 (package.json)
+
+```json
+{
+  "name": "pixiv",
+  "version": "1.0.0",
+  "author": "LibrarySquirrel",
+  "librarySquirrel": {
+    "activationType": "url"
+  }
+}
+```
+
+### 激活类型
+
+| 类型 | 说明 |
+|------|------|
+| `url` | URL 激活，通过解析特定 URL 触发 |
+| `manual` | 手动激活，用户主动启用 |
+| `auto` | 自动激活，启动时加载 |
+
+## 插件接口
+
+### BasePlugin 接口
+
+重构后的 `BasePlugin` 接口简化为只包含 `pluginId`：
+
+```typescript
+export interface BasePlugin {
+  pluginId: number
+}
+```
+
+### 插件实例 (PluginInstance)
+
+```typescript
+interface PluginInstance {
+  plugin: Plugin                    # 插件实体
+  contributions?: ContributionMap   # 贡献点映射
+  entryPoint?: PluginEntryPoint      # 入口点
+}
+```
+
+## 贡献点 (Contributions)
+
+插件可以贡献以下功能：
+
+### 1. TaskHandler - 任务处理器
+
+处理资源下载任务：
+
+```typescript
+class MyTaskHandler implements TaskHandler {
+  async handle(params: TaskHandlerParams): Promise<TaskResult> {
+    # 下载逻辑
+    return { success: true, works: [] }
+  }
+}
+```
+
+### 2. SiteBrowser - 站点浏览器
+
+提供站点内容浏览能力：
+
+```typescript
+class MySiteBrowser implements SiteBrowser {
+  async search(keyword: string): Promise<SearchResult[]> {
+    # 搜索逻辑
+  }
+}
+```
+
+## 插件管理器
+
+`PluginManager` 负责插件的加载、缓存和生命周期管理：
+
+```typescript
+import PluginManager from '@main/plugin/PluginManager'
+
+const pluginManager = new PluginManager()
+
+# 加载插件
+const instance = await pluginManager.load(pluginId)
+
+# 卸载插件
+await pluginManager.unload(pluginId)
+```
+
+## 插件上下文 (PluginContext)
+
+插件运行时上下文，提供服务访问：
+
+```typescript
+interface PluginContext {
+  pluginId: number
+  localAuthorService: LocalAuthorService
+  localTagService: LocalTagService
+  siteService: SiteService
+  workSetService: WorkSetService
+  secureStorageService: SecureStorageService
+}
+```
+
+## 插槽系统 (Slots)
+
+插件可以通过插槽贡献 UI：
+
+### 视图插槽 (ViewSlot)
+
+```typescript
+const viewSlot: ViewSlotConfig = {
+  id: 'my-plugin-view',
+  name: '我的插件视图',
+  icon: 'Document',
+  order: 10,
+  component: () => import('./views/MyView.vue')
+}
+```
+
+### 面板插槽 (PanelSlot)
+
+```typescript
+const panelSlot: PanelSlotConfig = {
+  id: 'my-plugin-panel',
+  name: '我的插件面板',
+  icon: 'Panel',
+  component: () => import('./views/MyPanel.vue')
+}
+```
+
+### 嵌入插槽 (EmbedSlot)
+
+```typescript
+const embedSlot: EmbedSlotConfig = {
+  id: 'my-plugin-embed',
+  name: '我的嵌入组件',
+  component: () => import('./components/MyEmbed.vue')
+}
+```
+
+## 开发示例
+
+### 创建简单插件
+
+1. 创建插件目录结构
+
+```
+plugin/package/my-plugin/
+├── package.json
+└── index.js
+```
+
+2. 编写 package.json
+
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "author": "YourName",
+  "librarySquirrel": {
+    "activationType": "url"
+  }
+}
+```
+
+3. 编写入口文件
+
+```javascript
+export default {
+  pluginId: 1,
+
+  onLoad(context) {
+    console.log('插件加载', context.pluginId)
+  },
+
+  contributions: {
+    taskHandler: {
+      # 任务处理器
+    }
+  }
+}
+```
+
+## 主程序端管理
+
+### 插件服务 (PluginService)
+
+负责插件的 CRUD 操作：
+
+```typescript
+import PluginService from '@main/service/PluginService'
+
+const pluginService = new PluginService()
+
+# 获取所有插件
+const plugins = await pluginService.list()
+
+# 安装插件
+await pluginService.install(pluginPath)
+
+# 卸载插件
+await pluginService.uninstall(pluginId)
+```
+
+### 插件数据库表
+
+| 表名 | 说明 |
+|------|------|
+| `plugin` | 插件基本信息 |
+| `site` | 站点配置 |
+| `site_tag` | 站点标签 |
+| `site_author` | 站点作者 |
+
+## IPC 通信
+
+插件通过 IPC 与主进程通信：
+
+```typescript
+# 主进程端
+Electron.ipcMain.handle('plugin-method', async (event, args) => {
+  # 处理逻辑
+})
+
+# 插件端
+window.api.pluginMethod(args)
+```
+
+## 最佳实践
+
+1. **错误处理**：所有异步操作都需要 try-catch
+2. **资源清理**：卸载时释放所有资源
+3. **版本兼容**：检查主程序版本
+4. **日志记录**：使用 LogUtil 记录关键操作
+5. **配置存储**：使用 SecureStorageService 存储敏感信息
+
+## 更新记录
+
+### 2026-03-16
+
+- [修改] BasePlugin 接口简化为只包含 pluginId
+- [修改] 更新 PluginManager 说明
