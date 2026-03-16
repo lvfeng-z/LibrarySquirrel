@@ -12,6 +12,12 @@ import { isNullish } from '@shared/util/CommonUtil.ts'
 const borrowedConnections = new WeakMap<BetterSqlite3.Database, Connection>()
 
 /**
+ * 是否持有排他锁
+ * @private
+ */
+let holdingLock: boolean = false
+
+/**
  * 数据库访问入口
  * 提供静态方法，自动检测事务上下文并获取对应连接
  */
@@ -85,6 +91,17 @@ export class Database {
    * @returns 执行结果
    */
   static async run<BindParameters extends unknown[]>(statement: string, ...params: BindParameters): Promise<BetterSqlite3.RunResult> {
+    // 事务中：由 TransactionContext 管理锁，这里不获取/释放锁
+    const inTransaction = TransactionContext.inTransaction()
+
+    // 非事务：获取排他锁，防止并发写操作导致数据库锁定
+    let lockAcquired = false
+    if (!inTransaction && !holdingLock) {
+      await getConnectionPool().acquireLock(this.caller, statement)
+      holdingLock = true
+      lockAcquired = true
+    }
+
     const connection = await this.acquireConnection(false)
     try {
       LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
@@ -94,6 +111,11 @@ export class Database {
       throw error
     } finally {
       this.releaseConnection(connection)
+      // 仅在获取了锁且非事务情况下释放排他锁
+      if (lockAcquired && !inTransaction && holdingLock) {
+        getConnectionPool().releaseLock(this.caller)
+        holdingLock = false
+      }
     }
   }
 
