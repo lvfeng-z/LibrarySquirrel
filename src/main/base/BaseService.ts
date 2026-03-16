@@ -163,10 +163,4 @@ export default abstract class BaseService<Query extends BaseQueryDTO, Model exte
   ): Promise<Page<Query, SelectItem>> {
     return this.dao.querySelectItemPage(page, valueName, labelName, secondaryLabelName)
   }
-
-  protected async transaction<R>(func: (db?: DatabaseClient) => Promise<R>, operation: string): Promise<R> {
-    return this.db.transaction<R>(func, operation).finally(() => {
-      if (!this.injectedDB) this.db.release()
-    })
-  }
 }

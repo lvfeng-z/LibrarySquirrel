@@ -4,6 +4,7 @@ import LogUtil from '../util/LogUtil.ts'
 import { Connection, RequestWeight } from '../core/classes/ConnectionPool.ts'
 import { getConnectionPool } from '../core/connectionPool.ts'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
+import { TransactionContext } from './TransactionContext.ts'
 
 /**
  * 数据库客户端
@@ -34,22 +35,6 @@ export default class DatabaseClient {
    * @private
    */
   private writingAcquirePromise: Promise<Connection> | null = null
-  /**
-   * 事务保存点计数器
-   * @private
-   */
-  private savepointCounter = 0
-
-  /**
-   * 是否处于事务中
-   * @private
-   */
-  private inTransaction: boolean = false
-  /**
-   * 是否持有排他锁
-   * @private
-   */
-  private holdingLock: boolean
 
   constructor(caller: string) {
     if (isNotBlank(caller)) {
@@ -57,7 +42,6 @@ export default class DatabaseClient {
     } else {
       this.caller = 'unknown'
     }
-    this.holdingLock = false
 
     // 封装类被回收时，释放链接
     const weakThis = new WeakRef(this)
@@ -74,10 +58,10 @@ export default class DatabaseClient {
     statement: string,
     read: boolean
   ): Promise<Database.Statement<BindParameters, Result>> {
-    // 为了在同一个DB对象中能够查看到事务未提交的更改，如果实例处于事务中，则无论读写，这次请求都作为写操作
+    // 为了在同一个DB对象中能够查看到事务未提交的更改，如果处于事务中，则无论读写，这次请求都作为写操作
     let readOnly: boolean
     if (read) {
-      readOnly = !this.inTransaction
+      readOnly = !TransactionContext.inTransaction()
     } else {
       readOnly = false
     }
@@ -103,22 +87,12 @@ export default class DatabaseClient {
     ...params: BindParameters
   ): Promise<Database.RunResult> {
     try {
-      // 获取排他锁
-      if (!this.holdingLock) {
-        await getConnectionPool().acquireLock(this.caller, statement)
-        this.holdingLock = true
-      }
       const prepare = await this.prepare<BindParameters, Result>(statement, false)
       LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return prepare.run(...params)
     } catch (error) {
       LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
-    } finally {
-      if (this.holdingLock && !this.inTransaction) {
-        getConnectionPool().releaseLock(this.caller)
-        this.holdingLock = false
-      }
     }
   }
   public async get<BindParameters extends unknown[], Result = unknown>(
@@ -233,88 +207,18 @@ export default class DatabaseClient {
   }
 
   /**
-   * 事务
-   * @param fn 事务代码
-   * @param operation 操作说明
-   */
-  public async transaction<R>(fn: (db?: DatabaseClient) => Promise<R>, operation: string): Promise<R> {
-    const connection = await this.acquire(false)
-    // 记录是否为事务最外层保存点
-    const isStartPoint = this.savepointCounter === 0
-    // 标记当前DB实例处于事务中
-    this.inTransaction = true
-    // 创建一个当前层级的保存点
-    const savepointName = `sp${this.savepointCounter++}`
-    // 开启事务之前获取排他锁
-    if (!this.holdingLock) {
-      await getConnectionPool().acquireLock(this.caller, operation)
-      this.holdingLock = true
-    }
-
-    try {
-      connection.connection.exec(`SAVEPOINT ${savepointName}`)
-      LogUtil.debug(this.caller, `${operation}，SAVEPOINT ${savepointName}`)
-    } catch (error) {
-      // 释放排他锁
-      if (this.holdingLock && isStartPoint) {
-        getConnectionPool().releaseLock(`${this.caller}_${operation}`)
-        this.holdingLock = false
-      }
-      LogUtil.error(this.caller, `创建保存点失败，释放排他锁: ${operation}，SAVEPOINT ${savepointName}`, error)
-      throw error
-    }
-
-    return fn(this)
-      .then((result) => {
-        // 事务代码顺利执行的话释放此保存点
-        connection.connection.exec(`RELEASE ${savepointName}`)
-        this.savepointCounter--
-        LogUtil.debug(this.caller, `${operation}，RELEASE ${savepointName}，result: ${result}`)
-
-        // 如果是最外层保存点，标记当前DB实例已经不处于事务中
-        if (isStartPoint) {
-          this.inTransaction = false
-        }
-
-        return result
-      })
-      .catch((error) => {
-        // 如果是最外层保存点，通过ROLLBACK释放排他锁，防止异步执行多个事务时，某个事务发生异常，但是由于异步执行无法立即释放链接，导致排他锁一直无法释放
-        if (isStartPoint) {
-          connection.connection.exec(`ROLLBACK`)
-          LogUtil.debug(this.caller, `${operation}，ROLLBACK`)
-
-          // 标记当前DB实例已经不处于事务中
-          this.inTransaction = false
-
-          // 释放排他锁
-          getConnectionPool().releaseLock(`${this.caller}_${operation}`)
-          this.holdingLock = false
-        } else {
-          // 事务代码出现异常的话回滚至此保存点
-          connection.connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
-          LogUtil.debug(this.caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
-        }
-
-        this.savepointCounter--
-        LogUtil.error(this.caller, error)
-        throw error
-      })
-      .finally(() => {
-        // 释放排他锁
-        if (this.holdingLock && isStartPoint) {
-          getConnectionPool().releaseLock(`${this.caller}_${operation}`)
-          this.holdingLock = false
-        }
-      })
-  }
-
-  /**
    * 请求链接
+   * 优先从事务上下文获取连接，其次从连接池获取
    * @param readOnly 读还是写（true：读，false：写）
    * @private
    */
   private async acquire(readOnly: boolean): Promise<Connection> {
+    // 优先从事务上下文获取连接
+    const ctxConn = TransactionContext.getConnection()
+    if (ctxConn !== undefined) {
+      return ctxConn
+    }
+
     if (readOnly) {
       if (this.readingConnection != undefined) {
         return this.readingConnection

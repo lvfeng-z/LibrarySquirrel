@@ -33,6 +33,7 @@ import WorkWithWorkSetId from '@shared/model/domain/WorkWithWorkSetId.ts'
 import lodash from 'lodash'
 import { getSettings } from '../core/settings.ts'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
+import { transactional } from '../database/Transactional.ts'
 
 export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao> {
   constructor(db?: DatabaseClient) {
@@ -163,26 +164,26 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
     const localTags = workSaveDTO.localTags
 
     // 开启事务
-    return this.transaction<number>(async (transactionDB): Promise<number> => {
+    return transactional<number>(`保存作品信息，taskId: ${workSaveDTO.taskId}`, async () => {
       // 保存作品
       if (update) {
-        const workService = new WorkService(transactionDB)
+        const workService = new WorkService()
         await workService.updateById(workSaveDTO)
       } else {
-        const workService = new WorkService(transactionDB)
+        const workService = new WorkService()
         workSaveDTO.id = await workService.save(workSaveDTO)
       }
       assertNotNullish(workSaveDTO.id, '保存作品的周边信息失败，作品id不能为空')
 
       // 关联作品和作品集
       if (arrayNotEmpty(workSets)) {
-        const reWorkWorkSetService = new ReWorkWorkSetService(transactionDB)
+        const reWorkWorkSetService = new ReWorkWorkSetService()
         const workSetIds = workSets.map((workSet) => workSet.id).filter(notNullish)
         await reWorkWorkSetService.updateLinks(workSaveDTO.id, workSetIds)
       }
       // 作者
       if (arrayNotEmpty(localAuthors) || arrayNotEmpty(siteAuthors)) {
-        const reWorkAuthorService = new ReWorkAuthorService(transactionDB)
+        const reWorkAuthorService = new ReWorkAuthorService()
         // 关联作品和本地作者
         if (arrayNotEmpty(localAuthors)) {
           const localAuthorIds = localAuthors
@@ -216,7 +217,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
       }
       // 标签
       if (arrayNotEmpty(localTags) || arrayNotEmpty(siteTags)) {
-        const reWorkTagService = new ReWorkTagService(transactionDB)
+        const reWorkTagService = new ReWorkTagService()
         // 关联作品和本地标签
         if (arrayNotEmpty(localTags)) {
           const localTagIds = localTags.map((localTag) => localTag.id).filter(notNullish)
@@ -230,17 +231,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
       }
 
       return workSaveDTO.id
-    }, `保存作品信息，taskId: ${workSaveDTO.taskId}`)
-      .catch((error) => {
-        LogUtil.error(this.constructor.name, '保存作品失败')
-        throw error
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          this.db.release()
-        }
-      })
-      .then()
+    })
   }
 
   /**
@@ -312,13 +303,13 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
   }
 
   public async updateWithResById(workFullDTO: WorkFullDTO): Promise<number> {
-    return this.transaction<number>(async (transactionDB) => {
-      const resService = new ResourceService(transactionDB)
+    return transactional<number>('更新作品信息和资源信息', async () => {
+      const resService = new ResourceService()
       if (notNullish(workFullDTO.resource)) {
         await resService.updateById(workFullDTO.resource)
       }
       return this.updateById(workFullDTO)
-    }, '更新作品信息和资源信息')
+    })
   }
 
   /**
@@ -326,8 +317,8 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
    * @param workId
    */
   public async deleteWorkAndSurroundingData(workId: number): Promise<boolean> {
-    return this.transaction<boolean>(async (transactionDB) => {
-      const resService = new ResourceService(transactionDB)
+    return transactional<boolean>(`删除作品${workId}及其相关数据`, async () => {
+      const resService = new ResourceService()
       const resList = await resService.listByWorkId(workId)
       await this.deleteById(workId)
       if (arrayNotEmpty(resList)) {
@@ -348,7 +339,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
         await Promise.all(resDeletePromiseList)
       }
       return true
-    }, `删除作品${workId}及其相关数据`)
+    })
   }
 
   /**

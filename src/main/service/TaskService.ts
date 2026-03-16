@@ -28,6 +28,7 @@ import { FileSaveResult } from '../constant/FileSaveResult.js'
 import { TaskOperation } from '../core/classes/TaskQueue.ts'
 import TaskProgressTreeDTO from '@shared/model/dto/TaskProgressTreeDTO.js'
 import SiteService from './SiteService.js'
+import { transactional } from '../database/Transactional.ts'
 import Site from '@shared/model/entity/Site.js'
 import CreateTaskWritable from '../util/CreateTaskWritable.ts'
 import ResourceService from './ResourceService.js'
@@ -92,7 +93,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         const pluginResponse = await taskHandler.create(url)
 
         // 分别处理数组类型和流类型的响应值
-        const pluginProcessResult = await this.transaction<TaskCreateResponse | undefined>(async () => {
+        const pluginProcessResult = await transactional<TaskCreateResponse | undefined>('创建任务', async () => {
           if (pluginResponse instanceof Readable) {
             const addedQuantity = await this.handleCreateTaskStream(pluginResponse, taskPlugin, 100)
             return new TaskCreateResponse({
@@ -113,7 +114,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
             LogUtil.error(this.constructor.name, '插件创建任务失败，插件返回了不支持的类型')
             return
           }
-        }, '创建任务')
+        })
         if (notNullish(pluginProcessResult)) {
           return pluginProcessResult
         }

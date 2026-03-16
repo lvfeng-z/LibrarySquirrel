@@ -23,6 +23,7 @@ import { assignExisting } from '@shared/util/ObjectUtil.ts'
 import { getPluginManager } from '../core/pluginManager.ts'
 import { ActivationType } from '@shared/model/constant/ActivationType.ts'
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
+import { transactional } from '../database/Transactional.ts'
 
 /**
  * 主键查询
@@ -259,9 +260,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const plugin = new Plugin()
     plugin.id = pluginId
     plugin.uninstalled = BOOL.TRUE
-    return this.transaction<number>(async () => {
+    return transactional('卸载插件', async () => {
       return this.updateById(plugin)
-    }, '卸载插件')
+    })
   }
 
   /**

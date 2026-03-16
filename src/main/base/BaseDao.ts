@@ -1,4 +1,3 @@
-import DatabaseClient from '../database/DatabaseClient.ts'
 import BaseEntity, { Id } from '@shared/model/base/BaseEntity.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 import { ToObjAcceptedBySqlite3, toPlainParams } from '../util/DatabaseUtil.ts'
@@ -12,6 +11,7 @@ import ForeignKeyConstraintError from '../error/ForeignKeyConstraintError.js'
 import ForeignKeyDeleteError from '../error/ForeignKeyDeleteError.js'
 import { camelToSnakeCase } from '@shared/util/StringUtil.ts'
 import { alignProperties, nonUndefinedValue } from '@shared/util/ObjectUtil.ts'
+import { Database } from '../database/Database.ts'
 
 type PrimaryKey = string | number
 
@@ -31,8 +31,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   protected entityConstr: new (src?: Model) => Model
 
-  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model, db: DatabaseClient, injectedDB: boolean) {
-    super(db, injectedDB)
+  protected constructor(tableName: string, entityConstr: new (src?: Model) => Model) {
+    super()
     this.entityConstr = entityConstr
     this.tableName = tableName
   }
@@ -53,15 +53,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const keys = Object.keys(plainObject).map((key) => camelToSnakeCase(key))
     const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
     const statement = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement, plainObject)
       .then((runResult) => runResult.lastInsertRowid as number)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -119,15 +113,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const statement = insertClause.concat(' ', valuesClause)
 
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement, numberedProperties)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -136,8 +124,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async deleteById(id: PrimaryKey): Promise<number> {
     const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" = ${id}`
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement)
       .then((runResult) => runResult.changes)
       .catch((error) => {
@@ -145,11 +132,6 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
           throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
         } else {
           throw error
-        }
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
         }
       })
   }
@@ -185,8 +167,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
     // 查询
     const nonUndefined = nonUndefinedValue(plainParams)
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement, nonUndefined)
       .then((runResult) => runResult.changes)
       .catch((error) => {
@@ -194,11 +175,6 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
           throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
         } else {
           throw error
-        }
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
         }
       })
   }
@@ -212,15 +188,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const idsStr = ids.join(',')
     const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -238,15 +208,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const keys = Object.keys(existingValue)
     const setClauses = keys.map((item) => `${camelToSnakeCase(item)} = @${item}`)
     const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseEntity.PK}" = @${BaseEntity.PK}`
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement, existingValue)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -306,15 +270,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
 
     const statement = updateClause + ' SET ' + setClauses.join() + ' ' + whereClause
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement, numberedProperties)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -377,15 +335,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const statement = insertClause + ' ' + valuesClause + ' ' + excludedClauses.join(' ')
 
-    const db = this.acquire()
-    return db
+    return Database
       .run(statement, numberedProperties)
       .then((runResult) => runResult.changes)
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -394,8 +346,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async getById(id: PrimaryKey): Promise<Model | undefined> {
     const statement = `SELECT * FROM ${this.tableName} WHERE ${BaseEntity.PK} = @${BaseEntity.PK}`
-    const db = this.acquire()
-    return db
+    return Database
       .get<unknown[], Record<string, unknown>>(statement, {
         [BaseEntity.PK]: id
       })
@@ -404,11 +355,6 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
           return this.toResultTypeData<Model>(result)
         } else {
           return undefined
-        }
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
         }
       })
   }
@@ -444,19 +390,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
     // 查询
     const nonUndefined = nonUndefinedValue(plainParams)
-    const db = this.acquire()
-    return db
+    return Database
       .get<unknown[], Record<string, unknown>>(statement, nonUndefined)
       .then((row) => {
         if (isNullish(row)) {
           return undefined
         }
         return this.toResultTypeData<Model>(row)
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
       })
   }
 
@@ -494,18 +434,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement, plainParams)
       .then((rows) => {
         // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
         modifiedPage.data = this.toResultTypeDataList<Model>(rows)
         return modifiedPage
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
       })
   }
 
@@ -540,15 +474,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
     // 查询
     const nonUndefined = nonUndefinedValue(plainParams)
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement, nonUndefined)
       .then((rows) => this.toResultTypeDataList<Model>(rows))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -561,15 +489,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 生成where字句
 
     // 查询
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], Record<string, unknown>>(statement)
       .then((rows) => this.toResultTypeDataList<Model>(rows))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -581,7 +503,6 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     labelName: string,
     secondaryLabelName?: string
   ): Promise<SelectItem[]> {
-    const db = this.acquire()
     // 拼接select子句
     let selectClause: string
     const valueCol = camelToSnakeCase(valueName)
@@ -606,14 +527,9 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     // 查询
     const queryObj = toPlainParams(modifiedQuery)
-    return db
+    return Database
       .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
       .then((rows) => rows.map((row) => new SelectItem(row)))
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
-      })
   }
 
   /**
@@ -674,19 +590,13 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
-    const db = this.acquire()
-    return db
+    return Database
       .all<unknown[], SelectItem>(statement, plainParams)
       .then((rows) => {
         const selectItems = rows.map((row) => new SelectItem(row))
         const result = modifiedPage.transform<SelectItem>()
         result.data = selectItems
         return result
-      })
-      .finally(() => {
-        if (!this.injectedDB) {
-          db.release()
-        }
       })
   }
 }

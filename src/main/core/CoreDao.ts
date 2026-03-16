@@ -5,28 +5,13 @@ import { toPlainParams } from '../util/DatabaseUtil.ts'
 import Page from '@shared/model/util/Page.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { QuerySortOption } from '../constant/QuerySortOption.ts'
-import DatabaseClient from '../database/DatabaseClient.ts'
+import { Database } from '../database/Database.ts'
 import BaseEntity from '@shared/model/base/BaseEntity.ts'
 import LogUtil from '../util/LogUtil.ts'
-import DatabaseClientNotFoundError from '../error/DatabaseClientNotFoundError.ts'
 import { camelToSnakeCase, isBlank, isNotBlank, snakeToCamelCase } from '@shared/util/StringUtil.ts'
 
 export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
-  /**
-   * 数据库客户端
-   * @private
-   */
-  protected db: DatabaseClient | undefined
-  /**
-   * 是否为注入的数据库客户端
-   * @private
-   */
-  protected readonly injectedDB: boolean
-
-  protected constructor(db: DatabaseClient, injectedDB: boolean) {
-    this.db = db
-    this.injectedDB = injectedDB
-  }
+  protected constructor() {}
 
   /**
    * 拼接where字句
@@ -106,7 +91,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
                 whereClauses.set(
                   key,
                   alias == undefined
-                    ? `"(${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
+                    ? `"${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR "${snakeCaseKey}" ${Operator.IS_NULL})`
                     : `(${alias}."${snakeCaseKey}" ${Operator.NOT_EQUAL} @${key} OR ${alias}."${snakeCaseKey}" ${Operator.IS_NULL})`
                 )
                 modifiedValue = value
@@ -214,28 +199,21 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     if (isBlank(statement)) {
       return statement
     }
-    const db = this.acquire()
-    try {
-      // 查询数据总量，计算页码数量
-      let notNullishValue: Record<string, unknown> | undefined = undefined
-      if (notNullish(page.query)) {
-        notNullishValue = toPlainParams(page.query)
-      }
-      const countSql = `SELECT COUNT(*) AS total FROM (${statement})`
-      const countResult = (await db.get(countSql, notNullishValue)) as { total: number }
-      page.dataCount = countResult.total
-      page.pageCount = Math.ceil(countResult.total / page.pageSize)
-      page.currentCount = Math.max(0, page.dataCount - page.pageSize * (page.pageNumber - 1))
-
-      // 计算偏移量
-      const offset = (page.pageNumber - 1) * page.pageSize
-
-      return `LIMIT ${page.pageSize} OFFSET ${offset}`
-    } finally {
-      if (!this.injectedDB) {
-        db.release()
-      }
+    // 查询数据总量，计算页码数量
+    let notNullishValue: Record<string, unknown> | undefined = undefined
+    if (notNullish(page.query)) {
+      notNullishValue = toPlainParams(page.query)
     }
+    const countSql = `SELECT COUNT(*) AS total FROM (${statement})`
+    const countResult = (await Database.get<Record<string, unknown>, { total: number }>(countSql, notNullishValue)) as { total: number }
+    page.dataCount = countResult.total
+    page.pageCount = Math.ceil(countResult.total / page.pageSize)
+    page.currentCount = Math.max(0, page.dataCount - page.pageSize * (page.pageNumber - 1))
+
+    // 计算偏移量
+    const offset = (page.pageNumber - 1) * page.pageSize
+
+    return `LIMIT ${page.pageSize} OFFSET ${offset}`
   }
 
   /**
@@ -295,13 +273,6 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     return Object.fromEntries(Object.entries(data).map(([k, v]) => [snakeToCamelCase(k), v])) as Result
   }
 
-  protected acquire() {
-    if (isNullish(this.db)) {
-      throw new DatabaseClientNotFoundError()
-    }
-    return this.db
-  }
-
   /**
    * 为查询语句附加排序和分页字句（为第一个参数statement末端拼接排序和分页字句并返回，最后一个参数page的dataCount和pageCount赋值）
    * @param statement 需要分页的语句
@@ -317,12 +288,5 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
     }
     tempStatement = await this.pager(tempStatement, page)
     return tempStatement
-  }
-
-  protected async transaction<R>(func: (db?: DatabaseClient) => Promise<R>, operation: string) {
-    const db = this.acquire()
-    return db.transaction<R>(func, operation).finally(() => {
-      if (!this.injectedDB) db.release()
-    })
   }
 }

@@ -12,6 +12,7 @@ import { BackupRootDirName } from '../constant/BackupConstants.js'
 import { cp } from 'node:fs/promises'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { getSettings } from '../core/settings.ts'
+import { transactional } from '../database/Transactional.ts'
 
 export default class BackupService extends BaseService<BackupQueryDTO, Backup, BackupDao> {
   constructor(db?: DatabaseClient) {
@@ -65,7 +66,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       }
     }
 
-    return this.transaction<Backup>(async () => {
+    return transactional('创建文件备份', async () => {
       const backup = new Backup()
       backup.sourceType = sourceType
       backup.sourceId = sourceId
@@ -76,7 +77,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
 
       await cp(sourceFilePath, finalAbsolutePath, { recursive: true })
       return backup
-    }, '创建文件备份')
+    })
   }
 
   /**
@@ -127,9 +128,9 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
   }
 
   private async deleteBackupByIdAndPath(backUpId: number, absoluteBackupPath: string): Promise<number> {
-    return this.transaction<number>(async () => {
+    return transactional('删除备份', async () => {
       await fs.rm(absoluteBackupPath, { recursive: true })
       return this.deleteById(backUpId)
-    }, '删除备份')
+    })
   }
 }

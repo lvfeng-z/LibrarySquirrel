@@ -99,7 +99,19 @@ src/shared/
 - [ ] 注释是否只描述目的和约束
 - [ ] 方法名是否与 props 不同名
 
-### 5. 运行质量检查
+### 5. 格式化代码
+
+> ⚠️ **注意**: 格式化可能导致错误，如导入顺序改变、装饰器位置变化等。格式化后请检查是否有报错，如有报错需手动修复。
+
+```bash
+# 格式化新增/修改的文件
+ai-assistant/skills/code-writer-skill/script/lint-fix.sh <文件路径>
+
+# 或格式化所有文件
+yarn lint --fix
+```
+
+### 6. 运行质量检查
 
 ```bash
 # 类型检查
@@ -110,6 +122,18 @@ yarn format
 
 # ESLint 检查
 yarn lint
+```
+
+**格式化单个文件**:
+```bash
+# 使用脚本格式化指定文件
+ai-assistant/skills/code-writer-skill/script/lint-fix.sh <文件路径>
+
+# 示例
+ai-assistant/skills/code-writer-skill/script/lint-fix.sh src/main/service/WorkService.ts
+
+# 或直接使用 yarn
+yarn lint --fix src/main/service/WorkService.ts
 ```
 
 ## 关键代码规范速查
@@ -261,16 +285,6 @@ if (isNotBlank(name)) { ... }
 // 错误
 if (!value) { ... }
 if (items.length) { ... }
-```
-
-### 禁止使用 any
-
-```typescript
-// 禁止
-const data: any = ...
-
-// 必须
-const data: WorkDTO = ...
 ```
 
 ### DTO 扁平化原则

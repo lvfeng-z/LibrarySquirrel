@@ -3,6 +3,7 @@ import ResourceQueryDTO from '@shared/model/queryDTO/ResourceQueryDTO.js'
 import Resource from '@shared/model/entity/Resource.js'
 import ResourceDao from '../dao/ResourceDao.js'
 import DatabaseClient from '../database/DatabaseClient.js'
+import { transactional } from '../database/Transactional.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { BOOL } from '../constant/BOOL.js'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
@@ -160,12 +161,12 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     if (oldAbsolutePath !== newFullSavePath) {
       let fileMoved = false
       try {
-        await this.transaction(async () => {
+        await transactional('恢复资源保存时移动原有资源文件到新路径下', async () => {
           await rename(oldAbsolutePath, newFullSavePath)
           fileMoved = true
           // 更新资源信息
           await this.updateById(resourceSaveDTO)
-        }, '恢复资源保存时移动原有资源文件到新路径下')
+        })
       } catch (error) {
         LogUtil.error(
           this.constructor.name,
