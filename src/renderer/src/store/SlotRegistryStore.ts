@@ -91,7 +91,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
         })
       })
 
-      return routes.sort((a, b) => (a.meta?.order as number ?? 100) - (b.meta?.order as number ?? 100))
+      return routes.sort((a, b) => ((a.meta?.order as number) ?? 100) - ((b.meta?.order as number) ?? 100))
     }
   },
 

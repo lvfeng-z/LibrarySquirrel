@@ -2,10 +2,10 @@
 
 ## 接口概述
 
-| 属性 | 值 |
-|------|-----|
-| IPC 通道 | `search-queryWorkPage` |
-| 服务类 | `SearchService` |
+| 属性     | 值                                                          |
+| -------- | ----------------------------------------------------------- |
+| IPC 通道 | `search-queryWorkPage`                                      |
+| 服务类   | `SearchService`                                             |
 | 服务方法 | `queryWorkPage(page: Page<SearchCondition[], WorkFullDTO>)` |
 
 ## 调用方式
@@ -40,14 +40,14 @@ Electron.ipcMain.handle('search-queryWorkPage', async (_event, args) => {
 
 ```typescript
 interface Page<Query, Result> {
-  paging: boolean          // 是否分页，默认 true
-  pageNumber: number       // 当前页码，从 1 开始
-  pageSize: number        // 分页大小，默认 10
-  pageCount: number       // 总页数
-  dataCount: number       // 数据总量
-  currentCount: number    // 本页数据量
-  query: Query            // 查询条件
-  data?: Result[]         // 返回数据（请求时通常为 undefined）
+  paging: boolean // 是否分页，默认 true
+  pageNumber: number // 当前页码，从 1 开始
+  pageSize: number // 分页大小，默认 10
+  pageCount: number // 总页数
+  dataCount: number // 数据总量
+  currentCount: number // 本页数据量
+  query: Query // 查询条件
+  data?: Result[] // 返回数据（请求时通常为 undefined）
 }
 ```
 
@@ -55,43 +55,43 @@ interface Page<Query, Result> {
 
 ```typescript
 interface SearchCondition {
-  type: SearchType         // 查询类型
-  value: unknown           // 查询值
-  operator?: CrudOperator  // 操作符，默认 EQUAL
+  type: SearchType // 查询类型
+  value: unknown // 查询值
+  operator?: CrudOperator // 操作符，默认 EQUAL
 }
 
 enum SearchType {
-  LOCAL_TAG = 1,      // 本地标签
-  SITE_TAG = 2,       // 站点标签
-  LOCAL_AUTHOR = 3,    // 本地作者
-  SITE_AUTHOR = 4,     // 站点作者
+  LOCAL_TAG = 1, // 本地标签
+  SITE_TAG = 2, // 站点标签
+  LOCAL_AUTHOR = 3, // 本地作者
+  SITE_AUTHOR = 4, // 站点作者
   WORKS_SITE_NAME = 5, // 站点作品名称
-  WORKS_NICKNAME = 6,  // 作品别称
+  WORKS_NICKNAME = 6 // 作品别称
 }
 
 enum CrudOperator {
-  EQUAL = '=',           // 等于
-  NOT_EQUAL = '!=',     // 不等于
-  LIKE = 'LIKE',         // 模糊匹配
-  GREATER_THAN = '>',   // 大于
-  LESS_THAN = '<',      // 小于
+  EQUAL = '=', // 等于
+  NOT_EQUAL = '!=', // 不等于
+  LIKE = 'LIKE', // 模糊匹配
+  GREATER_THAN = '>', // 大于
+  LESS_THAN = '<' // 小于
   // ...其他操作符
 }
 ```
 
 ### 查询条件映射规则
 
-| SearchType | operator | 映射字段 | 说明 |
-|------------|----------|----------|------|
-| LOCAL_TAG | EQUAL | `includeLocalTagIds` | 包含本地标签 |
-| LOCAL_TAG | NOT_EQUAL | `excludeLocalTagIds` | 排除本地标签 |
-| SITE_TAG | EQUAL | `includeSiteTagIds` | 包含站点标签 |
-| SITE_TAG | NOT_EQUAL | `excludeSiteTagIds` | 排除站点标签 |
-| LOCAL_AUTHOR | EQUAL | `includeLocalAuthorIds` | 包含本地作者 |
-| LOCAL_AUTHOR | NOT_EQUAL | `excludeLocalAuthorIds` | 排除本地作者 |
-| SITE_AUTHOR | EQUAL | `includeSiteAuthorIds` | 包含站点作者 |
-| SITE_AUTHOR | NOT_EQUAL | `excludeSiteAuthorIds` | 排除站点作者 |
-| WORKS_SITE_NAME | EQUAL/LIKE | `siteWorkName` | 作品名称模糊搜索 |
+| SearchType      | operator   | 映射字段                | 说明             |
+| --------------- | ---------- | ----------------------- | ---------------- |
+| LOCAL_TAG       | EQUAL      | `includeLocalTagIds`    | 包含本地标签     |
+| LOCAL_TAG       | NOT_EQUAL  | `excludeLocalTagIds`    | 排除本地标签     |
+| SITE_TAG        | EQUAL      | `includeSiteTagIds`     | 包含站点标签     |
+| SITE_TAG        | NOT_EQUAL  | `excludeSiteTagIds`     | 排除站点标签     |
+| LOCAL_AUTHOR    | EQUAL      | `includeLocalAuthorIds` | 包含本地作者     |
+| LOCAL_AUTHOR    | NOT_EQUAL  | `excludeLocalAuthorIds` | 排除本地作者     |
+| SITE_AUTHOR     | EQUAL      | `includeSiteAuthorIds`  | 包含站点作者     |
+| SITE_AUTHOR     | NOT_EQUAL  | `excludeSiteAuthorIds`  | 排除站点作者     |
+| WORKS_SITE_NAME | EQUAL/LIKE | `siteWorkName`          | 作品名称模糊搜索 |
 
 ## 返回结果
 
@@ -100,13 +100,13 @@ enum CrudOperator {
 ```typescript
 interface Page<WorkQueryDTO, WorkFullDTO> {
   paging: boolean
-  pageNumber: number       // 当前页码
-  pageSize: number         // 分页大小
-  pageCount: number        // 总页数
-  dataCount: number        // 数据总量
-  currentCount: number     // 本页数据量
-  query?: WorkQueryDTO     // 查询条件
-  data?: WorkFullDTO[]     // 作品列表
+  pageNumber: number // 当前页码
+  pageSize: number // 分页大小
+  pageCount: number // 总页数
+  dataCount: number // 数据总量
+  currentCount: number // 本页数据量
+  query?: WorkQueryDTO // 查询条件
+  data?: WorkFullDTO[] // 作品列表
 }
 ```
 
@@ -114,33 +114,33 @@ interface Page<WorkQueryDTO, WorkFullDTO> {
 
 ```typescript
 class WorkFullDTO extends Work {
-  resource?: Resource              // 资源信息
-  inactiveResource?: Resource[]    // 不活跃资源
-  site?: Site                      // 所属站点
-  localAuthors?: RankedLocalAuthor[]   // 本地作者列表
-  localTags?: LocalTag[]           // 本地标签列表
-  siteAuthors?: RankedSiteAuthor[]     // 站点作者列表
-  siteTags?: SiteTagFullDTO[]     // 站点标签列表
-  workSets?: WorkSet[]            // 所属作品集
+  resource?: Resource // 资源信息
+  inactiveResource?: Resource[] // 不活跃资源
+  site?: Site // 所属站点
+  localAuthors?: RankedLocalAuthor[] // 本地作者列表
+  localTags?: LocalTag[] // 本地标签列表
+  siteAuthors?: RankedSiteAuthor[] // 站点作者列表
+  siteTags?: SiteTagFullDTO[] // 站点标签列表
+  workSets?: WorkSet[] // 所属作品集
 }
 ```
 
 ### Work 基础字段
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | number | 作品ID |
-| filePath | string | 文件存储路径 |
-| fileName | string | 文件名称 |
-| siteId | number | 站点ID |
-| siteWorkId | string | 站点作品ID |
-| siteWorkName | string | 站点作品名称 |
-| nickName | string | 作品别称 |
-| siteUploadTime | number | 站点上传时间(毫秒时间戳) |
-| lastView | number | 最后查看时间 |
-| importMethod | number | 导入方式(0:本地导入, 1:站点下载) |
-| taskId | number | 任务ID |
-| resourceComplete | boolean | 资源是否保存完成 |
+| 字段             | 类型    | 说明                             |
+| ---------------- | ------- | -------------------------------- |
+| id               | number  | 作品ID                           |
+| filePath         | string  | 文件存储路径                     |
+| fileName         | string  | 文件名称                         |
+| siteId           | number  | 站点ID                           |
+| siteWorkId       | string  | 站点作品ID                       |
+| siteWorkName     | string  | 站点作品名称                     |
+| nickName         | string  | 作品别称                         |
+| siteUploadTime   | number  | 站点上传时间(毫秒时间戳)         |
+| lastView         | number  | 最后查看时间                     |
+| importMethod     | number  | 导入方式(0:本地导入, 1:站点下载) |
+| taskId           | number  | 任务ID                           |
+| resourceComplete | boolean | 资源是否保存完成                 |
 
 ## 调用示例
 

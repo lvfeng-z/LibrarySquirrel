@@ -46,11 +46,7 @@ export enum SecureStorageErrorCode {
  * 提供加密、解密、密文存储和读取功能
  * 使用 Electron safeStorage 进行加密和解密
  */
-export default class SecureStorageService extends BaseService<
-  SecureStorageQueryDTO,
-  SecureStorage,
-  SecureStorageDao
-> {
+export default class SecureStorageService extends BaseService<SecureStorageQueryDTO, SecureStorage, SecureStorageDao> {
   constructor(db?: DatabaseClient) {
     super(SecureStorageDao, db)
   }
@@ -191,9 +187,7 @@ export default class SecureStorageService extends BaseService<
   async listKeys(): Promise<string[]> {
     const query = new SecureStorageQueryDTO()
     const list = await super.list(query)
-    return list
-      .filter((item) => item.storageKey)
-      .map((item) => item.storageKey as string)
+    return list.filter((item) => item.storageKey).map((item) => item.storageKey as string)
   }
 
   /**

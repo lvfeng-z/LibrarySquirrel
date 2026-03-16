@@ -129,11 +129,32 @@ yarn lint
 import { WorkService } from '@renderer/apis/workService'
 import { notNullish } from '@shared/util/CommonUtil.ts'
 
-// 禁止使用 any 类型
+// 对于有明确类型的变量，禁止使用 any 类型，也不允许使用never代替any
 const data: any = ...  // ✗ 禁止
 
 // 必须定义明确类型
 const data: WorkDTO = ...  // ✓ 正确
+
+// never仅用于穷尽性检查
+type EventType = 'login' | 'logout' | 'signup';
+
+function handleEvent(type: EventType) {
+  switch (type) {
+    case 'login':
+      // 处理登录
+      break;
+    case 'logout':
+      // 处理登出
+      break;
+    // 假设我们忘了写 'signup' 的情况
+    default:
+      // 如果 type 是 'signup'，传到这里，type 的类型应该是 never
+      // 如果漏掉了 'signup'，这里的 type 实际上是 'signup' 类型，而不是 never
+      // 赋值给 never 变量会报错，从而提醒开发者补全逻辑
+      const _exhaustiveCheck: never = type;
+      return _exhaustiveCheck;
+  }
+}
 ```
 
 ### 空值判断规范

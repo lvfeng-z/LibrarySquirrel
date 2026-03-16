@@ -4,13 +4,13 @@
 
 ## 智能体列表
 
-| 智能体 | 名称 | 职责 |
-|--------|------|------|
-| [requirements-analyst](./requirements-analyst.md) | 需求分析师 | 与用户交流需求，生成详细开发计划文档 |
-| [code-writer](./code-writer.md) | 代码工程师 | 根据计划按照项目代码规则编写代码 |
-| [test-engineer](./test-engineer.md) | 测试工程师 | 编写和执行测试，确保代码质量 |
-| [doc-maintainer](./doc-maintainer.md) | 文档维护工程师 | 维护 ai-assistant 目录下的开发辅助文档 |
-| [workflow-coordinator](./workflow-coordinator.md) | 工作流协调员 | 统筹协调所有智能体的工作流程 |
+| 智能体                                            | 名称           | 职责                                   |
+| ------------------------------------------------- | -------------- | -------------------------------------- |
+| [requirements-analyst](./requirements-analyst.md) | 需求分析师     | 与用户交流需求，生成详细开发计划文档   |
+| [code-writer](./code-writer.md)                   | 代码工程师     | 根据计划按照项目代码规则编写代码       |
+| [test-engineer](./test-engineer.md)               | 测试工程师     | 编写和执行测试，确保代码质量           |
+| [doc-maintainer](./doc-maintainer.md)             | 文档维护工程师 | 维护 ai-assistant 目录下的开发辅助文档 |
+| [workflow-coordinator](./workflow-coordinator.md) | 工作流协调员   | 统筹协调所有智能体的工作流程           |
 
 ## 工作流程
 

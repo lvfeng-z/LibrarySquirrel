@@ -32,10 +32,10 @@ App.vue (根组件)
 
 ### 2.2 核心状态管理
 
-| Store | 职责 |
-|-------|------|
-| `SlotRegistryStore` | 管理 viewSlots、menuSlots、activeViewId |
-| `UsePageStatesStore` | 管理 PageState 和页面切换 |
+| Store                | 职责                                    |
+| -------------------- | --------------------------------------- |
+| `SlotRegistryStore`  | 管理 viewSlots、menuSlots、activeViewId |
+| `UsePageStatesStore` | 管理 PageState 和页面切换               |
 
 ### 2.3 现有页面注册方式
 
@@ -81,15 +81,15 @@ App.vue (根组件)
 
 ## 四、差异分析
 
-| 方面 | 当前实现 | 目标实现 |
-|------|----------|----------|
-| **路由系统** | 无，使用 Store 驱动视图切换 | Vue Router，URL 驱动视图 |
-| **页面注册** | Store API (`registerViewSlot`) | 路由配置 (`routes`) |
-| **菜单生成** | 读取 `SlotRegistryStore.menuSlots` | 读取路由 `meta` 信息 |
-| **导航方式** | `gotoPage(PageEnum)` | `router.push('/settings')` |
-| **URL 支持** | 无 | 支持浏览器前进/后退、deep link |
-| **布局组件** | 全部在 `App.vue` | 新增 `MainLayout.vue` |
-| **插件页面** | Store 注册 `viewId` | 动态添加路由 |
+| 方面         | 当前实现                           | 目标实现                       |
+| ------------ | ---------------------------------- | ------------------------------ |
+| **路由系统** | 无，使用 Store 驱动视图切换        | Vue Router，URL 驱动视图       |
+| **页面注册** | Store API (`registerViewSlot`)     | 路由配置 (`routes`)            |
+| **菜单生成** | 读取 `SlotRegistryStore.menuSlots` | 读取路由 `meta` 信息           |
+| **导航方式** | `gotoPage(PageEnum)`               | `router.push('/settings')`     |
+| **URL 支持** | 无                                 | 支持浏览器前进/后退、deep link |
+| **布局组件** | 全部在 `App.vue`                   | 新增 `MainLayout.vue`          |
+| **插件页面** | Store 注册 `viewId`                | 动态添加路由                   |
 
 ---
 
@@ -98,11 +98,13 @@ App.vue (根组件)
 ### 阶段 1：基础设施搭建
 
 #### 1.1 安装 Vue Router
+
 ```bash
 yarn add vue-router
 ```
 
 #### 1.2 创建路由配置目录
+
 ```
 src/renderer/src/router/
 ├── index.ts        # Router 实例配置
@@ -110,6 +112,7 @@ src/renderer/src/router/
 ```
 
 #### 1.3 修改 main.ts
+
 - 引入 Vue Router
 - 配置 Router 实例
 - 挂载到 Vue 应用
@@ -119,11 +122,13 @@ src/renderer/src/router/
 ### 阶段 2：创建布局组件
 
 #### 2.1 创建 MainLayout.vue
+
 - 从 `App.vue` 提取侧边栏布局
 - 保留常驻组件（通知列表、弹窗等）
 - 包含嵌套 `<router-view>`
 
 #### 2.2 重构 App.vue
+
 ```vue
 <template>
   <router-view />
@@ -162,7 +167,7 @@ export const routes = [
           icon: 'Setting',
           order: 70
         }
-      },
+      }
       // 其他内置页面...
     ]
   }
@@ -179,8 +184,9 @@ const router = useRouter()
 
 // 从路由配置生成菜单
 const menuItems = computed(() => {
-  return router.getRoutes()
-    .filter(route => route.meta?.title)
+  return router
+    .getRoutes()
+    .filter((route) => route.meta?.title)
     .sort((a, b) => (a.meta.order ?? 100) - (b.meta.order ?? 100))
 })
 ```
@@ -200,7 +206,7 @@ const router = useRouter()
 export async function gotoPage(pageEnum: PageEnum) {
   const routeMap = {
     [PageEnum.MainPage]: '/',
-    [PageEnum.Settings]: '/settings',
+    [PageEnum.Settings]: '/settings'
     // ...
   }
 
@@ -240,7 +246,7 @@ export function addRoute(route: RouteRecordRaw) {
 // 插件安装时添加路由
 function installPlugin(plugin: Plugin) {
   if (plugin.views) {
-    plugin.views.forEach(view => {
+    plugin.views.forEach((view) => {
       addRoute({
         path: view.path,
         name: view.id,
@@ -286,46 +292,49 @@ export default {
 
 ### 新增文件
 
-| 文件路径 | 说明 |
-|----------|------|
-| `src/renderer/src/router/index.ts` | Vue Router 实例配置 |
-| `src/renderer/src/router/routes.ts` | 路由配置定义 |
-| `src/renderer/src/views/MainLayout.vue` | 主布局组件 |
+| 文件路径                                | 说明                |
+| --------------------------------------- | ------------------- |
+| `src/renderer/src/router/index.ts`      | Vue Router 实例配置 |
+| `src/renderer/src/router/routes.ts`     | 路由配置定义        |
+| `src/renderer/src/views/MainLayout.vue` | 主布局组件          |
 
 ### 修改文件
 
-| 文件路径 | 变更内容 |
-|----------|----------|
-| `src/renderer/src/main.ts` | 添加 Vue Router 配置 |
-| `src/renderer/src/App.vue` | 简化为仅包含 `<router-view>` |
-| `src/renderer/src/components/slot/DynamicSideMenu.vue` | 改为读取路由配置 |
-| `src/renderer/src/composables/useBuiltinMenus.ts` | 适配路由系统 |
-| `src/renderer/src/utils/PageUtil.ts` | 使用 router 导航 |
-| `src/renderer/src/store/UsePageStatesStore.ts` | 适配路由系统 |
-| `src/renderer/src/store/SlotRegistryStore.ts` | 支持动态路由注册 |
+| 文件路径                                               | 变更内容                     |
+| ------------------------------------------------------ | ---------------------------- |
+| `src/renderer/src/main.ts`                             | 添加 Vue Router 配置         |
+| `src/renderer/src/App.vue`                             | 简化为仅包含 `<router-view>` |
+| `src/renderer/src/components/slot/DynamicSideMenu.vue` | 改为读取路由配置             |
+| `src/renderer/src/composables/useBuiltinMenus.ts`      | 适配路由系统                 |
+| `src/renderer/src/utils/PageUtil.ts`                   | 使用 router 导航             |
+| `src/renderer/src/store/UsePageStatesStore.ts`         | 适配路由系统                 |
+| `src/renderer/src/store/SlotRegistryStore.ts`          | 支持动态路由注册             |
 
 ### 后续可删除文件（待确认无依赖后）
 
-| 文件路径 | 说明 |
-|----------|------|
+| 文件路径                                  | 说明                    |
+| ----------------------------------------- | ----------------------- |
 | `src/renderer/src/constants/PageState.ts` | PageEnum 可保留用于兼容 |
-| `src/renderer/src/model/slot/ViewSlot.ts` | 部分功能可被路由替代 |
+| `src/renderer/src/model/slot/ViewSlot.ts` | 部分功能可被路由替代    |
 
 ---
 
 ## 七、兼容性考虑
 
 ### 7.1 渐进式迁移
+
 - 保持 PageEnum 和路由并存一段时间
 - 逐步将页面迁移到路由
 - `gotoPage()` 函数内部适配到路由
 
 ### 7.2 URL 同步
+
 - 确保浏览器后退/前进按钮正常工作
 - 支持 deep link 直接打开页面
 - 刷新页面保持当前视图
 
 ### 7.3 插件兼容
+
 - 插件的视图注册 API 保持兼容
 - 内部自动转换为路由注册
 - 提供迁移指南
@@ -334,12 +343,12 @@ export default {
 
 ## 八、预期收益
 
-| 收益 | 说明 |
-|------|------|
-| **更好的 UX** | 浏览器原生导航支持、URL 可分享 |
+| 收益               | 说明                             |
+| ------------------ | -------------------------------- |
+| **更好的 UX**      | 浏览器原生导航支持、URL 可分享   |
 | **更好的开发体验** | 路由级别代码分割、清晰的路由组织 |
-| **更好的维护性** | 声明式路由配置、Vue 生态最佳实践 |
-| **更好的调试** | Vue Devtools 路由调试支持 |
+| **更好的维护性**   | 声明式路由配置、Vue 生态最佳实践 |
+| **更好的调试**     | Vue Devtools 路由调试支持        |
 
 ---
 

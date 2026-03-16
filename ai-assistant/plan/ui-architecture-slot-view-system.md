@@ -6,12 +6,12 @@
 
 根据 `src/renderer/src/` 现有代码分析：
 
-| 问题 | 位置 | 影响 |
-|------|------|------|
-| 页面硬编码 | `App.vue:584-600` | 插件无法添加新页面 |
-| 状态硬编码 | `PageState.ts:32-47` | 新页面需修改源码 |
-| 导航硬编码 | `App.vue:411-466` | 插件无法动态添加导航项 |
-| 布局写死 | `App.vue:468-583` | 主工作区只能显示主页/子页面二选一 |
+| 问题       | 位置                 | 影响                              |
+| ---------- | -------------------- | --------------------------------- |
+| 页面硬编码 | `App.vue:584-600`    | 插件无法添加新页面                |
+| 状态硬编码 | `PageState.ts:32-47` | 新页面需修改源码                  |
+| 导航硬编码 | `App.vue:411-466`    | 插件无法动态添加导航项            |
+| 布局写死   | `App.vue:468-583`    | 主工作区只能显示主页/子页面二选一 |
 
 ### 1.2 当前页面渲染模式
 
@@ -48,11 +48,11 @@ App.vue
 
 ### 2.2 位点分类
 
-| 位点类型 | 位置 | 用途 | 插件能力 |
-|----------|------|------|----------|
-| **Micro-Slot** | 顶部工具栏、状态栏 | 快速操作、状态指示 | 动态更新微件状态 |
-| **Panel-Slot** | 侧边栏、右侧属性栏、底部 | 导航树、列表、属性 | 注入完整组件 |
-| **View-Slot** | 主工作区 | 核心业务界面 | 提供完整页面 |
+| 位点类型       | 位置                     | 用途               | 插件能力         |
+| -------------- | ------------------------ | ------------------ | ---------------- |
+| **Micro-Slot** | 顶部工具栏、状态栏       | 快速操作、状态指示 | 动态更新微件状态 |
+| **Panel-Slot** | 侧边栏、右侧属性栏、底部 | 导航树、列表、属性 | 注入完整组件     |
+| **View-Slot**  | 主工作区                 | 核心业务界面       | 提供完整页面     |
 
 ---
 
@@ -65,11 +65,11 @@ App.vue
 ```typescript
 // model/slot/ViewSlot.ts
 export interface ViewSlot {
-  id: string                      // 唯一标识，如 "plugin-xxx-dashboard"
-  name: string                    // 显示名称，如 "数据大屏"
-  icon?: string                  // Element Plus 图标名
-  component: () => Promise<any>  // 动态导入组件
-  order?: number                 // 排序权重
+  id: string // 唯一标识，如 "plugin-xxx-dashboard"
+  name: string // 显示名称，如 "数据大屏"
+  icon?: string // Element Plus 图标名
+  component: () => Promise<any> // 动态导入组件
+  order?: number // 排序权重
 }
 
 // model/slot/MicroSlot.ts
@@ -84,7 +84,7 @@ export interface MicroSlot {
 export interface PanelSlot {
   id: string
   position: 'left-sidebar' | 'right-sidebar' | 'bottom'
-  width?: number                 // 面板宽度
+  width?: number // 面板宽度
   component: () => Promise<any>
 }
 ```
@@ -140,8 +140,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
 
     // 获取所有视图（用于导航渲染）
     getAllViewSlots(): ViewSlot[] {
-      return Array.from(this.viewSlots.values())
-        .sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
+      return Array.from(this.viewSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
     }
   }
 })
@@ -175,14 +174,8 @@ const activeComponent = computed(() => {
 
 <template>
   <div class="view-slot-container">
-    <component
-      :is="activeComponent"
-      v-if="activeComponent"
-      v-bind="activeSlot?.props"
-    />
-    <div v-else class="view-slot-empty">
-      请选择一个视图
-    </div>
+    <component :is="activeComponent" v-if="activeComponent" v-bind="activeSlot?.props" />
+    <div v-else class="view-slot-empty">请选择一个视图</div>
   </div>
 </template>
 
@@ -208,13 +201,13 @@ const store = useSlotRegistryStore()
 
 // 内置导航项
 const builtinItems = [
-  { index: 'main', icon: 'HomeFilled', label: '主页', page: 'mainPage' },
+  { index: 'main', icon: 'HomeFilled', label: '主页', page: 'mainPage' }
   // ...其他内置项
 ]
 
 // 插件视图项
 const pluginItems = computed(() =>
-  store.getAllViewSlots().map(slot => ({
+  store.getAllViewSlots().map((slot) => ({
     index: slot.id,
     icon: slot.icon || 'Guide',
     label: slot.name,
@@ -223,7 +216,7 @@ const pluginItems = computed(() =>
 )
 
 function handleSelect(index: string) {
-  const builtin = builtinItems.find(item => item.index === index)
+  const builtin = builtinItems.find((item) => item.index === index)
   if (builtin) {
     // 处理内置页面
     return
@@ -330,10 +323,7 @@ export default {
   },
 
   // 卸载时清理
-  unregister(registry: {
-    unregisterViewSlot: (id: string) => void
-    unregisterMicroSlot: (id: string) => void
-  }) {
+  unregister(registry: { unregisterViewSlot: (id: string) => void; unregisterMicroSlot: (id: string) => void }) {
     registry.unregisterViewSlot('data-dashboard')
     registry.unregisterMicroSlot('data-dashboard-progress')
   }
@@ -383,10 +373,10 @@ slotUnregisterViewSlot: (id: string) => ipcRenderer.invoke('plugin-unregister-vi
 
 ## 6. 向后兼容方案
 
-| 场景 | 兼容策略                                |
-|------|-------------------------------------|
+| 场景       | 兼容策略                                         |
+| ---------- | ------------------------------------------------ |
 | 现有子页面 | 不保持 `PageState` 体系，通过适配器转为 ViewSlot |
-| 现有导航 | 保留硬编码菜单项，插件视图动态追加                   |
+| 现有导航   | 保留硬编码菜单项，插件视图动态追加               |
 | 插件无视图 | 正常加载，不影响主程序功能                       |
 
 ---

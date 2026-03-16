@@ -27,7 +27,10 @@ const ErrorComponent: Component = {
   render() {
     return h(
       'div',
-      { style: 'display: flex; align-items: center; justify-content: center; height: 100%; color: var(--el-color-danger); font-size: 12px;' },
+      {
+        style:
+          'display: flex; align-items: center; justify-content: center; height: 100%; color: var(--el-color-danger); font-size: 12px;'
+      },
       [h('span', {}, '加载失败')]
     )
   }
@@ -58,10 +61,7 @@ function getSlotStyle(slot: PanelSlot): Record<string, string> {
 </script>
 
 <template>
-  <div
-    class="panel-slot-container"
-    :class="`panel-slot-${position}`"
-  >
+  <div class="panel-slot-container" :class="`panel-slot-${position}`">
     <template v-for="slot in slots" :key="slot.id">
       <div class="panel-slot-item" :style="getSlotStyle(slot)">
         <component :is="createSlotRenderer(slot)" v-bind="slot.props" />

@@ -42,15 +42,15 @@ ai-assistant/
 
 ### 何时更新文档
 
-| 场景 | 需更新的文档 |
-|------|-------------|
-| 添加新业务概念 | `glossary.md`, `architecture-quick-reference.md` |
-| 架构重大变更 | `architecture-quick-reference.md`, `business-logic.md` |
-| 代码规范变更 | `code-rules.md` |
-| 新增开发模式 | `development-scenarios.md` |
-| 发现新错误 | `common-pitfalls.md` |
-| 插件系统变更 | `plugin-development.md` |
-| 新增 API | `api/` 目录相关文件 |
+| 场景           | 需更新的文档                                           |
+| -------------- | ------------------------------------------------------ |
+| 添加新业务概念 | `glossary.md`, `architecture-quick-reference.md`       |
+| 架构重大变更   | `architecture-quick-reference.md`, `business-logic.md` |
+| 代码规范变更   | `code-rules.md`                                        |
+| 新增开发模式   | `development-scenarios.md`                             |
+| 发现新错误     | `common-pitfalls.md`                                   |
+| 插件系统变更   | `plugin-development.md`                                |
+| 新增 API       | `api/` 目录相关文件                                    |
 
 ### 文档质量标准
 
@@ -94,6 +94,7 @@ ai-assistant/
 ## 更新记录
 
 ### 2026-03-15
+
 - [新增] xxx 功能说明
 - [修改] xxx 描述更新
 - [删除] xxx 内容移除

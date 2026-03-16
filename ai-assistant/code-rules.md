@@ -7,6 +7,7 @@
 ## 文件命名规范
 
 ### 目录结构约定
+
 - **src/main/** - 主进程代码 (Node.js/Electron)
   - `base/` - 基类 (BaseDao, BaseService, BasePlugin)
   - `constant/` - 常量与枚举（主进程专用）
@@ -36,24 +37,27 @@
   - `src/utils/` - 渲染进程工具类
 
 ### 文件命名规则
-| 文件类型 | 命名规则 | 示例 |
-|----------|----------|------|
-| **类文件** | PascalCase + `.ts` | `WorkService.ts`, `BaseDao.ts` |
-| **Vue 组件** | PascalCase + `.vue` | `WorkCard.vue`, `WorkSetDialog.vue` |
-| **TypeScript 类型/接口** | PascalCase + `.ts` | `WorkDTO.ts`, `TaskStatus.ts` |
-| **工具函数** | camelCase + `.ts` | `logUtil.ts`, `apiUtil.ts` |
-| **常量文件** | camelCase + `.ts` | `errorCode.ts`, `httpStatus.ts` |
-| **配置文件** | kebab-case + `.yml`/`.json` | `createDataTables.yml`, `tsconfig.web.json` |
+
+| 文件类型                 | 命名规则                    | 示例                                        |
+| ------------------------ | --------------------------- | ------------------------------------------- |
+| **类文件**               | PascalCase + `.ts`          | `WorkService.ts`, `BaseDao.ts`              |
+| **Vue 组件**             | PascalCase + `.vue`         | `WorkCard.vue`, `WorkSetDialog.vue`         |
+| **TypeScript 类型/接口** | PascalCase + `.ts`          | `WorkDTO.ts`, `TaskStatus.ts`               |
+| **工具函数**             | camelCase + `.ts`           | `logUtil.ts`, `apiUtil.ts`                  |
+| **常量文件**             | camelCase + `.ts`           | `errorCode.ts`, `httpStatus.ts`             |
+| **配置文件**             | kebab-case + `.yml`/`.json` | `createDataTables.yml`, `tsconfig.web.json` |
 
 ## 代码风格规范
 
 ### 注释规范
 
 #### 基本原则
+
 - **只描述目的和约束**: 注释应说明函数/方法的目的、用途和使用约束，而不是描述实现方式
 - **禁止变更描述**: 注释中禁止使用"改为"、"修改为"、"重构"、"优化"等描述变更的词汇
 
 #### 错误示例
+
 ```typescript
 // 改为调用外部注入的方法  ← 禁止：描述变更
 // 重构这个方法实现  ← 禁止：描述变更
@@ -62,6 +66,7 @@
 ```
 
 #### 正确示例
+
 ```typescript
 /**
  * 批量关联作品到作品集
@@ -87,22 +92,25 @@
 ### 命名规范
 
 #### 禁止方法名与 prop 同名
+
 - **原则**：组件内部方法名不得与 props 中定义的属性名相同
 - **原因**：避免变量遮蔽和潜在的代码混淆问题
 - **解决方案**：使用动词前缀区分方法与属性
 
 #### 方法命名模式
+
 使用明确的前缀来区分方法与 props 属性：
 
-| 前缀 | 用途 | 示例 |
-|------|------|------|
-| `handleXxx` | 处理事件或回调 | `handleSubmit`, `handleChange` |
-| `doXxx` | 执行操作 | `doFetch`, `doSearch` |
-| `buildXxx` | 构建或组装数据 | `buildConditions`, `buildQuery` |
-| `loadXxx` | 加载数据 | `loadData`, `loadItems` |
-| `checkXxx` | 检查或验证 | `checkPermission`, `validateInput` |
+| 前缀        | 用途           | 示例                               |
+| ----------- | -------------- | ---------------------------------- |
+| `handleXxx` | 处理事件或回调 | `handleSubmit`, `handleChange`     |
+| `doXxx`     | 执行操作       | `doFetch`, `doSearch`              |
+| `buildXxx`  | 构建或组装数据 | `buildConditions`, `buildQuery`    |
+| `loadXxx`   | 加载数据       | `loadData`, `loadItems`            |
+| `checkXxx`  | 检查或验证     | `checkPermission`, `validateInput` |
 
 #### 正确示例
+
 ```typescript
 // props 中定义了 fetchWorkPage
 const props = defineProps<{
@@ -116,6 +124,7 @@ async function doFetchWorkPage(page: Page) {
 ```
 
 #### 错误示例
+
 ```typescript
 // 方法名与 prop 同名 - 禁止
 async function fetchWorkPage(page: Page) {
@@ -124,11 +133,13 @@ async function fetchWorkPage(page: Page) {
 ```
 
 #### Vue 组件特有规则
+
 - Props 中的函数属性通常使用名词命名（如 `fetchWorkPage`）
 - 组件内部方法应使用动词前缀（如 `doFetchWorkPage`）
 - 事件处理统一使用 `handle` 前缀（如 `handleClick`）
 
 ### TypeScript 规范
+
 - **模块解析**: 主进程使用 `node16`，渲染进程使用 `bundler`
 - **路径别名**:
   - `@renderer/*` → `src/renderer/src/*`（渲染进程专用）
@@ -144,6 +155,7 @@ async function fetchWorkPage(page: Page) {
 **原则**: 判断变量是否为 `undefined` 或 `null` 时，必须使用 `@shared/util/CommonUtil.ts` 中定义的 `NotNullish` 和 `IsNullish` 函数，避免使用"逻辑非"语法（`!value`），以保证语义清晰。
 
 **函数定义**:
+
 ```typescript
 // 判断值是否不为 null 或 undefined
 export function NotNullish<T>(value: T | undefined | null): value is T
@@ -153,11 +165,13 @@ export function IsNullish(value: unknown): value is undefined | null
 ```
 
 **导入方式**:
+
 ```typescript
 import { NotNullish, IsNullish } from '@shared/util/CommonUtil.ts'
 ```
 
 **✅ 正确示例**:
+
 ```typescript
 import { NotNullish, IsNullish } from '@shared/util/CommonUtil.ts'
 
@@ -187,19 +201,23 @@ assertIsDefined(value: T): asserts value is T {
 ```
 
 **❌ 错误示例**:
+
 ```typescript
 // 禁止使用逻辑非判断空值（语义不清晰）
-if (!value) {  // ✗ 这会过滤掉 falsy 值（如 0, '', false）
+if (!value) {
+  // ✗ 这会过滤掉 falsy 值（如 0, '', false）
   return
 }
 
 // 禁止使用 != null 判断（会同时过滤 undefined 和 null，但语义不明确）
-if (value != null) {  // ✗ 语义不清晰，不知道是判断非空还是其他意图
+if (value != null) {
+  // ✗ 语义不清晰，不知道是判断非空还是其他意图
   // 处理
 }
 
 // 禁止使用双重否定（语义不清晰）
-if (!!value) {  // ✗
+if (!!value) {
+  // ✗
   // 处理
 }
 ```
@@ -224,6 +242,7 @@ function processValue(value: string | undefined | null) {
 **原则**: 判断数组是否为空时，必须使用 `@shared/util/CommonUtil.ts` 中定义的 `ArrayNotEmpty` 和 `ArrayIsEmpty` 函数。
 
 **函数定义**:
+
 ```typescript
 // 判断数组是否不为空
 export function ArrayNotEmpty(value: unknown): value is unknown[]
@@ -233,6 +252,7 @@ export function ArrayIsEmpty(value: unknown): value is null | undefined | []
 ```
 
 **✅ 正确示例**:
+
 ```typescript
 import { ArrayNotEmpty, ArrayIsEmpty } from '@shared/util/CommonUtil.ts'
 
@@ -252,13 +272,16 @@ const hasItems = ArrayNotEmpty(items)
 ```
 
 **❌ 错误示例**:
+
 ```typescript
 // 禁止使用 length 属性直接判断
-if (items.length) {  // ✗ 语义不清晰
+if (items.length) {
+  // ✗ 语义不清晰
   // 处理
 }
 
-if (items && items.length > 0) {  // ✗ 冗长且语义不明确
+if (items && items.length > 0) {
+  // ✗ 冗长且语义不明确
   // 处理
 }
 ```
@@ -268,6 +291,7 @@ if (items && items.length > 0) {  // ✗ 冗长且语义不明确
 **原则**: 判断字符串是否为空白时，必须使用 `@shared/util/StringUtil.ts` 中定义的 `isBlank` 和 `isNotBlank` 函数。
 
 **函数定义**:
+
 ```typescript
 // 判断字符串是否为空白（null、undefined 或只包含空白字符）
 export function isBlank(input: string | null | undefined): input is undefined | null | ''
@@ -277,6 +301,7 @@ export function isNotBlank(input: string | null | undefined): input is string
 ```
 
 **✅ 正确示例**:
+
 ```typescript
 import { isBlank, isNotBlank } from '@shared/util/StringUtil.ts'
 
@@ -302,32 +327,36 @@ function process(input: string | undefined | null) {
 ```
 
 **❌ 错误示例**:
+
 ```typescript
 // 禁止使用逻辑非判断空字符串
-if (!input) {  // ✗ 会过滤掉 falsy 值
+if (!input) {
+  // ✗ 会过滤掉 falsy 值
   return
 }
 
 // 禁止使用 length 判断
-if (input && input.length === 0) {  // ✗ 没有判断空白字符
+if (input && input.length === 0) {
+  // ✗ 没有判断空白字符
   return
 }
 ```
 
 #### 4. 适用场景汇总
 
-| 场景 | 推荐方式 | 导入来源 |
-|------|----------|----------|
-| 判断值是否为 null/undefined | `IsNullish(value)` | `@shared/util/CommonUtil.ts` |
-| 判断值是否不为 null/undefined | `NotNullish(value)` | `@shared/util/CommonUtil.ts` |
-| 判断数组是否为空 | `ArrayIsEmpty(value)` | `@shared/util/CommonUtil.ts` |
-| 判断数组是否不为空 | `ArrayNotEmpty(value)` | `@shared/util/CommonUtil.ts` |
-| 过滤数组中的 null/undefined | `array.filter(NotNullish)` | `@shared/util/CommonUtil.ts` |
-| 判断字符串是否为空白 | `isBlank(value)` | `@shared/util/StringUtil.ts` |
-| 判断字符串是否不为空白 | `isNotBlank(value)` | `@shared/util/StringUtil.ts` |
-| 条件分支中的类型收窄 | `if (NotNullish(value)) { ... }` | 对应工具类 |
+| 场景                          | 推荐方式                         | 导入来源                     |
+| ----------------------------- | -------------------------------- | ---------------------------- |
+| 判断值是否为 null/undefined   | `IsNullish(value)`               | `@shared/util/CommonUtil.ts` |
+| 判断值是否不为 null/undefined | `NotNullish(value)`              | `@shared/util/CommonUtil.ts` |
+| 判断数组是否为空              | `ArrayIsEmpty(value)`            | `@shared/util/CommonUtil.ts` |
+| 判断数组是否不为空            | `ArrayNotEmpty(value)`           | `@shared/util/CommonUtil.ts` |
+| 过滤数组中的 null/undefined   | `array.filter(NotNullish)`       | `@shared/util/CommonUtil.ts` |
+| 判断字符串是否为空白          | `isBlank(value)`                 | `@shared/util/StringUtil.ts` |
+| 判断字符串是否不为空白        | `isNotBlank(value)`              | `@shared/util/StringUtil.ts` |
+| 条件分支中的类型收窄          | `if (NotNullish(value)) { ... }` | 对应工具类                   |
 
 **⚠️ 尽量避免**:
+
 ```typescript
 // 尽量避免简单的逻辑非
 if (!value) { ... }
@@ -338,11 +367,13 @@ if (!name) { ... }
 #### 6. 例外情况
 
 以下情况可使用逻辑非：
+
 - 判断值为 falsy（如 `0`, `''`, `false`）而非仅 null/undefined
 - 布尔值取反（如 `!isLoading`）
 - 复杂布尔表达式（如 `!value || !value.enabled`）
 
 ### Vue 组件规范
+
 - **语法**: 使用 `<script setup lang="ts">` 组合式 API
 - **Props 定义**: Props 接口使用 `Props` 后缀
   ```typescript
@@ -356,18 +387,20 @@ if (!name) { ... }
 - **样式选择器**: 尽可能使用类选择器 (`.class-name`) 设置样式，避免使用元素选择器 (`div`, `span`) 和 ID 选择器 (`#id`)，仅在必要时使用style属性，以提高样式复用性和可维护性
 
 ### 命名约定
-| 元素类型 | 命名规则 | 示例 |
-|----------|----------|------|
-| **类名** | PascalCase | `WorkService`, `BaseDao` |
-| **接口/类型** | PascalCase | `WorkDTO`, `TaskStatus` |
-| **变量/函数** | camelCase | `workList`, `getWorkById` |
-| **常量** | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT`, `DEFAULT_PAGE_SIZE` |
-| **私有成员** | 前缀 `_` (可选) | `_internalCache`, `_privateMethod()` |
-| **布尔变量** | 使用 `is`, `has`, `can` 前缀 | `isLoading`, `hasError`, `canEdit` |
+
+| 元素类型      | 命名规则                     | 示例                                   |
+| ------------- | ---------------------------- | -------------------------------------- |
+| **类名**      | PascalCase                   | `WorkService`, `BaseDao`               |
+| **接口/类型** | PascalCase                   | `WorkDTO`, `TaskStatus`                |
+| **变量/函数** | camelCase                    | `workList`, `getWorkById`              |
+| **常量**      | UPPER_SNAKE_CASE             | `MAX_RETRY_COUNT`, `DEFAULT_PAGE_SIZE` |
+| **私有成员**  | 前缀 `_` (可选)              | `_internalCache`, `_privateMethod()`   |
+| **布尔变量**  | 使用 `is`, `has`, `can` 前缀 | `isLoading`, `hasError`, `canEdit`     |
 
 ## 开发约定
 
 ### IPC 通信模式
+
 - **方法命名**: `serviceName-methodName` (kebab-case)
 - **主进程注册** (`MainProcessApi.ts`):
   ```typescript
@@ -390,6 +423,7 @@ if (!name) { ... }
   ```
 
 ### 响应处理
+
 - **统一响应格式**: 使用 `ApiUtil.response(data)` / `ApiUtil.error(message)`
 - **错误包装**: 所有错误通过 `returnError(error)` 包装
 - **前端处理**:
@@ -484,6 +518,7 @@ function fromEntity(user: User, token: string): UserResponseDTO {
 - 业务逻辑明确要求复杂的层级分组，且该子结构在多个 API 中复用（此时应创建 `XXXSubDTO`）
 
 ### 数据库操作
+
 - **事务处理**: 使用 `db.transaction()` 支持嵌套 SAVEPOINT
   ```typescript
   await db.transaction(async (tx) => {
@@ -511,6 +546,7 @@ function fromEntity(user: User, token: string): UserResponseDTO {
 #### 2. Service 实例创建规范
 
 **❌ 错误示例**:
+
 ```typescript
 // 错误：传入数据库连接但不用于事务，导致连接无法自动释放
 class SearchService {
@@ -523,6 +559,7 @@ class SearchService {
 ```
 
 **✅ 正确示例**:
+
 ```typescript
 // 正确：不传入数据库连接，让被调用的 Service 创建并管理自己的连接
 class SearchService {
@@ -559,8 +596,8 @@ class SomeTransactionService {
 class BaseService {
   constructor(
     dao: new (db: DatabaseClient, injectedDB: boolean) => Dao,
-    db?: DatabaseClient,           // 可选：传入数据库客户端用于事务
-    injectedDB?: boolean            // 可选：显式指定是否为注入的连接
+    db?: DatabaseClient, // 可选：传入数据库客户端用于事务
+    injectedDB?: boolean // 可选：显式指定是否为注入的连接
   ) {
     //...
   }
@@ -573,10 +610,12 @@ class BaseService {
 #### 4. DAO 层连接管理
 
 DAO 层通过 `injectedDB` 标志管理连接释放：
+
 - `injectedDB = false`: Service 创建的连接，查询完成后在 `finally` 块中释放
 - `injectedDB = true`: 外部注入的连接（用于事务），不自动释放，由外部事务管理器控制
 
 **DAO 查询方法标准模式**:
+
 ```typescript
 class demoDao {
   async queryByConditions(params): Promise<Result> {
@@ -600,9 +639,11 @@ class demoDao {
 3. **事务回滚**: 事务中使用 `throw` 触发回滚，避免手动处理
 
 ### 数据库布尔类型转换
+
 - **原则**: 数据库中使用整数（0/1）表示布尔值，转换为 JS 布尔值时必须使用 `BOOL` 常量进行比较
 - **常量位置**: `src/shared/model/constant/BOOL.ts`
 - **正确示例**:
+
   ```typescript
   import { BOOL } from '@shared/model/constant/BOOL.ts'
 
@@ -612,20 +653,24 @@ class demoDao {
   // 写入数据库前转换
   link.isCover = true ? BOOL.TRUE : BOOL.FALSE
   ```
+
 - **错误示例**:
+
   ```typescript
   // 禁止使用硬编码数字比较
-  item.isCover = isCoverValue === 1  // ✗
+  item.isCover = isCoverValue === 1 // ✗
 
   // 禁止使用布尔字面量比较
-  item.isCover = isCoverValue === true  // ✗
+  item.isCover = isCoverValue === true // ✗
   ```
 
 ### 数据库查询结果转换为实体类
+
 - **原则**: 从数据库查询出的元数据应先通过框架的转换方法（`toResultTypeData`/`toResultTypeDataList`）转换为项目中定义的实体类或其他对应类，再进行后续操作
 - **避免使用 `as` 类型断言**: 不要直接使用 `as` 从 `Record<string, unknown>` 中提取字段
 - **需要额外字段时创建 DTO 类**: 如果查询结果需要返回比实体类更多的字段（如关联表的外键），应在 `src/shared/model/domain/` 目录下创建对应的 DTO 类继承原实体类
 - **正确示例**:
+
   ```typescript
   // 1. 创建继承实体类的 DTO（包含额外字段）
   // 文件: src/shared/model/domain/ResourceWithWorkSetId.ts
@@ -639,19 +684,22 @@ class demoDao {
 
   // 3. 从实体类中获取属性（无需类型断言）
   for (const item of resultList) {
-    const workSetId = item.workSetId  // 类型安全
+    const workSetId = item.workSetId // 类型安全
   }
   ```
+
 - **错误示例**:
+
   ```typescript
   // 禁止直接使用 as 类型断言提取字段
-  const workSetId = row['work_set_id'] as number  // ✗
+  const workSetId = row['work_set_id'] as number // ✗
 
   // 禁止直接访问 Record 的索引
-  const id = row['id']  // ✗ 类型为 unknown
+  const id = row['id'] // ✗ 类型为 unknown
   ```
 
 ### 插件开发规范
+
 - **目录位置**: `src/main/plugin/package/`
 - **插件结构**: 每个插件是独立包，包含 `package.json`
 - **基类**: 实现 `BasePlugin` 接口，至少包含 `pluginId: number`
@@ -660,30 +708,36 @@ class demoDao {
 ## 代码质量工具
 
 ### ESLint 配置
+
 - **基础配置**: `@electron-toolkit/eslint-config`
 - **Vue 规则**: `vue/require-default-prop` 已禁用
 - **自动修复**: `yarn lint` 运行 ESLint 并自动修复问题
 
 ### Prettier 格式化
+
 - **格式化命令**: `yarn format`
 - **集成**: 与 ESLint 配合，确保代码风格统一
 
 ### 类型检查
+
 - **全项目检查**: `yarn typecheck`
 - **主进程**: `yarn typecheck:node`
 - **渲染进程**: `yarn typecheck:web`
 
 ## 日期与时间处理
+
 - **统一格式**: 所有日期时间字段使用 Unix 时间戳（毫秒）
 - **数据库存储**: 使用 `INTEGER` 类型存储时间戳
 - **显示转换**: 在前端进行本地化时间格式转换
 
 ## 资源文件管理
+
 - **本地文件协议**: 使用自定义 `resource://` 协议访问本地文件
 - **图像处理**: 支持通过 sharp 进行图像尺寸调整
 - **文件路径**: 使用绝对路径，避免相对路径歧义
 
 ## Git 提交规范
+
 - **提交信息**: 使用中文描述，格式为 `类型(范围): 描述`
   - `feat(渲染进程): 添加作品卡片组件`
   - `fix(主进程): 修复数据库连接泄漏`
@@ -693,24 +747,28 @@ class demoDao {
 ## 新增功能开发流程
 
 ### 1. 添加新 Service
+
 1. 在 `src/main/service/` 创建 Service 类
 2. 在 `MainProcessApi.ts` 注册 IPC 处理器
 3. 在 `preload/index.ts` 添加 API 包装
 4. 前端通过 `window.api` 调用
 
 ### 2. 添加新 Vue 组件
+
 1. 在 `src/renderer/src/components/` 创建 `.vue` 文件
 2. 使用 `<script setup lang="ts">` 语法
 3. 定义 Props 接口（使用 `Props` 后缀）
 4. 通过路径别名导入其他组件
 
 ### 3. 添加数据库表
+
 1. 在 `src/main/resources/database/createDataTables.yml` 定义表结构
 2. 创建对应的 Model 类（`src/main/model/`）
 3. 创建 DAO 类（`src/main/dao/`）
 4. 在 Service 层调用 DAO 方法
 
 ## 常见注意事项
+
 1. **避免直接使用 SQLite API**: 始终通过 DAO 层访问数据库
 2. **错误处理**: 所有异步操作都需要 try-catch 并返回统一错误格式
 3. **类型安全**: 充分利用 TypeScript 类型系统，避免使用 `any`
@@ -718,7 +776,9 @@ class demoDao {
 5. **性能优化**: 大型列表使用虚拟滚动，图片使用懒加载
 
 ## 文档维护
+
 当代码规则发生变化时，需要同步更新以下文档：
+
 1. 本文档（`code-rules.md`）
 2. `CLAUDE.md` 中的 Key Conventions 部分
 3. 相关开发示例（`development-scenarios.md`）

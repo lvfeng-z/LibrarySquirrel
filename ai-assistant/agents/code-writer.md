@@ -24,12 +24,12 @@
 
 #### 文件命名规则
 
-| 类型 | 规则 | 示例 |
-|------|------|------|
-| 类文件 | PascalCase + `.ts` | `WorkService.ts` |
-| Vue组件 | PascalCase + `.vue` | `WorkCard.vue` |
-| 工具函数 | camelCase + `.ts` | `logUtil.ts` |
-| 常量文件 | camelCase + `.ts` | `errorCode.ts` |
+| 类型     | 规则                | 示例             |
+| -------- | ------------------- | ---------------- |
+| 类文件   | PascalCase + `.ts`  | `WorkService.ts` |
+| Vue组件  | PascalCase + `.vue` | `WorkCard.vue`   |
+| 工具函数 | camelCase + `.ts`   | `logUtil.ts`     |
+| 常量文件 | camelCase + `.ts`   | `errorCode.ts`   |
 
 #### TypeScript 规范
 
@@ -123,8 +123,8 @@ item.isCover = isCoverValue === BOOL.TRUE
 
 // DTO 扁平化（禁止嵌套实体）
 class UserResponseDTO {
-  id: number           // ✓ 显式字段
-  username: string     // ✓ 显式字段
+  id: number // ✓ 显式字段
+  username: string // ✓ 显式字段
   // 禁止: user: User   // ✗ 禁止嵌套实体
 }
 ```
