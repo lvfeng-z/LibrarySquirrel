@@ -10,7 +10,7 @@ import PluginInstallDTO from '@shared/model/dto/PluginInstallDTO.js'
 import { assertArrayNotEmpty, assertNotBlank, assertNotNullish, assertTrue } from '@shared/util/AssertUtil.ts'
 import fs from 'fs'
 import AdmZip from 'adm-zip'
-import { PLUGIN_RUNTIME } from '../constant/PluginConstant.js'
+import { PLUGIN_ROOT } from '../constant/PluginConstant.js'
 import { BOOL } from '../constant/BOOL.js'
 import Page from '@shared/model/util/Page.js'
 import BackupService from './BackupService.js'
@@ -146,14 +146,14 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const backup = await backupService.createBackup(BackupSourceTypeEnum.PLUGIN, 0, packagePath)
 
     // 安装路径
-    const installPath: string = path.join(RootDir(), PLUGIN_RUNTIME, pathRelative)
+    const installPath: string = path.join(RootDir(), PLUGIN_ROOT, pathRelative)
     await CreateDirIfNotExists(installPath)
     pluginInstallDTO.package.extractAllTo(installPath, true)
 
     const newPlugin = new Plugin()
     assignExisting(newPlugin, pluginInstallDTO)
     newPlugin.activationType = pluginInstallDTO.activation.type
-    newPlugin.entryPath = path.join(PLUGIN_RUNTIME, pathRelative, pluginInstallDTO.entryFile)
+    newPlugin.entryPath = path.join(PLUGIN_ROOT, pathRelative, pluginInstallDTO.entryFile)
     newPlugin.rootPath = pathRelative
     newPlugin.backupId = backup.id as number
 
@@ -239,7 +239,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     const plugin = await this.getById(pluginId)
     assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
     assertNotNullish(plugin.rootPath, `卸载插件失败，插件根目录路径不存在，pluginId: ${pluginId}`)
-    const pluginPath = path.join(RootDir(), PLUGIN_RUNTIME, plugin.rootPath as string)
+    const pluginPath = path.join(RootDir(), PLUGIN_ROOT, plugin.rootPath as string)
     try {
       await rm(pluginPath, { recursive: true, force: true })
     } catch (error) {

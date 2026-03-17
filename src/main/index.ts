@@ -17,7 +17,7 @@ import { createPluginTaskUrlListenerManager } from './core/pluginTaskUrlListener
 import { setMainWindow } from './core/mainWindow.ts'
 import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 import { createSiteBrowserManager } from './core/siteBrowserManager.ts'
-import { PLUGIN_RUNTIME } from './constant/PluginConstant.ts'
+import { PLUGIN_ROOT } from './constant/PluginConstant.ts'
 
 function createWindow(): Electron.BrowserWindow {
   // Create the browser window.
@@ -177,7 +177,7 @@ Electron.app.whenReady().then(() => {
         const url = new URL(request.url)
         // 提取插件路径 (去掉开头的 /)
         const pluginPath = decodeURIComponent(url.pathname.substring(1))
-        const pluginDir = path.join(RootDir(), PLUGIN_RUNTIME)
+        const pluginDir = path.join(RootDir(), PLUGIN_ROOT)
         const fullPath = path.join(pluginDir, pluginPath)
         const fullPathNormalized = process.platform === 'win32' ? ConvertPath(fullPath) : fullPath
 
