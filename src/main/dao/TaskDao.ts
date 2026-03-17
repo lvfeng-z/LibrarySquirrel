@@ -33,7 +33,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
             end)
         WHERE id = ${taskId}`
 
-    return Database.run(statement).then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement)
+    return runResult.changes
   }
 
   /**
@@ -76,10 +77,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     statement = await super.sortAndPage(statement, modifiedPage, sort)
 
     // 查询
-    return Database.all<unknown[], Record<string, unknown>>(statement, modifiedPage.query).then((rows) => {
-      modifiedPage.data = super.toResultTypeDataList<Task>(rows)
-      return modifiedPage
-    })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, modifiedPage.query)
+    modifiedPage.data = super.toResultTypeDataList<Task>(rows)
+    return modifiedPage
   }
 
   /**
@@ -108,7 +108,8 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                           FROM task
                           WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}
                        )`
-    return Database.run(statement).then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement)
+    return runResult.changes
   }
 
   /**
@@ -136,11 +137,9 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
                        SELECT *
                        FROM task
                        WHERE pid in (SELECT id FROM parent) ${notNullish(includeStatus) ? 'and status in (' + statusStr + ')' : ''}`
-    let sourceTasks: TaskTreeDTO[]
-    return Database.all<unknown[], Record<string, unknown>>(statement).then((rows) => {
-      sourceTasks = super.toResultTypeDataList<TaskTreeDTO>(rows)
-      return buildTree(sourceTasks, 0)
-    })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    const sourceTasks = super.toResultTypeDataList<TaskTreeDTO>(rows)
+    return buildTree(sourceTasks, 0)
   }
 
   /**
@@ -152,8 +151,7 @@ export default class TaskDao extends BaseDao<TaskQueryDTO, Task> {
     const statement = `SELECT id, pid, status, CASE WHEN status = ${TaskStatusEnum.FINISHED} THEN 100 END AS schedule
                        FROM "${this.tableName}"
                        WHERE id in (${idsStr})`
-    return Database.all<unknown[], Record<string, unknown>>(statement).then((rows) =>
-      super.toResultTypeDataList<TaskScheduleDTO>(rows)
-    )
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<TaskScheduleDTO>(rows)
   }
 }

@@ -11,11 +11,10 @@ export default class PluginDao extends BaseDao<PluginQueryDTO, Plugin> {
 
   public async checkInstalled(publicId: string) {
     const statements = `SELECT COUNT(1) as NUM FROM plugin WHERE public_id = '${publicId}'`
-    return Database.get<unknown[], { NUM: number }>(statements).then((result) => {
-      if (isNullish(result)) {
-        return false
-      }
-      return result.NUM > 0
-    })
+    const result = await Database.get<unknown[], { NUM: number }>(statements)
+    if (isNullish(result)) {
+      return false
+    }
+    return result.NUM > 0
   }
 }

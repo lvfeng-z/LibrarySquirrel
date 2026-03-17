@@ -28,7 +28,7 @@ export default class ForeignKeyConstraintError extends DatabaseSqlError {
     this.violatingValue = violatingValue
   }
 
-  public static isForeignKeyConstraintError(error: unknown) {
+  public static isForeignKeyConstraintError<T>(error: T | unknown): error is Error {
     return (
       (error as { code: string; message: string }).code === 'SQLITE_CONSTRAINT_TRIGGER' &&
       (error as { code: string; message: string }).message === 'FOREIGN KEY constraint failed'

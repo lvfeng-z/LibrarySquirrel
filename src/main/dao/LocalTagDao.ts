@@ -59,9 +59,8 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
            WHERE treeNode.level < @depth
          )
          SELECT * FROM treeNode`
-    return Database.all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth }).then(
-      (result) => this.toResultTypeDataList<LocalTagDTO>(result)
-    )
+    const result = await Database.all<unknown[], Record<string, unknown>>(statement, { rootId: rootId, depth: depth })
+    return this.toResultTypeDataList<LocalTagDTO>(result)
   }
 
   /**
@@ -80,9 +79,8 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
             JOIN parentNode ON local_tag.id = parentNode.base_local_tag_id
         )
         SELECT * FROM parentNode`
-    return Database.all<unknown[], Record<string, unknown>>(statement, { nodeId: nodeId }).then((result) =>
-      this.toResultTypeDataList<LocalTag>(result)
-    )
+    const result = await Database.all<unknown[], Record<string, unknown>>(statement, { nodeId: nodeId })
+    return this.toResultTypeDataList<LocalTag>(result)
   }
 
   /**
@@ -94,9 +92,8 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
                        FROM local_tag t1
                               INNER JOIN re_work_tag t2 ON t1.id = t2.local_tag_id
                        WHERE t2.work_id = ${workId}`
-    return Database.all<unknown[], Record<string, unknown>>(statement).then((runResult) =>
-      super.toResultTypeDataList<LocalTag>(runResult)
-    )
+    const runResult = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<LocalTag>(runResult)
   }
 
   /**
@@ -108,9 +105,8 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
                        FROM local_tag t1
                               INNER JOIN re_work_tag t2 ON t1.id = t2.local_tag_id
                        WHERE t2.work_id IN (${workIds.join(',')})`
-    return Database.all<unknown[], Record<string, unknown>>(statement).then((runResult) =>
-      super.toResultTypeDataList<LocalTagWithWorkId>(runResult)
-    )
+    const runResult = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return super.toResultTypeDataList<LocalTagWithWorkId>(runResult)
   }
 
   /**
@@ -149,10 +145,9 @@ export default class LocalTagDao extends BaseDao<LocalTagQueryDTO, LocalTag> {
     let statement = selectClause + ' ' + fromClause + ' ' + whereClause
     const sort = isNullish(page.query?.sort) ? [] : page.query.sort
     statement = await super.sortAndPage(statement, page, sort)
-    return Database.all<unknown[], Record<string, unknown>>(statement, modifiedQuery).then((rows) => {
-      page.data = super.toResultTypeDataList<LocalTag>(rows)
-      return page
-    })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
+    page.data = super.toResultTypeDataList<LocalTag>(rows)
+    return page
   }
 
   /**

@@ -25,22 +25,19 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                        FROM local_author t1
                               INNER JOIN re_work_author t2 ON t1.id = t2.local_author_id
                        WHERE t2.work_id IN (${workIds.join(',')})`
-    return Database
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => {
-        type relationShipType = RankedLocalAuthor & { workId: number }
-        const relationShips = this.toResultTypeDataList<relationShipType>(rows)
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    type relationShipType = RankedLocalAuthor & { workId: number }
+    const relationShips = this.toResultTypeDataList<relationShipType>(rows)
 
-        // 返回一个workId为键，相同workId的元素为数组为值的Map
-        return relationShips.reduce((map: Map<number, RankedLocalAuthor[]>, relationShip: relationShipType) => {
-          const workId = relationShip.workId
-          if (!map.has(workId)) {
-            map.set(workId, [])
-          }
-          map.get(workId)?.push(relationShip)
-          return map
-        }, new Map<number, RankedLocalAuthor[]>())
-      })
+    // 返回一个workId为键，相同workId的元素为数组为值的Map
+    return relationShips.reduce((map: Map<number, RankedLocalAuthor[]>, relationShip: relationShipType) => {
+      const workId = relationShip.workId
+      if (!map.has(workId)) {
+        map.set(workId, [])
+      }
+      map.get(workId)?.push(relationShip)
+      return map
+    }, new Map<number, RankedLocalAuthor[]>())
   }
 
   /**
@@ -53,9 +50,8 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                               INNER JOIN re_work_author t2 ON t1.id = t2.local_author_id
                               INNER JOIN work t3 ON t2.work_id = t3.id
                        WHERE t3.id = ${workId}`
-    return Database
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<RankedLocalAuthor>(runResult))
+    const runResult = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return this.toResultTypeDataList<RankedLocalAuthor>(runResult)
   }
 
   /**
@@ -68,8 +64,7 @@ export default class LocalAuthorDao extends BaseDao<LocalAuthorQueryDTO, LocalAu
                               INNER JOIN re_work_author t2 ON t1.id = t2.local_author_id
                               INNER JOIN work t3 ON t2.work_id = t3.id
                        WHERE t3.id IN (${workIds.join(',')})`
-    return Database
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((runResult) => super.toResultTypeDataList<RankedLocalAuthorWithWorkId>(runResult))
+    const runResult = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return this.toResultTypeDataList<RankedLocalAuthorWithWorkId>(runResult)
   }
 }

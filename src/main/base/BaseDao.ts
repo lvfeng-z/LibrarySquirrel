@@ -53,9 +53,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const keys = Object.keys(plainObject).map((key) => camelToSnakeCase(key))
     const valueKeys = Object.keys(plainObject).map((item) => `@${item}`)
     const statement = `INSERT INTO "${this.tableName}" (${keys}) VALUES (${valueKeys})`
-    return Database
-      .run(statement, plainObject)
-      .then((runResult) => runResult.lastInsertRowid as number)
+    const runResult = await Database.run(statement, plainObject)
+    return runResult.lastInsertRowid as number
   }
 
   /**
@@ -113,9 +112,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const statement = insertClause.concat(' ', valuesClause)
 
-    return Database
-      .run(statement, numberedProperties)
-      .then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement, plainObject)
+    return runResult.changes
   }
 
   /**
@@ -124,16 +122,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async deleteById(id: PrimaryKey): Promise<number> {
     const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" = ${id}`
-    return Database
-      .run(statement)
-      .then((runResult) => runResult.changes)
-      .catch((error) => {
-        if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
-          throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
-        } else {
-          throw error
-        }
-      })
+    try {
+      const runResult = await Database.run(statement)
+      return runResult.changes
+    } catch (error) {
+      if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
+        throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
+      } else {
+        throw error
+      }
+    }
   }
 
   /**
@@ -167,16 +165,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
     // 查询
     const nonUndefined = nonUndefinedValue(plainParams)
-    return Database
-      .run(statement, nonUndefined)
-      .then((runResult) => runResult.changes)
-      .catch((error) => {
-        if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
-          throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
-        } else {
-          throw error
-        }
-      })
+    try {
+      const runResult = await Database.run(statement, nonUndefined)
+      return runResult.changes
+    } catch (error) {
+      if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
+        throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
+      } else {
+        throw error
+      }
+    }
   }
 
   /**
@@ -188,9 +186,16 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const idsStr = ids.join(',')
     const statement = `DELETE FROM "${this.tableName}" WHERE "${BaseEntity.PK}" IN (${idsStr})`
-    return Database
-      .run(statement)
-      .then((runResult) => runResult.changes)
+    try {
+      const runResult = await Database.run(statement)
+      return runResult.changes
+    } catch (error) {
+      if (ForeignKeyConstraintError.isForeignKeyConstraintError(error)) {
+        throw new ForeignKeyDeleteError(error.message, error, statement, null, this.tableName)
+      } else {
+        throw error
+      }
+    }
   }
 
   /**
@@ -208,9 +213,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     const keys = Object.keys(existingValue)
     const setClauses = keys.map((item) => `${camelToSnakeCase(item)} = @${item}`)
     const statement = `UPDATE "${this.tableName}" SET ${setClauses} WHERE "${BaseEntity.PK}" = @${BaseEntity.PK}`
-    return Database
-      .run(statement, existingValue)
-      .then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement, existingValue)
+    return runResult.changes
   }
 
   /**
@@ -270,9 +274,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     })
 
     const statement = updateClause + ' SET ' + setClauses.join() + ' ' + whereClause
-    return Database
-      .run(statement, numberedProperties)
-      .then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement, numberedProperties)
+    return runResult.changes
   }
 
   /**
@@ -335,9 +338,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const statement = insertClause + ' ' + valuesClause + ' ' + excludedClauses.join(' ')
 
-    return Database
-      .run(statement, numberedProperties)
-      .then((runResult) => runResult.changes)
+    const runResult = await Database.run(statement, numberedProperties)
+    return runResult.changes
   }
 
   /**
@@ -346,17 +348,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
    */
   public async getById(id: PrimaryKey): Promise<Model | undefined> {
     const statement = `SELECT * FROM ${this.tableName} WHERE ${BaseEntity.PK} = @${BaseEntity.PK}`
-    return Database
-      .get<unknown[], Record<string, unknown>>(statement, {
-        [BaseEntity.PK]: id
-      })
-      .then((result) => {
-        if (notNullish(result)) {
-          return this.toResultTypeData<Model>(result)
-        } else {
-          return undefined
-        }
-      })
+    const result = await Database.get<unknown[], Record<string, unknown>>(statement, { [BaseEntity.PK]: id })
+    if (notNullish(result)) {
+      return this.toResultTypeData<Model>(result)
+    } else {
+      return undefined
+    }
   }
 
   /**
@@ -390,14 +387,12 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
     // 查询
     const nonUndefined = nonUndefinedValue(plainParams)
-    return Database
-      .get<unknown[], Record<string, unknown>>(statement, nonUndefined)
-      .then((row) => {
-        if (isNullish(row)) {
-          return undefined
-        }
-        return this.toResultTypeData<Model>(row)
-      })
+    const result = await Database.get<unknown[], Record<string, unknown>>(statement, nonUndefined)
+    if (notNullish(result)) {
+      return this.toResultTypeData<Model>(result)
+    } else {
+      return undefined
+    }
   }
 
   /**
@@ -434,13 +429,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
-    return Database
-      .all<unknown[], Record<string, unknown>>(statement, plainParams)
-      .then((rows) => {
-        // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
-        modifiedPage.data = this.toResultTypeDataList<Model>(rows)
-        return modifiedPage
-      })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, plainParams)
+    // 结果集中的元素的属性名从snakeCase转换为camelCase，并赋值给page.data
+    modifiedPage.data = this.toResultTypeDataList<Model>(rows)
+    return modifiedPage
   }
 
   /**
@@ -474,9 +466,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     }
     // 查询
     const nonUndefined = nonUndefinedValue(plainParams)
-    return Database
-      .all<unknown[], Record<string, unknown>>(statement, nonUndefined)
-      .then((rows) => this.toResultTypeDataList<Model>(rows))
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, nonUndefined)
+    return this.toResultTypeDataList<Model>(rows)
   }
 
   /**
@@ -489,9 +480,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     // 生成where字句
 
     // 查询
-    return Database
-      .all<unknown[], Record<string, unknown>>(statement)
-      .then((rows) => this.toResultTypeDataList<Model>(rows))
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    return this.toResultTypeDataList<Model>(rows)
   }
 
   /**
@@ -527,9 +517,8 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     // 查询
     const queryObj = toPlainParams(modifiedQuery)
-    return Database
-      .all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
-      .then((rows) => rows.map((row) => new SelectItem(row)))
+    const rows = await Database.all<unknown[], SelectItem>(statement, queryObj === undefined ? {} : queryObj)
+    return rows.map((row) => new SelectItem(row))
   }
 
   /**
@@ -590,13 +579,10 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
     if (notNullish(modifiedPage.query)) {
       plainParams = toPlainParams(modifiedPage.query)
     }
-    return Database
-      .all<unknown[], SelectItem>(statement, plainParams)
-      .then((rows) => {
-        const selectItems = rows.map((row) => new SelectItem(row))
-        const result = modifiedPage.transform<SelectItem>()
-        result.data = selectItems
-        return result
-      })
+    const rows = await Database.all<unknown[], SelectItem>(statement, plainParams)
+    const selectItems = rows.map((row) => new SelectItem(row))
+    const result = modifiedPage.transform<SelectItem>()
+    result.data = selectItems
+    return result
   }
 }

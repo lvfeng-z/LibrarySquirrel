@@ -167,13 +167,12 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
       query = toPlainParams(modifiedPage.query)
     }
 
-    return Database.all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query).then((rows) => {
-      const result = this.toResultTypeDataList<WorkFullDTO>(rows)
-      // 利用构造函数处理JSON字符串
-      modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, query === undefined ? {} : query)
+    const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+    // 利用构造函数处理JSON字符串
+    modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
 
-      return modifiedPage
-    })
+    return modifiedPage
   }
 
   /**
@@ -192,13 +191,12 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     const fromClause = `FROM work work_m ` + fromAndWhere.from
     const whereClause = fromAndWhere.where
     const statement = selectClause + fromClause + isBlank(whereClause) ? '' : `WHERE ${whereClause}`
-    return Database.all<unknown[], Record<string, unknown>>(statement).then((rows) => {
-      const result = this.toResultTypeDataList<WorkFullDTO>(rows)
-      // 利用构造函数处理JSON字符串
-      modifiedPage.data = result.map((workDTO) => new WorkFullDTO(workDTO))
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement)
+    const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+    // 利用构造函数处理JSON字符串
+    modifiedPage.data = result.map((workDTO) => new WorkFullDTO(workDTO))
 
-      return modifiedPage
-    })
+    return modifiedPage
   }
 
   private generateClause(searchConditions: SearchCondition[]): { from: string; where: string } {
@@ -319,11 +317,10 @@ export class WorkDao extends BaseDao<WorkQueryDTO, Work> {
     const sort = page.query?.sort ?? []
     statement = await this.sortAndPage(statement, modifiedPage, sort, fromClause)
 
-    return Database.all<unknown[], Record<string, unknown>>(statement, {}).then((rows) => {
-      const result = this.toResultTypeDataList<WorkFullDTO>(rows)
-      modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
-      return modifiedPage
-    })
+    const rows = await Database.all<unknown[], Record<string, unknown>>(statement, {})
+    const result = this.toResultTypeDataList<WorkFullDTO>(rows)
+    modifiedPage.data = result.map((raw) => new WorkFullDTO(raw))
+    return modifiedPage
   }
 
   public async listBySiteIdAndSiteWorkIds(siteIdAndSiteWorkIds: { siteId: number; siteWorkId: string }[]): Promise<Work[]> {
