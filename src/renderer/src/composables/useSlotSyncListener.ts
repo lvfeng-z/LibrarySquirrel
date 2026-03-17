@@ -6,6 +6,19 @@ import type { MenuSlotItem } from '@renderer/store/SlotRegistryStore'
  * 从主进程同步过来的位点配置类型
  * 与主进程的 SlotTypes 对应
  */
+
+/**
+ * 组件内容类型 (仅用于 contentType 为 'component' 时)
+ * - 字符串: 仅包含js路径 (向后兼容)
+ * - 对象: 包含js路径和可选的css路径
+ */
+type SyncComponentContent =
+  | string
+  | {
+      js: string
+      css?: string
+    }
+
 interface SyncSlotConfig {
   id: string
   pluginId: number
@@ -16,7 +29,7 @@ interface SyncSlotConfig {
   width?: number
   height?: number
   contentType: 'component' | 'code'
-  content: string
+  content: SyncComponentContent
   props?: Record<string, unknown>
   replaceViewId?: string
   icon?: string
@@ -39,7 +52,7 @@ interface SyncMenuChildConfig {
  * 转换视图位点配置
  */
 function convertToViewSlot(config: SyncSlotConfig): ViewSlot {
-  const componentLoader = () => loadPluginComponent(config.contentType, config.content)
+  const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginId)
   return {
     id: config.id,
     name: config.name,
@@ -58,7 +71,7 @@ function convertToEmbedSlot(config: SyncSlotConfig): EmbedSlot {
   return {
     id: config.id,
     position: config.position as 'topbar' | 'statusbar' | 'toolbar',
-    component: () => loadPluginComponent(config.contentType, config.content),
+    component: () => loadPluginComponent(config.contentType, config.content, config.pluginId),
     props: config.props,
     order: config.order ?? 100
   }
@@ -73,7 +86,7 @@ function convertToPanelSlot(config: SyncSlotConfig): PanelSlot {
     position: config.position as 'left-sidebar' | 'right-sidebar' | 'bottom',
     width: config.width,
     height: config.height,
-    component: () => loadPluginComponent(config.contentType, config.content),
+    component: () => loadPluginComponent(config.contentType, config.content, config.pluginId),
     props: config.props,
     order: config.order ?? 100
   }
@@ -109,18 +122,74 @@ function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
 }
 
 /**
- * 根据内容类型加载插件组件
+ * 加载插件CSS样式
+ * @param pluginId 插件ID，用于标识CSS
+ * @param cssPath CSS文件路径
  */
-async function loadPluginComponent(contentType: string, content: string): Promise<unknown> {
+async function loadPluginStyles(pluginId: number, cssPath: string): Promise<void> {
+  // 检查CSS是否已加载
+  const existingLink = document.querySelector(`link[data-plugin-id="${pluginId}"][data-css-path="${cssPath}"]`)
+  if (existingLink) {
+    return
+  }
+
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.type = 'text/css'
+    link.href = cssPath
+    link.setAttribute('data-plugin-id', String(pluginId))
+    link.setAttribute('data-css-path', cssPath)
+
+    link.onload = () => {
+      resolve()
+    }
+    link.onerror = () => {
+      reject(new Error(`CSS加载失败: ${cssPath}`))
+    }
+
+    document.head.appendChild(link)
+  })
+}
+
+/**
+ * 卸载插件CSS样式
+ * @param pluginId 插件ID
+ */
+function unloadPluginStyles(pluginId: number): void {
+  const links = document.querySelectorAll(`link[data-plugin-id="${pluginId}"]`)
+  links.forEach((link) => {
+    link.remove()
+  })
+}
+
+/**
+ * 根据内容类型加载插件组件
+ * @param contentType 内容类型
+ * @param content 内容(字符串或对象)
+ * @param pluginId 插件ID
+ */
+async function loadPluginComponent(contentType: string, content: SyncComponentContent, pluginId: number): Promise<unknown> {
   if (contentType === 'component') {
+    const protocolPrefix = 'resource://plugin/'
+    // 如果content是对象且包含css路径，先加载CSS
+    if (typeof content === 'object' && content.css) {
+      await loadPluginStyles(pluginId, protocolPrefix + content.css)
+    }
+
+    // 获取js路径
+    const jsPath = typeof content === 'string' ? content : protocolPrefix + content.js
+
     // Vue 组件文件: dynamic import
     // 插件组件通过 resource:// 协议访问
-    return import(/* @vite-ignore */ content)
+    return import(/* @vite-ignore */ jsPath)
   }
 
   if (contentType === 'code') {
     // 代码片段: 执行代码并返回 Vue 组件
-    return createCodeComponent(content)
+    // content对于code类型应该是字符串
+    const codeContent = typeof content === 'string' ? content : content.js
+    return createCodeComponent(codeContent)
   }
 
   throw new Error(`未知的内容类型: ${contentType}`)
@@ -174,7 +243,12 @@ export function initSlotSyncListener() {
 
   // 监听位点注销
   window.electron.onSlotUnregister((...args: unknown[]) => {
-    const data = args[0] as { id: string; type: string }
+    const data = args[0] as { id: string; type: string; pluginId: number }
+
+    // 卸载插件CSS样式
+    if (data.pluginId) {
+      unloadPluginStyles(data.pluginId)
+    }
 
     if (data.type === 'view') {
       store.unregisterViewSlot(data.id)

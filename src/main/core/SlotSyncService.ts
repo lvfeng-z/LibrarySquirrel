@@ -26,7 +26,9 @@ const registeredSlots = new Map<string, SlotConfig>()
 class SlotSyncService {
   private static instance: SlotSyncService
 
-  private constructor() {}
+  private constructor() {
+    /* empty */
+  }
 
   static getInstance(): SlotSyncService {
     if (!SlotSyncService.instance) {
@@ -52,7 +54,7 @@ class SlotSyncService {
     if (registeredSlots.has(slotId)) {
       const config = registeredSlots.get(slotId)
       registeredSlots.delete(slotId)
-      this.syncToRenderer(SlotEvent.UNREGISTER, { id: slotId, type: config?.type })
+      this.syncToRenderer(SlotEvent.UNREGISTER, { id: slotId, type: config?.type, pluginId: config?.pluginId })
       LogUtil.info('SlotSyncService', `注销位点: ${slotId}`)
     }
   }

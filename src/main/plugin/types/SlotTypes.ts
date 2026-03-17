@@ -6,6 +6,18 @@
 /** 位点内容类型 */
 export type SlotContentType = 'component' | 'code'
 
+/**
+ * 组件内容类型 (仅用于 contentType 为 'component' 时)
+ * - 字符串: 仅包含js路径 (向后兼容)
+ * - 对象: 包含js路径和可选的css路径
+ */
+export type ComponentContent =
+  | string
+  | {
+      js: string
+      css?: string
+    }
+
 /** 位点基础配置 */
 export interface BaseSlotConfig {
   /** 唯一标识: "plugin-{pluginId}-{name}" */
@@ -26,8 +38,8 @@ export interface EmbedSlotConfig extends BaseSlotConfig {
   position: 'topbar' | 'statusbar' | 'toolbar'
   /** 内容类型 */
   contentType: SlotContentType
-  /** 内容: 组件路径 / 代码片段 */
-  content: string
+  /** 内容: 代码片段 / 组件内容对象(包含js和css路径) */
+  content: ComponentContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
 }
@@ -44,8 +56,8 @@ export interface PanelSlotConfig extends BaseSlotConfig {
   height?: number
   /** 内容类型 */
   contentType: SlotContentType
-  /** 内容: 组件路径 / 代码片段 */
-  content: string
+  /** 内容: 代码片段 / 组件内容对象(包含js和css路径) */
+  content: ComponentContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
   /** 替换的主程序视图ID (可选) */
@@ -60,8 +72,8 @@ export interface ViewSlotConfig extends BaseSlotConfig {
   icon?: string
   /** 内容类型 */
   contentType: SlotContentType
-  /** 内容: 组件路径 / 代码片段 */
-  content: string
+  /** 内容: 代码片段 / 组件内容对象(包含js和css路径) */
+  content: ComponentContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
 }
