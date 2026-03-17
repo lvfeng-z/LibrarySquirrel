@@ -90,5 +90,17 @@ export interface MenuSlotConfig extends BaseSlotConfig {
   children?: MenuSlotConfig[]
 }
 
+/** 站点浏览器列表位点配置 (对应 siteBrowserList) */
+export interface SiteBrowserListSlotConfig extends BaseSlotConfig {
+  /** 位点类型 */
+  type: 'siteBrowserList'
+  /** 贡献点id（站点浏览器在插件内的唯一标识） */
+  contributionId: string
+  /** 插件公开ID */
+  pluginPublicId: string
+  /** 图片路径 */
+  imagePath: string
+}
+
 /** 所有位点配置的联合类型 */
-export type SlotConfig = EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig
+export type SlotConfig = EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig | SiteBrowserListSlotConfig

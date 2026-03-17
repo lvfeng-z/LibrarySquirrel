@@ -1,6 +1,6 @@
 import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
 import type { ViewSlot, EmbedSlot, PanelSlot } from '@renderer/model/slot'
-import type { MenuSlotItem } from '@renderer/store/SlotRegistryStore'
+import type { MenuSlotItem, SiteBrowserListSlotItem } from '@renderer/store/SlotRegistryStore'
 
 /**
  * 从主进程同步过来的位点配置类型
@@ -24,7 +24,7 @@ interface SyncSlotConfig {
   pluginId: number
   name: string
   order?: number
-  type: 'embed' | 'panel' | 'view' | 'menu'
+  type: 'embed' | 'panel' | 'view' | 'menu' | 'siteBrowserList'
   position?: string
   width?: number
   height?: number
@@ -36,6 +36,10 @@ interface SyncSlotConfig {
   // 菜单位点专用
   viewId?: string
   children?: SyncMenuChildConfig[]
+  // 站点浏览器列表位点专用
+  contributionId?: string
+  pluginPublicId?: string
+  imagePath?: string
 }
 
 /** 子菜单配置 */
@@ -118,6 +122,21 @@ function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
     order: config.order ?? 100,
     viewId: config.viewId,
     children: convertChildren(config.children)
+  }
+}
+
+/**
+ * 转换站点浏览器列表位点配置
+ */
+function convertToSiteBrowserListSlot(config: SyncSlotConfig): SiteBrowserListSlotItem {
+  return {
+    id: config.id,
+    pluginId: config.pluginId,
+    name: config.name,
+    order: config.order ?? 100,
+    contributionId: config.contributionId ?? '',
+    pluginPublicId: config.pluginPublicId ?? '',
+    imagePath: config.imagePath ?? ''
   }
 }
 
@@ -238,6 +257,8 @@ export function initSlotSyncListener() {
       if (config.replaceViewId) {
         store.replaceView(config.id, config.replaceViewId)
       }
+    } else if (config.type === 'siteBrowserList') {
+      store.registerSiteBrowserSlot(convertToSiteBrowserListSlot(config))
     }
   })
 
@@ -258,6 +279,8 @@ export function initSlotSyncListener() {
       store.unregisterEmbedSlot(data.id)
     } else if (data.type === 'panel') {
       store.unregisterPanelSlot(data.id)
+    } else if (data.type === 'siteBrowserList') {
+      store.unregisterSiteBrowserSlot(data.id)
     }
   })
 
@@ -274,6 +297,8 @@ export function initSlotSyncListener() {
         store.registerEmbedSlot(convertToEmbedSlot(config))
       } else if (config.type === 'panel') {
         store.registerPanelSlot(convertToPanelSlot(config))
+      } else if (config.type === 'siteBrowserList') {
+        store.registerSiteBrowserSlot(convertToSiteBrowserListSlot(config))
       }
     })
   })
@@ -290,6 +315,8 @@ export function initSlotSyncListener() {
         store.registerEmbedSlot(convertToEmbedSlot(syncConfig))
       } else if (syncConfig.type === 'panel') {
         store.registerPanelSlot(convertToPanelSlot(syncConfig))
+      } else if (syncConfig.type === 'siteBrowserList') {
+        store.registerSiteBrowserSlot(convertToSiteBrowserListSlot(syncConfig))
       }
     })
   })

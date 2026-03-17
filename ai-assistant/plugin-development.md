@@ -88,6 +88,41 @@ class MySiteBrowser implements SiteBrowser {
 }
 ```
 
+> **⚠️ 重要区分：站点浏览器注册 vs 站点浏览器列表位点**
+>
+> 这两个概念容易被混淆，请注意区分：
+>
+> | 概念 | API | 用途 |
+> |------|-----|------|
+> | **站点浏览器** | `app.registerSiteBrowser()` | 注册站点浏览器本身（业务数据），使系统知道这个插件提供了站点浏览器功能 |
+> | **站点浏览器列表位点** | `slots.registerSiteBrowserSlot()` | 在"站点浏览"页面的卡片列表中添加一个入口（UI），让用户能看到并点击进入 |
+>
+> **两者必须同时注册**，站点浏览器功能才能完整工作：
+> 1. 先用 `app.registerSiteBrowser()` 注册站点浏览器
+> 2. 再用 `slots.registerSiteBrowserSlot()` 在 UI 中添加入口
+>
+> ```javascript
+> // 激活函数中
+> async activate() {
+>     // 1. 注册站点浏览器（业务功能）
+>     await this.context.app.registerSiteBrowser({
+>         contributionId: 'main',
+>         pluginPublicId: this.manifest.id,
+>         name: 'PixivSiteBrowser',
+>     })
+>
+>     // 2. 注册站点浏览器列表位点（UI入口）
+>     this.context.slots.registerSiteBrowserSlot({
+>         id: `siteBrowser-${this.manifest.id}-main`,
+>         contributionId: 'main',
+>         pluginPublicId: this.manifest.id,
+>         name: 'PixivSiteBrowser',
+>         imagePath: '/plugins/icon.png',
+>         order: 0
+>     })
+> }
+> ```
+
 ## 插件管理器
 
 `PluginManager` 负责插件的加载、缓存和生命周期管理：

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
-import { onMounted, ref, toRaw, UnwrapRef } from 'vue'
+import { computed, onMounted, ref, toRaw, UnwrapRef } from 'vue'
 import { Picture } from '@element-plus/icons-vue'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import Page from '@renderer/model/util/Page.ts'
+import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
 
 // 站点浏览器数据接口
 interface SiteBrowserItem {
@@ -14,11 +15,48 @@ interface SiteBrowserItem {
   pluginId: number
 }
 
-// 站点浏览器列表
+// 站点浏览器列表（从后端 API 获取）
 const siteBrowserList = ref<SiteBrowserItem[]>([])
 
 // 分页参数
 const page = ref<UnwrapRef<Page<object, SiteBrowserItem>>>(new Page<object, SiteBrowserItem>())
+
+// 位点存储
+const slotStore = useSlotRegistryStore()
+
+// 站点浏览器列表（从位点获取）
+const siteBrowserSlots = computed(() => {
+  return slotStore.allSiteBrowserSlots.map((slot) => ({
+    pluginPublicId: slot.pluginPublicId,
+    contributionId: slot.contributionId,
+    name: slot.name,
+    imagePath: slot.imagePath,
+    pluginId: slot.pluginId
+  }))
+})
+
+// 合并两个数据源的列表
+const mergedSiteBrowserList = computed(() => {
+  const apiList = siteBrowserList.value
+  const slotList = siteBrowserSlots.value
+
+  // 使用 Map 去重，基于 pluginPublicId + contributionId 作为 key
+  const mergedMap = new Map<string, SiteBrowserItem>()
+
+  // 先添加 API 数据
+  for (const item of apiList) {
+    const key = `${item.pluginPublicId}-${item.contributionId}`
+    mergedMap.set(key, item)
+  }
+
+  // 再添加位点数据（位点数据优先级更高，可覆盖）
+  for (const item of slotList) {
+    const key = `${item.pluginPublicId}-${item.contributionId}`
+    mergedMap.set(key, item)
+  }
+
+  return Array.from(mergedMap.values())
+})
 
 // 查询站点浏览器列表
 async function querySiteBrowserList() {
@@ -54,7 +92,7 @@ async function handleCardClick(item: SiteBrowserItem) {
         <el-scrollbar>
           <div class="site-browser-grid">
             <div
-              v-for="item in siteBrowserList"
+              v-for="item in mergedSiteBrowserList"
               :key="item.pluginPublicId + item.contributionId"
               class="site-browser-card"
               @click="handleCardClick(item)"

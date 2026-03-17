@@ -18,6 +18,17 @@ export interface MenuSlotItem {
   pageStateKey?: string
 }
 
+// 站点浏览器列表位点项类型
+export interface SiteBrowserListSlotItem {
+  id: string
+  pluginId: number
+  name: string
+  order?: number
+  contributionId: string
+  pluginPublicId: string
+  imagePath: string
+}
+
 // Router 实例管理
 let routerInstance: Router | null = null
 
@@ -42,6 +53,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     embedSlots: new Map<string, EmbedSlot>(),
     panelSlots: new Map<string, PanelSlot>(),
     menuSlots: new Map<string, MenuSlotItem>(),
+    siteBrowserSlots: new Map<string, SiteBrowserListSlotItem>(),
     activeViewId: ref<string | null>(null),
     // 视图替换状态
     replacedViewId: ref<string | null>(null)
@@ -72,6 +84,11 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     // 获取所有菜单项（已排序）
     allMenuSlots: (state): MenuSlotItem[] => {
       return Array.from(state.menuSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
+    },
+
+    // 获取所有站点浏览器列表位点（已排序）
+    allSiteBrowserSlots: (state): SiteBrowserListSlotItem[] => {
+      return Array.from(state.siteBrowserSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
     },
 
     // 获取用于菜单的路由配置
@@ -209,12 +226,30 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.menuSlots.delete(id)
     },
 
+    // 注册站点浏览器列表位点
+    registerSiteBrowserSlot(item: SiteBrowserListSlotItem) {
+      this.siteBrowserSlots.set(item.id, item)
+    },
+
+    // 批量注册站点浏览器列表位点
+    registerSiteBrowserSlots(items: SiteBrowserListSlotItem[]) {
+      items.forEach((item) => {
+        this.siteBrowserSlots.set(item.id, item)
+      })
+    },
+
+    // 取消注册站点浏览器列表位点
+    unregisterSiteBrowserSlot(id: string) {
+      this.siteBrowserSlots.delete(id)
+    },
+
     // 重置所有注册（用于测试或清理）
     reset() {
       this.viewSlots.clear()
       this.embedSlots.clear()
       this.panelSlots.clear()
       this.menuSlots.clear()
+      this.siteBrowserSlots.clear()
       this.activeViewId = null
       this.replacedViewId = null
     }

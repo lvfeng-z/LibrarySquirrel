@@ -29,7 +29,14 @@ import PluginWithContribution from '@shared/model/domain/PluginWithContribution.
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 import TaskService from '../service/TaskService.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
-import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig, MenuSlotConfig, SlotConfig } from './types/SlotTypes.ts'
+import type {
+  EmbedSlotConfig,
+  PanelSlotConfig,
+  ViewSlotConfig,
+  MenuSlotConfig,
+  SiteBrowserListSlotConfig,
+  SlotConfig
+} from './types/SlotTypes.ts'
 
 /**
  * 缓存的插件实例
@@ -242,6 +249,10 @@ export default class PluginManager {
           const fullConfig: MenuSlotConfig = { ...config, pluginId, type: 'menu' }
           getSlotSyncService().registerSlot(fullConfig)
         },
+        registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginId' | 'type'>) => {
+          const fullConfig: SiteBrowserListSlotConfig = { ...config, pluginId, type: 'siteBrowserList' }
+          getSlotSyncService().registerSlot(fullConfig)
+        },
         unregisterSlot: (slotId: string) => {
           getSlotSyncService().unregisterSlot(slotId)
         },
@@ -255,6 +266,9 @@ export default class PluginManager {
             }
             if ('viewId' in config || 'children' in config) {
               return { ...config, pluginId, type: 'menu' as const }
+            }
+            if ('contributionId' in config || 'pluginPublicId' in config) {
+              return { ...config, pluginId, type: 'siteBrowserList' as const }
             }
             return { ...config, pluginId, type: 'view' as const }
           })
