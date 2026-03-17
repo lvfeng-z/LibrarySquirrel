@@ -113,6 +113,6 @@ export function iniListener() {
 
   window.electron.ipcRenderer.on('goto-page', (_event, config: GotoPageConfig) => askGotoPage(config))
 
-  // 初始化位点同步监听器
+  // 初始化插槽同步监听器
   initSlotSyncListener()
 }

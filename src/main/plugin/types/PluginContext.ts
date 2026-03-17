@@ -56,21 +56,21 @@ export interface PluginContext {
   /** 插件数据 */
   pluginData: unknown
 
-  /** 位点注册 API - 允许插件贡献 UI 元素 */
+  /** 插槽注册 API - 允许插件贡献 UI 元素 */
   slots: {
-    /** 注册嵌入位点 (对应 EmbedSlot) */
+    /** 注册嵌入插槽 (对应 EmbedSlot) */
     registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginId' | 'type'>) => void
-    /** 注册面板位点 (对应 PanelSlot) */
+    /** 注册面板插槽 (对应 PanelSlot) */
     registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => void
-    /** 注册视图位点 (对应 ViewSlot) */
+    /** 注册视图插槽 (对应 ViewSlot) */
     registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => void
-    /** 注册菜单位点 (对应 MenuSlot) */
+    /** 注册菜单插槽 (对应 MenuSlot) */
     registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => void
-    /** 注册站点浏览器列表位点 (对应 siteBrowserList) */
+    /** 注册站点浏览器列表插槽 (对应 siteBrowserList) */
     registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginId' | 'type'>) => void
-    /** 注销位点 */
+    /** 注销插槽 */
     unregisterSlot: (slotId: string) => void
-    /** 批量注册位点 */
+    /** 批量注册插槽 */
     registerSlots: (
       configs: Omit<
         EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig | SiteBrowserListSlotConfig,

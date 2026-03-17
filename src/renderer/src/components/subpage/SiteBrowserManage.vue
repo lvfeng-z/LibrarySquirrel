@@ -21,10 +21,10 @@ const siteBrowserList = ref<SiteBrowserItem[]>([])
 // 分页参数
 const page = ref<UnwrapRef<Page<object, SiteBrowserItem>>>(new Page<object, SiteBrowserItem>())
 
-// 位点存储
+// 插槽存储
 const slotStore = useSlotRegistryStore()
 
-// 站点浏览器列表（从位点获取）
+// 站点浏览器列表（从插槽获取）
 const siteBrowserSlots = computed(() => {
   return slotStore.allSiteBrowserSlots.map((slot) => ({
     pluginPublicId: slot.pluginPublicId,
@@ -49,7 +49,7 @@ const mergedSiteBrowserList = computed(() => {
     mergedMap.set(key, item)
   }
 
-  // 再添加位点数据（位点数据优先级更高，可覆盖）
+  // 再添加插槽数据（插槽数据优先级更高，可覆盖）
   for (const item of slotList) {
     const key = `${item.pluginPublicId}-${item.contributionId}`
     mergedMap.set(key, item)

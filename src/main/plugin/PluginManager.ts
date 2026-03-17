@@ -398,7 +398,7 @@ export default class PluginManager {
     } finally {
       // 清除激活类型
       cached.activationType = undefined
-      // 注销插件贡献的所有位点
+      // 注销插件贡献的所有插槽
       getSlotSyncService().unregisterSlotsByPluginId(pluginId)
     }
   }

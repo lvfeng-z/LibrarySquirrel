@@ -18,12 +18,12 @@
    - 维护插件 CSS 加载状态，避免重复加载
 
 3. **CSS 清理机制**
-   - 插件失效（位点注销）时，移除该插件提供的所有 CSS
+   - 插件失效（插槽注销）时，移除该插件提供的所有 CSS
    - 通过 `data-plugin-id` 属性查找并移除对应的 `<link>` 标签
 
 ### 用户场景
 
-1. 插件开发者注册位点时，传入包含 js 和 css 路径的对象：
+1. 插件开发者注册插槽时，传入包含 js 和 css 路径的对象：
    ```typescript
    context.slots.registerViewSlot({
      id: 'my-plugin-view',
@@ -36,7 +36,7 @@
    })
    ```
 
-2. 位点注销时，CSS 自动清理：
+2. 插槽注销时，CSS 自动清理：
    ```typescript
    context.slots.unregisterSlot('my-plugin-view')
    // 自动移除对应的 <link> 标签
@@ -63,7 +63,7 @@
 
 ### 涉及模块
 
-- `src/main/plugin/types/SlotTypes.ts` - 主进程位点类型定义
+- `src/main/plugin/types/SlotTypes.ts` - 主进程插槽类型定义
 - `src/renderer/src/composables/useSlotSyncListener.ts` - 渲染进程组件加载逻辑
 
 ### 技术要点
@@ -99,7 +99,7 @@
    - 新增 `loadPluginStyles` 函数：加载 CSS 文件
    - 新增 `unloadPluginStyles` 函数：移除 CSS 文件
    - 修改 `loadPluginComponent` 函数：先加载 CSS，再加载组件
-   - 修改位点注销逻辑：调用 `unloadPluginStyles`
+   - 修改插槽注销逻辑：调用 `unloadPluginStyles`
 
 ### Phase 3: 类型同步
 
@@ -111,7 +111,7 @@
 - [ ] `content` 字段支持字符串和对象两种形式
 - [ ] 使用 `<link>` 标签加载 CSS，且带有 `data-plugin-id` 属性
 - [ ] CSS 在组件 JS 加载之前完成加载
-- [ ] 位点注销时自动移除对应的 CSS
+- [ ] 插槽注销时自动移除对应的 CSS
 - [ ] 向后兼容：原有的字符串形式仍然正常工作
 - [ ] 类型检查通过 (`yarn typecheck`)
 - [ ] ESLint 检查通过 (`yarn lint`)

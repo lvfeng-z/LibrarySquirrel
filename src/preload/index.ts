@@ -158,7 +158,7 @@ const slotEventHandlers = {
   onSlotBatchRegister: (callback: (...args: unknown[]) => void) => {
     Electron.ipcRenderer.on('slot-batch-register', (_event, ...args) => callback(...args))
   },
-  // 获取所有已注册的位点
+  // 获取所有已注册的插槽
   getAllSlots: () => Electron.ipcRenderer.invoke('slot-getAllSlots')
 }
 

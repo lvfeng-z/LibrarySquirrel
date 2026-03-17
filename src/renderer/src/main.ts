@@ -42,7 +42,7 @@ setRouterInstance(router)
 // 初始化内置菜单（在 pinia store 初始化之后）
 initBuiltinMenus()
 
-// 初始化插槽同步监听器（监听主进程发来的位点注册消息）
+// 初始化插槽同步监听器（监听主进程发来的插槽注册消息）
 initSlotSyncListener()
 
 app.mount('#app')

@@ -18,7 +18,7 @@ export interface MenuSlotItem {
   pageStateKey?: string
 }
 
-// 站点浏览器列表位点项类型
+// 站点浏览器列表插槽项类型
 export interface SiteBrowserListSlotItem {
   id: string
   pluginId: number
@@ -86,7 +86,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       return Array.from(state.menuSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
     },
 
-    // 获取所有站点浏览器列表位点（已排序）
+    // 获取所有站点浏览器列表插槽（已排序）
     allSiteBrowserSlots: (state): SiteBrowserListSlotItem[] => {
       return Array.from(state.siteBrowserSlots.values()).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
     },
@@ -113,7 +113,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
   },
 
   actions: {
-    // 注册视图位点
+    // 注册视图插槽
     registerViewSlot(slot: ViewSlot) {
       this.viewSlots.set(slot.id, slot)
 
@@ -128,7 +128,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       }
     },
 
-    // 注册视图位点并同步到路由
+    // 注册视图插槽并同步到路由
     registerViewSlotWithRoute(slot: ViewSlot) {
       this.registerViewSlot(slot)
 
@@ -143,7 +143,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       }
     },
 
-    // 取消注册视图位点
+    // 取消注册视图插槽
     unregisterViewSlot(id: string) {
       const slot = this.viewSlots.get(id)
       // 如果是插件视图且 router 可用，自动移除路由
@@ -157,23 +157,23 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.viewSlots.delete(id)
     },
 
-    // 注册微件位点
-    // 注册嵌入位点
+    // 注册微件插槽
+    // 注册嵌入插槽
     registerEmbedSlot(slot: EmbedSlot) {
       this.embedSlots.set(slot.id, slot)
     },
 
-    // 取消注册嵌入位点
+    // 取消注册嵌入插槽
     unregisterEmbedSlot(id: string) {
       this.embedSlots.delete(id)
     },
 
-    // 注册面板位点
+    // 注册面板插槽
     registerPanelSlot(slot: PanelSlot) {
       this.panelSlots.set(slot.id, slot)
     },
 
-    // 取消注册面板位点
+    // 取消注册面板插槽
     unregisterPanelSlot(id: string) {
       this.panelSlots.delete(id)
     },
@@ -193,7 +193,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.activeViewId = null
     },
 
-    // 替换视图 (面板位点替换主程序页面)
+    // 替换视图 (面板插槽替换主程序页面)
     replaceView(panelSlotId: string, originalViewId: string) {
       // 记录被替换的视图ID
       this.replacedViewId = originalViewId
@@ -209,36 +209,36 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       }
     },
 
-    // 注册菜单位点
+    // 注册菜单插槽
     registerMenuSlot(item: MenuSlotItem) {
       this.menuSlots.set(item.id, item)
     },
 
-    // 批量注册菜单位点
+    // 批量注册菜单插槽
     registerMenuSlots(items: MenuSlotItem[]) {
       items.forEach((item) => {
         this.menuSlots.set(item.id, item)
       })
     },
 
-    // 取消注册菜单位点
+    // 取消注册菜单插槽
     unregisterMenuSlot(id: string) {
       this.menuSlots.delete(id)
     },
 
-    // 注册站点浏览器列表位点
+    // 注册站点浏览器列表插槽
     registerSiteBrowserSlot(item: SiteBrowserListSlotItem) {
       this.siteBrowserSlots.set(item.id, item)
     },
 
-    // 批量注册站点浏览器列表位点
+    // 批量注册站点浏览器列表插槽
     registerSiteBrowserSlots(items: SiteBrowserListSlotItem[]) {
       items.forEach((item) => {
         this.siteBrowserSlots.set(item.id, item)
       })
     },
 
-    // 取消注册站点浏览器列表位点
+    // 取消注册站点浏览器列表插槽
     unregisterSiteBrowserSlot(id: string) {
       this.siteBrowserSlots.delete(id)
     },

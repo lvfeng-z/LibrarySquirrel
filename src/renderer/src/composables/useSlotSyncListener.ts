@@ -3,7 +3,7 @@ import type { ViewSlot, EmbedSlot, PanelSlot } from '@renderer/model/slot'
 import type { MenuSlotItem, SiteBrowserListSlotItem } from '@renderer/store/SlotRegistryStore'
 
 /**
- * 从主进程同步过来的位点配置类型
+ * 从主进程同步过来的插槽配置类型
  * 与主进程的 SlotTypes 对应
  */
 
@@ -33,10 +33,10 @@ interface SyncSlotConfig {
   props?: Record<string, unknown>
   replaceViewId?: string
   icon?: string
-  // 菜单位点专用
+  // 菜单插槽专用
   viewId?: string
   children?: SyncMenuChildConfig[]
-  // 站点浏览器列表位点专用
+  // 站点浏览器列表插槽专用
   contributionId?: string
   pluginPublicId?: string
   imagePath?: string
@@ -53,7 +53,7 @@ interface SyncMenuChildConfig {
 }
 
 /**
- * 转换视图位点配置
+ * 转换视图插槽配置
  */
 function convertToViewSlot(config: SyncSlotConfig): ViewSlot {
   const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginId)
@@ -69,7 +69,7 @@ function convertToViewSlot(config: SyncSlotConfig): ViewSlot {
 }
 
 /**
- * 转换微件位点配置
+ * 转换微件插槽配置
  */
 function convertToEmbedSlot(config: SyncSlotConfig): EmbedSlot {
   return {
@@ -82,7 +82,7 @@ function convertToEmbedSlot(config: SyncSlotConfig): EmbedSlot {
 }
 
 /**
- * 转换面板位点配置
+ * 转换面板插槽配置
  */
 function convertToPanelSlot(config: SyncSlotConfig): PanelSlot {
   return {
@@ -97,7 +97,7 @@ function convertToPanelSlot(config: SyncSlotConfig): PanelSlot {
 }
 
 /**
- * 转换菜单位点配置
+ * 转换菜单插槽配置
  */
 function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
   // 递归转换子菜单
@@ -126,7 +126,7 @@ function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
 }
 
 /**
- * 转换站点浏览器列表位点配置
+ * 转换站点浏览器列表插槽配置
  */
 function convertToSiteBrowserListSlot(config: SyncSlotConfig): SiteBrowserListSlotItem {
   return {
@@ -232,13 +232,13 @@ function createCodeComponent(code: string): Promise<() => unknown> {
 }
 
 /**
- * 初始化位点同步监听器
- * 监听主进程发来的位点注册/注销消息
+ * 初始化插槽同步监听器
+ * 监听主进程发来的插槽注册/注销消息
  */
 export function initSlotSyncListener() {
   const store = useSlotRegistryStore()
 
-  // 监听位点注册
+  // 监听插槽注册
   window.electron.onSlotRegister((...args: unknown[]) => {
     const config = args[0] as SyncSlotConfig
 
@@ -262,7 +262,7 @@ export function initSlotSyncListener() {
     }
   })
 
-  // 监听位点注销
+  // 监听插槽注销
   window.electron.onSlotUnregister((...args: unknown[]) => {
     const data = args[0] as { id: string; type: string; pluginId: number }
 
@@ -284,7 +284,7 @@ export function initSlotSyncListener() {
     }
   })
 
-  // 监听批量位点注册
+  // 监听批量插槽注册
   window.electron.onSlotBatchRegister((...args: unknown[]) => {
     const configs = args[0] as SyncSlotConfig[]
 
@@ -303,7 +303,7 @@ export function initSlotSyncListener() {
     })
   })
 
-  // 同步所有已注册的位点（插件激活时可能渲染进程还未准备好）
+  // 同步所有已注册的插槽（插件激活时可能渲染进程还未准备好）
   window.electron.getAllSlots().then((slots: unknown[]) => {
     slots.forEach((config: unknown) => {
       const syncConfig = config as SyncSlotConfig

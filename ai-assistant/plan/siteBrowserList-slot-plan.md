@@ -1,36 +1,36 @@
-# 站点浏览器列表位点开发计划
+# 站点浏览器列表插槽开发计划
 
 ## 需求概述
 
-将插件注册站点浏览器时修改 UI 的功能分离出来，作为一个与 menu 同级的 UI 类型 `siteBrowserList`。该位点类型允许插件在站点浏览器列表页面中注册自己的入口卡片。
+将插件注册站点浏览器时修改 UI 的功能分离出来，作为一个与 menu 同级的 UI 类型 `siteBrowserList`。该插槽类型允许插件在站点浏览器列表页面中注册自己的入口卡片。
 
 ## 需求详情
 
 ### 功能列表
 
-1. **新增 siteBrowserList 位点类型**
-   - 在插件位点系统中添加新的位点类型 `siteBrowserList`
+1. **新增 siteBrowserList 插槽类型**
+   - 在插件插槽系统中添加新的插槽类型 `siteBrowserList`
    - 配置属性与 SiteBrowserDTO 相同（包含 contributionId, pluginPublicId, name, imagePath, pluginId）
-   - 作为独立位点类型，与 menu、view、embed、panel 同级
+   - 作为独立插槽类型，与 menu、view、embed、panel 同级
 
-2. **主进程位点注册支持**
+2. **主进程插槽注册支持**
    - 在 PluginContext 中添加 `registerSiteBrowserSlot` API
    - 在 SlotTypes 中定义 `SiteBrowserListSlotConfig` 类型
    - 在 SlotSyncService 中支持新类型同步
 
-3. **渲染进程位点管理**
+3. **渲染进程插槽管理**
    - 在 SlotRegistryStore 中添加 `siteBrowserSlots` 存储
    - 在 useSlotSyncListener 中处理 `siteBrowserList` 类型同步
 
 4. **UI 渲染集成**
-   - 修改 SiteBrowserManage.vue 使用位点渲染列表
-   - 同时支持原有 registerSiteBrowser 方式和新的位点方式
+   - 修改 SiteBrowserManage.vue 使用插槽渲染列表
+   - 同时支持原有 registerSiteBrowser 方式和新的插槽方式
 
 ### 用户场景
 
 插件开发者可以通过以下两种方式在站点浏览器列表页面展示入口：
 
-1. **新方式（位点）**：使用 `slots.registerSiteBrowserSlot(config)`
+1. **新方式（插槽）**：使用 `slots.registerSiteBrowserSlot(config)`
 2. **原有方式**：使用 `app.registerSiteBrowser(siteBrowser)`
 
 两种方式并行存在，保持向后兼容。
@@ -53,13 +53,13 @@ interface SiteBrowserListSlotConfig extends BaseSlotConfig {
 
 | 方法 | 类型 | 说明 |
 |------|------|------|
-| slots.registerSiteBrowserSlot | 插件 API | 注册站点浏览器列表位点 |
-| slots.registerSlots | 插件 API | 批量注册位点（需支持 siteBrowserList） |
+| slots.registerSiteBrowserSlot | 插件 API | 注册站点浏览器列表插槽 |
+| slots.registerSlots | 插件 API | 批量注册插槽（需支持 siteBrowserList） |
 
 ### 边界条件
 
-1. **重复注册**：相同 contributionId 的位点应该被覆盖
-2. **插件卸载**：插件卸载时需要自动注销所有相关的 siteBrowserList 位点
+1. **重复注册**：相同 contributionId 的插槽应该被覆盖
+2. **插件卸载**：插件卸载时需要自动注销所有相关的 siteBrowserList 插槽
 3. **向后兼容**：原有的 `app.registerSiteBrowser` API 继续可用
 
 ## 技术方案
@@ -70,18 +70,18 @@ interface SiteBrowserListSlotConfig extends BaseSlotConfig {
 |------|------|----------|
 | 主进程类型 | src/main/plugin/types/SlotTypes.ts | 新增 SiteBrowserListSlotConfig |
 | 插件上下文 | src/main/plugin/types/PluginContext.ts | 新增 registerSiteBrowserSlot API |
-| 插件管理器 | src/main/plugin/PluginManager.ts | 实现位点注册逻辑 |
-| 位点同步服务 | src/main/core/SlotSyncService.ts | 类型定义更新 |
+| 插件管理器 | src/main/plugin/PluginManager.ts | 实现插槽注册逻辑 |
+| 插槽同步服务 | src/main/core/SlotSyncService.ts | 类型定义更新 |
 | 渲染层 Store | src/renderer/src/store/SlotRegistryStore.ts | 新增 siteBrowserSlots |
-| 位点同步监听 | src/renderer/src/composables/useSlotSyncListener.ts | 处理新类型 |
+| 插槽同步监听 | src/renderer/src/composables/useSlotSyncListener.ts | 处理新类型 |
 | Preload 桥接 | src/preload/index.ts | 暴露 IPC 方法 |
-| 站点浏览器页面 | src/renderer/src/components/subpage/SiteBrowserManage.vue | 使用位点渲染 |
+| 站点浏览器页面 | src/renderer/src/components/subpage/SiteBrowserManage.vue | 使用插槽渲染 |
 
 ### 技术要点
 
-1. **位点类型定义**：在 SlotConfig 联合类型中添加 `SiteBrowserListSlotConfig`
+1. **插槽类型定义**：在 SlotConfig 联合类型中添加 `SiteBrowserListSlotConfig`
 2. **数据同步**：复用现有的 SlotSyncService 机制，将新类型同步到渲染进程
-3. **渲染兼容**：在 SiteBrowserManage.vue 中合并两种数据源（位点 + 原有 API）
+3. **渲染兼容**：在 SiteBrowserManage.vue 中合并两种数据源（插槽 + 原有 API）
 
 ## 开发步骤
 
@@ -117,12 +117,12 @@ interface SiteBrowserListSlotConfig extends BaseSlotConfig {
 
 6. **修改 preload/index.ts**
    - 添加 `onSlotSiteBrowserListRegister` 事件监听（如果需要）
-   - 确保位点同步事件能正确传递
+   - 确保插槽同步事件能正确传递
 
 ### Phase 4: UI 渲染
 
 7. **修改 SiteBrowserManage.vue**
-   - 导入位点 store
+   - 导入插槽 store
    - 使用 `allSiteBrowserSlots` 渲染插件注册的站点浏览器卡片
    - 与原有 `siteBrowserList` 数据合并显示
 
@@ -136,9 +136,9 @@ interface SiteBrowserListSlotConfig extends BaseSlotConfig {
 ## 验收标准
 
 - [ ] `SiteBrowserListSlotConfig` 类型正确定义
-- [ ] 插件可以使用 `slots.registerSiteBrowserSlot` 注册位点
-- [ ] 位点可以正确同步到渲染进程
-- [ ] `SiteBrowserManage.vue` 正确显示位点注册的站点浏览器卡片
+- [ ] 插件可以使用 `slots.registerSiteBrowserSlot` 注册插槽
+- [ ] 插槽可以正确同步到渲染进程
+- [ ] `SiteBrowserManage.vue` 正确显示插槽注册的站点浏览器卡片
 - [ ] 原有 `app.registerSiteBrowser` 方式继续可用（向后兼容）
 - [ ] 类型检查通过 (`yarn typecheck`)
 - [ ] ESLint 检查通过 (`yarn lint`)

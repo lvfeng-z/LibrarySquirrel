@@ -1,4 +1,4 @@
-# UI 架构重构方案：位点 + 动态视图系统
+# UI 架构重构方案：插槽 + 动态视图系统
 
 ## 1. 现状分析
 
@@ -27,7 +27,7 @@ App.vue
 
 ## 2. 目标架构
 
-### 2.1 三层位点系统
+### 2.1 三层插槽系统
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -46,9 +46,9 @@ App.vue
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 位点分类
+### 2.2 插槽分类
 
-| 位点类型       | 位置                     | 用途               | 插件能力         |
+| 插槽类型       | 位置                     | 用途               | 插件能力         |
 | -------------- | ------------------------ | ------------------ | ---------------- |
 | **Micro-Slot** | 顶部工具栏、状态栏       | 快速操作、状态指示 | 动态更新微件状态 |
 | **Panel-Slot** | 侧边栏、右侧属性栏、底部 | 导航树、列表、属性 | 注入完整组件     |
@@ -107,7 +107,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
   }),
 
   actions: {
-    // 注册视图位点
+    // 注册视图插槽
     registerViewSlot(slot: ViewSlot) {
       this.viewSlots.set(slot.id, slot)
     },
@@ -120,12 +120,12 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.viewSlots.delete(id)
     },
 
-    // 注册微件位点
+    // 注册微件插槽
     registerMicroSlot(slot: MicroSlot) {
       this.microSlots.set(slot.id, slot)
     },
 
-    // 注册面板位点
+    // 注册面板插槽
     registerPanelSlot(slot: PanelSlot) {
       this.panelSlots.set(slot.id, slot)
     },
@@ -264,7 +264,7 @@ function handleSelect(index: string) {
       <!-- 现有代码... -->
     </div>
 
-    <!-- 新的视图位点渲染区 -->
+    <!-- 新的视图插槽渲染区 -->
     <view-slot-renderer v-if="isPluginView" />
   </el-main>
 </template>
@@ -299,7 +299,7 @@ export default {
   name: 'data-dashboard',
   version: '1.0.0',
 
-  // 注册视图位点
+  // 注册视图插槽
   registerViews(registry: {
     registerViewSlot: (slot: ViewSlot) => void
     registerMicroSlot: (slot: MicroSlot) => void
@@ -358,11 +358,11 @@ slotUnregisterViewSlot: (id: string) => ipcRenderer.invoke('plugin-unregister-vi
 5. 改造 `App.vue` 主工作区逻辑
 6. 改造 `UsePageStatesStore` 支持插件视图 ID
 
-### 阶段三：微件/面板位点（预计 2 天）
+### 阶段三：微件/面板插槽（预计 2 天）
 
 7. 实现 MicroSlot 渲染器
 8. 实现 PanelSlot 渲染器
-9. 在工具栏/侧边栏预留位点
+9. 在工具栏/侧边栏预留插槽
 
 ### 阶段四：插件集成（预计 1 天）
 
@@ -389,9 +389,9 @@ slotUnregisterViewSlot: (id: string) => ipcRenderer.invoke('plugin-unregister-vi
 src/renderer/src/
 ├── model/slot/
 │   ├── index.ts              # 统一导出
-│   ├── ViewSlot.ts           # 视图位点类型
-│   ├── MicroSlot.ts          # 微件位点类型
-│   └── PanelSlot.ts          # 面板位点类型
+│   ├── ViewSlot.ts           # 视图插槽类型
+│   ├── MicroSlot.ts          # 微件插槽类型
+│   └── PanelSlot.ts          # 面板插槽类型
 ├── store/
 │   └── SlotRegistryStore.ts  # 插槽注册中心
 └── components/slot/
@@ -405,7 +405,7 @@ src/renderer/src/
 
 ```
 src/renderer/src/
-├── App.vue                   # 集成动态位点
+├── App.vue                   # 集成动态插槽
 ├── store/UsePageStatesStore.ts  # 支持插件视图
 ├── main.ts                   # (无需修改)
 └── components/oneOff/SideMenu.vue  # 保留或移除
@@ -419,7 +419,7 @@ src/preload/index.ts          # 添加插槽相关 IPC
 
 1. **组件卸载**：动态组件需正确处理生命周期，确保插件卸载时组件被销毁
 2. **状态隔离**：不同插件视图的状态应隔离，避免内存泄漏
-3. **权限控制**：插件注册的位点需审核，防止恶意组件
+3. **权限控制**：插件注册的插槽需审核，防止恶意组件
 4. **版本兼容**：插件 API 需版本化管理，保持向后兼容
 
 ---
@@ -430,4 +430,4 @@ src/preload/index.ts          # 添加插槽相关 IPC
 - [ ] 点击插件导航项，主工作区加载对应组件
 - [ ] 卸载插件后，导航项自动消失
 - [ ] 现有内置页面功能不受影响
-- [ ] 微件位点可在工具栏显示插件组件
+- [ ] 微件插槽可在工具栏显示插件组件
