@@ -1,5 +1,6 @@
 import App from './App.vue'
 import { createApp } from 'vue'
+import * as vue from 'vue'
 import { createPinia } from 'pinia'
 import Element from 'element-plus'
 import { elementIconRegister } from './plugins/elementIcon'
@@ -39,12 +40,16 @@ window['__vueRouter__'] = router
 // 设置 router 实例到 store（在 router 初始化后）
 setRouterInstance(router)
 
+app.mount('#app')
+
+// 关键：暴露给插件使用
+window['vue'] = vue // 视情况而定
+window['element-plus'] = Element
+
 // 初始化内置菜单（在 pinia store 初始化之后）
 initBuiltinMenus()
 
 // 初始化插槽同步监听器（监听主进程发来的插槽注册消息）
 initSlotSyncListener()
-
-app.mount('#app')
 
 iniListener()

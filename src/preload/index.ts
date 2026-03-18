@@ -159,7 +159,9 @@ const slotEventHandlers = {
     Electron.ipcRenderer.on('slot-batch-register', (_event, ...args) => callback(...args))
   },
   // 获取所有已注册的插槽
-  getAllSlots: () => Electron.ipcRenderer.invoke('slot-getAllSlots')
+  getAllSlots: () => Electron.ipcRenderer.invoke('slot-getAllSlots'),
+  // 读取插件 Vue 源码文件
+  pluginReadVueFile: (filePath: string) => Electron.ipcRenderer.invoke('plugin-readVueFile', filePath)
 }
 
 // 合并 electronAPI 和 slotEventHandlers

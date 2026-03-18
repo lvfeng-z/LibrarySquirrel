@@ -8,6 +8,7 @@ declare global {
       onSlotUnregister: (callback: (...args: unknown[]) => void) => void
       onSlotBatchRegister: (callback: (...args: unknown[]) => void) => void
       getAllSlots: () => Promise<unknown[]>
+      pluginReadVueFile: (filePath: string) => Promise<unknown>
     }
     api: {
       // test

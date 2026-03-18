@@ -1,6 +1,8 @@
 import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
 import type { ViewSlot, EmbedSlot, PanelSlot } from '@renderer/model/slot'
 import type { MenuSlotItem, SiteBrowserListSlotItem } from '@renderer/store/SlotRegistryStore'
+import ApiUtil from '@renderer/utils/ApiUtil.ts'
+import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 
 /**
  * 从主进程同步过来的插槽配置类型
@@ -11,12 +13,16 @@ import type { MenuSlotItem, SiteBrowserListSlotItem } from '@renderer/store/Slot
  * 组件内容类型 (仅用于 contentType 为 'component' 时)
  * - 字符串: 仅包含js路径 (向后兼容)
  * - 对象: 包含js路径和可选的css路径
+ * - vue: 包含vue文件路径，用于运行时编译
  */
 type SyncComponentContent =
   | string
   | {
       js: string
       css?: string
+    }
+  | {
+      vue: string
     }
 
 /**
@@ -236,6 +242,10 @@ function unloadPluginStyles(pluginId: number): void {
 async function loadPluginComponent(contentType: string, content: SyncComponentContent, pluginId: number): Promise<unknown> {
   if (contentType === 'component') {
     const protocolPrefix = 'resource://plugin/'
+    // 如果content是对象且包含vue路径，运行时编译Vue源码
+    if (typeof content === 'object' && 'vue' in content) {
+      return loadVueSourceComponent(content.vue, pluginId)
+    }
     // 如果content是对象且包含css路径，先加载CSS
     if (typeof content === 'object' && content.css) {
       await loadPluginStyles(pluginId, protocolPrefix + content.css)
@@ -252,7 +262,14 @@ async function loadPluginComponent(contentType: string, content: SyncComponentCo
   if (contentType === 'code') {
     // 代码片段: 执行代码并返回 Vue 组件
     // content对于code类型应该是字符串
-    const codeContent = typeof content === 'string' ? content : content.js
+    let codeContent: string
+    if (typeof content === 'string') {
+      codeContent = content
+    } else if ('js' in content) {
+      codeContent = content.js
+    } else {
+      throw new Error('code 类型的内容需要提供 js 路径')
+    }
     return createCodeComponent(codeContent)
   }
 
@@ -274,6 +291,153 @@ function createCodeComponent(code: string): Promise<() => unknown> {
       reject(new Error(`代码片段执行失败: ${error}`))
     }
   })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type VueModule = any
+
+/**
+ * 加载并编译 Vue 源码
+ * 实现 7 个阶段的编译流程
+ * @param vuePath Vue 文件路径
+ * @param pluginId 插件ID
+ */
+async function loadVueSourceComponent(vuePath: string, pluginId: number): Promise<unknown> {
+  // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
+  const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse
+  if (ApiUtil.check(response)) {
+    ApiUtil.failedMsg(response)
+  }
+  const sourceCode = response.data as string
+
+  // 动态导入编译器
+  const compilerSFC = await import('@vue/compiler-sfc')
+  const compilerDOM: VueModule = await import('vue')
+  const compilerDOMModule = await import('@vue/compiler-dom')
+
+  // 阶段 2: SFC 解析 - 解析 Vue 单文件组件
+  const parseResult = compilerSFC.parse(sourceCode)
+  const errors = parseResult.errors as unknown[] | undefined
+  if (errors && errors.length > 0) {
+    throw new Error(`SFC 解析错误: ${errors.map((e) => String(e)).join(', ')}`)
+  }
+
+  const descriptor = parseResult.descriptor
+  if (!descriptor) {
+    throw new Error('无法解析 Vue 文件')
+  }
+
+  // 阶段 3: 模板编译 - 使用运行时编译器生成 render 函数
+  let renderFunction: ((...args: unknown[]) => unknown) | undefined
+  if (descriptor.template) {
+    // 使用 @vue/compiler-dom 编译模板
+    const compile = compilerDOMModule.compile as (template: string, options?: Record<string, unknown>) => { code: string; errors?: string[] }
+    const templateResult = compile(descriptor.template.content)
+    if (templateResult.errors && templateResult.errors.length > 0) {
+      throw new Error(`模板编译错误: ${templateResult.errors.join(', ')}`)
+    }
+    // 将生成的 render 函数代码转换为可执行函数
+    if (templateResult.code) {
+      const renderCode = `return ${templateResult.code}`
+      renderFunction = new Function(renderCode)()
+    }
+  }
+
+  // 阶段 4: 脚本执行 - 执行 script 获取组件选项
+  let componentOptions: Record<string, unknown> = {}
+  if (descriptor.script) {
+    const scriptContent = descriptor.script.content
+    // 移除 export default 并包裹为立即执行函数
+    const scriptCode = scriptContent.replace(/export\s+default\s+/, '').replace(/^export\s+default\s+/, '')
+    const wrappedCode = `return (${scriptCode})`
+    try {
+      componentOptions = new Function(wrappedCode)() || {}
+    } catch (error) {
+      console.error('Script 执行错误:', error)
+      throw new Error(`Script 执行失败: ${error}`)
+    }
+  } else if (descriptor.scriptSetup) {
+    // 处理 script setup
+    const scriptSetupContent = descriptor.scriptSetup.content
+    // 对于 script setup，需要额外处理 - 这里简化处理
+    // 实际项目中可能需要使用 @vue/compiler-sfc 的 compileScript 方法
+    const scriptCode = `return { setup: () => { ${scriptSetupContent} } }`
+    try {
+      componentOptions = new Function(scriptCode)() || {}
+    } catch (error) {
+      console.error('Script Setup 执行错误:', error)
+      throw new Error(`Script Setup 执行失败: ${error}`)
+    }
+  }
+
+  // 阶段 5: 样式注入 - 处理 scoped 样式
+  if (descriptor.styles && descriptor.styles.length > 0) {
+    for (const style of descriptor.styles) {
+      const isScoped = style.scoped
+      let cssContent = style.content
+
+      if (isScoped) {
+        // 使用 compilerSFC 生成的 CSS scope ID
+        // 由于运行时编译，我们生成一个简单的 scope ID
+        const scopeId = `data-v-${pluginId}-${Math.random().toString(36).slice(2, 8)}`
+        // 为 scoped 样式添加属性选择器
+        // 注意：这里简化处理，实际需要更复杂的 AST 转换
+        cssContent = cssContent.replace(/([^}]+)\s*\{/g, (_, selector) => {
+          // 避免重复添加属性选择器
+          if (selector.includes(scopeId)) {
+            return `${selector} {`
+          }
+          // 为选择器添加 scoped 属性
+          const modifiedSelector = selector
+            .split(',')
+            .map((s: string) => {
+              const trimmed = s.trim()
+              if (trimmed.startsWith('.') || trimmed.startsWith('#') || trimmed.startsWith('[')) {
+                return `${trimmed}[${scopeId}]`
+              }
+              return `${trimmed}[${scopeId}]`
+            })
+            .join(', ')
+          return `${modifiedSelector} {`
+        })
+      }
+
+      // 注入 CSS 到页面
+      injectStyle(cssContent, pluginId, isScoped ? String(pluginId) : undefined)
+    }
+  }
+
+  // 阶段 6: 组件组装 - 合并 render 函数和组件选项
+  const componentDef: Record<string, unknown> = {
+    ...componentOptions
+  }
+
+  // 如果有编译后的 render 函数，优先使用
+  if (renderFunction) {
+    componentDef.render = renderFunction
+    // 删除 template 以避免冲突
+    delete componentDef.template
+  }
+
+  // 阶段 7: 使用 defineComponent 包装并返回
+  return compilerDOM.defineComponent(componentDef)
+}
+
+/**
+ * 动态注入 CSS 样式
+ */
+function injectStyle(css: string, pluginId: number, scopeId?: string): void {
+  const styleId = `plugin-style-${pluginId}${scopeId ? `-${scopeId}` : ''}`
+  const existingStyle = document.getElementById(styleId)
+  if (existingStyle) {
+    return
+  }
+
+  const styleElement = document.createElement('style')
+  styleElement.id = styleId
+  styleElement.type = 'text/css'
+  styleElement.textContent = css
+  document.head.appendChild(styleElement)
 }
 
 /**

@@ -1,5 +1,6 @@
 import LocalTagService from '../service/LocalTagService.ts'
 import { ipcMain, IpcMainInvokeEvent } from 'electron'
+import * as fs from 'fs'
 import SiteTagService from '../service/SiteTagService.ts'
 import SiteService from '../service/SiteService.ts'
 import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
@@ -14,7 +15,7 @@ import LocalAuthorService from '../service/LocalAuthorService.ts'
 import LogUtil from '../util/LogUtil.ts'
 import SiteAuthorService from '../service/SiteAuthorService.ts'
 import AutoExplainPathService from '../service/AutoExplainPathService.ts'
-import { DirSelect } from '../util/FileSysUtil.ts'
+import { DirSelect, RootDir } from '../util/FileSysUtil.ts'
 import { ReWorkTagService } from '../service/ReWorkTagService.ts'
 import ReWorkWorkSetService from '../service/ReWorkWorkSetService.ts'
 import SearchService from '../service/SearchService.ts'
@@ -32,6 +33,8 @@ import { getSiteBrowserManager } from './siteBrowserManager.ts'
 import { getPluginManager } from './pluginManager.ts'
 import { getSlotSyncService } from './SlotSyncService.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
+import path from 'path'
+import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
 
 function returnError(error: unknown) {
   LogUtil.error('MainProcessApi', error)
@@ -78,6 +81,26 @@ export function registerMainIpcHandlers() {
   ipcMain.handle('slot-getAllSlots', async () => {
     try {
       return getSlotSyncService().getAllSlots()
+    } catch (error) {
+      return returnError(error)
+    }
+  })
+
+  // 读取插件 Vue 源码文件
+  ipcMain.handle('plugin-readVueFile', async (_event, filePath: string) => {
+    try {
+      if (!filePath) {
+        return ApiUtil.error('无效的文件路径')
+      }
+      const pluginDir = path.join(RootDir(), PLUGIN_ROOT)
+      const fullPath = path.join(pluginDir, filePath)
+      // 安全检查：确保路径在插件目录内
+      const normalizedPath = fullPath.replace(/\\/g, '/')
+      if (normalizedPath.includes('..')) {
+        return ApiUtil.error('路径不允许包含 .. 跳转')
+      }
+      const content = fs.readFileSync(fullPath, 'utf-8')
+      return ApiUtil.response(content)
     } catch (error) {
       return returnError(error)
     }
