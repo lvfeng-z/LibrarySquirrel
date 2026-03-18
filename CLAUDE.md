@@ -129,8 +129,11 @@ src/
    ```typescript
    Electron.ipcMain.handle('serviceName-method', async (_event, args) => {
      const service = new ServiceName()
-     try { return ApiUtil.response(await service.method(args)) }
-     catch (error) { return returnError(error) }
+     try {
+       return ApiUtil.response(await service.method(args))
+     } catch (error) {
+       return returnError(error)
+     }
    })
    ```
 3. Add wrapper in `src/preload/index.ts`: `serviceNameMethod: (args) => Electron.ipcRenderer.invoke('serviceName-method', args)`

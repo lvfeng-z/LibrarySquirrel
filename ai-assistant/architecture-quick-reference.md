@@ -124,6 +124,7 @@ await router.push({ name: 'Settings' })
 ```
 
 路由配置示例（`routes.ts`）:
+
 ```typescript
 export const routes = [
   {

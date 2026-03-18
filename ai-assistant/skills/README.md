@@ -4,13 +4,13 @@
 
 ## Skill 列表
 
-| Skill | 名称 | 描述 |
-|-------|------|------|
-| [workflow-coordinator-skill](./workflow-coordinator-skill/) | 工作流协调员 | 统筹协调所有技能的工作流程 |
-| [requirements-analyst-skill](./requirements-analyst-skill/) | 需求分析师 | 与用户交流需求，生成开发计划 |
-| [code-writer-skill](./code-writer-skill/) | 代码工程师 | 按照规范编写高质量代码 |
-| [test-engineer-skill](./test-engineer-skill/) | 测试工程师 | 验证功能，编写和执行测试 |
-| [doc-maintainer-skill](./doc-maintainer-skill/) | 文档维护工程师 | 维护开发辅助文档 |
+| Skill                                                       | 名称           | 描述                         |
+| ----------------------------------------------------------- | -------------- | ---------------------------- |
+| [workflow-coordinator-skill](./workflow-coordinator-skill/) | 工作流协调员   | 统筹协调所有技能的工作流程   |
+| [requirements-analyst-skill](./requirements-analyst-skill/) | 需求分析师     | 与用户交流需求，生成开发计划 |
+| [code-writer-skill](./code-writer-skill/)                   | 代码工程师     | 按照规范编写高质量代码       |
+| [test-engineer-skill](./test-engineer-skill/)               | 测试工程师     | 验证功能，编写和执行测试     |
+| [doc-maintainer-skill](./doc-maintainer-skill/)             | 文档维护工程师 | 维护开发辅助文档             |
 
 ## Skill 结构
 
@@ -31,13 +31,13 @@ skill-name/
 
 ## 与原 Agent 的对应关系
 
-| 原 Agent | 转换为 Skill |
-|----------|--------------|
+| 原 Agent             | 转换为 Skill               |
+| -------------------- | -------------------------- |
 | workflow-coordinator | workflow-coordinator-skill |
 | requirements-analyst | requirements-analyst-skill |
-| code-writer | code-writer-skill |
-| test-engineer | test-engineer-skill |
-| doc-maintainer | doc-maintainer-skill |
+| code-writer          | code-writer-skill          |
+| test-engineer        | test-engineer-skill        |
+| doc-maintainer       | doc-maintainer-skill       |
 
 ---
 

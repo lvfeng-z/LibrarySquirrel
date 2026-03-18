@@ -38,6 +38,7 @@
 ### 数据模型
 
 **SiteBrowserListSlotConfig**（新增）:
+
 ```typescript
 interface SiteBrowserListSlotConfig extends BaseSlotConfig {
   type: 'siteBrowserList'
@@ -51,10 +52,10 @@ interface SiteBrowserListSlotConfig extends BaseSlotConfig {
 
 ### API 设计
 
-| 方法 | 类型 | 说明 |
-|------|------|------|
-| slots.registerSiteBrowserSlot | 插件 API | 注册站点浏览器列表插槽 |
-| slots.registerSlots | 插件 API | 批量注册插槽（需支持 siteBrowserList） |
+| 方法                          | 类型     | 说明                                   |
+| ----------------------------- | -------- | -------------------------------------- |
+| slots.registerSiteBrowserSlot | 插件 API | 注册站点浏览器列表插槽                 |
+| slots.registerSlots           | 插件 API | 批量注册插槽（需支持 siteBrowserList） |
 
 ### 边界条件
 
@@ -66,16 +67,16 @@ interface SiteBrowserListSlotConfig extends BaseSlotConfig {
 
 ### 涉及模块
 
-| 模块 | 文件 | 变更内容 |
-|------|------|----------|
-| 主进程类型 | src/main/plugin/types/SlotTypes.ts | 新增 SiteBrowserListSlotConfig |
-| 插件上下文 | src/main/plugin/types/PluginContext.ts | 新增 registerSiteBrowserSlot API |
-| 插件管理器 | src/main/plugin/PluginManager.ts | 实现插槽注册逻辑 |
-| 插槽同步服务 | src/main/core/SlotSyncService.ts | 类型定义更新 |
-| 渲染层 Store | src/renderer/src/store/SlotRegistryStore.ts | 新增 siteBrowserSlots |
-| 插槽同步监听 | src/renderer/src/composables/useSlotSyncListener.ts | 处理新类型 |
-| Preload 桥接 | src/preload/index.ts | 暴露 IPC 方法 |
-| 站点浏览器页面 | src/renderer/src/components/subpage/SiteBrowserManage.vue | 使用插槽渲染 |
+| 模块           | 文件                                                      | 变更内容                         |
+| -------------- | --------------------------------------------------------- | -------------------------------- |
+| 主进程类型     | src/main/plugin/types/SlotTypes.ts                        | 新增 SiteBrowserListSlotConfig   |
+| 插件上下文     | src/main/plugin/types/PluginContext.ts                    | 新增 registerSiteBrowserSlot API |
+| 插件管理器     | src/main/plugin/PluginManager.ts                          | 实现插槽注册逻辑                 |
+| 插槽同步服务   | src/main/core/SlotSyncService.ts                          | 类型定义更新                     |
+| 渲染层 Store   | src/renderer/src/store/SlotRegistryStore.ts               | 新增 siteBrowserSlots            |
+| 插槽同步监听   | src/renderer/src/composables/useSlotSyncListener.ts       | 处理新类型                       |
+| Preload 桥接   | src/preload/index.ts                                      | 暴露 IPC 方法                    |
+| 站点浏览器页面 | src/renderer/src/components/subpage/SiteBrowserManage.vue | 使用插槽渲染                     |
 
 ### 技术要点
 

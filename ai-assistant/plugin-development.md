@@ -31,11 +31,11 @@ plugin/package/
 
 ### 激活类型
 
-| 类型 | 说明 |
-|------|------|
-| `url` | URL 激活，通过解析特定 URL 触发 |
-| `manual` | 手动激活，用户主动启用 |
-| `auto` | 自动激活，启动时加载 |
+| 类型     | 说明                            |
+| -------- | ------------------------------- |
+| `url`    | URL 激活，通过解析特定 URL 触发 |
+| `manual` | 手动激活，用户主动启用          |
+| `auto`   | 自动激活，启动时加载            |
 
 ## 插件接口
 
@@ -92,12 +92,13 @@ class MySiteBrowser implements SiteBrowser {
 >
 > 这两个概念容易被混淆，请注意区分：
 >
-> | 概念 | API | 用途 |
-> |------|-----|------|
-> | **站点浏览器** | `app.registerSiteBrowser()` | 注册站点浏览器本身（业务数据），使系统知道这个插件提供了站点浏览器功能 |
+> | 概念                   | API                               | 用途                                                                   |
+> | ---------------------- | --------------------------------- | ---------------------------------------------------------------------- |
+> | **站点浏览器**         | `app.registerSiteBrowser()`       | 注册站点浏览器本身（业务数据），使系统知道这个插件提供了站点浏览器功能 |
 > | **站点浏览器列表插槽** | `slots.registerSiteBrowserSlot()` | 在"站点浏览"页面的卡片列表中添加一个入口（UI），让用户能看到并点击进入 |
 >
 > **两者必须同时注册**，站点浏览器功能才能完整工作：
+>
 > 1. 先用 `app.registerSiteBrowser()` 注册站点浏览器
 > 2. 再用 `slots.registerSiteBrowserSlot()` 在 UI 中添加入口
 >
@@ -257,12 +258,12 @@ await pluginService.uninstall(pluginId)
 
 ### 插件数据库表
 
-| 表名 | 说明 |
-|------|------|
-| `plugin` | 插件基本信息 |
-| `site` | 站点配置 |
-| `site_tag` | 站点标签 |
-| `site_author` | 站点作者 |
+| 表名          | 说明         |
+| ------------- | ------------ |
+| `plugin`      | 插件基本信息 |
+| `site`        | 站点配置     |
+| `site_tag`    | 站点标签     |
+| `site_author` | 站点作者     |
 
 ## IPC 通信
 
@@ -303,6 +304,7 @@ window.api.pluginMethod(args)
 ### 设计理念：插件主动提供，主程序被动发现
 
 LibrarySquirrel 的插件系统采用**事件驱动/观察者模式**的变体：插件激活时主动注册自己的贡献点，主程序在需要时动态发现和调用。这种设计实现了：
+
 - **解耦**：主程序不需要知道有哪些插件
 - **灵活**：多个插件可以监听同一 URL 模式
 - **可扩展**：新增贡献点类型时无需大幅修改主程序
@@ -328,6 +330,7 @@ registerUrlListener: (conditions: { contributionId: string; listenerPatterns: Re
 - `PluginTaskUrlListenerManager` 将每个正则表达式与对应的插件关联存储
 
 **关键文件**：
+
 - `src/main/core/pluginTaskUrlListener.ts` - 任务 URL 监听器管理器
 
 #### 触发阶段（创建任务时）
@@ -359,6 +362,7 @@ registerSiteBrowser: (siteBrowser: SiteBrowserDTO) => {
 - `SiteBrowserManager` 将站点浏览器信息存入缓存
 
 **关键文件**：
+
 - `src/main/core/classes/SiteBrowserManager.ts` - 站点浏览器管理器
 - `src/main/core/siteBrowserManager.ts` - 站点浏览器管理器导出
 
@@ -414,6 +418,7 @@ slots: {
 ```
 
 **关键文件**：
+
 - `src/main/core/SlotSyncService.ts` - 插槽同步服务
 - `src/main/plugin/types/SlotTypes.ts` - 插槽类型定义
 
@@ -460,24 +465,26 @@ export function initSlotSyncListener() {
 #### 渲染阶段
 
 渲染器组件使用 Store 中的插槽数据：
+
 - `EmbedSlotRenderer.vue` - 渲染 embed 插槽（topbar/statusbar/toolbar）
 - `PanelSlotRenderer.vue` - 渲染 panel 插槽（sidebar/bottom）
 - `ViewSlotRenderer.vue` - 渲染 view 插槽（视图页面）
 - `DynamicSideMenu.vue` - 渲染 menu 插槽（侧边菜单）
 
 **关键文件**：
+
 - `src/renderer/src/store/SlotRegistryStore.ts` - 插槽注册 Store
 - `src/renderer/src/composables/useSlotSyncListener.ts` - 插槽同步监听器
 
 ### 插槽类型
 
-| 类型 | 位置 | 说明 |
-|------|------|------|
-| `embed` | topbar/statusbar/toolbar | 嵌入到工具栏的微件 |
-| `panel` | left-sidebar/right-sidebar/bottom | 侧边面板或底部面板 |
-| `view` | 页面视图 | 完整的页面视图 |
-| `menu` | 侧边菜单 | 菜单项 |
-| `siteBrowserList` | 站点浏览器列表 | 站点浏览器卡片入口 |
+| 类型              | 位置                              | 说明               |
+| ----------------- | --------------------------------- | ------------------ |
+| `embed`           | topbar/statusbar/toolbar          | 嵌入到工具栏的微件 |
+| `panel`           | left-sidebar/right-sidebar/bottom | 侧边面板或底部面板 |
+| `view`            | 页面视图                          | 完整的页面视图     |
+| `menu`            | 侧边菜单                          | 菜单项             |
+| `siteBrowserList` | 站点浏览器列表                    | 站点浏览器卡片入口 |
 
 ### 管理器初始化
 
@@ -486,9 +493,9 @@ export function initSlotSyncListener() {
 ```typescript
 // src/main/index.ts:228-232
 createTaskQueue()
-createPluginTaskUrlListenerManager()  // 任务URL监听器
-createSiteBrowserManager()            // 站点浏览器管理器
-createPluginManager()                // 插件管理器
+createPluginTaskUrlListenerManager() // 任务URL监听器
+createSiteBrowserManager() // 站点浏览器管理器
+createPluginManager() // 插件管理器
 ```
 
 ### 停用时清理
@@ -503,3 +510,4 @@ deactivatePlugin(pluginId: number): void {
   // 注销插件贡献的所有插槽
   getSlotSyncService().unregisterSlotsByPluginId(pluginId)
 }
+```
