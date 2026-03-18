@@ -50,7 +50,7 @@ App.vue
 
 | 插槽类型       | 位置                     | 用途               | 插件能力         |
 | -------------- | ------------------------ | ------------------ | ---------------- |
-| **Micro-Slot** | 顶部工具栏、状态栏       | 快速操作、状态指示 | 动态更新微件状态 |
+| **Micro-Slot** | 顶部工具栏、状态栏       | 快速操作、状态指示 | 动态更新嵌入状态 |
 | **Panel-Slot** | 侧边栏、右侧属性栏、底部 | 导航树、列表、属性 | 注入完整组件     |
 | **View-Slot**  | 主工作区                 | 核心业务界面       | 提供完整页面     |
 
@@ -120,7 +120,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.viewSlots.delete(id)
     },
 
-    // 注册微件插槽
+    // 注册嵌入插槽
     registerMicroSlot(slot: MicroSlot) {
       this.microSlots.set(slot.id, slot)
     },
@@ -314,7 +314,7 @@ export default {
       component: () => import('./views/Dashboard.vue')
     })
 
-    // 注册顶部微件
+    // 注册顶部嵌入
     registry.registerMicroSlot({
       id: 'data-dashboard-progress',
       position: 'topbar',
@@ -358,7 +358,7 @@ slotUnregisterViewSlot: (id: string) => ipcRenderer.invoke('plugin-unregister-vi
 5. 改造 `App.vue` 主工作区逻辑
 6. 改造 `UsePageStatesStore` 支持插件视图 ID
 
-### 阶段三：微件/面板插槽（预计 2 天）
+### 阶段三：嵌入/面板插槽（预计 2 天）
 
 7. 实现 MicroSlot 渲染器
 8. 实现 PanelSlot 渲染器
@@ -390,13 +390,13 @@ src/renderer/src/
 ├── model/slot/
 │   ├── index.ts              # 统一导出
 │   ├── ViewSlot.ts           # 视图插槽类型
-│   ├── MicroSlot.ts          # 微件插槽类型
+│   ├── MicroSlot.ts          # 嵌入插槽类型
 │   └── PanelSlot.ts          # 面板插槽类型
 ├── store/
 │   └── SlotRegistryStore.ts  # 插槽注册中心
 └── components/slot/
     ├── ViewSlotRenderer.vue  # 视图渲染器
-    ├── MicroSlotRenderer.vue # 微件渲染器
+    ├── MicroSlotRenderer.vue # 嵌入渲染器
     ├── PanelSlotRenderer.vue # 面板渲染器
     └── DynamicSideMenu.vue   # 动态导航菜单
 ```
@@ -430,4 +430,4 @@ src/preload/index.ts          # 添加插槽相关 IPC
 - [ ] 点击插件导航项，主工作区加载对应组件
 - [ ] 卸载插件后，导航项自动消失
 - [ ] 现有内置页面功能不受影响
-- [ ] 微件插槽可在工具栏显示插件组件
+- [ ] 嵌入插槽可在工具栏显示插件组件

@@ -157,7 +157,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       this.viewSlots.delete(id)
     },
 
-    // 注册微件插槽
+    // 注册嵌入插槽
     // 注册嵌入插槽
     registerEmbedSlot(slot: EmbedSlot) {
       this.embedSlots.set(slot.id, slot)

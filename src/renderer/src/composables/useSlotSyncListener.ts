@@ -19,12 +19,14 @@ type SyncComponentContent =
       css?: string
     }
 
-interface SyncSlotConfig {
+/**
+ * 通用基础字段 - 所有插槽类型都有的字段
+ */
+interface BaseSlotConfig {
   id: string
   pluginId: number
   name: string
   order?: number
-  type: 'embed' | 'panel' | 'view' | 'menu' | 'siteBrowserList'
   position?: string
   width?: number
   height?: number
@@ -33,13 +35,15 @@ interface SyncSlotConfig {
   props?: Record<string, unknown>
   replaceViewId?: string
   icon?: string
-  // 菜单插槽专用
-  viewId?: string
-  children?: SyncMenuChildConfig[]
-  // 站点浏览器列表插槽专用
-  contributionId?: string
-  pluginPublicId?: string
-  imagePath?: string
+}
+
+/**
+ * 菜单插槽配置 - type 为 'menu' 时使用
+ */
+interface MenuSlotConfig extends BaseSlotConfig {
+  type: 'menu'
+  viewId: string
+  children: SyncMenuChildConfig[]
 }
 
 /** 子菜单配置 */
@@ -53,9 +57,50 @@ interface SyncMenuChildConfig {
 }
 
 /**
+ * 站点浏览器列表插槽配置 - type 为 'siteBrowserList' 时使用
+ */
+interface SiteBrowserListSlotConfig extends BaseSlotConfig {
+  type: 'siteBrowserList'
+  contributionId: string
+  pluginPublicId: string
+  imagePath: string
+}
+
+/**
+ * 视图插槽配置 - type 为 'view' 时使用
+ */
+interface ViewTypeSlotConfig extends BaseSlotConfig {
+  type: 'view'
+}
+
+/**
+ * 嵌入插槽配置 - type 为 'embed' 时使用
+ */
+interface EmbedTypeSlotConfig extends BaseSlotConfig {
+  type: 'embed'
+}
+
+/**
+ * 面板插槽配置 - type 为 'panel' 时使用
+ */
+interface PanelTypeSlotConfig extends BaseSlotConfig {
+  type: 'panel'
+}
+
+/**
+ * 插槽配置联合类型 - 使用可辨识联合实现类型安全
+ */
+export type SyncSlotConfig =
+  | MenuSlotConfig
+  | SiteBrowserListSlotConfig
+  | ViewTypeSlotConfig
+  | EmbedTypeSlotConfig
+  | PanelTypeSlotConfig
+
+/**
  * 转换视图插槽配置
  */
-function convertToViewSlot(config: SyncSlotConfig): ViewSlot {
+function convertToViewSlot(config: ViewTypeSlotConfig): ViewSlot {
   const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginId)
   return {
     id: config.id,
@@ -69,9 +114,9 @@ function convertToViewSlot(config: SyncSlotConfig): ViewSlot {
 }
 
 /**
- * 转换微件插槽配置
+ * 转换嵌入插槽配置
  */
-function convertToEmbedSlot(config: SyncSlotConfig): EmbedSlot {
+function convertToEmbedSlot(config: EmbedTypeSlotConfig): EmbedSlot {
   return {
     id: config.id,
     position: config.position as 'topbar' | 'statusbar' | 'toolbar',
@@ -84,7 +129,7 @@ function convertToEmbedSlot(config: SyncSlotConfig): EmbedSlot {
 /**
  * 转换面板插槽配置
  */
-function convertToPanelSlot(config: SyncSlotConfig): PanelSlot {
+function convertToPanelSlot(config: PanelTypeSlotConfig): PanelSlot {
   return {
     id: config.id,
     position: config.position as 'left-sidebar' | 'right-sidebar' | 'bottom',
@@ -99,7 +144,7 @@ function convertToPanelSlot(config: SyncSlotConfig): PanelSlot {
 /**
  * 转换菜单插槽配置
  */
-function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
+function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
   // 递归转换子菜单
   const convertChildren = (children?: SyncMenuChildConfig[]): MenuSlotItem[] | undefined => {
     if (!children || children.length === 0) return undefined
@@ -128,7 +173,7 @@ function convertToMenuSlot(config: SyncSlotConfig): MenuSlotItem {
 /**
  * 转换站点浏览器列表插槽配置
  */
-function convertToSiteBrowserListSlot(config: SyncSlotConfig): SiteBrowserListSlotItem {
+function convertToSiteBrowserListSlot(config: SiteBrowserListSlotConfig): SiteBrowserListSlotItem {
   return {
     id: config.id,
     pluginId: config.pluginId,
@@ -303,7 +348,7 @@ export function initSlotSyncListener() {
     })
   })
 
-  // 同步所有已注册的插槽（插件激活时可能渲染进程还未准备好）
+  // 同步所有已注册的插槽（用于处理插件激活时渲染进程还未准备好的情况）
   window.electron.getAllSlots().then((slots: unknown[]) => {
     slots.forEach((config: unknown) => {
       const syncConfig = config as SyncSlotConfig
