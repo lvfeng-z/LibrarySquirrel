@@ -32,9 +32,6 @@ ai-assistant/
 ├── plugin-development.md        # 插件开发指南
 ├── api/                         # API 文档
 │   └── search-query-work-page.md
-├── plan/                        # 开发计划
-│   ├── ui-architecture-slot-view-system.md
-│   └── ui-router-refactor-plan.md
 └── MAINTAINER.md                # 维护者信息
 ```
 
