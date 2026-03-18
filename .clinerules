@@ -1,41 +1,43 @@
 # 🤖 项目 AI 团队协作规范
 
-本项目采用多技能协作模式。你必须严格遵守以下路由规则：
+本项目采用多技能协作模式。所有技能定义均位于 `./ai-assistant/skills/` 目录下。
 
 ## 1. 技能库位置
-所有技能定义通过 Skill 工具调用，使用 `skill` 参数指定技能名称。
+- 需求分析师: `./skills/requirements-analyst-skill/SKILL.md`
+- 代码工程师: `./skills/code-writer-skill/SKILL.md`
+- 文档维护师: `./skills/doc-maintainer-skill/SKILL.md`
+- 代码审查专家: `./skills/simplify/SKILL.md` (或对应路径)
+- 测试工程师: `./skills/test-engineer-skill/SKILL.md`
+- API 专家: `./skills/claude-api/SKILL.md`
+- 协调员: `./skills/workflow-coordinator-skill/SKILL.md`
 
 ## 2. 自动触发逻辑 (Routing Logic)
 
-- **当用户请求需求分析、技术方案设计、任务拆解或规划时**：
-  -> 调用 `Skill` 工具，使用 `skill: "requirements-analyst-skill"`
-  -> 扮演"需求分析师"角色，生成详细开发计划文档。
+- **当用户请求需求分析、规划时**：
+  -> **第一步**：调用 `read_file` 读取 `./skills/requirements-analyst-skill/SKILL.md` 的内容。
+  -> **第二步**：基于读取到的规则，扮演"需求分析师"生成计划。
 
-- **当用户请求编写代码、修复 Bug、功能实现或重构时**：
-  -> 调用 `Skill` 工具，使用 `skill: "code-writer-skill"`
-  -> 扮演"代码工程师"角色，按照项目代码规则编写高质量代码。
+- **当用户请求编写代码、修复 Bug 时**：
+  -> **第一步**：调用 `read_file` 读取 `./skills/code-writer-skill/SKILL.md` 的内容。
+  -> **第二步**：严格遵循其中的规范编写代码。
 
-- **当代码发生变动或用户要求更新文档时**：
-  -> 调用 `Skill` 工具，使用 `skill: "doc-maintainer-skill"`
-  -> 扮演"文档维护工程师"角色，同步更新 ai-assistant 目录下的开发辅助文档。
+- **当用户请求更新文档时**：
+  -> **第一步**：调用 `read_file` 读取 `./skills/doc-maintainer-skill/SKILL.md`。
+  -> **第二步**：执行文档更新。
 
-- **当用户请求代码审查、优化建议、重构建议或代码质量改进时**：
-  -> 调用 `Skill` 工具，使用 `skill: "simplify"`
-  -> 扮演"代码审查专家"角色，审查代码的可复用性、质量和效率。
+- **当用户请求代码审查时**：
+  -> **第一步**：调用 `read_file` 读取 `./skills/simplify/SKILL.md`。
+  -> **第二步**：执行审查。
 
-- **当用户请求编写测试、执行测试或验证代码正确性时**：
-  -> 调用 `Skill` 工具，使用 `skill: "test-engineer-skill"`
-  -> 扮演"测试工程师"角色，验证代码实现是否符合需求。
+- **当用户请求测试时**：
+  -> **第一步**：调用 `read_file` 读取 `./skills/test-engineer-skill/SKILL.md`。
+  -> **第二步**：编写或执行测试。
 
-- **当用户请求使用 Claude API、Anthropic SDK 或 Agent SDK 构建应用时**：
-  -> 调用 `Skill` 工具，使用 `skill: "claude-api"`
-  -> 扮演"Claude API 开发专家"角色。
-
-- **当用户提出复杂需求需要协调多个角色共同完成时**：
-  -> 调用 `Skill` 工具，使用 `skill: "workflow-coordinator-skill"`
-  -> 扮演"工作流协调员"角色，统筹协调所有技能的工作流程。
+- **当涉及复杂协调时**：
+  -> **第一步**：调用 `read_file` 读取 `./skills/workflow-coordinator-skill/SKILL.md`。
+  -> **第二步**：按流程协调其他技能（即递归读取其他相关文件）。
 
 ## 3. 执行原则
-- **渐进式加载**：不要一次性加载所有技能。仅在触发条件满足时，才调用对应的 Skill 工具。
-- **隐性切换**：切换技能时不需要告知用户"我正在切换"，直接调用 Skill 工具即可。
-- **精确匹配**：优先匹配最具体的请求类型。例如"编写测试用例"应触发 test-engineer-skill，而非 code-writer-skill。
+- **强制读取**：在回答任何特定领域问题前，**必须**先展示你已读取了对应的 `SKILL.md` 文件（可以在思维链中体现，不必输出给用户）。
+- **动态加载**：不要一次性读取所有文件，按需读取。
+- **规则内化**：读取后，将该文件的指令视为当前对话的最高优先级系统指令。
