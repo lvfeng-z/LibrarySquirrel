@@ -32,8 +32,8 @@ const apis = {
 
 // 方法
 // 重新安装
-async function reInstall(pluginId: number | undefined | null) {
-  const response = await apis.pluginReinstall(pluginId)
+async function reInstall(pluginPublicId: string | undefined | null) {
+  const response = await apis.pluginReinstall(pluginPublicId)
   if (ApiUtil.check(response)) {
     ElMessage({
       type: 'success',
@@ -47,8 +47,8 @@ async function reInstall(pluginId: number | undefined | null) {
   }
 }
 // 卸载
-async function unInstall(pluginId: number | undefined | null) {
-  const response = await apis.pluginUnInstall(pluginId)
+async function unInstall(pluginPublicId: string | undefined | null) {
+  const response = await apis.pluginUnInstall(pluginPublicId)
   if (ApiUtil.check(response)) {
     ElMessage({
       type: 'success',
@@ -106,10 +106,10 @@ async function unInstall(pluginId: number | undefined | null) {
     <template #footer>
       <el-row>
         <el-col :span="3">
-          <el-button type="primary" @click="reInstall(formData.id)">修复</el-button>
+          <el-button type="primary" @click="reInstall(formData.publicId)">修复</el-button>
         </el-col>
         <el-col :span="3">
-          <el-button type="danger" @click="unInstall(formData.id)">卸载</el-button>
+          <el-button type="danger" @click="unInstall(formData.publicId)">卸载</el-button>
         </el-col>
         <el-col :span="3">
           <el-button @click="state = false">取消</el-button>

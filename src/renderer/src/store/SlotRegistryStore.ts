@@ -22,10 +22,10 @@ export interface MenuSlotItem {
 export interface SiteBrowserListSlotItem {
   id: string
   pluginId: number
+  pluginPublicId: string
   name: string
   order?: number
   contributionId: string
-  pluginPublicId: string
   imagePath: string
 }
 

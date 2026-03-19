@@ -114,7 +114,7 @@ class MySiteBrowser implements SiteBrowser {
 >
 >     // 2. 注册站点浏览器列表插槽（UI入口）
 >     this.context.slots.registerSiteBrowserSlot({
->         id: `siteBrowser-${this.manifest.id}-main`,
+>         slotId: `siteBrowser-${this.manifest.id}-main`,
 >         contributionId: 'main',
 >         pluginPublicId: this.manifest.id,
 >         name: 'PixivSiteBrowser',

@@ -41,7 +41,7 @@ class SlotSyncService {
    * 注册插槽
    */
   registerSlot(config: SlotConfig): void {
-    const slotId = config.id
+    const slotId = config.slotId
     registeredSlots.set(slotId, config)
     this.syncToRenderer(SlotEvent.REGISTER, config)
     LogUtil.info('SlotSyncService', `注册插槽: ${slotId}, 类型: ${config.type}`)
@@ -54,7 +54,7 @@ class SlotSyncService {
     if (registeredSlots.has(slotId)) {
       const config = registeredSlots.get(slotId)
       registeredSlots.delete(slotId)
-      this.syncToRenderer(SlotEvent.UNREGISTER, { id: slotId, type: config?.type, pluginId: config?.pluginId })
+      this.syncToRenderer(SlotEvent.UNREGISTER, { id: slotId, type: config?.type, pluginId: config?.pluginPublicId })
       LogUtil.info('SlotSyncService', `注销插槽: ${slotId}`)
     }
   }
@@ -63,7 +63,7 @@ class SlotSyncService {
    * 批量注册插槽
    */
   registerSlots(configs: SlotConfig[]): void {
-    configs.forEach((config) => registeredSlots.set(config.id, config))
+    configs.forEach((config) => registeredSlots.set(config.pluginPublicId, config))
     this.syncToRenderer(SlotEvent.BATCH_REGISTER, configs)
     LogUtil.info('SlotSyncService', `批量注册插槽: ${configs.length}个`)
   }
@@ -92,16 +92,16 @@ class SlotSyncService {
   /**
    * 根据插件ID获取所有插槽
    */
-  getSlotsByPluginId(pluginId: number): SlotConfig[] {
-    return Array.from(registeredSlots.values()).filter((slot) => slot.pluginId === pluginId)
+  getSlotsByPluginId(pluginPublicId: string): SlotConfig[] {
+    return Array.from(registeredSlots.values()).filter((slot) => slot.pluginPublicId === pluginPublicId)
   }
 
   /**
    * 注销插件的所有插槽
    */
-  unregisterSlotsByPluginId(pluginId: number): void {
-    const slots = this.getSlotsByPluginId(pluginId)
-    slots.forEach((slot) => this.unregisterSlot(slot.id))
+  unregisterSlotsByPluginId(pluginPublicId: string): void {
+    const slots = this.getSlotsByPluginId(pluginPublicId)
+    slots.forEach((slot) => this.unregisterSlot(slot.pluginPublicId))
   }
 }
 

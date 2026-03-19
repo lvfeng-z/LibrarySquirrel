@@ -63,11 +63,11 @@ class PluginTaskUrlListenerManager {
 
   /**
    * 取消注册插件的任务URL监听器
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    */
-  unregister(pluginId: number): void {
+  unregister(pluginPublicId: string): void {
     for (const [, plugins] of this.listeners) {
-      const index = plugins.findIndex((p) => p.id === pluginId)
+      const index = plugins.findIndex((p) => p.publicId === pluginPublicId)
       if (index !== -1) {
         plugins.splice(index, 1)
       }

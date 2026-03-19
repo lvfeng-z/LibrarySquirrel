@@ -10,6 +10,7 @@ import {
   SiteBrowserListSlotConfig,
   ViewSlotConfig
 } from '@shared/model/interface/SlotConfigs.ts'
+import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
 
 /**
  * 插件上下文接口
@@ -65,23 +66,18 @@ export interface PluginContext {
   /** 插槽注册 API - 允许插件贡献 UI 元素 */
   slots: {
     /** 注册嵌入插槽 (对应 EmbedSlot) */
-    registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginId' | 'type'>) => void
+    registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginPublicId' | 'type'>) => void
     /** 注册面板插槽 (对应 PanelSlot) */
-    registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => void
+    registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginPublicId' | 'type'>) => void
     /** 注册视图插槽 (对应 ViewSlot) */
-    registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => void
+    registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginPublicId' | 'type'>) => void
     /** 注册菜单插槽 (对应 MenuSlot) */
-    registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => void
+    registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginPublicId' | 'type'>) => void
     /** 注册站点浏览器列表插槽 (对应 siteBrowserList) */
-    registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginId' | 'type'>) => void
+    registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginPublicId' | 'type'>) => void
     /** 注销插槽 */
     unregisterSlot: (slotId: string) => void
     /** 批量注册插槽 */
-    registerSlots: (
-      configs: Omit<
-        EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig | SiteBrowserListSlotConfig,
-        'pluginId' | 'type'
-      >[]
-    ) => void
+    registerSlots: (configs: SlotConfig[]) => void
   }
 }

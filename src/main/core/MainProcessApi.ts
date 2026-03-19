@@ -889,7 +889,7 @@ export function registerMainIpcHandlers() {
         throw new Error(`站点浏览器不存在: ${pluginPublicId}-${contributionId}`)
       }
       const pluginManager = getPluginManager()
-      const siteBrowserInstance = await pluginManager.getContribution(siteBrowser.pluginId, 'siteBrowser', contributionId)
+      const siteBrowserInstance = await pluginManager.getContribution(siteBrowser.pluginPublicId, 'siteBrowser', contributionId)
       if (!siteBrowserInstance) {
         throw new Error(`获取站点浏览器插件失败: ${pluginPublicId}`)
       }

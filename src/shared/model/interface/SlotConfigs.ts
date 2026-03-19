@@ -1,25 +1,13 @@
 import { AnySlotContent, SlotContentType } from '@shared/model/constant/SlotTypes.ts'
 
-/**
- * 通用基础字段 - 所有插槽类型都有的字段
- */
-export interface BaseSlotConfig {
-  id: string
-  pluginId: number
-  name: string
-  order?: number
-  contentType: SlotContentType
-  content: AnySlotContent
-  props?: Record<string, unknown>
-  replaceViewId?: string
-}
-
 /** 插槽基础配置 */
 export interface BaseSlotConfig {
   /** 唯一标识: "plugin-{pluginId}-{name}" */
-  id: string
-  /** 所属插件ID */
+  slotId: string
+  /** 插件ID */
   pluginId: number
+  /** 插件公开ID */
+  pluginPublicId: string
   /** 显示名称 */
   name: string
   /** 排序权重 */
@@ -90,8 +78,6 @@ export interface SiteBrowserListSlotConfig extends BaseSlotConfig {
   type: 'siteBrowserList'
   /** 贡献点id（站点浏览器在插件内的唯一标识） */
   contributionId: string
-  /** 插件公开ID */
-  pluginPublicId: string
   /** 图片路径 */
   imagePath: string
 }

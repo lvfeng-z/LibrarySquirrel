@@ -58,7 +58,7 @@ export default class PluginManager {
    * 插件缓存
    * @private
    */
-  private readonly pluginCache: Map<number, CachedPlugin> = new Map()
+  private readonly pluginCache: Map<string, CachedPlugin> = new Map()
 
   /**
    * 插件服务
@@ -77,19 +77,19 @@ export default class PluginManager {
 
   /**
    * 加载插件
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    * @param justInstalled
    * @returns 插件实例
    */
-  public async load(pluginId: number, justInstalled?: boolean): Promise<PluginInstance> {
-    let cached = this.pluginCache.get(pluginId)
+  public async load(pluginPublicId: string, justInstalled?: boolean): Promise<PluginInstance> {
+    let cached = this.pluginCache.get(pluginPublicId)
 
     if (isNullish(cached)) {
-      const plugin = await this.pluginService.getById(pluginId)
+      const plugin = await this.pluginService.getByPublicId(pluginPublicId)
       assertNotBlank(plugin?.entryPath, '')
       path.join(RootDir(), plugin?.entryPath)
       assertNotNullish(plugin, '加载插件失败，插件id不可用')
-      const context = await this.createPluginContext(pluginId)
+      const context = await this.createPluginContext(pluginPublicId)
 
       const loaded = this.loadPluginInstance(plugin, context)
 
@@ -100,7 +100,7 @@ export default class PluginManager {
         justInstalled: isNullish(justInstalled) ? false : justInstalled
       }
 
-      this.pluginCache.set(pluginId, cached)
+      this.pluginCache.set(pluginPublicId, cached)
 
       // 等待插件加载完成
       const instance = await loaded
@@ -142,21 +142,21 @@ export default class PluginManager {
 
   /**
    * 获取指定贡献点
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    * @param key 贡献点键名
    * @param contributionId 贡献点id
    * @returns 贡献点实现
    */
   public async getContribution<K extends ContributionKey>(
-    pluginId: number,
+    pluginPublicId: string,
     key: K,
     contributionId: string
   ): Promise<ContributionMap[K]> {
-    const pluginInstance = await this.load(pluginId)
+    const pluginInstance = await this.load(pluginPublicId)
     const contribution = await pluginInstance.getContribution(key, contributionId)
 
     if (isNullish(contribution)) {
-      throw new Error(`插件 ${pluginId} 未实现 ${key} 贡献点`)
+      throw new Error(`插件 ${pluginPublicId} 未实现 ${key} 贡献点`)
     }
 
     return contribution as ContributionMap[K]
@@ -166,9 +166,11 @@ export default class PluginManager {
    * 创建插件上下文
    * @private
    */
-  private async createPluginContext(pluginId: number): Promise<PluginContext> {
-    const plugin = await this.pluginService.getById(pluginId)
-    assertNotNullish(plugin, '创建插件上下文失败，插件id不可用')
+  private async createPluginContext(pluginPublicId: string): Promise<PluginContext> {
+    const plugin = await this.pluginService.getByPublicId(pluginPublicId)
+    assertNotNullish(plugin, `创建插件上下文失败，插件不存在，插件公开id${pluginPublicId}`)
+    const pluginId = plugin.id
+    assertNotNullish(pluginId, '创建插件上下文失败，插件id不能为空')
     const secureStorageService = new SecureStorageService()
     const pluginService = this.pluginService
     const pluginName = plugin?.name ?? ''
@@ -188,7 +190,7 @@ export default class PluginManager {
         getPluginData: async () => plugin?.pluginData ?? undefined,
         setPluginData: async (data) => {
           const tempPlugin = new Plugin()
-          tempPlugin.id = pluginId
+          tempPlugin.id = plugin.id
           tempPlugin.pluginData = data
           return pluginService.updateById(tempPlugin)
         },
@@ -206,7 +208,7 @@ export default class PluginManager {
         },
         unregisterUrlListener: () => {
           const listenerManager = getPluginTaskUrlListenerManager()
-          listenerManager.unregister(pluginId)
+          listenerManager.unregister(pluginPublicId)
         },
         addSite: async (site: Site[]) => {
           const siteService = new SiteService()
@@ -233,46 +235,31 @@ export default class PluginManager {
       },
       pluginData: plugin.pluginData,
       slots: {
-        registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginId' | 'type'>) => {
-          const fullConfig: EmbedSlotConfig = { ...config, pluginId, type: 'embed' }
+        registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginPublicId' | 'type'>) => {
+          const fullConfig: EmbedSlotConfig = { ...config, pluginId, pluginPublicId, type: 'embed' }
           getSlotSyncService().registerSlot(fullConfig)
         },
-        registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => {
-          const fullConfig: PanelSlotConfig = { ...config, pluginId, type: 'panel' }
+        registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginPublicId' | 'type'>) => {
+          const fullConfig: PanelSlotConfig = { ...config, pluginId, pluginPublicId, type: 'panel' }
           getSlotSyncService().registerSlot(fullConfig)
         },
-        registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => {
-          const fullConfig: ViewSlotConfig = { ...config, pluginId, type: 'view' }
+        registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginPublicId' | 'type'>) => {
+          const fullConfig: ViewSlotConfig = { ...config, pluginId, pluginPublicId, type: 'view' }
           getSlotSyncService().registerSlot(fullConfig)
         },
-        registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => {
-          const fullConfig: MenuSlotConfig = { ...config, pluginId, type: 'menu' }
+        registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginPublicId' | 'type'>) => {
+          const fullConfig: MenuSlotConfig = { ...config, pluginId, pluginPublicId, type: 'menu' }
           getSlotSyncService().registerSlot(fullConfig)
         },
-        registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginId' | 'type'>) => {
-          const fullConfig: SiteBrowserListSlotConfig = { ...config, pluginId, type: 'siteBrowserList' }
+        registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginPublicId' | 'type'>) => {
+          const fullConfig: SiteBrowserListSlotConfig = { ...config, pluginId, pluginPublicId, type: 'siteBrowserList' }
           getSlotSyncService().registerSlot(fullConfig)
         },
         unregisterSlot: (slotId: string) => {
           getSlotSyncService().unregisterSlot(slotId)
         },
-        registerSlots: (configs: Omit<SlotConfig, 'pluginId' | 'type'>[]) => {
-          const fullConfigs = configs.map((config) => {
-            if ('position' in config) {
-              if (config.position === 'topbar' || config.position === 'statusbar' || config.position === 'toolbar') {
-                return { ...config, pluginId, type: 'embed' as const }
-              }
-              return { ...config, pluginId, type: 'panel' as const }
-            }
-            if ('viewId' in config || 'children' in config) {
-              return { ...config, pluginId, type: 'menu' as const }
-            }
-            if ('contributionId' in config || 'pluginPublicId' in config) {
-              return { ...config, pluginId, type: 'siteBrowserList' as const }
-            }
-            return { ...config, pluginId, type: 'view' as const }
-          })
-          getSlotSyncService().registerSlots(fullConfigs as SlotConfig[])
+        registerSlots: (configs: SlotConfig[]) => {
+          getSlotSyncService().registerSlots(configs)
         }
       }
     }
@@ -342,33 +329,33 @@ export default class PluginManager {
 
   /**
    * 根据激活类型激活插件
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    * @param installType 安装类型
    */
-  public async onInstallPlugin(pluginId: number, installType: InstallType): Promise<void> {
+  public async onInstallPlugin(pluginPublicId: string, installType: InstallType): Promise<void> {
     // 替换已有缓存
-    this.pluginCache.delete(pluginId)
-    const pluginInstance = await this.load(pluginId, true)
+    this.pluginCache.delete(pluginPublicId)
+    const pluginInstance = await this.load(pluginPublicId, true)
     // 调用安装后钩子
     return pluginInstance.onInstall(installType)
   }
 
   /**
    * 根据激活类型激活插件
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    * @param activationType 激活类型
    */
-  public async activatePlugin(pluginId: number, activationType: ActivationType): Promise<void> {
+  public async activatePlugin(pluginPublicId: string, activationType: ActivationType): Promise<void> {
     // 如果已经激活，直接返回
-    const cached = this.pluginCache.get(pluginId)
+    const cached = this.pluginCache.get(pluginPublicId)
     if (cached?.activationType) {
-      LogUtil.debug('PluginManager', `插件 ${pluginId} 已激活，跳过`)
+      LogUtil.debug('PluginManager', `插件 ${pluginPublicId} 已激活，跳过`)
       return
     }
 
-    await this.load(pluginId)
+    await this.load(pluginPublicId)
     // 设置激活类型
-    const pluginCached = this.pluginCache.get(pluginId)
+    const pluginCached = this.pluginCache.get(pluginPublicId)
     if (notNullish(pluginCached)) {
       pluginCached.activationType = activationType
     }
@@ -376,30 +363,30 @@ export default class PluginManager {
 
   /**
    * 停用插件
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    */
-  public async deactivatePlugin(pluginId: number): Promise<void> {
-    const cached = this.pluginCache.get(pluginId)
+  public async deactivatePlugin(pluginPublicId: string): Promise<void> {
+    const cached = this.pluginCache.get(pluginPublicId)
     if (!cached?.activationType) {
-      LogUtil.debug('PluginManager', `插件 ${pluginId} 未激活，无需停用`)
+      LogUtil.debug('PluginManager', `插件 ${pluginPublicId} 未激活，无需停用`)
       return
     }
 
-    LogUtil.info('PluginManager', `停用插件 ${pluginId}`)
+    LogUtil.info('PluginManager', `停用插件 ${pluginPublicId}`)
 
     try {
       // 获取插件实例并调用 deactivate 方法
-      const instance = await this.load(pluginId)
+      const instance = await this.load(pluginPublicId)
       if (instance.deactivate) {
         await instance.deactivate()
       }
     } catch (error) {
-      LogUtil.error('PluginManager', `插件 ${pluginId} 停用失败`, error)
+      LogUtil.error('PluginManager', `插件 ${pluginPublicId} 停用失败`, error)
     } finally {
       // 清除激活类型
       cached.activationType = undefined
       // 注销插件贡献的所有插槽
-      getSlotSyncService().unregisterSlotsByPluginId(pluginId)
+      getSlotSyncService().unregisterSlotsByPluginId(pluginPublicId)
     }
   }
 
@@ -424,7 +411,8 @@ export default class PluginManager {
         continue
       }
       try {
-        await this.activatePlugin(plugin.id, ActivationType.STARTUP)
+        assertNotBlank(plugin.publicId, '插件公开id不能为空')
+        await this.activatePlugin(plugin.publicId, ActivationType.STARTUP)
         LogUtil.info('PluginManager', `插件 ${plugin.name} 激活成功`)
       } catch (error) {
         LogUtil.error('PluginManager', `插件 ${plugin.name} 激活失败`, error)
@@ -437,17 +425,17 @@ export default class PluginManager {
 
   /**
    * 获取插件激活类型
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    */
-  public getActivationType(pluginId: number): ActivationType | undefined {
-    return this.pluginCache.get(pluginId)?.activationType
+  public getActivationType(pluginPublicId: string): ActivationType | undefined {
+    return this.pluginCache.get(pluginPublicId)?.activationType
   }
 
   /**
    * 检查插件是否已激活
-   * @param pluginId 插件ID
+   * @param pluginPublicId 插件ID
    */
-  public isActivated(pluginId: number): boolean {
-    return !!this.pluginCache.get(pluginId)?.activationType
+  public isActivated(pluginPublicId: string): boolean {
+    return !!this.pluginCache.get(pluginPublicId)?.activationType
   }
 }

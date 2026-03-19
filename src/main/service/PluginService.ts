@@ -171,9 +171,9 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     }
 
     const pluginManager = getPluginManager()
-    await pluginManager.onInstallPlugin(finalPluginId, installType)
+    await pluginManager.onInstallPlugin(pluginInstallDTO.publicId, installType)
     if (newPlugin.activationType === ActivationType.STARTUP) {
-      await pluginManager.activatePlugin(finalPluginId, ActivationType.STARTUP)
+      await pluginManager.activatePlugin(pluginInstallDTO.publicId, ActivationType.STARTUP)
     }
     LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
     return newPlugin
@@ -198,32 +198,32 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 重新安装插件
    */
-  public async reinstall(pluginId: number, installType: InstallType) {
-    const plugin = await this.getById(pluginId)
-    assertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    assertNotNullish(plugin.backupId, `重新安装插件失败，插件备份id不可用，pluginId: ${pluginId}`)
+  public async reinstall(pluginPublicId: string, installType: InstallType) {
+    const plugin = await this.getById(pluginPublicId)
+    assertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginPublicId}`)
+    assertNotNullish(plugin.backupId, `重新安装插件失败，插件备份id不可用，pluginId: ${pluginPublicId}`)
     const backupService = new BackupService()
     const backup = await backupService.getById(plugin.backupId as number)
     assertNotNullish(backup, `重新安装插件失败，备份不存在，backupId: ${plugin.backupId}`)
     const workdir = getSettings().store.workdir
     const packagePath = path.join(workdir, backup.filePath as string)
-    return this.reinstallFromPath(pluginId, packagePath, installType)
+    return this.reinstallFromPath(pluginPublicId, packagePath, installType)
   }
 
   /**
    * 重新安装插件
    */
-  public async reinstallFromPath(pluginId: number, packagePath: string, installType: InstallType) {
-    assertNotBlank(packagePath, `重新安装插件失败，给定的安装包路径不可用，pluginId: ${pluginId}，packagePath: ${packagePath}`)
-    const plugin = await this.getById(pluginId)
-    assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    assertNotNullish(plugin.author, `卸载插件失败，找不到插件所在目录，因为插件的作者为空，pluginId: ${pluginId}`)
-    assertNotNullish(plugin.name, `卸载插件失败，找不到插件所在目录，因为插件的名称为空，pluginId: ${pluginId}`)
-    assertNotNullish(plugin.version, `卸载插件失败，找不到插件所在目录，因为插件的版本为空，pluginId: ${pluginId}`)
-    assertNotNullish(plugin, `重新安装插件失败，找不到这个插件，pluginId: ${pluginId}`)
+  public async reinstallFromPath(pluginPublicId: string, packagePath: string, installType: InstallType) {
+    assertNotBlank(packagePath, `重新安装插件失败，给定的安装包路径不可用，插件公开id: ${pluginPublicId}，packagePath: ${packagePath}`)
+    const plugin = await this.getByPublicId(pluginPublicId)
+    assertNotNullish(plugin, `卸载插件失败，找不到这个插件，插件公开id: ${pluginPublicId}`)
+    assertNotNullish(plugin.author, `卸载插件失败，找不到插件所在目录，因为插件的作者为空，插件公开id: ${pluginPublicId}`)
+    assertNotNullish(plugin.name, `卸载插件失败，找不到插件所在目录，因为插件的名称为空，插件公开id: ${pluginPublicId}`)
+    assertNotNullish(plugin.version, `卸载插件失败，找不到插件所在目录，因为插件的版本为空，插件公开id: ${pluginPublicId}`)
+    assertNotNullish(plugin, `重新安装插件失败，找不到这个插件，插件公开id: ${pluginPublicId}`)
 
     // 卸载旧插件
-    await this.uninstall(pluginId)
+    await this.uninstall(pluginPublicId)
 
     // 安装
     const installDTO = this.loadPluginPackage(packagePath)
@@ -234,11 +234,12 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
   /**
    * 卸载插件
    */
-  public async uninstall(pluginId: number): Promise<number> {
-    await getPluginManager().deactivatePlugin(pluginId)
-    const plugin = await this.getById(pluginId)
-    assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginId: ${pluginId}`)
-    assertNotNullish(plugin.rootPath, `卸载插件失败，插件根目录路径不存在，pluginId: ${pluginId}`)
+  public async uninstall(pluginPublicId: string): Promise<number> {
+    await getPluginManager().deactivatePlugin(pluginPublicId)
+    const plugin = await this.getByPublicId(pluginPublicId)
+    assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginPublicId: ${pluginPublicId}`)
+    assertNotNullish(plugin.id, `卸载插件失败，插件id不能为空，pluginPublicId: ${pluginPublicId}`)
+    assertNotNullish(plugin.rootPath, `卸载插件失败，插件根目录路径不存在，pluginPublicId: ${pluginPublicId}`)
     const pluginPath = path.join(RootDir(), PLUGIN_ROOT, plugin.rootPath as string)
     try {
       await rm(pluginPath, { recursive: true, force: true })
@@ -248,7 +249,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         throw error
       }
     }
-    return this.setUninstalled(pluginId)
+    return this.setUninstalled(plugin.id)
   }
 
   /**

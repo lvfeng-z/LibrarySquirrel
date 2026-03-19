@@ -123,10 +123,10 @@ function handleRowButtonClicked(op: DataTableOperationResponse<Plugin>) {
       dialogState.value = true
       break
     case 'reinstall':
-      beforeReInstall(Number(op.id))
+      beforeReInstall(String(op.data.publicId))
       break
     case 'uninstall':
-      unInstall(Number(op.id))
+      unInstall(String(op.data.publicId))
       break
     default:
       break
@@ -139,26 +139,26 @@ async function handleSelectionChange(selections: Plugin[]) {
   }
 }
 // 重新安装前询问安装来源
-async function beforeReInstall(pluginId: number) {
+async function beforeReInstall(pluginPublicId: string) {
   ElMessageBox.confirm('请选择修复方式', '', {
     confirmButtonText: '自动修复',
     cancelButtonText: '选择安装包修复',
     type: 'warning',
     distinguishCancelAndClose: true
   })
-    .then(() => reInstall(pluginId))
+    .then(() => reInstall(pluginPublicId))
     .catch(async (action: 'cancel' | 'close') => {
       if (action === 'cancel') {
         const packagePath = await selectPackage()
         if (isNotBlank(packagePath)) {
-          return reInstallFromPath(pluginId, packagePath)
+          return reInstallFromPath(pluginPublicId, packagePath)
         }
       }
     })
 }
 // 重新安装
-async function reInstall(pluginId: number) {
-  const response = await apis.pluginReinstall(pluginId)
+async function reInstall(pluginPublicId: string) {
+  const response = await apis.pluginReinstall(pluginPublicId)
   pluginSearchTable.value.doSearch()
   if (ApiUtil.check(response)) {
     ElMessage({
@@ -173,8 +173,8 @@ async function reInstall(pluginId: number) {
   }
 }
 // 卸载
-async function unInstall(pluginId: number) {
-  const response = await apis.pluginUnInstall(pluginId)
+async function unInstall(pluginPublicId: string) {
+  const response = await apis.pluginUnInstall(pluginPublicId)
   pluginSearchTable.value.doSearch()
   if (ApiUtil.check(response)) {
     ElMessage({
@@ -214,8 +214,8 @@ async function installFromPath(packagePath: string) {
   }
 }
 // 通过安装包路径重新安装插件
-async function reInstallFromPath(pluginId: number, packagePath: string) {
-  const result = await apis.pluginReinstallFromPath(pluginId, packagePath)
+async function reInstallFromPath(publicPublicId: string, packagePath: string) {
+  const result = await apis.pluginReinstallFromPath(publicPublicId, packagePath)
   pluginSearchTable.value.doSearch()
   ApiUtil.msg(result)
 }

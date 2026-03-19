@@ -19,9 +19,9 @@ import {
  * 转换视图插槽配置
  */
 function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
-  const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginId)
+  const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId)
   return {
-    id: config.id,
+    id: config.pluginPublicId,
     name: config.name,
     component: componentLoader,
     order: config.order ?? 100,
@@ -35,9 +35,9 @@ function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
  */
 function convertToEmbedSlot(config: EmbedSlotConfig): EmbedSlot {
   return {
-    id: config.id,
+    id: config.pluginPublicId,
     position: config.position as 'topbar' | 'statusbar' | 'toolbar',
-    component: () => loadPluginComponent(config.contentType, config.content, config.pluginId),
+    component: () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId),
     props: config.props,
     order: config.order ?? 100
   }
@@ -48,11 +48,11 @@ function convertToEmbedSlot(config: EmbedSlotConfig): EmbedSlot {
  */
 function convertToPanelSlot(config: PanelSlotConfig): PanelSlot {
   return {
-    id: config.id,
+    id: config.pluginPublicId,
     position: config.position as 'left-sidebar' | 'right-sidebar' | 'bottom',
     width: config.width,
     height: config.height,
-    component: () => loadPluginComponent(config.contentType, config.content, config.pluginId),
+    component: () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId),
     props: config.props,
     order: config.order ?? 100
   }
@@ -66,8 +66,8 @@ function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
   const convertChildren = (children?: MenuSlotConfig[]): MenuSlotItem[] | undefined => {
     if (!children || children.length === 0) return undefined
     return children.map((child) => ({
-      id: child.id,
-      index: child.id,
+      id: child.pluginPublicId,
+      index: child.pluginPublicId,
       label: child.name,
       icon: child.icon,
       order: child.order ?? 100,
@@ -77,8 +77,8 @@ function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
   }
 
   return {
-    id: config.id,
-    index: config.id,
+    id: config.pluginPublicId,
+    index: config.pluginPublicId,
     label: config.name,
     icon: config.icon,
     order: config.order ?? 100,
@@ -92,24 +92,24 @@ function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
  */
 function convertToSiteBrowserListSlot(config: SiteBrowserListSlotConfig): SiteBrowserListSlotItem {
   return {
-    id: config.id,
+    id: config.slotId,
     pluginId: config.pluginId,
+    pluginPublicId: config.pluginPublicId ?? '',
     name: config.name,
     order: config.order ?? 100,
     contributionId: config.contributionId ?? '',
-    pluginPublicId: config.pluginPublicId ?? '',
     imagePath: config.imagePath ?? ''
   }
 }
 
 /**
  * 加载插件CSS样式
- * @param pluginId 插件ID，用于标识CSS
+ * @param pluginPublicId 插件ID，用于标识CSS
  * @param cssPath CSS文件路径
  */
-async function loadPluginStyles(pluginId: number, cssPath: string): Promise<void> {
+async function loadPluginStyles(pluginPublicId: string, cssPath: string): Promise<void> {
   // 检查CSS是否已加载
-  const existingLink = document.querySelector(`link[data-plugin-id="${pluginId}"][data-css-path="${cssPath}"]`)
+  const existingLink = document.querySelector(`link[data-plugin-id="${pluginPublicId}"][data-css-path="${cssPath}"]`)
   if (existingLink) {
     return
   }
@@ -119,7 +119,7 @@ async function loadPluginStyles(pluginId: number, cssPath: string): Promise<void
     link.rel = 'stylesheet'
     link.type = 'text/css'
     link.href = cssPath
-    link.setAttribute('data-plugin-id', String(pluginId))
+    link.setAttribute('data-plugin-id', pluginPublicId)
     link.setAttribute('data-css-path', cssPath)
 
     link.onload = () => {
@@ -148,13 +148,13 @@ function unloadPluginStyles(pluginId: number): void {
  * 根据内容类型加载插件组件
  * @param contentType 内容类型
  * @param content 内容(字符串或对象)
- * @param pluginId 插件ID
+ * @param pluginPublicId 插件公开ID
  */
-async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginId: number): Promise<unknown> {
+async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginPublicId: string): Promise<unknown> {
   // Vue源码加载 - 运行时编译.vue文件
   if (contentType === 'vueSource') {
     if (typeof content === 'string') {
-      return loadVueSourceComponent(content, pluginId)
+      return loadVueSourceComponent(content, pluginPublicId)
     } else {
       throw new Error('vueSource 类型的内容需要提供源码路径')
     }
@@ -167,7 +167,7 @@ async function loadPluginComponent(contentType: string, content: AnySlotContent,
 
     // 如果content是对象且包含css路径，先加载CSS
     if (typeof precompiledContent === 'object' && precompiledContent.css) {
-      await loadPluginStyles(pluginId, protocolPrefix + precompiledContent.css)
+      await loadPluginStyles(pluginPublicId, protocolPrefix + precompiledContent.css)
     }
 
     // 获取js路径
@@ -215,9 +215,9 @@ function createCodeComponent(code: string): Promise<() => unknown> {
  * 加载并编译 Vue 源码
  * 插件可使用主程序的依赖
  * @param vuePath Vue 文件路径
- * @param pluginId 插件ID
+ * @param pluginPublicId 插件公开ID
  */
-async function loadVueSourceComponent(vuePath: string, pluginId: number): Promise<unknown> {
+async function loadVueSourceComponent(vuePath: string, pluginPublicId: string): Promise<unknown> {
   try {
     // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
     const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse
@@ -288,7 +288,7 @@ async function loadVueSourceComponent(vuePath: string, pluginId: number): Promis
         if (isScoped) {
           // 使用 compilerSFC 生成的 CSS scope ID
           // 由于运行时编译，我们生成一个简单的 scope ID
-          const scopeId = `data-v-${pluginId}-${Math.random().toString(36).slice(2, 8)}`
+          const scopeId = `data-v-${pluginPublicId}-${Math.random().toString(36).slice(2, 8)}`
           // 为 scoped 样式添加属性选择器
           // 注意：这里简化处理，实际需要更复杂的 AST 转换
           cssContent = cssContent.replace(/([^}]+)\s*\{/g, (_, selector) => {
@@ -312,7 +312,7 @@ async function loadVueSourceComponent(vuePath: string, pluginId: number): Promis
         }
 
         // 注入 CSS 到页面
-        injectStyle(cssContent, pluginId, isScoped ? String(pluginId) : undefined)
+        injectStyle(cssContent, pluginPublicId, isScoped ? String(pluginPublicId) : undefined)
       }
     }
 
@@ -336,8 +336,8 @@ async function loadVueSourceComponent(vuePath: string, pluginId: number): Promis
 /**
  * 动态注入 CSS 样式
  */
-function injectStyle(css: string, pluginId: number, scopeId?: string): void {
-  const styleId = `plugin-style-${pluginId}${scopeId ? `-${scopeId}` : ''}`
+function injectStyle(css: string, pluginPublicId: string, scopeId?: string): void {
+  const styleId = `plugin-style-${pluginPublicId}${scopeId ? `-${scopeId}` : ''}`
   const existingStyle = document.getElementById(styleId)
   if (existingStyle) {
     return
@@ -360,6 +360,7 @@ export function initSlotSyncListener() {
   window.electron.onSlotRegister((...args: unknown[]) => {
     const config = args[0] as SyncSlotConfig
 
+    console.log(config)
     if (config.type === 'view') {
       const slot = convertToViewSlot(config)
       store.registerViewSlot(slot)
@@ -373,7 +374,7 @@ export function initSlotSyncListener() {
 
       // 处理页面替换
       if (config.replaceViewId) {
-        store.replaceView(config.id, config.replaceViewId)
+        store.replaceView(config.pluginPublicId, config.replaceViewId)
       }
     } else if (config.type === 'siteBrowserList') {
       store.registerSiteBrowserSlot(convertToSiteBrowserListSlot(config))
@@ -406,7 +407,9 @@ export function initSlotSyncListener() {
   window.electron.onSlotBatchRegister((...args: unknown[]) => {
     const configs = args[0] as SyncSlotConfig[]
 
+    console.log('onSlotBatchRegister')
     configs.forEach((config) => {
+      console.log(config)
       if (config.type === 'view') {
         store.registerViewSlot(convertToViewSlot(config))
       } else if (config.type === 'menu') {
@@ -423,8 +426,10 @@ export function initSlotSyncListener() {
 
   // 同步所有已注册的插槽（用于处理插件激活时渲染进程还未准备好的情况）
   window.electron.getAllSlots().then((slots: unknown[]) => {
+    console.log('getAllSlots')
     slots.forEach((config: unknown) => {
       const syncConfig = config as SyncSlotConfig
+      console.log(config)
       if (syncConfig.type === 'view') {
         store.registerViewSlot(convertToViewSlot(syncConfig))
       } else if (syncConfig.type === 'menu') {
