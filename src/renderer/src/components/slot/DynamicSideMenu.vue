@@ -15,7 +15,7 @@ const route = useRoute()
 const slotStore = useSlotRegistryStore()
 
 interface MenuItem {
-  id: string
+  slotId: string
   index: string
   name: string
   label: string
@@ -33,9 +33,9 @@ function buildMenuItems(menuSlots: MenuSlotItem[]): MenuItem[] {
 
   menuSlots.forEach((menu) => {
     const item: MenuItem = {
-      id: menu.id,
+      slotId: menu.slotId,
       index: menu.index,
-      name: menu.id,
+      name: menu.slotId,
       label: menu.label,
       icon: menu.icon,
       order: menu.order ?? 100,
@@ -82,7 +82,7 @@ function handleMenuClick(item: MenuItem) {
   >
     <template #default>
       <div v-if="menuItems.length === 0">菜单为空</div>
-      <template v-for="item in menuItems" :key="item.id">
+      <template v-for="item in menuItems" :key="item.slotId">
         <!-- 分组菜单（有子菜单） -->
         <el-sub-menu v-if="item.children.length > 0" :index="item.index">
           <template #title>

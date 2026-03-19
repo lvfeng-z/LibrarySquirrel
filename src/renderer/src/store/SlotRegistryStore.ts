@@ -6,7 +6,7 @@ import type { Router } from 'vue-router'
 
 // 菜单项类型
 export interface MenuSlotItem {
-  id: string
+  slotId: string
   index: string
   icon?: unknown
   label: string
@@ -20,7 +20,7 @@ export interface MenuSlotItem {
 
 // 站点浏览器列表插槽项类型
 export interface SiteBrowserListSlotItem {
-  id: string
+  slotId: string
   pluginId: number
   pluginPublicId: string
   name: string
@@ -98,8 +98,8 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       // 从 viewSlots 生成路由
       this.viewSlots.forEach((slot) => {
         routes.push({
-          path: `/${slot.id}`,
-          name: slot.id,
+          path: `/${slot.slotId}`,
+          name: slot.slotId,
           component: slot.component,
           meta: {
             title: slot.name,
@@ -115,13 +115,13 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
   actions: {
     // 注册视图插槽
     registerViewSlot(slot: ViewSlot) {
-      this.viewSlots.set(slot.id, slot)
+      this.viewSlots.set(slot.slotId, slot)
 
       // 如果是插件视图且 router 可用，自动添加路由
       if (slot.isPlugin && routerInstance) {
         routerInstance.addRoute('MainLayout', {
-          path: slot.id,
-          name: slot.id,
+          path: slot.slotId,
+          name: slot.slotId,
           component: slot.component,
           meta: { title: slot.name, order: slot.order ?? 100, isPlugin: true }
         })
@@ -135,8 +135,8 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
       // 如果提供了 router 实例，添加路由
       if (routerInstance) {
         routerInstance.addRoute('MainLayout', {
-          path: slot.id,
-          name: slot.id,
+          path: slot.slotId,
+          name: slot.slotId,
           component: slot.component,
           meta: { title: slot.name, order: slot.order ?? 100 }
         })
@@ -160,7 +160,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
     // 注册嵌入插槽
     // 注册嵌入插槽
     registerEmbedSlot(slot: EmbedSlot) {
-      this.embedSlots.set(slot.id, slot)
+      this.embedSlots.set(slot.slotId, slot)
     },
 
     // 取消注册嵌入插槽
@@ -170,7 +170,7 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
 
     // 注册面板插槽
     registerPanelSlot(slot: PanelSlot) {
-      this.panelSlots.set(slot.id, slot)
+      this.panelSlots.set(slot.slotId, slot)
     },
 
     // 取消注册面板插槽
@@ -211,13 +211,14 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
 
     // 注册菜单插槽
     registerMenuSlot(item: MenuSlotItem) {
-      this.menuSlots.set(item.id, item)
+      console.log(item)
+      this.menuSlots.set(item.slotId, item)
     },
 
     // 批量注册菜单插槽
     registerMenuSlots(items: MenuSlotItem[]) {
       items.forEach((item) => {
-        this.menuSlots.set(item.id, item)
+        this.menuSlots.set(item.slotId, item)
       })
     },
 
@@ -228,13 +229,13 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
 
     // 注册站点浏览器列表插槽
     registerSiteBrowserSlot(item: SiteBrowserListSlotItem) {
-      this.siteBrowserSlots.set(item.id, item)
+      this.siteBrowserSlots.set(item.slotId, item)
     },
 
     // 批量注册站点浏览器列表插槽
     registerSiteBrowserSlots(items: SiteBrowserListSlotItem[]) {
       items.forEach((item) => {
-        this.siteBrowserSlots.set(item.id, item)
+        this.siteBrowserSlots.set(item.slotId, item)
       })
     },
 

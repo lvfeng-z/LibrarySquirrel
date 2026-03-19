@@ -24,26 +24,26 @@ export function addPluginRoute(viewSlot: ViewSlot): boolean {
   }
 
   // 检查路由是否已存在
-  const exists = router.getRoutes().some((r) => r.name === viewSlot.id)
+  const exists = router.getRoutes().some((r) => r.name === viewSlot.slotId)
   if (exists) {
-    console.warn(`[PluginRouter] Route ${viewSlot.id} already exists`)
+    console.warn(`[PluginRouter] Route ${viewSlot.slotId} already exists`)
     return false
   }
 
   // 添加路由到 MainLayout
   router.addRoute('MainLayout', {
-    path: viewSlot.id,
-    name: viewSlot.id,
+    path: viewSlot.slotId,
+    name: viewSlot.slotId,
     component: viewSlot.component,
     meta: {
       title: viewSlot.name,
       order: viewSlot.order ?? 100,
       isPlugin: true,
-      pluginId: viewSlot.id
+      pluginId: viewSlot.slotId
     }
   })
 
-  console.log(`[PluginRouter] Added route: ${viewSlot.id}`)
+  console.log(`[PluginRouter] Added route: ${viewSlot.slotId}`)
   return true
 }
 

@@ -2,6 +2,7 @@ import { useSlotRegistryStore, setRouterInstance, getRouterInstance } from '@ren
 import { HomeFilled, Discount, User, Star, List, Link, TakeawayBox, Setting, Guide, Coordinate } from '@element-plus/icons-vue'
 import { markRaw } from 'vue'
 import type { Router } from 'vue-router'
+import { ViewSlot } from '@renderer/model/slot'
 
 /**
  * 设置 Router 实例
@@ -26,93 +27,93 @@ export function initBuiltinMenus() {
   const store = useSlotRegistryStore()
 
   // 注册内置视图（主页和所有子页面）
-  const builtinViews = [
+  const builtinViews: ViewSlot[] = [
     {
-      id: 'mainPage',
+      slotId: 'mainPage',
       name: '主页',
       component: () => import('@renderer/components/main/MainPageWrapper.vue'),
       order: 0,
       isBuiltin: true
     },
     {
-      id: 'localTagManage',
+      slotId: 'localTagManage',
       name: '本地标签',
       component: () => import('@renderer/components/subpage/LocalTagManage.vue'),
       order: 10,
       isBuiltin: true
     },
     {
-      id: 'siteTagManage',
+      slotId: 'siteTagManage',
       name: '站点标签',
       component: () => import('@renderer/components/subpage/SiteTagManage.vue'),
       order: 11,
       isBuiltin: true
     },
     {
-      id: 'localAuthorManage',
+      slotId: 'localAuthorManage',
       name: '本地作者',
       component: () => import('@renderer/components/subpage/LocalAuthorManage.vue'),
       order: 20,
       isBuiltin: true
     },
     {
-      id: 'siteAuthorManage',
+      slotId: 'siteAuthorManage',
       name: '站点作者',
       component: () => import('@renderer/components/subpage/SiteAuthorManage.vue'),
       order: 21,
       isBuiltin: true
     },
     {
-      id: 'developing',
+      slotId: 'developing',
       name: '收藏',
       component: () => import('@renderer/components/subpage/Developing.vue'),
       order: 30,
       isBuiltin: true
     },
     {
-      id: 'taskManage',
+      slotId: 'taskManage',
       name: '任务',
       component: () => import('@renderer/components/subpage/TaskManage.vue'),
       order: 40,
       isBuiltin: true
     },
     {
-      id: 'siteManage',
+      slotId: 'siteManage',
       name: '站点管理',
       component: () => import('@renderer/components/subpage/SiteManage.vue'),
       order: 50,
       isBuiltin: true
     },
     {
-      id: 'siteBrowserManage',
+      slotId: 'siteBrowserManage',
       name: '站点浏览',
       component: () => import('@renderer/components/subpage/SiteBrowserManage.vue'),
       order: 51,
       isBuiltin: true
     },
     {
-      id: 'pluginManage',
+      slotId: 'pluginManage',
       name: '插件',
       component: () => import('@renderer/components/subpage/PluginManage.vue'),
       order: 60,
       isBuiltin: true
     },
     {
-      id: 'settings',
+      slotId: 'settings',
       name: '设置',
       component: () => import('@renderer/components/subpage/Settings.vue'),
       order: 70,
       isBuiltin: true
     },
     {
-      id: 'guide',
+      slotId: 'guide',
       name: '向导',
       component: () => import('@renderer/components/subpage/Guide.vue'),
       order: 80,
       isBuiltin: true
     },
     {
-      id: 'test',
+      slotId: 'test',
       name: '测试按钮',
       component: () => import('@renderer/components/subpage/Test.vue'),
       order: 90,
@@ -126,7 +127,7 @@ export function initBuiltinMenus() {
   // 批量注册内置菜单（icon 使用 markRaw 避免 reactive 警告）
   store.registerMenuSlots([
     {
-      id: 'builtin-main',
+      slotId: 'builtin-main',
       index: 'main',
       icon: markRaw(HomeFilled),
       label: '主页',
@@ -134,14 +135,14 @@ export function initBuiltinMenus() {
       viewId: 'mainPage'
     },
     {
-      id: 'builtin-tag',
+      slotId: 'builtin-tag',
       index: 'tag',
       icon: markRaw(Discount),
       label: '标签',
       order: 10,
       children: [
         {
-          id: 'builtin-localTag',
+          slotId: 'builtin-localTag',
           index: 'localTag',
           icon: markRaw(Discount),
           label: '本地标签',
@@ -149,7 +150,7 @@ export function initBuiltinMenus() {
           viewId: 'localTagManage'
         },
         {
-          id: 'builtin-siteTag',
+          slotId: 'builtin-siteTag',
           index: 'siteTag',
           icon: markRaw(Discount),
           label: '站点标签',
@@ -159,14 +160,14 @@ export function initBuiltinMenus() {
       ]
     },
     {
-      id: 'builtin-author',
+      slotId: 'builtin-author',
       index: 'author',
       icon: markRaw(User),
       label: '作者',
       order: 20,
       children: [
         {
-          id: 'builtin-localAuthor',
+          slotId: 'builtin-localAuthor',
           index: 'localAuthor',
           icon: markRaw(User),
           label: '本地作者',
@@ -174,7 +175,7 @@ export function initBuiltinMenus() {
           viewId: 'localAuthorManage'
         },
         {
-          id: 'builtin-siteAuthor',
+          slotId: 'builtin-siteAuthor',
           index: 'siteAuthor',
           icon: markRaw(User),
           label: '站点作者',
@@ -184,7 +185,7 @@ export function initBuiltinMenus() {
       ]
     },
     {
-      id: 'builtin-favorite',
+      slotId: 'builtin-favorite',
       index: 'favorite',
       icon: markRaw(Star),
       label: '收藏',
@@ -192,7 +193,7 @@ export function initBuiltinMenus() {
       viewId: 'developing'
     },
     {
-      id: 'builtin-task',
+      slotId: 'builtin-task',
       index: 'task',
       icon: markRaw(List),
       label: '任务',
@@ -200,14 +201,14 @@ export function initBuiltinMenus() {
       viewId: 'taskManage'
     },
     {
-      id: 'builtin-site',
+      slotId: 'builtin-site',
       index: 'site',
       icon: markRaw(Link),
       label: '站点',
       order: 50,
       children: [
         {
-          id: 'builtin-siteManage',
+          slotId: 'builtin-siteManage',
           index: 'siteManage',
           icon: markRaw(Link),
           label: '站点管理',
@@ -215,7 +216,7 @@ export function initBuiltinMenus() {
           viewId: 'siteManage'
         },
         {
-          id: 'builtin-siteBrowser',
+          slotId: 'builtin-siteBrowser',
           index: 'siteBrowser',
           icon: markRaw(Link),
           label: '站点浏览',
@@ -225,7 +226,7 @@ export function initBuiltinMenus() {
       ]
     },
     {
-      id: 'builtin-plugin',
+      slotId: 'builtin-plugin',
       index: 'plugin',
       icon: markRaw(TakeawayBox),
       label: '插件',
@@ -233,7 +234,7 @@ export function initBuiltinMenus() {
       viewId: 'pluginManage'
     },
     {
-      id: 'builtin-settings',
+      slotId: 'builtin-settings',
       index: 'settings',
       icon: markRaw(Setting),
       label: '设置',
@@ -241,7 +242,7 @@ export function initBuiltinMenus() {
       viewId: 'settings'
     },
     {
-      id: 'builtin-guide',
+      slotId: 'builtin-guide',
       index: 'guide',
       icon: markRaw(Guide),
       label: '向导',
@@ -249,7 +250,7 @@ export function initBuiltinMenus() {
       viewId: 'guide'
     },
     {
-      id: 'builtin-test',
+      slotId: 'builtin-test',
       index: 'test',
       icon: markRaw(Coordinate),
       label: '测试按钮',

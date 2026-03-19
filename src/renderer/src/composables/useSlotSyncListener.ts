@@ -5,7 +5,7 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { parse } from '@vue/compiler-sfc'
-import { compile, defineComponent } from 'vue'
+import { compile, DefineComponent, defineComponent } from 'vue'
 import { AnySlotContent, PrecompiledContent, SyncSlotConfig } from '@shared/model/constant/SlotTypes.ts'
 import {
   EmbedSlotConfig,
@@ -21,7 +21,7 @@ import {
 function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
   const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId)
   return {
-    id: config.pluginPublicId,
+    slotId: config.slotId,
     name: config.name,
     component: componentLoader,
     order: config.order ?? 100,
@@ -35,7 +35,7 @@ function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
  */
 function convertToEmbedSlot(config: EmbedSlotConfig): EmbedSlot {
   return {
-    id: config.pluginPublicId,
+    slotId: config.slotId,
     position: config.position as 'topbar' | 'statusbar' | 'toolbar',
     component: () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId),
     props: config.props,
@@ -48,7 +48,7 @@ function convertToEmbedSlot(config: EmbedSlotConfig): EmbedSlot {
  */
 function convertToPanelSlot(config: PanelSlotConfig): PanelSlot {
   return {
-    id: config.pluginPublicId,
+    slotId: config.slotId,
     position: config.position as 'left-sidebar' | 'right-sidebar' | 'bottom',
     width: config.width,
     height: config.height,
@@ -66,7 +66,7 @@ function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
   const convertChildren = (children?: MenuSlotConfig[]): MenuSlotItem[] | undefined => {
     if (!children || children.length === 0) return undefined
     return children.map((child) => ({
-      id: child.pluginPublicId,
+      slotId: child.slotId,
       index: child.pluginPublicId,
       label: child.name,
       icon: child.icon,
@@ -77,7 +77,7 @@ function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
   }
 
   return {
-    id: config.pluginPublicId,
+    slotId: config.slotId,
     index: config.pluginPublicId,
     label: config.name,
     icon: config.icon,
@@ -92,7 +92,7 @@ function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
  */
 function convertToSiteBrowserListSlot(config: SiteBrowserListSlotConfig): SiteBrowserListSlotItem {
   return {
-    id: config.slotId,
+    slotId: config.slotId,
     pluginId: config.pluginId,
     pluginPublicId: config.pluginPublicId ?? '',
     name: config.name,
@@ -150,7 +150,7 @@ function unloadPluginStyles(pluginId: number): void {
  * @param content 内容(字符串或对象)
  * @param pluginPublicId 插件公开ID
  */
-async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginPublicId: string): Promise<unknown> {
+async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginPublicId: string): Promise<DefineComponent> {
   // Vue源码加载 - 运行时编译.vue文件
   if (contentType === 'vueSource') {
     if (typeof content === 'string') {
@@ -198,7 +198,7 @@ async function loadPluginComponent(contentType: string, content: AnySlotContent,
  * 创建代码片段组件
  * 注意: 代码片段需要返回一个 Vue 组件定义
  */
-function createCodeComponent(code: string): Promise<() => unknown> {
+function createCodeComponent(code: string): Promise<DefineComponent> {
   return new Promise((resolve, reject) => {
     try {
       // 使用 Function 构造函数创建组件工厂函数
@@ -217,7 +217,7 @@ function createCodeComponent(code: string): Promise<() => unknown> {
  * @param vuePath Vue 文件路径
  * @param pluginPublicId 插件公开ID
  */
-async function loadVueSourceComponent(vuePath: string, pluginPublicId: string): Promise<unknown> {
+async function loadVueSourceComponent(vuePath: string, pluginPublicId: string): Promise<DefineComponent> {
   try {
     // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
     const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse
@@ -360,7 +360,6 @@ export function initSlotSyncListener() {
   window.electron.onSlotRegister((...args: unknown[]) => {
     const config = args[0] as SyncSlotConfig
 
-    console.log(config)
     if (config.type === 'view') {
       const slot = convertToViewSlot(config)
       store.registerViewSlot(slot)
@@ -407,9 +406,7 @@ export function initSlotSyncListener() {
   window.electron.onSlotBatchRegister((...args: unknown[]) => {
     const configs = args[0] as SyncSlotConfig[]
 
-    console.log('onSlotBatchRegister')
     configs.forEach((config) => {
-      console.log(config)
       if (config.type === 'view') {
         store.registerViewSlot(convertToViewSlot(config))
       } else if (config.type === 'menu') {
@@ -426,10 +423,8 @@ export function initSlotSyncListener() {
 
   // 同步所有已注册的插槽（用于处理插件激活时渲染进程还未准备好的情况）
   window.electron.getAllSlots().then((slots: unknown[]) => {
-    console.log('getAllSlots')
     slots.forEach((config: unknown) => {
       const syncConfig = config as SyncSlotConfig
-      console.log(config)
       if (syncConfig.type === 'view') {
         store.registerViewSlot(convertToViewSlot(syncConfig))
       } else if (syncConfig.type === 'menu') {

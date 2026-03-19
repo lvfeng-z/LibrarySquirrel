@@ -1,7 +1,9 @@
+import { DefineComponent } from 'vue'
+
 export interface EmbedSlot {
-  id: string
+  slotId: string
   position: 'topbar' | 'statusbar' | 'toolbar'
-  component: () => Promise<any>
-  props?: Record<string, any>
+  component: () => Promise<DefineComponent>
+  props?: Record<string, unknown>
   order?: number
 }
