@@ -11,7 +11,7 @@ import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util
 import { MediaExtMapping, MediaType } from '../constant/MediaType.js'
 import { OriginType } from '../constant/OriginType.js'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
-import { BOOL } from '../constant/BOOL.js'
+import { BOOL } from '@shared/model/constant/BOOL.js'
 import WorkWithWorkSetId from '@shared/model/domain/WorkWithWorkSetId.ts'
 import { SearchConditionUtil } from '../util/SearchConditionUtil.ts'
 import { isBlank } from '@shared/util/StringUtil.ts'

@@ -29,14 +29,14 @@ import PluginWithContribution from '@shared/model/domain/PluginWithContribution.
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
 import TaskService from '../service/TaskService.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
-import type {
+import {
   EmbedSlotConfig,
-  PanelSlotConfig,
-  ViewSlotConfig,
   MenuSlotConfig,
+  PanelSlotConfig,
   SiteBrowserListSlotConfig,
-  SlotConfig
-} from './types/SlotTypes.ts'
+  ViewSlotConfig
+} from '@shared/model/interface/SlotConfigs.ts'
+import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
 
 /**
  * 缓存的插件实例

@@ -11,7 +11,7 @@ import { assertArrayNotEmpty, assertNotBlank, assertNotNullish, assertTrue } fro
 import fs from 'fs'
 import AdmZip from 'adm-zip'
 import { PLUGIN_ROOT } from '../constant/PluginConstant.js'
-import { BOOL } from '../constant/BOOL.js'
+import { BOOL } from '@shared/model/constant/BOOL.js'
 import Page from '@shared/model/util/Page.js'
 import BackupService from './BackupService.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'

@@ -3,7 +3,13 @@ import WorkSet from '@shared/model/entity/WorkSet.ts'
 import Site from '@shared/model/entity/Site.ts'
 import SiteBrowserDTO from '@shared/model/dto/SiteBrowserDTO.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
-import type { EmbedSlotConfig, PanelSlotConfig, ViewSlotConfig, MenuSlotConfig, SiteBrowserListSlotConfig } from './SlotTypes.ts'
+import {
+  EmbedSlotConfig,
+  MenuSlotConfig,
+  PanelSlotConfig,
+  SiteBrowserListSlotConfig,
+  ViewSlotConfig
+} from '@shared/model/interface/SlotConfigs.ts'
 
 /**
  * 插件上下文接口

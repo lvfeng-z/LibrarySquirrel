@@ -4,6 +4,7 @@ import { Database } from '../database/Database.ts'
 import { RootDir } from './FileSysUtil.ts'
 import BaseQueryDTO from '@shared/model/base/BaseQueryDTO.ts'
 import { notNullish } from '@shared/util/CommonUtil.ts'
+import { BOOL } from '@shared/model/constant/BOOL.ts'
 
 /**
  * 查询数据库所有数据表的名称
@@ -34,7 +35,7 @@ export function ToObjAcceptedBySqlite3(obj: object | undefined, ignore?: string[
       .filter(([key, value]) => value !== undefined && typeof value !== 'function' && !ignore?.includes(key))
       .map(([key, value]) => {
         if (typeof value === 'boolean') {
-          return [key, value ? 1 : 0]
+          return [key, value ? BOOL.TRUE : BOOL.FALSE]
         }
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
           return [key, JSON.stringify(value)]

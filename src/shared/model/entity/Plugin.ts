@@ -1,6 +1,6 @@
 import BaseEntity from '../base/BaseEntity.ts'
 import { notNullish } from '../../util/CommonUtil.ts'
-import { BOOL } from '../constant/BOOL.ts'
+import { BOOL } from '@shared/model/constant/BOOL.ts'
 import { ActivationType } from '../constant/ActivationType.ts'
 
 export default class Plugin extends BaseEntity {

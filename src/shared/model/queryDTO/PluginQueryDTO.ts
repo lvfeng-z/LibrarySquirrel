@@ -1,6 +1,6 @@
 import BaseQueryDTO from '../base/BaseQueryDTO.ts'
 import { notNullish } from '../../util/CommonUtil.ts'
-import { BOOL } from '../constant/BOOL.ts'
+import { BOOL } from '@shared/model/constant/BOOL.ts'
 import { ActivationType } from '@shared/model/constant/ActivationType.ts'
 
 export default class PluginQueryDTO extends BaseQueryDTO {
