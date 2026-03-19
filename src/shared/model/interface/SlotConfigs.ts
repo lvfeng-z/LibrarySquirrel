@@ -58,6 +58,10 @@ export interface ViewSlotConfig extends BaseSlotConfig {
   content: AnySlotContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
+  /** 编译后的 JS 文件路径 (仅 vueSource 类型使用) */
+  compiledJsPath?: string
+  /** 编译后的 CSS 文件路径 (仅 vueSource 类型使用) */
+  compiledCssPath?: string
 }
 
 /** 菜单插槽配置 (对应 MenuSlot) */
@@ -80,4 +84,9 @@ export interface SiteBrowserListSlotConfig extends BaseSlotConfig {
   contributionId: string
   /** 图片路径 */
   imagePath: string
+}
+
+export interface VueCompileResult {
+  jsPath: string
+  cssPath: string | undefined
 }

@@ -5,7 +5,7 @@ import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { parse } from '@vue/compiler-sfc'
-import { compile, DefineComponent, defineComponent } from 'vue'
+import { compile, defineComponent } from 'vue'
 import { AnySlotContent, PrecompiledContent, SyncSlotConfig } from '@shared/model/constant/SlotTypes.ts'
 import {
   EmbedSlotConfig,
@@ -14,12 +14,14 @@ import {
   SiteBrowserListSlotConfig,
   ViewSlotConfig
 } from '@shared/model/interface/SlotConfigs.ts'
+import { DefineComponent } from 'vue'
 
 /**
  * 转换视图插槽配置
  */
 function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
-  const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId)
+  const componentLoader = () =>
+    loadPluginComponent(config.contentType, config.content, config.pluginPublicId, config.compiledJsPath, config.compiledCssPath)
   return {
     slotId: config.slotId,
     name: config.name,
@@ -145,14 +147,60 @@ function unloadPluginStyles(pluginId: number): void {
 }
 
 /**
+ * 加载预编译的插件组件
+ * 直接加载主进程编译生成的 JS 文件
+ * @param jsPath 编译后的 JS 文件路径
+ * @param cssPath 编译后的 CSS 文件路径（可选）
+ * @param pluginPublicId 插件公开ID
+ */
+async function loadCompiledComponent(jsPath: string, cssPath: string | undefined, pluginPublicId: string): Promise<DefineComponent> {
+  // 使用 resource:// 协议加载 JS 文件
+  const protocolPrefix = 'resource://plugin/'
+
+  // 转换绝对路径为相对路径（相对于插件缓存目录）
+  const relativeJsPath = jsPath.replace(/\\/g, '/')
+  const jsUrl = protocolPrefix + relativeJsPath
+
+  // 如果有CSS文件，先加载CSS
+  if (cssPath) {
+    const relativeCssPath = cssPath.replace(/\\/g, '/')
+    const cssUrl = protocolPrefix + relativeCssPath
+    await loadPluginStyles(pluginPublicId, cssUrl)
+  }
+
+  // 动态导入 JS 文件获取组件
+  try {
+    const module = await import(/* @vite-ignore */ jsUrl)
+    return module.default
+  } catch (error) {
+    console.error('加载编译后的组件失败:', error)
+    throw new Error(`加载编译后的组件失败: ${error}`)
+  }
+}
+
+/**
  * 根据内容类型加载插件组件
  * @param contentType 内容类型
  * @param content 内容(字符串或对象)
  * @param pluginPublicId 插件公开ID
+ * @param compiledJsPath 编译后的JS文件路径（可选）
+ * @param compiledCssPath 编译后的CSS文件路径（可选）
  */
-async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginPublicId: string): Promise<DefineComponent> {
-  // Vue源码加载 - 运行时编译.vue文件
+async function loadPluginComponent(
+  contentType: string,
+  content: AnySlotContent,
+  pluginPublicId: string,
+  compiledJsPath?: string,
+  compiledCssPath?: string
+): Promise<DefineComponent> {
+  // Vue源码加载 - 优先使用预编译的缓存文件
   if (contentType === 'vueSource') {
+    // 如果有编译后的缓存文件，直接加载
+    if (compiledJsPath) {
+      return loadCompiledComponent(compiledJsPath, compiledCssPath, pluginPublicId)
+    }
+
+    // 否则fallback到运行时编译
     if (typeof content === 'string') {
       return loadVueSourceComponent(content, pluginPublicId)
     } else {

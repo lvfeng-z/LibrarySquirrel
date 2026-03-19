@@ -30,11 +30,11 @@ export default class VueSourceCompiler {
   /**
    * 编译 Vue 源码文件
    * @param vueFilePath .vue 文件的绝对路径
-   * @param pluginId 插件 ID
+   * @param pluginPublicId 插件 ID
    * @param slotId 插槽 ID
    * @returns 编译结果包含 JS 和 CSS 文件路径
    */
-  async compile(vueFilePath: string, pluginId: number, slotId: string): Promise<VueCompileResult> {
+  async compile(vueFilePath: string, pluginPublicId: number, slotId: string): Promise<VueCompileResult> {
     LogUtil.info('VueSourceCompiler', `开始编译 Vue 源码: ${vueFilePath}`)
 
     // 读取 Vue 文件内容
@@ -49,30 +49,34 @@ export default class VueSourceCompiler {
     }
 
     // 准备输出目录
-    const pluginCacheDir = path.join(this.cacheDir, String(pluginId))
+    const pluginCacheDir = path.join(this.cacheDir, String(pluginPublicId))
     await CreateDirIfNotExists(pluginCacheDir)
 
-    // 生成文件名前缀
-    const filePrefix = slotId.replace(/[^a-zA-Z0-9]/g, '_')
-    const jsPath = `${filePrefix}.js`
-    const cssPath = `${filePrefix}.css`
+    // 生成文件名
+    const fileName = slotId.replace(/[^a-zA-Z0-9]/g, '_')
 
     // 编译脚本和模板
-    const { scriptCode, stylesCode } = await this.compileSFC(descriptor, pluginId)
+    const { scriptCode, stylesCode } = await this.compileSFC(descriptor, pluginPublicId)
 
     // 写入 JS 文件
-    await fsPromise.writeFile(path.join(pluginCacheDir, jsPath), scriptCode, 'utf-8')
-    LogUtil.info('VueSourceCompiler', `JS 文件已写入: ${jsPath}`)
+    const jsFileName = `${fileName}.js`
+    const jsFullPath = path.join(pluginCacheDir, jsFileName)
+    await fsPromise.writeFile(jsFullPath, scriptCode, 'utf-8')
+    LogUtil.info('VueSourceCompiler', `JS 文件已写入: ${jsFileName}`)
 
     // 写入 CSS 文件
+    let cssFullPath: string | undefined
     if (stylesCode) {
-      await fsPromise.writeFile(path.join(pluginCacheDir, cssPath), stylesCode, 'utf-8')
-      LogUtil.info('VueSourceCompiler', `CSS 文件已写入: ${cssPath}`)
+      const cssFileName = `${fileName}.css`
+      cssFullPath = path.join(pluginCacheDir, cssFileName)
+      await fsPromise.writeFile(cssFullPath, stylesCode, 'utf-8')
+      LogUtil.info('VueSourceCompiler', `CSS 文件已写入: ${cssFileName}`)
     }
 
+    // 返回相对于 cacheDir 的路径
     return {
-      jsPath: `plugin-cache/${pluginId}/${jsPath}`,
-      cssPath: stylesCode ? `plugin-cache/${pluginId}/${cssPath}` : undefined
+      jsPath: path.relative(this.cacheDir, jsFullPath),
+      cssPath: cssFullPath ? path.relative(this.cacheDir, cssFullPath) : undefined
     }
   }
 
@@ -182,7 +186,50 @@ export default class VueSourceCompiler {
    * 移除 import 语句和 export 声明
    */
   private extractRenderFunction(code: string): string {
-    return code.trim()
+    let result = code.trim()
+
+    // 1. 将 Vue 导入语句转换为变量赋值
+    result = this.convertVueImports(result)
+
+    // 2. 将 export function render 替换为 function render
+    result = result.replace(/export\s+function\s+render/, 'function render')
+
+    return result
+  }
+
+  /**
+   * 将 Vue 导入语句转换为变量赋值
+   * 例如: import { foo as _foo, bar } from "vue"
+   * 转换为:
+   *   const _foo = foo
+   *   const _bar = bar
+   */
+  private convertVueImports(code: string): string {
+    const importMatch = code.match(/import\s*\{([^}]+)\}\s*from\s*["']vue["']/)
+    if (!importMatch) {
+      return code
+    }
+
+    const imports = importMatch[1]
+    const lines: string[] = []
+
+    for (const item of imports.split(',')) {
+      const trimmed = item.trim()
+      const asIndex = trimmed.indexOf(' as ')
+
+      if (asIndex !== -1) {
+        // 形式: xxx as _xxx
+        const original = trimmed.substring(0, asIndex).trim()
+        const alias = trimmed.substring(asIndex + 4).trim()
+        lines.push(`const ${alias} = ${original}`)
+      } else {
+        // 形式: xxx -> const _xxx = xxx
+        lines.push(`const _${trimmed} = ${trimmed}`)
+      }
+    }
+
+    const importsBlock = lines.join('\n  ')
+    return code.replace(importMatch[0], importsBlock)
   }
 
   /**
