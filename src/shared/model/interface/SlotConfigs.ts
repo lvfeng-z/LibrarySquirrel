@@ -1,26 +1,18 @@
-/**
- * 插件插槽类型定义
- * 定义插件贡献UI插槽的配置类型
- */
-
-/** 插槽内容类型 */
-export type SlotContentType = 'component' | 'code'
+import { AnySlotContent, SlotContentType } from '@shared/model/constant/SlotTypes.ts'
 
 /**
- * 组件内容类型 (仅用于 contentType 为 'component' 时)
- * - 字符串: 仅包含js路径 (向后兼容)
- * - 对象: 包含js路径和可选的css路径
- * - vue: 包含vue文件路径，用于运行时编译
+ * 通用基础字段 - 所有插槽类型都有的字段
  */
-export type ComponentContent =
-  | string
-  | {
-      js: string
-      css?: string
-    }
-  | {
-      vue: string
-    }
+export interface BaseSlotConfig {
+  id: string
+  pluginId: number
+  name: string
+  order?: number
+  contentType: SlotContentType
+  content: AnySlotContent
+  props?: Record<string, unknown>
+  replaceViewId?: string
+}
 
 /** 插槽基础配置 */
 export interface BaseSlotConfig {
@@ -42,8 +34,8 @@ export interface EmbedSlotConfig extends BaseSlotConfig {
   position: 'topbar' | 'statusbar' | 'toolbar'
   /** 内容类型 */
   contentType: SlotContentType
-  /** 内容: 代码片段 / 组件内容对象(包含js和css路径) */
-  content: ComponentContent
+  /** 内容: 根据 contentType 类型确定 */
+  content: AnySlotContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
 }
@@ -60,8 +52,8 @@ export interface PanelSlotConfig extends BaseSlotConfig {
   height?: number
   /** 内容类型 */
   contentType: SlotContentType
-  /** 内容: 代码片段 / 组件内容对象(包含js和css路径) */
-  content: ComponentContent
+  /** 内容: 根据 contentType 类型确定 */
+  content: AnySlotContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
   /** 替换的主程序视图ID (可选) */
@@ -72,12 +64,10 @@ export interface PanelSlotConfig extends BaseSlotConfig {
 export interface ViewSlotConfig extends BaseSlotConfig {
   /** 插槽类型 */
   type: 'view'
-  /** 图标 (Element Plus 图标名) */
-  icon?: string
   /** 内容类型 */
   contentType: SlotContentType
-  /** 内容: 代码片段 / 组件内容对象(包含js和css路径) */
-  content: ComponentContent
+  /** 内容: 根据 contentType 类型确定 */
+  content: AnySlotContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
 }
@@ -105,6 +95,3 @@ export interface SiteBrowserListSlotConfig extends BaseSlotConfig {
   /** 图片路径 */
   imagePath: string
 }
-
-/** 所有插槽配置的联合类型 */
-export type SlotConfig = EmbedSlotConfig | PanelSlotConfig | ViewSlotConfig | MenuSlotConfig | SiteBrowserListSlotConfig

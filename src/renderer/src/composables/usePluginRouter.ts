@@ -37,7 +37,6 @@ export function addPluginRoute(viewSlot: ViewSlot): boolean {
     component: viewSlot.component,
     meta: {
       title: viewSlot.name,
-      icon: viewSlot.icon,
       order: viewSlot.order ?? 100,
       isPlugin: true,
       pluginId: viewSlot.id

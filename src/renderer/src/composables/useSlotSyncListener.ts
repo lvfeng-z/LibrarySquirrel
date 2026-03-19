@@ -1,118 +1,28 @@
-import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
-import type { ViewSlot, EmbedSlot, PanelSlot } from '@renderer/model/slot'
 import type { MenuSlotItem, SiteBrowserListSlotItem } from '@renderer/store/SlotRegistryStore'
+import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
+import type { EmbedSlot, PanelSlot, ViewSlot } from '@renderer/model/slot'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
-
-/**
- * 从主进程同步过来的插槽配置类型
- * 与主进程的 SlotTypes 对应
- */
-
-/**
- * 组件内容类型 (仅用于 contentType 为 'component' 时)
- * - 字符串: 仅包含js路径 (向后兼容)
- * - 对象: 包含js路径和可选的css路径
- * - vue: 包含vue文件路径，用于运行时编译
- */
-type SyncComponentContent =
-  | string
-  | {
-      js: string
-      css?: string
-    }
-  | {
-      vue: string
-    }
-
-/**
- * 通用基础字段 - 所有插槽类型都有的字段
- */
-interface BaseSlotConfig {
-  id: string
-  pluginId: number
-  name: string
-  order?: number
-  position?: string
-  width?: number
-  height?: number
-  contentType: 'component' | 'code'
-  content: SyncComponentContent
-  props?: Record<string, unknown>
-  replaceViewId?: string
-  icon?: string
-}
-
-/**
- * 菜单插槽配置 - type 为 'menu' 时使用
- */
-interface MenuSlotConfig extends BaseSlotConfig {
-  type: 'menu'
-  viewId: string
-  children: SyncMenuChildConfig[]
-}
-
-/** 子菜单配置 */
-interface SyncMenuChildConfig {
-  id: string
-  name: string
-  order?: number
-  icon?: string
-  viewId?: string
-  children?: SyncMenuChildConfig[]
-}
-
-/**
- * 站点浏览器列表插槽配置 - type 为 'siteBrowserList' 时使用
- */
-interface SiteBrowserListSlotConfig extends BaseSlotConfig {
-  type: 'siteBrowserList'
-  contributionId: string
-  pluginPublicId: string
-  imagePath: string
-}
-
-/**
- * 视图插槽配置 - type 为 'view' 时使用
- */
-interface ViewTypeSlotConfig extends BaseSlotConfig {
-  type: 'view'
-}
-
-/**
- * 嵌入插槽配置 - type 为 'embed' 时使用
- */
-interface EmbedTypeSlotConfig extends BaseSlotConfig {
-  type: 'embed'
-}
-
-/**
- * 面板插槽配置 - type 为 'panel' 时使用
- */
-interface PanelTypeSlotConfig extends BaseSlotConfig {
-  type: 'panel'
-}
-
-/**
- * 插槽配置联合类型 - 使用可辨识联合实现类型安全
- */
-export type SyncSlotConfig =
-  | MenuSlotConfig
-  | SiteBrowserListSlotConfig
-  | ViewTypeSlotConfig
-  | EmbedTypeSlotConfig
-  | PanelTypeSlotConfig
+import { parse } from '@vue/compiler-sfc'
+import { compile, defineComponent } from 'vue'
+import { AnySlotContent, PrecompiledContent, SyncSlotConfig } from '@shared/model/constant/SlotTypes.ts'
+import {
+  EmbedSlotConfig,
+  MenuSlotConfig,
+  PanelSlotConfig,
+  SiteBrowserListSlotConfig,
+  ViewSlotConfig
+} from '@shared/model/interface/SlotConfigs.ts'
 
 /**
  * 转换视图插槽配置
  */
-function convertToViewSlot(config: ViewTypeSlotConfig): ViewSlot {
+function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
   const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginId)
   return {
     id: config.id,
     name: config.name,
-    icon: config.icon,
     component: componentLoader,
     order: config.order ?? 100,
     isPlugin: true,
@@ -123,7 +33,7 @@ function convertToViewSlot(config: ViewTypeSlotConfig): ViewSlot {
 /**
  * 转换嵌入插槽配置
  */
-function convertToEmbedSlot(config: EmbedTypeSlotConfig): EmbedSlot {
+function convertToEmbedSlot(config: EmbedSlotConfig): EmbedSlot {
   return {
     id: config.id,
     position: config.position as 'topbar' | 'statusbar' | 'toolbar',
@@ -136,7 +46,7 @@ function convertToEmbedSlot(config: EmbedTypeSlotConfig): EmbedSlot {
 /**
  * 转换面板插槽配置
  */
-function convertToPanelSlot(config: PanelTypeSlotConfig): PanelSlot {
+function convertToPanelSlot(config: PanelSlotConfig): PanelSlot {
   return {
     id: config.id,
     position: config.position as 'left-sidebar' | 'right-sidebar' | 'bottom',
@@ -153,7 +63,7 @@ function convertToPanelSlot(config: PanelTypeSlotConfig): PanelSlot {
  */
 function convertToMenuSlot(config: MenuSlotConfig): MenuSlotItem {
   // 递归转换子菜单
-  const convertChildren = (children?: SyncMenuChildConfig[]): MenuSlotItem[] | undefined => {
+  const convertChildren = (children?: MenuSlotConfig[]): MenuSlotItem[] | undefined => {
     if (!children || children.length === 0) return undefined
     return children.map((child) => ({
       id: child.id,
@@ -240,36 +150,43 @@ function unloadPluginStyles(pluginId: number): void {
  * @param content 内容(字符串或对象)
  * @param pluginId 插件ID
  */
-async function loadPluginComponent(contentType: string, content: SyncComponentContent, pluginId: number): Promise<unknown> {
-  if (contentType === 'component') {
-    const protocolPrefix = 'resource://plugin/'
-    // 如果content是对象且包含vue路径，运行时编译Vue源码
-    if (typeof content === 'object' && 'vue' in content) {
-      return loadVueSourceComponent(content.vue, pluginId)
+async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginId: number): Promise<unknown> {
+  // Vue源码加载 - 运行时编译.vue文件
+  if (contentType === 'vueSource') {
+    if (typeof content === 'string') {
+      return loadVueSourceComponent(content, pluginId)
+    } else {
+      throw new Error('vueSource 类型的内容需要提供源码路径')
     }
+  }
+
+  // 预编译组件加载 - 加载JS/CSS
+  if (contentType === 'precompiled') {
+    const protocolPrefix = 'resource://plugin/'
+    const precompiledContent = content as PrecompiledContent
+
     // 如果content是对象且包含css路径，先加载CSS
-    if (typeof content === 'object' && content.css) {
-      await loadPluginStyles(pluginId, protocolPrefix + content.css)
+    if (typeof precompiledContent === 'object' && precompiledContent.css) {
+      await loadPluginStyles(pluginId, protocolPrefix + precompiledContent.css)
     }
 
     // 获取js路径
-    const jsPath = typeof content === 'string' ? content : protocolPrefix + content.js
+    const jsPath = typeof precompiledContent === 'string' ? precompiledContent : protocolPrefix + precompiledContent.js
 
     // Vue 组件文件: dynamic import
     // 插件组件通过 resource:// 协议访问
     return import(/* @vite-ignore */ jsPath)
   }
 
+  // 代码片段加载
   if (contentType === 'code') {
     // 代码片段: 执行代码并返回 Vue 组件
     // content对于code类型应该是字符串
     let codeContent: string
     if (typeof content === 'string') {
       codeContent = content
-    } else if ('js' in content) {
-      codeContent = content.js
     } else {
-      throw new Error('code 类型的内容需要提供 js 路径')
+      throw new Error('code 类型的内容需要提供代码片段')
     }
     return createCodeComponent(codeContent)
   }
@@ -294,9 +211,6 @@ function createCodeComponent(code: string): Promise<() => unknown> {
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type VueModule = any
-
 /**
  * 加载并编译 Vue 源码
  * 插件可使用主程序的依赖
@@ -307,18 +221,14 @@ async function loadVueSourceComponent(vuePath: string, pluginId: number): Promis
   try {
     // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
     const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse
-    if (ApiUtil.check(response)) {
+    if (!ApiUtil.check(response)) {
       ApiUtil.failedMsg(response)
+      throw new Error(`加载Vue源码失败，${response.msg}`)
     }
     const sourceCode = response.data as string
 
-    // 动态导入编译器
-    const compilerSFC = await import('@vue/compiler-sfc')
-    const compilerDOM: VueModule = await import('vue')
-    const { compile } = await import('vue')
-
     // 阶段 2: SFC 解析 - 解析 Vue 单文件组件
-    const parseResult = compilerSFC.parse(sourceCode)
+    const parseResult = parse(sourceCode)
     const errors = parseResult.errors as unknown[] | undefined
     if (errors && errors.length > 0) {
       throw new Error(`SFC 解析错误: ${errors.map((e) => String(e)).join(', ')}`)
@@ -349,9 +259,7 @@ async function loadVueSourceComponent(vuePath: string, pluginId: number): Promis
       scriptCode = scriptCode.replace(/export\s+default\s+/, '').replace(/^export\s+default\s+/, '')
       // 使用 eval 执行，因为 new Function 不能执行包含 const/let 的代码
       try {
-        // 【关键修改 3】: 确保 eval 的结果是一个干净的对象
         // 使用 with 或者直接返回对象字面量
-        // 注意：如果脚本里有 const handleClick = ...，它必须在返回的对象里暴露出来 (setup) 或在 methods 里
         const result = eval(`(function() { return (${scriptCode}) })()`)
         componentOptions = result || {}
       } catch (error) {
@@ -418,7 +326,7 @@ async function loadVueSourceComponent(vuePath: string, pluginId: number): Promis
       delete componentDef.template
     }
 
-    return compilerDOM.defineComponent(componentDef)
+    return defineComponent(componentDef)
   } catch (error) {
     console.error('Vue 源码编译失败:', error)
     throw error
@@ -437,7 +345,6 @@ function injectStyle(css: string, pluginId: number, scopeId?: string): void {
 
   const styleElement = document.createElement('style')
   styleElement.id = styleId
-  styleElement.type = 'text/css'
   styleElement.textContent = css
   document.head.appendChild(styleElement)
 }

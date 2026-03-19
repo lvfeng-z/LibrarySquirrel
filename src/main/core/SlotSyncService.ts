@@ -1,6 +1,6 @@
 import LogUtil from '../util/LogUtil.ts'
 import { getMainWindow } from './mainWindow.ts'
-import type { SlotConfig } from '../plugin/types/SlotTypes.ts'
+import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
 
 /**
  * IPC 事件名称枚举
