@@ -6,6 +6,7 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { parse } from '@vue/compiler-sfc'
 import { compile, defineComponent } from 'vue'
+import * as vue from 'vue'
 import { AnySlotContent, PrecompiledContent, SyncSlotConfig } from '@shared/model/constant/SlotTypes.ts'
 import {
   EmbedSlotConfig,
@@ -172,8 +173,9 @@ async function loadCompiledComponent(jsPath: string, cssPath: string | undefined
 
   // 动态导入 JS 文件获取组件
   try {
-    const module = await import(/* @vite-ignore */ jsUrl)
-    return module.default
+    const getter = await import(/* @vite-ignore */ jsUrl)
+    const blueprint = getter.default(vue)
+    return defineComponent(blueprint)
   } catch (error) {
     console.error('加载编译后的组件失败:', error)
     throw new Error(`加载编译后的组件失败: ${error}`)

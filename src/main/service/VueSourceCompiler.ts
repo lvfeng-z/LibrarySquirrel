@@ -99,17 +99,20 @@ export default class VueSourceCompiler {
       scriptSetupContent = descriptor.scriptSetup.content
     }
 
-    // 编译 script（处理 script 和 scriptSetup）
+    // 编译 script（关键修改点）
     let compiledScript = ''
     if (scriptContent || scriptSetupContent) {
       try {
         const sfc = compileScript(descriptor, {
           id: String(pluginId),
-          inlineTemplate: true
+          inlineTemplate: false, // 不内联模板，分开处理
+          genDefaultAs: '__componentOptions', // 自定义导出变量名
+          propsDestructure: true
         })
-        compiledScript = sfc.content
+
+        // 提取纯组件选项对象，移除 export default
+        compiledScript = this.extractComponentOptions(sfc.content, '__componentOptions')
       } catch (error) {
-        // 如果 compileScript 失败，尝试手动处理
         LogUtil.warn('VueSourceCompiler', `compileScript 失败，使用备用方案: ${error}`)
         compiledScript = this.generateFallbackScript(scriptContent, scriptSetupContent)
       }
@@ -117,7 +120,7 @@ export default class VueSourceCompiler {
       compiledScript = this.generateFallbackScript(scriptContent, scriptSetupContent)
     }
 
-    // 处理模板
+    // 处理模板（关键修改点）
     let renderFunction = ''
     if (descriptor.template) {
       try {
@@ -126,10 +129,16 @@ export default class VueSourceCompiler {
           filename: `plugin-${pluginId}.vue`,
           id: String(pluginId),
           compilerOptions: {
-            bindingMetadata: {}
-          }
+            prefixIdentifiers: true,
+            bindingMetadata: {},
+            hoistStatic: true,
+            cacheHandlers: true
+          },
+          ssr: false
         })
-        renderFunction = code
+
+        // 清理 import 语句，提取 render 函数体
+        renderFunction = this.extractRenderFunction(code)
       } catch (error) {
         LogUtil.error('VueSourceCompiler', `模板编译失败: ${error}`)
         throw new Error(`模板编译失败: ${error}`)
@@ -158,6 +167,22 @@ export default class VueSourceCompiler {
     const scriptCode = this.assembleComponentCode(componentName, compiledScript, renderFunction)
 
     return { scriptCode, stylesCode }
+  }
+
+  /**
+   * 从编译后的脚本中提取组件选项对象
+   * 移除 export default 包装，只保留对象内容
+   */
+  private extractComponentOptions(code: string, varName: string): string {
+    return `setup: () => {${code}; return ${varName}.setup()}`
+  }
+
+  /**
+   * 从编译后的模板代码中提取 render 函数
+   * 移除 import 语句和 export 声明
+   */
+  private extractRenderFunction(code: string): string {
+    return code.trim()
   }
 
   /**
@@ -219,26 +244,34 @@ export default class VueSourceCompiler {
 
   /**
    * 组装最终的组件代码
-   * @private
+   * 通过参数注入 Vue 依赖
    */
   private assembleComponentCode(componentName: string, scriptCode: string, renderFunction: string): string {
-    // 清理 render 函数代码，移除注释和多余部分
-    const cleanedRender = renderFunction
-      .replace(/import\s+.*from\s+['"]vue['"];?\s*/g, '')
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/.*/g, '')
-      .trim()
+    // 确定需要的 Vue API
+    const vueImports = [
+      'createElementVNode',
+      'createTextVNode',
+      'resolveComponent',
+      'withCtx',
+      'createVNode',
+      'openBlock',
+      'createElementBlock',
+      'createBlock',
+      'toDisplayString'
+    ]
 
-    return `import { defineComponent } from 'vue'
-
-const ${componentName} = defineComponent({
-  name: '${componentName}',
-  ${scriptCode},
-  ${cleanedRender}
-})
-
-export default ${componentName}
-`
+    return `export default function getBlueprint(Vue) {
+  // 从注入的 Vue 对象中解构需要的 API
+  const { ${vueImports.join(', ')} } = Vue || {}
+  // 渲染函数（已移除 import 语句）
+  ${renderFunction}
+  // 返回组件选项对象
+  return {
+    name: '${componentName}',
+    ${scriptCode},
+    ${renderFunction.includes('function render') ? 'render' : ''}
+  }
+}`
   }
 
   /**
