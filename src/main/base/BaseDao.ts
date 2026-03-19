@@ -112,7 +112,7 @@ export default abstract class BaseDao<Query extends BaseQueryDTO, Model extends 
 
     const statement = insertClause.concat(' ', valuesClause)
 
-    const runResult = await Database.run(statement, plainObject)
+    const runResult = await Database.run(statement, numberedProperties)
     return runResult.changes
   }
 
