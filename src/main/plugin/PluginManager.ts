@@ -233,30 +233,30 @@ export default class PluginManager {
       },
       pluginData: plugin.pluginData,
       slots: {
-        registerEmbedSlot: (config: Omit<EmbedSlotConfig, 'pluginId' | 'type'>) => {
+        registerEmbedSlot: async (config: Omit<EmbedSlotConfig, 'pluginId' | 'type'>) => {
           const fullConfig: EmbedSlotConfig = { ...config, pluginId, type: 'embed' }
-          getSlotSyncService().registerSlot(fullConfig)
+          await getSlotSyncService().registerSlot(fullConfig)
         },
-        registerPanelSlot: (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => {
+        registerPanelSlot: async (config: Omit<PanelSlotConfig, 'pluginId' | 'type'>) => {
           const fullConfig: PanelSlotConfig = { ...config, pluginId, type: 'panel' }
-          getSlotSyncService().registerSlot(fullConfig)
+          await getSlotSyncService().registerSlot(fullConfig)
         },
-        registerViewSlot: (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => {
+        registerViewSlot: async (config: Omit<ViewSlotConfig, 'pluginId' | 'type'>) => {
           const fullConfig: ViewSlotConfig = { ...config, pluginId, type: 'view' }
-          getSlotSyncService().registerSlot(fullConfig)
+          await getSlotSyncService().registerSlot(fullConfig)
         },
-        registerMenuSlot: (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => {
+        registerMenuSlot: async (config: Omit<MenuSlotConfig, 'pluginId' | 'type'>) => {
           const fullConfig: MenuSlotConfig = { ...config, pluginId, type: 'menu' }
-          getSlotSyncService().registerSlot(fullConfig)
+          await getSlotSyncService().registerSlot(fullConfig)
         },
-        registerSiteBrowserSlot: (config: Omit<SiteBrowserListSlotConfig, 'pluginId' | 'type'>) => {
+        registerSiteBrowserSlot: async (config: Omit<SiteBrowserListSlotConfig, 'pluginId' | 'type'>) => {
           const fullConfig: SiteBrowserListSlotConfig = { ...config, pluginId, type: 'siteBrowserList' }
-          getSlotSyncService().registerSlot(fullConfig)
+          await getSlotSyncService().registerSlot(fullConfig)
         },
         unregisterSlot: (slotId: string) => {
           getSlotSyncService().unregisterSlot(slotId)
         },
-        registerSlots: (configs: Omit<SlotConfig, 'pluginId' | 'type'>[]) => {
+        registerSlots: async (configs: Omit<SlotConfig, 'pluginId' | 'type'>[]) => {
           const fullConfigs = configs.map((config) => {
             if ('position' in config) {
               if (config.position === 'topbar' || config.position === 'statusbar' || config.position === 'toolbar') {
@@ -272,7 +272,7 @@ export default class PluginManager {
             }
             return { ...config, pluginId, type: 'view' as const }
           })
-          getSlotSyncService().registerSlots(fullConfigs as SlotConfig[])
+          await getSlotSyncService().registerSlots(fullConfigs as SlotConfig[])
         }
       }
     }

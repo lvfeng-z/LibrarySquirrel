@@ -14,12 +14,14 @@ import {
   SiteBrowserListSlotConfig,
   ViewSlotConfig
 } from '@shared/model/interface/SlotConfigs.ts'
+import { DefineComponent } from 'vue'
 
 /**
  * 转换视图插槽配置
  */
 function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
-  const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginId)
+  const componentLoader = () =>
+    loadPluginComponent(config.contentType, config.content, config.pluginId, config.compiledJsPath, config.compiledCssPath)
   return {
     id: config.id,
     name: config.name,
@@ -37,7 +39,8 @@ function convertToEmbedSlot(config: EmbedSlotConfig): EmbedSlot {
   return {
     id: config.id,
     position: config.position as 'topbar' | 'statusbar' | 'toolbar',
-    component: () => loadPluginComponent(config.contentType, config.content, config.pluginId),
+    component: () =>
+      loadPluginComponent(config.contentType, config.content, config.pluginId, config.compiledJsPath, config.compiledCssPath),
     props: config.props,
     order: config.order ?? 100
   }
@@ -52,7 +55,8 @@ function convertToPanelSlot(config: PanelSlotConfig): PanelSlot {
     position: config.position as 'left-sidebar' | 'right-sidebar' | 'bottom',
     width: config.width,
     height: config.height,
-    component: () => loadPluginComponent(config.contentType, config.content, config.pluginId),
+    component: () =>
+      loadPluginComponent(config.contentType, config.content, config.pluginId, config.compiledJsPath, config.compiledCssPath),
     props: config.props,
     order: config.order ?? 100
   }
@@ -145,14 +149,60 @@ function unloadPluginStyles(pluginId: number): void {
 }
 
 /**
+ * 加载预编译的插件组件
+ * 直接加载主进程编译生成的 JS 文件
+ * @param jsPath 编译后的 JS 文件路径
+ * @param cssPath 编译后的 CSS 文件路径（可选）
+ * @param pluginId 插件ID
+ */
+async function loadCompiledComponent(jsPath: string, cssPath: string | undefined, pluginId: number): Promise<unknown> {
+  // 使用 resource:// 协议加载 JS 文件
+  const protocolPrefix = 'resource://plugin/'
+
+  // 转换绝对路径为相对路径（相对于插件缓存目录）
+  const relativeJsPath = jsPath.replace(/\\/g, '/')
+  const jsUrl = protocolPrefix + relativeJsPath
+
+  // 如果有CSS文件，先加载CSS
+  if (cssPath) {
+    const relativeCssPath = cssPath.replace(/\\/g, '/')
+    const cssUrl = protocolPrefix + relativeCssPath
+    await loadPluginStyles(pluginId, cssUrl)
+  }
+
+  // 动态导入 JS 文件获取组件
+  try {
+    const module = await import(/* @vite-ignore */ jsUrl)
+    return module.default
+  } catch (error) {
+    console.error('加载编译后的组件失败:', error)
+    throw new Error(`加载编译后的组件失败: ${error}`)
+  }
+}
+
+/**
  * 根据内容类型加载插件组件
  * @param contentType 内容类型
  * @param content 内容(字符串或对象)
  * @param pluginId 插件ID
+ * @param compiledJsPath 编译后的JS文件路径（可选）
+ * @param compiledCssPath 编译后的CSS文件路径（可选）
  */
-async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginId: number): Promise<unknown> {
-  // Vue源码加载 - 运行时编译.vue文件
+async function loadPluginComponent(
+  contentType: string,
+  content: AnySlotContent,
+  pluginId: number,
+  compiledJsPath?: string,
+  compiledCssPath?: string
+): Promise<unknown> {
+  // Vue源码加载 - 优先使用预编译的缓存文件
   if (contentType === 'vueSource') {
+    // 如果有编译后的缓存文件，直接加载
+    if (compiledJsPath) {
+      return loadCompiledComponent(compiledJsPath, compiledCssPath, pluginId)
+    }
+
+    // 否则fallback到运行时编译
     if (typeof content === 'string') {
       return loadVueSourceComponent(content, pluginId)
     } else {
@@ -217,7 +267,7 @@ function createCodeComponent(code: string): Promise<() => unknown> {
  * @param vuePath Vue 文件路径
  * @param pluginId 插件ID
  */
-async function loadVueSourceComponent(vuePath: string, pluginId: number): Promise<unknown> {
+async function loadVueSourceComponent(vuePath: string, pluginId: number): Promise<DefineComponent> {
   try {
     // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
     const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse

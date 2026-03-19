@@ -12,18 +12,10 @@ export interface BaseSlotConfig {
   content: AnySlotContent
   props?: Record<string, unknown>
   replaceViewId?: string
-}
-
-/** 插槽基础配置 */
-export interface BaseSlotConfig {
-  /** 唯一标识: "plugin-{pluginId}-{name}" */
-  id: string
-  /** 所属插件ID */
-  pluginId: number
-  /** 显示名称 */
-  name: string
-  /** 排序权重 */
-  order?: number
+  /** 编译后的 JS 文件路径 (仅 vueSource 类型使用) */
+  compiledJsPath?: string
+  /** 编译后的 CSS 文件路径 (仅 vueSource 类型使用) */
+  compiledCssPath?: string
 }
 
 /** 嵌入插槽配置 (对应 EmbedSlot) */
@@ -94,4 +86,14 @@ export interface SiteBrowserListSlotConfig extends BaseSlotConfig {
   pluginPublicId: string
   /** 图片路径 */
   imagePath: string
+}
+
+/**
+ * Vue 源码编译结果
+ */
+export interface VueCompileResult {
+  /** 编译后的 JS 文件路径 */
+  jsPath: string
+  /** 编译后的 CSS 文件路径 */
+  cssPath: string | undefined
 }

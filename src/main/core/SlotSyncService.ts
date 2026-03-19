@@ -1,6 +1,10 @@
 import LogUtil from '../util/LogUtil.ts'
 import { getMainWindow } from './mainWindow.ts'
 import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
+import { getVueSourceCompiler } from '../service/VueSourceCompiler.ts'
+import path from 'path'
+import { RootDir } from '../util/FileSysUtil.ts'
+import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
 
 /**
  * IPC 事件名称枚举
@@ -40,8 +44,33 @@ class SlotSyncService {
   /**
    * 注册插槽
    */
-  registerSlot(config: SlotConfig): void {
+  async registerSlot(config: SlotConfig): Promise<void> {
     const slotId = config.id
+
+    // 检测 vueSource 类型并自动编译
+    if (config.contentType === 'vueSource') {
+      const content = config.content
+      if (typeof content === 'string') {
+        try {
+          LogUtil.info('SlotSyncService', `检测到 vueSource 类型插槽，开始编译: ${slotId}`)
+          const compiler = getVueSourceCompiler()
+          const finalContent = path.join(RootDir(), PLUGIN_ROOT, content)
+          const result = await compiler.compile(finalContent, config.pluginId, slotId)
+
+          // 更新配置，添加编译结果路径
+          config.compiledJsPath = result.jsPath
+          config.compiledCssPath = result.cssPath
+
+          LogUtil.info('SlotSyncService', `Vue 源码编译完成: ${slotId}`)
+        } catch (error) {
+          LogUtil.error('SlotSyncService', `Vue 源码编译失败: ${slotId}`, error)
+          throw error
+        }
+      } else {
+        LogUtil.warn('SlotSyncService', `vueSource 类型的内容需要是字符串路径: ${slotId}`)
+      }
+    }
+
     registeredSlots.set(slotId, config)
     this.syncToRenderer(SlotEvent.REGISTER, config)
     LogUtil.info('SlotSyncService', `注册插槽: ${slotId}, 类型: ${config.type}`)
@@ -62,8 +91,35 @@ class SlotSyncService {
   /**
    * 批量注册插槽
    */
-  registerSlots(configs: SlotConfig[]): void {
-    configs.forEach((config) => registeredSlots.set(config.id, config))
+  async registerSlots(configs: SlotConfig[]): Promise<void> {
+    for (const config of configs) {
+      const slotId = config.id
+
+      // 检测 vueSource 类型并自动编译
+      if (config.contentType === 'vueSource') {
+        const content = config.content
+        if (typeof content === 'string') {
+          try {
+            LogUtil.info('SlotSyncService', `检测到 vueSource 类型插槽，开始编译: ${slotId}`)
+            const compiler = getVueSourceCompiler()
+            const result = await compiler.compile(content, config.pluginId, slotId)
+
+            // 更新配置，添加编译结果路径
+            config.compiledJsPath = result.jsPath
+            config.compiledCssPath = result.cssPath
+
+            LogUtil.info('SlotSyncService', `Vue 源码编译完成: ${slotId}`)
+          } catch (error) {
+            LogUtil.error('SlotSyncService', `Vue 源码编译失败: ${slotId}`, error)
+            throw error
+          }
+        } else {
+          LogUtil.warn('SlotSyncService', `vueSource 类型的内容需要是字符串路径: ${slotId}`)
+        }
+      }
+
+      registeredSlots.set(config.id, config)
+    }
     this.syncToRenderer(SlotEvent.BATCH_REGISTER, configs)
     LogUtil.info('SlotSyncService', `批量注册插槽: ${configs.length}个`)
   }
