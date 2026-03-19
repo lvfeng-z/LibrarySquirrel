@@ -15,7 +15,8 @@ export default defineConfig({
     resolve: {
       alias: {
         '@renderer': Path.resolve('src/renderer/src'),
-        '@shared': Path.resolve('src/shared/')
+        '@shared': Path.resolve('src/shared/'),
+        vue: 'vue/dist/vue.esm-bundler.js'
       }
     },
     plugins: [vue()]

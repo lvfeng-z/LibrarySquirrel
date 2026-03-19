@@ -1,6 +1,6 @@
 import App from './App.vue'
 import { createApp } from 'vue'
-import * as vue from 'vue'
+import * as Vue from 'vue'
 import { createPinia } from 'pinia'
 import Element from 'element-plus'
 import { elementIconRegister } from './plugins/elementIcon'
@@ -18,6 +18,7 @@ import { iniListener } from '@renderer/MainIpcListener.ts'
 import { initBuiltinMenus } from './composables/useBuiltinMenus.ts'
 import { initSlotSyncListener } from './composables/useSlotSyncListener.ts'
 import { setRouterInstance } from './store/SlotRegistryStore.ts'
+import lodash from 'lodash'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -40,11 +41,43 @@ window['__vueRouter__'] = router
 // 设置 router 实例到 store（在 router 初始化后）
 setRouterInstance(router)
 
-app.mount('#app')
+// 构建插件的上下文对象
+const pluginContext = {
+  // --- Vue Core ---
+  vue: Vue,
 
-// 关键：暴露给插件使用
-window['vue'] = vue // 视情况而定
-window['element-plus'] = Element
+  // --- Globals (从 app 实例提取) ---
+  globals: {
+    // 直接从 globalProperties 拿，这是最稳妥的
+    $message: app.config.globalProperties.$message,
+    $notify: app.config.globalProperties.$notify,
+    $confirm: app.config.globalProperties.$confirm, // 注意：ElementPlus 默认可能是 $alert 或 ElMessageBox，需确认
+    $alert: app.config.globalProperties.$alert,
+
+    // 路由
+    $router: router,
+    // 注意：$route 是动态的，通常插件内部用 useRoute() 获取，这里可以不放，或者放个 getter
+    // $route: router.currentRoute, // 不推荐直接放静态引用
+
+    // 状态管理
+    $store: pinia // 如果是 Pinia
+  },
+
+  // --- Third-party Libs ---
+  libs: {
+    lodash: lodash
+  },
+
+  // --- Custom Business Logic ---
+  custom: {}
+}
+
+// 插件的上下文暴露到 window
+// 使用深冻结 (Optional) 防止插件意外修改主程序的核心引用
+// Object.freeze(pluginContext.vue)
+window['__PLUGIN_CTX__'] = pluginContext
+
+app.mount('#app')
 
 // 初始化内置菜单（在 pinia store 初始化之后）
 initBuiltinMenus()

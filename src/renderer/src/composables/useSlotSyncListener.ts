@@ -3,6 +3,7 @@ import type { ViewSlot, EmbedSlot, PanelSlot } from '@renderer/model/slot'
 import type { MenuSlotItem, SiteBrowserListSlotItem } from '@renderer/store/SlotRegistryStore'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import ApiResponse from '@renderer/model/util/ApiResponse.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
 
 /**
  * 从主进程同步过来的插槽配置类型
@@ -298,129 +299,130 @@ type VueModule = any
 
 /**
  * 加载并编译 Vue 源码
- * 实现 7 个阶段的编译流程
+ * 插件可使用主程序的依赖
  * @param vuePath Vue 文件路径
  * @param pluginId 插件ID
  */
 async function loadVueSourceComponent(vuePath: string, pluginId: number): Promise<unknown> {
-  // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
-  const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse
-  if (ApiUtil.check(response)) {
-    ApiUtil.failedMsg(response)
-  }
-  const sourceCode = response.data as string
-
-  // 动态导入编译器
-  const compilerSFC = await import('@vue/compiler-sfc')
-  const compilerDOM: VueModule = await import('vue')
-  const compilerDOMModule = await import('@vue/compiler-dom')
-
-  // 阶段 2: SFC 解析 - 解析 Vue 单文件组件
-  const parseResult = compilerSFC.parse(sourceCode)
-  const errors = parseResult.errors as unknown[] | undefined
-  if (errors && errors.length > 0) {
-    throw new Error(`SFC 解析错误: ${errors.map((e) => String(e)).join(', ')}`)
-  }
-
-  const descriptor = parseResult.descriptor
-  if (!descriptor) {
-    throw new Error('无法解析 Vue 文件')
-  }
-
-  // 阶段 3: 模板编译 - 使用运行时编译器生成 render 函数
-  let renderFunction: ((...args: unknown[]) => unknown) | undefined
-  if (descriptor.template) {
-    // 使用 @vue/compiler-dom 编译模板
-    const compile = compilerDOMModule.compile as (template: string, options?: Record<string, unknown>) => { code: string; errors?: string[] }
-    const templateResult = compile(descriptor.template.content)
-    if (templateResult.errors && templateResult.errors.length > 0) {
-      throw new Error(`模板编译错误: ${templateResult.errors.join(', ')}`)
+  try {
+    // 阶段 1: 文件获取 - 通过 IPC 读取 .vue 文件内容
+    const response = (await window.electron.pluginReadVueFile(vuePath)) as ApiResponse
+    if (ApiUtil.check(response)) {
+      ApiUtil.failedMsg(response)
     }
-    // 将生成的 render 函数代码转换为可执行函数
-    if (templateResult.code) {
-      const renderCode = `return ${templateResult.code}`
-      renderFunction = new Function(renderCode)()
-    }
-  }
+    const sourceCode = response.data as string
 
-  // 阶段 4: 脚本执行 - 执行 script 获取组件选项
-  let componentOptions: Record<string, unknown> = {}
-  if (descriptor.script) {
-    const scriptContent = descriptor.script.content
-    // 移除 export default 并包裹为立即执行函数
-    const scriptCode = scriptContent.replace(/export\s+default\s+/, '').replace(/^export\s+default\s+/, '')
-    const wrappedCode = `return (${scriptCode})`
-    try {
-      componentOptions = new Function(wrappedCode)() || {}
-    } catch (error) {
-      console.error('Script 执行错误:', error)
-      throw new Error(`Script 执行失败: ${error}`)
-    }
-  } else if (descriptor.scriptSetup) {
-    // 处理 script setup
-    const scriptSetupContent = descriptor.scriptSetup.content
-    // 对于 script setup，需要额外处理 - 这里简化处理
-    // 实际项目中可能需要使用 @vue/compiler-sfc 的 compileScript 方法
-    const scriptCode = `return { setup: () => { ${scriptSetupContent} } }`
-    try {
-      componentOptions = new Function(scriptCode)() || {}
-    } catch (error) {
-      console.error('Script Setup 执行错误:', error)
-      throw new Error(`Script Setup 执行失败: ${error}`)
-    }
-  }
+    // 动态导入编译器
+    const compilerSFC = await import('@vue/compiler-sfc')
+    const compilerDOM: VueModule = await import('vue')
+    const { compile } = await import('vue')
 
-  // 阶段 5: 样式注入 - 处理 scoped 样式
-  if (descriptor.styles && descriptor.styles.length > 0) {
-    for (const style of descriptor.styles) {
-      const isScoped = style.scoped
-      let cssContent = style.content
+    // 阶段 2: SFC 解析 - 解析 Vue 单文件组件
+    const parseResult = compilerSFC.parse(sourceCode)
+    const errors = parseResult.errors as unknown[] | undefined
+    if (errors && errors.length > 0) {
+      throw new Error(`SFC 解析错误: ${errors.map((e) => String(e)).join(', ')}`)
+    }
 
-      if (isScoped) {
-        // 使用 compilerSFC 生成的 CSS scope ID
-        // 由于运行时编译，我们生成一个简单的 scope ID
-        const scopeId = `data-v-${pluginId}-${Math.random().toString(36).slice(2, 8)}`
-        // 为 scoped 样式添加属性选择器
-        // 注意：这里简化处理，实际需要更复杂的 AST 转换
-        cssContent = cssContent.replace(/([^}]+)\s*\{/g, (_, selector) => {
-          // 避免重复添加属性选择器
-          if (selector.includes(scopeId)) {
-            return `${selector} {`
-          }
-          // 为选择器添加 scoped 属性
-          const modifiedSelector = selector
-            .split(',')
-            .map((s: string) => {
-              const trimmed = s.trim()
-              if (trimmed.startsWith('.') || trimmed.startsWith('#') || trimmed.startsWith('[')) {
-                return `${trimmed}[${scopeId}]`
-              }
-              return `${trimmed}[${scopeId}]`
-            })
-            .join(', ')
-          return `${modifiedSelector} {`
-        })
+    const descriptor = parseResult.descriptor
+    if (!descriptor) {
+      throw new Error('无法解析 Vue 文件')
+    }
+
+    // 阶段 3: 模板编译 - 使用运行时编译器生成 render 函数
+    if (isNullish(descriptor.template)) {
+      throw new Error('未解析出 Vue 文件的模板')
+    }
+    const renderFunction: ((...args: unknown[]) => unknown) | undefined = compile(descriptor.template.content, {
+      mode: 'function'
+    })
+
+    // 阶段 4: 脚本执行 - 执行 script 获取组件选项
+    let componentOptions: Record<string, unknown> = {}
+    if (descriptor.script) {
+      let scriptCode = descriptor.script.content
+      // 移除所有 import 语句，因为 eval/new Function 不能执行 import
+      scriptCode = scriptCode.replace(/^import\s+.*from\s+['"].*['"];?\s*$/gm, '')
+      // 移除独立的 import 语句（没有 from 的情况）
+      scriptCode = scriptCode.replace(/^import\s+['"].*['"];?\s*$/gm, '')
+      // 移除 export default
+      scriptCode = scriptCode.replace(/export\s+default\s+/, '').replace(/^export\s+default\s+/, '')
+      // 使用 eval 执行，因为 new Function 不能执行包含 const/let 的代码
+      try {
+        // 【关键修改 3】: 确保 eval 的结果是一个干净的对象
+        // 使用 with 或者直接返回对象字面量
+        // 注意：如果脚本里有 const handleClick = ...，它必须在返回的对象里暴露出来 (setup) 或在 methods 里
+        const result = eval(`(function() { return (${scriptCode}) })()`)
+        componentOptions = result || {}
+      } catch (error) {
+        console.error('Script 执行错误:', error)
+        throw new Error(`Script 执行失败: ${error}`)
       }
-
-      // 注入 CSS 到页面
-      injectStyle(cssContent, pluginId, isScoped ? String(pluginId) : undefined)
+    } else if (descriptor.scriptSetup) {
+      // 处理 script setup
+      const scriptSetupContent = descriptor.scriptSetup.content
+      // 对于 script setup，需要额外处理 - 这里简化处理
+      // 实际项目中可能需要使用 @vue/compiler-sfc 的 compileScript 方法
+      try {
+        componentOptions = eval(`(({ setup: () => { ${scriptSetupContent} } }))`) || {}
+      } catch (error) {
+        console.error('Script Setup 执行错误:', error)
+        throw new Error(`Script Setup 执行失败: ${error}`)
+      }
     }
-  }
 
-  // 阶段 6: 组件组装 - 合并 render 函数和组件选项
-  const componentDef: Record<string, unknown> = {
-    ...componentOptions
-  }
+    // 阶段 5: 样式注入 - 处理 scoped 样式
+    if (descriptor.styles && descriptor.styles.length > 0) {
+      for (const style of descriptor.styles) {
+        const isScoped = style.scoped
+        let cssContent = style.content
 
-  // 如果有编译后的 render 函数，优先使用
-  if (renderFunction) {
-    componentDef.render = renderFunction
-    // 删除 template 以避免冲突
-    delete componentDef.template
-  }
+        if (isScoped) {
+          // 使用 compilerSFC 生成的 CSS scope ID
+          // 由于运行时编译，我们生成一个简单的 scope ID
+          const scopeId = `data-v-${pluginId}-${Math.random().toString(36).slice(2, 8)}`
+          // 为 scoped 样式添加属性选择器
+          // 注意：这里简化处理，实际需要更复杂的 AST 转换
+          cssContent = cssContent.replace(/([^}]+)\s*\{/g, (_, selector) => {
+            // 避免重复添加属性选择器
+            if (selector.includes(scopeId)) {
+              return `${selector} {`
+            }
+            // 为选择器添加 scoped 属性
+            const modifiedSelector = selector
+              .split(',')
+              .map((s: string) => {
+                const trimmed = s.trim()
+                if (trimmed.startsWith('.') || trimmed.startsWith('#') || trimmed.startsWith('[')) {
+                  return `${trimmed}[${scopeId}]`
+                }
+                return `${trimmed}[${scopeId}]`
+              })
+              .join(', ')
+            return `${modifiedSelector} {`
+          })
+        }
 
-  // 阶段 7: 使用 defineComponent 包装并返回
-  return compilerDOM.defineComponent(componentDef)
+        // 注入 CSS 到页面
+        injectStyle(cssContent, pluginId, isScoped ? String(pluginId) : undefined)
+      }
+    }
+
+    // 阶段 6: 组件组装
+    const componentDef: Record<string, unknown> = {
+      ...componentOptions
+    }
+
+    if (renderFunction) {
+      componentDef.render = renderFunction
+      delete componentDef.template
+    }
+
+    return compilerDOM.defineComponent(componentDef)
+  } catch (error) {
+    console.error('Vue 源码编译失败:', error)
+    throw error
+  }
 }
 
 /**
