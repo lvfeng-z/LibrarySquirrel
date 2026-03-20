@@ -50,7 +50,7 @@ export interface PluginContext {
     /** 创建任务 */
     createTask: (url: string) => Promise<TaskCreateResponse>
     /** 获取插件根目录 */
-    getPluginRoot: () => string
+    getPluginRoot: (isRelative: boolean) => string
     /** 日志工具 */
     logger: {
       info: (message: string, ...args: unknown[]) => void

@@ -154,7 +154,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     assignExisting(newPlugin, pluginInstallDTO)
     newPlugin.activationType = pluginInstallDTO.activation.type
     newPlugin.entryPath = path.join(PLUGIN_ROOT, pathRelative, pluginInstallDTO.entryFile)
-    newPlugin.rootPath = pathRelative
+    newPlugin.rootPath = path.join(PLUGIN_ROOT, pathRelative)
     newPlugin.backupId = backup.id as number
 
     const pluginService = new PluginService()
@@ -240,7 +240,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     assertNotNullish(plugin, `卸载插件失败，找不到这个插件，pluginPublicId: ${pluginPublicId}`)
     assertNotNullish(plugin.id, `卸载插件失败，插件id不能为空，pluginPublicId: ${pluginPublicId}`)
     assertNotNullish(plugin.rootPath, `卸载插件失败，插件根目录路径不存在，pluginPublicId: ${pluginPublicId}`)
-    const pluginPath = path.join(RootDir(), PLUGIN_ROOT, plugin.rootPath as string)
+    const pluginPath = path.join(RootDir(), plugin.rootPath as string)
     try {
       await rm(pluginPath, { recursive: true, force: true })
     } catch (error) {

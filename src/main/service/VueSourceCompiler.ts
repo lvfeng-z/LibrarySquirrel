@@ -4,7 +4,8 @@ import { parse, compileScript, compileTemplate, SFCDescriptor } from '@vue/compi
 import LogUtil from '../util/LogUtil.ts'
 import { CreateDirIfNotExists, RootDir } from '../util/FileSysUtil.ts'
 import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
-import { VueCompileResult } from '@shared/model/interface/SlotConfigs.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
+import { VueSourceContent } from '@shared/model/interface/SlotConfigs.ts'
 
 /**
  * Vue 源码编译器
@@ -12,12 +13,12 @@ import { VueCompileResult } from '@shared/model/interface/SlotConfigs.ts'
  */
 export default class VueSourceCompiler {
   private static instance: VueSourceCompiler
-
+  private static PATH_DIR = 'plugin-cache'
   /** 插件缓存目录 */
   private readonly cacheDir: string
 
   private constructor() {
-    this.cacheDir = path.join(RootDir(), PLUGIN_ROOT, 'plugin-cache')
+    this.cacheDir = path.join(PLUGIN_ROOT, VueSourceCompiler.PATH_DIR)
   }
 
   static getInstance(): VueSourceCompiler {
@@ -34,7 +35,7 @@ export default class VueSourceCompiler {
    * @param slotId 插槽 ID
    * @returns 编译结果包含 JS 和 CSS 文件路径
    */
-  async compile(vueFilePath: string, pluginPublicId: number, slotId: string): Promise<VueCompileResult> {
+  async compile(vueFilePath: string, pluginPublicId: string, slotId: string): Promise<VueSourceContent> {
     LogUtil.info('VueSourceCompiler', `开始编译 Vue 源码: ${vueFilePath}`)
 
     // 读取 Vue 文件内容
@@ -48,35 +49,39 @@ export default class VueSourceCompiler {
       throw new Error(`SFC 解析错误: ${errorMsg}`)
     }
 
-    // 准备输出目录
-    const pluginCacheDir = path.join(this.cacheDir, String(pluginPublicId))
-    await CreateDirIfNotExists(pluginCacheDir)
-
     // 生成文件名
     const fileName = slotId.replace(/[^a-zA-Z0-9]/g, '_')
 
+    const dirRelative = path.join(this.cacheDir, pluginPublicId)
+    const dirFull = path.join(RootDir(), dirRelative)
+    // 准备输出目录
+    await CreateDirIfNotExists(dirFull)
     // 编译脚本和模板
     const { scriptCode, stylesCode } = await this.compileSFC(descriptor, pluginPublicId)
 
     // 写入 JS 文件
     const jsFileName = `${fileName}.js`
-    const jsFullPath = path.join(pluginCacheDir, jsFileName)
+    const jsRelativePath = path.join(dirRelative, jsFileName)
+    const jsFullPath = path.join(dirFull, jsFileName)
+
     await fsPromise.writeFile(jsFullPath, scriptCode, 'utf-8')
     LogUtil.info('VueSourceCompiler', `JS 文件已写入: ${jsFileName}`)
 
     // 写入 CSS 文件
-    let cssFullPath: string | undefined
+    let cssRelativePath: string | undefined
     if (stylesCode) {
       const cssFileName = `${fileName}.css`
-      cssFullPath = path.join(pluginCacheDir, cssFileName)
+      cssRelativePath = path.join(dirRelative, cssFileName)
+      const cssFullPath = path.join(dirFull, cssFileName)
       await fsPromise.writeFile(cssFullPath, stylesCode, 'utf-8')
       LogUtil.info('VueSourceCompiler', `CSS 文件已写入: ${cssFileName}`)
     }
 
     // 返回相对于 cacheDir 的路径
     return {
-      jsPath: path.relative(this.cacheDir, jsFullPath),
-      cssPath: cssFullPath ? path.relative(this.cacheDir, cssFullPath) : undefined
+      js: jsRelativePath,
+      css: isBlank(cssRelativePath) ? undefined : cssRelativePath,
+      vue: vueFilePath
     }
   }
 
@@ -86,10 +91,10 @@ export default class VueSourceCompiler {
    */
   private async compileSFC(
     descriptor: SFCDescriptor,
-    pluginId: number
+    slotId: string
   ): Promise<{ scriptCode: string; stylesCode: string | undefined }> {
     // 生成组件名称
-    const componentName = `PluginComponent_${pluginId}_${Date.now()}`
+    const componentName = `PluginComponent_${slotId}_${Date.now()}`
 
     // 处理 script
     let scriptContent = ''
@@ -103,25 +108,18 @@ export default class VueSourceCompiler {
       scriptSetupContent = descriptor.scriptSetup.content
     }
 
-    // 编译 script（关键修改点）
-    let compiledScript = ''
+    // 编译 script
+    let compiledScript: string = ''
     if (scriptContent || scriptSetupContent) {
-      try {
-        const sfc = compileScript(descriptor, {
-          id: String(pluginId),
-          inlineTemplate: false, // 不内联模板，分开处理
-          genDefaultAs: '__componentOptions', // 自定义导出变量名
-          propsDestructure: true
-        })
+      const sfc = compileScript(descriptor, {
+        id: slotId,
+        inlineTemplate: false, // 不内联模板，分开处理
+        genDefaultAs: '__componentOptions', // 自定义导出变量名
+        propsDestructure: true
+      })
 
-        // 提取纯组件选项对象，移除 export default
-        compiledScript = this.extractComponentOptions(sfc.content, '__componentOptions')
-      } catch (error) {
-        LogUtil.warn('VueSourceCompiler', `compileScript 失败，使用备用方案: ${error}`)
-        compiledScript = this.generateFallbackScript(scriptContent, scriptSetupContent)
-      }
-    } else {
-      compiledScript = this.generateFallbackScript(scriptContent, scriptSetupContent)
+      // script代码转换为合适的形式
+      compiledScript = this.convertScript(sfc.content, '__componentOptions')
     }
 
     // 处理模板（关键修改点）
@@ -130,8 +128,8 @@ export default class VueSourceCompiler {
       try {
         const { code } = compileTemplate({
           source: descriptor.template.content,
-          filename: `plugin-${pluginId}.vue`,
-          id: String(pluginId),
+          filename: `${slotId}.vue`,
+          id: slotId,
           compilerOptions: {
             prefixIdentifiers: true,
             bindingMetadata: {},
@@ -141,8 +139,8 @@ export default class VueSourceCompiler {
           ssr: false
         })
 
-        // 清理 import 语句，提取 render 函数体
-        renderFunction = this.extractRenderFunction(code)
+        // render代码转换为合适的形式
+        renderFunction = this.convertRender(code)
       } catch (error) {
         LogUtil.error('VueSourceCompiler', `模板编译失败: ${error}`)
         throw new Error(`模板编译失败: ${error}`)
@@ -158,7 +156,7 @@ export default class VueSourceCompiler {
 
         // 处理 scoped 样式
         if (style.scoped) {
-          const scopeId = `data-v-${pluginId}`
+          const scopeId = `data-v-${slotId}`
           cssContent = this.processScopedStyles(cssContent, scopeId)
         }
 
@@ -174,18 +172,18 @@ export default class VueSourceCompiler {
   }
 
   /**
-   * 从编译后的脚本中提取组件选项对象
-   * 移除 export default 包装，只保留对象内容
+   * 转换script代码
+   * 包装编译后的script脚本为一个setup函数
    */
-  private extractComponentOptions(code: string, varName: string): string {
+  private convertScript(code: string, varName: string): string {
     return `setup: () => {${code}; return ${varName}.setup()}`
   }
 
   /**
-   * 从编译后的模板代码中提取 render 函数
-   * 移除 import 语句和 export 声明
+   * 转换render代码
+   * 将 Vue 导入语句转换为变量赋值，将 export function render 替换为 function render
    */
-  private extractRenderFunction(code: string): string {
+  private convertRender(code: string): string {
     let result = code.trim()
 
     // 1. 将 Vue 导入语句转换为变量赋值
@@ -199,13 +197,13 @@ export default class VueSourceCompiler {
 
   /**
    * 将 Vue 导入语句转换为变量赋值
-   * 例如: import { foo as _foo, bar } from "vue"
+   * 例如: \import { foo as _foo, bar } from "vue"
    * 转换为:
    *   const _foo = foo
    *   const _bar = bar
    */
   private convertVueImports(code: string): string {
-    const importMatch = code.match(/import\s*\{([^}]+)\}\s*from\s*["']vue["']/)
+    const importMatch = code.match(/import\s*\{([^}]+)}\s*from\s*["']vue["']/)
     if (!importMatch) {
       return code
     }
@@ -221,42 +219,15 @@ export default class VueSourceCompiler {
         // 形式: xxx as _xxx
         const original = trimmed.substring(0, asIndex).trim()
         const alias = trimmed.substring(asIndex + 4).trim()
-        lines.push(`const ${alias} = ${original}`)
+        lines.push(`const ${alias} = Vue.${original}`)
       } else {
         // 形式: xxx -> const _xxx = xxx
-        lines.push(`const _${trimmed} = ${trimmed}`)
+        lines.push(`const _${trimmed} = Vue.${trimmed}`)
       }
     }
 
     const importsBlock = lines.join('\n  ')
     return code.replace(importMatch[0], importsBlock)
-  }
-
-  /**
-   * 生成备用脚本代码
-   * @private
-   */
-  private generateFallbackScript(scriptContent: string, scriptSetupContent: string): string {
-    let scriptCode = scriptContent
-
-    // 移除 export default 和 import 语句
-    scriptCode = scriptCode.replace(/^import\s+.*from\s+['"].*['"];?\s*$/gm, '')
-    scriptCode = scriptCode.replace(/^import\s+['"].*['"];?\s*$/gm, '')
-    scriptCode = scriptCode.replace(/export\s+default\s+/, '')
-
-    // 处理 script setup
-    if (scriptSetupContent) {
-      // 简化处理：将 setup 函数包装
-      const setupFunc = `() => { ${scriptSetupContent} }`
-      scriptCode = `{ setup: ${setupFunc} }`
-    }
-
-    // 如果没有内容，返回空对象
-    if (!scriptCode.trim()) {
-      scriptCode = '{}'
-    }
-
-    return scriptCode
   }
 
   /**
@@ -294,22 +265,7 @@ export default class VueSourceCompiler {
    * 通过参数注入 Vue 依赖
    */
   private assembleComponentCode(componentName: string, scriptCode: string, renderFunction: string): string {
-    // 确定需要的 Vue API
-    const vueImports = [
-      'createElementVNode',
-      'createTextVNode',
-      'resolveComponent',
-      'withCtx',
-      'createVNode',
-      'openBlock',
-      'createElementBlock',
-      'createBlock',
-      'toDisplayString'
-    ]
-
     return `export default function getBlueprint(Vue) {
-  // 从注入的 Vue 对象中解构需要的 API
-  const { ${vueImports.join(', ')} } = Vue || {}
   // 渲染函数（已移除 import 语句）
   ${renderFunction}
   // 返回组件选项对象
@@ -323,13 +279,13 @@ export default class VueSourceCompiler {
 
   /**
    * 清理插件缓存
-   * @param pluginId 插件 ID
+   * @param pluginPublicId 插件公开 ID
    */
-  async clearCache(pluginId: number): Promise<void> {
-    const pluginCacheDir = path.join(this.cacheDir, String(pluginId))
+  async clearCache(pluginPublicId: string): Promise<void> {
+    const pluginCacheDir = path.join(this.cacheDir, pluginPublicId)
     try {
       await fsPromise.rm(pluginCacheDir, { recursive: true, force: true })
-      LogUtil.info('VueSourceCompiler', `已清理插件缓存: ${pluginId}`)
+      LogUtil.info('VueSourceCompiler', `已清理插件缓存: ${pluginPublicId}`)
     } catch (error) {
       LogUtil.warn('VueSourceCompiler', `清理缓存失败: ${error}`)
     }

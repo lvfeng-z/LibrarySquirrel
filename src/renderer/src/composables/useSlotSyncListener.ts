@@ -6,13 +6,16 @@ import ApiResponse from '@renderer/model/util/ApiResponse.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { parse } from '@vue/compiler-sfc'
 import { compile, defineComponent } from 'vue'
-import { AnySlotContent, PrecompiledContent, SyncSlotConfig } from '@shared/model/constant/SlotTypes.ts'
+import * as Vue from 'vue'
+import { AnySlotContent, SyncSlotConfig } from '@shared/model/constant/SlotTypes.ts'
 import {
   EmbedSlotConfig,
   MenuSlotConfig,
   PanelSlotConfig,
+  PrecompiledContent,
   SiteBrowserListSlotConfig,
-  ViewSlotConfig
+  ViewSlotConfig,
+  VueSourceContent
 } from '@shared/model/interface/SlotConfigs.ts'
 import { DefineComponent } from 'vue'
 
@@ -20,8 +23,7 @@ import { DefineComponent } from 'vue'
  * 转换视图插槽配置
  */
 function convertToViewSlot(config: ViewSlotConfig): ViewSlot {
-  const componentLoader = () =>
-    loadPluginComponent(config.contentType, config.content, config.pluginPublicId, config.compiledJsPath, config.compiledCssPath)
+  const componentLoader = () => loadPluginComponent(config.contentType, config.content, config.pluginPublicId)
   return {
     slotId: config.slotId,
     name: config.name,
@@ -155,23 +157,34 @@ function unloadPluginStyles(pluginId: number): void {
  */
 async function loadCompiledComponent(jsPath: string, cssPath: string | undefined, pluginPublicId: string): Promise<DefineComponent> {
   // 使用 resource:// 协议加载 JS 文件
-  const protocolPrefix = 'resource://plugin/'
+  const protocolPrefix = 'resource://'
+  const pluginResPrefix = 'plugin/'
 
   // 转换绝对路径为相对路径（相对于插件缓存目录）
   const relativeJsPath = jsPath.replace(/\\/g, '/')
-  const jsUrl = protocolPrefix + relativeJsPath
+  let jsUrl: string
+  if (relativeJsPath.startsWith(pluginResPrefix)) {
+    jsUrl = protocolPrefix + relativeJsPath
+  } else {
+    jsUrl = protocolPrefix + pluginResPrefix + relativeJsPath
+  }
 
   // 如果有CSS文件，先加载CSS
   if (cssPath) {
     const relativeCssPath = cssPath.replace(/\\/g, '/')
-    const cssUrl = protocolPrefix + relativeCssPath
+    let cssUrl: string
+    if (relativeJsPath.startsWith(pluginResPrefix)) {
+      cssUrl = protocolPrefix + relativeCssPath
+    } else {
+      cssUrl = protocolPrefix + pluginResPrefix + relativeCssPath
+    }
     await loadPluginStyles(pluginPublicId, cssUrl)
   }
 
   // 动态导入 JS 文件获取组件
   try {
     const module = await import(/* @vite-ignore */ jsUrl)
-    return module.default
+    return defineComponent(module.default(Vue) as Record<string, unknown>)
   } catch (error) {
     console.error('加载编译后的组件失败:', error)
     throw new Error(`加载编译后的组件失败: ${error}`)
@@ -183,47 +196,25 @@ async function loadCompiledComponent(jsPath: string, cssPath: string | undefined
  * @param contentType 内容类型
  * @param content 内容(字符串或对象)
  * @param pluginPublicId 插件公开ID
- * @param compiledJsPath 编译后的JS文件路径（可选）
- * @param compiledCssPath 编译后的CSS文件路径（可选）
  */
-async function loadPluginComponent(
-  contentType: string,
-  content: AnySlotContent,
-  pluginPublicId: string,
-  compiledJsPath?: string,
-  compiledCssPath?: string
-): Promise<DefineComponent> {
+async function loadPluginComponent(contentType: string, content: AnySlotContent, pluginPublicId: string): Promise<DefineComponent> {
   // Vue源码加载 - 优先使用预编译的缓存文件
   if (contentType === 'vueSource') {
+    const compiledJsPath = (content as VueSourceContent).js
     // 如果有编译后的缓存文件，直接加载
     if (compiledJsPath) {
+      const compiledCssPath = (content as VueSourceContent).css
       return loadCompiledComponent(compiledJsPath, compiledCssPath, pluginPublicId)
     }
 
     // 否则fallback到运行时编译
-    if (typeof content === 'string') {
-      return loadVueSourceComponent(content, pluginPublicId)
-    } else {
-      throw new Error('vueSource 类型的内容需要提供源码路径')
-    }
+    return loadVueSourceComponent((content as VueSourceContent).vue, pluginPublicId)
   }
 
   // 预编译组件加载 - 加载JS/CSS
   if (contentType === 'precompiled') {
-    const protocolPrefix = 'resource://plugin/'
     const precompiledContent = content as PrecompiledContent
-
-    // 如果content是对象且包含css路径，先加载CSS
-    if (typeof precompiledContent === 'object' && precompiledContent.css) {
-      await loadPluginStyles(pluginPublicId, protocolPrefix + precompiledContent.css)
-    }
-
-    // 获取js路径
-    const jsPath = typeof precompiledContent === 'string' ? precompiledContent : protocolPrefix + precompiledContent.js
-
-    // Vue 组件文件: dynamic import
-    // 插件组件通过 resource:// 协议访问
-    return import(/* @vite-ignore */ jsPath)
+    return loadCompiledComponent(precompiledContent.js, precompiledContent.css, pluginPublicId)
   }
 
   // 代码片段加载

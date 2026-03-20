@@ -37,6 +37,8 @@ import {
   ViewSlotConfig
 } from '@shared/model/interface/SlotConfigs.ts'
 import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
+import { BOOL } from '@shared/model/constant/BOOL.ts'
+import { isBlank } from '@shared/util/StringUtil.ts'
 
 /**
  * 缓存的插件实例
@@ -87,7 +89,6 @@ export default class PluginManager {
     if (isNullish(cached)) {
       const plugin = await this.pluginService.getByPublicId(pluginPublicId)
       assertNotBlank(plugin?.entryPath, '')
-      path.join(RootDir(), plugin?.entryPath)
       assertNotNullish(plugin, '加载插件失败，插件id不可用')
       const context = await this.createPluginContext(pluginPublicId)
 
@@ -126,7 +127,7 @@ export default class PluginManager {
    */
   private async loadPluginInstance(plugin: Plugin, context: PluginContext): Promise<PluginInstance> {
     const entryPath = plugin.entryPath
-    if (!entryPath) {
+    if (isBlank(entryPath)) {
       throw new Error(`插件加载路径不能为空，pluginId: ${plugin.id}`)
     }
     const moduleUrl = pathToFileURL(entryPath).href
@@ -227,9 +228,13 @@ export default class PluginManager {
           const taskService = new TaskService()
           return taskService.createTask(url)
         },
-        getPluginRoot: () => {
-          // 返回相对于 plugin/runtime 的路径，例如 "pixiv"
-          return plugin?.rootPath as string
+        getPluginRoot: (isRelative: boolean) => {
+          if (isRelative) {
+            // 返回相对于根目录的路径
+            return plugin?.rootPath as string
+          } else {
+            return path.join(RootDir(), plugin?.rootPath as string)
+          }
         },
         logger
       },
@@ -399,6 +404,7 @@ export default class PluginManager {
     // 获取所有已安装且未卸载的插件
     const query = new PluginQueryDTO()
     query.activationType = ActivationType.STARTUP
+    query.uninstalled = BOOL.FALSE
     const plugins = await this.pluginService.list(query)
     if (!plugins || plugins.length === 0) {
       LogUtil.info('PluginManager', '没有需要加载的插件')
@@ -407,7 +413,7 @@ export default class PluginManager {
 
     for (const plugin of plugins) {
       // 跳过没有有效 id 的插件
-      if (isNullish(plugin.id)) {
+      if (isNullish(plugin.publicId)) {
         continue
       }
       try {

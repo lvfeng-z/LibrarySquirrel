@@ -2,7 +2,7 @@ import { AnySlotContent, SlotContentType } from '@shared/model/constant/SlotType
 
 /** 插槽基础配置 */
 export interface BaseSlotConfig {
-  /** 唯一标识: "plugin-{pluginId}-{name}" */
+  /** 唯一标识 */
   slotId: string
   /** 插件ID */
   pluginId: number
@@ -58,10 +58,6 @@ export interface ViewSlotConfig extends BaseSlotConfig {
   content: AnySlotContent
   /** 传递给组件的额外属性 */
   props?: Record<string, unknown>
-  /** 编译后的 JS 文件路径 (仅 vueSource 类型使用) */
-  compiledJsPath?: string
-  /** 编译后的 CSS 文件路径 (仅 vueSource 类型使用) */
-  compiledCssPath?: string
 }
 
 /** 菜单插槽配置 (对应 MenuSlot) */
@@ -86,7 +82,22 @@ export interface SiteBrowserListSlotConfig extends BaseSlotConfig {
   imagePath: string
 }
 
-export interface VueCompileResult {
-  jsPath: string
-  cssPath: string | undefined
+/**
+ * 预编译组件内容类型 (仅用于 contentType 为 'precompiled' 时)
+ * - 字符串: 仅包含js路径 (向后兼容)
+ * - 对象: 包含js路径和可选的css路径
+ */
+export interface PrecompiledContent {
+  js: string
+  css?: string
+}
+
+/**
+ * 预编译组件内容类型 (仅用于 contentType 为 'vueSource' 时)
+ */
+export interface VueSourceContent extends PrecompiledContent {
+  /**
+   * vue源码路径
+   */
+  vue: string
 }

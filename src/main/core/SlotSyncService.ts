@@ -4,7 +4,6 @@ import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
 import { getVueSourceCompiler } from '../service/VueSourceCompiler.ts'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.ts'
-import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
 
 /**
  * IPC 事件名称枚举
@@ -54,12 +53,10 @@ class SlotSyncService {
         try {
           LogUtil.info('SlotSyncService', `检测到 vueSource 类型插槽，开始编译: ${slotId}`)
           const compiler = getVueSourceCompiler()
-          const finalContent = path.join(RootDir(), PLUGIN_ROOT, content)
-          const result = await compiler.compile(finalContent, config.pluginId, slotId)
+          const finalContent = path.join(RootDir(), content)
 
           // 更新配置，添加编译结果路径
-          config['compiledJsPath'] = result.jsPath
-          config['compiledCssPath'] = result.cssPath
+          config.content = await compiler.compile(finalContent, config.pluginPublicId, slotId)
 
           LogUtil.info('SlotSyncService', `Vue 源码编译完成: ${slotId}`)
         } catch (error) {
@@ -102,11 +99,11 @@ class SlotSyncService {
           try {
             LogUtil.info('SlotSyncService', `检测到 vueSource 类型插槽，开始编译: ${slotId}`)
             const compiler = getVueSourceCompiler()
-            const result = await compiler.compile(content, config.pluginId, slotId)
+            const result = await compiler.compile(content, config.pluginPublicId, slotId)
 
             // 更新配置，添加编译结果路径
-            config['compiledJsPath'] = result.jsPath
-            config['compiledCssPath'] = result.cssPath
+            config['compiledJsPath'] = result.js
+            config['compiledCssPath'] = result.css
 
             LogUtil.info('SlotSyncService', `Vue 源码编译完成: ${slotId}`)
           } catch (error) {

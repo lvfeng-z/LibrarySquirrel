@@ -211,7 +211,6 @@ export const useSlotRegistryStore = defineStore('slotRegistry', {
 
     // 注册菜单插槽
     registerMenuSlot(item: MenuSlotItem) {
-      console.log(item)
       this.menuSlots.set(item.slotId, item)
     },
 

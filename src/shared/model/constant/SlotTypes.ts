@@ -2,28 +2,20 @@ import {
   EmbedSlotConfig,
   MenuSlotConfig,
   PanelSlotConfig,
+  PrecompiledContent,
   SiteBrowserListSlotConfig,
-  ViewSlotConfig
+  ViewSlotConfig,
+  VueSourceContent
 } from '@shared/model/interface/SlotConfigs.ts'
 
 /** 插槽内容类型 */
 export type SlotContentType = 'vueSource' | 'precompiled' | 'code'
 
 /**
- * 预编译组件内容类型 (仅用于 contentType 为 'precompiled' 时)
- * - 字符串: 仅包含js路径 (向后兼容)
- * - 对象: 包含js路径和可选的css路径
- */
-export type PrecompiledContent = {
-  js: string
-  css?: string
-}
-
-/**
  * 任意插槽内容类型 - 用于 IPC 序列化
  * 包含所有可能的内容格式
  */
-export type AnySlotContent = PrecompiledContent | string
+export type AnySlotContent = PrecompiledContent | VueSourceContent | string
 
 /**
  * 插槽配置联合类型 - 使用可辨识联合实现类型安全
