@@ -698,6 +698,54 @@ class demoDao {
   const id = row['id'] // ✗ 类型为 unknown
   ```
 
+### 数据库路径存储规范
+
+- **原则**: 数据库中存储的所有相对路径必须相对于项目根目录（资源库根目录）
+- **根目录定义**: 项目配置中定义的资源库根目录路径
+- **正确示例**:
+
+  ```typescript
+  // 正确：相对于根目录的路径
+  const path = 'images/2024/01/photo.jpg'
+  const coverPath = 'covers/work_001.jpg'
+
+  // 存储到数据库
+  await resourceDao.save({ path: 'images/2024/01/photo.jpg' })
+  ```
+
+- **错误示例**:
+
+  ```typescript
+  // 错误：相对于当前工作目录或其他位置的路径
+  const path = '../shared/images/photo.jpg'    // ✗ 包含 ../
+  const path = './cache/thumbnail.jpg'          // ✗ 包含 ./
+  const path = 'C:/Users/Admin/pictures/1.jpg'   // ✗ 绝对路径
+  ```
+
+- **路径拼接规范**: 使用统一的路径工具类进行路径拼接，确保生成相对路径
+
+#### 例外情况
+
+以下场景可以使用独立于程序目录的绝对路径：
+
+- **用户自定义资源目录**: 用户在设置中配置的资源库目录（即workdir），该路径存储在配置表中，程序启动时读取
+- **下载的临时文件**: 插件下载资源时使用的临时缓存目录，通常由系统临时目录或用户配置决定
+- **外部关联文件**: 用户手动关联到作品的外部文件路径（如关联本地已存在的图片）
+
+当存储此类路径时，应在字段命名或注释中明确标识其性质：
+
+```typescript
+// 正确示例：使用明确的字段命名
+interface ResourceRecord {
+  // 相对于根目录的资源路径
+  path: string
+  // 外部关联文件的绝对路径
+  externalPath: string | null
+  // 用户配置的资源库根目录
+  libraryRoot: string
+}
+```
+
 ### 插件开发规范
 
 - **目录位置**: `src/main/plugin/package/`
@@ -785,5 +833,5 @@ class demoDao {
 
 ---
 
-**最后更新**: 2026-03-03
+**最后更新**: 2026-03-20
 **维护者**: AI Assistant
