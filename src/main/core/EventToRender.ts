@@ -1,4 +1,4 @@
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { getMainWindow } from './mainWindow.ts'
 
 export enum RenderEvent {
@@ -21,6 +21,6 @@ export function SendMsgToRender(channel: RenderEvent, ...args: unknown[]) {
   try {
     getMainWindow().webContents.send(channel, args)
   } catch (ignoredError) {
-    LogUtil.error('SendMsgToRender', ignoredError)
+    log.error('SendMsgToRender', ignoredError)
   }
 }

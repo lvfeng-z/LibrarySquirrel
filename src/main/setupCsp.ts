@@ -1,5 +1,5 @@
 import { session } from 'electron'
-import LogUtil from './util/LogUtil.ts'
+import log from './util/LogUtil.ts'
 
 /**
  * 设置 CSP 策略
@@ -35,7 +35,7 @@ export function setupCSP(allowUnsafeEval: boolean) {
       // 合并所有指令
       const cspString = cspDirectives.join('; ')
 
-      LogUtil.info('CSP', `应用策略 (unsafe-eval: ${allowUnsafeEval ? '允许' : '禁止'}):`, cspString)
+      log.info('CSP', `应用策略 (unsafe-eval: ${allowUnsafeEval ? '允许' : '禁止'}):`, cspString)
 
       // 应用 CSP 头
       callback({

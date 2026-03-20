@@ -4,7 +4,7 @@ import Backup from '@shared/model/entity/Backup.js'
 import BackupDao from '../dao/BackupDao.js'
 import { BackupSourceTypeEnum } from '../constant/BackupSourceTypeEnum.js'
 import fs from 'fs/promises'
-import LogUtil from '../util/LogUtil.js'
+import log from '../util/LogUtil.js'
 import { AddSuffix, CreateDirIfNotExists } from '../util/FileSysUtil.js'
 import path from 'path'
 import { BackupRootDirName } from '../constant/BackupConstants.js'
@@ -28,7 +28,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     try {
       await fs.access(sourceFilePath)
     } catch (error) {
-      LogUtil.error(
+      log.error(
         this.constructor.name,
         `创建备份失败，源文件不存在，sourceType: ${sourceType}, sourceId: ${sourceId}, path: ${sourceFilePath}`
       )
@@ -59,7 +59,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
       try {
         await fs.access(finalAbsolutePath)
         fileName = AddSuffix(fileName, '_' + Date.now())
-        LogUtil.info(this.constructor.name, `文件${finalAbsolutePath}已存在，尝试文件名: ${fileName}`)
+        log.info(this.constructor.name, `文件${finalAbsolutePath}已存在，尝试文件名: ${fileName}`)
       } catch {
         fileNameAccepted = true
       }
@@ -95,7 +95,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     try {
       await fs.access(absoluteBackupPath)
     } catch (error) {
-      LogUtil.error(this.constructor.name, '恢复备份失败，找不到备份文件', error)
+      log.error(this.constructor.name, '恢复备份失败，找不到备份文件', error)
       throw error
     }
     return fs
@@ -107,7 +107,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
         return result
       })
       .catch((error) => {
-        LogUtil.error(this.constructor.name, `恢复备份到${targetPath}失败，error: `, error)
+        log.error(this.constructor.name, `恢复备份到${targetPath}失败，error: `, error)
         throw error
       })
   }
@@ -120,7 +120,7 @@ export default class BackupService extends BaseService<BackupQueryDTO, Backup, B
     try {
       await fs.access(absoluteBackupPath)
     } catch (error) {
-      LogUtil.error(this.constructor.name, '删除备份失败，找不到备份文件', error)
+      log.error(this.constructor.name, '删除备份失败，找不到备份文件', error)
       throw error
     }
     return this.deleteBackupByIdAndPath(backUpId, absoluteBackupPath)

@@ -4,7 +4,7 @@ import PluginService from '../service/PluginService.ts'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.ts'
 import { RESOURCE_PATH } from '../constant/CommonConstant.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { arrayNotEmpty } from '@shared/util/CommonUtil.ts'
 import { getIniConfig } from './iniConfig.ts'
 
@@ -51,7 +51,7 @@ export async function initializeByConfig() {
       try {
         await pluginService.installFromPath(installPath, 'initialization')
       } catch (error) {
-        LogUtil.error('Initialize', '安装插件失败', error)
+        log.error('Initialize', '安装插件失败', error)
       }
     }
   }

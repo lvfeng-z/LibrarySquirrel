@@ -1,6 +1,6 @@
 import { Writable } from 'node:stream'
 import { isBlank } from '@shared/util/StringUtil.ts'
-import LogUtil from './LogUtil.js'
+import log from './LogUtil.js'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.js'
 import { arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
 import Task from '@shared/model/entity/Task.js'
@@ -86,25 +86,25 @@ export default class CreateTaskWritable extends Writable {
         const pluginTaskResponseDTO = pluginResponse.task as PluginCreateTaskResponseDTO
         const pluginPid = pluginTaskResponseDTO.pluginPid
         if (isBlank(pluginPid)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的子任务信息中缺少pluginPid')
+          log.error(this.constructor.name, '创建任务失败，插件返回的子任务信息中缺少pluginPid')
           callback()
           return
         }
         const truePid = this.pluginPidToTruePidMapping.get(pluginPid)
         if (isNullish(truePid)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的子任务中的pluginPid不可用')
+          log.error(this.constructor.name, '创建任务失败，插件返回的子任务中的pluginPid不可用')
           callback()
           return
         }
         const task = PluginCreateTaskResponseDTO.toTaskCreateDTO(pluginTaskResponseDTO)
         // 校验
         if (isBlank(task.siteName)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点名称')
+          log.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少站点名称')
           callback()
           return
         }
         if (isBlank(task.siteWorkId)) {
-          LogUtil.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
+          log.error(this.constructor.name, '创建任务失败，插件返回的任务信息中缺少siteWorkId')
           callback()
           return
         }
@@ -117,7 +117,7 @@ export default class CreateTaskWritable extends Writable {
         task.pid = truePid
         task.siteId = await this.getSiteId(task.siteName)
         if (isNullish(task.siteId)) {
-          LogUtil.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
+          log.error(this.constructor.name, `创建任务失败，没有找到${task.siteName}对应的站点`)
           callback()
           return
         }
@@ -129,16 +129,16 @@ export default class CreateTaskWritable extends Writable {
         const pluginCreateParentTaskResponseDTO = pluginResponse.task as PluginCreateParentTaskResponseDTO
         const pluginPid = pluginCreateParentTaskResponseDTO.pluginTaskId
         if (isBlank(pluginPid)) {
-          LogUtil.info(this.constructor.name, '创建父任务失败，插件返回的父任务的pluginTaskId为空')
+          log.info(this.constructor.name, '创建父任务失败，插件返回的父任务的pluginTaskId为空')
           callback()
           return
         }
         if (this.pluginPidToTruePidMapping.has(pluginPid)) {
-          LogUtil.info(this.constructor.name, '保存父任务失败，插件返回了重复的pluginTaskId')
+          log.info(this.constructor.name, '保存父任务失败，插件返回了重复的pluginTaskId')
         } else {
           const parentTaskCreateDTO = PluginCreateParentTaskResponseDTO.toTaskCreateDTO(pluginCreateParentTaskResponseDTO)
           if (isBlank(parentTaskCreateDTO.siteName)) {
-            LogUtil.error(this.constructor.name, '创建任务失败，插件返回的父任务信息中缺少站点名称')
+            log.error(this.constructor.name, '创建任务失败，插件返回的父任务信息中缺少站点名称')
             callback()
             return
           }

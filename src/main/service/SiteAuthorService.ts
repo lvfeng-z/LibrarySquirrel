@@ -2,7 +2,7 @@ import BaseService from '../base/BaseService.ts'
 import SiteAuthor from '@shared/model/entity/SiteAuthor.ts'
 import SiteAuthorQueryDTO from '@shared/model/queryDTO/SiteAuthorQueryDTO.ts'
 import SiteAuthorDao from '../dao/SiteAuthorDao.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import lodash from 'lodash'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import Page from '@shared/model/util/Page.ts'
@@ -33,11 +33,11 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
   public async saveOrUpdateBySiteAuthorId(siteAuthor: SiteAuthor): Promise<number> {
     if (isNullish(siteAuthor.siteId)) {
       const msg = '保存作品失败，作品的站点id不能为空'
-      LogUtil.error('SiteAuthorService', msg)
+      log.error('SiteAuthorService', msg)
       throw new Error(msg)
     } else if (isNullish(siteAuthor.siteAuthorId)) {
       const msg = '保存作品失败，站点作者的id不能为空'
-      LogUtil.error('SiteAuthorService', '保存作品失败，站点作者的id不能为空')
+      log.error('SiteAuthorService', '保存作品失败，站点作者的id不能为空')
       throw new Error(msg)
     } else {
       const oldSiteAuthor = await this.getBySiteAuthorId(siteAuthor.siteAuthorId, siteAuthor.siteId)
@@ -117,7 +117,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return true
       }
     } else {
-      LogUtil.error('SiteAuthorService', '站点作者绑定在本地作者上失败，localAuthorId不能为空')
+      log.error('SiteAuthorService', '站点作者绑定在本地作者上失败，localAuthorId不能为空')
       return false
     }
   }
@@ -210,13 +210,13 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
         return siteAuthors[0]
       }
       if (siteAuthors.length > 1) {
-        LogUtil.warn('SiteAuthorService', `站点作者id：${siteAuthorId}在数据库中存在多个作者`)
+        log.warn('SiteAuthorService', `站点作者id：${siteAuthorId}在数据库中存在多个作者`)
         return siteAuthors[0]
       }
       return undefined
     } else {
       const msg = '根据站点作者id查询站点作者时站点作者id不能为空'
-      LogUtil.error('SiteAuthorService', msg)
+      log.error('SiteAuthorService', msg)
       throw new Error(msg)
     }
   }
@@ -306,7 +306,7 @@ export default class SiteAuthorService extends BaseService<SiteAuthorQueryDTO, S
       }
       return this.dao.queryLocalRelateDTOPage(page)
     } catch (error) {
-      LogUtil.error(this.constructor.name, error)
+      log.error(this.constructor.name, error)
       throw error
     }
   }

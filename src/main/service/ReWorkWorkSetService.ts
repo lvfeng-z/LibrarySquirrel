@@ -4,7 +4,7 @@ import ReWorkWorkSet from '@shared/model/entity/ReWorkWorkSet.ts'
 import ReWorkWorkSetDao from '../dao/ReWorkWorkSetDao.ts'
 import { WorkDao } from '../dao/WorkDao.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish } from '@shared/util/CommonUtil.ts'
-import LogUtil from '../util/LogUtil.js'
+import log from '../util/LogUtil.js'
 import Work from '@shared/model/entity/Work.ts'
 
 export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQueryDTO, ReWorkWorkSet, ReWorkWorkSetDao> {
@@ -62,12 +62,12 @@ export default class ReWorkWorkSetService extends BaseService<ReWorkWorkSetQuery
     // 校验
     const legalWorkList = work.filter((tempWork) => {
       if (isNullish(tempWork)) {
-        LogUtil.warn(this.constructor.name, `关联作品集和作品失败，作品信息不能为空`)
+        log.warn(this.constructor.name, `关联作品集和作品失败，作品信息不能为空`)
         return false
       }
       if (isNullish(!Object.hasOwn(tempWork, 'id') || tempWork.id)) {
         const siteWorkName = Object.hasOwn(tempWork, 'siteWorkName') ? tempWork.siteWorkName : 'unknown'
-        LogUtil.warn(this.constructor.name, `关联作品集和作品失败，作品id不能为空，siteWorkName: ${siteWorkName}`)
+        log.warn(this.constructor.name, `关联作品集和作品失败，作品id不能为空，siteWorkName: ${siteWorkName}`)
         return false
       }
       return true

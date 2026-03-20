@@ -12,7 +12,7 @@ import WorkService from '../service/WorkService.ts'
 import { ApiResponse, ApiUtil } from '../util/ApiUtil.ts'
 import TaskService from '../service/TaskService.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import SiteAuthorService from '../service/SiteAuthorService.ts'
 import AutoExplainPathService from '../service/AutoExplainPathService.ts'
 import { DirSelect, RootDir } from '../util/FileSysUtil.ts'
@@ -37,7 +37,7 @@ import path from 'path'
 import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
 
 function returnError(error: unknown) {
-  LogUtil.error('MainProcessApi', error)
+  log.error('MainProcessApi', error)
   return ApiUtil.error(String(error))
 }
 
@@ -58,7 +58,7 @@ function createHandler<T>(
 ) {
   return async (_event: IpcMainInvokeEvent, ...args: any[]) => {
     if (!options?.silent) {
-      LogUtil.info('MainProcessApi', channel)
+      log.info('MainProcessApi', channel)
     }
     try {
       const result = await handler(...args)

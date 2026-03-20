@@ -6,7 +6,7 @@ import LocalTagConstant from '../constant/LocalTagConstant.ts'
 import TreeSelectNode from '@shared/model/util/TreeSelectNode.ts'
 import { buildTree } from '@shared/util/TreeUtil.ts'
 import BaseService from '../base/BaseService.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import Page from '@shared/model/util/Page.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
@@ -37,7 +37,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
     if (localTag.id) {
       if (localTag.baseLocalTagId !== undefined && localTag.baseLocalTagId === localTag.id) {
         const msg = '基础标签不能为自身'
-        LogUtil.error('LocalTagService', msg)
+        log.error('LocalTagService', msg)
         throw new Error(msg)
       }
 
@@ -55,7 +55,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
           const old = await this.dao.getById(localTag.id)
           if (isNullish(old)) {
             const msg = '修改本地标签失败，原标签信息不能为空'
-            LogUtil.error('LocalTagService', msg)
+            log.error('LocalTagService', msg)
             throw new Error(msg)
           }
 
@@ -69,7 +69,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       return await this.dao.updateById(localTag)
     } else {
       const msg = '更新本地标签失败，id不能为空'
-      LogUtil.error('LocalTagService', msg)
+      log.error('LocalTagService', msg)
       throw new Error(msg)
     }
   }
@@ -103,7 +103,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       }
       return super.queryPage(page)
     } catch (error) {
-      LogUtil.error('LocalTagService', error)
+      log.error('LocalTagService', error)
       throw error
     }
   }
@@ -123,7 +123,7 @@ export default class LocalTagService extends BaseService<LocalTagQueryDTO, Local
       }
       return this.dao.queryDTOPage(page)
     } catch (error) {
-      LogUtil.error('LocalTagService', error)
+      log.error('LocalTagService', error)
       throw error
     }
   }

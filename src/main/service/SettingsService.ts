@@ -1,5 +1,5 @@
 import { DefaultSettings } from '../util/SettingsUtil.ts'
-import LogUtil from '../util/LogUtil.js'
+import log from '../util/LogUtil.js'
 import { getTaskQueue } from '../core/taskQueue.ts'
 import { getSettings as settingsGetSettings } from '../core/settings.ts'
 import { Settings } from '@shared/model/base/Settings.ts'
@@ -26,7 +26,7 @@ function saveSettings(settings: { path: string; value: unknown }[]): boolean {
     }
     return true
   } catch (e) {
-    LogUtil.error('SettingsService', '修改设置失败，', e)
+    log.error('SettingsService', '修改设置失败，', e)
     return false
   }
 }
@@ -39,7 +39,7 @@ function resetSettings() {
     DefaultSettings()
     return true
   } catch (e) {
-    LogUtil.error('SettingsService', '重置设置失败，', e)
+    log.error('SettingsService', '重置设置失败，', e)
     return false
   }
 }

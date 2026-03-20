@@ -4,7 +4,7 @@ import AutoExplainPath from '@shared/model/entity/AutoExplainPath.ts'
 import { Database } from '../database/Database.ts'
 import Page from '@shared/model/util/Page.ts'
 import lodash from 'lodash'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { isBlank } from '@shared/util/StringUtil.ts'
 
@@ -27,7 +27,7 @@ export default class AutoExplainPathDao extends BaseDao<AutoExplainPathQueryDTO,
     // 校验
     if (isBlank(path)) {
       const msg = '分页查询自动解释失败，path不能为空'
-      LogUtil.error('', msg)
+      log.error('', msg)
       throw new Error(msg)
     }
 

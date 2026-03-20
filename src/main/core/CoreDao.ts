@@ -7,7 +7,7 @@ import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util
 import { QuerySortOption } from '../constant/QuerySortOption.ts'
 import { Database } from '../database/Database.ts'
 import BaseEntity from '@shared/model/base/BaseEntity.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { camelToSnakeCase, isBlank, isNotBlank, snakeToCamelCase } from '@shared/util/StringUtil.ts'
 
 export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntity> {
@@ -132,7 +132,7 @@ export default class CoreDao<Query extends BaseQueryDTO, Model extends BaseEntit
             case Operator.IN:
               if (!Array.isArray(value)) {
                 const msg = `生成where子句失败，处理IN条件时比较值不是数组类型`
-                LogUtil.error(this.constructor.name, msg)
+                log.error(this.constructor.name, msg)
                 throw new Error(msg)
               }
               whereClauses.set(

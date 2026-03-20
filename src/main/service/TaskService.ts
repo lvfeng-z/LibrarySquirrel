@@ -1,5 +1,5 @@
 import Task from '@shared/model/entity/Task.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import TaskDao from '../dao/TaskDao.ts'
 import { TaskStatusEnum } from '../constant/TaskStatusEnum.ts'
 import TaskQueryDTO from '@shared/model/queryDTO/TaskQueryDTO.ts'
@@ -56,7 +56,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
     if (arrayIsEmpty(taskPlugins)) {
       const msg = `url不受支持，url: ${url}`
-      LogUtil.info(this.constructor.name, msg)
+      log.info(this.constructor.name, msg)
       return new TaskCreateResponse({
         succeed: false,
         addedQuantity: 0,
@@ -71,7 +71,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
         // 加载插件
         if (isNullish(taskPlugin.id)) {
           const msg = `任务的插件id不能为空，taskId: ${taskPlugin.id}`
-          LogUtil.error(this.constructor.name, msg)
+          log.error(this.constructor.name, msg)
           continue
         }
         assertNotBlank(taskPlugin.publicId, '获取功能失败，插件公开id不能为空')
@@ -111,7 +111,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
               plugin: taskPlugin
             })
           } else {
-            LogUtil.error(this.constructor.name, '插件创建任务失败，插件返回了不支持的类型')
+            log.error(this.constructor.name, '插件创建任务失败，插件返回了不支持的类型')
             return
           }
         })
@@ -119,13 +119,13 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
           return pluginProcessResult
         }
       } catch (error) {
-        LogUtil.error(this.constructor.name, `插件创建任务失败，url: ${url}，error:`, error)
+        log.error(this.constructor.name, `插件创建任务失败，url: ${url}，error:`, error)
       }
     }
 
     // 未能在循环中返回，则返回0
     const msg = `尝试了所有插件均未成功，url: ${url}`
-    LogUtil.info(this.constructor.name, msg)
+    log.info(this.constructor.name, msg)
     return new TaskCreateResponse({ succeed: false, addedQuantity: 0, msg: msg, plugin: undefined })
   }
 
@@ -168,7 +168,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       try {
         task.pluginData = JSON.stringify(task.pluginData)
       } catch (error) {
-        LogUtil.error(this.constructor.name, `序列化插件保存的pluginData失败，url: ${url}，error:`, error)
+        log.error(this.constructor.name, `序列化插件保存的pluginData失败，url: ${url}，error:`, error)
         return
       }
     }
@@ -219,11 +219,11 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     return new Promise<number>((resolve, reject) => {
       const writable = new CreateTaskWritable(this, new SiteService(), taskPlugin, batchSize)
       createTaskStream.on('error', (error) => {
-        LogUtil.error(this.constructor.name, '创建任务失败，ReadableError: ', error)
+        log.error(this.constructor.name, '创建任务失败，ReadableError: ', error)
         reject(error)
       })
       writable.on('error', (error) => {
-        LogUtil.error(this.constructor.name, '创建任务失败，WritableError: ', error)
+        log.error(this.constructor.name, '创建任务失败，WritableError: ', error)
         reject(error)
       })
       writable.on('finish', () => resolve(writable.taskCount))
@@ -253,7 +253,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     try {
       pluginWorkResponseDTO = await taskHandler.createWorkInfo(task)
     } catch (error) {
-      LogUtil.error(this.constructor.name, `任务${taskId}调用插件获取作品信息时失败`, error)
+      log.error(this.constructor.name, `任务${taskId}调用插件获取作品信息时失败`, error)
       throw error
     }
     pluginWorkResponseDTO.work.siteId = task.siteId
@@ -297,7 +297,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       const taskHandler: TaskHandler = await getPluginManager().getContribution(plugin.publicId, 'taskHandler', pluginContributionId)
       pluginResponse = await taskHandler.start(task)
     } catch (error) {
-      LogUtil.error(this.constructor.name, `任务${taskId}调用插件开始时失败`, error)
+      log.error(this.constructor.name, `任务${taskId}调用插件开始时失败`, error)
       return new TaskProcessResponseDTO(TaskStatusEnum.FAILED, error as Error)
     }
     assertNotNullish(pluginResponse.resource?.resourceStream, `插件没有返回任务${taskId}的资源`)
@@ -321,7 +321,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     // 标记为进行中
     task.status = TaskStatusEnum.PROCESSING
 
-    LogUtil.info(this.constructor.name, `任务${taskId}开始下载`)
+    log.info(this.constructor.name, `任务${taskId}开始下载`)
     const resSavePromise: Promise<FileSaveResult> = isNullish(activeRes)
       ? resService.saveResource(resourceSaveDTO, resourceWriter)
       : resService.replaceResource(resourceSaveDTO, resourceWriter)
@@ -369,7 +369,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
         await taskQueue.pushBatch(children, TaskOperation.START)
       } catch (error) {
-        LogUtil.error(this.constructor.name, error)
+        log.error(this.constructor.name, error)
         if (parent.id) {
           await this.taskFailed(parent.id, String(error))
         }
@@ -432,7 +432,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       try {
         await taskHandler.pause(taskPluginDTO)
       } catch (error) {
-        LogUtil.error(this.constructor.name, '调用插件的pause方法出错: ', error)
+        log.error(this.constructor.name, '调用插件的pause方法出错: ', error)
         if (notNullish(resourceWriter.readable)) {
           resourceWriter.readable.pause()
         }
@@ -494,7 +494,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       try {
         await taskHandler.stop(taskPluginDTO)
       } catch (error) {
-        LogUtil.error(this.constructor.name, '调用插件的stop方法出错: ', error)
+        log.error(this.constructor.name, '调用插件的stop方法出错: ', error)
         if (notNullish(resourceWriter.readable)) {
           resourceWriter.readable.destroy()
         }
@@ -574,7 +574,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     const resourceSaveDTO = ResourceService.createSaveInfoFromPlugin(oldWork, pluginResponse, taskId)
     resourceSaveDTO.id = task.pendingResourceId
 
-    LogUtil.info(this.constructor.name, `任务${taskId}恢复下载`)
+    log.info(this.constructor.name, `任务${taskId}恢复下载`)
     return resourceService.resumeSaveResource(resourceSaveDTO, resourceWriter).then(async (saveResult) => {
       if (FileSaveResult.FINISH === saveResult) {
         return new TaskProcessResponseDTO(TaskStatusEnum.FINISHED)

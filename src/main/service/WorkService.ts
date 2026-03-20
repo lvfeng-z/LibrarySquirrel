@@ -3,7 +3,7 @@ import WorkQueryDTO from '@shared/model/queryDTO/WorkQueryDTO.ts'
 import Work from '@shared/model/entity/Work.ts'
 import WorkFullDTO from '@shared/model/dto/WorkFullDTO.ts'
 import { WorkDao } from '../dao/WorkDao.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import BaseService from '../base/BaseService.ts'
 import SiteAuthorService from './SiteAuthorService.ts'
 import SiteService from './SiteService.ts'
@@ -296,7 +296,7 @@ export default class WorkService extends BaseService<WorkQueryDTO, Work, WorkDao
       }
       return resultPage
     } catch (error) {
-      LogUtil.error(this.constructor.name, error)
+      log.error(this.constructor.name, error)
       throw error
     }
   }

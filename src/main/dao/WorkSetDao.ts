@@ -2,7 +2,7 @@ import BaseDao from '../base/BaseDao.ts'
 import WorkSetQueryDTO from '@shared/model/queryDTO/WorkSetQueryDTO.ts'
 import WorkSet from '@shared/model/entity/WorkSet.ts'
 import { Database } from '../database/Database.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { notNullish } from '@shared/util/CommonUtil.ts'
 import { toPlainParams } from '../util/DatabaseUtil.ts'
 import WorkSetWithWorkId from '@shared/model/domain/WorkSetWithWorkId.ts'
@@ -37,7 +37,7 @@ export default class WorkSetDao extends BaseDao<WorkSetQueryDTO, WorkSet> {
     const rows = await Database.all<unknown[], Record<string, unknown>>(statement, modifiedQuery)
     const result = super.toResultTypeDataList(rows) as WorkSet[]
     if (result.length > 1) {
-      LogUtil.warn(
+      log.warn(
         this.constructor.name,
         `同一站点作品集id和导入任务id下，存在多个作品集，siteWorkSetId: ${siteWorkSetId}，taskId: ${taskId}`
       )

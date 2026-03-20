@@ -6,7 +6,7 @@ import { transactional } from '../database/Transactional.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { BOOL } from '@shared/model/constant/BOOL.js'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
-import LogUtil from '../util/LogUtil.js'
+import log from '../util/LogUtil.js'
 import { AddSuffix, CreateDirIfNotExists, SanitizeFileName } from '../util/FileSysUtil.js'
 import path from 'path'
 import ResourceSaveDTO from '@shared/model/dto/ResourceSaveDTO.js'
@@ -52,7 +52,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     const workdir = getSettings().store.workdir
     if (isBlank(workdir)) {
       const msg = `保存资源失败，工作目录不能为空，taskId: ${result.taskId}`
-      LogUtil.error(this.constructor.name, msg)
+      log.error(this.constructor.name, msg)
       throw new Error(msg)
     }
     const pluginResDTO = pluginResponse.resource
@@ -105,7 +105,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     if (notNullish(resourceSaveDTO.resourceSize)) {
       resourceWriter.resourceSize = resourceSaveDTO.resourceSize
     } else {
-      LogUtil.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
+      log.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
       resourceWriter.resourceSize = 0
     }
 
@@ -128,9 +128,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
       return saveResult
     } catch (error) {
-      fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
+      fs.rm(fullSavePath, (error) => log.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
-      LogUtil.error(this.constructor.name, msg, error)
+      log.error(this.constructor.name, msg, error)
       throw error
     }
   }
@@ -167,7 +167,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
           await this.updateById(resourceSaveDTO)
         })
       } catch (error) {
-        LogUtil.error(
+        log.error(
           this.constructor.name,
           `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}，恢复资源保存时移动原有资源文件到新路径下失败，尝试把文件移回原位`,
           error
@@ -199,9 +199,9 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       // TODO 保存完成后比较一下原本存在数据库中的资源信息和保存用的资源信息
       return saveResult
     } catch (error) {
-      fs.rm(newFullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
+      fs.rm(newFullSavePath, (error) => log.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const msg = `保存作品资源失败，taskId: ${resourceSaveDTO.taskId}`
-      LogUtil.error(this.constructor.name, msg, error)
+      log.error(this.constructor.name, msg, error)
       throw error
     }
   }
@@ -224,7 +224,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
     if (notNullish(resourceSaveDTO.resourceSize)) {
       resourceWriter.resourceSize = resourceSaveDTO.resourceSize
     } else {
-      LogUtil.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
+      log.warn(this.constructor.name, `插件没有返回任务${resourceWriter}的资源的大小`)
       resourceWriter.resourceSize = 0
     }
 
@@ -249,7 +249,7 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
           return undefined
         })
     } catch (error) {
-      LogUtil.warn(this.constructor.name, '替换资源时未创建备份，因为原文件不存在，', error)
+      log.warn(this.constructor.name, '替换资源时未创建备份，因为原文件不存在，', error)
     }
 
     try {
@@ -274,19 +274,19 @@ export default class ResourceService extends BaseService<ResourceQueryDTO, Resou
       }
       return saveResult
     } catch (error) {
-      fs.rm(fullSavePath, (error) => LogUtil.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
+      fs.rm(fullSavePath, (error) => log.error(this.constructor.name, '删除因意外中断的资源文件失败，', error))
       const backup = await backupPromise
       let recovered = false
       if (notNullish(backup)) {
         await backupService.recoverToPath(backup.id as number, oldResAbsolutePath, true).catch((recoverError) => {
-          LogUtil.error(this.constructor.name, '恢复资源失败', recoverError)
+          log.error(this.constructor.name, '恢复资源失败', recoverError)
         })
         recovered = true
       } else {
-        LogUtil.error(this.constructor.name, '恢复资源失败，替换资源前没有创建备份')
+        log.error(this.constructor.name, '恢复资源失败，替换资源前没有创建备份')
       }
       const msg = `替换资源失败，taskId: ${resourceSaveDTO.taskId}，原文件${recovered ? '已恢复' : '未能恢复'}`
-      LogUtil.error(this.constructor.name, msg, error)
+      log.error(this.constructor.name, msg, error)
       throw error
     }
   }

@@ -1,4 +1,4 @@
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import Electron from 'electron'
 import { MeaningOfPath } from '@shared/model/util/MeaningOfPath.ts'
 import LocalAuthorService from '../service/LocalAuthorService.ts'
@@ -177,10 +177,10 @@ export default class PluginManager {
     const pluginName = plugin?.name ?? ''
 
     const logger = {
-      info: (...args: unknown[]) => LogUtil.info(`Plugin[${pluginName}]`, ...args),
-      debug: (...args: unknown[]) => LogUtil.debug(`Plugin[${pluginName}]`, ...args),
-      warn: (...args: unknown[]) => LogUtil.warn(`Plugin[${pluginName}]`, ...args),
-      error: (...args: unknown[]) => LogUtil.error(`Plugin[${pluginName}]`, ...args)
+      info: (...args: unknown[]) => log.info(`Plugin[${pluginName}]`, ...args),
+      debug: (...args: unknown[]) => log.debug(`Plugin[${pluginName}]`, ...args),
+      warn: (...args: unknown[]) => log.warn(`Plugin[${pluginName}]`, ...args),
+      error: (...args: unknown[]) => log.error(`Plugin[${pluginName}]`, ...args)
     }
 
     return {
@@ -286,7 +286,7 @@ export default class PluginManager {
               const localAuthor = await localAuthorService.getById(meaningOfPath.id)
               if (isNullish(localAuthor)) {
                 const msg = '附加目录含义中的作者信息失败，作者id不可用'
-                LogUtil.error(this.constructor.name, msg)
+                log.error(this.constructor.name, msg)
                 reject(msg)
               } else {
                 meaningOfPath.name = localAuthor.authorName
@@ -300,7 +300,7 @@ export default class PluginManager {
               const localTag = await localTagService.getById(meaningOfPath.id)
               if (isNullish(localTag)) {
                 const msg = '附加目录含义中的标签信息失败，标签id不可用'
-                LogUtil.error(this.constructor.name, msg)
+                log.error(this.constructor.name, msg)
                 reject(msg)
               } else {
                 meaningOfPath.name = localTag.localTagName
@@ -314,7 +314,7 @@ export default class PluginManager {
               const site = await siteService.getById(meaningOfPath.id)
               if (isNullish(site)) {
                 const msg = '附加目录含义中的站点信息失败，站点id不可用'
-                LogUtil.error(this.constructor.name, msg)
+                log.error(this.constructor.name, msg)
                 reject(msg)
               } else {
                 meaningOfPath.name = site.siteName
@@ -354,7 +354,7 @@ export default class PluginManager {
     // 如果已经激活，直接返回
     const cached = this.pluginCache.get(pluginPublicId)
     if (cached?.activationType) {
-      LogUtil.debug('PluginManager', `插件 ${pluginPublicId} 已激活，跳过`)
+      log.debug('PluginManager', `插件 ${pluginPublicId} 已激活，跳过`)
       return
     }
 
@@ -373,11 +373,11 @@ export default class PluginManager {
   public async deactivatePlugin(pluginPublicId: string): Promise<void> {
     const cached = this.pluginCache.get(pluginPublicId)
     if (!cached?.activationType) {
-      LogUtil.debug('PluginManager', `插件 ${pluginPublicId} 未激活，无需停用`)
+      log.debug('PluginManager', `插件 ${pluginPublicId} 未激活，无需停用`)
       return
     }
 
-    LogUtil.info('PluginManager', `停用插件 ${pluginPublicId}`)
+    log.info('PluginManager', `停用插件 ${pluginPublicId}`)
 
     try {
       // 获取插件实例并调用 deactivate 方法
@@ -386,7 +386,7 @@ export default class PluginManager {
         await instance.deactivate()
       }
     } catch (error) {
-      LogUtil.error('PluginManager', `插件 ${pluginPublicId} 停用失败`, error)
+      log.error('PluginManager', `插件 ${pluginPublicId} 停用失败`, error)
     } finally {
       // 清除激活类型
       cached.activationType = undefined
@@ -399,7 +399,7 @@ export default class PluginManager {
    * 激活所有启动时加载的插件
    */
   public async activateStartupPlugins(): Promise<void> {
-    LogUtil.info('PluginManager', '开始激活启动时加载的插件')
+    log.info('PluginManager', '开始激活启动时加载的插件')
 
     // 获取所有已安装且未卸载的插件
     const query = new PluginQueryDTO()
@@ -407,7 +407,7 @@ export default class PluginManager {
     query.uninstalled = BOOL.FALSE
     const plugins = await this.pluginService.list(query)
     if (!plugins || plugins.length === 0) {
-      LogUtil.info('PluginManager', '没有需要加载的插件')
+      log.info('PluginManager', '没有需要加载的插件')
       return
     }
 
@@ -419,14 +419,14 @@ export default class PluginManager {
       try {
         assertNotBlank(plugin.publicId, '插件公开id不能为空')
         await this.activatePlugin(plugin.publicId, ActivationType.STARTUP)
-        LogUtil.info('PluginManager', `插件 ${plugin.name} 激活成功`)
+        log.info('PluginManager', `插件 ${plugin.name} 激活成功`)
       } catch (error) {
-        LogUtil.error('PluginManager', `插件 ${plugin.name} 激活失败`, error)
+        log.error('PluginManager', `插件 ${plugin.name} 激活失败`, error)
         throw error
       }
     }
 
-    LogUtil.info('PluginManager', '启动时插件激活完成')
+    log.info('PluginManager', '启动时插件激活完成')
   }
 
   /**

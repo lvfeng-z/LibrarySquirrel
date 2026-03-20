@@ -3,7 +3,7 @@ import LocalAuthorQueryDTO from '@shared/model/queryDTO/LocalAuthorQueryDTO.ts'
 import LocalAuthor from '@shared/model/entity/LocalAuthor.ts'
 import LocalAuthorDao from '../dao/LocalAuthorDao.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { Operator } from '../constant/CrudConstant.ts'
 import Page from '@shared/model/util/Page.ts'
 import RankedLocalAuthor from '@shared/model/domain/RankedLocalAuthor.ts'
@@ -46,7 +46,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
       }
       return super.queryPage(page)
     } catch (error) {
-      LogUtil.error('LocalAuthorService', error)
+      log.error('LocalAuthorService', error)
       throw error
     }
   }
@@ -60,7 +60,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
       query.operators = { authorName: Operator.LIKE }
       return this.dao.baseListSelectItems(query, 'id', 'authorName')
     } catch (error) {
-      LogUtil.error('LocalAuthorService', error)
+      log.error('LocalAuthorService', error)
       throw error
     }
   }
@@ -75,7 +75,7 @@ export default class LocalAuthorService extends BaseService<LocalAuthorQueryDTO,
       page.query.operators = { authorName: Operator.LIKE }
       return this.dao.querySelectItemPage(page, 'id', 'authorName')
     } catch (error) {
-      LogUtil.error('LocalAuthorService', error)
+      log.error('LocalAuthorService', error)
       throw error
     }
   }

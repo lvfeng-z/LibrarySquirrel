@@ -247,7 +247,7 @@ public async associateAuthors(workId: number, siteAuthorIds: number[], localAuth
 #### 5. 添加日志
 
 ```typescript
-LogUtil.info('WorkService', '开始处理作者关联', {
+log.info('WorkService', '开始处理作者关联', {
   workId,
   siteAuthors: siteAuthors.length,
   localAuthors: localAuthorIds.length

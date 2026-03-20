@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import { FileSaveResult } from '../constant/FileSaveResult.js'
-import LogUtil from './LogUtil.js'
+import log from './LogUtil.js'
 import { assertNotNullish } from '@shared/util/AssertUtil.ts'
 import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import fs from 'fs'
@@ -67,7 +67,7 @@ export default class ResourceWriter {
       const readableErrorHandler = (err: Error) => {
         this.errorOccurred = true
         this.readable?.unpipe(this.writable)
-        LogUtil.error(this.constructor.name, `readable出错${err}`)
+        log.error(this.constructor.name, `readable出错${err}`)
         reject(err)
       }
       // 可读流的end事件回调
@@ -93,7 +93,7 @@ export default class ResourceWriter {
       }
       writable.once('error', (err) => {
         this.errorOccurred = true
-        LogUtil.error(this.constructor.name, `writable出错，${err}`)
+        log.error(this.constructor.name, `writable出错，${err}`)
         writable.destroy()
         reject(err)
       })

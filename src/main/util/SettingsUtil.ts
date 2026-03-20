@@ -1,5 +1,5 @@
 import { SettingsTemplate } from '../resources/settings/SettingsTemplate.js'
-import LogUtil from './LogUtil.ts'
+import log from './LogUtil.ts'
 import { getSettings } from '../core/settings.ts'
 
 /**
@@ -13,7 +13,7 @@ export function DefaultSettings() {
     settings.set('initialized', true)
   } catch (error) {
     settings.set('initialized', false)
-    LogUtil.error('SettingsUtil', String(error))
+    log.error('SettingsUtil', String(error))
     throw error
   }
 }

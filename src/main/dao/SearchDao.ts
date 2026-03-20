@@ -9,7 +9,7 @@ import SelectItem from '@shared/model/util/SelectItem.js'
 import { SearchTypes } from '../constant/SearchType.js'
 import { SearchType } from '@shared/model/util/SearchCondition.js'
 import { arrayIsEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
-import LogUtil from '../util/LogUtil.js'
+import log from '../util/LogUtil.js'
 import Site from '@shared/model/entity/Site.js'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
 
@@ -99,7 +99,7 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
         try {
           selectItem.extraData = JSON.parse(selectItem.extraData as string)
         } catch (error) {
-          LogUtil.error(`解析查询配置项${selectItem.label}的额外数据失败，error`, error)
+          log.error(`解析查询配置项${selectItem.label}的额外数据失败，error`, error)
         }
         if (notNullish(selectItem.extraData)) {
           const extra = selectItem.extraData as { type: SearchType; id: number }
@@ -126,14 +126,14 @@ export default class SearchDao extends CoreDao<BaseQueryDTO, BaseEntity> {
               break
             }
             default:
-              LogUtil.error(
+              log.error(
                 this.constructor.name,
                 `解析查询配置项${selectItem.label}的额外数据失败，出现了不支持的类型，type: ${extra.type}`
               )
           }
           selectItem.subLabels = subLabels
         } else {
-          LogUtil.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据不能为空`)
+          log.error(this.constructor.name, `解析查询配置项${selectItem.label}的额外数据失败，额外数据不能为空`)
         }
       }
     })

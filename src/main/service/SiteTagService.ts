@@ -1,7 +1,7 @@
 import SiteTag from '@shared/model/entity/SiteTag.ts'
 import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
 import SiteTagDao from '../dao/SiteTagDao.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import SelectItem from '@shared/model/util/SelectItem.ts'
 import { isNotBlank } from '@shared/util/StringUtil.ts'
 import Page from '@shared/model/util/Page.ts'
@@ -104,7 +104,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
         return true
       }
     } else {
-      LogUtil.error('SiteTagService', '站点标签绑定在本地标签上失败，localTagId不能为空')
+      log.error('SiteTagService', '站点标签绑定在本地标签上失败，localTagId不能为空')
       return false
     }
   }
@@ -188,7 +188,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       }
       return super.queryPage(page)
     } catch (error) {
-      LogUtil.error(this.constructor.name, error)
+      log.error(this.constructor.name, error)
       throw error
     }
   }
@@ -270,7 +270,7 @@ export default class SiteTagService extends BaseService<SiteTagQueryDTO, SiteTag
       }
       return this.dao.queryLocalRelateDTOPage(page)
     } catch (error) {
-      LogUtil.error(this.constructor.name, error)
+      log.error(this.constructor.name, error)
       throw error
     }
   }

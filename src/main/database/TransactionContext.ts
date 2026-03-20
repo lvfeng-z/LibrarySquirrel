@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'async_hooks'
 import { Connection } from '../core/classes/ConnectionPool.ts'
 import { RequestWeight } from '../core/classes/ConnectionPool.ts'
 import { getConnectionPool } from '../core/connectionPool.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 
 /**
@@ -91,16 +91,16 @@ class TransactionContext {
 
       try {
         conn.connection.exec(`SAVEPOINT ${savepointName}`)
-        LogUtil.debug(caller, `${operation}，SAVEPOINT ${savepointName}`)
+        log.debug(caller, `${operation}，SAVEPOINT ${savepointName}`)
         const result = await fn()
         conn.connection.exec(`RELEASE ${savepointName}`)
         store.savepointCounter--
-        LogUtil.debug(caller, `${operation}，RELEASE ${savepointName}`)
+        log.debug(caller, `${operation}，RELEASE ${savepointName}`)
         return result
       } catch (error) {
         conn.connection.exec(`ROLLBACK TO SAVEPOINT ${savepointName}`)
         store.savepointCounter--
-        LogUtil.debug(caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
+        log.debug(caller, `${operation}，ROLLBACK TO SAVEPOINT ${savepointName}`)
         throw error
       }
     }
@@ -123,16 +123,16 @@ class TransactionContext {
 
     try {
       connection.connection.exec('BEGIN')
-      LogUtil.debug(caller, `${operation}，BEGIN`)
+      log.debug(caller, `${operation}，BEGIN`)
 
       const result = await this.asyncLocalStorage.run(newState, fn)
 
       connection.connection.exec('COMMIT')
-      LogUtil.debug(caller, `${operation}，COMMIT`)
+      log.debug(caller, `${operation}，COMMIT`)
       return result
     } catch (error) {
       connection.connection.exec('ROLLBACK')
-      LogUtil.debug(caller, `${operation}，ROLLBACK`)
+      log.debug(caller, `${operation}，ROLLBACK`)
       throw error
     } finally {
       // 释放排他锁

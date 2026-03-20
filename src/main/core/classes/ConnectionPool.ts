@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3'
-import LogUtil from '../../util/LogUtil.ts'
+import log from '../../util/LogUtil.ts'
 
 export interface ConnectionPoolConfig {
   maxRead: number
@@ -111,7 +111,7 @@ export class ConnectionPool {
             // 分配之前清除空闲计时
             clearTimeout(connection.timeoutId)
             connection.timeoutId = undefined
-            LogUtil.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]链接复用，清除空闲计时`)
+            log.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]链接复用，清除空闲计时`)
             connection.occupied = true
             connection.refreshOccupyStart()
             resolve(connection)
@@ -124,7 +124,7 @@ export class ConnectionPool {
           newConnection.occupied = true
           connectionArray[firstIdleIndex] = newConnection
           resolve(newConnection)
-          LogUtil.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${firstIdleIndex}]新建链接`)
+          log.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${firstIdleIndex}]新建链接`)
           return
         }
         if (readonly) {
@@ -133,7 +133,7 @@ export class ConnectionPool {
           this.writeWaitingQueue.push({ requestWeigh: requestWeigh, resolve: resolve })
         }
       } catch (e) {
-        LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, '分配数据库连接失败，', e)
+        log.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, '分配数据库连接失败，', e)
         reject(e)
       }
     })
@@ -149,17 +149,17 @@ export class ConnectionPool {
     const waitingQueue = readonly ? this.readWaitingQueue : this.writeWaitingQueue
     const connection = connectionArray[index]
     if (connection === undefined) {
-      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}-${index}`, `[${index}]释放链接失败，链接为空`)
+      log.error(`ConnectionPool.${readonly ? 'read' : 'write'}-${index}`, `[${index}]释放链接失败，链接为空`)
       return
     }
     if (!connection.occupied) {
-      LogUtil.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]释放链接失败，链接已经处于空闲状态`)
+      log.error(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]释放链接失败，链接已经处于空闲状态`)
     }
     // 如果等待队列不为空，从等待队列中取第一个分配链接，否则链接状态设置为空闲，并开始空闲计时
     if (waitingQueue.length > 0) {
       const request = waitingQueue.shift()
       if (request) {
-        LogUtil.debug(
+        log.debug(
           `ConnectionPool.${readonly ? 'read' : 'write'}`,
           `[${index}]链接在释放时被复用，当前等待队列长度为：${waitingQueue.length}`
         )
@@ -168,7 +168,7 @@ export class ConnectionPool {
       }
     } else {
       connection.occupied = false
-      LogUtil.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]链接已释放`)
+      log.debug(`ConnectionPool.${readonly ? 'read' : 'write'}`, `[${index}]链接已释放`)
       this.setupIdleTimeout(connection)
     }
   }
@@ -179,11 +179,11 @@ export class ConnectionPool {
   public async acquireLock(requester: string, operation: string): Promise<void> {
     return new Promise((resolve) => {
       if (!this.writeLocked) {
-        LogUtil.debug('ConnectionPool.write', `${requester}锁定排他锁，操作：${operation}`)
+        log.debug('ConnectionPool.write', `${requester}锁定排他锁，操作：${operation}`)
         this.writeLocked = true
         resolve()
       } else {
-        LogUtil.debug('ConnectionPool.write', `排他锁处于锁定状态，${requester}进入等待队列，操作：${operation}`)
+        log.debug('ConnectionPool.write', `排他锁处于锁定状态，${requester}进入等待队列，操作：${operation}`)
         this.writeLockQueue.push(() => resolve())
       }
     })
@@ -199,7 +199,7 @@ export class ConnectionPool {
         next()
       }
     } else {
-      LogUtil.debug('ConnectionPool.write', `${requester}释放排他锁`)
+      log.debug('ConnectionPool.write', `${requester}释放排他锁`)
       this.writeLocked = false
     }
   }
@@ -224,7 +224,7 @@ export class ConnectionPool {
     }
     // 将空闲计时ID与连接关联，便于后续清理
     connection.timeoutId = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
-    LogUtil.debug(
+    log.debug(
       `ConnectionPool.${connection.readonly ? 'read' : 'write'}`,
       `[${connection.index}]链接已开始空闲计时，timeoutId=${connection.timeoutId}`
     )
@@ -240,12 +240,12 @@ export class ConnectionPool {
     // 关闭链接后清理空闲计时
     clearTimeout(connection.timeoutId)
     connection.timeoutId = undefined
-    LogUtil.debug(`ConnectionPool.${connection.readonly ? 'read' : 'write'}`, `[${connection.index}]链接的空闲计时被清除`)
+    log.debug(`ConnectionPool.${connection.readonly ? 'read' : 'write'}`, `[${connection.index}]链接的空闲计时被清除`)
     // 关闭数据库连接
     connection.connection.close()
     const connectionArray = connection.readonly ? this.readConnections : this.writeConnections
     connectionArray[connection.index] = undefined
-    LogUtil.debug(`ConnectionPool.${connection.readonly ? 'read' : 'write'}`, `[${connection.index}]链接已超时关闭`)
+    log.debug(`ConnectionPool.${connection.readonly ? 'read' : 'write'}`, `[${connection.index}]链接已超时关闭`)
   }
 
   // private log(msg: string) {

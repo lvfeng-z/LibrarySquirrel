@@ -1,7 +1,7 @@
 import fsPromise from 'fs/promises'
 import path from 'path'
 import { parse, compileScript, compileTemplate, SFCDescriptor } from '@vue/compiler-sfc'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { CreateDirIfNotExists, RootDir } from '../util/FileSysUtil.ts'
 import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
 import { isBlank } from '@shared/util/StringUtil.ts'
@@ -36,7 +36,7 @@ export default class VueSourceCompiler {
    * @returns 编译结果包含 JS 和 CSS 文件路径
    */
   async compile(vueFilePath: string, pluginPublicId: string, slotId: string): Promise<VueSourceContent> {
-    LogUtil.info('VueSourceCompiler', `开始编译 Vue 源码: ${vueFilePath}`)
+    log.info('VueSourceCompiler', `开始编译 Vue 源码: ${vueFilePath}`)
 
     // 读取 Vue 文件内容
     const sourceCode = await fsPromise.readFile(vueFilePath, 'utf-8')
@@ -45,7 +45,7 @@ export default class VueSourceCompiler {
     const { descriptor, errors } = parse(sourceCode)
     if (errors && errors.length > 0) {
       const errorMsg = errors.map((e) => e.message).join('\n')
-      LogUtil.error('VueSourceCompiler', `SFC 解析错误: ${errorMsg}`)
+      log.error('VueSourceCompiler', `SFC 解析错误: ${errorMsg}`)
       throw new Error(`SFC 解析错误: ${errorMsg}`)
     }
 
@@ -65,7 +65,7 @@ export default class VueSourceCompiler {
     const jsFullPath = path.join(dirFull, jsFileName)
 
     await fsPromise.writeFile(jsFullPath, scriptCode, 'utf-8')
-    LogUtil.info('VueSourceCompiler', `JS 文件已写入: ${jsFileName}`)
+    log.info('VueSourceCompiler', `JS 文件已写入: ${jsFileName}`)
 
     // 写入 CSS 文件
     let cssRelativePath: string | undefined
@@ -74,7 +74,7 @@ export default class VueSourceCompiler {
       cssRelativePath = path.join(dirRelative, cssFileName)
       const cssFullPath = path.join(dirFull, cssFileName)
       await fsPromise.writeFile(cssFullPath, stylesCode, 'utf-8')
-      LogUtil.info('VueSourceCompiler', `CSS 文件已写入: ${cssFileName}`)
+      log.info('VueSourceCompiler', `CSS 文件已写入: ${cssFileName}`)
     }
 
     // 返回相对于 cacheDir 的路径
@@ -142,7 +142,7 @@ export default class VueSourceCompiler {
         // render代码转换为合适的形式
         renderFunction = this.convertRender(code)
       } catch (error) {
-        LogUtil.error('VueSourceCompiler', `模板编译失败: ${error}`)
+        log.error('VueSourceCompiler', `模板编译失败: ${error}`)
         throw new Error(`模板编译失败: ${error}`)
       }
     }
@@ -285,9 +285,9 @@ export default class VueSourceCompiler {
     const pluginCacheDir = path.join(this.cacheDir, pluginPublicId)
     try {
       await fsPromise.rm(pluginCacheDir, { recursive: true, force: true })
-      LogUtil.info('VueSourceCompiler', `已清理插件缓存: ${pluginPublicId}`)
+      log.info('VueSourceCompiler', `已清理插件缓存: ${pluginPublicId}`)
     } catch (error) {
-      LogUtil.warn('VueSourceCompiler', `清理缓存失败: ${error}`)
+      log.warn('VueSourceCompiler', `清理缓存失败: ${error}`)
     }
   }
 }

@@ -5,7 +5,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import { registerMainIpcHandlers } from './core/MainProcessApi.ts'
-import LogUtil from './util/LogUtil.ts'
+import log, { initializeLogSetting } from './util/LogUtil.ts'
 import { ConvertPath, GetWorkResource, RootDir } from './util/FileSysUtil.ts'
 import { initializeByConfig } from './core/InitializeByConfig.ts'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
@@ -149,7 +149,7 @@ Electron.app.whenReady().then(() => {
   setMainWindow(mainWindow)
 
   // 配置日志
-  LogUtil.initializeLogSetting()
+  initializeLogSetting()
 
   // 如何响应前面的resource自定义协议的请求
   Electron.protocol.handle('resource', async (request): Promise<Response> => {
@@ -173,7 +173,7 @@ Electron.app.whenReady().then(() => {
         const data = await GetWorkResource(fullPath, height, width, visualHeight, visualWidth)
         return new Response(data as BodyInit)
       } catch (error) {
-        LogUtil.error('scheme-resource', 'Error handling workdir request:', String(error))
+        log.error('scheme-resource', 'Error handling workdir request:', String(error))
         return new Response('Failed to read file', { status: 500 })
       }
     }
@@ -211,12 +211,12 @@ Electron.app.whenReady().then(() => {
           headers: { 'Content-Type': contentType }
         })
       } catch (error) {
-        LogUtil.error('scheme-resource', 'Error handling plugin request:', String(error))
+        log.error('scheme-resource', 'Error handling plugin request:', String(error))
         return new Response('Plugin file not found', { status: 404 })
       }
     }
 
-    LogUtil.error('main/index.ts', 'Invalid protocol request format:', request.url)
+    log.error('main/index.ts', 'Invalid protocol request format:', request.url)
     return new Response('Invalid request format', { status: 400 })
   })
 

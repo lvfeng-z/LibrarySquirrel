@@ -4,25 +4,25 @@ import LogConstant from '../constant/LogConstant.ts'
 import { RootDir } from './FileSysUtil.ts'
 
 function info(module: string, ...args: unknown[]) {
-  log.info('[info]' + module + ':', ...args)
+  log.info(`[${module}]:`, ...args)
 }
 
 function debug(module: string, ...args: unknown[]) {
-  log.debug('[debug]' + module + ':', ...args)
+  log.debug(`[${module}]:`, ...args)
 }
 
 function warn(module: string, ...args: unknown[]) {
-  log.warn('[warn]' + module + ':', ...args)
+  log.warn(`[${module}]:`, ...args)
 }
 
 function error(module: string, ...args: unknown[]) {
-  log.error('[error]' + module + ':', ...args)
+  log.error(`[${module}]:`, ...args)
 }
 
 /**
  * 初始化日志工具配置
  */
-function initializeLogSetting() {
+export function initializeLogSetting() {
   const NODE_ENV = process.env.NODE_ENV
   log.transports.file.maxSize = 1024 * 1024 * 10
   if (NODE_ENV == 'development') {
@@ -40,6 +40,5 @@ export default {
   info,
   debug,
   warn,
-  error,
-  initializeLogSetting
+  error
 }

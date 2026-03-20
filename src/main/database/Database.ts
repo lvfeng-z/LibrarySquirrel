@@ -2,7 +2,7 @@ import BetterSqlite3 from 'better-sqlite3'
 import { TransactionContext } from './TransactionContext.ts'
 import { getConnectionPool } from '../core/connectionPool.ts'
 import { Connection, RequestWeight } from '../core/classes/ConnectionPool.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 
 /**
@@ -76,7 +76,7 @@ export class Database {
     const connInfo = borrowedConnections.get(connection)
 
     if (isNullish(connInfo)) {
-      LogUtil.warn(this.caller, '释放连接时未找到借用信息')
+      log.warn(this.caller, '释放连接时未找到借用信息')
       return
     }
 
@@ -104,10 +104,10 @@ export class Database {
 
     const connection = await this.acquireConnection(false)
     try {
-      LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return connection.prepare(statement).run(...params)
     } catch (error) {
-      LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      log.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
     } finally {
       this.releaseConnection(connection)
@@ -131,10 +131,10 @@ export class Database {
   ): Promise<Result | undefined> {
     const connection = await this.acquireConnection(true)
     try {
-      LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return connection.prepare(statement).get(...params) as Result | undefined
     } catch (error) {
-      LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      log.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
     } finally {
       this.releaseConnection(connection)
@@ -153,10 +153,10 @@ export class Database {
   ): Promise<Result[]> {
     const connection = await this.acquireConnection(true)
     try {
-      LogUtil.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return connection.prepare(statement).all(...params) as Result[]
     } catch (error) {
-      LogUtil.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+      log.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       throw error
     } finally {
       this.releaseConnection(connection)
@@ -169,10 +169,10 @@ export class Database {
   public static async exec(statement: string): Promise<BetterSqlite3.Database> {
     const connection = await this.acquireConnection(true)
     try {
-      LogUtil.debug(this.caller, `[SQL] ${statement}`)
+      log.debug(this.caller, `[SQL] ${statement}`)
       return connection.exec(statement)
     } catch (error) {
-      LogUtil.error(this.caller, error, `\n[SQL] ${statement}`)
+      log.error(this.caller, error, `\n[SQL] ${statement}`)
       throw error
     } finally {
       this.releaseConnection(connection)

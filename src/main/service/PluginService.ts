@@ -5,7 +5,7 @@ import Plugin from '@shared/model/entity/Plugin.ts'
 import BaseService from '../base/BaseService.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import { arrayNotEmpty, notNullish } from '@shared/util/CommonUtil.ts'
-import LogUtil from '../util/LogUtil.js'
+import log from '../util/LogUtil.js'
 import PluginInstallDTO from '@shared/model/dto/PluginInstallDTO.js'
 import { assertArrayNotEmpty, assertNotBlank, assertNotNullish, assertTrue } from '@shared/util/AssertUtil.ts'
 import fs from 'fs'
@@ -133,7 +133,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
         uninstalled = existing
       } else {
         const msg = `安装插件失败，已存在该插件 name: ${pluginInstallDTO.name} author: ${pluginInstallDTO.author} version: ${pluginInstallDTO.version}`
-        LogUtil.error(this.constructor.name, msg)
+        log.error(this.constructor.name, msg)
         throw new Error(msg)
       }
     }
@@ -175,7 +175,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     if (newPlugin.activationType === ActivationType.STARTUP) {
       await pluginManager.activatePlugin(pluginInstallDTO.publicId, ActivationType.STARTUP)
     }
-    LogUtil.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
+    log.info(this.constructor.name, `已安装插件${pluginInstallDTO.author}-${pluginInstallDTO.name}-${pluginInstallDTO.version}`)
     return newPlugin
   }
 
@@ -189,7 +189,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
     try {
       await fs.promises.access(packagePath, fs.constants.F_OK)
     } catch (error) {
-      LogUtil.error(this.constructor.name, `安装插件失败，找不到插件包"${packagePath}"`)
+      log.error(this.constructor.name, `安装插件失败，找不到插件包"${packagePath}"`)
       throw error
     }
     return this.install(this.loadPluginPackage(packagePath), installType)
@@ -245,7 +245,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       await rm(pluginPath, { recursive: true, force: true })
     } catch (error) {
       if ((error as { code: string }).code !== 'ENOENT') {
-        LogUtil.error(this.constructor.name, `卸载插件失败，plugin: ${plugin.publicId},`, error)
+        log.error(this.constructor.name, `卸载插件失败，plugin: ${plugin.publicId},`, error)
         throw error
       }
     }
@@ -278,7 +278,7 @@ export default class PluginService extends BaseService<PluginQueryDTO, Plugin, P
       }
       return super.queryPage(page)
     } catch (error) {
-      LogUtil.error('LocalTagService', error)
+      log.error('LocalTagService', error)
       throw error
     }
   }

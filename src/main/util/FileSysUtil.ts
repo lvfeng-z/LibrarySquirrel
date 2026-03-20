@@ -1,7 +1,7 @@
 import Electron, { dialog } from 'electron'
 import fs from 'fs'
 import fsPromise from 'fs/promises'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import path from 'path'
 import sharp from 'sharp'
 import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
@@ -19,9 +19,9 @@ export async function CreateDirIfNotExists(dirPath: string): Promise<void> {
     // 如果访问目录时出现错误（如目录不存在），则创建目录
     if ((error as { code: string }).code === 'ENOENT') {
       await fsPromise.mkdir(dirPath, { recursive: true })
-      LogUtil.info('FileSysUtil', '已创建目录：' + dirPath)
+      log.info('FileSysUtil', '已创建目录：' + dirPath)
     } else {
-      LogUtil.error('FileSysUtil', error)
+      log.error('FileSysUtil', error)
       throw error // 其他错误类型，直接抛出
     }
   }
@@ -129,7 +129,7 @@ export async function GetWorkResource(
         }
       } else {
         const msg = `无法获取图片的高度或宽度！path: ${fullPath}`
-        LogUtil.error(msg)
+        log.error(msg)
         throw Error(msg)
       }
     } else {

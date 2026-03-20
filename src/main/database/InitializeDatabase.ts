@@ -4,7 +4,7 @@ import yaml from 'js-yaml'
 import { CreateDirIfNotExists } from '../util/FileSysUtil.ts'
 import BetterSqlite3 from 'better-sqlite3'
 import DataBaseConstant from '../constant/DataBaseConstant.ts'
-import LogUtil from '../util/LogUtil.ts'
+import log from '../util/LogUtil.ts'
 import { Database } from './Database.ts'
 import { createConnectionPool } from '../core/connectionPool.ts'
 import tableYml from '../resources/database/createDataTables.yml?asset'
@@ -21,7 +21,7 @@ export async function InitializeDB() {
   // 创建数据库
   const tempDB = new BetterSqlite3(dbPath + DataBaseConstant.DB_FILE_NAME, {})
   tempDB.close()
-  LogUtil.info('InitializeDataBase', '已创建数据库文件')
+  log.info('InitializeDataBase', '已创建数据库文件')
 
   // 创建全局连接池实例
   createConnectionPool()
@@ -36,7 +36,7 @@ export async function InitializeDB() {
     const yamlContent = fs.readFileSync(tableYml, 'utf-8')
     tableNameSqlStatements = yaml.load(yamlContent) as { tables: { name: string; sql: string }[] }
   } catch (e) {
-    LogUtil.error('InitializeDataBase', String(e))
+    log.error('InitializeDataBase', String(e))
     throw e
   }
 
@@ -51,6 +51,6 @@ export async function InitializeDB() {
       }
     }
     await Database.exec(notExistsTableSql.join(';'))
-    LogUtil.info('InitializeDataBase', '已创建数据表' + notExistsTableNames.join())
+    log.info('InitializeDataBase', '已创建数据表' + notExistsTableNames.join())
   }
 }

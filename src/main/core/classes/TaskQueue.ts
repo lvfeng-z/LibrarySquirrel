@@ -1,6 +1,6 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
 import { assertNotNullish } from '@shared/util/AssertUtil.ts'
-import LogUtil from '../../util/LogUtil.ts'
+import log from '../../util/LogUtil.ts'
 import TaskService from '../../service/TaskService.ts'
 import WorkService from '../../service/WorkService.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
@@ -138,7 +138,7 @@ export class TaskQueue {
     // 初始化流
     this.readyToClose = new Promise<void>((resolve, reject) => {
       const handleError = (error: Error, taskRunInstance?: TaskRunInstance) => {
-        LogUtil.error(this.constructor.name, `处理任务失败，taskId: ${taskRunInstance?.taskId}，error: ${error.message}`)
+        log.error(this.constructor.name, `处理任务失败，taskId: ${taskRunInstance?.taskId}，error: ${error.message}`)
         if (notNullish(taskRunInstance)) {
           taskRunInstance.failed()
           this.taskPersistStream.addTask([taskRunInstance])
@@ -148,7 +148,7 @@ export class TaskQueue {
           } else {
             // 有父任务的刷新父任务状态
             this.refreshParentStatus([taskRunInstance.parentId]).catch((error) =>
-              LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+              log.error(this.constructor.name, '刷新父任务状态失败', error)
             )
           }
         }
@@ -170,7 +170,7 @@ export class TaskQueue {
       const taskInfoStreamDestroyed = new Promise<void>((resolve) =>
         this.workInfoSaveStream.once('end', () => {
           this.workInfoSaveStream.destroy()
-          LogUtil.info(this.constructor.name, '作品信息保存流已销毁')
+          log.info(this.constructor.name, '作品信息保存流已销毁')
           resolve()
         })
       )
@@ -183,10 +183,10 @@ export class TaskQueue {
       this.resourceSaveStream.on('data', (taskRunInstance: TaskRunInstance) => {
         if (taskRunInstance.status === TaskStatusEnum.FINISHED) {
           taskRunInstance.resSaveSuspended = false
-          LogUtil.info(this.constructor.name, `任务${taskRunInstance.taskId}完成`)
+          log.info(this.constructor.name, `任务${taskRunInstance.taskId}完成`)
         } else if (taskRunInstance.status === TaskStatusEnum.FAILED) {
           taskRunInstance.resSaveSuspended = false
-          LogUtil.info(this.constructor.name, `任务${taskRunInstance.taskId}失败`)
+          log.info(this.constructor.name, `任务${taskRunInstance.taskId}失败`)
         }
         if (isNullish(taskRunInstance.parentId) || taskRunInstance.parentId === 0) {
           // 单个的任务直接清除
@@ -194,16 +194,16 @@ export class TaskQueue {
         } else {
           // 有父任务的刷新父任务状态
           this.refreshParentStatus([taskRunInstance.parentId]).catch((error) =>
-            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+            log.error(this.constructor.name, '刷新父任务状态失败', error)
           )
         }
       })
       this.resourceSaveStream.on('save-failed', handleError)
-      this.resourceSaveStream.on('finish', () => LogUtil.info(this.constructor.name, '任务队列完成'))
+      this.resourceSaveStream.on('finish', () => log.info(this.constructor.name, '任务队列完成'))
       const taskResourceStreamDestroyed = new Promise<void>((resolve) =>
         this.resourceSaveStream.once('end', () => {
           this.resourceSaveStream.destroy()
-          LogUtil.info(this.constructor.name, '资源保存流已销毁')
+          log.info(this.constructor.name, '资源保存流已销毁')
           resolve()
         })
       )
@@ -216,7 +216,7 @@ export class TaskQueue {
       const taskPersistStreamDestroyed = new Promise<void>((resolve) =>
         this.taskPersistStream.once('close', () => {
           this.taskPersistStream.destroy()
-          LogUtil.info(this.constructor.name, '任务结果保存流已销毁')
+          log.info(this.constructor.name, '任务结果保存流已销毁')
           resolve()
         })
       )
@@ -249,7 +249,7 @@ export class TaskQueue {
    */
   public async pushBatch(tasks: Task[], taskOperation: TaskOperation) {
     if (this.closed) {
-      LogUtil.warn(this.constructor.name, '无法执行操作，任务队列已经关闭')
+      log.warn(this.constructor.name, '无法执行操作，任务队列已经关闭')
       return
     }
     if (taskOperation === TaskOperation.START || taskOperation === TaskOperation.RESUME) {
@@ -258,7 +258,7 @@ export class TaskQueue {
       await this.pauseTask(tasks.map((task) => task.id as number))
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh)).catch((error) =>
-        LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+        log.error(this.constructor.name, '刷新父任务状态失败', error)
       )
     } else if (taskOperation === TaskOperation.STOP) {
       await this.stopTask(tasks)
@@ -268,10 +268,10 @@ export class TaskQueue {
       // 刷新父任务
       const parentIdWaitingRefresh: Set<number> = new Set(tasks.map((task) => task.pid).filter(notNullish))
       this.refreshParentStatus(Array.from(parentIdWaitingRefresh)).catch((error) =>
-        LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+        log.error(this.constructor.name, '刷新父任务状态失败', error)
       )
     }
-    this.pushTaskSchedule().catch((error) => LogUtil.error(this.constructor.name, '向渲染进程推送任务进度时出现错误，', error))
+    this.pushTaskSchedule().catch((error) => log.error(this.constructor.name, '向渲染进程推送任务进度时出现错误，', error))
   }
 
   /**
@@ -467,12 +467,12 @@ export class TaskQueue {
       .filter((runInst) => TaskStatusEnum.WAITING === runInst.status || TaskStatusEnum.PROCESSING === runInst.status)
       .map((runInst) => runInst.taskId)
     const parentIds = runInstList.map((runInst) => runInst.parentId)
-    this.pauseTask(ids).catch((error) => LogUtil.error(this.constructor.name, '关闭任务队列时暂停任务失败，', error))
+    this.pauseTask(ids).catch((error) => log.error(this.constructor.name, '关闭任务队列时暂停任务失败，', error))
     this.queueEntrance.preDestroy()
     this.queueEntrance.destroy()
     await this.readyToClose
     await this.refreshParentStatus(parentIds)
-    LogUtil.info(this.constructor.name, '任务队列已关闭')
+    log.info(this.constructor.name, '任务队列已关闭')
   }
 
   /**
@@ -587,7 +587,7 @@ export class TaskQueue {
     for (const taskId of taskIds) {
       const taskRunInstance = this.taskMap.get(taskId)
       if (isNullish(taskRunInstance)) {
-        LogUtil.error(this.constructor.name, `无法暂停任务${taskId}，队列中没有这个任务`)
+        log.error(this.constructor.name, `无法暂停任务${taskId}，队列中没有这个任务`)
         continue
       }
       try {
@@ -596,7 +596,7 @@ export class TaskQueue {
           taskSaveResultList.push(taskRunInstance)
         }
       } catch (error) {
-        LogUtil.error(this.constructor.name, error)
+        log.error(this.constructor.name, error)
       }
     }
     this.taskPersistStream.addTask(taskSaveResultList)
@@ -612,13 +612,13 @@ export class TaskQueue {
     const taskSaveResultList: TaskRunInstance[] = []
     for (const task of tasks) {
       if (isNullish(task.id)) {
-        LogUtil.error(this.constructor.name, `停止任务失败，任务id不能为空`)
+        log.error(this.constructor.name, `停止任务失败，任务id不能为空`)
         continue
       }
       const taskId = task.id
       const taskRunInstance = this.taskMap.get(taskId)
       if (isNullish(taskRunInstance)) {
-        LogUtil.error(this.constructor.name, `无法停止任务${taskId}，队列中没有这个任务`)
+        log.error(this.constructor.name, `无法停止任务${taskId}，队列中没有这个任务`)
         continue
       }
       try {
@@ -627,7 +627,7 @@ export class TaskQueue {
           taskSaveResultList.push(taskRunInstance)
         }
       } catch (error) {
-        LogUtil.info(this.constructor.name, error)
+        log.info(this.constructor.name, error)
       }
     }
     this.taskPersistStream.addTask(taskSaveResultList)
@@ -674,7 +674,7 @@ export class TaskQueue {
         assertNotNullish(parentInfo.id, `添加父任务${parentInfo.id}失败，父任务id不能为空`)
         if (isNullish(parentInfo.status)) {
           this.removeTaskByPid(parentInfo.id)
-          LogUtil.error(this.constructor.name, `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
+          log.error(this.constructor.name, `添加父任务${parentInfo.id}失败，父任务状态不能为空`)
           continue
         }
         const tempChildren = pidChildrenMap.get(parentInfo.id)
@@ -781,7 +781,7 @@ export class TaskQueue {
         } else if (created > 0) {
           newStatus = TaskStatusEnum.CREATED
         } else {
-          LogUtil.warn(
+          log.warn(
             'TaskQueue',
             `刷新父任务状态失败，created: ${created} processing: ${processing} waiting: ${waiting} paused: ${paused} finished: ${finished} failed: ${failed}`
           )
@@ -794,7 +794,7 @@ export class TaskQueue {
           parent.status = newStatus
           this.taskService
             .updateById(parent)
-            .catch((error) => LogUtil.error(this.constructor.name, '刷新父任务状态并保存到数据库时出现错误', error))
+            .catch((error) => log.error(this.constructor.name, '刷新父任务状态并保存到数据库时出现错误', error))
         }
 
         // 清除不再活跃的父任务
@@ -805,7 +805,7 @@ export class TaskQueue {
         }
       }
     }
-    this.pushParentTaskSchedule().catch((error) => LogUtil.error(this.constructor.name, '推送父任务信息到渲染进程失败，', error))
+    this.pushParentTaskSchedule().catch((error) => log.error(this.constructor.name, '推送父任务信息到渲染进程失败，', error))
   }
 
   /**
@@ -864,7 +864,7 @@ export class TaskQueue {
           // 任务状态推送到渲染进程
           SendMsgToRender(RenderEvent.TASK_STATUS_REMOVE_TASK, [runInstance.taskId])
         } else {
-          LogUtil.info(this.constructor.name, `任务${runInstance.taskId}移除失败，任务信息的更新尚未保存，已尝试${tried}次`)
+          log.info(this.constructor.name, `任务${runInstance.taskId}移除失败，任务信息的更新尚未保存，已尝试${tried}次`)
           delayedRemoval(runInstance, delay, tried + 1)
         }
       }, delay)
@@ -875,7 +875,7 @@ export class TaskQueue {
       if (notNullish(runInstance)) {
         delayedRemoval(runInstance, 5000, 0)
       } else {
-        LogUtil.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
+        log.warn(this.constructor.name, `移除任务运行实例失败，任务运行实例不存在，taskId: ${taskId}`)
       }
     }
   }
@@ -914,7 +914,7 @@ export class TaskQueue {
         SendMsgToRender(RenderEvent.PARENT_TASK_STATUS_REMOVE_PARENT_TASK, [taskId])
       }, 5000)
     } else {
-      LogUtil.warn(this.constructor.name, `移除父任务运行实例失败，父任务运行实例不存在，taskId: ${taskId}`)
+      log.warn(this.constructor.name, `移除父任务运行实例失败，父任务运行实例不存在，taskId: ${taskId}`)
     }
   }
 
@@ -1207,7 +1207,7 @@ class TaskRunInstance extends TaskStatus {
           this.resSaveSuspended = true
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
-        LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
+        log.info(this.constructor.name, `任务${this.taskId}暂停`)
         return result
       } catch (error) {
         this.errorOccurred = true
@@ -1231,7 +1231,7 @@ class TaskRunInstance extends TaskStatus {
           result = this.taskService.stopTask(this.taskInfo, this.resourceWriter)
         }
         this.changeStatus(TaskStatusEnum.PAUSE)
-        LogUtil.info(this.constructor.name, `任务${this.taskId}暂停`)
+        log.info(this.constructor.name, `任务${this.taskId}暂停`)
         return result
       } catch (error) {
         this.errorOccurred = true
@@ -1388,7 +1388,7 @@ class TaskQueueEntrance extends Readable {
       })
       if (this.downstreamWaiting) {
         this.processNext().catch((error) =>
-          LogUtil.error(this.constructor.name, '收到确认替换原有资源事件并向下游推送数据时出现错误', error)
+          log.error(this.constructor.name, '收到确认替换原有资源事件并向下游推送数据时出现错误', error)
         )
       }
     })
@@ -1461,7 +1461,7 @@ class TaskQueueEntrance extends Readable {
           taskRunInstance.changeStatus(TaskStatusEnum.FINISHED)
           taskRunInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
           this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
-            LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+            log.error(this.constructor.name, '刷新父任务状态失败', error)
           )
           this.handleReplaceRefuse(taskRunInstance)
         } else {
@@ -1471,12 +1471,12 @@ class TaskQueueEntrance extends Readable {
             this.sendReplaceConfirmToMainWindow(taskRunInstance, String(taskRunInstance.getTaskInfo().taskName))
             taskRunInstance.waitUserInput()
             this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
-              LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+              log.error(this.constructor.name, '刷新父任务状态失败', error)
             )
           } else {
             taskRunInstance.preStart()
             this.refreshParentState([taskRunInstance.parentId]).catch((error) =>
-              LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
+              log.error(this.constructor.name, '刷新父任务状态失败', error)
             )
             return this.push(taskRunInstance)
           }
@@ -1546,7 +1546,7 @@ class WorkInfoSaveStream extends Transform {
       } else {
         newError.message = msg + '，' + (error as { message: string }).message
       }
-      LogUtil.error(this.constructor.name, newError)
+      log.error(this.constructor.name, newError)
       this.emit('save-failed', newError, chunk)
       if (!alreadyCallback) {
         callback()
@@ -1613,9 +1613,7 @@ class ResourceSaveStream extends Transform {
       return
     }
     // 发出任务开始保存的事件
-    this.refreshParentStatus([runInstance.parentId]).catch((error) =>
-      LogUtil.error(this.constructor.name, '刷新父任务状态失败', error)
-    )
+    this.refreshParentStatus([runInstance.parentId]).catch((error) => log.error(this.constructor.name, '刷新父任务状态失败', error))
 
     // 开始任务
     try {
@@ -1701,7 +1699,7 @@ class TaskPersistStream extends Writable {
         aBatch.forEach((runInst) => (runInst.taskChangeStored = true))
       }
     } catch (error) {
-      LogUtil.error(this.constructor.name, error)
+      log.error(this.constructor.name, error)
     } finally {
       callback()
     }
