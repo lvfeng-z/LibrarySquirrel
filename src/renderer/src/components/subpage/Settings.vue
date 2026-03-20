@@ -3,7 +3,7 @@ import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
 import { nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
 import lodash from 'lodash'
-import { emptySettings, Settings } from '@renderer/model/util/Settings.ts'
+import { emptySettings, Settings } from '@shared/model/base/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import { arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -174,6 +174,7 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
             <el-anchor-link href="#basicSettings" title="基本设置" />
             <el-anchor-link href="#downloadSettings" title="下载" />
             <el-anchor-link href="#workSettings" title="作品" />
+            <el-anchor-link href="#pluginSettings" title="插件" />
             <el-anchor-link href="#otherSettings" title="其他" />
           </el-anchor>
           <el-scrollbar class="settings-scrollbar">
@@ -252,6 +253,27 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
                   </el-tooltip>
                 </el-row>
                 <el-input ref="workSettingsFileNameFormatInput" v-model="settings.workSettings.fileNameFormat"></el-input>
+                <el-divider />
+              </div>
+              <div id="pluginSettings">
+                <el-text size="large">插件</el-text>
+                <el-divider content-position="left" border-style="dotted">
+                  <el-text>运行时编译</el-text>
+                  <el-switch
+                    v-model="settings.pluginSettings.allowUnsafeEval"
+                    class="plugin-settings-allow-unsafe-eval-switch"
+                    inline-prompt
+                    size="large"
+                    active-text="开"
+                    inactive-text="关"
+                  ></el-switch
+                ></el-divider>
+                <el-tooltip placement="top" effect="customized">
+                  <template #content>
+                    开启此选项可以解决某些插件页面无法正常显示的问题。<br />这会降低应用的安全性，建议仅在遇到页面加载异常时临时开启。
+                  </template>
+                  <el-text type="info" size="small">什么是运行时编译？</el-text>
+                </el-tooltip>
                 <el-divider />
               </div>
               <div id="otherSettings">
@@ -425,6 +447,9 @@ function insertFormatToken(element: ResFileNameFormatEnum, isDialog: boolean) {
   max-height: 65vh;
 }
 .work-settings-update-work-info-when-import-switch {
+  margin-left: 20px;
+}
+.plugin-settings-allow-unsafe-eval-switch {
   margin-left: 20px;
 }
 .work-settings-file-name-format-button {

@@ -9,6 +9,9 @@ export interface Settings {
     maxParallelImport: number
     updateWorkInfoWhenImport: boolean
   }
+  pluginSettings: {
+    allowUnsafeEval: boolean
+  }
   tour: {
     firstTimeTourPassed: boolean
     workdirTour: boolean
@@ -26,6 +29,9 @@ export const emptySettings: Settings = {
   importSettings: {
     maxParallelImport: 3,
     updateWorkInfoWhenImport: true
+  },
+  pluginSettings: {
+    allowUnsafeEval: false
   },
   tour: {
     firstTimeTourPassed: false,

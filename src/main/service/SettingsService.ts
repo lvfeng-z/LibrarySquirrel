@@ -1,8 +1,8 @@
 import { DefaultSettings } from '../util/SettingsUtil.ts'
-import { Settings } from '../core/types/Settings.ts'
 import LogUtil from '../util/LogUtil.js'
 import { getTaskQueue } from '../core/taskQueue.ts'
 import { getSettings as settingsGetSettings } from '../core/settings.ts'
+import { Settings } from '@shared/model/base/Settings.ts'
 
 /**
  * 全量获取配置

@@ -18,8 +18,11 @@ import { setMainWindow } from './core/mainWindow.ts'
 import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 import { createSiteBrowserManager } from './core/siteBrowserManager.ts'
 import { PLUGIN_ROOT } from './constant/PluginConstant.ts'
+import { setupCSP } from './setupCsp.ts'
 
 function createWindow(): Electron.BrowserWindow {
+  const allowUnsafeEval = getSettings().store.pluginSettings?.allowUnsafeEval ?? false
+  setupCSP(allowUnsafeEval)
   // Create the browser window.
   const mainWindow = new Electron.BrowserWindow({
     width: 1280,
@@ -138,6 +141,10 @@ Electron.app.whenReady().then(() => {
   // IPC test
   Electron.ipcMain.on('ping', () => console.log('pong'))
 
+  // 初始化设置
+  createSettings()
+
+  // 创建主窗口
   const mainWindow = createWindow()
   setMainWindow(mainWindow)
 

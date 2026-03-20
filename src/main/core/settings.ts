@@ -1,7 +1,7 @@
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import ElectronStore from 'electron-store'
 import { DefaultSettings } from '../util/SettingsUtil.ts'
-import { Settings } from './types/Settings.ts'
+import { Settings } from '@shared/model/base/Settings.ts'
 
 let settings: ElectronStore<Settings> | undefined = undefined
 

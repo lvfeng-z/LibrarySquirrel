@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Settings } from '@renderer/model/util/Settings.ts'
+import { Settings } from '@shared/model/base/Settings.ts'
 import mitt, { Emitter } from 'mitt'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 

@@ -1,5 +1,5 @@
-import { Settings } from '../../core/types/Settings.ts'
 import ResFileNameFormatEnum from '../../constant/ResFileNameFormatEnum.js'
+import { Settings } from '@shared/model/base/Settings.ts'
 
 export const SettingsTemplate: Settings = {
   initialized: false,
@@ -11,6 +11,9 @@ export const SettingsTemplate: Settings = {
   importSettings: {
     maxParallelImport: 3,
     updateWorkInfoWhenImport: true
+  },
+  pluginSettings: {
+    allowUnsafeEval: false
   },
   tour: {
     firstTimeTourPassed: false,
