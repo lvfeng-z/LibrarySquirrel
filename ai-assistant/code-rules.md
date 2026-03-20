@@ -717,9 +717,9 @@ class demoDao {
 
   ```typescript
   // 错误：相对于当前工作目录或其他位置的路径
-  const path = '../shared/images/photo.jpg'    // ✗ 包含 ../
-  const path = './cache/thumbnail.jpg'          // ✗ 包含 ./
-  const path = 'C:/Users/Admin/pictures/1.jpg'   // ✗ 绝对路径
+  const path = '../shared/images/photo.jpg' // ✗ 包含 ../
+  const path = './cache/thumbnail.jpg' // ✗ 包含 ./
+  const path = 'C:/Users/Admin/pictures/1.jpg' // ✗ 绝对路径
   ```
 
 - **路径拼接规范**: 使用统一的路径工具类进行路径拼接，确保生成相对路径

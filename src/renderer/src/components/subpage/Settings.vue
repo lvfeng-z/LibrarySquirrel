@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import Electron from 'electron'
 import BaseSubpage from './BaseSubpage.vue'
-import { nextTick, onBeforeMount, reactive, Ref, ref } from 'vue'
+import { nextTick, onBeforeMount, onBeforeUnmount, reactive, Ref, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import lodash from 'lodash'
 import { emptySettings, Settings } from '@shared/model/base/Settings.ts'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
@@ -36,8 +37,55 @@ const settings: Ref<Settings> = ref(emptySettings)
 let oldSettings: Settings = emptySettings // 原设置
 // 作品文件名称命名格式对话框开关
 const workSettingsFileNameFormatDialogState: Ref<boolean> = ref(false)
+// 路由实例
+const router = useRouter()
 
 // 方法
+// 检查设置是否有未保存的更改
+function hasUnsavedChanges(): boolean {
+  const changed = getChangedProperties(settings.value, oldSettings)
+  return arrayNotEmpty(changed)
+}
+
+// 路由守卫 - 离开前检查未保存的更改
+async function handleBeforeRouteLeave() {
+  if (hasUnsavedChanges()) {
+    const confirm = await askBeforeSave()
+    if (confirm) {
+      // 用户选择保存
+      await saveSettings()
+      return true
+    }
+    // 用户选择不保存
+    return true
+  }
+  return true
+}
+
+// 离开前询问是否保存
+async function askBeforeSave(): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    ElMessageBox.confirm('是否保存更改?', '更改未保存', {
+      confirmButtonText: '是',
+      cancelButtonText: '否',
+      type: 'warning'
+    })
+      .then(() => {
+        resolve(true)
+      })
+      .catch(() => {
+        resolve(false)
+      })
+  })
+}
+
+// 注册路由守卫
+const leaveGuard = router.beforeEach(handleBeforeRouteLeave)
+
+// 组件卸载前移除路由守卫
+onBeforeUnmount(() => {
+  leaveGuard()
+})
 // 加载设置
 async function loadSettings() {
   const response = await apis.settingsGetSettings()
@@ -115,8 +163,6 @@ async function selectDir() {
     }
   }
 }
-// TODO: 使用路由守卫实现离开前检查未保存的更改
-// 可以使用 router.beforeEach 守卫来实现在离开页面时检查未保存的更改
 // 重置前询问
 async function askBeforeReset(): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
