@@ -1,12 +1,10 @@
-import Electron from 'electron'
+import { app, BrowserWindow, Menu, protocol, session, shell } from 'electron'
 import path from 'path'
-import fs from 'fs/promises'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { InitializeDB } from './database/InitializeDatabase.ts'
 import { registerMainIpcHandlers } from './core/MainProcessApi.ts'
-import log, { initializeLogSetting } from './util/LogUtil.ts'
-import { ConvertPath, GetWorkResource, RootDir } from './util/FileSysUtil.ts'
+import { initializeLogSetting } from './util/LogUtil.ts'
 import { initializeByConfig } from './core/InitializeByConfig.ts'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 import iniConfig from './resources/config/iniConfig.yml?asset'
@@ -17,14 +15,22 @@ import { createPluginTaskUrlListenerManager } from './core/pluginTaskUrlListener
 import { setMainWindow } from './core/mainWindow.ts'
 import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 import { createSiteBrowserManager } from './core/siteBrowserManager.ts'
-import { PLUGIN_ROOT } from './constant/PluginConstant.ts'
 import { setupCSP } from './setupCsp.ts'
+import { registerCustomProtocols } from './protocol.ts'
 
-function createWindow(): Electron.BrowserWindow {
+function createWindow(): BrowserWindow {
+  // 定义一个唯一的 partition 名称
+  const mainWindowPartition = 'main-window-strict-csp'
+
+  // 获取该 partition 对应的 Session 实例
+  // 如果该 partition 第一次被使用，Electron 会自动创建它
+  const mainSession = session.fromPartition(mainWindowPartition)
+
+  // 在这个独立的 Session 上设置 CSP
   const allowUnsafeEval = getSettings().store.pluginSettings?.allowUnsafeEval ?? false
-  setupCSP(allowUnsafeEval)
+  setupCSP(mainSession, allowUnsafeEval)
   // Create the browser window.
-  const mainWindow = new Electron.BrowserWindow({
+  const mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
     minWidth: 800,
@@ -33,10 +39,14 @@ function createWindow(): Electron.BrowserWindow {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
+      partition: mainWindowPartition,
       preload: path.join(__dirname, '../preload/index.mjs'),
       sandbox: false
     }
   })
+
+  // 如何响应前面的resource自定义协议的请求
+  registerCustomProtocols(mainSession)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -64,7 +74,7 @@ function createWindow(): Electron.BrowserWindow {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    Electron.shell.openExternal(details.url)
+    shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
@@ -77,7 +87,7 @@ function createWindow(): Electron.BrowserWindow {
   }
 
   // 创建右键菜单
-  const contextMenu = Electron.Menu.buildFromTemplate([
+  const contextMenu = Menu.buildFromTemplate([
     {
       label: '复制',
       role: 'copy'
@@ -111,7 +121,7 @@ function createWindow(): Electron.BrowserWindow {
 }
 
 // 在ready之前注册一个自定义协议，用来加载本地文件
-Electron.protocol.registerSchemesAsPrivileged([
+protocol.registerSchemesAsPrivileged([
   {
     scheme: 'resource',
     privileges: {
@@ -127,19 +137,18 @@ Electron.protocol.registerSchemesAsPrivileged([
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-Electron.app.whenReady().then(() => {
+app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  Electron.app.on('browser-window-created', (_, window) => {
+  app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
-
-  // IPC test
-  Electron.ipcMain.on('ping', () => console.log('pong'))
+  // 为默认会话注册
+  registerCustomProtocols(session.defaultSession)
 
   // 初始化设置
   createSettings()
@@ -150,75 +159,6 @@ Electron.app.whenReady().then(() => {
 
   // 配置日志
   initializeLogSetting()
-
-  // 如何响应前面的resource自定义协议的请求
-  Electron.protocol.handle('resource', async (request): Promise<Response> => {
-    const workdir: string = getSettings().store.workdir
-
-    // 处理 workdir 资源请求
-    if (/^resource:\/\/workdir\//i.test(request.url)) {
-      try {
-        const url = new URL(request.url)
-        const decodedUrl = decodeURIComponent(path.join(workdir, url.pathname))
-        const fullPath = process.platform === 'win32' ? ConvertPath(decodedUrl) : decodedUrl
-        const heightStr = url.searchParams.get('height')
-        const height = heightStr === null ? undefined : parseInt(heightStr)
-        const widthStr = url.searchParams.get('width')
-        const width = widthStr === null ? undefined : parseInt(widthStr)
-        const visualHeightStr = url.searchParams.get('visualHeight')
-        const visualHeight = visualHeightStr === null ? undefined : parseInt(visualHeightStr)
-        const visualWidthStr = url.searchParams.get('visualWidth')
-        const visualWidth = visualWidthStr === null ? undefined : parseInt(visualWidthStr)
-
-        const data = await GetWorkResource(fullPath, height, width, visualHeight, visualWidth)
-        return new Response(data as BodyInit)
-      } catch (error) {
-        log.error('scheme-resource', 'Error handling workdir request:', String(error))
-        return new Response('Failed to read file', { status: 500 })
-      }
-    }
-
-    // 处理插件资源请求: resource://plugin/{plugin-path}
-    if (/^resource:\/\/plugin\//i.test(request.url)) {
-      try {
-        const url = new URL(request.url)
-        // 提取插件路径 (去掉开头的 /)
-        const pluginPath = decodeURIComponent(url.pathname.substring(1))
-        const pluginDir = path.join(RootDir(), PLUGIN_ROOT)
-        const fullPath = path.join(pluginDir, pluginPath)
-        const fullPathNormalized = process.platform === 'win32' ? ConvertPath(fullPath) : fullPath
-
-        // 读取文件内容
-        const content = await fs.readFile(fullPathNormalized)
-        // 根据文件扩展名设置 Content-Type
-        const ext = path.extname(pluginPath).toLowerCase()
-        const contentTypes: Record<string, string> = {
-          '.vue': 'application/javascript',
-          '.js': 'application/javascript',
-          '.mjs': 'application/javascript',
-          '.json': 'application/json',
-          '.png': 'image/png',
-          '.jpg': 'image/jpeg',
-          '.jpeg': 'image/jpeg',
-          '.gif': 'image/gif',
-          '.svg': 'image/svg+xml',
-          '.css': 'text/css',
-          '.html': 'text/html'
-        }
-        const contentType = contentTypes[ext] || 'text/plain'
-
-        return new Response(content, {
-          headers: { 'Content-Type': contentType }
-        })
-      } catch (error) {
-        log.error('scheme-resource', 'Error handling plugin request:', String(error))
-        return new Response('Plugin file not found', { status: 404 })
-      }
-    }
-
-    log.error('main/index.ts', 'Invalid protocol request format:', request.url)
-    return new Response('Invalid request format', { status: 400 })
-  })
 
   // 初始化INI_CONFIG
   createIniConfig(iniConfig)
@@ -243,19 +183,19 @@ Electron.app.whenReady().then(() => {
     await getPluginManager().activateStartupPlugins()
   })
 
-  Electron.app.on('activate', function () {
+  app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (Electron.BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-Electron.app.on('window-all-closed', () => {
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    Electron.app.quit()
+    app.quit()
   }
 })
 
