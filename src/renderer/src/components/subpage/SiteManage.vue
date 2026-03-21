@@ -241,7 +241,7 @@ function handleSiteDialogRequestSuccess() {
   background: #f4f4f4;
   border-radius: 6px;
   width: calc(100% - 20px);
-  height: calc(100% - 20px - 45px);
+  height: calc(100% - 20px);
   padding: 5px;
   margin: 5px;
 }
