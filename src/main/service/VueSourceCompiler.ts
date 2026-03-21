@@ -3,7 +3,7 @@ import path from 'path'
 import { parse, compileScript, compileTemplate, SFCDescriptor } from '@vue/compiler-sfc'
 import log from '../util/LogUtil.ts'
 import { CreateDirIfNotExists, RootDir } from '../util/FileSysUtil.ts'
-import { PLUGIN_ROOT } from '../constant/PluginConstant.ts'
+import { PLUGIN_CACHE } from '../constant/PluginConstant.ts'
 import { isBlank } from '@shared/util/StringUtil.ts'
 import { VueSourceContent } from '@shared/model/interface/SlotConfigs.ts'
 
@@ -13,12 +13,12 @@ import { VueSourceContent } from '@shared/model/interface/SlotConfigs.ts'
  */
 export default class VueSourceCompiler {
   private static instance: VueSourceCompiler
-  private static PATH_DIR = 'plugin-cache'
+  private static VUE_NAME = 'vue'
   /** 插件缓存目录 */
   private readonly cacheDir: string
 
   private constructor() {
-    this.cacheDir = path.join(PLUGIN_ROOT, VueSourceCompiler.PATH_DIR)
+    this.cacheDir = PLUGIN_CACHE
   }
 
   static getInstance(): VueSourceCompiler {
@@ -219,10 +219,10 @@ export default class VueSourceCompiler {
         // 形式: xxx as _xxx
         const original = trimmed.substring(0, asIndex).trim()
         const alias = trimmed.substring(asIndex + 4).trim()
-        lines.push(`const ${alias} = Vue.${original}`)
+        lines.push(`const ${alias} = ${VueSourceCompiler.VUE_NAME}.${original}`)
       } else {
         // 形式: xxx -> const _xxx = xxx
-        lines.push(`const _${trimmed} = Vue.${trimmed}`)
+        lines.push(`const _${trimmed} = ${VueSourceCompiler.VUE_NAME}.${trimmed}`)
       }
     }
 
@@ -265,8 +265,8 @@ export default class VueSourceCompiler {
    * 通过参数注入 Vue 依赖
    */
   private assembleComponentCode(componentName: string, scriptCode: string, renderFunction: string): string {
-    return `export default function getBlueprint(Vue) {
-  // 渲染函数（已移除 import 语句）
+    return `export default function getBlueprint(${VueSourceCompiler.VUE_NAME}) {
+  // 渲染函数
   ${renderFunction}
   // 返回组件选项对象
   return {

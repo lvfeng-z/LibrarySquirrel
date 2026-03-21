@@ -8,6 +8,11 @@ export default defineConfig({
       alias: {
         '@shared': Path.resolve('src/shared/')
       }
+    },
+    build: {
+      rollupOptions: {
+        external: ['webpack', 'vue-loader', 'rimraf']
+      }
     }
   },
   preload: {},

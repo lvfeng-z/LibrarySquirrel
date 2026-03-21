@@ -1,7 +1,7 @@
 import log from '../util/LogUtil.ts'
 import { getMainWindow } from './mainWindow.ts'
 import { SlotConfig } from '@shared/model/constant/SlotTypes.ts'
-import { getVueSourceCompiler } from '../service/VueSourceCompiler.ts'
+import { getWebpackVueCompiler } from '../service/WebpackVueCompiler.ts'
 import path from 'path'
 import { RootDir } from '../util/FileSysUtil.ts'
 
@@ -52,7 +52,7 @@ class SlotSyncService {
       if (typeof content === 'string') {
         try {
           log.info('SlotSyncService', `检测到 vueSource 类型插槽，开始编译: ${slotId}`)
-          const compiler = getVueSourceCompiler()
+          const compiler = getWebpackVueCompiler()
           const finalContent = path.join(RootDir(), content)
 
           // 更新配置，添加编译结果路径
@@ -98,7 +98,7 @@ class SlotSyncService {
         if (typeof content === 'string') {
           try {
             log.info('SlotSyncService', `检测到 vueSource 类型插槽，开始编译: ${slotId}`)
-            const compiler = getVueSourceCompiler()
+            const compiler = getWebpackVueCompiler()
             const result = await compiler.compile(content, config.pluginPublicId, slotId)
 
             // 更新配置，添加编译结果路径

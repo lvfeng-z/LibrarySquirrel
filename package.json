@@ -34,6 +34,7 @@
     "adm-zip": "^0.5.16",
     "async": "^3.2.6",
     "better-sqlite3": "^12.6.2",
+    "css-loader": "^7.1.4",
     "electron-log": "^5.4.3",
     "electron-store": "11.0.2",
     "electron-updater": "^6.8.3",
@@ -42,8 +43,11 @@
     "pinia": "^3.0.4",
     "sharp": "^0.34.5",
     "sqlite3": "^5.1.7",
+    "style-loader": "^4.0.0",
     "uuid": "^13.0.0",
-    "vue-router": "^5.0.3"
+    "vue-loader": "^17.4.2",
+    "vue-router": "^5.0.3",
+    "webpack": "^5.105.4"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.1.0",
