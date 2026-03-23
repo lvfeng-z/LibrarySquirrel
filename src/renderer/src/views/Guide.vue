@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
+import BaseSubpage from '@renderer/views/BaseSubpage.vue'
 import { ref } from 'vue'
 import { Discount, Link, List, TakeawayBox, User } from '@element-plus/icons-vue'
 import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'

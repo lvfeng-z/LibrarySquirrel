@@ -4,12 +4,12 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'MainLayout',
-    component: () => import('@renderer/views/MainLayout.vue'),
+    component: () => import('@renderer/MainLayout.vue'),
     children: [
       {
         path: '',
         name: 'Home',
-        component: () => import('@renderer/components/main/MainPageWrapper.vue'),
+        component: () => import('@renderer/components/oneOff/MainPageWrapper.vue'),
         meta: {
           title: '主页',
           icon: 'HomeFilled',
@@ -31,7 +31,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'local-tag',
             name: 'LocalTagManage',
-            component: () => import('@renderer/components/subpage/LocalTagManage.vue'),
+            component: () => import('@renderer/views/LocalTagManage.vue'),
             meta: {
               title: '本地标签',
               icon: 'Discount',
@@ -41,7 +41,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'site-tag',
             name: 'SiteTagManage',
-            component: () => import('@renderer/components/subpage/SiteTagManage.vue'),
+            component: () => import('@renderer/views/SiteTagManage.vue'),
             meta: {
               title: '站点标签',
               icon: 'Discount',
@@ -65,7 +65,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'local-author',
             name: 'LocalAuthorManage',
-            component: () => import('@renderer/components/subpage/LocalAuthorManage.vue'),
+            component: () => import('@renderer/views/LocalAuthorManage.vue'),
             meta: {
               title: '本地作者',
               icon: 'User',
@@ -75,7 +75,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'site-author',
             name: 'SiteAuthorManage',
-            component: () => import('@renderer/components/subpage/SiteAuthorManage.vue'),
+            component: () => import('@renderer/views/SiteAuthorManage.vue'),
             meta: {
               title: '站点作者',
               icon: 'User',
@@ -87,7 +87,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'favorite',
         name: 'Favorite',
-        component: () => import('@renderer/components/subpage/Developing.vue'),
+        component: () => import('@renderer/views/Developing.vue'),
         meta: {
           title: '收藏',
           icon: 'Star',
@@ -97,7 +97,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'task',
         name: 'TaskManage',
-        component: () => import('@renderer/components/subpage/TaskManage.vue'),
+        component: () => import('@renderer/views/TaskManage.vue'),
         meta: {
           title: '任务',
           icon: 'List',
@@ -119,7 +119,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'site-manage',
             name: 'SiteManage',
-            component: () => import('@renderer/components/subpage/SiteManage.vue'),
+            component: () => import('@renderer/views/SiteManage.vue'),
             meta: {
               title: '站点管理',
               icon: 'Link',
@@ -129,7 +129,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'site-browser',
             name: 'SiteBrowserManage',
-            component: () => import('@renderer/components/subpage/SiteBrowserManage.vue'),
+            component: () => import('@renderer/views/SiteBrowserManage.vue'),
             meta: {
               title: '站点浏览',
               icon: 'Link',
@@ -141,7 +141,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'plugin',
         name: 'PluginManage',
-        component: () => import('@renderer/components/subpage/PluginManage.vue'),
+        component: () => import('@renderer/views/PluginManage.vue'),
         meta: {
           title: '插件',
           icon: 'TakeawayBox',
@@ -151,7 +151,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'settings',
         name: 'Settings',
-        component: () => import('@renderer/components/subpage/Settings.vue'),
+        component: () => import('@renderer/views/Settings.vue'),
         meta: {
           title: '设置',
           icon: 'Setting',
@@ -161,7 +161,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'guide',
         name: 'Guide',
-        component: () => import('@renderer/components/subpage/Guide.vue'),
+        component: () => import('@renderer/views/Guide.vue'),
         meta: {
           title: '向导',
           icon: 'Guide',
@@ -171,7 +171,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'test',
         name: 'Test',
-        component: () => import('@renderer/components/subpage/Test.vue'),
+        component: () => import('@renderer/views/Test.vue'),
         meta: {
           title: '测试按钮',
           icon: 'Coordinate',

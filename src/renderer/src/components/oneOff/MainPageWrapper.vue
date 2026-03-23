@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, Ref, ref, UnwrapRef } from 'vue'
-import ApiUtil from '@renderer/utils/ApiUtil'
+import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import Page from '@renderer/model/util/Page.ts'
 import SelectItem from '@renderer/model/util/SelectItem.ts'
 import SegmentedTagItem from '@renderer/model/util/SegmentedTagItem.ts'

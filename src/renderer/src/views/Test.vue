@@ -3,7 +3,7 @@ import { h, Ref, ref } from 'vue'
 import { ElMessageBox, ElTreeSelect } from 'element-plus'
 import { useTaskStore } from '@renderer/store/UseTaskStore.ts'
 import { useParentTaskStore } from '@renderer/store/UseParentTaskStore.ts'
-import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
+import BaseSubpage from '@renderer/views/BaseSubpage.vue'
 import { useNotificationStore } from '@renderer/store/UseNotificationStore.ts'
 
 const value = ref()

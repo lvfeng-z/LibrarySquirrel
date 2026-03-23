@@ -6,7 +6,7 @@ import DynamicSideMenu from '@renderer/components/slot/DynamicSideMenu.vue'
 import NotificationList from '@renderer/components/oneOff/NotificationList.vue'
 import ExplainPath from '@renderer/components/dialogs/ExplainPath.vue'
 import TaskQueueResourceReplaceConfirmDialog from '@renderer/components/dialogs/TaskQueueResourceReplaceConfirmDialog.vue'
-import { useTourStatesStore } from '@renderer/store/UseTourStatesStore'
+import { useTourStatesStore } from '@renderer/store/UseTourStatesStore.ts'
 import * as electron from 'electron'
 
 const router = useRouter()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
+import BaseSubpage from '@renderer/views/BaseSubpage.vue'
 import SearchTable from '@renderer/components/common/SearchTable.vue'
 import { onMounted, ref, Ref, UnwrapRef } from 'vue'
 import Page from '@renderer/model/util/Page.ts'

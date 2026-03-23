@@ -1,23 +1,25 @@
-import Database from 'better-sqlite3'
-import { DataBasePath } from '../util/DatabaseUtil.ts'
-import DataBaseConstant from '../constant/DataBaseConstant.ts'
+
 import pLimit from 'p-limit'
 import GotoPageConfig from '@shared/model/util/GotoPageConfig.js'
 import { PageEnum } from '../constant/PageEnum.js'
 import WorkSetService from '../service/WorkSetService.ts'
 import { getMainWindow } from '../core/mainWindow.ts'
+import { Database } from '../database/Database.ts'
+import { transactional } from '../database/Transactional.ts'
 
 async function transactionTest() {
-  const db = new Database(DataBasePath() + DataBaseConstant.DB_FILE_NAME)
-  const p1 = db.prepare("insert into site_author (site_author_id, author_name) values (1, 'test1')")
-  const p2 = db.prepare("insert into site_author (site_author_id, author_name) values (2, 'test2')")
-  const p3 = db.prepare("insert into site_author (site_author_id, author_name) values (3, 'test3')")
-  const t = db.transaction(() => {
-    p1.run()
-    p2.run()
-    p3.run()
+  const p1 = await Database.run("insert into site_author (site_author_id, author_name) values (111, 'test1')")
+  console.log(p1)
+  await transactional('test', async () => {
+    const p2 = await Database.run("insert into site_author (site_author_id, author_name) values (222, 'test2')")
+    console.log(p2)
+    const p3 = await Database.run("insert into site_author (site_author_id, author_name) values (333, 'test3')")
+    console.log(p3)
+    if (p2.changes === 11) {
+      return 1
+    }
+    throw new Error('test')
   })
-  t()
 }
 
 async function pLimitTest() {

@@ -31,91 +31,91 @@ export function initBuiltinMenus() {
     {
       slotId: 'mainPage',
       name: '主页',
-      component: () => import('@renderer/components/main/MainPageWrapper.vue'),
+      component: () => import('@renderer/components/oneOff/MainPageWrapper.vue'),
       order: 0,
       isBuiltin: true
     },
     {
       slotId: 'localTagManage',
       name: '本地标签',
-      component: () => import('@renderer/components/subpage/LocalTagManage.vue'),
+      component: () => import('@renderer/views/LocalTagManage.vue'),
       order: 10,
       isBuiltin: true
     },
     {
       slotId: 'siteTagManage',
       name: '站点标签',
-      component: () => import('@renderer/components/subpage/SiteTagManage.vue'),
+      component: () => import('@renderer/views/SiteTagManage.vue'),
       order: 11,
       isBuiltin: true
     },
     {
       slotId: 'localAuthorManage',
       name: '本地作者',
-      component: () => import('@renderer/components/subpage/LocalAuthorManage.vue'),
+      component: () => import('@renderer/views/LocalAuthorManage.vue'),
       order: 20,
       isBuiltin: true
     },
     {
       slotId: 'siteAuthorManage',
       name: '站点作者',
-      component: () => import('@renderer/components/subpage/SiteAuthorManage.vue'),
+      component: () => import('@renderer/views/SiteAuthorManage.vue'),
       order: 21,
       isBuiltin: true
     },
     {
       slotId: 'developing',
       name: '收藏',
-      component: () => import('@renderer/components/subpage/Developing.vue'),
+      component: () => import('@renderer/views/Developing.vue'),
       order: 30,
       isBuiltin: true
     },
     {
       slotId: 'taskManage',
       name: '任务',
-      component: () => import('@renderer/components/subpage/TaskManage.vue'),
+      component: () => import('@renderer/views/TaskManage.vue'),
       order: 40,
       isBuiltin: true
     },
     {
       slotId: 'siteManage',
       name: '站点管理',
-      component: () => import('@renderer/components/subpage/SiteManage.vue'),
+      component: () => import('@renderer/views/SiteManage.vue'),
       order: 50,
       isBuiltin: true
     },
     {
       slotId: 'siteBrowserManage',
       name: '站点浏览',
-      component: () => import('@renderer/components/subpage/SiteBrowserManage.vue'),
+      component: () => import('@renderer/views/SiteBrowserManage.vue'),
       order: 51,
       isBuiltin: true
     },
     {
       slotId: 'pluginManage',
       name: '插件',
-      component: () => import('@renderer/components/subpage/PluginManage.vue'),
+      component: () => import('@renderer/views/PluginManage.vue'),
       order: 60,
       isBuiltin: true
     },
     {
       slotId: 'settings',
       name: '设置',
-      component: () => import('@renderer/components/subpage/Settings.vue'),
+      component: () => import('@renderer/views/Settings.vue'),
       order: 70,
       isBuiltin: true
     },
     {
       slotId: 'guide',
       name: '向导',
-      component: () => import('@renderer/components/subpage/Guide.vue'),
+      component: () => import('@renderer/views/Guide.vue'),
       order: 80,
       isBuiltin: true
     },
     {
       slotId: 'test',
       name: '测试按钮',
-      component: () => import('@renderer/components/subpage/Test.vue'),
+      component: () => import('@renderer/views/Test.vue'),
       order: 90,
       isBuiltin: true
     }

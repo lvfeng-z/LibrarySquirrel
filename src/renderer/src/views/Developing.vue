@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
+import BaseSubpage from '@renderer/views/BaseSubpage.vue'
 import { HotWater } from '@element-plus/icons-vue'
-import daBing from '../../../../../resources/da-bing.png'
+import daBing from '../../../../resources/da-bing.png'
 </script>
 
 <template>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import BaseSubpage from '@renderer/components/subpage/BaseSubpage.vue'
+import BaseSubpage from '@renderer/views/BaseSubpage.vue'
 import { computed, onMounted, ref, toRaw, UnwrapRef } from 'vue'
 import { Picture } from '@element-plus/icons-vue'
 import ApiUtil from '@renderer/utils/ApiUtil.ts'
 import Page from '@renderer/model/util/Page.ts'
-import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore'
+import { useSlotRegistryStore } from '@renderer/store/SlotRegistryStore.ts'
 
 // 站点浏览器数据接口
 interface SiteBrowserItem {
