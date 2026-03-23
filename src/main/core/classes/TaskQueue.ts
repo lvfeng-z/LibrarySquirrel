@@ -20,6 +20,7 @@ import Electron from 'electron'
 import TaskProcessResponseDTO from '@shared/model/dto/TaskProcessResponseDTO.ts'
 import { getSettings } from '../settings.ts'
 import { getMainWindow } from '../mainWindow.ts'
+import { getTaskWorkerClient } from '../../worker/index.ts'
 
 /**
  * 任务队列
@@ -111,6 +112,12 @@ export class TaskQueue {
    */
   private parentSchedulePushing: boolean
 
+  /**
+   * Worker 客户端
+   * @private
+   */
+  private readonly workerClient: ReturnType<typeof getTaskWorkerClient>
+
   constructor() {
     this.taskMap = new Map()
     this.parentMap = new Map()
@@ -123,6 +130,11 @@ export class TaskQueue {
     this.parentSchedulePushing = false
     // this.siteCache = new Map()
 
+    // 初始化 Worker 客户端
+    this.workerClient = getTaskWorkerClient()
+    // 注册 Worker 进度回调
+    this.registerWorkerCallbacks()
+
     this.queueEntrance = new TaskQueueEntrance(
       this.getNext.bind(this),
       new ResourceService(),
@@ -132,7 +144,11 @@ export class TaskQueue {
     this.workInfoSaveStream = new WorkInfoSaveStream()
     // 读取设置中的最大并行数
     const maxParallelImportInSettings = getSettings().store.importSettings.maxParallelImport
-    this.resourceSaveStream = new ResourceSaveStream(maxParallelImportInSettings, this.refreshParentStatus.bind(this))
+    this.resourceSaveStream = new ResourceSaveStream(
+      maxParallelImportInSettings,
+      this.refreshParentStatus.bind(this),
+      this.workerClient
+    )
     this.taskPersistStream = new TaskPersistStream()
 
     // 初始化流
@@ -946,21 +962,52 @@ export class TaskQueue {
     this.taskPersistStream.addTask([taskRunInstance])
   }
 
-  // /**
-  //  * 获取站点信息
-  //  * @param siteId 站点id
-  //  * @private
-  //  */
-  // private async getSite(siteId: number): Promise<Site | undefined> {
-  //   let result = this.siteCache.get(siteId)
-  //   if (IsNullish(result)) {
-  //     result = await this.siteService.getById(siteId)
-  //     if (NotNullish(result)) {
-  //       this.siteCache.set(siteId, result)
-  //     }
-  //   }
-  //   return result
-  // }
+  /**
+   * 注册 Worker 回调
+   * @private
+   */
+  private registerWorkerCallbacks(): void {
+    // 注册全局进度回调
+    this.workerClient.onGlobalProgress((taskId, _progress, downloadedBytes, totalBytes) => {
+      const runInstance = this.taskMap.get(taskId)
+      if (notNullish(runInstance)) {
+        // 更新运行实例的进度
+        if (notNullish(runInstance.resourceWriter)) {
+          runInstance.resourceWriter.bytesWritten = downloadedBytes
+          runInstance.resourceWriter.resourceSize = totalBytes
+        }
+        // 刷新进度到 UI
+        this.pushTaskSchedule().catch((error) => log.error(this.constructor.name, '推送任务进度失败', error))
+      }
+    })
+
+    // 注册全局完成回调
+    this.workerClient.onGlobalComplete((taskId, workId) => {
+      const runInstance = this.taskMap.get(taskId)
+      if (notNullish(runInstance)) {
+        runInstance.workId = workId
+        runInstance.changeStatus(TaskStatusEnum.FINISHED)
+        // 重置是否替换资源的标记
+        runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
+        // 推送任务到下游
+        this.resourceSaveStream.pushTaskToDownstream(runInstance)
+        this.refreshParentStatus([runInstance.parentId]).catch((error) =>
+          log.error(this.constructor.name, '刷新父任务状态失败', error)
+        )
+      }
+    })
+
+    // 注册全局错误回调
+    this.workerClient.onGlobalError((taskId, error) => {
+      const runInstance = this.taskMap.get(taskId)
+      if (notNullish(runInstance)) {
+        runInstance.inStream = false
+        // 发出任务失败事件
+        this.resourceSaveStream.emitTaskError(error, runInstance)
+      }
+      log.error(this.constructor.name, `Worker 任务 ${taskId} 错误`, error)
+    })
+  }
 }
 
 /**
@@ -1584,7 +1631,17 @@ class ResourceSaveStream extends Transform {
    */
   private readonly refreshParentStatus: (pids: number[]) => Promise<void>
 
-  constructor(maxParallel: number, refreshParentStatus: (pids: number[]) => Promise<void>) {
+  /**
+   * Worker 客户端
+   * @private
+   */
+  private readonly workerClient: ReturnType<typeof getTaskWorkerClient>
+
+  constructor(
+    maxParallel: number,
+    refreshParentStatus: (pids: number[]) => Promise<void>,
+    workerClient: ReturnType<typeof getTaskWorkerClient>
+  ) {
     super({ objectMode: true, highWaterMark: 64, autoDestroy: false }) // 设置为对象模式
     const finalMaxParallel = maxParallel >= 1 ? maxParallel : 1
     this.queueFull = false
@@ -1600,10 +1657,28 @@ class ResourceSaveStream extends Transform {
       }
     })
     this.refreshParentStatus = refreshParentStatus
+    this.workerClient = workerClient
   }
 
   public updateMaxParallel(newNum: number): void {
     this.resSaveQueue.concurrency = newNum
+  }
+
+  /**
+   * 推送任务到下游
+   * @param runInstance 任务运行实例
+   */
+  public pushTaskToDownstream(runInstance: TaskRunInstance): void {
+    this.push(runInstance)
+  }
+
+  /**
+   * 发出任务错误事件
+   * @param error 错误
+   * @param runInstance 任务运行实例
+   */
+  public emitTaskError(error: Error, runInstance: TaskRunInstance): void {
+    this.emit('save-failed', error, runInstance)
   }
 
   private async processTask(runInstance: TaskRunInstance): Promise<void> {
@@ -1615,15 +1690,19 @@ class ResourceSaveStream extends Transform {
     // 发出任务开始保存的事件
     this.refreshParentStatus([runInstance.parentId]).catch((error) => log.error(this.constructor.name, '刷新父任务状态失败', error))
 
-    // 开始任务
+    // 获取任务参数
+    const taskId = runInstance.taskId
+    const workId = runInstance.workId
+    const url = runInstance.getTaskInfo().url ?? ''
+    // Worker 会从数据库获取任务信息，这里传递占位符值
+    const pluginId = 0
+
+    // 将任务委托给 Worker 处理
     try {
-      const saveResult = await runInstance.process()
+      await this.workerClient.startTask(taskId, workId, url, pluginId)
+      // 任务完成/失败通过回调通知，这里标记为已离开流
       runInstance.inStream = false
-      if (TaskStatusEnum.PAUSE !== saveResult.taskStatus) {
-        this.push(runInstance)
-        // 下载完成后，是否替换资源的标记重置
-        runInstance.confirmReplaceRes = ConfirmReplaceResStateEnum.UNKNOWN
-      }
+      // 注意：不立即推送结果，而是等待 Worker 回调
     } catch (error) {
       runInstance.inStream = false
       this.emit('save-failed', error, runInstance)
