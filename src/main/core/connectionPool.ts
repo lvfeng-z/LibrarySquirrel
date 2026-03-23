@@ -8,8 +8,7 @@ let connectionPool: ConnectionPool | undefined = undefined
 function createConnectionPool(): void {
   if (isNullish(connectionPool)) {
     connectionPool = new ConnectionPool({
-      maxRead: 10, // 最大连接数
-      maxWrite: 10, // 最大连接数
+      maxConnections: 10, // 最大连接数
       idleTimeout: 30000, // 连接空闲超时时间（毫秒）
       databasePath: DataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
     })

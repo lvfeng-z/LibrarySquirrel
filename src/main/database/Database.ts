@@ -1,15 +1,15 @@
 import BetterSqlite3 from 'better-sqlite3'
 import { TransactionContext } from './TransactionContext.ts'
 import { getConnectionPool } from '../core/connectionPool.ts'
-import { Connection, RequestWeight } from '../core/classes/ConnectionPool.ts'
+import { RequestWeight } from '../core/classes/ConnectionPool.ts'
 import log from '../util/LogUtil.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 
 /**
- * 保存借用的连接信息，用于释放
+ * 保存借用的连接索引，用于释放
  * @private
  */
-const borrowedConnections = new WeakMap<BetterSqlite3.Database, Connection>()
+const borrowedConnections = new WeakMap<BetterSqlite3.Database, number>()
 
 /**
  * 是否持有排他锁
@@ -41,7 +41,7 @@ export class Database {
    * - 非事务：从连接池借用
    * @private
    */
-  private static async acquireConnection(readOnly: boolean): Promise<BetterSqlite3.Database> {
+  private static async acquireConnection(): Promise<BetterSqlite3.Database> {
     // 事务中：使用上下文绑定的连接
     if (TransactionContext.inTransaction()) {
       const ctxConn = TransactionContext.getConnection()
@@ -53,11 +53,11 @@ export class Database {
 
     // 非事务：从连接池借用
     const pool = getConnectionPool()
-    const connection = await pool.acquire(readOnly, RequestWeight.LOW)
+    const connection = await pool.acquire(RequestWeight.LOW)
     this.registerRegexpFunction(connection.connection)
 
-    // 保存连接信息用于释放
-    borrowedConnections.set(connection.connection, connection)
+    // 保存连接索引用于释放
+    borrowedConnections.set(connection.connection, connection.index)
 
     return connection.connection
   }
@@ -73,14 +73,14 @@ export class Database {
     }
 
     const pool = getConnectionPool()
-    const connInfo = borrowedConnections.get(connection)
+    const index = borrowedConnections.get(connection)
 
-    if (isNullish(connInfo)) {
+    if (isNullish(index)) {
       log.warn(this.caller, '释放连接时未找到借用信息')
       return
     }
 
-    pool.release(connInfo.readonly, connInfo.index)
+    pool.release(index)
     borrowedConnections.delete(connection)
   }
 
@@ -102,7 +102,7 @@ export class Database {
       lockAcquired = true
     }
 
-    const connection = await this.acquireConnection(false)
+    const connection = await this.acquireConnection()
     try {
       log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return connection.prepare(statement).run(...params)
@@ -129,7 +129,7 @@ export class Database {
     statement: string,
     ...params: BindParameters
   ): Promise<Result | undefined> {
-    const connection = await this.acquireConnection(true)
+    const connection = await this.acquireConnection()
     try {
       log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return connection.prepare(statement).get(...params) as Result | undefined
@@ -151,7 +151,7 @@ export class Database {
     statement: string,
     ...params: BindParameters
   ): Promise<Result[]> {
-    const connection = await this.acquireConnection(true)
+    const connection = await this.acquireConnection()
     try {
       log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
       return connection.prepare(statement).all(...params) as Result[]
@@ -167,7 +167,7 @@ export class Database {
    * 执行语句
    */
   public static async exec(statement: string): Promise<BetterSqlite3.Database> {
-    const connection = await this.acquireConnection(true)
+    const connection = await this.acquireConnection()
     try {
       log.debug(this.caller, `[SQL] ${statement}`)
       return connection.exec(statement)
@@ -182,14 +182,12 @@ export class Database {
   /**
    * 执行预处理
    * @param statement SQL 语句
-   * @param read 是否为读操作
    * @returns 预处理语句对象
    */
   static async prepare<BindParameters extends unknown[], Result = unknown>(
-    statement: string,
-    read: boolean
+    statement: string
   ): Promise<BetterSqlite3.Statement<BindParameters, Result>> {
-    const connection = await this.acquireConnection(read)
+    const connection = await this.acquireConnection()
     return connection.prepare<BindParameters, Result>(statement)
   }
 

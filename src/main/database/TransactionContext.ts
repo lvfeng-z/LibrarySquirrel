@@ -107,7 +107,7 @@ class TransactionContext {
 
     // 最外层事务：创建新上下文
     const pool = getConnectionPool()
-    const connection = await pool.acquire(false, RequestWeight.HIGH)
+    const connection = await pool.acquire(RequestWeight.HIGH)
 
     // 获取排他锁
     await pool.acquireLock(caller, operation)
@@ -138,7 +138,7 @@ class TransactionContext {
       // 释放排他锁
       pool.releaseLock(caller)
       // 释放连接
-      pool.release(connection.readonly, connection.index)
+      pool.release(connection.index)
     }
   }
 }
