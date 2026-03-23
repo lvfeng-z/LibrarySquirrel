@@ -6,8 +6,7 @@ let connectionPool: ConnectionPool | undefined = undefined
 async function createConnectionPool(): Promise<void> {
   if (isNullish(connectionPool)) {
     connectionPool = new ConnectionPool({
-      maxConnections: 10, // 最大连接数
-      idleTimeout: 30000 // 连接空闲超时时间（毫秒）
+      maxConnections: 10 // 最大连接数
     })
     // 初始化连接池，创建所有 Worker
     await connectionPool.initialize()

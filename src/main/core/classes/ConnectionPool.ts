@@ -3,7 +3,6 @@ import { ConnectionWorker, createConnectionWorker } from './ConnectionWorker.ts'
 
 export interface ConnectionPoolConfig {
   maxConnections: number
-  idleTimeout: number
 }
 
 export enum RequestWeight {
@@ -36,11 +35,6 @@ export class ConnectionPool {
    */
   private readonly waitingQueue: WaitingRequest[]
   /**
-   * 空闲超时定时器
-   * @private
-   */
-  private readonly idleTimeouts: (NodeJS.Timeout | undefined)[]
-  /**
    * 是否写入锁定
    * @private
    */
@@ -60,7 +54,6 @@ export class ConnectionPool {
     this.config = config
     this.workers = Array(this.config.maxConnections).fill(undefined)
     this.waitingQueue = []
-    this.idleTimeouts = Array(this.config.maxConnections).fill(undefined)
     this.writeLocked = false
     this.writeLockQueue = []
   }
@@ -98,9 +91,7 @@ export class ConnectionPool {
       if (worker === undefined && firstIdleIndex === -1) {
         firstIdleIndex = index
       } else if (worker !== undefined && !worker.isOccupied()) {
-        // 分配之前清除空闲计时
-        this.clearIdleTimeout(index)
-        log.debug('ConnectionPool', `[${index}] Worker 复用，清除空闲计时`)
+        log.debug('ConnectionPool', `[${index}] Worker 复用`)
         worker.occupy()
         worker.refreshOccupyStart()
         return worker
@@ -147,7 +138,6 @@ export class ConnectionPool {
     } else {
       worker.release()
       log.debug('ConnectionPool', `[${index}] Worker 已释放`)
-      this.setupIdleTimeout(index)
     }
   }
 
@@ -192,57 +182,6 @@ export class ConnectionPool {
   }
 
   /**
-   * 清除空闲超时
-   */
-  private clearIdleTimeout(index: number): void {
-    const timeoutId = this.idleTimeouts[index]
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-      this.idleTimeouts[index] = undefined
-    }
-  }
-
-  /**
-   * 设置空闲超时
-   */
-  private setupIdleTimeout(index: number): void {
-    const idleTimeoutMilliseconds = this.config.idleTimeout
-    const worker = this.workers[index]
-
-    if (!worker) {
-      return
-    }
-
-    const timeoutHandler = () => {
-      this.closeWorker(index)
-    }
-
-    this.idleTimeouts[index] = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
-    log.debug('ConnectionPool', `[${index}] Worker 已开始空闲计时，timeoutId=${this.idleTimeouts[index]}`)
-  }
-
-  /**
-   * 关闭指定的 Worker 并更新连接池状态
-   */
-  private async closeWorker(index: number): Promise<void> {
-    // 清除空闲计时
-    this.clearIdleTimeout(index)
-
-    const worker = this.workers[index]
-    if (!worker) {
-      return
-    }
-
-    log.debug('ConnectionPool', `[${index}] Worker 的空闲计时被清除`)
-
-    // 关闭 Worker
-    await worker.close()
-    this.workers[index] = undefined
-
-    log.debug('ConnectionPool', `[${index}] Worker 已超时关闭`)
-  }
-
-  /**
    * 关闭所有 Worker
    */
   public async closeAll(): Promise<void> {
@@ -252,8 +191,6 @@ export class ConnectionPool {
     for (let index = 0; index < this.workers.length; index++) {
       const worker = this.workers[index]
       if (worker) {
-        // 清除空闲计时
-        this.clearIdleTimeout(index)
         closePromises.push(worker.close())
       }
     }
