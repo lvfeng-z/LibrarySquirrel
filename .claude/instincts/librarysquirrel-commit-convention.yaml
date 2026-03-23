@@ -1,0 +1,29 @@
+---
+id: librarysquirrel-commit-convention
+trigger: "when writing a commit message"
+confidence: 0.92
+domain: git
+source: local-repo-analysis
+---
+
+# Use Conventional Commits with Chinese Scope
+
+## Action
+Prefix commits with: `type(范围): 描述` or `type: 描述`
+
+## Types
+- `fix` - Bug fixes (32.5% of commits)
+- `feat` - New features (22.5%)
+- `refactor` - Code refactoring (14%)
+- `perf` - Performance improvements (14%)
+- `docs` - Documentation updates (9%)
+- `build` - Build/dependency updates (6%)
+
+## Examples
+- `fix(主进程): 修复主窗口的session设置影响了其他窗口的问题`
+- `feat(插件): 添加webpack编译vue的方法`
+- `perf(渲染进程、插件): 优化属性命名`
+
+## Evidence
+- Analyzed 200 commits
+- 92% follow conventional commit format with optional Chinese scope

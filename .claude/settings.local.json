@@ -6,7 +6,21 @@
       "Bash(yarn lint:*)",
       "Bash(yarn eslint:*)",
       "Bash(yarn typecheck:*)",
-      "Bash(yarn typecheck:node:*)"
+      "Bash(yarn typecheck:node:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(\"C:/Users/14848/AppData/Local/Python/bin/python.exe\" \"C:/Users/14848/.claude/plugins/cache/everything-claude-code/everything-claude-code/1.8.0/skills/continuous-learning-v2/scripts/instinct-cli.py\" status)"
     ]
+  },
+  "enabledPlugins": {
+    "everything-claude-code@everything-claude-code": true
+  },
+  "extraKnownMarketplaces": {
+    "everything-claude-code": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    }
   }
 }

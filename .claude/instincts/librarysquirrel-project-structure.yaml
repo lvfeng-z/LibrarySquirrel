@@ -1,0 +1,32 @@
+---
+id: librarysquirrel-project-structure
+trigger: "when adding new files to the project"
+confidence: 0.88
+domain: architecture
+source: local-repo-analysis
+---
+
+# Follow LibrarySquirrel Directory Structure
+
+## Main Process Files
+- Services → `src/main/service/`
+- DAOs → `src/main/dao/`
+- Constants → `src/main/constant/`
+- IPC Handlers → `src/main/core/MainProcessApi.ts`
+
+## Renderer Process Files
+- Components → `src/renderer/src/components/`
+  - Common: `src/renderer/src/components/common/`
+  - Dialogs: `src/renderer/src/components/dialogs/`
+  - Pages: `src/renderer/src/components/subpage/`
+- Composables → `src/renderer/src/composables/`
+- Store → `src/renderer/src/store/`
+
+## Naming
+- Files: PascalCase for classes/components, camelCase for utilities
+- Vue Components: PascalCase with suffix (e.g., `TaskManage.vue`)
+- Constants: PascalCase (e.g., `TaskStatusEnum.ts`)
+
+## Evidence
+- Most changed files: MainProcessApi.ts (28), App.vue (28), TaskService.ts (25)
+- Consistent structure across 200 commits

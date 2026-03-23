@@ -1,0 +1,42 @@
+---
+id: librarysquirrel-ipc-pattern
+trigger: "when adding new IPC communication between main and renderer"
+confidence: 0.9
+domain: electron
+source: local-repo-analysis
+---
+
+# Use LibrarySquirrel IPC Pattern
+
+## Main → Renderer (Handler)
+```typescript
+Electron.ipcMain.handle('serviceName-method', async (_event, args) => {
+  const service = new ServiceName()
+  try {
+    return ApiUtil.response(await service.method(args))
+  } catch (error) {
+    return returnError(error)
+  }
+})
+```
+
+## Preload Bridge
+```typescript
+// src/preload/index.ts
+serviceNameMethod: (args) => Electron.ipcRenderer.invoke('serviceName-method', args)
+```
+
+## Renderer Call
+```typescript
+window.api.serviceNameMethod(args)
+```
+
+## Key Files
+- IPC handlers: `src/main/core/MainProcessApi.ts`
+- Bridge: `src/preload/index.ts`
+- Type declarations: `src/preload/index.d.ts`
+
+## Evidence
+- 20+ changes to preload/index.ts
+- 28+ changes to MainProcessApi.ts
+- All services follow this pattern consistently
