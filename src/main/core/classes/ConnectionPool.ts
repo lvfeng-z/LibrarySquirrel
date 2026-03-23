@@ -1,10 +1,9 @@
-import Database from 'better-sqlite3'
 import log from '../../util/LogUtil.ts'
+import { ConnectionWorker, createConnectionWorker } from './ConnectionWorker.ts'
 
 export interface ConnectionPoolConfig {
   maxConnections: number
   idleTimeout: number
-  databasePath: string
 }
 
 export enum RequestWeight {
@@ -15,33 +14,9 @@ export enum RequestWeight {
   TRIVIAL = 1
 }
 
-export class Connection {
-  connection: Database.Database
-  index: number
-  occupied: boolean
-  occupyStart: number
-  holdingWriteLock: boolean
-  release: (...args: unknown[]) => void
-  timeoutId: NodeJS.Timeout | undefined
-
-  constructor(filename: string, index: number, release: (...args: unknown[]) => void) {
-    this.connection = new Database(filename)
-    this.index = index
-    this.occupied = false
-    this.occupyStart = Math.floor(Date.now() / 1000)
-    this.holdingWriteLock = false
-    this.release = release
-    this.timeoutId = undefined
-  }
-
-  public refreshOccupyStart() {
-    this.occupyStart = Math.floor(Date.now() / 1000)
-  }
-}
-
 type WaitingRequest = {
   requestWeigh: RequestWeight
-  resolve: (connection: Connection) => void
+  resolve: (connection: ConnectionWorker) => void
 }
 
 export class ConnectionPool {
@@ -51,15 +26,20 @@ export class ConnectionPool {
    */
   private readonly config: ConnectionPoolConfig
   /**
-   * 连接列表
+   * 连接 Worker 列表
    * @private
    */
-  private readonly connections: (Connection | undefined)[]
+  private readonly workers: (ConnectionWorker | undefined)[]
   /**
    * 等待队列
    * @private
    */
   private readonly waitingQueue: WaitingRequest[]
+  /**
+   * 空闲超时定时器
+   * @private
+   */
+  private readonly idleTimeouts: (NodeJS.Timeout | undefined)[]
   /**
    * 是否写入锁定
    * @private
@@ -70,80 +50,104 @@ export class ConnectionPool {
    * @private
    */
   private writeLockQueue: (() => void)[]
+  /**
+   * 初始化状态
+   * @private
+   */
+  private initialized: boolean = false
 
   constructor(config: ConnectionPoolConfig) {
     this.config = config
-    this.connections = Array(this.config.maxConnections).fill(undefined)
+    this.workers = Array(this.config.maxConnections).fill(undefined)
     this.waitingQueue = []
+    this.idleTimeouts = Array(this.config.maxConnections).fill(undefined)
     this.writeLocked = false
     this.writeLockQueue = []
   }
 
   /**
-   * 获取连接
+   * 初始化连接池，创建所有 Worker
    */
-  public async acquire(requestWeigh: RequestWeight): Promise<Connection> {
-    return new Promise((resolve, reject) => {
-      try {
-        // 遍历连接数组，寻找是否有可复用连接，并记录数组的第一个空闲索引
-        let firstIdleIndex = -1
-        for (let index = 0; index < this.connections.length; index++) {
-          const connection = this.connections[index]
-          if (connection === undefined && firstIdleIndex === -1) {
-            firstIdleIndex = index
-          } else if (connection !== undefined && !connection.occupied) {
-            // 分配之前清除空闲计时
-            clearTimeout(connection.timeoutId)
-            connection.timeoutId = undefined
-            log.debug('ConnectionPool', `[${index}]连接复用，清除空闲计时`)
-            connection.occupied = true
-            connection.refreshOccupyStart()
-            resolve(connection)
-            return
-          }
-        }
-        // 如果遍历整个连接数组还没有找到可用的连接，尝试新增连接
-        if (firstIdleIndex != -1) {
-          const newConnection = this.createConnection(firstIdleIndex)
-          newConnection.occupied = true
-          this.connections[firstIdleIndex] = newConnection
-          resolve(newConnection)
-          log.debug('ConnectionPool', `[${firstIdleIndex}]新建连接`)
-          return
-        }
-        this.waitingQueue.push({ requestWeigh: requestWeigh, resolve: resolve })
-      } catch (e) {
-        log.error('ConnectionPool', '分配数据库连接失败，', e)
-        reject(e)
+  public async initialize(): Promise<void> {
+    if (this.initialized) {
+      return
+    }
+
+    log.debug('ConnectionPool', '开始初始化连接池...')
+
+    // 预创建所有 Worker
+    const initPromises: Promise<ConnectionWorker>[] = []
+    for (let index = 0; index < this.config.maxConnections; index++) {
+      const promise = this.createWorker(index)
+      initPromises.push(promise)
+    }
+
+    await Promise.all(initPromises)
+    this.initialized = true
+    log.debug('ConnectionPool', `连接池初始化完成，共 ${this.config.maxConnections} 个 Worker`)
+  }
+
+  /**
+   * 获取连接 Worker
+   */
+  public async acquire(requestWeigh: RequestWeight): Promise<ConnectionWorker> {
+    // 遍历 Worker 数组，寻找是否有可复用 Worker
+    let firstIdleIndex = -1
+    for (let index = 0; index < this.workers.length; index++) {
+      const worker = this.workers[index]
+      if (worker === undefined && firstIdleIndex === -1) {
+        firstIdleIndex = index
+      } else if (worker !== undefined && !worker.isOccupied()) {
+        // 分配之前清除空闲计时
+        this.clearIdleTimeout(index)
+        log.debug('ConnectionPool', `[${index}] Worker 复用，清除空闲计时`)
+        worker.occupy()
+        worker.refreshOccupyStart()
+        return worker
       }
+    }
+
+    // 如果遍历整个数组还没有找到可用的 Worker，尝试新增
+    if (firstIdleIndex != -1) {
+      const newWorker = await this.createWorker(firstIdleIndex)
+      newWorker.occupy()
+      log.debug('ConnectionPool', `[${firstIdleIndex}]新建 Worker`)
+      return newWorker
+    }
+
+    // 没有可用 Worker，加入等待队列
+    return new Promise((resolve) => {
+      this.waitingQueue.push({ requestWeigh: requestWeigh, resolve })
     })
   }
 
   /**
-   * 释放连接
+   * 释放连接 Worker
    * @param index
    */
-  public release(index: number) {
-    const connection = this.connections[index]
-    if (connection === undefined) {
-      log.error('ConnectionPool', `[${index}]释放连接失败，连接为空`)
+  public release(index: number): void {
+    const worker = this.workers[index]
+    if (worker === undefined) {
+      log.error('ConnectionPool', `[${index}]释放 Worker 失败，Worker 为空`)
       return
     }
-    if (!connection.occupied) {
-      log.error('ConnectionPool', `[${index}]释放连接失败，连接已经处于空闲状态`)
+    if (!worker.isOccupied()) {
+      log.error('ConnectionPool', `[${index}]释放 Worker 失败，Worker 已经处于空闲状态`)
+      return
     }
-    // 如果等待队列不为空，从等待队列中取第一个分配连接，否则连接状态设置为空闲，并开始空闲计时
+
+    // 如果等待队列不为空，从等待队列中取第一个分配 Worker
     if (this.waitingQueue.length > 0) {
       const request = this.waitingQueue.shift()
       if (request) {
-        log.debug('ConnectionPool', `[${index}]连接在释放时被复用，当前等待队列长度为：${this.waitingQueue.length}`)
-        connection.refreshOccupyStart()
-        request.resolve(connection)
+        log.debug('ConnectionPool', `[${index}] Worker 在释放时被复用，当前等待队列长度为：${this.waitingQueue.length}`)
+        worker.refreshOccupyStart()
+        request.resolve(worker)
       }
     } else {
-      connection.occupied = false
-      log.debug('ConnectionPool', `[${index}]连接已释放`)
-      this.setupIdleTimeout(connection)
+      worker.release()
+      log.debug('ConnectionPool', `[${index}] Worker 已释放`)
+      this.setupIdleTimeout(index)
     }
   }
 
@@ -179,57 +183,82 @@ export class ConnectionPool {
   }
 
   /**
-   * 创建一个新连接返回
+   * 创建 Worker
    */
-  private createConnection(index: number): Connection {
-    return new Connection(this.config.databasePath, index, () => this.release(index))
+  private async createWorker(index: number): Promise<ConnectionWorker> {
+    const worker = await createConnectionWorker(index)
+    this.workers[index] = worker
+    return worker
+  }
+
+  /**
+   * 清除空闲超时
+   */
+  private clearIdleTimeout(index: number): void {
+    const timeoutId = this.idleTimeouts[index]
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      this.idleTimeouts[index] = undefined
+    }
   }
 
   /**
    * 设置空闲超时
-   * @private
-   * @param connection
    */
-  private setupIdleTimeout(connection: Connection) {
+  private setupIdleTimeout(index: number): void {
     const idleTimeoutMilliseconds = this.config.idleTimeout
-    // 空闲计时回调，关闭连接的函数
-    const timeoutHandler = () => {
-      this.closeConnection(connection)
+    const worker = this.workers[index]
+
+    if (!worker) {
+      return
     }
-    // 将空闲计时ID与连接关联，便于后续清理
-    connection.timeoutId = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
-    log.debug('ConnectionPool', `[${connection.index}]连接已开始空闲计时，timeoutId=${connection.timeoutId}`)
+
+    const timeoutHandler = () => {
+      this.closeWorker(index)
+    }
+
+    this.idleTimeouts[index] = setTimeout(timeoutHandler, idleTimeoutMilliseconds)
+    log.debug('ConnectionPool', `[${index}] Worker 已开始空闲计时，timeoutId=${this.idleTimeouts[index]}`)
   }
 
   /**
-   * 关闭指定的连接并更新连接池状态
-   *
-   * @param connection
+   * 关闭指定的 Worker 并更新连接池状态
    */
+  private async closeWorker(index: number): Promise<void> {
+    // 清除空闲计时
+    this.clearIdleTimeout(index)
 
-  private closeConnection(connection: Connection) {
-    // 关闭连接后清理空闲计时
-    clearTimeout(connection.timeoutId)
-    connection.timeoutId = undefined
-    log.debug('ConnectionPool', `[${connection.index}]连接的空闲计时被清除`)
-    // 关闭数据库连接
-    connection.connection.close()
-    this.connections[connection.index] = undefined
-    log.debug('ConnectionPool', `[${connection.index}]连接已超时关闭`)
+    const worker = this.workers[index]
+    if (!worker) {
+      return
+    }
+
+    log.debug('ConnectionPool', `[${index}] Worker 的空闲计时被清除`)
+
+    // 关闭 Worker
+    await worker.close()
+    this.workers[index] = undefined
+
+    log.debug('ConnectionPool', `[${index}] Worker 已超时关闭`)
   }
 
-  // private log(msg: string) {
-  //   console.log(msg)
-  //   this.connections.forEach((connection, index) => {
-  //     console.log(
-  //       index,
-  //       'haveConnection:',
-  //       connection === undefined ? '×' : '√',
-  //       'available:',
-  //       this.connectionExtra[index].state ? '√' : '×',
-  //       'timeoutId:',
-  //       String(this.connectionExtra[index].timeoutId)
-  //     )
-  //   })
-  // }
+  /**
+   * 关闭所有 Worker
+   */
+  public async closeAll(): Promise<void> {
+    log.debug('ConnectionPool', '开始关闭所有 Worker...')
+
+    const closePromises: Promise<void>[] = []
+    for (let index = 0; index < this.workers.length; index++) {
+      const worker = this.workers[index]
+      if (worker) {
+        // 清除空闲计时
+        this.clearIdleTimeout(index)
+        closePromises.push(worker.close())
+      }
+    }
+
+    await Promise.all(closePromises)
+    log.debug('ConnectionPool', '所有 Worker 已关闭')
+  }
 }

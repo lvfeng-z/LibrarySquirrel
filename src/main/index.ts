@@ -56,21 +56,24 @@ function createWindow(): BrowserWindow {
     // 阻止默认关闭行为
     event.preventDefault()
 
-    const taskQueue = getTaskQueue()
-    if (!taskQueue.isIdle()) {
-      await SendConfirmToWindow({
-        msg: '有任务正在进行中',
-        title: '是否关闭LibrarySquirrel？',
-        confirmButtonText: '关闭',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-    }
+    try {
+      const taskQueue = getTaskQueue()
+      if (!taskQueue.isIdle()) {
+        await SendConfirmToWindow({
+          msg: '有任务正在进行中',
+          title: '是否关闭LibrarySquirrel？',
+          confirmButtonText: '关闭',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+      }
 
-    // 关闭任务队列
-    await taskQueue.shutdown()
-    // 强制销毁窗口
-    mainWindow.destroy()
+      // 关闭任务队列
+      await taskQueue.shutdown()
+    } finally {
+      // 强制销毁窗口
+      mainWindow.destroy()
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

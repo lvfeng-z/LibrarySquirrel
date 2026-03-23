@@ -1,17 +1,16 @@
 import { ConnectionPool } from './classes/ConnectionPool.ts'
-import { DataBasePath } from '../util/DatabaseUtil.ts'
-import DataBaseConstant from '../constant/DataBaseConstant.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 
 let connectionPool: ConnectionPool | undefined = undefined
 
-function createConnectionPool(): void {
+async function createConnectionPool(): Promise<void> {
   if (isNullish(connectionPool)) {
     connectionPool = new ConnectionPool({
       maxConnections: 10, // 最大连接数
-      idleTimeout: 30000, // 连接空闲超时时间（毫秒）
-      databasePath: DataBasePath() + DataBaseConstant.DB_FILE_NAME // 数据库文件路径
+      idleTimeout: 30000 // 连接空闲超时时间（毫秒）
     })
+    // 初始化连接池，创建所有 Worker
+    await connectionPool.initialize()
   }
 }
 
@@ -22,4 +21,11 @@ function getConnectionPool(): ConnectionPool {
   return connectionPool
 }
 
-export { createConnectionPool, getConnectionPool }
+async function destroyConnectionPool(): Promise<void> {
+  if (connectionPool) {
+    await connectionPool.closeAll()
+    connectionPool = undefined
+  }
+}
+
+export { createConnectionPool, getConnectionPool, destroyConnectionPool }
