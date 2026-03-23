@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks'
+import BetterSqlite3 from 'better-sqlite3'
 import { Connection } from '../core/classes/ConnectionPool.ts'
 import { RequestWeight } from '../core/classes/ConnectionPool.ts'
 import { getConnectionPool } from '../core/connectionPool.ts'
@@ -73,6 +74,67 @@ class TransactionContext {
   //     return regex.test(string as string) ? 1 : 0
   //   })
   // }
+
+  /**
+   * 在当前事务中执行写操作
+   * 供 DatabaseProxy 在事务中调用
+   */
+  static runInCurrentTransaction<BindParameters extends unknown[]>(
+    statement: string,
+    params: BindParameters
+  ): BetterSqlite3.RunResult {
+    const store = this.asyncLocalStorage.getStore()
+    if (isNullish(store)) {
+      throw new Error('Not in transaction context')
+    }
+    log.debug('TransactionContext', `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+    return store.connection.connection.prepare(statement).run(...params)
+  }
+
+  /**
+   * 在当前事务中执行读操作 - 单条
+   * 供 DatabaseProxy 在事务中调用
+   */
+  static getFromCurrentTransaction<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    params: BindParameters
+  ): Result | undefined {
+    const store = this.asyncLocalStorage.getStore()
+    if (isNullish(store)) {
+      throw new Error('Not in transaction context')
+    }
+    log.debug('TransactionContext', `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+    return store.connection.connection.prepare(statement).get(...params) as Result | undefined
+  }
+
+  /**
+   * 在当前事务中执行读操作 - 列表
+   * 供 DatabaseProxy 在事务中调用
+   */
+  static allFromCurrentTransaction<BindParameters extends unknown[], Result = unknown>(
+    statement: string,
+    params: BindParameters
+  ): Result[] {
+    const store = this.asyncLocalStorage.getStore()
+    if (isNullish(store)) {
+      throw new Error('Not in transaction context')
+    }
+    log.debug('TransactionContext', `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
+    return store.connection.connection.prepare(statement).all(...params) as Result[]
+  }
+
+  /**
+   * 在当前事务中执行语句
+   * 供 DatabaseProxy 在事务中调用
+   */
+  static execInCurrentTransaction(statement: string): void {
+    const store = this.asyncLocalStorage.getStore()
+    if (isNullish(store)) {
+      throw new Error('Not in transaction context')
+    }
+    log.debug('TransactionContext', `[SQL] ${statement}`)
+    store.connection.connection.exec(statement)
+  }
 
   /**
    * 执行事务

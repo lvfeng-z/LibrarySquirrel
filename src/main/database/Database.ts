@@ -1,89 +1,15 @@
 import BetterSqlite3 from 'better-sqlite3'
 import { TransactionContext } from './TransactionContext.ts'
-import { getConnectionPool } from '../core/connectionPool.ts'
-import { Connection, RequestWeight } from '../core/classes/ConnectionPool.ts'
-import log from '../util/LogUtil.ts'
-import { isNullish } from '@shared/util/CommonUtil.ts'
+import { DatabaseRequest, DatabaseResponse, generateRequestId } from '../worker/DatabaseIpcTypes.ts'
+import { getDbWorker } from '../core/dbWorker.ts'
 
-/**
- * 保存借用的连接信息，用于释放
- * @private
- */
-const borrowedConnections = new WeakMap<BetterSqlite3.Database, Connection>()
-
-/**
- * 是否持有排他锁
- * @private
- */
-let holdingLock: boolean = false
-
+const pendingRequests = new Map()
 /**
  * 数据库访问入口
- * 提供静态方法，自动检测事务上下文并获取对应连接
+ * 将请求转发到 Worker 线程执行
+ * 事务中自动使用主线程连接
  */
 export class Database {
-  private static readonly caller = 'Database'
-
-  /**
-   * 注册 REGEXP 函数到数据库连接
-   * @private
-   */
-  private static registerRegexpFunction(connection: BetterSqlite3.Database): void {
-    connection.function('REGEXP', (pattern, string) => {
-      const regex = new RegExp(pattern as string)
-      return regex.test(string as string) ? 1 : 0
-    })
-  }
-
-  /**
-   * 获取数据库连接
-   * - 事务中：返回绑定到上下文的连接
-   * - 非事务：从连接池借用
-   * @private
-   */
-  private static async acquireConnection(readOnly: boolean): Promise<BetterSqlite3.Database> {
-    // 事务中：使用上下文绑定的连接
-    if (TransactionContext.inTransaction()) {
-      const ctxConn = TransactionContext.getConnection()
-      if (isNullish(ctxConn)) {
-        throw new Error('Transaction context exists but connection is missing')
-      }
-      return ctxConn.connection
-    }
-
-    // 非事务：从连接池借用
-    const pool = getConnectionPool()
-    const connection = await pool.acquire(readOnly, RequestWeight.LOW)
-    this.registerRegexpFunction(connection.connection)
-
-    // 保存连接信息用于释放
-    borrowedConnections.set(connection.connection, connection)
-
-    return connection.connection
-  }
-
-  /**
-   * 释放非事务连接
-   * @private
-   */
-  private static releaseConnection(connection: BetterSqlite3.Database): void {
-    // 事务中不释放，由事务上下文管理
-    if (TransactionContext.inTransaction()) {
-      return
-    }
-
-    const pool = getConnectionPool()
-    const connInfo = borrowedConnections.get(connection)
-
-    if (isNullish(connInfo)) {
-      log.warn(this.caller, '释放连接时未找到借用信息')
-      return
-    }
-
-    pool.release(connInfo.readonly, connInfo.index)
-    borrowedConnections.delete(connection)
-  }
-
   /**
    * 执行写操作 (INSERT/UPDATE/DELETE)
    * @param statement SQL 语句
@@ -91,32 +17,12 @@ export class Database {
    * @returns 执行结果
    */
   static async run<BindParameters extends unknown[]>(statement: string, ...params: BindParameters): Promise<BetterSqlite3.RunResult> {
-    // 事务中：由 TransactionContext 管理锁，这里不获取/释放锁
-    const inTransaction = TransactionContext.inTransaction()
-
-    // 非事务：获取排他锁，防止并发写操作导致数据库锁定
-    let lockAcquired = false
-    if (!inTransaction && !holdingLock) {
-      await getConnectionPool().acquireLock(this.caller, statement)
-      holdingLock = true
-      lockAcquired = true
+    // 事务中：不通过 Worker，直接使用 TransactionContext 的连接
+    if (TransactionContext.inTransaction()) {
+      return TransactionContext.runInCurrentTransaction(statement, params)
     }
 
-    const connection = await this.acquireConnection(false)
-    try {
-      log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      return connection.prepare(statement).run(...params)
-    } catch (error) {
-      log.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      throw error
-    } finally {
-      this.releaseConnection(connection)
-      // 仅在获取了锁且非事务情况下释放排他锁
-      if (lockAcquired && !inTransaction && holdingLock) {
-        getConnectionPool().releaseLock(this.caller)
-        holdingLock = false
-      }
-    }
+    return this.sendRequest<BetterSqlite3.RunResult>('run', { statement, params })
   }
 
   /**
@@ -129,16 +35,12 @@ export class Database {
     statement: string,
     ...params: BindParameters
   ): Promise<Result | undefined> {
-    const connection = await this.acquireConnection(true)
-    try {
-      log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      return connection.prepare(statement).get(...params) as Result | undefined
-    } catch (error) {
-      log.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      throw error
-    } finally {
-      this.releaseConnection(connection)
+    // 事务中
+    if (TransactionContext.inTransaction()) {
+      return TransactionContext.getFromCurrentTransaction(statement, params) as Result | undefined
     }
+
+    return this.sendRequest<Result>('get', { statement, params })
   }
 
   /**
@@ -151,46 +53,20 @@ export class Database {
     statement: string,
     ...params: BindParameters
   ): Promise<Result[]> {
-    const connection = await this.acquireConnection(true)
-    try {
-      log.debug(this.caller, `[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      return connection.prepare(statement).all(...params) as Result[]
-    } catch (error) {
-      log.error(this.caller, error, `\n[SQL] ${statement}\n\t[PARAMS] ${JSON.stringify(params)}`)
-      throw error
-    } finally {
-      this.releaseConnection(connection)
+    // 事务中
+    if (TransactionContext.inTransaction()) {
+      return TransactionContext.allFromCurrentTransaction(statement, params) as Result[]
     }
+
+    return this.sendRequest<Result[]>('all', { statement, params })
   }
 
   /**
    * 执行语句
    */
   public static async exec(statement: string): Promise<BetterSqlite3.Database> {
-    const connection = await this.acquireConnection(true)
-    try {
-      log.debug(this.caller, `[SQL] ${statement}`)
-      return connection.exec(statement)
-    } catch (error) {
-      log.error(this.caller, error, `\n[SQL] ${statement}`)
-      throw error
-    } finally {
-      this.releaseConnection(connection)
-    }
-  }
-
-  /**
-   * 执行预处理
-   * @param statement SQL 语句
-   * @param read 是否为读操作
-   * @returns 预处理语句对象
-   */
-  static async prepare<BindParameters extends unknown[], Result = unknown>(
-    statement: string,
-    read: boolean
-  ): Promise<BetterSqlite3.Statement<BindParameters, Result>> {
-    const connection = await this.acquireConnection(read)
-    return connection.prepare<BindParameters, Result>(statement)
+    await this.sendRequest<void>('exec', { statement })
+    return {} as BetterSqlite3.Database
   }
 
   /**
@@ -198,5 +74,50 @@ export class Database {
    */
   static inTransaction(): boolean {
     return TransactionContext.inTransaction()
+  }
+
+  /**
+   * 发送请求到 Worker 并等待响应
+   */
+  static async sendRequest<T>(
+    type: DatabaseRequest['type'],
+    options?: {
+      statement?: string
+      params?: unknown[]
+      savepointName?: string
+    }
+  ): Promise<T> {
+    const id = generateRequestId()
+    const request: DatabaseRequest = {
+      id,
+      type,
+      statement: options?.statement,
+      params: options?.params,
+      savepointName: options?.savepointName
+    }
+
+    return new Promise((resolve, reject) => {
+      pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject })
+
+      const dbWorker = getDbWorker()
+      dbWorker.on('message', (msg: DatabaseResponse) => {
+        if (id === msg.id) {
+          if (msg.success) {
+            resolve(msg.data as T)
+          } else {
+            reject(msg.error)
+          }
+        }
+      })
+      dbWorker.postMessage(request)
+
+      // 添加超时处理
+      setTimeout(() => {
+        if (pendingRequests.has(id)) {
+          pendingRequests.delete(id)
+          reject(new Error(`数据库操作超时: ${type}`))
+        }
+      }, 1000)
+    })
   }
 }

@@ -11,7 +11,11 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        external: ['webpack', 'vue-loader', 'rimraf']
+        external: ['webpack', 'vue-loader', 'rimraf', 'better-sqlite3'],
+        input: {
+          index: Path.resolve('src/main/index.ts'),
+          worker: Path.resolve('src/main/worker/DatabaseWorker.ts')
+        }
       }
     }
   },

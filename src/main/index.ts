@@ -2,7 +2,6 @@ import { app, BrowserWindow, Menu, protocol, session, shell } from 'electron'
 import path from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { InitializeDB } from './database/InitializeDatabase.ts'
 import { registerMainIpcHandlers } from './core/MainProcessApi.ts'
 import { initializeLogSetting } from './util/LogUtil.ts'
 import { initializeByConfig } from './core/InitializeByConfig.ts'
@@ -17,6 +16,8 @@ import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 import { createSiteBrowserManager } from './core/siteBrowserManager.ts'
 import { setupCSP } from './setupCsp.ts'
 import { registerCustomProtocols } from './protocol.ts'
+import { createDbWorker } from './core/dbWorker.ts'
+import log from 'electron-log'
 
 function createWindow(): BrowserWindow {
   // 定义一个唯一的 partition 名称
@@ -56,21 +57,23 @@ function createWindow(): BrowserWindow {
     // 阻止默认关闭行为
     event.preventDefault()
 
-    const taskQueue = getTaskQueue()
-    if (!taskQueue.isIdle()) {
-      await SendConfirmToWindow({
-        msg: '有任务正在进行中',
-        title: '是否关闭LibrarySquirrel？',
-        confirmButtonText: '关闭',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
+    try {
+      const taskQueue = getTaskQueue()
+      if (!taskQueue.isIdle()) {
+        await SendConfirmToWindow({
+          msg: '有任务正在进行中',
+          title: '是否关闭LibrarySquirrel？',
+          confirmButtonText: '关闭',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+      }
+      // 关闭任务队列
+      await taskQueue.shutdown()
+    } finally {
+      // 强制销毁窗口
+      mainWindow.destroy()
     }
-
-    // 关闭任务队列
-    await taskQueue.shutdown()
-    // 强制销毁窗口
-    mainWindow.destroy()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -166,22 +169,27 @@ app.whenReady().then(() => {
   createSettings()
 
   // 初始化数据库
-  InitializeDB().then(async () => {
-    // 创建服务层的ipc通信
-    registerMainIpcHandlers()
-    // 初始化任务队列
-    createTaskQueue()
-    // 初始化插件任务URL监听器管理器
-    createPluginTaskUrlListenerManager()
-    // 初始化站点浏览器管理器
-    createSiteBrowserManager()
-    // 初始化插件管理器
-    createPluginManager()
-    // 初始化站点和内置插件
-    await initializeByConfig()
-    // 激活启动时加载的插件
-    await getPluginManager().activateStartupPlugins()
-  })
+  createDbWorker()
+    .then(async () => {
+      // 创建服务层的ipc通信
+      registerMainIpcHandlers()
+      // 初始化任务队列
+      createTaskQueue()
+      // 初始化插件任务URL监听器管理器
+      createPluginTaskUrlListenerManager()
+      // 初始化站点浏览器管理器
+      createSiteBrowserManager()
+      // 初始化插件管理器
+      createPluginManager()
+      // 初始化站点和内置插件
+      await initializeByConfig()
+      // 激活启动时加载的插件
+      await getPluginManager().activateStartupPlugins()
+    })
+    .catch((error) => {
+      log.error(error)
+      throw error
+    })
 
   app.on('activate', function () {
     // On macOS, it's common to re-create a window in the app when the

@@ -1,4 +1,4 @@
-import Electron, { dialog } from 'electron'
+import Electron from 'electron'
 import fs from 'fs'
 import fsPromise from 'fs/promises'
 import log from '../util/LogUtil.ts'
@@ -67,12 +67,12 @@ export async function DirSelect(openFile: boolean, isModal?: boolean): Promise<E
     properties.push('openDirectory')
   }
   if (isModal) {
-    return dialog.showOpenDialog(getMainWindow(), {
+    return Electron.dialog.showOpenDialog(getMainWindow(), {
       defaultPath: defaultPath,
       properties: properties
     })
   } else {
-    return dialog.showOpenDialog({
+    return Electron.dialog.showOpenDialog({
       defaultPath: defaultPath,
       properties: properties
     })
