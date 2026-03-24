@@ -12,11 +12,11 @@ import { isNullish } from '@shared/util/CommonUtil.ts'
  */
 const borrowedWorkers = new WeakMap<ConnectionWorker, number>()
 
-/**
- * 是否持有排他锁
- * @private
- */
-let holdingLock: boolean = false
+// /**
+//  * 是否持有排他锁
+//  * @private
+//  */
+// let holdingLock: boolean = false
 
 /**
  * 数据库访问入口
@@ -80,16 +80,16 @@ export class Database {
    * @returns 执行结果
    */
   static async run<BindParameters extends unknown[]>(statement: string, ...params: BindParameters): Promise<BetterSqlite3.RunResult> {
-    // 事务中：由 TransactionContext 管理锁，这里不获取/释放锁
-    const inTransaction = TransactionContext.inTransaction()
-
-    // 非事务：获取排他锁，防止并发写操作导致数据库锁定
-    let lockAcquired = false
-    if (!inTransaction && !holdingLock) {
-      await getConnectionPool().acquireLock(this.caller, statement)
-      holdingLock = true
-      lockAcquired = true
-    }
+    // // 事务中：由 TransactionContext 管理锁，这里不获取/释放锁
+    // const inTransaction = TransactionContext.inTransaction()
+    //
+    // // 非事务：获取排他锁，防止并发写操作导致数据库锁定
+    // let lockAcquired = false
+    // if (!inTransaction && !holdingLock) {
+    //   await getConnectionPool().acquireLock(this.caller, statement)
+    //   holdingLock = true
+    //   lockAcquired = true
+    // }
 
     const worker = await this.acquireWorker()
     try {
@@ -100,11 +100,11 @@ export class Database {
       throw error
     } finally {
       this.releaseWorker(worker)
-      // 仅在获取了锁且非事务情况下释放排他锁
-      if (lockAcquired && !inTransaction && holdingLock) {
-        getConnectionPool().releaseLock(this.caller)
-        holdingLock = false
-      }
+      // // 仅在获取了锁且非事务情况下释放排他锁
+      // if (lockAcquired && !inTransaction && holdingLock) {
+      //   getConnectionPool().releaseLock(this.caller)
+      //   holdingLock = false
+      // }
     }
   }
 

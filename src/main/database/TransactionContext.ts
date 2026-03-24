@@ -106,8 +106,8 @@ class TransactionContext {
     const pool = getConnectionPool()
     const worker = await pool.acquire(RequestWeight.HIGH)
 
-    // 获取排他锁
-    await pool.acquireLock(caller, operation)
+    // // 获取排他锁
+    // await pool.acquireLock(caller, operation)
 
     const newState: TransactionState = {
       worker,
@@ -132,8 +132,8 @@ class TransactionContext {
       log.debug(caller, `${operation}，ROLLBACK`)
       throw error
     } finally {
-      // 释放排他锁
-      pool.releaseLock(caller)
+      // // 释放排他锁
+      // pool.releaseLock(caller)
       // 释放 Worker
       pool.release(worker.getIndex())
     }

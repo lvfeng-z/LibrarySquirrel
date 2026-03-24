@@ -34,16 +34,16 @@ export class ConnectionPool {
    * @private
    */
   private readonly waitingQueue: WaitingRequest[]
-  /**
-   * 是否写入锁定
-   * @private
-   */
-  private writeLocked: boolean
-  /**
-   * 虚拟排他锁的请求队列
-   * @private
-   */
-  private writeLockQueue: (() => void)[]
+  // /**
+  //  * 是否写入锁定
+  //  * @private
+  //  */
+  // private writeLocked: boolean
+  // /**
+  //  * 虚拟排他锁的请求队列
+  //  * @private
+  //  */
+  // private writeLockQueue: (() => void)[]
   /**
    * 初始化状态
    * @private
@@ -54,8 +54,8 @@ export class ConnectionPool {
     this.config = config
     this.workers = Array(this.config.maxConnections).fill(undefined)
     this.waitingQueue = []
-    this.writeLocked = false
-    this.writeLockQueue = []
+    // this.writeLocked = false
+    // this.writeLockQueue = []
   }
 
   /**
@@ -141,36 +141,36 @@ export class ConnectionPool {
     }
   }
 
-  /**
-   * 获取排他锁
-   */
-  public async acquireLock(requester: string, operation: string): Promise<void> {
-    return new Promise((resolve) => {
-      if (!this.writeLocked) {
-        log.debug('ConnectionPool.write', `${requester}锁定排他锁，操作：${operation}`)
-        this.writeLocked = true
-        resolve()
-      } else {
-        log.debug('ConnectionPool.write', `排他锁处于锁定状态，${requester}进入等待队列，操作：${operation}`)
-        this.writeLockQueue.push(() => resolve())
-      }
-    })
-  }
+  // /**
+  //  * 获取排他锁
+  //  */
+  // public async acquireLock(requester: string, operation: string): Promise<void> {
+  //   return new Promise((resolve) => {
+  //     if (!this.writeLocked) {
+  //       log.debug('ConnectionPool.write', `${requester}锁定排他锁，操作：${operation}`)
+  //       this.writeLocked = true
+  //       resolve()
+  //     } else {
+  //       log.debug('ConnectionPool.write', `排他锁处于锁定状态，${requester}进入等待队列，操作：${operation}`)
+  //       this.writeLockQueue.push(() => resolve())
+  //     }
+  //   })
+  // }
 
-  /**
-   * 释放排他锁
-   */
-  public releaseLock(requester: string): void {
-    if (this.writeLockQueue.length > 0) {
-      const next = this.writeLockQueue.shift()
-      if (next) {
-        next()
-      }
-    } else {
-      log.debug('ConnectionPool.write', `${requester}释放排他锁`)
-      this.writeLocked = false
-    }
-  }
+  // /**
+  //  * 释放排他锁
+  //  */
+  // public releaseLock(requester: string): void {
+  //   if (this.writeLockQueue.length > 0) {
+  //     const next = this.writeLockQueue.shift()
+  //     if (next) {
+  //       next()
+  //     }
+  //   } else {
+  //     log.debug('ConnectionPool.write', `${requester}释放排他锁`)
+  //     this.writeLocked = false
+  //   }
+  // }
 
   /**
    * 创建 Worker
