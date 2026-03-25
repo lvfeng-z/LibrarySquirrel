@@ -25,11 +25,7 @@ TaskQueueEntrance → WorkInfoSaveStream → ResourceSaveStream → TaskPersistS
 
 本计划依赖 **非主线程数据库操作实现计划**，需要先完成以下改造：
 
-- `Database.ts` 支持线程感知，自动选择数据库访问路径
-- 创建 `DedicatedDbProxy` 和 `DbProxyRegistry`，允许 Worker 线程通过专用连接执行数据库操作
-
-**关键点**：每个 TaskWorker 在执行任务期间独占一个数据库连接，任务完成后释放回连接池
-
+[non-main-thread-database-operation-plan.md](non-main-thread-database-operation-plan.md)
 ---
 
 ## 技术方案
@@ -99,7 +95,6 @@ export class TaskWorker {
 **设计要点**：
 - 在 Worker 线程中运行，使用 `workerData` 获取配置
 - 直接调用 `Database.run()` 等方法（依赖前置计划）
-- 每个 TaskWorker 拥有专属的数据库连接（通过 DedicatedDbProxy）
 - 任务完成/停止时必须释放数据库连接回连接池
 - 通过消息机制与主线程通信（进度推送、状态变更通知）
 
@@ -120,7 +115,7 @@ export class TaskWorkerPool {
   // 提交任务（自动分配或排队）
   submitTask(task: TaskRunInstance): void
 
-  // 释放工作线程（同时释放数据库连接）
+  // 释放工作线程
   releaseWorker(workerId: number): void
 
   // 暂停指定任务
@@ -138,8 +133,6 @@ export class TaskWorkerPool {
 ```
 
 **设计要点**：
-- 每个 TaskWorker 对应一个专用数据库连接（由 DedicatedDbProxy 管理）
-- 释放工作线程时，同时触发数据库连接的释放
 - `taskToWorkerMap` 用于快速定位任务所在的工作线程
 
 ---
@@ -252,7 +245,7 @@ TaskWorkerPool.submitTask(task)
 | 操作 | 文件路径 | 说明 |
 |------|---------|------|
 | 新增 | `src/main/constant/WorkerStatusEnum.ts` | 工作线程状态枚举 |
-| 新增 | `src/main/core/classes/TaskWorker.ts` | 工作线程类（含数据库连接释放） |
+| 新增 | `src/main/core/classes/TaskWorker.ts` | 工作线程类 |
 | 新增 | `src/main/core/classes/TaskWorkerPool.ts` | 工作线程池类 |
 | 修改 | `src/main/core/classes/TaskQueue.ts` | 移除 Stream，集成 TaskWorkerPool |
 | 修改 | `src/main/core/taskQueue.ts` | 导出 TaskWorkerPool 单例 |

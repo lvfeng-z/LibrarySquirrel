@@ -16,12 +16,10 @@
 
 ### 关键要求
 
-1. **代理持有连接**：当子线程向代理请求连接时，主线程从连接池获取一个专用连接，由代理持有
-2. **1:1 映射**：
-   - 子线程向代理请求连接 = 主线程为代理请求连接（从连接池获取）
-   - 子线程向代理请求数据库操作 = 主线程使用该代理持有的连接进行数据库操作
-   - 子线程向代理请求释放连接 = 主线程释放该代理持有的连接（归还到连接池）
-3. **显式释放**：直到子线程**明确请求释放**该连接时，主线程才将其归还到连接池
+1. **对子线程无感**：子线程只需调用 `Database.run()` 等方法，无需知道自己在子线程，`Database.ts` 自动处理线程判断和路由
+2. **通用设计**：不专为 TaskWorker 设计，任何 Worker 线程都能使用同一套数据库访问方式
+3. **按需获取连接**：每次数据库操作时从连接池获取连接，操作完成后立即释放（而非长期占用）
+4. **显式释放**：连接在单次数据库操作完成后即归还到连接池（而非等待任务结束）
 
 ### 设计含义
 
@@ -66,44 +64,10 @@
 └──────────────────────┴─────────┴──────────────────────────┘
 
 说明：
-1. 子线程请求连接 → 主线程从连接池获取 → 代理持有
-2. 子线程请求操作 → 主线程使用代理持有的连接执行 → 返回结果
-3. 子线程请求释放 → 主线程归还连接到连接池 → 代理不再持有
-
-流程详解（以 TaskWorker 1 为例）：
-┌─────────────────────────────────────────────────────────────────┐
-│ TaskWorker 1                                                    │
-│                                                                 │
-│ 1. Database.run('SELECT * FROM task')                          │
-│    │                                                           │
-│    ▼ (Database.ts 检测到非主线程，调用 DedicatedDbProxy)        │
-│                                                                 │
-│ 2. DedicatedDbProxy.run('SELECT * FROM task')                  │
-│    │                                                           │
-│    │ (发送消息到主线程)                                         │
-│    ▼                                                           │
-│ 3. process.parentPort.postMessage({                            │
-│       type: 'run',                                             │
-│       statement: 'SELECT * FROM task',                         │
-│       threadId: 1                                              │
-│     })                                                         │
-│    │                                                           │
-└────┼───────────────────────────────────────────────────────────┘
-     │
-     │ 消息通信
-     ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 主线程: DbProxyRegistry                                        │
-│                                                                 │
-│ 4. 接收消息，根据 threadId=1 找到对应的 ConnectionWorker        │
-│    │                                                           │
-│    ▼                                                           │
-│ 5. worker.run('SELECT * FROM task')                            │
-│    │ (使用该代理持有的专用连接执行)                              │
-│    │                                                           │
-│ 6. 返回结果到子线程                                             │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+1. 子线程调用 Database.run() → Database.ts 自动检测到非主线程
+2. 请求转发到主线程 → 主线程从连接池获取连接 → 执行数据库操作
+3. 操作完成 → 立即归还连接到连接池 → 返回结果到子线程
+4. 子线程无感知，与在主线程调用 Database.run() 方式完全相同
 ```
 
 ---
@@ -125,9 +89,9 @@
 
 ### 对任务队列重构的影响
 
-1. **TaskWorker 可直接调用 Database**：无需在主线程中代理数据库操作，简化 TaskWorker 实现
-2. **Database.ts 需支持线程感知**：自动检测运行环境，选择正确的数据库访问路径
-3. **每个 TaskWorker 拥有独立数据库连接**：任务执行期间独占连接，完成后释放
+1. **子线程无感知调用 Database**：TaskWorker 只需调用 `Database.run()`，无需关心线程判断
+2. **通用设计**：任何 Worker 线程都能使用同一套数据库访问方式，不限于 TaskWorker
+3. **按需连接**：每次数据库操作时获取连接，完成后立即释放，无需管理连接生命周期
 
 ---
 
@@ -208,12 +172,7 @@ export class Database {
     }
   }
 
-  // 获取当前线程的专用数据库代理（仅非主线程使用）
-  private static getDedicatedProxy(): DedicatedDbProxy | null {
-    return DedicatedDbProxy.getInstance()
-  }
-
-  // 获取数据库连接 Worker
+  // 获取数据库连接 Worker（每次操作时获取）
   private static async acquireWorker(): Promise<ConnectionWorker> {
     if (this.isInMainThread()) {
       // 主线程：使用现有逻辑
@@ -225,16 +184,16 @@ export class Database {
       borrowedWorkers.set(worker, worker.getIndex())
       return worker
     } else {
-      // 非主线程：通过专用代理获取连接
-      const proxy = this.getDedicatedProxy()
+      // 非主线程：通过代理获取连接（按需获取）
+      const proxy = this.getDbProxy()
       if (!proxy) {
-        throw new Error('DedicatedDbProxy 未初始化')
+        throw new Error('DbProxy 未初始化')
       }
       return proxy.acquireWorker()
     }
   }
 
-  // 释放数据库连接 Worker
+  // 释放数据库连接 Worker（每次操作后释放）
   private static releaseWorker(worker: ConnectionWorker): void {
     if (this.isInMainThread()) {
       // 主线程：现有逻辑
@@ -248,37 +207,49 @@ export class Database {
         borrowedWorkers.delete(worker)
       }
     } else {
-      // 非主线程：通过专用代理释放连接
-      const proxy = this.getDedicatedProxy()
+      // 非主线程：通过代理释放连接（每次操作后立即释放）
+      const proxy = this.getDbProxy()
       if (proxy) {
         proxy.releaseWorker(worker)
       }
+    }
+  }
+
+  // 执行数据库操作（每次操作自动获取和释放连接）
+  static async run(statement: string, params?: unknown[]): Promise<unknown> {
+    const worker = await this.acquireWorker()
+    try {
+      const result = await worker.run(statement, params)
+      return result
+    } finally {
+      this.releaseWorker(worker)  // 操作完成后立即释放
     }
   }
 }
 ```
 
 **关键改进**：
-- 新增 `getDedicatedProxy()` 方法，获取当前线程的代理实例
-- Database.ts 无需关心 threadId，由 DedicatedDbProxy 内部管理
-- 子线程只需调用 `Database.run()`，无感知地使用数据库操作
+- 子线程调用 `Database.run()` 时自动获取连接
+- 操作完成后在 `finally` 中立即释放连接
+- 子线程无需管理连接生命周期，与主线程调用方式完全相同
 
-#### 4. DedicatedDbProxy 设计（关键组件）
+#### 4. DbProxy 设计（关键组件）
 
-**核心职责**：在每个 Worker 线程中维护一个与主线程数据库连接的 1:1 映射
+**核心职责**：在每个 Worker 线程中作为数据库操作的代理，负责将请求转发到主线程
 
 **重要**：
-- DedicatedDbProxy 在**每个 Worker 线程中是单例**（通过 `getInstance()` 获取）
-- 不同 Worker 线程拥有不同的 DedicatedDbProxy 实例，各自持有独立的数据库连接
+- DbProxy 在**每个 Worker 线程中是单例**（通过 `getInstance()` 获取）
+- 不同 Worker 线程拥有不同的 DbProxy 实例
+- 每次数据库操作时获取连接，完成后立即释放（不长期持有）
 - Worker 线程启动时自动初始化，Database.ts 无需传递 threadId
 
 ```typescript
-// src/main/core/classes/DedicatedDbProxy.ts
+// src/main/core/classes/DbProxy.ts
 
 interface DbRequest {
   requestId: string
   threadId: number  // 线程ID，用于主线程区分来源
-  type: 'run' | 'get' | 'all' | 'exec' | 'acquire' | 'release'
+  type: 'run' | 'get' | 'all' | 'exec'
   statement?: string
   params?: unknown[]
 }
@@ -288,24 +259,23 @@ interface DbResponse {
   success: boolean
   result?: unknown
   error?: string
-  workerIndex?: number  // 用于标识连接
 }
 
 // 模块级变量：存储当前线程的代理实例
-let dbProxyInstance: DedicatedDbProxy | null = null
+let dbProxyInstance: DbProxy | null = null
 
 /**
- * 专用数据库代理
+ * 数据库代理
  *
  * 使用方式：
- * 1. Worker 线程启动时：new DedicatedDbProxy() 自动初始化
- * 2. Database.ts 调用：DedicatedDbProxy.getInstance() 获取当前线程的代理
+ * 1. Worker 线程启动时：new DbProxy() 自动初始化
+ * 2. Database.ts 调用：DbProxy.getInstance() 获取当前线程的代理
+ *
+ * 特点：每次请求时获取连接，完成后立即释放，不长期占用
  */
-export class DedicatedDbProxy {
+export class DbProxy {
   private readonly threadId: number  // 当前线程ID
   private pendingRequests: Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }> = new Map()
-  private acquiredWorker: ConnectionWorker | null = null  // 当前持有的专用连接
-  private workerIndex: number | null = null  // 连接索引
 
   constructor(threadId: number) {
     this.threadId = threadId
@@ -328,7 +298,7 @@ export class DedicatedDbProxy {
   }
 
   // 获取当前线程的代理实例（供 Database.ts 调用）
-  static getInstance(): DedicatedDbProxy | null {
+  static getInstance(): DbProxy | null {
     return dbProxyInstance
   }
 
@@ -337,39 +307,7 @@ export class DedicatedDbProxy {
     return this.threadId
   }
 
-  // 从主线程获取专用数据库连接（长期占用）
-  async acquireWorker(): Promise<ConnectionWorker> {
-    if (this.acquiredWorker) {
-      return this.acquiredWorker  // 已有专用连接，复用
-    }
-
-    const requestId = `acquire_${Date.now()}`
-    return new Promise((resolve, reject) => {
-      this.pendingRequests.set(requestId, {
-        resolve: (result) => {
-          this.acquiredWorker = result as unknown as ConnectionWorker
-          resolve(this.acquiredWorker)
-        },
-        reject
-      })
-
-      this.sendToMain({ requestId, type: 'acquire', threadId: this.threadId })
-    })
-  }
-
-  // 释放专用数据库连接（归还到连接池）
-  releaseWorker(_worker: ConnectionWorker): void {
-    if (!this.acquiredWorker) {
-      return  // 没有专用连接，无需释放
-    }
-
-    const requestId = `release_${Date.now()}`
-    this.sendToMain({ requestId, type: 'release', threadId: this.threadId })
-    this.acquiredWorker = null
-    this.workerIndex = null
-  }
-
-  // 执行数据库操作（通过专用连接）
+  // 执行数据库操作（每次操作自动获取和释放连接）
   async run(statement: string, params?: unknown[]): Promise<unknown> {
     return this.sendRequest({ type: 'run', statement, params, threadId: this.threadId })
   }
@@ -405,50 +343,40 @@ export class DedicatedDbProxy {
 ```typescript
 // ===== Worker 线程入口文件 (如 taskWorkerEntry.ts) =====
 // Worker 线程启动时自动初始化代理
-import { DedicatedDbProxy } from './DedicatedDbProxy.ts'
+import { DbProxy } from './DbProxy.ts'
 
 // 创建代理实例，自动存储到模块级变量
-new DedicatedDbProxy(workerData.threadId)
+new DbProxy(workerData.threadId)
 
 
-// ===== Database.ts 中调用 =====
-// 无需传递 threadId，自动获取当前线程的代理
-const proxy = DedicatedDbProxy.getInstance()
-if (proxy) {
-  // 使用代理执行操作
-  const result = await proxy.run('SELECT * FROM task')
-}
+// ===== Worker 线程中使用 Database =====
+// 与主线程调用方式完全相同，无需感知线程差异
+import { Database } from '../../database/Database.ts'
+
+const result = await Database.run('SELECT * FROM task WHERE id = ?', [taskId])
 ```
 
 #### 5. DbProxyRegistry 设计
 
-**核心职责**：在主线程中管理所有子线程的专用数据库连接，按线程ID索引
+**核心职责**：在主线程中接收子线程的数据库操作请求，每次请求时从连接池获取连接，执行完成后立即释放
 
 ```typescript
 // src/main/core/DbProxyRegistry.ts
-
-interface ProxyInfo {
-  threadId: number
-  worker: ConnectionWorker
-  createdAt: number
-}
 
 /**
  * 数据库代理注册表
  *
  * 核心功能：
- * 1. 按 threadId 管理每个 Worker 线程的专用数据库连接
- * 2. 处理 acquire 请求：为请求的线程分配新的专用连接
- * 3. 处理 release 请求：归还指定线程的连接到连接池
- * 4. 处理数据库操作：使用对应线程的连接执行操作
+ * 1. 接收子线程的数据库操作请求
+ * 2. 每次请求时从连接池获取连接
+ * 3. 执行数据库操作
+ * 4. 操作完成后立即归还连接到连接池（不长期占用）
  *
- * 关键：threadId -> ConnectionWorker 是 1:1 映射
+ * 关键：每次操作都是独立的获取/执行/释放流程
  */
 
 export class DbProxyRegistry {
-  private static proxies: Map<number, ProxyInfo> = new Map()
   private static initialized: boolean = false
-  private static messageHandler: ((message: DbMessage) => void) | null = null
 
   static initialize(): void {
     if (this.initialized) return
@@ -467,81 +395,23 @@ export class DbProxyRegistry {
 
     try {
       switch (type) {
-        case 'create-dedicated-proxy': {
-          // 创建专用数据库代理
-          const worker = await this.createDedicatedConnection()
-          this.proxies.set(threadId, {
-            threadId,
-            worker,
-            createdAt: Date.now()
-          })
-
-          process.parentPort?.postMessage({
-            requestId,
-            success: true,
-            workerIndex: worker.getIndex()
-          })
-          break
-        }
-
-        case 'acquire': {
-          // 获取专用连接（如果已存在则直接返回）
-          const proxyInfo = this.proxies.get(threadId)
-          if (proxyInfo) {
-            process.parentPort?.postMessage({
-              requestId,
-              success: true,
-              workerIndex: proxyInfo.worker.getIndex()
-            })
-          } else {
-            // 首次获取，创建新连接
-            const worker = await this.createDedicatedConnection()
-            this.proxies.set(threadId, {
-              threadId,
-              worker,
-              createdAt: Date.now()
-            })
-
-            process.parentPort?.postMessage({
-              requestId,
-              success: true,
-              workerIndex: worker.getIndex()
-            })
-          }
-          break
-        }
-
-        case 'release': {
-          // 释放专用连接（归还到连接池）
-          const proxyInfo = this.proxies.get(threadId)
-          if (proxyInfo) {
-            getConnectionPool().release(proxyInfo.worker.getIndex())
-            this.proxies.delete(threadId)
-          }
-
-          process.parentPort?.postMessage({
-            requestId,
-            success: true
-          })
-          break
-        }
-
         case 'run':
         case 'get':
         case 'all':
         case 'exec': {
-          // 执行数据库操作
-          const proxyInfo = this.proxies.get(threadId)
-          if (!proxyInfo) {
-            throw new Error(`线程 ${threadId} 没有专用数据库连接`)
+          // 每次操作：获取连接 → 执行 → 释放
+          const worker = await this.acquireConnection()
+          try {
+            const result = await this.executeDbOperation(worker, message)
+            process.parentPort?.postMessage({
+              requestId,
+              success: true,
+              result
+            })
+          } finally {
+            // 操作完成后立即释放连接
+            this.releaseConnection(worker)
           }
-
-          const result = await this.executeDbOperation(proxyInfo.worker, message)
-          process.parentPort?.postMessage({
-            requestId,
-            success: true,
-            result
-          })
           break
         }
       }
@@ -554,11 +424,15 @@ export class DbProxyRegistry {
     }
   }
 
-  private static async createDedicatedConnection(): Promise<ConnectionWorker> {
+  private static async acquireConnection(): Promise<ConnectionWorker> {
     const pool = getConnectionPool()
-    // 专用连接使用较高优先级
     const worker = await pool.acquire(RequestWeight.HIGH)
     return worker
+  }
+
+  private static releaseConnection(worker: ConnectionWorker): void {
+    const pool = getConnectionPool()
+    pool.release(worker.getIndex())
   }
 
   private static async executeDbOperation(
@@ -579,17 +453,9 @@ export class DbProxyRegistry {
     }
   }
 
-  // 获取当前活跃的代理数量
-  static getActiveProxyCount(): number {
-    return this.proxies.size
-  }
-
-  // 清理所有代理（应用关闭时）
+  // 清理所有资源（应用关闭时）
   static async cleanup(): Promise<void> {
-    for (const [_, proxyInfo] of this.proxies) {
-      getConnectionPool().release(proxyInfo.worker.getIndex())
-    }
-    this.proxies.clear()
+    // 无需清理，因为每次操作后立即释放
   }
 }
 ```
@@ -631,7 +497,7 @@ export class DbProxyRegistry {
 
 | 操作 | 文件路径 | 说明 |
 |------|---------|------|
-| 新增 | `src/main/core/classes/DedicatedDbProxy.ts` | 子线程专用数据库代理（长连接） |
+| 新增 | `src/main/core/classes/DbProxy.ts` | 子线程数据库代理（每次操作获取/释放连接） |
 | 新增 | `src/main/core/DbProxyRegistry.ts` | 主线程端代理注册表 |
 | 修改 | `src/main/database/Database.ts` | 增加线程感知逻辑 |
 | 修改 | `src/main/index.ts` 或初始化文件 | 启动时初始化 DbProxyRegistry |
@@ -640,11 +506,12 @@ export class DbProxyRegistry {
 
 ## 关键设计说明
 
-### 为什么采用专用连接模式？
+### 为什么采用按需获取连接模式？
 
-1. **性能优化**：避免每次数据库操作都进行进程间通信和连接池获取/释放
-2. **1:1 映射**：每个 TaskWorker 拥有独立的数据库连接，任务执行期间独占
-3. **简化事务处理**：同一连接内的事务操作更可靠
+1. **通用性**：不限于 TaskWorker，任何 Worker 线程都能使用
+2. **子线程无感**：子线程只需调用 `Database.run()`，无需知道自己在子线程
+3. **资源高效**：每次操作后立即释放连接，连接池利用率更高
+4. **简化管理**：无需在子线程中管理连接的长期持有和释放
 
 ### 连接生命周期
 
@@ -652,7 +519,7 @@ export class DbProxyRegistry {
 Worker 线程启动
     │
     ▼
-new DedicatedDbProxy(threadId) 构造函数
+new DbProxy(threadId) 构造函数
     │
     │ 自动存储到模块级变量 dbProxyInstance
     ▼
@@ -660,38 +527,31 @@ Database.run() 被调用
     │
     │ 检测到非主线程
     ▼
-DedicatedDbProxy.getInstance() 获取代理
-    │
-    │ 首次调用：请求主线程分配专用连接
-    ▼
-主线程: DbProxyRegistry 从连接池获取专用连接
-    │
-    │ 代理持有连接（长期占用）
-    ▼
-TaskWorker 执行任务（调用 Database.run/get/all）
-    │
-    ├─ Database.run() → 代理发送请求 → 主线程使用同一连接执行
-    ├─ Database.get() → 代理发送请求 → 主线程使用同一连接执行
-    └─ Database.all() → 代理发送请求 → 主线程使用同一连接执行
+DbProxy.sendRequest() 发送请求到主线程
     │
     ▼
-TaskWorker 完成/停止
+主线程: DbProxyRegistry 从连接池获取连接
     │
     ▼
-代理.releaseWorker() 请求释放连接
+执行数据库操作
     │
     ▼
-主线程: DbProxyRegistry 归还连接到连接池
+归还连接到连接池（每次操作后立即释放）
+    │
+    ▼
+返回结果到子线程
+    │
+    ▼
+（每次 Database.run() 调用都重复上述流程）
 ```
 
 ---
 
 ## 风险与注意事项
 
-1. **连接泄漏**：必须确保 TaskWorker 停止时正确释放专用连接
-2. **线程安全**：DedicatedDbProxy 需要正确处理并发请求
-3. **超时处理**：需要为代理请求设置超时，避免线程阻塞
-4. **连接池容量**：需要根据 maxParallelImport 合理配置连接池大小
+1. **性能开销**：每次操作都需要进程间通信，但连接复用可缓解
+2. **事务处理**：单次操作内的事务没问题，跨多次操作的事务需要特殊处理
+3. **连接池容量**：需要合理配置连接池大小，支持并发操作
 
 ---
 
@@ -699,7 +559,7 @@ TaskWorker 完成/停止
 
 完成本计划后：
 
-1. **TaskWorker 可直接调用 Database.run() 等方法**
-2. **每个 TaskWorker 拥有独立的数据库连接**
-3. **任务完成后自动释放连接**
-4. **无需额外处理数据库操作的线程安全问题**
+1. **Worker 线程无感知调用 Database**：TaskWorker 只需调用 `Database.run()`，无需关心线程判断
+2. **通用设计**：任何 Worker 线程都能使用同一套数据库访问方式
+3. **按需连接**：每次数据库操作时获取连接，完成后立即释放
+4. **简化 TaskWorker 实现**：无需管理连接生命周期
