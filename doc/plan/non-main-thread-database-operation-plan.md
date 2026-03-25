@@ -91,7 +91,7 @@
 
 1. **子线程无感知调用 Database**：TaskWorker 只需调用 `Database.run()`，无需关心线程判断
 2. **通用设计**：任何 Worker 线程都能使用同一套数据库访问方式，不限于 TaskWorker
-3. **按需连接**：每次数据库操作时获取连接，完成后立即释放，无需管理连接生命周期
+3. **按需连接**：每次数据库操作时获取连接，完成后立即释放，像主程序中一样无需手动管理连接生命周期
 
 ---
 
@@ -552,6 +552,327 @@ DbProxy.sendRequest() 发送请求到主线程
 1. **性能开销**：每次操作都需要进程间通信，但连接复用可缓解
 2. **事务处理**：单次操作内的事务没问题，跨多次操作的事务需要特殊处理
 3. **连接池容量**：需要合理配置连接池大小，支持并发操作
+
+---
+
+## 子线程事务支持设计
+
+### 问题分析
+
+当前 `TransactionContext` 使用 `AsyncLocalStorage` 存储事务状态，但 `AsyncLocalStorage` 是线程隔离的：
+
+- 主线程的 `AsyncLocalStorage` 无法被 Worker 线程访问
+- Worker 线程的 `AsyncLocalStorage` 是独立的存储实例
+- 当前 `DbProxy` 每次操作获取/释放连接，不支持跨操作的事务
+
+### 设计方案：主线程事务代理
+
+**核心思路**：子线程的事务状态管理在子线程，实际 SQL 执行在主线程。主线程通过 `ThreadTransactionRegistry` 维护每个子线程事务的连接。
+
+### 新增消息类型
+
+```typescript
+// 事务相关消息
+type TransactionMessage =
+  | { type: 'transaction_begin'; transactionId: string; caller: string; operation: string }
+  | { type: 'transaction_end'; transactionId: string; commit: boolean }
+  | { type: 'transaction_run'; transactionId: string; statement: string; params?: unknown[] }
+  | { type: 'transaction_get'; transactionId: string; statement: string; params?: unknown[] }
+  | { type: 'transaction_all'; transactionId: string; statement: string; params?: unknown[] }
+  | { type: 'transaction_exec'; transactionId: string; statement: string }
+  | { type: 'transaction_savepoint'; transactionId: string; savepointName: string }
+  | { type: 'transaction_release_savepoint'; transactionId: string; savepointName: string }
+  | { type: 'transaction_rollback_savepoint'; transactionId: string; savepointName: string }
+```
+
+### 子线程端 `DbProxy` 改造
+
+```typescript
+// src/main/core/classes/DbProxy.ts
+
+// 子线程事务状态
+interface ThreadTransactionState {
+  transactionId: string
+  savepointStack: string[]  // 保存点栈，用于嵌套事务
+}
+
+// 模块级变量
+let dbProxyInstance: DbProxy | null = null
+let currentTransaction: ThreadTransactionState | null = null
+
+export class DbProxy {
+  // ... 现有代码 ...
+
+  /**
+   * 在子线程中执行事务
+   * 事务的 BEGIN/COMMIT/ROLLBACK 由主线程执行
+   */
+  async runInTransaction<R>(caller: string, operation: string, fn: () => Promise<R>): Promise<R> {
+    // 检查是否已在事务中（嵌套事务）
+    if (currentTransaction) {
+      return this.runNestedTransaction(fn)
+    }
+
+    // 最外层事务：请求主线程开启事务
+    const transactionId = `tx_${process.pid}_${Date.now()}_${Math.random()}`
+    currentTransaction = { transactionId, savepointStack: [] }
+
+    try {
+      await this.sendRequest({
+        type: 'transaction_begin',
+        transactionId,
+        caller,
+        operation
+      })
+
+      const result = await fn()
+
+      await this.sendRequest({
+        type: 'transaction_end',
+        transactionId,
+        commit: true
+      })
+      return result
+    } catch (error) {
+      await this.sendRequest({
+        type: 'transaction_end',
+        transactionId,
+        commit: false
+      })
+      throw error
+    } finally {
+      currentTransaction = null
+    }
+  }
+
+  /**
+   * 执行嵌套事务
+   */
+  private async runNestedTransaction<R>(fn: () => Promise<R>): Promise<R> {
+    const savepointName = `sp_${Date.now()}_${Math.random()}`
+    currentTransaction!.savepointStack.push(savepointName)
+
+    try {
+      await this.sendRequest({
+        type: 'transaction_savepoint',
+        transactionId: currentTransaction!.transactionId,
+        savepointName
+      })
+      const result = await fn()
+      await this.sendRequest({
+        type: 'transaction_release_savepoint',
+        transactionId: currentTransaction!.transactionId,
+        savepointName
+      })
+      currentTransaction!.savepointStack.pop()
+      return result
+    } catch (error) {
+      await this.sendRequest({
+        type: 'transaction_rollback_savepoint',
+        transactionId: currentTransaction!.transactionId,
+        savepointName
+      })
+      currentTransaction!.savepointStack.pop()
+      throw error
+    }
+  }
+
+  // 数据库操作（自动使用事务连接）
+  async run(statement: string, params?: unknown[]): Promise<unknown> {
+    if (currentTransaction) {
+      return this.sendRequest({
+        type: 'transaction_run',
+        transactionId: currentTransaction.transactionId,
+        statement,
+        params
+      })
+    }
+    return this.sendRequest({ type: 'run', statement, params })
+  }
+
+  // 其他方法类似...
+}
+```
+
+### 主线程端 `DbProxyRegistry` 改造
+
+```typescript
+// src/main/core/DbProxyRegistry.ts
+
+interface ThreadTransaction {
+  worker: ConnectionWorker
+  savepointCounter: number
+}
+
+// threadId -> transactionId -> ThreadTransaction
+const threadTransactions = new Map<number, Map<string, ThreadTransaction>>()
+
+private static async handleMessage(message: DbMessage): Promise<void> {
+  const { type, threadId } = message
+
+  switch (type) {
+    case 'transaction_begin': {
+      const { transactionId, caller, operation } = message
+      const pool = getConnectionPool()
+      const worker = await pool.acquire(RequestWeight.HIGH)
+
+      await worker.exec('BEGIN')
+      log.debug(caller, `${operation}，BEGIN`)
+
+      if (!threadTransactions.has(threadId)) {
+        threadTransactions.set(threadId, new Map())
+      }
+      threadTransactions.get(threadId)!.set(transactionId, {
+        worker,
+        savepointCounter: 0
+      })
+
+      process.parentPort?.postMessage({
+        requestId: message.requestId,
+        success: true,
+        result: null
+      })
+      break
+    }
+
+    case 'transaction_end': {
+      const { transactionId, commit, threadId } = message
+      const txMap = threadTransactions.get(threadId)
+      const tx = txMap?.get(transactionId)
+
+      if (tx) {
+        await tx.worker.exec(commit ? 'COMMIT' : 'ROLLBACK')
+        log.debug('DbProxyRegistry', `${commit ? 'COMMIT' : 'ROLLBACK'}`)
+
+        const pool = getConnectionPool()
+        pool.release(tx.worker.getIndex())
+        txMap!.delete(transactionId)
+      }
+      break
+    }
+
+    case 'transaction_run':
+    case 'transaction_get':
+    case 'transaction_all':
+    case 'transaction_exec': {
+      const { transactionId, threadId } = message
+      const tx = threadTransactions.get(threadId)?.get(transactionId)
+
+      if (tx) {
+        const result = await this.executeDbOperation(tx.worker, message)
+        process.parentPort?.postMessage({
+          requestId: message.requestId,
+          success: true,
+          result
+        })
+      }
+      break
+    }
+
+    case 'transaction_savepoint': {
+      const { transactionId, threadId, savepointName } = message
+      const tx = threadTransactions.get(threadId)?.get(transactionId)
+
+      if (tx) {
+        await tx.worker.exec(`SAVEPOINT ${savepointName}`)
+        tx.savepointCounter++
+        log.debug('DbProxyRegistry', `SAVEPOINT ${savepointName}`)
+      }
+      break
+    }
+
+    case 'transaction_release_savepoint':
+    case 'transaction_rollback_savepoint': {
+      const { transactionId, threadId, savepointName } = message
+      const tx = threadTransactions.get(threadId)?.get(transactionId)
+
+      if (tx) {
+        const sql = type === 'transaction_release_savepoint'
+          ? `RELEASE SAVEPOINT ${savepointName}`
+          : `ROLLBACK TO SAVEPOINT ${savepointName}`
+        await tx.worker.exec(sql)
+        tx.savepointCounter--
+        log.debug('DbProxyRegistry', sql)
+      }
+      break
+    }
+  }
+}
+```
+
+### 调用示例
+
+```typescript
+// ===== Worker 线程中使用事务 =====
+import { Database } from '../../database/Database.ts'
+
+// 方式一：通过 DbProxy.runInTransaction（推荐）
+const result = await dbProxy.runInTransaction('TaskService', '保存任务', async () => {
+  // 在事务中执行多个数据库操作
+  await Database.run('INSERT INTO task (...) VALUES (...)', params1)
+  await Database.run('UPDATE task SET ... WHERE ...', params2)
+  await Database.run('INSERT INTO task_log (...) VALUES (...)', params3)
+  return someResult
+})
+
+// 方式二：通过 Database.runInTransaction（兼容主线程风格）
+const result = await Database.runInTransaction('TaskService', '保存任务', async () => {
+  await Database.run('INSERT INTO task (...) VALUES (...)', params1)
+  await Database.run('UPDATE task SET ... WHERE ...', params2)
+  return someResult
+})
+
+// 嵌套事务示例
+await dbProxy.runInTransaction('TaskService', '批量保存', async () => {
+  await Database.run('INSERT INTO task (...) VALUES (...)', params1)
+
+  // 嵌套事务（自动使用 SAVEPOINT）
+  await dbProxy.runInTransaction('TaskService', '嵌套操作', async () => {
+    await Database.run('INSERT INTO task_log (...) VALUES (...)', params2)
+    throw new Error('模拟错误')  // 会回滚嵌套保存点
+  })
+
+  await Database.run('INSERT INTO task_info (...) VALUES (...)', params3)
+})
+```
+
+### 事务生命周期
+
+```
+Worker 线程                    主线程
+    │                            │
+    │──transaction_begin────────▶│ 获取连接
+    │                            │ 执行 BEGIN
+    │                            │ 注册事务
+    │◀──response─────────────────│
+    │                            │
+    │──transaction_run──────────▶│ 使用同一连接执行
+    │◀──response─────────────────│
+    │                            │
+    │──transaction_savepoint────▶│ 执行 SAVEPOINT
+    │◀──response─────────────────│
+    │                            │
+    │──transaction_run──────────▶│ 使用同一连接执行
+    │◀──response─────────────────│
+    │                            │
+    │──transaction_rollback_sp─▶│ ROLLBACK TO SAVEPOINT
+    │◀──response─────────────────│
+    │                            │
+    │──transaction_end(commit)──▶│ 执行 COMMIT
+    │                            │ 释放连接
+    │◀──response─────────────────│
+    │                            │
+```
+
+### 与主线程 TransactionContext 的对比
+
+| 特性 | 主线程 TransactionContext | 子线程 DbProxy.runInTransaction |
+|------|---------------------------|----------------------------------|
+| 事务状态存储 | `AsyncLocalStorage` | 子线程模块变量 |
+| 连接获取 | 主线程连接池 | 主线程连接池（代理） |
+| BEGIN/COMMIT | 直接执行 | 通过消息代理执行 |
+| SAVEPOINT | 直接执行 | 通过消息代理执行 |
+| 嵌套事务 | 通过 savepointCounter | 通过 savepointStack |
 
 ---
 
