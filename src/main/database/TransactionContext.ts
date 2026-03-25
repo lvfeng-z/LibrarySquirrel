@@ -83,7 +83,7 @@ class TransactionContext {
     // 嵌套事务：已有上下文，直接执行
     if (store) {
       // 创建保存点
-      const savepointName = `sp${store.savepointCounter++}`
+      const savepointName = `sp_${store.savepointCounter++}`
       const worker = store.worker
 
       try {
