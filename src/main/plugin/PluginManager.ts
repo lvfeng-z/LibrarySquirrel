@@ -18,6 +18,7 @@ import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
 import { ActivationType } from './types/ActivationTypes.ts'
+import { ContributionFilePathInfo, GetContributionOptions } from './types/ContributionFilePathInfo.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import Site from '@shared/model/entity/Site.ts'
@@ -152,15 +153,39 @@ export default class PluginManager {
     pluginPublicId: string,
     key: K,
     contributionId: string
-  ): Promise<ContributionMap[K]> {
+  ): Promise<ContributionMap[K]>
+  /**
+   * 获取指定贡献点的文件路径信息（用于子线程加载）
+   * @param pluginPublicId 插件ID
+   * @param key 贡献点键名
+   * @param contributionId 贡献点id
+   * @param options 选项
+   * @param options.returnFilePath 是否返回文件路径信息
+   * @returns 贡献点文件路径信息
+   */
+  public async getContribution<K extends ContributionKey>(
+    pluginPublicId: string,
+    key: K,
+    contributionId: string,
+    options: GetContributionOptions
+  ): Promise<ContributionFilePathInfo>
+  /**
+   * 获取指定贡献点实现
+   */
+  public async getContribution<K extends ContributionKey>(
+    pluginPublicId: string,
+    key: K,
+    contributionId: string,
+    options?: GetContributionOptions
+  ): Promise<ContributionMap[K] | ContributionFilePathInfo> {
     const pluginInstance = await this.load(pluginPublicId)
-    const contribution = await pluginInstance.getContribution(key, contributionId)
+    const contribution = await pluginInstance.getContribution(key, contributionId, options)
 
     if (isNullish(contribution)) {
       throw new Error(`插件 ${pluginPublicId} 未实现 ${key} 贡献点`)
     }
 
-    return contribution as ContributionMap[K]
+    return contribution as ContributionMap[K] | ContributionFilePathInfo
   }
 
   /**

@@ -1,6 +1,6 @@
 import { DefaultSettings } from '../util/SettingsUtil.ts'
 import log from '../util/LogUtil.js'
-import { getTaskQueue } from '../core/taskQueue.ts'
+import { getTaskQueue, updateTaskWorkerPoolSize } from '../core/taskQueue.ts'
 import { getSettings as settingsGetSettings } from '../core/settings.ts'
 import { Settings } from '@shared/model/base/Settings.ts'
 
@@ -21,6 +21,8 @@ function saveSettings(settings: { path: string; value: unknown }[]): boolean {
         // 读取设置中的最大并行数
         const maxParallelImport = settingsGetSettings().store.importSettings.maxParallelImport
         getTaskQueue().updateMaxParallel(maxParallelImport)
+        // 同时更新工作线程池大小
+        updateTaskWorkerPoolSize(maxParallelImport)
       }
       settingsGetSettings().set(setting.path, setting.value)
     }

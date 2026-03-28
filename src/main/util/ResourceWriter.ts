@@ -28,6 +28,10 @@ export default class ResourceWriter {
    */
   public bytesWritten: number
   /**
+   * 进度回调函数（用于 Worker 线程中发送进度到主线程）
+   */
+  public onProgress: ((bytesWritten: number) => void) | undefined
+  /**
    * 是否暂停
    * @private
    */
@@ -51,6 +55,7 @@ export default class ResourceWriter {
     this.readableFinished = false
     this.resource = undefined
     this.errorOccurred = false
+    this.onProgress = undefined
   }
 
   /**
@@ -79,6 +84,13 @@ export default class ResourceWriter {
           reject(new Error('可读流以错误状态结束'))
         }
       }
+      // 进度追踪回调
+      const progressHandler = (chunk: Buffer) => {
+        this.bytesWritten += chunk.length
+        if (this.onProgress) {
+          this.onProgress(this.bytesWritten)
+        }
+      }
 
       if (notNullish(newWritable)) {
         this.writable = newWritable
@@ -88,6 +100,8 @@ export default class ResourceWriter {
       const readable = this.readable
       const writable = this.writable
       this.errorOccurred = false
+      this.bytesWritten = 0
+
       if (!readable.listeners('error').includes(readableErrorHandler)) {
         readable.once('error', readableErrorHandler)
       }
@@ -100,7 +114,11 @@ export default class ResourceWriter {
       if (!readable.listeners('end').includes(readableEndHandler)) {
         readable.once('end', readableEndHandler)
       }
+      // 监听 data 事件进行进度追踪
+      readable.on('data', progressHandler)
       writable.once('finish', () => {
+        // 移除进度监听器
+        readable.removeListener('data', progressHandler)
         if (!this.errorOccurred) {
           if (this.paused) {
             resolve(FileSaveResult.PAUSE)

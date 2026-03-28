@@ -2,6 +2,7 @@ import { PluginManifest } from './PluginManifest.ts'
 import { PluginContext } from './PluginContext.ts'
 import { BaseContribution, ContributionKey } from './ContributionTypes.ts'
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
+import { ContributionFilePathInfo, GetContributionOptions } from './ContributionFilePathInfo.ts'
 
 /**
  * 插件实例
@@ -16,8 +17,18 @@ export interface PluginInstance {
   deactivate: () => Promise<void>
   /** 安装后钩子 */
   onInstall: (type: InstallType, oldManifest?: PluginManifest) => Promise<void>
-  /** 获取贡献点实例 */
-  getContribution: <T extends BaseContribution>(key: ContributionKey, contributionId: string) => Promise<T>
+  /**
+   * 获取贡献点实例
+   * @param key 贡献点键名
+   * @param contributionId 贡献点id
+   * @param options 选项
+   * @param options.returnFilePath 是否返回文件路径信息（用于子线程加载）
+   */
+  getContribution: <T extends BaseContribution>(
+    key: ContributionKey,
+    contributionId: string,
+    options?: GetContributionOptions
+  ) => Promise<T | ContributionFilePathInfo>
 }
 
 /**
