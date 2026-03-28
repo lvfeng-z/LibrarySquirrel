@@ -59,6 +59,7 @@ export class TaskQueue {
    * @private
    */
   private readonly readyToClose: Promise<void>
+  private resolveReadyToClose: (() => void) | undefined
 
   /**
    * 是否正在推送任务进度
@@ -96,7 +97,8 @@ export class TaskQueue {
     this.setupProgressCallback()
 
     // 初始化关闭 Promise
-    this.readyToClose = new Promise<void>(() => {
+    this.readyToClose = new Promise<void>((resolve) => {
+      this.resolveReadyToClose = resolve
       // 关闭时的清理逻辑
       log.info(this.constructor.name, '任务队列已初始化')
     })
@@ -198,6 +200,14 @@ export class TaskQueue {
 
     // 延迟移除任务
     this.scheduleTaskRemoval(taskId, taskStatus)
+
+    // 检查是否需要 resolve readyToClose
+    if (this.closed && this.taskMap.size === 0 && this.parentMap.size === 0) {
+      if (this.resolveReadyToClose) {
+        this.resolveReadyToClose()
+        log.info(this.constructor.name, '所有任务已处理完毕，readyToClose 已 resolve')
+      }
+    }
 
     // 刷新父任务状态
     const parentId = taskStatus.parentId
@@ -457,6 +467,13 @@ export class TaskQueue {
     const ids = runInstList
       .filter((runInst) => TaskStatusEnum.WAITING === runInst.status || TaskStatusEnum.PROCESSING === runInst.status)
       .map((runInst) => runInst.taskId)
+
+    // 如果没有需要停止的任务，直接 resolve
+    if (ids.length === 0) {
+      if (this.resolveReadyToClose) {
+        this.resolveReadyToClose()
+      }
+    }
 
     // 停止所有运行中的任务
     for (const taskId of ids) {
