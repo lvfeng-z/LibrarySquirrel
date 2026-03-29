@@ -1,5 +1,9 @@
 import { parentPort, workerData } from 'worker_threads'
 import Database from 'better-sqlite3'
+import { fileURLToPath } from 'url'
+
+// 导出模块路径（用于 electron-vite ?modulePath 导入）
+export default fileURLToPath(import.meta.url)
 
 interface WorkerInitData {
   databasePath: string

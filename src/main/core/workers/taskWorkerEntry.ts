@@ -1,7 +1,17 @@
 import { parentPort, workerData } from 'worker_threads'
 import Task from '@shared/model/entity/Task.ts'
-import TaskService from '../../service/TaskService.ts'
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
+import { fileURLToPath } from 'url'
+import ResourceWriter from '../../util/ResourceWriter.js'
+import { TaskHandler } from '../../plugin/types/ContributionTypes.ts'
+import { isNullish } from '@shared/util/CommonUtil.ts'
+import { pathToFileURL } from 'node:url'
+
+// 导出模块路径（用于 electron-vite ?modulePath 导入）
+export default fileURLToPath(import.meta.url)
+
+// 动态导入的 TaskService 模块缓存
+let TaskServiceModule: typeof import('../../service/TaskService.ts') | null = null
 
 /**
  * 工作线程初始化数据
@@ -9,18 +19,6 @@ import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
 interface TaskWorkerInitData {
   workerId: number
   threadType: string
-}
-
-/**
- * 贡献点文件路径信息（来自主线程）
- */
-interface ContributionFilePathInfo {
-  /** 插件入口文件路径 */
-  entryPath: string
-  /** 贡献点键名 */
-  key: string
-  /** 贡献点 ID */
-  contributionId: string
 }
 
 /**
@@ -40,12 +38,12 @@ interface TaskDataForWorker {
   task: Task
   /** 插件公开 ID */
   pluginPublicId: string
-  /** 贡献点文件路径信息 */
-  contributionInfo: ContributionFilePathInfo
-  /** 作品 ID */
-  workId: number
+  /** 贡献点文件路径 */
+  contributionPath: string
   /** 工作目录（用于拼接 resourcePath） */
   workdir: string
+  /** 作品 ID（在子线程中获取） */
+  workId?: number
 }
 
 /**
@@ -60,6 +58,16 @@ interface WorkerProgressMessage {
   error?: string
 }
 
+/**
+ * 贡献点缓存 key
+ */
+type ContributionCacheKey = string
+
+/**
+ * 贡献点缓存
+ */
+const contributionCache: Map<ContributionCacheKey, TaskHandler> = new Map()
+
 // 初始化数据
 const initData = workerData as TaskWorkerInitData
 const workerId = initData.workerId
@@ -70,16 +78,52 @@ const workerId = initData.workerId
 let currentTaskData: TaskDataForWorker | null = null
 
 /**
- * Worker 线程中共享的 TaskService 实例
- * 用于在同一 Worker 线程中的 startTask/pauseTask/stopTask 之间共享 currentResourceWriter
+ * 当前任务的 ResourceWriter（在同一 Worker 线程中共享）
+ * 用于 startTask/pauseTask/resumeTask/stopTask 之间共享
  */
-const taskService = new TaskService()
+let currentResourceWriter: ResourceWriter | null = null
+
+/**
+ * 当前任务的 TaskHandler（在同一 Worker 线程中共享）
+ * 用于 startTask/pauseTask/resumeTask/stopTask 之间共享
+ */
+let currentTaskHandler: TaskHandler | null = null
 
 /**
  * 发送消息到主线程
  */
 function sendToMain(message: WorkerProgressMessage): void {
   parentPort?.postMessage(message)
+}
+
+/**
+ * 获取 TaskService（动态导入以避免循环依赖）
+ */
+async function getTaskService(): Promise<import('../../service/TaskService.ts').default> {
+  if (!TaskServiceModule) {
+    TaskServiceModule = await import('../../service/TaskService.ts')
+  }
+  return new TaskServiceModule.default()
+}
+
+/**
+ * 从缓存或动态导入获取贡献点
+ * @param contributionPath 贡献点文件路径
+ * @returns 贡献点实例
+ */
+async function getContribution(contributionPath: string): Promise<TaskHandler> {
+  let handler = contributionCache.get(contributionPath)
+
+  if (isNullish(handler)) {
+    // 动态导入贡献点（使用 entryPath）
+    const temp = pathToFileURL(contributionPath).href
+    const module = await import(temp)
+    // 获取默认导出（贡献点实例）
+    handler = module.default as TaskHandler
+    contributionCache.set(contributionPath, handler)
+  }
+
+  return handler
 }
 
 /**
@@ -122,9 +166,31 @@ async function handleTaskStart(message: WorkerTaskMessage): Promise<void> {
     return
   }
 
+  if (typeof taskData.task.pluginData === 'string') {
+    taskData.task.pluginData = JSON.parse(taskData.task.pluginData)
+  }
+
   try {
     // 保存任务数据供暂停/恢复/停止使用
     currentTaskData = taskData
+
+    // 获取贡献点（从缓存或动态导入）
+    const taskHandler = await getContribution(taskData.contributionPath)
+    currentTaskHandler = taskHandler
+
+    // 获取 TaskService（动态导入）
+    const taskService = await getTaskService()
+
+    // 在子线程中获取或创建 workId（通过 DbProxy 透明地在主线程执行数据库操作）
+    const update = false // 新任务默认不更新已有作品信息
+    const workId = await taskService.saveWorkInfo(taskData.task, update)
+    if (workId === null || workId === undefined) {
+      sendToMain({ type: 'error', taskId: message.taskId, error: '创建作品信息失败' })
+      return
+    }
+
+    // 将 workId 存储在 currentTaskData 中，供 resumeTask 使用
+    taskData.workId = workId
 
     // 创建进度回调，用于将进度消息发送到主线程
     const onProgress = (bytesWritten: number) => {
@@ -132,14 +198,15 @@ async function handleTaskStart(message: WorkerTaskMessage): Promise<void> {
         type: 'progress',
         taskId: message.taskId,
         progress: {
-          resourceSize: taskService.getCurrentResourceWriter()?.resourceSize,
+          resourceSize: currentResourceWriter?.resourceSize,
           bytesWritten: bytesWritten
         }
       })
     }
 
     // 调用 startTask，Database 操作会通过 DbProxy 透明地路由到主线程
-    const result = await taskService.startTask(taskData.task, taskData.workId, onProgress)
+    const { response: result, resourceWriter } = await taskService.startTask(taskData.task, workId, taskHandler, onProgress)
+    currentResourceWriter = resourceWriter
 
     // 根据结果发送消息
     if (result.taskStatus === TaskStatusEnum.FINISHED) {
@@ -152,12 +219,16 @@ async function handleTaskStart(message: WorkerTaskMessage): Promise<void> {
 
     // 清理状态
     currentTaskData = null
+    currentResourceWriter = null
+    currentTaskHandler = null
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     sendToMain({ type: 'error', taskId: message.taskId, error: errorMessage })
 
     // 清理状态
     currentTaskData = null
+    currentResourceWriter = null
+    currentTaskHandler = null
   }
 }
 
@@ -165,14 +236,17 @@ async function handleTaskStart(message: WorkerTaskMessage): Promise<void> {
  * 处理任务暂停
  */
 async function handleTaskPause(): Promise<void> {
-  if (currentTaskData === null) {
+  if (currentTaskData === null || currentTaskHandler === null) {
     sendToMain({ type: 'error', error: '当前没有运行中的任务，无法暂停' })
     return
   }
 
   try {
+    // 获取 TaskService（动态导入）
+    const taskService = await getTaskService()
+
     // 调用 pauseTask
-    await taskService.pauseTask(currentTaskData.task)
+    await taskService.pauseTask(currentTaskData.task, currentTaskHandler, currentResourceWriter!)
 
     sendToMain({ type: 'paused' })
   } catch (error) {
@@ -185,12 +259,21 @@ async function handleTaskPause(): Promise<void> {
  * 处理任务恢复
  */
 async function handleTaskResume(): Promise<void> {
-  if (currentTaskData === null) {
+  if (currentTaskData === null || currentTaskHandler === null) {
     sendToMain({ type: 'error', error: '当前没有暂停的任务，无法恢复' })
     return
   }
 
+  // 检查 workId 是否存在
+  if (currentTaskData.workId === null || currentTaskData.workId === undefined) {
+    sendToMain({ type: 'error', error: '恢复任务失败，workId 不存在' })
+    return
+  }
+
   try {
+    // 获取 TaskService（动态导入）
+    const taskService = await getTaskService()
+
     // 创建进度回调，用于将进度消息发送到主线程
     const onProgress = (bytesWritten: number) => {
       const taskId = currentTaskData!.task.id
@@ -199,7 +282,7 @@ async function handleTaskResume(): Promise<void> {
           type: 'progress',
           taskId: taskId,
           progress: {
-            resourceSize: taskService.getCurrentResourceWriter()?.resourceSize,
+            resourceSize: currentResourceWriter?.resourceSize,
             bytesWritten: bytesWritten
           }
         })
@@ -207,7 +290,13 @@ async function handleTaskResume(): Promise<void> {
     }
 
     // 调用 resumeTask
-    const result = await taskService.resumeTask(currentTaskData.task, currentTaskData.workId, onProgress)
+    const { response: result, resourceWriter } = await taskService.resumeTask(
+      currentTaskData.task,
+      currentTaskData.workId,
+      currentTaskHandler,
+      onProgress
+    )
+    currentResourceWriter = resourceWriter
 
     // 发送状态变化消息
     sendToMain({ type: 'statusChange', status: 1 }) // WorkerStatusEnum.RUNNING = 1
@@ -230,17 +319,22 @@ async function handleTaskResume(): Promise<void> {
  * 处理任务停止
  */
 async function handleTaskStop(): Promise<void> {
-  if (currentTaskData === null) {
+  if (currentTaskData === null || currentTaskHandler === null) {
     sendToMain({ type: 'error', error: '当前没有运行中的任务，无法停止' })
     return
   }
 
   try {
+    // 获取 TaskService（动态导入）
+    const taskService = await getTaskService()
+
     // 调用 stopTask
-    await taskService.stopTask(currentTaskData.task)
+    await taskService.stopTask(currentTaskData.task, currentTaskHandler, currentResourceWriter!)
 
     // 清理状态
     currentTaskData = null
+    currentResourceWriter = null
+    currentTaskHandler = null
 
     sendToMain({ type: 'statusChange', status: 3 }) // WorkerStatusEnum.STOPPED = 3
     sendToMain({ type: 'complete' })

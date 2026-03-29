@@ -1,6 +1,5 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
 import Task from '@shared/model/entity/Task.ts'
-import { ContributionFilePathInfo } from './TaskWorker.ts'
 
 /**
  * 任务运行实例
@@ -35,19 +34,14 @@ export class TaskStatus {
   private readonly pluginPublicId: string
 
   /**
-   * 贡献点文件路径信息
+   * 贡献点文件路径
    */
-  private readonly contributionInfo: ContributionFilePathInfo
+  private readonly contributionPath: string
 
   /**
    * 工作目录
    */
   private readonly workdir: string
-
-  /**
-   * 作品 ID
-   */
-  private readonly workId: number
 
   /**
    * 清理定时器 ID
@@ -65,18 +59,16 @@ export class TaskStatus {
     parentId: number | null | undefined,
     taskInfo: Task,
     pluginPublicId: string,
-    contributionInfo: ContributionFilePathInfo,
-    workdir: string,
-    workId: number
+    contributionPath: string,
+    workdir: string
   ) {
     this.taskId = taskId
     this.status = status
     this.parentId = parentId
     this.taskInfo = taskInfo
     this.pluginPublicId = pluginPublicId
-    this.contributionInfo = contributionInfo
+    this.contributionPath = contributionPath
     this.workdir = workdir
-    this.workId = workId
     this.clearTimeoutId = undefined
     this.taskChangeStored = false
   }
@@ -96,10 +88,10 @@ export class TaskStatus {
   }
 
   /**
-   * 获取贡献点文件路径信息
+   * 获取贡献点文件路径
    */
-  getContributionInfo(): ContributionFilePathInfo {
-    return this.contributionInfo
+  getContributionInfo(): string {
+    return this.contributionPath
   }
 
   /**
@@ -107,13 +99,6 @@ export class TaskStatus {
    */
   getWorkdir(): string {
     return this.workdir
-  }
-
-  /**
-   * 获取作品 ID
-   */
-  getWorkId(): number {
-    return this.workId
   }
 
   /**

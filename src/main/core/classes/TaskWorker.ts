@@ -8,6 +8,9 @@ import { SendMsgToRender } from '../EventToRender.ts'
 import { RenderEvent } from '../EventToRender.ts'
 import { TaskStatus } from './TaskStatus.ts'
 
+// 使用 entry point 名称来引用 worker 文件
+import TaskWorkerEntryPath from '../workers/taskWorkerEntry.ts?modulePath'
+
 /**
  * 工作线程初始化数据
  */
@@ -82,13 +85,43 @@ export class TaskWorker {
    */
   private pauseResolve: PauseResolve | null = null
 
-  /**
-   * Worker 入口文件路径
-   */
-  private static readonly WORKER_ENTRY_PATH = __dirname + '/taskWorkerEntry.js'
-
   constructor(workerId: number) {
     this.workerId = workerId
+    this.initWorker()
+  }
+
+  /**
+   * 初始化工作线程（构造函数中调用，创建固定线程）
+   */
+  private initWorker(): void {
+    // 创建 Worker 线程
+    this.worker = new Worker(TaskWorkerEntryPath, {
+      workerData: {
+        workerId: this.workerId,
+        threadType: 'task'
+      } as TaskWorkerInitData
+    })
+
+    // 监听 Worker 线程消息
+    this.worker.on('message', (message: WorkerProgressMessage) => {
+      this.handleWorkerMessage(message)
+    })
+
+    this.worker.on('error', (error: Error) => {
+      log.error(this.constructor.name, `工作线程 ${this.workerId} 错误: ${error.message}`)
+      this.status = WorkerStatusEnum.IDLE
+      this.taskId = null
+    })
+
+    this.worker.on('exit', (code: number) => {
+      if (code !== 0) {
+        log.warn(this.constructor.name, `工作线程 ${this.workerId} 退出，code: ${code}`)
+      }
+      // 工作线程退出后标记为空闲
+      this.worker = null
+      this.status = WorkerStatusEnum.IDLE
+      this.taskId = null
+    })
   }
 
   /**
@@ -138,36 +171,13 @@ export class TaskWorker {
       return
     }
 
+    if (this.worker === null) {
+      log.warn(this.constructor.name, `工作线程 ${this.workerId} 未初始化，无法启动任务`)
+      return
+    }
+
     this.taskId = taskStatus.taskId
     this.status = WorkerStatusEnum.RUNNING
-
-    // 创建 Worker 线程
-    this.worker = new Worker(TaskWorker.WORKER_ENTRY_PATH, {
-      workerData: {
-        workerId: this.workerId,
-        threadType: 'task'
-      } as TaskWorkerInitData
-    })
-
-    // 监听 Worker 线程消息
-    this.worker.on('message', (message: WorkerProgressMessage) => {
-      this.handleWorkerMessage(message)
-    })
-
-    this.worker.on('error', (error: Error) => {
-      log.error(this.constructor.name, `工作线程 ${this.workerId} 错误: ${error.message}`)
-      this.status = WorkerStatusEnum.IDLE
-      this.taskId = null
-    })
-
-    this.worker.on('exit', (code: number) => {
-      if (code !== 0) {
-        log.warn(this.constructor.name, `工作线程 ${this.workerId} 退出，code: ${code}`)
-      }
-      this.status = WorkerStatusEnum.IDLE
-      this.taskId = null
-      this.worker = null
-    })
 
     // 发送任务开始消息
     this.sendMessage({
@@ -176,9 +186,8 @@ export class TaskWorker {
       taskData: {
         task: taskStatus.getTaskData(),
         pluginPublicId: taskStatus.getPluginPublicId(),
-        contributionInfo: taskStatus.getContributionInfo(),
-        workdir: taskStatus.getWorkdir(),
-        workId: taskStatus.getWorkId()
+        contributionPath: taskStatus.getContributionInfo(),
+        workdir: taskStatus.getWorkdir()
       }
     })
   }
@@ -225,11 +234,20 @@ export class TaskWorker {
   }
 
   /**
-   * 释放工作线程（归还到线程池）
+   * 释放工作线程（归还到线程池，线程保持运行）
    */
   release(): void {
+    // 仅重置状态，线程保持运行以复用
+    this.status = WorkerStatusEnum.IDLE
+    this.taskId = null
+  }
+
+  /**
+   * 销毁工作线程（彻底关闭，不再复用）
+   */
+  async destroy(): Promise<void> {
     if (notNullish(this.worker)) {
-      this.worker.terminate()
+      await this.worker.terminate()
       this.worker = null
     }
     this.status = WorkerStatusEnum.IDLE
@@ -303,18 +321,6 @@ export class TaskWorker {
 }
 
 /**
- * 贡献点文件路径信息
- */
-export interface ContributionFilePathInfo {
-  /** 插件入口文件路径 */
-  entryPath: string
-  /** 贡献点键名 */
-  key: string
-  /** 贡献点 ID */
-  contributionId: string
-}
-
-/**
  * 任务运行实例包装器
  * @description 用于传递给工作线程的任务信息
  */
@@ -335,34 +341,21 @@ export class TaskRunInstanceWrapper {
   private readonly pluginPublicId: string
 
   /**
-   * 贡献点文件路径信息
+   * 贡献点文件路径
    */
-  private readonly contributionInfo: ContributionFilePathInfo
+  private readonly contributionPath: string
 
   /**
    * 工作目录
    */
   private readonly workdir: string
 
-  /**
-   * 作品 ID
-   */
-  private readonly workId: number
-
-  constructor(
-    taskId: number,
-    taskInfo: Task,
-    pluginPublicId: string,
-    contributionInfo: ContributionFilePathInfo,
-    workdir: string,
-    workId: number
-  ) {
+  constructor(taskId: number, taskInfo: Task, pluginPublicId: string, contributionPath: string, workdir: string) {
     this.taskId = taskId
     this.taskInfo = taskInfo
     this.pluginPublicId = pluginPublicId
-    this.contributionInfo = contributionInfo
+    this.contributionPath = contributionPath
     this.workdir = workdir
-    this.workId = workId
   }
 
   /**
@@ -380,10 +373,10 @@ export class TaskRunInstanceWrapper {
   }
 
   /**
-   * 获取贡献点文件路径信息
+   * 获取贡献点文件路径
    */
-  getContributionInfo(): ContributionFilePathInfo {
-    return this.contributionInfo
+  getContributionInfo(): string {
+    return this.contributionPath
   }
 
   /**
@@ -391,12 +384,5 @@ export class TaskRunInstanceWrapper {
    */
   getWorkdir(): string {
     return this.workdir
-  }
-
-  /**
-   * 获取作品 ID
-   */
-  getWorkId(): number {
-    return this.workId
   }
 }

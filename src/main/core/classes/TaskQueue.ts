@@ -1,7 +1,6 @@
 import { TaskStatusEnum } from '../../constant/TaskStatusEnum.ts'
 import log from '../../util/LogUtil.ts'
 import TaskService from '../../service/TaskService.ts'
-import WorkService from '../../service/WorkService.ts'
 import { arrayIsEmpty, arrayNotEmpty, isNullish, notNullish } from '@shared/util/CommonUtil.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
 import Task from '@shared/model/entity/Task.ts'
@@ -12,9 +11,11 @@ import TaskTreeDTO from '@shared/model/dto/TaskTreeDTO.ts'
 import TaskProgressDTO from '@shared/model/dto/TaskProgressDTO.ts'
 import { getSettings } from '../settings.ts'
 import { getTaskWorkerPool } from '../taskQueue.ts'
-import { ContributionFilePathInfo } from './TaskWorker.ts'
 import { getPluginManager } from '../pluginManager.ts'
 import { TaskStatus } from './TaskStatus.ts'
+import path from 'node:path'
+import { PLUGIN_ROOT } from '../../constant/PluginConstant.ts'
+import { RootDir } from '../../util/FileSysUtil.ts'
 
 /**
  * 任务队列
@@ -41,12 +42,6 @@ export class TaskQueue {
    * @private
    */
   private readonly taskService: TaskService
-
-  /**
-   * 作品服务
-   * @private
-   */
-  private workService: WorkService
 
   /**
    * 是否已经关闭
@@ -83,7 +78,6 @@ export class TaskQueue {
     this.taskMap = new Map()
     this.parentMap = new Map()
     this.taskService = new TaskService()
-    this.workService = new WorkService()
     this.closed = false
     this.taskSchedulePushing = false
     this.parentSchedulePushing = false
@@ -532,7 +526,7 @@ export class TaskQueue {
       }
 
       try {
-        // 获取插件贡献点文件路径信息
+        // 获取插件贡献点文件路径
         const pluginContributionId = task.pluginContributionId
         if (isNullish(pluginContributionId)) {
           log.error(this.constructor.name, `任务 ${taskId} 缺少 pluginContributionId`)
@@ -545,40 +539,16 @@ export class TaskQueue {
           continue
         }
 
-        const contributionInfo = (await getPluginManager().getContribution(pluginPublicId, 'taskHandler', pluginContributionId, {
+        let contributionPath = await getPluginManager().getContribution(pluginPublicId, 'taskHandler', pluginContributionId, {
           returnFilePath: true
-        })) as ContributionFilePathInfo
-
-        // 检查作品是否已存在
-        let workId: number | null | undefined
-        const existsWorkList = await this.workService.listBySiteIdAndSiteWorkIds([
-          { siteId: task.siteId as number, siteWorkId: task.siteWorkId as string }
-        ])
-
-        if (arrayNotEmpty(existsWorkList)) {
-          workId = existsWorkList[0].id
-        } else {
-          // 创建作品信息
-          const update = getSettings().store.importSettings.updateWorkInfoWhenImport
-          workId = await this.taskService.saveWorkInfo(task, update)
-        }
-
-        if (isNullish(workId)) {
-          log.error(this.constructor.name, `任务 ${taskId} 无法获取有效的 workId`)
-          continue
+        })
+        if (!path.isAbsolute(contributionPath)) {
+          contributionPath = path.join(RootDir(), PLUGIN_ROOT, contributionPath)
         }
 
         // 创建任务状态（包含完整任务信息，用于主线程追踪）
-        const taskStatus = new TaskStatus(
-          taskId,
-          TaskStatusEnum.WAITING,
-          task.pid,
-          task,
-          pluginPublicId,
-          contributionInfo,
-          workdir,
-          workId as number
-        )
+        // 注意：workId 在子线程中通过 saveWorkInfo 获取
+        const taskStatus = new TaskStatus(taskId, TaskStatusEnum.WAITING, task.pid, task, pluginPublicId, contributionPath, workdir)
         this.taskMap.set(taskId, taskStatus)
 
         // 通知渲染进程任务已添加

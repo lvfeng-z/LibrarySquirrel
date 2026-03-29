@@ -18,7 +18,7 @@ import { ContributionKey, ContributionMap } from './types/ContributionTypes.ts'
 import { PluginContext } from './types/PluginContext.ts'
 import { PluginEntryPoint, PluginInstance } from './types/PluginInstance.ts'
 import { ActivationType } from './types/ActivationTypes.ts'
-import { ContributionFilePathInfo, GetContributionOptions } from './types/ContributionFilePathInfo.ts'
+import { GetContributionOptions } from './types/ContributionFilePathInfo.ts'
 import { assertNotBlank, assertNotNullish } from '@shared/util/AssertUtil.ts'
 import PluginQueryDTO from '@shared/model/queryDTO/PluginQueryDTO.ts'
 import Site from '@shared/model/entity/Site.ts'
@@ -161,14 +161,14 @@ export default class PluginManager {
    * @param contributionId 贡献点id
    * @param options 选项
    * @param options.returnFilePath 是否返回文件路径信息
-   * @returns 贡献点文件路径信息
+   * @returns 贡献点文件路径
    */
   public async getContribution<K extends ContributionKey>(
     pluginPublicId: string,
     key: K,
     contributionId: string,
     options: GetContributionOptions
-  ): Promise<ContributionFilePathInfo>
+  ): Promise<string>
   /**
    * 获取指定贡献点实现
    */
@@ -177,7 +177,7 @@ export default class PluginManager {
     key: K,
     contributionId: string,
     options?: GetContributionOptions
-  ): Promise<ContributionMap[K] | ContributionFilePathInfo> {
+  ): Promise<ContributionMap[K] | string> {
     const pluginInstance = await this.load(pluginPublicId)
     const contribution = await pluginInstance.getContribution(key, contributionId, options)
 
@@ -185,7 +185,7 @@ export default class PluginManager {
       throw new Error(`插件 ${pluginPublicId} 未实现 ${key} 贡献点`)
     }
 
-    return contribution as ContributionMap[K] | ContributionFilePathInfo
+    return contribution as ContributionMap[K] | string
   }
 
   /**

@@ -2,7 +2,7 @@ import { PluginManifest } from './PluginManifest.ts'
 import { PluginContext } from './PluginContext.ts'
 import { BaseContribution, ContributionKey } from './ContributionTypes.ts'
 import { InstallType } from '@shared/model/interface/PluginInstallType.ts'
-import { ContributionFilePathInfo, GetContributionOptions } from './ContributionFilePathInfo.ts'
+import { GetContributionOptions } from './ContributionFilePathInfo.ts'
 
 /**
  * 插件实例
@@ -28,7 +28,7 @@ export interface PluginInstance {
     key: ContributionKey,
     contributionId: string,
     options?: GetContributionOptions
-  ) => Promise<T | ContributionFilePathInfo>
+  ) => Promise<T | string>
 }
 
 /**
