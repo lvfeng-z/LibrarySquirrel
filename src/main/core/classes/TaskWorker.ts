@@ -1,4 +1,5 @@
 import { Worker } from 'worker_threads'
+import path from 'path'
 import { WorkerStatusEnum } from '../../constant/WorkerStatusEnum.ts'
 import { notNullish } from '@shared/util/CommonUtil.ts'
 import log from '../../util/LogUtil.ts'
@@ -8,9 +9,6 @@ import { SendMsgToRender } from '../EventToRender.ts'
 import { RenderEvent } from '../EventToRender.ts'
 import { TaskStatus } from './TaskStatus.ts'
 import { DbProxyRegistry } from '../DbProxyRegistry.ts'
-
-// 使用 entry point 名称来引用 worker 文件
-import TaskWorkerEntryPath from '../workers/taskWorkerEntry.ts?modulePath'
 import { ThreadInitData } from '../types/ThreadInitData.ts'
 
 /**
@@ -94,7 +92,7 @@ export class TaskWorker {
       threadType: 'task',
       isMainThread: false
     }
-    this.worker = new Worker(TaskWorkerEntryPath, {
+    this.worker = new Worker(path.join(__dirname, '..', 'task-worker.js'), {
       workerData: initData
     })
 

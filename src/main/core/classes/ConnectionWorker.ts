@@ -2,7 +2,7 @@ import { Worker } from 'worker_threads'
 import { DataBasePath } from '../../util/DatabaseUtil.ts'
 import DataBaseConstant from '../../constant/DataBaseConstant.ts'
 import log from '../../util/LogUtil.ts'
-import DatabaseWorkerPath from '../workers/databaseWorker.ts?modulePath'
+import path from 'path'
 
 interface DatabaseRequest {
   id: string
@@ -40,7 +40,7 @@ export class ConnectionWorker {
 
     // 创建 Worker Promise
     this.readyPromise = new Promise((resolve) => {
-      const worker = new Worker(DatabaseWorkerPath, {
+      const worker = new Worker(path.join(__dirname, '..', 'database-worker.js'), {
         workerData: {
           databasePath: DataBasePath() + DataBaseConstant.DB_FILE_NAME
         }

@@ -6,7 +6,6 @@ import ResourceWriter from '../../util/ResourceWriter.js'
 import { TaskHandler } from '../../plugin/types/ContributionTypes.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { pathToFileURL } from 'node:url'
-import PluginManager from '../../plugin/PluginManager.ts'
 import { createPluginContext } from '../../plugin/types/PluginContext.ts'
 
 // 导出模块路径（用于 electron-vite ?modulePath 导入）
