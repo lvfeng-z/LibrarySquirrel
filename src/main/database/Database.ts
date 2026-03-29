@@ -6,7 +6,9 @@ import { RequestWeight } from '../core/classes/ConnectionPool.ts'
 import { ConnectionWorker } from '../core/classes/ConnectionWorker.ts'
 import { DbProxy } from '../core/classes/DbProxy.ts'
 import log from '../util/LogUtil.ts'
-import { isNullish } from '@shared/util/CommonUtil.ts'
+import { isNullish, notNullish } from '@shared/util/CommonUtil.ts'
+import { workerData } from 'worker_threads'
+import { ThreadInitData } from '../core/types/ThreadInitData.ts'
 
 /**
  * 保存借用的 Worker 索引，用于释放
@@ -20,6 +22,13 @@ const borrowedWorkers = new WeakMap<ConnectionWorker, number>()
  */
 const borrowedDbProxies = new WeakMap<DbProxy, boolean>()
 
+interface DbProxyInitData extends ThreadInitData {
+  threadType: 'db'
+  threadId: number
+  databasePath: string
+  isMainThread: false
+}
+
 /**
  * 数据库访问入口
  *
@@ -30,11 +39,15 @@ export class Database {
   private static readonly caller = 'Database'
 
   /**
-   * 判断是否在主线程
-   * @private
+   * 检查是否在主线程
    */
-  private static isInMainThread(): boolean {
-    return DbProxy.isMainThread()
+  static isMainThread(): boolean {
+    try {
+      const data = workerData as DbProxyInitData | undefined
+      return isNullish(data) || (notNullish(data) && data.isMainThread)
+    } catch {
+      return true
+    }
   }
 
   /**
@@ -47,7 +60,7 @@ export class Database {
    */
   private static async acquireWorker(): Promise<ConnectionWorker | DbProxy> {
     // 主线程事务中：使用上下文绑定的 Worker
-    if (this.isInMainThread() && TransactionContext.inTransaction()) {
+    if (this.isMainThread() && TransactionContext.inTransaction()) {
       const ctxWorker = TransactionContext.getWorker()
       if (isNullish(ctxWorker)) {
         throw new Error('Transaction context exists but worker is missing')
@@ -55,7 +68,7 @@ export class Database {
       return ctxWorker
     }
 
-    if (!this.isInMainThread()) {
+    if (!this.isMainThread()) {
       // 子线程
 
       // 事务中：从 ALS 获取当前的 DbProxy
@@ -86,11 +99,11 @@ export class Database {
    */
   private static releaseWorker(worker: ConnectionWorker | DbProxy): void {
     // 主线程事务中不释放，由事务上下文管理
-    if (this.isInMainThread() && TransactionContext.inTransaction()) {
+    if (this.isMainThread() && TransactionContext.inTransaction()) {
       return
     }
 
-    if (!this.isInMainThread()) {
+    if (!this.isMainThread()) {
       // 子线程非事务：释放借用的 DbProxy
       if (borrowedDbProxies.has(worker as DbProxy)) {
         ;(worker as DbProxy).release()
@@ -117,7 +130,7 @@ export class Database {
    * @private
    */
   private static inTransactionContext(): boolean {
-    if (this.isInMainThread()) {
+    if (this.isMainThread()) {
       return TransactionContext.inTransaction()
     }
     return ThreadDbProxyContext.inTransaction()
@@ -218,7 +231,7 @@ export class Database {
    * @param fn 事务内执行的函数
    */
   static async runInTransaction<R>(caller: string, operation: string, fn: () => Promise<R>): Promise<R> {
-    if (this.isInMainThread()) {
+    if (this.isMainThread()) {
       return TransactionContext.runInTransaction(caller, operation, fn)
     }
 

@@ -9,7 +9,6 @@ import { initializeByConfig } from './core/InitializeByConfig.ts'
 import { SendConfirmToWindow } from './util/MainWindowUtil.js'
 import iniConfig from './resources/config/iniConfig.yml?asset'
 import { createTaskQueue, getTaskQueue, createTaskWorkerPool } from './core/taskQueue.ts'
-import { DbProxyRegistry } from './core/DbProxyRegistry.ts'
 import { createSettings, getSettings } from './core/settings.ts'
 import { createIniConfig } from './core/iniConfig.ts'
 import { createPluginTaskUrlListenerManager } from './core/pluginTaskUrlListener.ts'
@@ -171,12 +170,12 @@ app.whenReady().then(() => {
 
   // 初始化数据库
   InitializeDB().then(async () => {
-    // 初始化数据库代理注册表（接收子线程的数据库操作请求）
-    DbProxyRegistry.initialize()
     // 创建服务层的ipc通信
     registerMainIpcHandlers()
     // 初始化任务工作线程池
     const maxParallelImport = getSettings().store.importSettings.maxParallelImport
+    // 初始化插件管理器
+    createPluginManager()
     await createTaskWorkerPool(maxParallelImport)
     // 初始化任务队列
     createTaskQueue()
@@ -184,8 +183,6 @@ app.whenReady().then(() => {
     createPluginTaskUrlListenerManager()
     // 初始化站点浏览器管理器
     createSiteBrowserManager()
-    // 初始化插件管理器
-    createPluginManager()
     // 初始化站点和内置插件
     await initializeByConfig()
     // 激活启动时加载的插件

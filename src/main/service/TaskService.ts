@@ -16,7 +16,6 @@ import { Operator } from '../constant/CrudConstant.ts'
 import TaskTreeDTO from '@shared/model/dto/TaskTreeDTO.ts'
 import TaskCreateDTO from '@shared/model/dto/TaskCreateDTO.ts'
 import TaskScheduleDTO from '@shared/model/dto/TaskScheduleDTO.ts'
-import { PluginTaskResParam } from '../plugin/PluginTaskResParam.ts'
 import PluginWorkResponseDTO from '@shared/model/dto/PluginWorkResponseDTO.ts'
 import TaskCreateResponse from '@shared/model/util/TaskCreateResponse.ts'
 import { assertArrayNotEmpty, assertNotBlank, assertNotNullish, assertTrue } from '@shared/util/AssertUtil.ts'
@@ -33,11 +32,9 @@ import CreateTaskWritable from '../util/CreateTaskWritable.ts'
 import ResourceService from './ResourceService.js'
 import PluginCreateTaskResponseDTO from '@shared/model/dto/PluginCreateTaskResponseDTO.js'
 import PluginCreateParentTaskResponseDTO from '@shared/model/dto/PluginCreateParentTaskResponseDTO.js'
-import PluginResourceDTO from '@shared/model/dto/PluginResourceDTO.ts'
 import TaskProcessResponseDTO from '@shared/model/dto/TaskProcessResponseDTO.js'
 import { getTaskQueue } from '../core/taskQueue.ts'
 import { TaskHandler } from '../plugin/types/ContributionTypes.ts'
-import { mergeObjects } from '@shared/util/ObjectUtil.ts'
 import { getPluginManager } from '../core/pluginManager.ts'
 import PluginWithContribution from '@shared/model/domain/PluginWithContribution.ts'
 
@@ -290,7 +287,7 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
    * @param onProgress 进度回调（用于 Worker 线程中发送进度到主线程）
    * @returns 任务执行结果（包含响应和资源写入器）
    */
-  public async startTask(
+  public static async startTask(
     task: Task,
     workId: number,
     taskHandler: TaskHandler,
@@ -328,7 +325,8 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
     }
     // 更新下载中的资源id
     task.pendingResourceId = resourceSaveDTO.id
-    this.updateById(task)
+    const taskService = new TaskService()
+    taskService.updateById(task)
 
     // 创建 resourceWriter（流必须在同一线程中消费）
     const resourceWriter = new ResourceWriter()
@@ -425,41 +423,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
   }
 
   /**
-   * 暂停任务
-   * @param task 任务
-   * @param taskHandler 任务处理器（由调用方注入）
-   * @param resourceWriter 资源写入器（由 startTask/resumeTask 返回）
-   */
-  public async pauseTask(task: Task, taskHandler: TaskHandler, resourceWriter: ResourceWriter): Promise<boolean> {
-    assertNotNullish(resourceWriter, `暂停任务失败，资源写入器不能为空，taskId: ${task.id}`)
-
-    // 创建TaskPluginDTO对象
-    const taskPluginDTO = new PluginTaskResParam(task)
-    taskPluginDTO.resourcePluginDTO = new PluginResourceDTO()
-    taskPluginDTO.resourcePluginDTO.resourceSize = resourceWriter.resourceSize
-    taskPluginDTO.resourcePluginDTO.resourceStream = resourceWriter.readable
-    taskPluginDTO.resourcePluginDTO.filenameExtension = resourceWriter.resource?.filenameExtension
-
-    // 暂停写入
-    const finished = resourceWriter.pause()
-
-    if (!finished) {
-      // 调用插件的pause方法
-      try {
-        await taskHandler.pause(taskPluginDTO)
-      } catch (error) {
-        log.error(this.constructor.name, '调用插件的pause方法出错: ', error)
-        if (notNullish(resourceWriter.readable)) {
-          resourceWriter.readable.pause()
-        }
-      }
-      return true
-    } else {
-      return false
-    }
-  }
-
-  /**
    * 暂停任务树
    * @param ids id列表
    */
@@ -479,41 +442,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
       }
 
       taskQueue.pushBatch(children, TaskOperation.PAUSE)
-    }
-  }
-
-  /**
-   * 停止任务
-   * @param task 任务
-   * @param taskHandler 任务处理器（由调用方注入）
-   * @param resourceWriter 资源写入器（由 startTask/resumeTask 返回）
-   */
-  public async stopTask(task: Task, taskHandler: TaskHandler, resourceWriter: ResourceWriter): Promise<boolean> {
-    assertNotNullish(resourceWriter, `停止任务失败，资源写入器不能为空，taskId: ${task.id}`)
-
-    // 创建TaskPluginDTO对象
-    const taskPluginDTO = new PluginTaskResParam(task)
-    taskPluginDTO.resourcePluginDTO = new PluginResourceDTO()
-    taskPluginDTO.resourcePluginDTO.resourceSize = resourceWriter.resourceSize
-    taskPluginDTO.resourcePluginDTO.resourceStream = resourceWriter.readable
-    taskPluginDTO.resourcePluginDTO.filenameExtension = resourceWriter.resource?.filenameExtension
-
-    // 暂停写入
-    const finished = resourceWriter.pause()
-
-    if (!finished) {
-      // 调用插件的pause方法
-      try {
-        await taskHandler.stop(taskPluginDTO)
-      } catch (error) {
-        log.error(this.constructor.name, '调用插件的stop方法出错: ', error)
-        if (notNullish(resourceWriter.readable)) {
-          resourceWriter.readable.destroy()
-        }
-      }
-      return true
-    } else {
-      return false
     }
   }
 
@@ -538,68 +466,6 @@ export default class TaskService extends BaseService<TaskQueryDTO, Task, TaskDao
 
       taskQueue.pushBatch(children, TaskOperation.STOP)
     }
-  }
-
-  /**
-   * 恢复任务
-   * @param task 任务
-   * @param workId 作品ID
-   * @param taskHandler 任务处理器（由调用方注入）
-   * @param onProgress 进度回调（用于 Worker 线程中发送进度到主线程）
-   * @returns 任务执行结果（包含响应和资源写入器）
-   */
-  public async resumeTask(
-    task: Task,
-    workId: number,
-    taskHandler: TaskHandler,
-    onProgress?: (bytesWritten: number) => void
-  ): Promise<TaskExecutionResult> {
-    assertNotNullish(task.id, '恢复任务失败，任务id不能为空')
-    const taskId = task.id
-    assertNotNullish(task.pendingResourceId, `恢复任务失败，任务的处理中的资源id不能为空，taskId: ${taskId}`)
-
-    // 插件用于恢复下载的任务信息
-    const taskPluginDTO = new PluginTaskResParam(task)
-    const resourceService = new ResourceService()
-    taskPluginDTO.resourcePath = await resourceService.getFullResourcePath(task.pendingResourceId)
-
-    // 恢复下载
-    const workService = new WorkService()
-
-    // 标记为进行中
-    task.status = TaskStatusEnum.PROCESSING
-    // 调用插件的resume函数，获取资源
-    let pluginResponse: PluginWorkResponseDTO = await taskHandler.resume(taskPluginDTO)
-    const resourcePluginDTO = pluginResponse.resource
-    assertNotNullish(resourcePluginDTO, `恢复任务失败，插件返回的资源为空，taskId: ${taskId}`)
-    assertNotNullish(resourcePluginDTO.resourceStream, `恢复任务失败，插件返回的资源为空，taskId: ${taskId}`)
-
-    const oldWork = await workService.getFullWorkInfoById(workId)
-    assertNotNullish(oldWork, `恢复任务失败，任务的作品id不可用，taskId: ${taskId}`)
-    // 用旧的作品信息补全插件返回的信息
-    pluginResponse = mergeObjects<PluginWorkResponseDTO>(pluginResponse, oldWork, (src) => new PluginWorkResponseDTO(src))
-    // 创建资源保存DTO
-    const resourceSaveDTO = ResourceService.createSaveInfoFromPlugin(oldWork, pluginResponse, taskId)
-    resourceSaveDTO.id = task.pendingResourceId
-
-    // 创建新的 resourceWriter（恢复任务可能在不同的 Worker 线程中执行）
-    const resourceWriter = new ResourceWriter()
-    // 设置进度回调
-    if (onProgress) {
-      resourceWriter.onProgress = onProgress
-    }
-
-    log.info(this.constructor.name, `任务${taskId}恢复下载`)
-    const response = await resourceService.resumeSaveResource(resourceSaveDTO, resourceWriter).then(async (saveResult) => {
-      if (FileSaveResult.FINISH === saveResult) {
-        return new TaskProcessResponseDTO(TaskStatusEnum.FINISHED)
-      } else if (FileSaveResult.PAUSE === saveResult) {
-        return new TaskProcessResponseDTO(TaskStatusEnum.PAUSE)
-      } else {
-        throw new Error(`保存资源未返回预期的值，saveResult: ${saveResult}`)
-      }
-    })
-    return { response, resourceWriter }
   }
 
   /**

@@ -1,4 +1,4 @@
-import { parentPort } from 'worker_threads'
+import { Worker } from 'worker_threads'
 import { ConnectionWorker } from './classes/ConnectionWorker.ts'
 import { RequestWeight } from './classes/ConnectionPool.ts'
 import { getConnectionPool } from './connectionPool.ts'
@@ -39,49 +39,65 @@ const threadTransactions = new Map<number, Map<string, ThreadTransaction>>()
  * 数据库代理注册表（主线程端）
  *
  * 核心功能：
- * 1. 接收子线程的数据库操作请求
- * 2. 管理子线程的连接生命周期
- * 3. 处理事务操作
+ * 1. 注册子线程的数据库消息端口
+ * 2. 接收子线程的数据库操作请求
+ * 3. 管理子线程的连接生命周期
+ * 4. 处理事务操作
  */
 export class DbProxyRegistry {
-  private static initialized: boolean = false
-
   /**
-   * 初始化数据库代理注册表
+   * 注册工作线程的数据库消息端口
+   * @param worker Node.js Worker 实例
    */
-  static initialize(): void {
-    if (this.initialized) {
-      return
-    }
-
-    // 监听来自子线程的消息
-    parentPort?.on('message', async (message: DbMessage) => {
-      await this.handleMessage(message)
+  static registerWorker(worker: Worker): void {
+    // 在 worker 上监听数据库消息
+    worker.on('message', async (message: unknown) => {
+      const dbMessage = message as DbMessage
+      log.info('DbProxyRegistry received', message)
+      // 只处理数据库消息（包含 requestId）
+      if (dbMessage.requestId) {
+        await this.processMessage(worker, dbMessage)
+      }
     })
 
-    this.initialized = true
     log.debug('DbProxyRegistry', '数据库代理注册表已初始化')
   }
 
   /**
-   * 处理来自子线程的消息
+   * 发送响应消息到子线程
+   * @param worker Node.js Worker 实例
+   * @param response 响应消息
    */
-  private static async handleMessage(message: DbMessage): Promise<void> {
+  private static sendResponse(
+    worker: Worker,
+    response: { requestId: string; success: boolean; result?: unknown; error?: string }
+  ): void {
+    worker.postMessage(response)
+  }
+
+  /**
+   * 处理来自子线程的消息
+   * @param worker Node.js Worker 实例
+   * @param message 数据库消息
+   */
+  private static async processMessage(worker: Worker, message: DbMessage): Promise<void> {
     const { requestId, type, threadId, connectionId } = message
 
     try {
       switch (type) {
         // ==================== 连接管理 ====================
         case 'connection_acquire': {
+          log.info('DbProxyRegistry processing connection_acquire', { requestId, threadId })
           const pool = getConnectionPool()
-          const worker = await pool.acquire(RequestWeight.LOW)
+          const connWorker = await pool.acquire(RequestWeight.LOW)
 
           // 记录活跃连接
-          activeConnections.set(worker.getIndex(), worker)
+          activeConnections.set(connWorker.getIndex(), connWorker)
 
-          log.debug('DbProxyRegistry', `线程 ${threadId} 获取连接 ${worker.getIndex()}`)
+          log.debug('DbProxyRegistry', `线程 ${threadId} 获取连接 ${connWorker.getIndex()}`)
 
-          this.sendResponse({ requestId, success: true, result: worker.getIndex() })
+          this.sendResponse(worker, { requestId, success: true, result: connWorker.getIndex() })
+          log.info('DbProxyRegistry sent response for connection_acquire', { requestId, connectionId: connWorker.getIndex() })
           break
         }
 
@@ -90,15 +106,15 @@ export class DbProxyRegistry {
             throw new Error('connectionId is required for connection_release')
           }
 
-          const worker = activeConnections.get(connectionId)
-          if (worker) {
+          const connWorker = activeConnections.get(connectionId)
+          if (connWorker) {
             const pool = getConnectionPool()
             pool.release(connectionId)
             activeConnections.delete(connectionId)
             log.debug('DbProxyRegistry', `线程 ${threadId} 释放连接 ${connectionId}`)
           }
 
-          this.sendResponse({ requestId, success: true, result: null })
+          this.sendResponse(worker, { requestId, success: true, result: null })
           break
         }
 
@@ -110,9 +126,9 @@ export class DbProxyRegistry {
           }
 
           const pool = getConnectionPool()
-          const worker = await pool.acquire(RequestWeight.HIGH)
+          const connWorker = await pool.acquire(RequestWeight.HIGH)
 
-          await worker.exec('BEGIN')
+          await connWorker.exec('BEGIN')
           log.debug(caller ?? 'DbProxyRegistry', `${operation ?? '事务'}，BEGIN`)
 
           // 注册事务
@@ -120,14 +136,14 @@ export class DbProxyRegistry {
             threadTransactions.set(threadId, new Map())
           }
           threadTransactions.get(threadId)!.set(transactionId, {
-            worker,
+            worker: connWorker,
             savepointCounter: 0
           })
 
           // 同时记录活跃连接
-          activeConnections.set(worker.getIndex(), worker)
+          activeConnections.set(connWorker.getIndex(), connWorker)
 
-          this.sendResponse({ requestId, success: true, result: null })
+          this.sendResponse(worker, { requestId, success: true, result: null })
           break
         }
 
@@ -155,7 +171,7 @@ export class DbProxyRegistry {
             }
           }
 
-          this.sendResponse({ requestId, success: true, result: null })
+          this.sendResponse(worker, { requestId, success: true, result: null })
           break
         }
 
@@ -169,9 +185,9 @@ export class DbProxyRegistry {
           const tx = threadTransactions.get(threadId)?.get(transactionId)
           if (tx) {
             const result = await tx.worker.run(statement, params)
-            this.sendResponse({ requestId, success: true, result })
+            this.sendResponse(worker, { requestId, success: true, result })
           } else {
-            this.sendResponse({ requestId, success: false, error: `Transaction ${transactionId} not found` })
+            this.sendResponse(worker, { requestId, success: false, error: `Transaction ${transactionId} not found` })
           }
           break
         }
@@ -185,9 +201,9 @@ export class DbProxyRegistry {
           const tx = threadTransactions.get(threadId)?.get(transactionId)
           if (tx) {
             const result = await tx.worker.get(statement, params)
-            this.sendResponse({ requestId, success: true, result })
+            this.sendResponse(worker, { requestId, success: true, result })
           } else {
-            this.sendResponse({ requestId, success: false, error: `Transaction ${transactionId} not found` })
+            this.sendResponse(worker, { requestId, success: false, error: `Transaction ${transactionId} not found` })
           }
           break
         }
@@ -201,9 +217,9 @@ export class DbProxyRegistry {
           const tx = threadTransactions.get(threadId)?.get(transactionId)
           if (tx) {
             const result = await tx.worker.all(statement, params)
-            this.sendResponse({ requestId, success: true, result })
+            this.sendResponse(worker, { requestId, success: true, result })
           } else {
-            this.sendResponse({ requestId, success: false, error: `Transaction ${transactionId} not found` })
+            this.sendResponse(worker, { requestId, success: false, error: `Transaction ${transactionId} not found` })
           }
           break
         }
@@ -217,9 +233,9 @@ export class DbProxyRegistry {
           const tx = threadTransactions.get(threadId)?.get(transactionId)
           if (tx) {
             const result = await tx.worker.exec(statement)
-            this.sendResponse({ requestId, success: true, result })
+            this.sendResponse(worker, { requestId, success: true, result })
           } else {
-            this.sendResponse({ requestId, success: false, error: `Transaction ${transactionId} not found` })
+            this.sendResponse(worker, { requestId, success: false, error: `Transaction ${transactionId} not found` })
           }
           break
         }
@@ -238,7 +254,7 @@ export class DbProxyRegistry {
             log.debug('DbProxyRegistry', `SAVEPOINT ${savepointName}`)
           }
 
-          this.sendResponse({ requestId, success: true, result: null })
+          this.sendResponse(worker, { requestId, success: true, result: null })
           break
         }
 
@@ -255,7 +271,7 @@ export class DbProxyRegistry {
             log.debug('DbProxyRegistry', `RELEASE SAVEPOINT ${savepointName}`)
           }
 
-          this.sendResponse({ requestId, success: true, result: null })
+          this.sendResponse(worker, { requestId, success: true, result: null })
           break
         }
 
@@ -272,7 +288,7 @@ export class DbProxyRegistry {
             log.debug('DbProxyRegistry', `ROLLBACK TO SAVEPOINT ${savepointName}`)
           }
 
-          this.sendResponse({ requestId, success: true, result: null })
+          this.sendResponse(worker, { requestId, success: true, result: null })
           break
         }
 
@@ -289,47 +305,40 @@ export class DbProxyRegistry {
             throw new Error('connectionId is required for database operations')
           }
 
-          const worker = activeConnections.get(connectionId)
-          if (!worker) {
+          const connWorker = activeConnections.get(connectionId)
+          if (!connWorker) {
             throw new Error(`Connection ${connectionId} not found or already released`)
           }
 
           let result: unknown
           switch (type) {
             case 'run':
-              result = await worker.run(statement, params)
+              result = await connWorker.run(statement, params)
               break
             case 'get':
-              result = await worker.get(statement, params)
+              result = await connWorker.get(statement, params)
               break
             case 'all':
-              result = await worker.all(statement, params)
+              result = await connWorker.all(statement, params)
               break
             case 'exec':
-              result = await worker.exec(statement)
+              result = await connWorker.exec(statement)
               break
           }
-          this.sendResponse({ requestId, success: true, result })
+          this.sendResponse(worker, { requestId, success: true, result })
           break
         }
 
         default:
-          this.sendResponse({ requestId, success: false, error: `Unknown message type: ${type}` })
+          this.sendResponse(worker, { requestId, success: false, error: `Unknown message type: ${type}` })
       }
     } catch (error) {
-      this.sendResponse({
+      this.sendResponse(worker, {
         requestId,
         success: false,
         error: error instanceof Error ? error.message : String(error)
       })
     }
-  }
-
-  /**
-   * 发送响应消息到子线程
-   */
-  private static sendResponse(response: { requestId: string; success: boolean; result?: unknown; error?: string }): void {
-    parentPort?.postMessage(response)
   }
 
   /**
@@ -362,7 +371,6 @@ export class DbProxyRegistry {
     }
     activeConnections.clear()
 
-    this.initialized = false
     log.debug('DbProxyRegistry', '数据库代理注册表已清理')
   }
 }

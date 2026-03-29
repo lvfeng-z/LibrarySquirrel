@@ -1,12 +1,5 @@
-import { workerData } from 'worker_threads'
-import { isNullish } from '@shared/util/CommonUtil.ts'
+import { parentPort } from 'worker_threads'
 import log from '../../util/LogUtil.ts'
-
-interface DbProxyInitData {
-  threadType: string
-  threadId: number
-  databasePath: string
-}
 
 /**
  * 数据库请求（子线程 → 主线程）
@@ -56,7 +49,7 @@ export class DbProxy {
     this.connectionId = connectionId
 
     // 监听主线程返回的消息
-    process.parentPort?.on('message', this.handleMessage.bind(this))
+    parentPort?.on('message', this.handleMessage.bind(this))
 
     log.debug('DbProxy', `线程 ${threadId} 的数据库代理已创建，connectionId: ${connectionId}`)
   }
@@ -84,13 +77,17 @@ export class DbProxy {
         const response = message as DbResponse
         if (response.requestId === requestId) {
           clearTimeout(timeout)
-          process.parentPort?.removeListener('message', handler)
+          // process.parentPort?.removeListener('message', handler)
           resolve(response)
         }
       }
 
-      process.parentPort?.on('message', handler)
-      process.parentPort?.postMessage(request)
+      parentPort?.on('message', handler)
+      if (parentPort) {
+        parentPort.postMessage(request)
+      } else {
+        log.info('ct', 'parentPort is NULL!')
+      }
     })
 
     if (!response.success) {
@@ -114,18 +111,6 @@ export class DbProxy {
       } else {
         pending.reject(new Error(response.error))
       }
-    }
-  }
-
-  /**
-   * 检查是否在主线程
-   */
-  static isMainThread(): boolean {
-    try {
-      const data = workerData as DbProxyInitData | undefined
-      return isNullish(data) || data.threadType !== 'task'
-    } catch {
-      return true
     }
   }
 
@@ -159,7 +144,7 @@ export class DbProxy {
 
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(requestId, { resolve, reject })
-      process.parentPort?.postMessage(fullRequest)
+      parentPort?.postMessage(fullRequest)
     })
   }
 

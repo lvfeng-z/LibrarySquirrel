@@ -11,7 +11,16 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        external: ['webpack', 'vue-loader', 'rimraf']
+        external: ['webpack', 'vue-loader', 'rimraf'],
+        output: {
+          manualChunks: (id) => {
+            // 将 DbProxy 单独打包为一个 chunk，避免进入主线程 bundle
+            if (id.includes('DbProxy.ts') || id.includes('DbProxy.js')) {
+              return 'db-proxy'
+            }
+            return undefined
+          }
+        }
       }
     }
   },

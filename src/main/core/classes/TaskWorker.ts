@@ -7,17 +7,11 @@ import Task from '@shared/model/entity/Task.ts'
 import { SendMsgToRender } from '../EventToRender.ts'
 import { RenderEvent } from '../EventToRender.ts'
 import { TaskStatus } from './TaskStatus.ts'
+import { DbProxyRegistry } from '../DbProxyRegistry.ts'
 
 // 使用 entry point 名称来引用 worker 文件
 import TaskWorkerEntryPath from '../workers/taskWorkerEntry.ts?modulePath'
-
-/**
- * 工作线程初始化数据
- */
-interface TaskWorkerInitData {
-  workerId: number
-  threadType: string
-}
+import { ThreadInitData } from '../types/ThreadInitData.ts'
 
 /**
  * 工作线程任务消息（主线程 → Worker 线程）
@@ -95,14 +89,19 @@ export class TaskWorker {
    */
   private initWorker(): void {
     // 创建 Worker 线程
+    const initData: ThreadInitData = {
+      workerId: this.workerId,
+      threadType: 'task',
+      isMainThread: false
+    }
     this.worker = new Worker(TaskWorkerEntryPath, {
-      workerData: {
-        workerId: this.workerId,
-        threadType: 'task'
-      } as TaskWorkerInitData
+      workerData: initData
     })
 
-    // 监听 Worker 线程消息
+    // 注册数据库消息处理器（监听包含 requestId 的消息）
+    DbProxyRegistry.registerWorker(this.worker)
+
+    // 监听 Worker 线程任务进度消息（不包含 requestId 的消息）
     this.worker.on('message', (message: WorkerProgressMessage) => {
       this.handleWorkerMessage(message)
     })

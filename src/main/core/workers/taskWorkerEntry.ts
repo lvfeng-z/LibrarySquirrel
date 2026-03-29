@@ -6,12 +6,14 @@ import ResourceWriter from '../../util/ResourceWriter.js'
 import { TaskHandler } from '../../plugin/types/ContributionTypes.ts'
 import { isNullish } from '@shared/util/CommonUtil.ts'
 import { pathToFileURL } from 'node:url'
+import PluginManager from '../../plugin/PluginManager.ts'
+import { createPluginContext } from '../../plugin/types/PluginContext.ts'
 
 // 导出模块路径（用于 electron-vite ?modulePath 导入）
 export default fileURLToPath(import.meta.url)
 
-// 动态导入的 TaskService 模块缓存
-let TaskServiceModule: typeof import('../../service/TaskService.ts') | null = null
+// 动态导入的 TaskExecutor 模块缓存
+let TaskExecutorModule: typeof import('../../service/TaskExecutor.ts') | null = null
 
 /**
  * 工作线程初始化数据
@@ -97,21 +99,22 @@ function sendToMain(message: WorkerProgressMessage): void {
 }
 
 /**
- * 获取 TaskService（动态导入以避免循环依赖）
+ * 获取 TaskExecutor（动态导入以避免主线程模块进入子线程）
  */
-async function getTaskService(): Promise<import('../../service/TaskService.ts').default> {
-  if (!TaskServiceModule) {
-    TaskServiceModule = await import('../../service/TaskService.ts')
+async function getTaskExecutor(): Promise<typeof import('../../service/TaskExecutor.ts')> {
+  if (!TaskExecutorModule) {
+    TaskExecutorModule = await import('../../service/TaskExecutor.ts')
   }
-  return new TaskServiceModule.default()
+  return TaskExecutorModule
 }
 
 /**
  * 从缓存或动态导入获取贡献点
+ * @param pluginPublicId 插件公开id
  * @param contributionPath 贡献点文件路径
  * @returns 贡献点实例
  */
-async function getContribution(contributionPath: string): Promise<TaskHandler> {
+async function getContribution(pluginPublicId: string, contributionPath: string): Promise<TaskHandler> {
   let handler = contributionCache.get(contributionPath)
 
   if (isNullish(handler)) {
@@ -119,7 +122,7 @@ async function getContribution(contributionPath: string): Promise<TaskHandler> {
     const temp = pathToFileURL(contributionPath).href
     const module = await import(temp)
     // 获取默认导出（贡献点实例）
-    handler = module.default as TaskHandler
+    handler = module.default(createPluginContext(pluginPublicId)) as TaskHandler
     contributionCache.set(contributionPath, handler)
   }
 
@@ -175,15 +178,15 @@ async function handleTaskStart(message: WorkerTaskMessage): Promise<void> {
     currentTaskData = taskData
 
     // 获取贡献点（从缓存或动态导入）
-    const taskHandler = await getContribution(taskData.contributionPath)
+    const taskHandler = await getContribution(taskData.pluginPublicId, taskData.contributionPath)
     currentTaskHandler = taskHandler
 
-    // 获取 TaskService（动态导入）
-    const taskService = await getTaskService()
+    // 获取 TaskExecutor（动态导入）
+    const TaskExecutor = await getTaskExecutor()
 
     // 在子线程中获取或创建 workId（通过 DbProxy 透明地在主线程执行数据库操作）
     const update = false // 新任务默认不更新已有作品信息
-    const workId = await taskService.saveWorkInfo(taskData.task, update)
+    const workId = await TaskExecutor.TaskExecutor.saveWorkInfo(taskData.task, taskHandler, update)
     if (workId === null || workId === undefined) {
       sendToMain({ type: 'error', taskId: message.taskId, error: '创建作品信息失败' })
       return
@@ -204,8 +207,13 @@ async function handleTaskStart(message: WorkerTaskMessage): Promise<void> {
       })
     }
 
-    // 调用 startTask，Database 操作会通过 DbProxy 透明地路由到主线程
-    const { response: result, resourceWriter } = await taskService.startTask(taskData.task, workId, taskHandler, onProgress)
+    // 调用 startTask（使用 TaskExecutor），Database 操作会通过 DbProxy 透明地路由到主线程
+    const { response: result, resourceWriter } = await TaskExecutor.TaskExecutor.startTask(
+      taskData.task,
+      workId,
+      taskHandler,
+      onProgress
+    )
     currentResourceWriter = resourceWriter
 
     // 根据结果发送消息
@@ -242,11 +250,9 @@ async function handleTaskPause(): Promise<void> {
   }
 
   try {
-    // 获取 TaskService（动态导入）
-    const taskService = await getTaskService()
-
-    // 调用 pauseTask
-    await taskService.pauseTask(currentTaskData.task, currentTaskHandler, currentResourceWriter!)
+    // 调用 pauseTask（使用 TaskExecutor）
+    const TaskExecutor = await getTaskExecutor()
+    await TaskExecutor.TaskExecutor.pauseTask(currentTaskData.task, currentTaskHandler, currentResourceWriter!)
 
     sendToMain({ type: 'paused' })
   } catch (error) {
@@ -271,9 +277,6 @@ async function handleTaskResume(): Promise<void> {
   }
 
   try {
-    // 获取 TaskService（动态导入）
-    const taskService = await getTaskService()
-
     // 创建进度回调，用于将进度消息发送到主线程
     const onProgress = (bytesWritten: number) => {
       const taskId = currentTaskData!.task.id
@@ -289,8 +292,9 @@ async function handleTaskResume(): Promise<void> {
       }
     }
 
-    // 调用 resumeTask
-    const { response: result, resourceWriter } = await taskService.resumeTask(
+    // 调用 resumeTask（使用 TaskExecutor）
+    const TaskExecutor = await getTaskExecutor()
+    const { response: result, resourceWriter } = await TaskExecutor.TaskExecutor.resumeTask(
       currentTaskData.task,
       currentTaskData.workId,
       currentTaskHandler,
@@ -325,11 +329,9 @@ async function handleTaskStop(): Promise<void> {
   }
 
   try {
-    // 获取 TaskService（动态导入）
-    const taskService = await getTaskService()
-
-    // 调用 stopTask
-    await taskService.stopTask(currentTaskData.task, currentTaskHandler, currentResourceWriter!)
+    // 调用 stopTask（使用 TaskExecutor）
+    const TaskExecutor = await getTaskExecutor()
+    await TaskExecutor.TaskExecutor.stopTask(currentTaskData.task, currentTaskHandler, currentResourceWriter!)
 
     // 清理状态
     currentTaskData = null
