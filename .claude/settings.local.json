@@ -9,7 +9,13 @@
       "Bash(yarn typecheck:node:*)",
       "Bash(python3:*)",
       "Bash(python:*)",
-      "Bash(\"C:/Users/14848/AppData/Local/Python/bin/python.exe\" \"C:/Users/14848/.claude/plugins/cache/everything-claude-code/everything-claude-code/1.8.0/skills/continuous-learning-v2/scripts/instinct-cli.py\" status)"
+      "Bash(\"C:/Users/14848/AppData/Local/Python/bin/python.exe\" \"C:/Users/14848/.claude/plugins/cache/everything-claude-code/everything-claude-code/1.8.0/skills/continuous-learning-v2/scripts/instinct-cli.py\" status)",
+      "Bash(go mod:*)",
+      "Bash(go vet:*)",
+      "Bash(ls -la e:/code/lvfeng/LibrarySquirrel/src/main/*.go e:/code/lvfeng/LibrarySquirrel/src/main/**/*.go)",
+      "Bash(rm -rf internal/handler internal/model)",
+      "Bash(mkdir -p internal/user internal/order internal/model)",
+      "Bash(go build:*)"
     ]
   },
   "enabledPlugins": {
