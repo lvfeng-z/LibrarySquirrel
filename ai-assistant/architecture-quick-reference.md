@@ -180,3 +180,87 @@ export const routes = [
 - **后端调试**：查看 `LogUtil` 输出
 - **数据库调试**：检查SQL执行和事务
 - **IPC调试**：验证方法名匹配（`service-method` ↔ `serviceMethod`）
+
+---
+
+## Go 主进程架构 (my-ipc-service)
+
+> **项目状态**：正在从 Node.js (`src/main-old/`) 重构到 Go
+
+### Go 项目目录结构
+
+```
+my-ipc-service/
+├── cmd/server/main.go           # 程序入口
+├── internal/
+│   ├── config/                  # 程序配置
+│   ├── database/                # 数据库连接、迁移、事务
+│   ├── site/                    # 站点模块
+│   ├── author/                  # 作者模块
+│   ├── localTag/                # 本地标签
+│   ├── localAuthor/             # 本地作者
+│   ├── work/                    # 作品模块
+│   ├── workSet/                 # 作品集模块
+│   ├── relations/               # 作品关联 (tag/author/workSet)
+│   ├── plugin/                  # 插件系统
+│   ├── task/                    # 任务管理
+│   ├── search/                 # 搜索
+│   ├── settings/                # 业务设置
+│   ├── secureStorage/           # 安全存储
+│   ├── appLauncher/            # App启动器
+│   ├── autoExplainPath/        # 自动解释路径
+│   ├── slot/                   # Slot同步
+│   ├── siteBrowser/            # 站点浏览器
+│   ├── pluginTaskUrlListener/  # 插件任务URL监听
+│   ├── error/                  # 自定义错误
+│   └── util/                   # 工具函数
+├── pkg/model/                   # 全局共享 DTO
+└── go.mod
+```
+
+### Go 模块职责
+
+| 模块 | 职责 | 循环依赖风险 |
+|------|------|-------------|
+| `site` | 站点管理 | 无 |
+| `author` | 作者管理 | 无 |
+| `localTag` | 本地标签 | 无 |
+| `localAuthor` | 本地作者 | 无 |
+| `work` | 作品管理 | 被其他模块依赖 |
+| `workSet` | 作品集管理 | 无 |
+| `relations` | 作品关联 | 是叶子节点，无循环依赖 |
+| `plugin` | 插件系统 | 无 |
+| `task` | 任务调度 | 无 |
+| `search` | 搜索服务 | 可能依赖多个业务模块 |
+| `database` | 数据库基础设施 | 被业务模块依赖 |
+| `config` | 程序配置 | 无 |
+
+### Go Repository 模式
+
+每个业务模块内部结构：
+```
+internal/{module}/
+├── model.go             # 领域实体
+├── repository.go        # Repository 接口定义
+├── repository_impl.go   # 数据库实现 (唯一可以 import database 的地方)
+└── service.go           # 业务逻辑 (只依赖 Repository 接口)
+```
+
+### Go 与 Node.js 主进程对应关系
+
+| Node.js (src/main-old/) | Go (my-ipc-service/internal/) |
+|-------------------------|-------------------------------|
+| `service/` | `{module}/service.go` |
+| `dao/` | `{module}/repository_impl.go` |
+| `model/entity/` | `{module}/model.go` |
+| `database/` | `database/` |
+| `core/MainProcessApi.ts` | IPC handler 注册 |
+| `core/taskQueue.ts` | `task/` |
+
+### Go 开发检查清单
+
+- [ ] Service 层不直接 import `internal/database`
+- [ ] Repository 接口定义在被调用的 Service 包内
+- [ ] 跨模块调用使用接口而非直接引用
+- [ ] 所有 Repository 方法接收 `context.Context`
+- [ ] `config` 和 `settings` 职责区分清晰

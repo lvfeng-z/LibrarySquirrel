@@ -833,5 +833,135 @@ interface ResourceRecord {
 
 ---
 
-**最后更新**: 2026-03-20
+## Go 主进程代码规范
+
+### 文件命名规范
+
+| 元素 | 命名规则 | 示例 |
+|------|----------|------|
+| Go 源文件 | snake_case 或与类型同名 | `model.go`, `repository_impl.go` |
+| 目录 | 单元命名，全部小写 | `internal/author/` |
+| 包名 | 与目录同名，简洁 | `package author` |
+
+### 命名规范
+
+| 元素 | 命名规则 | 示例 |
+|------|----------|------|
+| 结构体/接口 | PascalCase | `type Service struct` |
+| 变量/函数 | camelCase | `func NewService()` |
+| 常量 | UPPER_SNAKE_CASE | `ErrNameEmpty` |
+| 错误类型 | 以 `Err` 开头 | `ErrNameEmpty` |
+| 接口 | 以 `er` 结尾或名词 | `Repository`, `Provider` |
+
+### 代码组织
+
+```go
+// 1. 包声明
+package author
+
+// 2. 导入 (按长度排序，标准库在前)
+import (
+    "context"
+    "errors"
+
+    "my-ipc-service/internal/database"
+)
+
+// 3. 错误定义
+var ErrNameEmpty = errors.New("author: name is empty")
+
+// 4. 领域实体
+type Author struct {
+    ID   int64
+    Name string
+}
+
+// 5. 接口定义
+type Repository interface {
+    FindByID(ctx context.Context, id int64) (*Author, error)
+}
+
+// 6. Service 实现
+type Service struct {
+    repo Repository
+}
+
+func NewService(repo Repository) *Service {
+    return &Service{repo: repo}
+}
+```
+
+### 函数/方法顺序
+
+1. 构造函数 (`NewXxx`)
+2. 接口实现方法 (按接口定义顺序)
+3. 业务方法 (按调用频率或重要性)
+4. 私有辅助方法
+
+### 注释规范
+
+```go
+// Author 领域实体
+type Author struct {
+    ID   int64
+    Name string
+}
+
+// Repository 定义了 Author 模块的数据存取契约
+type Repository interface {
+    // FindByID 根据 ID 查找作者
+    FindByID(ctx context.Context, id int64) (*Author, error)
+}
+
+// Register 创建新作者
+// ctx: 上下文
+// name: 作者名称
+// 返回创建的作者或错误
+func (s *Service) Register(ctx context.Context, name string) (*Author, error) {
+    // ...
+}
+```
+
+### 禁止的做法
+
+| 禁止 | 正确做法 |
+|------|----------|
+| 在 Service 层 import `internal/database` | 在 `repository_impl.go` 中 import |
+| 返回 `*gorm.DB` 或 `sql.Rows` | 返回领域实体或 DTO |
+| 使用裸 `error` 作为全局变量 | 使用 `var ErrXxx = errors.New(...)` |
+| 跨模块直接引用其他业务的 Service | 使用接口隔离 |
+| 在 `util` 包中包含有状态逻辑 | 使用纯函数 |
+
+### 错误处理模式
+
+```go
+// 定义错误
+var (
+    ErrNameEmpty   = errors.New("author: name is empty")
+    ErrNotFound    = errors.New("author: not found")
+)
+
+// 在 Service 中使用
+func (s *Service) Register(ctx context.Context, name string) (*Author, error) {
+    if name == "" {
+        return nil, ErrNameEmpty
+    }
+    // ...
+}
+
+// 调用方判断错误类型
+if errors.Is(err, author.ErrNotFound) {
+    // 处理未找到
+}
+```
+
+### context 传递规范
+
+- 所有 public 方法必须接收 `context.Context` 作为第一个参数
+- 在调用下游服务时传递 `ctx`
+- 不要在 `context.WithValue` 中存储业务数据
+
+---
+
+**最后更新**: 2026-03-30
 **维护者**: AI Assistant

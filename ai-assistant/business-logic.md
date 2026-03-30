@@ -250,14 +250,35 @@
 
 ## 项目文件位置速查
 
-- **业务逻辑**：`src/main/service/`
-- **数据模型**：`src/main/model/`
-- **数据库操作**：`src/main/dao/`
-- **插件系统**：`src/main/plugin/`
-- **前端组件**：`src/renderer/src/components/`
-- **状态管理**：`src/renderer/src/store/`
-- **API包装**：`src/renderer/src/apis/`
-- **IPC注册**：`src/main/core/MainProcessApi.ts`
-- **数据库配置**：`src/main/resources/database/createDataTables.yml`
-- **任务队列**：`src/main/core/taskQueue.ts`
-- **自定义协议**：`src/main/index.ts`（resource://处理）
+### Node.js 主进程 (当前活跃)
+
+| 组件 | 路径 |
+|------|------|
+| 业务逻辑 | `src/main-old/service/` |
+| 数据模型 | `src/main-old/model/` |
+| 数据库操作 | `src/main-old/dao/` |
+| 插件系统 | `src/main-old/plugin/` |
+| IPC注册 | `src/main-old/core/MainProcessApi.ts` |
+| 任务队列 | `src/main-old/core/taskQueue.ts` |
+| 数据库配置 | `src/main-old/resources/database/createDataTables.yml` |
+
+### Go 主进程 (重构中)
+
+| 组件 | 路径 |
+|------|------|
+| 程序入口 | `my-ipc-service/cmd/server/main.go` |
+| 业务模块 | `my-ipc-service/internal/{module}/` |
+| 数据库基础设施 | `my-ipc-service/internal/database/` |
+| 程序配置 | `my-ipc-service/internal/config/` |
+| 共享DTO | `my-ipc-service/pkg/model/` |
+
+> **注意**：Go 重构正在进行中，原 Node.js 代码位于 `src/main-old/`。重构完成后将替换为 `my-ipc-service/`。
+
+### 前端 (Renderer)
+
+| 组件 | 路径 |
+|------|------|
+| 前端组件 | `src/renderer/src/components/` |
+| 状态管理 | `src/renderer/src/store/` |
+| API包装 | `src/renderer/src/apis/` |
+| 路由配置 | `src/renderer/src/router/` |

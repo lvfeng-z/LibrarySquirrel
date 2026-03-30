@@ -114,6 +114,18 @@
 - **本地标签** ↔ **站点标签** = 跨站点标签统一检索
 - **业务价值**：一次检索，全站结果
 
+### Go 主进程重构
+
+> **项目状态**：正在进行从 Node.js 到 Go 的重构
+
+**目标**：将 `src/main-old/` 的 Node.js 主进程迁移到 `my-ipc-service/` 的 Go 实现。
+
+**核心规范**：
+- Repository 模式：数据访问通过接口隔离
+- 消除循环依赖：使用依赖倒置原则
+- 包内聚合：model, repository, service 在同一模块内
+- 详细规范见 [go-repository.md](./go-repository.md)
+
 ### Vue Router 前端路由
 
 - 使用 `createWebHashHistory()` 实现 hash 路由

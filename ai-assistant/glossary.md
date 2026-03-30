@@ -224,3 +224,55 @@
 - **定义**：使用SAVEPOINT而非BEGIN/COMMIT的事务机制
 - **优势**：支持嵌套事务
 - **实现**：`DatabaseClient.transaction()`
+
+## Go 主进程重构术语
+
+### Repository 模式 (Repository Pattern)
+
+- **英文**：Repository Pattern
+- **定义**：数据访问逻辑的抽象，将业务逻辑与数据存储分离
+- **Go 实现**：
+  - 接口定义在 `internal/{module}/repository.go`
+  - 实现代码在 `internal/{module}/repository_impl.go`
+  - Service 只依赖接口，不直接访问数据库
+- **优势**：解耦、可测试、消除循环依赖
+
+### 依赖倒置 (Dependency Inversion)
+
+- **英文**：Dependency Inversion
+- **定义**：高层模块不依赖低层模块，两者都依赖抽象
+- **Go 实现**：接口由调用方定义，实现方隐式满足
+- **示例**：`WorkService` 需要调用 `AuthorService` 时，定义 `AuthorProvider` 接口
+
+### 包内聚合 (Package-Level Aggregation)
+
+- **英文**：Package-Level Aggregation
+- **定义**：将相关的接口、实现、实体放在同一包内
+- **结构**：
+  ```
+  internal/author/
+  ├── model.go             # 领域实体
+  ├── repository.go        # 接口定义
+  ├── repository_impl.go   # 实现
+  └── service.go           # 业务逻辑
+  ```
+
+### context.Context
+
+- **英文**：Context
+- **定义**：Go 中用于传递请求范围的值、取消信号和超时控制
+- **规范**：所有 Repository 和 Service 方法第一个参数必须是 `context.Context`
+
+### 错误 sentinel
+
+- **英文**：Sentinel Error
+- **定义**：使用预定义的错误变量进行错误判断
+- **示例**：`var ErrNotFound = errors.New("not found")`
+- **判断方式**：`errors.Is(err, ErrNotFound)`
+
+### 叶子节点 (Leaf Node)
+
+- **英文**：Leaf Node
+- **定义**：在依赖图中不依赖其他业务模块的模块
+- **示例**：`relations` 模块被 `work` 依赖，但不依赖其他业务模块
+- **优势**：不会形成循环依赖，可以安全地被多个模块引用
