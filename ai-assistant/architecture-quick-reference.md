@@ -187,6 +187,34 @@ export const routes = [
 
 > **项目状态**：正在从 Node.js (`src/main-old/`) 重构到 Go
 
+### 三层架构
+
+```
+┌────────────────────────────────────────────┐
+│  共享层: pkg/model                         │
+│  ├── BaseEntity、Example、API Response      │
+│  └── ⚠️ 严禁业务逻辑或数据库依赖            │
+└────────────────────────────────────────────┘
+                      ↑
+┌────────────────────────────────────────────┐
+│  基础设施层: internal/database              │
+│  ├── BaseRepository[T] 泛型基础仓储         │
+│  └── Transaction 事务封装                   │
+└────────────────────────────────────────────┘
+                      ↑
+┌────────────────────────────────────────────┐
+│  业务层: internal/{module}/                 │
+│  ├── model.go        领域实体               │
+│  ├── repository.go   Repository 接口        │
+│  ├── repository_impl.go 数据库实现          │
+│  └── service.go     业务逻辑                │
+└────────────────────────────────────────────┘
+```
+
+**依赖方向**：`Service → Repository Interface ← Repository Implementation`
+
+**模块独立性**：模块之间**不产生依赖**，跨模块操作下沉到单一模块内部。
+
 ### Go 项目目录结构
 
 ```
@@ -199,12 +227,11 @@ my-ipc-service/
 │   ├── author/                  # 作者模块
 │   ├── localTag/                # 本地标签
 │   ├── localAuthor/             # 本地作者
-│   ├── work/                    # 作品模块
+│   ├── work/                    # 作品模块（含 link/unlink 逻辑）
 │   ├── workSet/                 # 作品集模块
-│   ├── relations/               # 作品关联 (tag/author/workSet)
 │   ├── plugin/                  # 插件系统
 │   ├── task/                    # 任务管理
-│   ├── search/                 # 搜索
+│   ├── search/                 # 搜索（不依赖其他业务模块）
 │   ├── settings/                # 业务设置
 │   ├── secureStorage/           # 安全存储
 │   ├── appLauncher/            # App启动器
@@ -218,49 +245,10 @@ my-ipc-service/
 └── go.mod
 ```
 
-### Go 模块职责
-
-| 模块 | 职责 | 循环依赖风险 |
-|------|------|-------------|
-| `site` | 站点管理 | 无 |
-| `author` | 作者管理 | 无 |
-| `localTag` | 本地标签 | 无 |
-| `localAuthor` | 本地作者 | 无 |
-| `work` | 作品管理 | 被其他模块依赖 |
-| `workSet` | 作品集管理 | 无 |
-| `relations` | 作品关联 | 是叶子节点，无循环依赖 |
-| `plugin` | 插件系统 | 无 |
-| `task` | 任务调度 | 无 |
-| `search` | 搜索服务 | 可能依赖多个业务模块 |
-| `database` | 数据库基础设施 | 被业务模块依赖 |
-| `config` | 程序配置 | 无 |
-
-### Go Repository 模式
-
-每个业务模块内部结构：
-```
-internal/{module}/
-├── model.go             # 领域实体
-├── repository.go        # Repository 接口定义
-├── repository_impl.go   # 数据库实现 (唯一可以 import database 的地方)
-└── service.go           # 业务逻辑 (只依赖 Repository 接口)
-```
-
-### Go 与 Node.js 主进程对应关系
-
-| Node.js (src/main-old/) | Go (my-ipc-service/internal/) |
-|-------------------------|-------------------------------|
-| `service/` | `{module}/service.go` |
-| `dao/` | `{module}/repository_impl.go` |
-| `model/entity/` | `{module}/model.go` |
-| `database/` | `database/` |
-| `core/MainProcessApi.ts` | IPC handler 注册 |
-| `core/taskQueue.ts` | `task/` |
-
 ### Go 开发检查清单
 
+- [ ] `pkg/model` 不含业务逻辑或数据库依赖（中立区）
+- [ ] **模块之间无依赖**，每个模块只依赖 Repository
 - [ ] Service 层不直接 import `internal/database`
-- [ ] Repository 接口定义在被调用的 Service 包内
-- [ ] 跨模块调用使用接口而非直接引用
 - [ ] 所有 Repository 方法接收 `context.Context`
 - [ ] `config` 和 `settings` 职责区分清晰

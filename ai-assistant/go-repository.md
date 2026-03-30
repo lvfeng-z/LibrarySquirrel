@@ -1,15 +1,60 @@
 # Go 主进程重构规范
 
-## 1. 核心目标
+## 核心目标
 
-- **消除循环依赖**：通过依赖倒置原则，确保业务模块之间、业务与数据库之间解耦。
-- **逻辑解耦**：明确区分"业务逻辑"（Service）与"数据存取逻辑"（Repository）。
-- **可测试性**：通过接口抽象，使得 Service 层可以轻松地通过 Mock 进行单元测试。
-- **渐进式迁移**：从 `src/main-old/` 的 Node.js 代码逐步迁移到 Go，保持功能一致。
+构建**高内聚、低耦合**的模块化系统。
+
+| 核心手段 | 实现方式 |
+|---------|---------|
+| 消除重复代码 | 泛型抽象：`BaseRepository[T]` 一次编写，全项目复用 |
+| 解决循环依赖 | 依赖倒置：接口定义在调用方，实现方隐式满足 |
+| 业务模块独立性 | 每个模块独立演进，不影响其他模块 |
+| 可测试性 | Service 层依赖接口，可轻松 Mock |
+
+**依赖方向**（严格遵循）：
+
+```
+Service → Repository Interface ← Repository Implementation
+                              ↑
+                       internal/database
+```
 
 ---
 
-## 2. 项目目录结构
+## 三层架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  共享层 (pkg/model)                                         │
+│  ├── 纯数据结构：API Response、Page、Example                 │
+│  └── 约束接口：BaseEntity（GetID）                          │
+│  ⚠️ 严禁包含任何业务逻辑或数据库依赖                         │
+└─────────────────────────────────────────────────────────────┘
+                              ↑
+┌─────────────────────────────────────────────────────────────┐
+│  基础设施层 (internal/database)                              │
+│  ├── BaseRepository[T] 泛型基础仓储                         │
+│  ├── Transaction 事务封装                                   │
+│  └── Example 查询条件构建器                                  │
+└─────────────────────────────────────────────────────────────┘
+                              ↑
+┌─────────────────────────────────────────────────────────────┐
+│  业务层 (internal/{module})                                 │
+│  ├── model.go        领域实体                               │
+│  ├── repository.go   Repository 接口（嵌入 BaseRepository）  │
+│  ├── repository_impl.go  数据库实现                         │
+│  └── service.go     业务逻辑（依赖注入）                     │
+└─────────────────────────────────────────────────────────────┘
+                              ↑
+┌─────────────────────────────────────────────────────────────┐
+│  组装层 (cmd/server/main.go)                                │
+│  └── 依赖注入：new Service(repo, externalDeps)              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 项目目录结构
 
 ```
 my-ipc-service/
@@ -29,13 +74,8 @@ my-ipc-service/
 │   ├── author/                  # 作者
 │   ├── localTag/                # 本地标签
 │   ├── localAuthor/             # 本地作者
-│   ├── work/                    # 作品
+│   ├── work/                    # 作品（含 link/unlink 逻辑）
 │   ├── workSet/                 # 作品集
-│   ├── relations/               # 作品关联 (tag/author/workSet)
-│   │   ├── interfaces.go        # 关联操作接口
-│   │   ├── tag/                # work-tag 关系
-│   │   ├── author/              # work-author 关系
-│   │   └── workSet/            # work-workSet 关系
 │   │
 │   # --- 基础设施/功能模块 ---
 │   ├── plugin/                  # 插件系统
@@ -59,49 +99,55 @@ my-ipc-service/
 
 ---
 
-## 3. 模块命名与循环依赖风险
+## 3. 模块独立性原则
 
-### ⚠️ relations 模块特别说明
+### 核心原则
 
-`relations` 模块负责处理作品与其他实体的关联关系（tag、author、workSet）。
+**模块之间不产生依赖**。每个模块只依赖通用 CRUD Repository（通过依赖注入）。
 
-**为什么不会循环依赖**：
-- `WorkService` 依赖 `relations`（调用 link/unlink 等方法）
-- 但 `relations` 内部三个子包（tag、author、workSet）之间**没有相互调用**
-- 因此 `relations` 是叶子节点，不会形成 A→B→A 循环
-
-**结构建议**：
 ```
-internal/relations/
-├── interfaces.go     # 定义 RelationOperator 接口
-├── tag/             # work-tag 关系实现
-├── author/          # work-author 关系实现
-└── workSet/         # work-workSet 关系实现
+模块A ──┐
+        ├──→ Repository Interface ←─── Repository Implementation
+模块B ──┘                      ↑
+                           database
 ```
+
+### 跨模块操作的下沉处理
+
+| 原 Node.js | Go 迁移 |
+|-----------|---------|
+| WorkService → ReWorkTagService.link() | **下沉到 Work 模块内部** |
+| WorkService → ReWorkAuthorService.link() | **下沉到 Work 模块内部** |
+| SearchService → WorkService | **不依赖**，各自使用 Example 查询 |
+
+**好处**：
+- 模块之间无依赖，可以独立演进
+- 消除循环依赖风险
+- 每个模块的内聚性更高
 
 ### 🔴 禁止的模块依赖
 
-以下依赖方向是**禁止**的，会产生循环依赖：
+以下情况是**禁止**的：
 
-| 模块 A | 禁止依赖 | 原因 |
-|--------|----------|------|
-| `author` | `work` | work 已经依赖 author |
-| `localTag` | `work` | work 已经依赖 localTag |
-| `relations` | 其他业务模块 | relations 是叶子节点 |
+| 禁止 | 示例 |
+|------|------|
+| 业务模块之间直接调用 | `author` 包 import `work` 包 |
+| Service 层调用其他 Service | `WorkService` 调用 `TagService` |
 
 ---
 
 ## 4. database 包的范围
 
 **职责范围**（必须）：
-- 数据库连接初始化
-- 连接池管理
+- 数据库连接初始化（基于 Go 原生 `database/sql`）
+- 连接池参数配置（`SetMaxOpenConns`, `SetMaxIdleConns`, `SetConnMaxLifetime`）
 - 迁移脚本执行
-- 事务上下文管理
+- 事务上下文管理（封装 `db.BeginTx()`）
 
 **禁止行为**：
 - ❌ 业务层直接 import `internal/database` 写 SQL
 - ❌ 在 `database` 包内实现业务逻辑
+- ❌ 手动实现连接池（Go `database/sql` 已自带）
 
 **正确做法**：
 ```
@@ -112,22 +158,73 @@ author/repository.go (接口定义)
 author/repository_impl.go (import database, 实现 SQL)
 ```
 
+**示例**：
+
+```go
+// internal/database/db.go
+package database
+
+import (
+    "database/sql"
+    "time"
+    _ "github.com/mattn/go-sqlite3"
+)
+
+type DB struct {
+    *sql.DB
+}
+
+func Open(dsn string) (*DB, error) {
+    db, err := sql.Open("sqlite3", dsn)
+    if err != nil {
+        return nil, err
+    }
+    db.SetMaxOpenConns(25)
+    db.SetMaxIdleConns(5)
+    db.SetConnMaxLifetime(5 * time.Minute)
+    return &DB{db}, nil
+}
+
+// Transaction 封装事务
+func (db *DB) Transaction(fn func(*sql.Tx) error) error {
+    tx, err := db.Begin()
+    if err != nil {
+        return err
+    }
+    if err := fn(tx); err != nil {
+        tx.Rollback()
+        return err
+    }
+    return tx.Commit()
+}
+```
+
 ---
 
 ## 5. model 的边界划分
 
-### pkg/model - 全局共享 DTO
+### pkg/model - 共享层（中立区）
 
-存放跨模块共享的数据传输对象：
+**定位**：跨模块共享的纯数据结构，切断业务模块间的直接类型引用。
+
+**作用**：作为"中立区"，从物理上杜绝循环依赖。如果 A 模块需要引用 B 模块的某个类型，不能直接引用（会循环），而是把这个类型提升到 `pkg/model`。
+
+**存放内容**：
 - API 响应格式 (`APIResponse<T>`)
 - 全局分页结构 (`PageRequest`, `PageResponse`)
+- Example 查询条件构建器
+- BaseEntity 约束接口
 - 全局枚举常量
 
-**原则**：这些是不涉及业务逻辑的纯数据结构。
+**原则**：
+- ❌ 严禁包含任何业务逻辑
+- ❌ 严禁依赖 `internal/database`
+- ❌ 严禁依赖任何业务模块
 
 ### internal/{module}/model - 领域实体
 
 存放本模块独有的实体定义及其业务方法：
+
 ```go
 // internal/author/model.go
 package author
@@ -137,13 +234,21 @@ type Author struct {
     Name string
 }
 
+// GetID 实现 BaseEntity 接口
+func (a *Author) GetID() int64 {
+    return a.ID
+}
+
 // IsValid 业务方法 - 与领域相关但不需要外部依赖
 func (a *Author) IsValid() bool {
     return a.Name != ""
 }
 ```
 
-**原则**：实体及其业务方法必须在同一模块内，不得跨模块引用其他实体的业务方法。
+**原则**：
+- 实体及其业务方法必须在同一模块内
+- 不得跨模块引用其他实体的业务方法
+- 如需被其他模块引用类型，考虑提升到 `pkg/model`
 
 ---
 
@@ -184,6 +289,7 @@ internal/author/
 - 不包含业务逻辑（如"计算折扣"）
 - 仅包含基础的数据验证方法（如 `Validate()`）
 - 严禁引用其他业务模块的实体
+- 必须实现 `GetID()` 方法供泛型基础仓储使用
 
 ```go
 package author
@@ -194,15 +300,76 @@ type Author struct {
     Name string `json:"name"`
 }
 
+func (a *Author) GetID() int64 {
+    return a.ID
+}
+
 // IsValid 验证作者是否有效
 func (a *Author) IsValid() bool {
     return a.Name != ""
 }
 ```
 
-### 7.3 接口定义 (repository.go)
+### 7.3 泛型基础仓储接口 (internal/database/base_repository.go)
 
-**职责**：定义数据存取的契约。
+**职责**：提供通用的 CRUD 方法，所有业务 Repository 自动获得这些能力。
+
+```go
+package database
+
+import "context"
+
+// BaseEntity 定义所有实体必须包含的基础字段
+type BaseEntity interface {
+    GetID() int64
+}
+
+// Example 用于动态构建查询条件
+type Example struct {
+    Where  []Condition  // AND 条件
+    Or     []Condition  // OR 条件（与 Where 是 OR 关系）
+    OrderBy []OrderField // 排序
+    Limit  int          // 限制返回条数
+    Offset int          // 偏移量
+}
+
+type Condition struct {
+    Field    string      // 字段名
+    Op       string      // 操作符: =, !=, >, <, >=, <=, LIKE, IN, IS_NULL, IS_NOT_NULL
+    Value    interface{} // 值
+}
+
+type OrderField struct {
+    Field string // 字段名
+    Asc  bool   // true=ASC, false=DESC
+}
+
+// BaseRepository 通用 CRUD 接口
+type BaseRepository[T BaseEntity] interface {
+    // Save 插入或更新（根据 ID 是否为 0 决定）
+    Save(ctx context.Context, entity *T) error
+    // SaveBatch 批量插入
+    SaveBatch(ctx context.Context, entities []*T) error
+    // Delete 根据 ID 删除
+    Delete(ctx context.Context, id int64) error
+    // DeleteBatch 根据 ID 批量删除
+    DeleteBatch(ctx context.Context, ids []int64) error
+    // Update 更新非零字段
+    Update(ctx context.Context, entity *T) error
+    // UpdateBatch 批量更新
+    UpdateBatch(ctx context.Context, entities []*T) error
+    // GetById 根据 ID 查询
+    GetById(ctx context.Context, id int64) (*T, error)
+    // Get 根据 Example 查询，返回单条
+    Get(ctx context.Context, example *Example) (*T, error)
+    // List 根据 Example 查询，返回列表
+    List(ctx context.Context, example *Example) ([]*T, error)
+}
+```
+
+### 7.4 业务模块 Repository 接口 (repository.go)
+
+**职责**：定义业务模块特有的数据存取方法。
 
 **规范**：
 - 接口定义在调用方（Service 所在的包）
@@ -215,16 +382,17 @@ package author
 import "context"
 
 // Repository 定义了 Author 模块的数据存取契约
+// 嵌入 BaseRepository[Author] 自动获得基础 CRUD 能力
 type Repository interface {
-    FindByID(ctx context.Context, id int64) (*Author, error)
-    Create(ctx context.Context, a *Author) error
-    Update(ctx context.Context, a *Author) error
-    Delete(ctx context.Context, id int64) error
-    List(ctx context.Context, limit, offset int) ([]*Author, error)
+    BaseRepository[Author]  // 基础 CRUD
+
+    // 特有方法
+    FindByName(ctx context.Context, name string) (*Author, error)
+    ListByConditions(ctx context.Context, name string, status int) ([]*Author, error)
 }
 ```
 
-### 7.4 业务逻辑 (service.go)
+### 7.5 业务逻辑 (service.go)
 
 **职责**：处理业务流程、事务控制。
 
@@ -248,14 +416,14 @@ func (s *Service) Register(ctx context.Context, name string) (*Author, error) {
         return nil, ErrNameEmpty
     }
     author := &Author{Name: name}
-    if err := s.repo.Create(ctx, author); err != nil {
+    if err := s.repo.Save(ctx, author); err != nil {
         return nil, err
     }
     return author, nil
 }
 ```
 
-### 7.5 数据库实现 (repository_impl.go)
+### 7.6 数据库实现 (repository_impl.go)
 
 **职责**：将接口调用转换为具体的 SQL 操作。
 
@@ -269,6 +437,9 @@ package author
 
 import (
     "context"
+    "database/sql"
+    "strings"
+
     "my-ipc-service/internal/database"
 )
 
@@ -280,13 +451,76 @@ func NewRepository(db *database.DB) Repository {
     return &repositoryImpl{db: db}
 }
 
-func (r *repositoryImpl) FindByID(ctx context.Context, id int64) (*Author, error) {
-    var author Author
-    err := r.db.WithContext(ctx).First(&author, id).Error
-    if err != nil {
-        return nil, err
+// FindByName 特有查询实现
+func (r *repositoryImpl) FindByName(ctx context.Context, name string) (*Author, error) {
+    example := &database.Example{
+        Where: []database.Condition{
+            {Field: "name", Op: "=", Value: name},
+        },
     }
-    return &author, nil
+    return r.repo.Get(ctx, example)
+}
+
+// ListByConditions 特有查询实现
+func (r *repositoryImpl) ListByConditions(ctx context.Context, name string, status int) ([]*Author, error) {
+    example := &database.Example{
+        Where: []database.Condition{
+            {Field: "name", Op: "LIKE", Value: "%" + name + "%"},
+            {Field: "status", Op: "=", Value: status},
+        },
+        OrderBy: []database.OrderField{
+            {Field: "id", Asc: false},
+        },
+    }
+    return r.repo.List(ctx, example)
+}
+```
+
+### 7.7 Example 查询构建示例
+
+```go
+// 单表简单查询
+example := &Example{
+    Where: []Condition{
+        {Field: "name", Op: "=", Value: "张三"},
+        {Field: "age", Op: ">=", Value: 18},
+    },
+    OrderBy: []OrderField{
+        {Field: "created_at", Asc: false},
+    },
+    Limit: 10,
+    Offset: 0,
+}
+
+// 模糊查询
+example := &Example{
+    Where: []Condition{
+        {Field: "title", Op: "LIKE", Value: "%关键词%"},
+    },
+}
+
+// IN 查询
+example := &Example{
+    Where: []Condition{
+        {Field: "status", Op: "IN", Value: []int{1, 2, 3}},
+    },
+}
+
+// NULL 判断
+example := &Example{
+    Where: []Condition{
+        {Field: "deleted_at", Op: "IS_NULL", Value: nil},
+    },
+}
+
+// OR 条件
+example := &Example{
+    Where: []Condition{
+        {Field: "name", Op: "=", Value: "张三"},
+    },
+    Or: []Condition{
+        {Field: "name", Op: "=", Value: "李四"},
+    },
 }
 ```
 
@@ -294,30 +528,49 @@ func (r *repositoryImpl) FindByID(ctx context.Context, id int64) (*Author, error
 
 ## 8. 跨模块依赖解决方案
 
-**问题**：如果 AuthorService 需要调用 WorkService，直接引用会导致循环依赖。
+**核心原则**：模块之间**不产生依赖**。
 
-**解决方案**：依赖倒置 + 接口隔离
+**问题**：原 Node.js 代码中 Service 调用其他 Service（如 WorkService → ReWorkTagService），会形成依赖链条。
 
-1. 在 author 包内定义它需要的接口 `WorkProvider`
-2. 在 main.go 中将 WorkService 注入给 AuthorService
+**解决方案**：跨模块操作**下沉到单一模块内部**
+
+| 原 Node.js | Go 迁移 |
+|-----------|---------|
+| WorkService → ReWorkTagService.link() | 将 link 逻辑**合并到 Work 模块内部** |
+| WorkService → ReWorkAuthorService.link() | 将 link 逻辑合并到 Work 模块内部 |
+| SearchService → WorkService | Search 不依赖 Work，各自使用 Example 查询条件 |
+
+**示例**：
 
 ```go
-// internal/author/service.go
-
-// WorkProvider 定义了 Author 模块需要的 Work 能力
-type WorkProvider interface {
-    GetWorksByAuthorID(ctx context.Context, authorID int64) ([]WorkSummary, error)
+// 原 Node.js: WorkService 调用 ReWorkTagService
+class WorkService {
+    linkTag(workId, tagIds) {
+        const reWorkTagService = new ReWorkTagService()
+        return reWorkTagService.link(workId, tagIds)
+    }
 }
 
-type Service struct {
-    repo         Repository
-    workProvider WorkProvider
-}
-
-func NewService(repo Repository, wp WorkProvider) *Service {
-    return &Service{repo: repo, workProvider: wp}
+// Go 迁移: link 逻辑下沉到 Work 模块内部
+// internal/work/service.go
+func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) error {
+    for _, tagId := range tagIds {
+        relation := &WorkTagRelation{
+            WorkId: workId,
+            TagId:  tagId,
+        }
+        if err := s.repo.SaveWorkTagRelation(ctx, relation); err != nil {
+            return err
+        }
+    }
+    return nil
 }
 ```
+
+**好处**：
+- 模块之间无依赖，可以独立演进
+- 避免循环依赖
+- 每个模块的内聚性更高
 
 ---
 
@@ -330,8 +583,12 @@ func main() {
     // 1. 初始化配置
     cfg := config.Load()
 
-    // 2. 初始化数据库
-    db := database.Init(cfg.Database)
+    // 2. 初始化数据库（使用 Go 原生连接池）
+    db, err := database.Open(cfg.DSN)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
 
     // 3. 初始化 Repository (实现层)
     authorRepo := author.NewRepository(db)
