@@ -6,17 +6,85 @@
 
 | 核心手段 | 实现方式 |
 |---------|---------|
-| 消除重复代码 | 泛型抽象：`BaseRepository[T]` 一次编写，全项目复用 |
-| 解决循环依赖 | 依赖倒置：接口定义在调用方，实现方隐式满足 |
+| 消除重复代码 | 泛型抽象：`BaseRepository[T]` 一次编写，全项目复用实现基础CRUD |
+| 模块间解耦 | 通过接口通信：调用方定义接口，实现方注入 |
 | 业务模块独立性 | 每个模块独立演进，不影响其他模块 |
-| 可测试性 | Service 层依赖接口，可轻松 Mock |
+| 可测试性 | 模块依赖接口，可轻松 Mock |
 
-**依赖方向**（严格遵循）：
+**核心原则**：所有模块间调用都通过接口进行。
+
+**接口设计模式**（适用于所有模块）：
 
 ```
-Service → Repository Interface ← Repository Implementation
-                              ↑
-                       internal/database
+定义接口  →  调用方定义所需接口（如 WorkService 定义 TagFinder 接口）
+    ↓
+实现接口  →  被调用方实现接口（如 LocalTagService 实现 TagFinder）
+    ↓
+注入      →  组装层（cmd/server/main.go）把实现注入给调用方
+```
+
+**禁止**：模块之间直接调用（`author` 包直接 import `work` 包）
+
+---
+
+## 渲染进程通信架构
+
+### 方案：Electron + 内嵌 Web 服务器
+
+**核心思路**：将 Electron 作为"Chromium 启动器"，Go 进程通过内嵌 HTTP 服务器处理所有业务逻辑。
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Electron 进程（仅负责窗口和生命周期）                      │
+│  - 创建 BrowserWindow                                       │
+│  - 管理应用生命周期                                         │
+│  - 提供前端资源                                              │
+└─────────────────────────────────────────────────────────────┘
+                            ↓ HTTP (:34567)
+┌─────────────────────────────────────────────────────────────┐
+│  Go HTTP 服务器（替代原 Node.js 主进程）                    │
+│  - 处理所有业务逻辑                                          │
+│  - 提供 API 接口                                            │
+│  - Go 进程与 Electron 进程解耦                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 通信对比
+
+| 原方案（Node.js） | 新方案（Go HTTP） |
+|------------------|------------------|
+| `ipcRenderer.invoke('xxx')` | `fetch('http://localhost:34567/api/xxx')` |
+| preload 桥接 | 无需 preload |
+| Electron IPC | HTTP REST API |
+
+### Electron 启动流程
+
+```go
+// cmd/server/main.go
+func main() {
+    // 1. 启动 Go HTTP 服务器
+    go http.ListenAndServe("127.0.0.1:34567", nil)
+
+    // 2. Electron 加载 Go 提供的页面
+    // BrowserWindow.loadURL("http://localhost:34567")
+}
+```
+
+### 前端改动
+
+渲染进程需要将 `window.api.xxx()` 调用改为 `fetch()` 请求：
+
+```typescript
+// 原来
+await window.api.workQueryPage(args)
+
+// 改为
+const response = await fetch('http://localhost:34567/api/work/queryPage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(args)
+})
+const result = await response.json()
 ```
 
 ---
@@ -156,31 +224,30 @@ type BaseRepository[T BaseEntity] interface {
 
 ## 阶段二：业务模块迁移
 
-### 2.1 模块独立性原则
+### 2.1 模块间解耦原则
 
-**核心原则**：模块之间**不产生依赖**，每个模块只依赖通用 CRUD Repository。
+**核心原则**：模块之间通过接口通信，不直接依赖。
 
 ```
-模块A ──┐
-        ├──→ Repository Interface ←─── Repository Implementation
-模块B ──┘                      ↑
-                           database
+调用方模块A ──→ 接口（定义在A或公共层）
+                  ↑
+实现方模块B ──────┘（实现A所需的接口）
+                    ↑
+              组装层注入
 ```
 
 **解决方案**：
 
-| 原 Node.js 中的依赖 | Go 迁移解决方案 |
-|-------------------|---------------|
-| WorkService → ReWorkTagService | 将 link/unlink 逻辑**提取到 Work 模块内部**，直接操作 re_work_tag 表 |
-| WorkService → ReWorkAuthorService | 将 link/unlink 逻辑提取到 Work 模块内部 |
-| WorkService → ReWorkWorkSetService | 将 link/unlink 逻辑提取到 Work 模块内部 |
-| SearchService → WorkService | Search 模块**不依赖 Work 模块**，而是各自依赖相同的 Example 查询条件 |
-| TaskService → PluginService | Task 模块**不依赖 Plugin 模块**，而是在 cmd/server 组装时注入插件执行器 |
+| 原 Node.js | Go 迁移 |
+|-----------|---------|
+| WorkService 直接调用 ReWorkTagService | WorkService 定义 `TagRelator` 接口，ReWorkTagService 实现，组装时注入 |
+| WorkService 直接调用 ReWorkAuthorService | 同上模式 |
+| SearchService 直接调用 WorkService | SearchService 定义 `WorkFinder` 接口，WorkService 实现，组装时注入 |
+| TaskService 直接调用 PluginService | TaskService 定义 `PluginExecutor` 接口，PluginService 实现，组装时注入 |
 
-**关键理解**：
-- 原代码中 Service 调用其他 Service，是因为有"业务操作需要跨越模块边界"
-- Go 迁移时，应该把这种**跨模块操作下沉到单一模块内部**
-- 模块间不需要通信，只需要数据库层面的关联
+**接口定义位置**：
+- 在调用方模块内部定义（如 `internal/work/interfaces.go`）
+- 或在 `pkg/model` 中定义跨模块共享的接口
 
 ### 2.2 模块迁移顺序
 
@@ -207,8 +274,7 @@ type BaseRepository[T BaseEntity] interface {
 │  ├── plugin      ├── task                                │
 │  ├── settings    ├── secureStorage                        │
 │  ├── appLauncher ├── slot                               │
-│  ├── siteBrowser ├── pluginTaskUrlListener               │
-│  └── autoExplainPath                                     │
+│  ├── siteBrowser └── pluginTaskUrlListener               │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -221,50 +287,87 @@ internal/author/
 ├── model.go              # 领域实体 (实现 GetID)
 ├── repository.go         # Repository 接口
 ├── repository_impl.go    # 数据库实现（嵌入 BaseRepository[T]）
-└── service.go           # 业务逻辑
+├── service.go           # 业务逻辑
+└── interfaces.go        # 本模块需要的外部接口定义
 ```
 
-**示例：迁移 ReWorkTag 的处理方式**
+**示例：Search 调用 Work 的处理方式**
 
 原 Node.js：
 ```typescript
-// WorkService.ts
-import { ReWorkTagService } from './ReWorkTagService.ts'
+// SearchService.ts
+import WorkService from './WorkService.ts'
 
-class WorkService {
-    linkTag(workId: number, tagIds: number[]) {
-        const reWorkTagService = new ReWorkTagService()
-        return reWorkTagService.link(workId, tagIds)
+class SearchService {
+    searchWorks(conditions) {
+        const workService = new WorkService()
+        return workService.queryWorksByConditions(conditions)
     }
 }
 ```
 
-Go 迁移（提取到 Work 模块内部）：
+Go 迁移（通过接口解耦）：
 ```go
-// internal/work/service.go
-package work
+// internal/search/interfaces.go
+package search
+
+// WorkFinder 定义 Search 模块需要的 Work 查询能力
+type WorkFinder interface {
+    FindByConditions(ctx context.Context, cond *Example) ([]*Work, error)
+}
+
+// internal/search/service.go
+package search
 
 type Service struct {
-    repo Repository
+    workFinder WorkFinder  // 依赖接口，不直接依赖 Work 模块
 }
 
-func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) error {
-    // 直接在 Work 模块内部处理 link 逻辑
-    // 不依赖 relations 模块
-    for _, tagId := range tagIds {
-        relation := &WorkTagRelation{
-            WorkId: workId,
-            TagId:  tagId,
-        }
-        if err := s.repo.SaveRelation(ctx, relation); err != nil {
-            return err
-        }
-    }
-    return nil
+func NewService(finder WorkFinder) *Service {
+    return &Service{workFinder: finder}
 }
+
+func (s *Service) Search(ctx context.Context, cond *Example) ([]*Work, error) {
+    // 通过接口调用，不关心 Work 模块的具体实现
+    return s.workFinder.FindByConditions(ctx, cond)
+}
+```
+
+```go
+// internal/work/repository_impl.go
+package work
+
+// 实现 Search 模块定义的 WorkFinder 接口
+func (s *Service) FindByConditions(ctx context.Context, cond *Example) ([]*Work, error) {
+    return s.repo.List(ctx, cond)
+}
+```
+
+```go
+// cmd/server/main.go - 组装层
+workService := work.NewService(workRepo)
+searchService := search.NewService(workService)  // 注入：WorkService 实现 WorkFinder 接口
 ```
 
 ### 2.4 模块迁移详情
+
+#### site 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/Site.ts` | `internal/site/model.go` |
+| `src/main-old/dao/SiteDao.ts` | `internal/site/repository_impl.go` |
+| `src/main-old/service/SiteService.ts` | `internal/site/service.go` |
+
+#### author 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/SiteAuthor.ts` | `internal/author/model.go` |
+| `src/main-old/dao/SiteAuthorDao.ts` | `internal/author/repository_impl.go` |
+| `src/main-old/service/SiteAuthorService.ts` | `internal/author/service.go` |
+
+**依赖**：需通过接口获取 localAuthor 的绑定信息
 
 #### localTag 模块
 
@@ -273,6 +376,22 @@ func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) err
 | `src/main-old/model/entity/LocalTag.ts` | `internal/localTag/model.go` |
 | `src/main-old/dao/LocalTagDao.ts` | `internal/localTag/repository_impl.go` |
 | `src/main-old/service/LocalTagService.ts` | `internal/localTag/service.go` |
+
+#### localAuthor 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/LocalAuthor.ts` | `internal/localAuthor/model.go` |
+| `src/main-old/dao/LocalAuthorDao.ts` | `internal/localAuthor/repository_impl.go` |
+| `src/main-old/service/LocalAuthorService.ts` | `internal/localAuthor/service.go` |
+
+#### siteTag 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/SiteTag.ts` | `internal/siteTag/model.go` |
+| `src/main-old/dao/SiteTagDao.ts` | `internal/siteTag/repository_impl.go` |
+| `src/main-old/service/SiteTagService.ts` | `internal/siteTag/service.go` |
 
 #### work 模块
 
@@ -285,16 +404,13 @@ func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) err
 | `src/main-old/service/ReWorkAuthorService.ts` | → **合并到** `internal/work/service.go` |
 | `src/main-old/service/ReWorkWorkSetService.ts` | → **合并到** `internal/work/service.go` |
 
-**关键变更**：link/unlink 逻辑从独立的 Service 合并到 Work 模块内部
+#### workSet 模块
 
-#### relations 模块
-
-**设计方案**：**不单独创建 relations 模块**
-
-原因：
-- link/unlink 逻辑已提取到各业务模块内部
-- 关联表（如 re_work_tag）的操作变成业务模块的内部实现
-- 不再需要独立的 relations 模块
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/WorkSet.ts` | `internal/workSet/model.go` |
+| `src/main-old/dao/WorkSetDao.ts` | `internal/workSet/repository_impl.go` |
+| `src/main-old/service/WorkSetService.ts` | `internal/workSet/service.go` |
 
 #### search 模块
 
@@ -302,27 +418,86 @@ func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) err
 |--------|------|
 | `src/main-old/service/SearchService.ts` | `internal/search/service.go` |
 
-**关键变更**：Search 不依赖 Work/Author 等模块，而是接收查询参数，各自查询后聚合结果
+**接口**：Search 定义 `WorkFinder` 接口，Work 实现
+
+#### plugin 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/Plugin.ts` | `internal/plugin/model.go` |
+| `src/main-old/dao/PluginDao.ts` | `internal/plugin/repository_impl.go` |
+| `src/main-old/service/PluginService.ts` | `internal/plugin/service.go` |
+| `src/main-old/plugin/PluginManager.ts` | `internal/plugin/manager.go` |
+
+**接口**：Task 定义 `PluginExecutor` 接口，Plugin 实现
+
+#### task 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/model/entity/Task.ts` | `internal/task/model.go` |
+| `src/main-old/dao/TaskDao.ts` | `internal/task/repository_impl.go` |
+| `src/main-old/service/TaskService.ts` | `internal/task/service.go` |
+| `src/main-old/core/taskQueue.ts` | `internal/task/queue.go` |
+
+**接口**：Task 定义 `PluginExecutor` 接口
+
+#### settings 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/service/SettingsService.ts` | `internal/settings/service.go` |
+
+#### secureStorage 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/service/SecureStorageService.ts` | `internal/secureStorage/service.go` |
+
+#### appLauncher 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/service/AppLauncherService.ts` | `internal/appLauncher/service.go` |
+
+#### slot 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/core/SlotSyncService.ts` | `internal/slot/service.go` |
+
+#### siteBrowser 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/core/siteBrowserManager.ts` | `internal/siteBrowser/manager.go` |
+
+#### pluginTaskUrlListener 模块
+
+| 源文件 | 目标 |
+|--------|------|
+| `src/main-old/core/pluginTaskUrlListener.ts` | `internal/pluginTaskUrlListener/manager.go` |
 
 ---
 
 ## 阶段三：集成与验证
 
-### 3.1 IPC 通信桥接
+### 3.1 HTTP API 适配
 
-**目标**：保持 API 契约与原 `MainProcessApi.ts` 一致
+**目标**：Go HTTP 服务提供与原 IPC 方法一一对应的 API 接口
 
 | # | 任务 | 说明 |
 |---|------|------|
-| 1 | 实现 IPC Handler 注册中心 | `cmd/server/ipc.go` |
-| 2 | 保持方法名/参数/返回值一致 | `service-method` 命名 |
-| 3 | 实现事件推送机制 | `ipcMain.send` / `ipcMain.on` |
+| 1 | 实现 HTTP Handler 注册中心 | `cmd/server/handlers.go` |
+| 2 | 保持 API 方法名/参数/返回值一致 | `/api/{service}/{method}` 路径 |
+| 3 | 实现事件推送机制 | Server-Sent Events (SSE) |
+| 4 | 前端适配层 | 将 `fetch()` 封装回 `window.api` 接口 |
 
 ### 3.2 功能验证
 
 | # | 验证项 | 方法 |
 |---|--------|------|
-| 1 | 所有 IPC 方法注册 | 调用 `window.api.*` 测试 |
+| 1 | 所有 HTTP API 可调用 | `curl` 或前端 `fetch()` 测试 |
 | 2 | 数据库 CRUD 正确 | 手动测试增删改查 |
 | 3 | 任务队列正常工作 | 创建任务并执行 |
 | 4 | 插件系统正常加载 | 安装并运行插件 |
@@ -351,9 +526,9 @@ func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) err
 
 - [ ] `pkg/model` 不含任何业务逻辑或数据库依赖（中立区）
 - [ ] `internal/database` 不含任何业务模块引用
-- [ ] **模块之间无依赖**：每个模块只依赖 Repository
-- [ ] Service 层通过构造函数注入 Repository
-- [ ] **跨模块操作下沉到单一模块内部**（如 link/unlink 逻辑合并到 Work 模块）
+- [ ] **模块间通过接口通信**：不直接 import 对方模块
+- [ ] 接口由调用方定义，实现方实现
+- [ ] Service 层通过构造函数注入依赖
 
 ### 代码质量
 
@@ -364,7 +539,7 @@ func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) err
 
 ### 功能完整性
 
-- [ ] 所有 IPC 方法已迁移
+- [ ] 所有 HTTP API 已迁移
 - [ ] 数据库表结构完整迁移
 - [ ] 事务处理正确
 
@@ -374,7 +549,7 @@ func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) err
 
 | 风险 | 影响 | 应对 |
 |------|------|------|
-| 模块间隐式依赖 | 编译失败/循环依赖 | 严格遵循"模块无依赖"原则，跨模块操作下沉 |
+| 模块间直接依赖 | 循环依赖/编译失败 | 严格遵循"接口解耦"原则 |
 | 功能差异 | 用户体验不一致 | 每模块迁移后进行功能验证 |
 | 泛型约束不足 | 类型安全隐患 | BaseEntity 接口约束必须实现 GetID() |
 | 迁移周期长 | 技术债务积累 | 分模块快速迭代，每模块 1-2 天 |

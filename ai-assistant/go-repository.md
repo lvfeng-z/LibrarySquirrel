@@ -526,51 +526,65 @@ example := &Example{
 
 ---
 
-## 8. 跨模块依赖解决方案
+## 8. 模块间解耦：接口通信模式
 
-**核心原则**：模块之间**不产生依赖**。
+**核心原则**：模块之间通过接口通信，不直接依赖。
 
-**问题**：原 Node.js 代码中 Service 调用其他 Service（如 WorkService → ReWorkTagService），会形成依赖链条。
+```
+调用方模块A ──→ 接口（定义在A或公共层）
+                  ↑
+实现方模块B ──────┘（实现A所需的接口）
+                    ↑
+              组装层注入
+```
 
-**解决方案**：跨模块操作**下沉到单一模块内部**
+**接口设计模式（适用于所有模块）**：
 
-| 原 Node.js | Go 迁移 |
-|-----------|---------|
-| WorkService → ReWorkTagService.link() | 将 link 逻辑**合并到 Work 模块内部** |
-| WorkService → ReWorkAuthorService.link() | 将 link 逻辑合并到 Work 模块内部 |
-| SearchService → WorkService | Search 不依赖 Work，各自使用 Example 查询条件 |
+| 步骤 | 说明 |
+|------|------|
+| 1. 定义接口 | 调用方在 `interfaces.go` 中定义所需接口 |
+| 2. 实现接口 | 被调用方实现接口 |
+| 3. 注入 | 组装层（cmd/server/main.go）把实现注入给调用方 |
 
-**示例**：
+**示例：Search 调用 Work**
 
 ```go
-// 原 Node.js: WorkService 调用 ReWorkTagService
-class WorkService {
-    linkTag(workId, tagIds) {
-        const reWorkTagService = new ReWorkTagService()
-        return reWorkTagService.link(workId, tagIds)
-    }
+// 1. 调用方 Search 定义接口
+// internal/search/interfaces.go
+package search
+
+type WorkFinder interface {
+    FindByConditions(ctx context.Context, cond *Example) ([]*Work, error)
 }
 
-// Go 迁移: link 逻辑下沉到 Work 模块内部
-// internal/work/service.go
-func (s *Service) LinkTag(ctx context.Context, workId int64, tagIds []int64) error {
-    for _, tagId := range tagIds {
-        relation := &WorkTagRelation{
-            WorkId: workId,
-            TagId:  tagId,
-        }
-        if err := s.repo.SaveWorkTagRelation(ctx, relation); err != nil {
-            return err
-        }
-    }
-    return nil
+// 2. Search 使用接口
+// internal/search/service.go
+package search
+
+type Service struct {
+    workFinder WorkFinder
 }
+
+func NewService(finder WorkFinder) *Service {
+    return &Service{workFinder: finder}
+}
+
+// 3. Work 实现接口
+// internal/work/service.go
+func (s *Service) FindByConditions(ctx context.Context, cond *Example) ([]*Work, error) {
+    return s.repo.List(ctx, cond)
+}
+
+// 4. 组装层注入
+// cmd/server/main.go
+workService := work.NewService(workRepo)
+searchService := search.NewService(workService) // 注入
 ```
 
 **好处**：
-- 模块之间无依赖，可以独立演进
+- 模块之间无直接依赖，可以独立演进
 - 避免循环依赖
-- 每个模块的内聚性更高
+- 可测试性强：测试时可以传入 Mock 实现
 
 ---
 
