@@ -1,6 +1,6 @@
 import AdmZip from 'adm-zip'
-import { PluginManifest } from '../../../main/plugin/types/PluginManifest.ts'
-import { ActivationConfig } from '../../../main/plugin/types/ActivationTypes.ts'
+import { PluginManifest } from '../../../main-go/plugin/types/PluginManifest.ts'
+import { ActivationConfig } from '../../../main-go/plugin/types/ActivationTypes.ts'
 
 export default class PluginInstallDTO {
   /**

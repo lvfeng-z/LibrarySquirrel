@@ -1,0 +1,10 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  path: data.db
+
+log:
+  level: info
+  format: console

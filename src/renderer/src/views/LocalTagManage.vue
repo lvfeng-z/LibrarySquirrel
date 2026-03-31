@@ -23,6 +23,7 @@ import LocalTagQueryDTO from '@shared/model/queryDTO/LocalTagQueryDTO.ts'
 import LocalTagDTO from '@shared/model/dto/LocalTagDTO.ts'
 import LocalTag from '@shared/model/entity/LocalTag.ts'
 import SiteTagQueryDTO from '@shared/model/queryDTO/SiteTagQueryDTO.ts'
+import { localTagQueryPage as aa } from '@renderer/apis/LocalTagHttpApi.ts'
 
 // onMounted
 onMounted(() => {
@@ -41,7 +42,6 @@ onMounted(() => {
 const apis = {
   localTagDeleteById: window.api.localTagDeleteById,
   localTagUpdateById: window.api.localTagUpdateById,
-  localTagQueryPage: window.api.localTagQueryPage,
   localTagQueryDTOPage: window.api.localTagQueryDTOPage,
   localTagListSelectItems: window.api.localTagListSelectItems,
   localTagQuerySelectItemPage: window.api.localTagQuerySelectItemPage,
@@ -151,7 +151,7 @@ const disableExcSearchButton: Ref<boolean> = ref(false)
 // 方法
 // 分页查询本地标签的函数
 async function localTagQueryPage(page: Page<LocalTagQueryDTO, LocalTagDTO>): Promise<Page<LocalTagQueryDTO, LocalTagDTO> | undefined> {
-  const response = await apis.localTagQueryDTOPage(page)
+  const response = await aa({ page: 1, pageSize: 10 })
   if (ApiUtil.check(response)) {
     let responsePage = ApiUtil.data<Page<LocalTagQueryDTO, LocalTagDTO>>(response)
     if (isNullish(responsePage)) {

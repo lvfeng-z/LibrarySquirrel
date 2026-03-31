@@ -20,7 +20,8 @@ export function setupCSP(targetSession: Session, allowUnsafeEval: boolean) {
         "img-src 'self' data:",
         "object-src 'none'",
         "base-uri 'self'",
-        "form-action 'self'"
+        "form-action 'self'",
+        "connect-src 'self' http://localhost:8080,"
       ]
 
       const cspString = cspDirectives.join('; ')

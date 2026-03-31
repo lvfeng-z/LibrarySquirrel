@@ -116,6 +116,16 @@ func (s *Service) List(ctx context.Context, example *model.Example) ([]*LocalTag
 	return s.repo.List(ctx, example)
 }
 
+// Count 统计数量
+func (s *Service) Count(ctx context.Context, example *model.Example) (int64, error) {
+	return s.repo.Count(ctx, example)
+}
+
+// Delete 删除标签
+func (s *Service) Delete(ctx context.Context, id int64) error {
+	return s.repo.Delete(ctx, id)
+}
+
 // GetTree 获取标签树形结构
 func (s *Service) GetTree(ctx context.Context, rootId int64, depth int) ([]*LocalTag, error) {
 	if rootId == 0 {

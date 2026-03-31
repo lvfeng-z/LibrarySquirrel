@@ -1,17 +1,17 @@
 package model
 
-// ApiResponse 统一API响应格式
+// ApiResponse 统一API响应格式（匹配前端 ApiResponse.ts）
 type ApiResponse struct {
-	Code    int         `json:"code"`    // 业务状态码，0表示成功
-	Message string      `json:"message"` // 消息
+	Success bool        `json:"success"` // 是否成功
+	Msg     string      `json:"msg"`     // 消息
 	Data    interface{} `json:"data"`    // 数据
 }
 
 // Success 成功响应
 func Success(data interface{}) *ApiResponse {
 	return &ApiResponse{
-		Code:    0,
-		Message: "success",
+		Success: true,
+		Msg:     "success",
 		Data:    data,
 	}
 }
@@ -19,8 +19,8 @@ func Success(data interface{}) *ApiResponse {
 // Error 错误响应
 func Error(message string) *ApiResponse {
 	return &ApiResponse{
-		Code:    -1,
-		Message: message,
+		Success: false,
+		Msg:     message,
 		Data:    nil,
 	}
 }
@@ -28,8 +28,8 @@ func Error(message string) *ApiResponse {
 // ErrorWithCode 带错误码的响应
 func ErrorWithCode(code int, message string) *ApiResponse {
 	return &ApiResponse{
-		Code:    code,
-		Message: message,
+		Success: code == 0,
+		Msg:     message,
 		Data:    nil,
 	}
 }

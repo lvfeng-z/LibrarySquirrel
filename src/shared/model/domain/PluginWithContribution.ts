@@ -1,5 +1,5 @@
 import Plugin from '@shared/model/entity/Plugin.ts'
-import { ContributionKey } from '../../../main/plugin/types/ContributionTypes.ts'
+import { ContributionKey } from '../../../main-go/plugin/types/ContributionTypes.ts'
 
 export default class PluginWithContribution extends Plugin {
   /**

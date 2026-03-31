@@ -29,6 +29,12 @@ func main() {
 		log.Fatalf("Failed to init database: %v", err)
 	}
 	sugar.Infof("Database initialized: %s", cfg.Database.Path)
+
+	// 自动建表（验证架构用）
+	if err := database.GetDB().AutoMigrate(&localTag.LocalTag{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+	sugar.Info("Database migrated")
 	defer database.Close()
 
 	// 初始化 Gin
@@ -38,7 +44,9 @@ func main() {
 	r := gin.Default()
 
 	// 注册业务模块路由
-	localTagHandler := localTag.NewHandler(database.GetDB())
+	localTagRepo := localTag.NewRepository(database.GetDB())
+	localTagSvc := localTag.NewService(localTagRepo)
+	localTagHandler := localTag.NewHandler(localTagSvc)
 	localTagHandler.RegisterRoutes(r)
 
 	port := cfg.Server.Port
