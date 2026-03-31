@@ -4,13 +4,11 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 
-	"library-squirrel/internal/user"
-	"library-squirrel/internal/order"
+	"library-squirrel/internal/config"
+	"library-squirrel/internal/database"
+	"library-squirrel/internal/localTag"
 )
 
 func main() {
@@ -19,25 +17,31 @@ func main() {
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	// 初始化 viper 配置
-	viper.SetDefault("server.port", 8080)
-
-	// 初始化 GORM SQLite
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	// 加载配置
+	cfg, err := config.Load("config.yaml")
 	if err != nil {
-		logger.Fatal("failed to connect database")
+		log.Fatalf("Failed to load config: %v", err)
 	}
-	_ = db
+	sugar.Infof("Config loaded: server.port=%d", cfg.Server.Port)
 
-	sugar.Infof("Database connected")
+	// 初始化数据库
+	if err := database.Init(&cfg.Database); err != nil {
+		log.Fatalf("Failed to init database: %v", err)
+	}
+	sugar.Infof("Database initialized: %s", cfg.Database.Path)
+	defer database.Close()
 
-	// 初始化各业务模块路由
+	// 初始化 Gin
+	if cfg.Server.Mode == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	r := gin.Default()
 
-	user.RegisterRoutes(r)
-	order.RegisterRoutes(r)
+	// 注册业务模块路由
+	localTagHandler := localTag.NewHandler(database.GetDB())
+	localTagHandler.RegisterRoutes(r)
 
-	port := viper.GetInt("server.port")
+	port := cfg.Server.Port
 	log.Printf("Server starting on http://localhost:%d", port)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
