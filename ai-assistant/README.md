@@ -38,18 +38,8 @@
   - 插件系统术语
   - 架构和开发约定术语
 
-### 4. [development-scenarios.md](./development-scenarios.md) - 开发示例场景
 
-- **用途**：通过具体示例理解开发模式和最佳实践
-- **适合场景**：需要实施具体开发任务时
-- **包含内容**：
-  - 添加新站点支持（Twitter示例）
-  - 添加新功能（收藏功能示例）
-  - 修复典型问题（作者关联问题）
-  - 性能优化实践
-  - 插件接口扩展
-
-### 5. [plugin-development.md](./plugin-development.md) - 插件系统开发指南
+### 4. [plugin-development.md](./plugin-development.md) - 插件系统开发指南
 
 - **用途**：理解插件系统的架构和开发方法
 - **适合场景**：开发或扩展插件功能时
@@ -62,7 +52,7 @@
   - 主程序端管理器
   - IPC 通信和扩展方法
 
-### 6. [common-pitfalls.md](./common-pitfalls.md) - 常见误区与陷阱
+### 5. [common-pitfalls.md](./common-pitfalls.md) - 常见误区与陷阱
 
 - **用途**：了解项目中容易犯的错误和需要特别注意的问题
 - **适合场景**：编写IPC通信代码、调试数据传输问题时参考
@@ -71,7 +61,7 @@
   - 响应式变量处理注意事项
   - 其他开发中容易忽略的陷阱
 
-### 7. [code-rules.md](./code-rules.md) - 代码规则与约定
+### 6. [code-rules.md](./code-rules.md) - 代码规则与约定
 
 - **用途**：查看项目的代码编写规范、命名约定和开发规范
 - **适合场景**：编写新代码、重构或评审代码时参考
@@ -89,22 +79,17 @@
 1. **首先阅读**：`architecture-quick-reference.md` - 获取快速概览
 2. **深入理解**：`business-logic.md` - 理解完整业务模型
 3. **术语澄清**：`glossary.md` - 统一术语理解
-4. **参考实现**：`development-scenarios.md` - 查看类似任务实现
 
 ### 对于具体问题诊断
 
 1. **定位相关概念**：使用`glossary.md`确定涉及的术语
 2. **理解业务逻辑**：参考`business-logic.md`相关章节
-3. **查看类似案例**：`development-scenarios.md`中的问题修复示例
-4. **检查常见陷阱**：参考`common-pitfalls.md`避免重复已知错误
+3. **检查常见陷阱**：参考`common-pitfalls.md`避免重复已知错误
 
 ### 对于新功能开发
 
-1. **确定开发模式**：`development-scenarios.md`中的模式总结
-2. **参考完整示例**：查看收藏功能添加的完整流程
-3. **检查架构约束**：`architecture-quick-reference.md`中的技术要点
-4. **遵循代码规范**：`code-rules.md`中的编码规则和约定
-5. **避免常见错误**：参考`common-pitfalls.md`中的注意事项
+1. **检查架构约束**：`architecture-quick-reference.md`中的技术要点
+2. **遵循代码规范**：`code-rules.md`中的编码规则和约定
 
 ## 关键架构要点（快速记忆）
 
