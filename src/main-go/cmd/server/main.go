@@ -9,12 +9,19 @@ import (
 	"library-squirrel/internal/config"
 	"library-squirrel/internal/database"
 	"library-squirrel/internal/localTag"
+	"library-squirrel/internal/migration"
 )
 
 func main() {
 	// 初始化 zap 日志
 	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		err := logger.Sync()
+		if err != nil {
+			println(err.Error())
+			return
+		}
+	}(logger)
 	sugar := logger.Sugar()
 
 	// 加载配置
@@ -29,11 +36,18 @@ func main() {
 		log.Fatalf("Failed to init database: %v", err)
 	}
 	sugar.Infof("Database initialized: %s", cfg.Database.Path)
-	defer database.Close()
+	defer func() {
+		err := database.Close()
+		if err != nil {
+			log.Fatalf("Failed to close database: %v", err)
+		}
+	}()
 
-	// 创建表
-	createTables()
-	sugar.Info("Tables created")
+	// 自动迁移表结构
+	if err := migration.AutoMigrate(database.GetDB()); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+	sugar.Info("Database migrated")
 
 	// 初始化 Gin
 	if cfg.Server.Mode == "release" {
@@ -51,24 +65,5 @@ func main() {
 	log.Printf("Server starting on http://localhost:%d", port)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
-	}
-}
-
-// createTables 创建数据库表
-func createTables() {
-	db := database.GetDB()
-
-	// 创建 local_tag 表
-	if err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS local_tag (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			local_tag_name TEXT,
-			base_local_tag_id INTEGER DEFAULT 0,
-			last_use INTEGER,
-			create_time INTEGER,
-			update_time INTEGER
-		)
-	`).Error; err != nil {
-		log.Fatalf("Failed to create local_tag table: %v", err)
 	}
 }

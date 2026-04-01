@@ -17,6 +17,10 @@ import { createPluginManager, getPluginManager } from './core/pluginManager.ts'
 import { createSiteBrowserManager } from './core/siteBrowserManager.ts'
 import { setupCSP } from './setupCsp.ts'
 import { registerCustomProtocols } from './protocol.ts'
+import { RootDir } from './util/FileSysUtil.ts'
+import { spawn } from 'node:child_process'
+
+let goProcess
 
 function createWindow(): BrowserWindow {
   // 定义一个唯一的 partition 名称
@@ -157,6 +161,34 @@ app.whenReady().then(() => {
   // 初始化设置
   createSettings()
 
+  let command
+  const args: string[] = []
+  process.env.CGO_ENABLED = '1'
+  if (process.env.NODE_ENV == 'development') {
+    command = 'go'
+    args.push('run', path.join(RootDir(), '/src/main-go/cmd/server/main.go'))
+  } else {
+    console.log('not yet')
+  }
+  console.log(`🚀 Starting Go backend: ${command} ${args.join(' ')}`)
+  goProcess = spawn(command, args, {
+    // --- 关键修复：指定工作目录 ---
+    cwd: path.join(RootDir(), '/src/main-go/'),
+
+    // 继承环境变量（确保包含 GOPATH, GOROOT 等）
+    env: process.env,
+
+    // 捕获输出
+    stdio: 'pipe'
+  })
+  // 5. 监听输出
+  goProcess.stdout.on('data', (data) => {
+    console.log(`Go Backend: ${data}`)
+  })
+  goProcess.stderr.on('data', (data) => {
+    console.error(`Go Backend Error: ${data}`)
+  })
+
   // 创建主窗口
   const mainWindow = createWindow()
   setMainWindow(mainWindow)
@@ -192,6 +224,13 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+// 退出时关闭 Go 进程
+app.on('will-quit', () => {
+  if (goProcess) {
+    goProcess.kill()
+  }
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
