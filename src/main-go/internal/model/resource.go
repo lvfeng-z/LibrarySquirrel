@@ -3,8 +3,8 @@ package model
 // Resource 资源
 type Resource struct {
 	ID                int64  `gorm:"primaryKey;column:id" json:"id"`
-	WorkID            int64  `gorm:"column:work_id" json:"workId"`
-	TaskID            int64  `gorm:"column:task_id" json:"taskId"`
+	WorkID            int64  `gorm:"column:work_id;index:idx_resource_work_id" json:"workId"`
+	TaskID            int64  `gorm:"column:task_id;index:idx_resource_task_id" json:"taskId"`
 	State             int    `gorm:"column:state" json:"state"`
 	FilePath          string `gorm:"column:file_path" json:"filePath"`
 	FileName          string `gorm:"column:file_name" json:"fileName"`

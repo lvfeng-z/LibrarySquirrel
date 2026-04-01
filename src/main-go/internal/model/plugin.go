@@ -3,7 +3,7 @@ package model
 // Plugin 插件
 type Plugin struct {
 	ID             int64  `gorm:"primaryKey;column:id" json:"id"`
-	PublicID       string `gorm:"column:public_id" json:"publicId"`
+	PublicID       string `gorm:"column:public_id;uniqueIndex" json:"publicId"`
 	Author         string `gorm:"column:author" json:"author"`
 	Name           string `gorm:"column:name" json:"name"`
 	Version        string `gorm:"column:version" json:"version"`

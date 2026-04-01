@@ -3,8 +3,8 @@ package model
 // SiteTag 站点标签
 type SiteTag struct {
 	ID            int64  `gorm:"primaryKey;column:id" json:"id"`
-	SiteID        int64  `gorm:"column:site_id" json:"siteId"`
-	SiteTagID     string `gorm:"column:site_tag_id" json:"siteTagId"`
+	SiteID        int64  `gorm:"column:site_id;uniqueIndex:idx_site_tag_site_site_tag" json:"siteId"`
+	SiteTagID     string `gorm:"column:site_tag_id;uniqueIndex:idx_site_tag_site_site_tag" json:"siteTagId"`
 	SiteTagName   string `gorm:"column:site_tag_name" json:"siteTagName"`
 	BaseSiteTagID string `gorm:"column:base_site_tag_id" json:"baseSiteTagId"`
 	Description   string `gorm:"column:description" json:"description"`

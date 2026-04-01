@@ -3,8 +3,8 @@ package model
 // Work 作品
 type Work struct {
 	ID                  int64  `gorm:"primaryKey;column:id" json:"id"`
-	SiteID              int64  `gorm:"column:site_id" json:"siteId"`
-	SiteWorkID          string `gorm:"column:site_work_id" json:"siteWorkId"`
+	SiteID              int64  `gorm:"column:site_id;uniqueIndex:idx_work_site_site_work" json:"siteId"`
+	SiteWorkID          string `gorm:"column:site_work_id;uniqueIndex:idx_work_site_site_work" json:"siteWorkId"`
 	SiteWorkName        string `gorm:"column:site_work_name" json:"siteWorkName"`
 	SiteAuthorID        string `gorm:"column:site_author_id" json:"siteAuthorId"`
 	SiteWorkDescription string `gorm:"column:site_work_description" json:"siteWorkDescription"`

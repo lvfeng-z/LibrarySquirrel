@@ -4,9 +4,9 @@ package model
 type ReWorkAuthor struct {
 	ID            int64 `gorm:"primaryKey;column:id" json:"id"`
 	AuthorType    int   `gorm:"column:author_type" json:"authorType"`
-	WorkID        int64 `gorm:"column:work_id" json:"workId"`
-	LocalAuthorID int64 `gorm:"column:local_author_id" json:"localAuthorId"`
-	SiteAuthorID  int64 `gorm:"column:site_author_id" json:"siteAuthorId"`
+	WorkID        int64 `gorm:"column:work_id;index:idx_re_work_author_work_id" json:"workId"`
+	LocalAuthorID int64 `gorm:"column:local_author_id;index:idx_re_work_author_local_author_id" json:"localAuthorId"`
+	SiteAuthorID  int64 `gorm:"column:site_author_id;index:idx_re_work_author_site_author_id" json:"siteAuthorId"`
 	AuthorRank    int   `gorm:"column:author_rank" json:"authorRank"`
 	CreateTime    int64 `gorm:"column:create_time" json:"createTime"`
 	UpdateTime    int64 `gorm:"column:update_time" json:"updateTime"`
