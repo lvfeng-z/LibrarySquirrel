@@ -25,17 +25,15 @@ func main() {
 	sugar.Infof("Config loaded: server.port=%d", cfg.Server.Port)
 
 	// 初始化数据库
-	if err := database.Init(&cfg.Database); err != nil {
+	if err := database.Init(cfg.Database.Path); err != nil {
 		log.Fatalf("Failed to init database: %v", err)
 	}
 	sugar.Infof("Database initialized: %s", cfg.Database.Path)
-
-	// 自动建表（验证架构用）
-	if err := database.GetDB().AutoMigrate(&localTag.LocalTag{}); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-	sugar.Info("Database migrated")
 	defer database.Close()
+
+	// 创建表
+	createTables()
+	sugar.Info("Tables created")
 
 	// 初始化 Gin
 	if cfg.Server.Mode == "release" {
@@ -53,5 +51,24 @@ func main() {
 	log.Printf("Server starting on http://localhost:%d", port)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// createTables 创建数据库表
+func createTables() {
+	db := database.GetDB()
+
+	// 创建 local_tag 表
+	if err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS local_tag (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			local_tag_name TEXT,
+			base_local_tag_id INTEGER DEFAULT 0,
+			last_use INTEGER,
+			create_time INTEGER,
+			update_time INTEGER
+		)
+	`).Error; err != nil {
+		log.Fatalf("Failed to create local_tag table: %v", err)
 	}
 }

@@ -39,6 +39,7 @@ function createWindow(): BrowserWindow {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
+      webSecurity: false, // 禁用同源策略
       partition: mainWindowPartition,
       preload: path.join(__dirname, '../preload/index.mjs'),
       sandbox: false

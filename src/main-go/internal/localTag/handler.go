@@ -59,8 +59,8 @@ func (h *Handler) Page(c *gin.Context) {
 // GetById 获取单个标签
 func (h *Handler) GetById(c *gin.Context) {
 	idStr := c.Param("id")
-	var id int64
-	if _, err := strconv.ParseInt(idStr, 10, 64); err != nil {
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, model.Error("invalid id"))
 		return
 	}
@@ -103,8 +103,8 @@ func (h *Handler) Update(c *gin.Context) {
 // Delete 删除标签
 func (h *Handler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
-	var id int64
-	if _, err := strconv.ParseInt(idStr, 10, 64); err != nil {
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, model.Error("invalid id"))
 		return
 	}
