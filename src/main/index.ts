@@ -19,6 +19,7 @@ import { setupCSP } from './setupCsp.ts'
 import { registerCustomProtocols } from './protocol.ts'
 import { RootDir } from './util/FileSysUtil.ts'
 import { spawn } from 'node:child_process'
+import log from './util/LogUtil.ts'
 
 let goProcess
 
@@ -168,9 +169,9 @@ app.whenReady().then(() => {
     command = 'go'
     args.push('run', path.join(RootDir(), '/src/main-go/cmd/server/main.go'))
   } else {
-    console.log('not yet')
+    log.info('main', 'prod not yet')
   }
-  console.log(`🚀 Starting Go backend: ${command} ${args.join(' ')}`)
+  log.info('main', `🚀 Starting Go backend: ${command} ${args.join(' ')}`)
   goProcess = spawn(command, args, {
     // --- 关键修复：指定工作目录 ---
     cwd: path.join(RootDir(), '/src/main-go/'),
@@ -182,41 +183,55 @@ app.whenReady().then(() => {
     stdio: 'pipe'
   })
   // 5. 监听输出
-  goProcess.stdout.on('data', (data) => {
-    console.log(`Go Backend: ${data}`)
+  const backendStarted = new Promise<void>((resolve) => {
+    const handler = (data) => {
+      const output = data.toString()
+
+      log.info('main', '监听go启动')
+      log.info('GO', data.toString())
+      // 【核心逻辑】检查是否包含启动完成的暗号
+      if (output.includes('MAIN_READY')) {
+        log.info('✅ Go 后端已启动完成，准备就绪！')
+        resolve()
+      }
+    }
+    goProcess.stdout.on('data', handler)
   })
-  goProcess.stderr.on('data', (data) => {
-    console.error(`Go Backend Error: ${data}`)
-  })
 
-  // 创建主窗口
-  const mainWindow = createWindow()
-  setMainWindow(mainWindow)
+  backendStarted.then(() => {
+    goProcess.stdout.removeAllListeners('data')
+    goProcess.stdout.on('data', (data) => {
+      log.info('GO', data.toString())
+    })
+    // 创建主窗口
+    const mainWindow = createWindow()
+    setMainWindow(mainWindow)
 
-  // 配置日志
-  initializeLogSetting()
+    // 配置日志
+    initializeLogSetting()
 
-  // 初始化INI_CONFIG
-  createIniConfig(iniConfig)
-  // 初始化设置
-  createSettings()
+    // 初始化INI_CONFIG
+    createIniConfig(iniConfig)
+    // 初始化设置
+    createSettings()
 
-  // 初始化数据库
-  InitializeDB().then(async () => {
-    // 创建服务层的ipc通信
-    registerMainIpcHandlers()
-    // 初始化任务队列
-    createTaskQueue()
-    // 初始化插件任务URL监听器管理器
-    createPluginTaskUrlListenerManager()
-    // 初始化站点浏览器管理器
-    createSiteBrowserManager()
-    // 初始化插件管理器
-    createPluginManager()
-    // 初始化站点和内置插件
-    await initializeByConfig()
-    // 激活启动时加载的插件
-    await getPluginManager().activateStartupPlugins()
+    // 初始化数据库
+    InitializeDB().then(async () => {
+      // 创建服务层的ipc通信
+      registerMainIpcHandlers()
+      // 初始化任务队列
+      createTaskQueue()
+      // 初始化插件任务URL监听器管理器
+      createPluginTaskUrlListenerManager()
+      // 初始化站点浏览器管理器
+      createSiteBrowserManager()
+      // 初始化插件管理器
+      createPluginManager()
+      // 初始化站点和内置插件
+      await initializeByConfig()
+      // 激活启动时加载的插件
+      await getPluginManager().activateStartupPlugins()
+    })
   })
 
   app.on('activate', function () {
@@ -227,9 +242,26 @@ app.whenReady().then(() => {
 })
 
 // 退出时关闭 Go 进程
-app.on('will-quit', () => {
+app.on('will-quit', async (e) => {
+  e.preventDefault()
   if (goProcess) {
+    if (process.platform === 'win32') {
+      const deadLine = new Promise((resolve) => {
+        setTimeout(resolve, 10000)
+      })
+      fetch('http://localhost:8080/shutdown')
+        .then((res) => log.info('main', res))
+        .catch((err) => {
+          log.error('main', err)
+        })
+        .finally(() => {
+          app.exit(0)
+        })
+      deadLine.then(() => app.exit(0))
+    }
     goProcess.kill()
+  } else {
+    app.exit(0)
   }
 })
 
