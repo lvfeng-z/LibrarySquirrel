@@ -1,6 +1,7 @@
 package localTag
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -33,13 +34,32 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 
 // Page 分页查询
 func (h *Handler) Page(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageNumber, _ := strconv.Atoi(c.DefaultQuery("pageNumber", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 
-	example := model.NewExample().
-		WithOffset((page-1)*pageSize).
-		WithLimit(pageSize).
-		WithOrder("id", false) // 按 id 降序
+	// 构建分页请求
+	pageReq := &model.PageRequest{
+		PageNumber: pageNumber,
+		PageSize:   pageSize,
+		Query:      nil, // 可通过查询参数传递
+	}
+
+	// 从查询参数中获取 query（JSON 格式）
+	if queryStr := c.Query("query"); queryStr != "" {
+		var query map[string]interface{}
+		if err := json.Unmarshal([]byte(queryStr), &query); err == nil {
+			pageReq.Query = query
+		}
+	}
+
+	example := pageReq.ToExample()
+	example.WithOffset((pageNumber - 1) * pageSize)
+	example.WithLimit(pageSize)
+
+	// 如果没有排序，默认按 id 降序
+	if len(example.OrderBy) == 0 {
+		example.WithOrder("id", false)
+	}
 
 	tags, err := h.service.List(c.Request.Context(), example)
 	if err != nil {
@@ -53,7 +73,7 @@ func (h *Handler) Page(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, model.Success(model.NewPageResponse(tags, total, page, pageSize)))
+	c.JSON(http.StatusOK, model.Success(model.NewPage(tags, total, pageNumber, pageSize)))
 }
 
 // GetById 获取单个标签
