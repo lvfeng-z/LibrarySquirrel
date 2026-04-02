@@ -72,6 +72,17 @@
   - 代码质量工具和日期处理规则
   - 新增功能开发流程和常见注意事项
 
+### 7. [go-refactor-progress.md](./go-refactor-progress.md) - Go 重构进度记录
+
+- **用途**：跟踪 Go 主进程重构项目的详细进度
+- **适合场景**：了解当前重构状态、已完成后模块、待完成功能
+- **包含内容**：
+  - 已完成的基础设施层和业务模块
+  - 分页参数设计和 Query 操作符支持
+  - 统一配置结构
+  - 技术决策记录
+  - 下一步计划
+
 ## 如何使用这些文档
 
 ### 对于新任务分析
@@ -102,8 +113,10 @@
 ### Go 主进程重构
 
 > **项目状态**：正在进行从 Node.js 到 Go 的重构
+>
+> **详细进度**：[go-refactor-progress.md](./go-refactor-progress.md)
 
-**目标**：将 `src/main-old/` 的 Node.js 主进程迁移到 `my-ipc-service/` 的 Go 实现。
+**目标**：将 `src/main/` 的 Node.js 主进程迁移到 `src/main-go/` 的 Go 实现。
 
 **核心规范**：
 - Repository 模式：数据访问通过接口隔离
