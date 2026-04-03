@@ -34,7 +34,11 @@ func (s *Service) Save(ctx context.Context, tag *domain.LocalTag) error {
 	if tag.BaseLocalTagID == 0 {
 		tag.BaseLocalTagID = 0 // 表示根标签
 	}
-	return s.repo.Save(ctx, tag)
+	err := s.repo.Save(ctx, tag)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // UpdateById 更新本地标签
@@ -72,10 +76,9 @@ func (s *Service) UpdateById(ctx context.Context, tag *domain.LocalTag) error {
 			}
 
 			// 将新上级节点移动到本节点的原上级节点之下
-			newBaseTag := &domain.LocalTag{
-				ID:             tag.BaseLocalTagID,
-				BaseLocalTagID: old.BaseLocalTagID,
-			}
+			newBaseTag := &domain.LocalTag{}
+			newBaseTag.ID = tag.BaseLocalTagID
+			newBaseTag.BaseLocalTagID = old.BaseLocalTagID
 			if err := s.repo.Update(ctx, newBaseTag); err != nil {
 				return err
 			}

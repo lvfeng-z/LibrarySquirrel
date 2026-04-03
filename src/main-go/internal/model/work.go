@@ -1,8 +1,10 @@
 package model
 
+import "library-squirrel/pkg/model"
+
 // Work 作品
 type Work struct {
-	ID                  int64  `gorm:"primaryKey;column:id" json:"id"`
+	model.BaseEntity
 	SiteID              int64  `gorm:"column:site_id;uniqueIndex:idx_work_site_site_work" json:"siteId"`
 	SiteWorkID          string `gorm:"column:site_work_id;uniqueIndex:idx_work_site_site_work" json:"siteWorkId"`
 	SiteWorkName        string `gorm:"column:site_work_name" json:"siteWorkName"`
@@ -13,30 +15,8 @@ type Work struct {
 	NickName            string `gorm:"column:nick_name" json:"nickName"`
 	LocalAuthorID       int64  `gorm:"column:local_author_id" json:"localAuthorId"`
 	LastView            int64  `gorm:"column:last_view" json:"lastView"`
-	CreateTime          int64  `gorm:"column:create_time" json:"createTime"`
-	UpdateTime          int64  `gorm:"column:update_time" json:"updateTime"`
 }
 
 func (Work) TableName() string {
 	return "work"
-}
-
-func (e Work) GetID() int64 {
-	return e.ID
-}
-
-func (e Work) GetCreateTime() int64 {
-	return e.CreateTime
-}
-
-func (e Work) GetUpdateTime() int64 {
-	return e.UpdateTime
-}
-
-func (e Work) SetCreateTime(time int64) {
-	e.CreateTime = time
-}
-
-func (e Work) SetUpdateTime(time int64) {
-	e.UpdateTime = time
 }

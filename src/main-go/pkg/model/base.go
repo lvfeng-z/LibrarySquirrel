@@ -1,33 +1,49 @@
 package model
 
-// BaseEntity 所有领域实体必须实现此接口
-type BaseEntity interface {
+// Entity 实体接口，所有领域实体必须实现此接口
+type Entity interface {
 	GetID() int64
+	SetID(id int64)
 	GetCreateTime() int64
-	GetUpdateTime() int64
 	SetCreateTime(time int64)
+	GetUpdateTime() int64
 	SetUpdateTime(time int64)
 }
 
-// BaseTime 基础时间结构体，嵌入到领域实体中
-type BaseTime struct {
-	CreateTime int64 `json:"createTime"`
-	UpdateTime int64 `json:"updateTime"`
+// BaseEntity 基础实体结构体，所有领域实体通过嵌入此结构体获得公共字段和方法
+type BaseEntity struct {
+	ID         int64 `gorm:"primaryKey;column:id" json:"id"`
+	CreateTime int64 `gorm:"column:create_time" json:"createTime"`
+	UpdateTime int64 `gorm:"column:update_time" json:"updateTime"`
 }
 
-func (b BaseTime) GetCreateTime() int64 {
+// GetID 实现 Entity 接口
+func (b *BaseEntity) GetID() int64 {
+	return b.ID
+}
+
+// SetID 实现 Entity 接口
+func (b *BaseEntity) SetID(id int64) {
+	b.ID = id
+}
+
+// GetCreateTime 实现 Entity 接口
+func (b *BaseEntity) GetCreateTime() int64 {
 	return b.CreateTime
 }
 
-func (b BaseTime) GetUpdateTime() int64 {
-	return b.UpdateTime
-}
-
-func (b BaseTime) SetCreateTime(time int64) {
+// SetCreateTime 实现 Entity 接口
+func (b *BaseEntity) SetCreateTime(time int64) {
 	b.CreateTime = time
 }
 
-func (b BaseTime) SetUpdateTime(time int64) {
+// GetUpdateTime 实现 Entity 接口
+func (b *BaseEntity) GetUpdateTime() int64 {
+	return b.UpdateTime
+}
+
+// SetUpdateTime 实现 Entity 接口
+func (b *BaseEntity) SetUpdateTime(time int64) {
 	b.UpdateTime = time
 }
 

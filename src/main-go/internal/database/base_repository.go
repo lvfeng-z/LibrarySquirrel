@@ -5,10 +5,10 @@ import (
 	"library-squirrel/pkg/model"
 )
 
-// BaseRepository[T] 泛型基础仓储接口
+// BaseRepository 泛型基础仓储接口
 // 所有业务模块的 Repository 应嵌入此接口
-// T 必须实现 BaseEntity 接口（拥有 GetID() int64 方法）
-type BaseRepository[T model.BaseEntity] interface {
+// T 必须实现 Entity 接口（通过嵌入 BaseEntity 获得）
+type BaseRepository[T model.Entity] interface {
 	// Save 保存单个实体
 	Save(ctx context.Context, entity *T) error
 	// SaveBatch 批量保存
