@@ -18,7 +18,6 @@ import (
 
 	"library-squirrel/internal/config"
 	"library-squirrel/internal/database"
-	"library-squirrel/internal/localTag"
 	"library-squirrel/internal/migration"
 )
 
@@ -65,11 +64,9 @@ func main() {
 	}
 	r := gin.Default()
 
-	// 注册业务模块路由
-	localTagRepo := localTag.NewRepository(database.GetDB())
-	localTagSvc := localTag.NewService(localTagRepo)
-	localTagHandler := localTag.NewHandler(localTagSvc)
-	localTagHandler.RegisterRoutes(r)
+	// 初始化模块
+	modules := InitModules(database.GetDB(), r)
+	_ = modules // 后续扩展使用
 
 	// 发送启动完成信号
 	fmt.Printf("MAIN_READY\n")

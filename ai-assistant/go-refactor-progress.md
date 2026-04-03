@@ -36,6 +36,8 @@
 | 模块 | Model | Repository | Service | Handler | HTTP Routes |
 |------|-------|------------|---------|---------|-------------|
 | localTag | ✅ | ✅ | ✅ | ✅ | ✅ |
+| localAuthor | ✅ | ✅ | ✅ | ✅ | ✅ |
+| work | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ### 1.4 GORM 模型 (18个)
 
