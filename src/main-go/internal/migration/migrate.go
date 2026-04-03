@@ -14,12 +14,12 @@ func AutoMigrate(db *gorm.DB) error {
 	models := []interface{}{
 		// 基础表（无外键依赖）
 		&model.Backup{},
-		&model.LocalAuthor{},
+		model.NewLocalAuthor(),
 		&model.Site{},
-		&model.SiteTag{},
+		model.NewSiteTag(),
 		&model.WorkSet{},
-		&model.Work{},
-		&model.SiteAuthor{},
+		model.NewWork(),
+		model.NewSiteAuthor(),
 		&model.Poi{},
 		&model.SecureStorage{},
 		&model.Plugin{},
@@ -33,7 +33,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.RePoiTarget{},
 
 		// 本地标签（独立表）
-		&model.LocalTag{},
+		model.NewLocalTag(),
 	}
 
 	// 执行自动迁移

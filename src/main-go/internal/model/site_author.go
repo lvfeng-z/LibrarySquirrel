@@ -4,7 +4,7 @@ import "library-squirrel/pkg/model"
 
 // SiteAuthor 站点作者
 type SiteAuthor struct {
-	model.BaseEntity
+	*model.BaseEntity
 	SiteID               int64  `gorm:"column:site_id;uniqueIndex:idx_site_author_site_site_author" json:"siteId"`
 	SiteAuthorID         string `gorm:"column:site_author_id;uniqueIndex:idx_site_author_site_site_author" json:"siteAuthorId"`
 	AuthorName           string `gorm:"column:author_name" json:"authorName"`
@@ -13,6 +13,12 @@ type SiteAuthor struct {
 	Introduce            string `gorm:"column:introduce" json:"introduce"`
 	LocalAuthorID        int64  `gorm:"column:local_author_id" json:"localAuthorId"`
 	LastUse              int64  `gorm:"column:last_use" json:"lastUse"`
+}
+
+func NewSiteAuthor() *SiteAuthor {
+	return &SiteAuthor{
+		BaseEntity: &model.BaseEntity{},
+	}
 }
 
 func (SiteAuthor) TableName() string {

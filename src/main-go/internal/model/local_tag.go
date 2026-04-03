@@ -4,10 +4,16 @@ import "library-squirrel/pkg/model"
 
 // LocalTag 本地标签
 type LocalTag struct {
-	model.BaseEntity        // 嵌入基础实体
-	LocalTagName     string `gorm:"column:local_tag_name" json:"localTagName"`
-	BaseLocalTagID   int64  `gorm:"column:base_local_tag_id" json:"baseLocalTagId"`
-	LastUse          int64  `gorm:"column:last_use" json:"lastUse"`
+	*model.BaseEntity        // 嵌入基础实体
+	LocalTagName      string `gorm:"column:local_tag_name" json:"localTagName"`
+	BaseLocalTagID    int64  `gorm:"column:base_local_tag_id" json:"baseLocalTagId"`
+	LastUse           int64  `gorm:"column:last_use" json:"lastUse"`
+}
+
+func NewLocalTag() *LocalTag {
+	return &LocalTag{
+		BaseEntity: &model.BaseEntity{},
+	}
 }
 
 // TableName 指定表名

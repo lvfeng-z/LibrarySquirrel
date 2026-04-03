@@ -167,7 +167,7 @@ app.whenReady().then(() => {
   process.env.CGO_ENABLED = '1'
   if (process.env.NODE_ENV == 'development') {
     command = 'go'
-    args.push('run', path.join(RootDir(), '/src/main-go/cmd/server/main.go'))
+    args.push('run', path.join(RootDir(), '/src/main-go/cmd/server/.'))
   } else {
     log.info('main', 'prod not yet')
   }

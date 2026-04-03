@@ -109,8 +109,8 @@ func main() {
 	// 主线程监听退出信号
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	fmt.Printf("开始监听退出信号")
+	fmt.Println("开始监听退出信号")
 	<-quit // 阻塞在这里，直到收到信号
-	fmt.Printf("收到信号，准备关闭服务...")
+	fmt.Println("收到信号，准备关闭服务...")
 	shutDownBackground()
 }

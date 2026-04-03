@@ -76,8 +76,8 @@ func (s *Service) UpdateById(ctx context.Context, tag *domain.LocalTag) error {
 			}
 
 			// 将新上级节点移动到本节点的原上级节点之下
-			newBaseTag := &domain.LocalTag{}
-			newBaseTag.ID = tag.BaseLocalTagID
+			newBaseTag := domain.NewLocalTag()
+			newBaseTag.SetID(tag.BaseLocalTagID)
 			newBaseTag.BaseLocalTagID = old.BaseLocalTagID
 			if err := s.repo.Update(ctx, newBaseTag); err != nil {
 				return err
