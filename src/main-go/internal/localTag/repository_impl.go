@@ -5,19 +5,20 @@ import (
 
 	"gorm.io/gorm"
 	"library-squirrel/internal/database"
+	domain "library-squirrel/internal/model"
 	"library-squirrel/pkg/model"
 )
 
 // localTagRepository 本地标签仓储实现
-// 嵌入 database.BaseRepositoryImpl[LocalTag] 获得基础 CRUD 实现
+// 嵌入 database.BaseRepositoryImpl[domain.LocalTag] 获得基础 CRUD 实现
 type localTagRepository struct {
-	*database.BaseRepositoryImpl[LocalTag]
+	*database.BaseRepositoryImpl[domain.LocalTag]
 }
 
 // NewRepository 创建本地标签仓储
 func NewRepository(db *gorm.DB) Repository {
 	return &localTagRepository{
-		BaseRepositoryImpl: database.NewBaseRepository[LocalTag](db),
+		BaseRepositoryImpl: database.NewBaseRepository[domain.LocalTag](db),
 	}
 }
 
@@ -27,7 +28,7 @@ func (r *localTagRepository) GORM() *gorm.DB {
 }
 
 // SelectTreeNode 递归查询子标签
-func (r *localTagRepository) SelectTreeNode(ctx context.Context, rootId int64, depth int) ([]*LocalTag, error) {
+func (r *localTagRepository) SelectTreeNode(ctx context.Context, rootId int64, depth int) ([]*domain.LocalTag, error) {
 	if depth <= 0 {
 		depth = 10
 	}
@@ -48,7 +49,7 @@ func (r *localTagRepository) SelectTreeNode(ctx context.Context, rootId int64, d
 		SELECT id, local_tag_name, base_local_tag_id, last_use, create_time, update_time FROM treeNode
 	`
 
-	var tags []*LocalTag
+	var tags []*domain.LocalTag
 	err := r.GORM().WithContext(ctx).Raw(query, rootId, depth).Scan(&tags).Error
 	if err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func (r *localTagRepository) SelectTreeNode(ctx context.Context, rootId int64, d
 }
 
 // SelectParentNode 递归查询上级标签
-func (r *localTagRepository) SelectParentNode(ctx context.Context, nodeId int64) ([]*LocalTag, error) {
+func (r *localTagRepository) SelectParentNode(ctx context.Context, nodeId int64) ([]*domain.LocalTag, error) {
 	query := `
 		WITH RECURSIVE parentNode AS
 		(
@@ -72,7 +73,7 @@ func (r *localTagRepository) SelectParentNode(ctx context.Context, nodeId int64)
 		SELECT * FROM parentNode
 	`
 
-	var tags []*LocalTag
+	var tags []*domain.LocalTag
 	err := r.GORM().WithContext(ctx).Raw(query, nodeId).Scan(&tags).Error
 	if err != nil {
 		return nil, err
@@ -81,7 +82,7 @@ func (r *localTagRepository) SelectParentNode(ctx context.Context, nodeId int64)
 }
 
 // ListByWorkId 查询作品关联的本地标签
-func (r *localTagRepository) ListByWorkId(ctx context.Context, workId int64) ([]*LocalTag, error) {
+func (r *localTagRepository) ListByWorkId(ctx context.Context, workId int64) ([]*domain.LocalTag, error) {
 	query := `
 		SELECT t1.id, t1.local_tag_name, t1.base_local_tag_id, t1.last_use, t1.create_time, t1.update_time
 		FROM local_tag t1
@@ -89,7 +90,7 @@ func (r *localTagRepository) ListByWorkId(ctx context.Context, workId int64) ([]
 		WHERE t2.work_id = ?
 	`
 
-	var tags []*LocalTag
+	var tags []*domain.LocalTag
 	err := r.GORM().WithContext(ctx).Raw(query, workId).Scan(&tags).Error
 	if err != nil {
 		return nil, err
@@ -98,6 +99,6 @@ func (r *localTagRepository) ListByWorkId(ctx context.Context, workId int64) ([]
 }
 
 // Page 分页查询
-func (r *localTagRepository) Page(ctx context.Context, page, pageSize int, example *model.Example) ([]*LocalTag, int64, error) {
+func (r *localTagRepository) Page(ctx context.Context, page, pageSize int, example *model.Example) ([]*domain.LocalTag, int64, error) {
 	return r.BaseRepositoryImpl.Page(ctx, page, pageSize, example)
 }

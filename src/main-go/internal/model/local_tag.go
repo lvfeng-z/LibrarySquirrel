@@ -19,3 +19,23 @@ func (LocalTag) TableName() string {
 func (t LocalTag) GetID() int64 {
 	return t.ID
 }
+
+// GetCreateTime 实现 BaseEntity 接口
+func (t LocalTag) GetCreateTime() int64 {
+	return t.CreateTime
+}
+
+// GetUpdateTime 实现 BaseEntity 接口
+func (t LocalTag) GetUpdateTime() int64 {
+	return t.UpdateTime
+}
+
+// SetCreateTime 实现 BaseEntity 接口
+func (t LocalTag) SetCreateTime(time int64) {
+	t.CreateTime = time
+}
+
+// SetUpdateTime 实现 BaseEntity 接口
+func (t LocalTag) SetUpdateTime(time int64) {
+	t.UpdateTime = time
+}

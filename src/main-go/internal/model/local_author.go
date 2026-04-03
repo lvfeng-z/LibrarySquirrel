@@ -17,3 +17,19 @@ func (LocalAuthor) TableName() string {
 func (e LocalAuthor) GetID() int64 {
 	return e.ID
 }
+
+func (e LocalAuthor) GetCreateTime() int64 {
+	return e.CreateTime
+}
+
+func (e LocalAuthor) GetUpdateTime() int64 {
+	return e.UpdateTime
+}
+
+func (e LocalAuthor) SetCreateTime(time int64) {
+	e.CreateTime = time
+}
+
+func (e LocalAuthor) SetUpdateTime(time int64) {
+	e.UpdateTime = time
+}

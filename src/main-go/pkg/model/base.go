@@ -3,6 +3,32 @@ package model
 // BaseEntity 所有领域实体必须实现此接口
 type BaseEntity interface {
 	GetID() int64
+	GetCreateTime() int64
+	GetUpdateTime() int64
+	SetCreateTime(time int64)
+	SetUpdateTime(time int64)
+}
+
+// BaseTime 基础时间结构体，嵌入到领域实体中
+type BaseTime struct {
+	CreateTime int64 `json:"createTime"`
+	UpdateTime int64 `json:"updateTime"`
+}
+
+func (b BaseTime) GetCreateTime() int64 {
+	return b.CreateTime
+}
+
+func (b BaseTime) GetUpdateTime() int64 {
+	return b.UpdateTime
+}
+
+func (b BaseTime) SetCreateTime(time int64) {
+	b.CreateTime = time
+}
+
+func (b BaseTime) SetUpdateTime(time int64) {
+	b.UpdateTime = time
 }
 
 // ========== 分页模型 ==========

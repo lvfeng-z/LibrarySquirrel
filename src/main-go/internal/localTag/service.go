@@ -5,6 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
+	domain "library-squirrel/internal/model"
 	"library-squirrel/internal/util"
 	"library-squirrel/pkg/model"
 )
@@ -29,20 +30,15 @@ func NewService(repo Repository) *Service {
 }
 
 // Save 保存本地标签
-func (s *Service) Save(ctx context.Context, tag *LocalTag) error {
+func (s *Service) Save(ctx context.Context, tag *domain.LocalTag) error {
 	if tag.BaseLocalTagID == 0 {
 		tag.BaseLocalTagID = 0 // 表示根标签
 	}
-	now := util.GetCurrentTimestamp()
-	if tag.ID == 0 {
-		tag.CreateTime = now
-	}
-	tag.UpdateTime = now
 	return s.repo.Save(ctx, tag)
 }
 
 // UpdateById 更新本地标签
-func (s *Service) UpdateById(ctx context.Context, tag *LocalTag) error {
+func (s *Service) UpdateById(ctx context.Context, tag *domain.LocalTag) error {
 	if tag.ID == 0 {
 		return ErrTagIdRequired
 	}
@@ -76,7 +72,7 @@ func (s *Service) UpdateById(ctx context.Context, tag *LocalTag) error {
 			}
 
 			// 将新上级节点移动到本节点的原上级节点之下
-			newBaseTag := &LocalTag{
+			newBaseTag := &domain.LocalTag{
 				ID:             tag.BaseLocalTagID,
 				BaseLocalTagID: old.BaseLocalTagID,
 			}
@@ -86,7 +82,6 @@ func (s *Service) UpdateById(ctx context.Context, tag *LocalTag) error {
 		}
 	}
 
-	tag.UpdateTime = util.GetCurrentTimestamp()
 	return s.repo.Update(ctx, tag)
 }
 
@@ -107,12 +102,12 @@ func (s *Service) UpdateLastUse(ctx context.Context, ids []int64) error {
 }
 
 // GetById 根据ID获取
-func (s *Service) GetById(ctx context.Context, id int64) (*LocalTag, error) {
+func (s *Service) GetById(ctx context.Context, id int64) (*domain.LocalTag, error) {
 	return s.repo.GetById(ctx, id)
 }
 
 // List 查询列表
-func (s *Service) List(ctx context.Context, example *model.Example) ([]*LocalTag, error) {
+func (s *Service) List(ctx context.Context, example *model.Example) ([]*domain.LocalTag, error) {
 	return s.repo.List(ctx, example)
 }
 
@@ -127,7 +122,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 }
 
 // GetTree 获取标签树形结构
-func (s *Service) GetTree(ctx context.Context, rootId int64, depth int) ([]*LocalTag, error) {
+func (s *Service) GetTree(ctx context.Context, rootId int64, depth int) ([]*domain.LocalTag, error) {
 	if rootId == 0 {
 		rootId = RootLocalTagID // 默认根标签
 	}
@@ -138,12 +133,12 @@ func (s *Service) GetTree(ctx context.Context, rootId int64, depth int) ([]*Loca
 }
 
 // SelectParentNode 查询上级标签
-func (s *Service) SelectParentNode(ctx context.Context, nodeId int64) ([]*LocalTag, error) {
+func (s *Service) SelectParentNode(ctx context.Context, nodeId int64) ([]*domain.LocalTag, error) {
 	return s.repo.SelectParentNode(ctx, nodeId)
 }
 
 // ListByWorkId 查询作品关联的标签
-func (s *Service) ListByWorkId(ctx context.Context, workId int64) ([]*LocalTag, error) {
+func (s *Service) ListByWorkId(ctx context.Context, workId int64) ([]*domain.LocalTag, error) {
 	return s.repo.ListByWorkId(ctx, workId)
 }
 

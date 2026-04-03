@@ -22,3 +22,19 @@ func (SiteAuthor) TableName() string {
 func (e SiteAuthor) GetID() int64 {
 	return e.ID
 }
+
+func (e SiteAuthor) GetCreateTime() int64 {
+	return e.CreateTime
+}
+
+func (e SiteAuthor) GetUpdateTime() int64 {
+	return e.UpdateTime
+}
+
+func (e SiteAuthor) SetCreateTime(time int64) {
+	e.CreateTime = time
+}
+
+func (e SiteAuthor) SetUpdateTime(time int64) {
+	e.UpdateTime = time
+}

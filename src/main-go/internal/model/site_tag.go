@@ -21,3 +21,19 @@ func (SiteTag) TableName() string {
 func (e SiteTag) GetID() int64 {
 	return e.ID
 }
+
+func (e SiteTag) GetCreateTime() int64 {
+	return e.CreateTime
+}
+
+func (e SiteTag) GetUpdateTime() int64 {
+	return e.UpdateTime
+}
+
+func (e SiteTag) SetCreateTime(time int64) {
+	e.CreateTime = time
+}
+
+func (e SiteTag) SetUpdateTime(time int64) {
+	e.UpdateTime = time
+}

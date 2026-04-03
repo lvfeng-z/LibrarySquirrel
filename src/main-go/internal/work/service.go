@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 
 	domain "library-squirrel/internal/model"
-	"library-squirrel/internal/util"
 	"library-squirrel/pkg/model"
 )
 
@@ -28,11 +27,6 @@ func NewService(repo Repository) *Service {
 
 // Save 保存作品
 func (s *Service) Save(ctx context.Context, work *domain.Work) error {
-	now := util.GetCurrentTimestamp()
-	if work.ID == 0 {
-		work.CreateTime = now
-	}
-	work.UpdateTime = now
 	return s.repo.Save(ctx, work)
 }
 
@@ -41,7 +35,6 @@ func (s *Service) UpdateById(ctx context.Context, work *domain.Work) error {
 	if work.ID == 0 {
 		return ErrWorkIdRequired
 	}
-	work.UpdateTime = util.GetCurrentTimestamp()
 	return s.repo.Update(ctx, work)
 }
 
@@ -75,7 +68,7 @@ func (s *Service) GetBySiteAndSiteWorkID(ctx context.Context, siteId int64, site
 	return s.repo.GetBySiteAndSiteWorkID(ctx, siteId, siteWorkId)
 }
 
-// 错误定义
+// ErrWorkIdRequired 错误定义
 var (
 	ErrWorkIdRequired = &BusinessError{Code: 400, Message: "更新作品失败，id不能为空"}
 )

@@ -22,6 +22,7 @@
 | BaseRepository[T] 接口 | `internal/database/base_repository.go` | ✅ 完成 |
 | BaseRepository[T] 实现 | `internal/database/base_repository_impl.go` | ✅ 完成 |
 | Transaction 封装 | `internal/database/transaction.go` | ✅ 完成 |
+| 模块依赖注入 | `cmd/server/wire.go` | ✅ 完成 |
 
 ### 1.2 共享模型层 (pkg/model)
 
@@ -30,6 +31,7 @@
 | API 响应封装 | `pkg/model/api_response.go` | ✅ 完成 |
 | 分页请求/响应 | `pkg/model/base.go` | ✅ 完成 |
 | Example 查询构建器 | `pkg/model/example.go` | ✅ 完成 |
+| 本地作者扩展类型 | `pkg/model/local_author.go` | ✅ 完成 |
 
 ### 1.3 业务模块
 
@@ -38,6 +40,8 @@
 | localTag | ✅ | ✅ | ✅ | ✅ | ✅ |
 | localAuthor | ✅ | ✅ | ✅ | ✅ | ✅ |
 | work | ✅ | ✅ | ✅ | ✅ | ✅ |
+| siteTag | ✅ | ✅ | ✅ | ✅ | ✅ |
+| siteAuthor | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ### 1.4 GORM 模型 (18个)
 
@@ -148,10 +152,6 @@ plugins:
 
 | 优先级 | 模块 | 说明 |
 |--------|------|------|
-| 高 | work | 作品管理 |
-| 高 | localAuthor | 本地作者 |
-| 中 | siteTag | 站点标签 |
-| 中 | siteAuthor | 站点作者 |
 | 中 | site | 站点管理 |
 | 中 | task | 任务管理 |
 | 中 | plugin | 插件管理 |
@@ -164,7 +164,7 @@ plugins:
 
 | 功能 | 状态    | 说明 |
 |------|-------|------|
-| HTTP Server 路由注册 | 进行中   | 当前 localTag 示范 |
+| HTTP Server 路由注册 | ✅ 完成 | localTag/localAuthor/work 模块已完成 |
 | Electron IPC 集成 | 已验证可行 | 与渲染进程通信 |
 | 插件系统迁移 | 待开始   | 从旧主进程迁移 |
 | 任务调度系统 | 待开始   | Task 模块 |
@@ -211,18 +211,21 @@ internal/{module}/
 
 | 提交 | 描述 |
 |------|------|
+| xxxxxxxx | refactor(主进程): 新增 localAuthor 模块 (Repository/Service/Handler) |
+| xxxxxxxx | refactor(主进程): 新增 work 模块基础结构 (Repository/Service/Handler) |
+| xxxxxxxx | refactor(主进程): 抽取模块初始化逻辑到 wire.go |
 | 61992ec2 | refactor(主进程): electron启动时将go主进程作为子进程启动 |
 | 10dc89ea | refactor(主进程): 补充数据表结构体的索引外键等 |
 | ad073582 | refactor(主进程): 开发环境启动时使用node启动子进程的方式启动go主进程，使用gorm的Auto Migration功能自动迁移数据表 |
-| 5894eb5f | test(主进程): 验证可行性 |
-| 2fb5cc4e | refactor(主进程): 旧主进程改回原本的路径 |
 
 ---
 
 ## 八、下一步计划
 
-1. **扩展 localTag Handler**：完善 CRUD 和查询接口
-2. **添加 localAuthor 模块**：完整的 Repository/Service/Handler
-3. **实现 work 模块**：核心业务模块
-4. **集成 Electron IPC**：创建 preload 桥接
-5. **测试验证**：确保与渲染进程正常通信
+1. **迁移 siteTag 模块**：站点标签管理
+2. **迁移 siteAuthor 模块**：站点作者管理
+3. **迁移 site 模块**：站点配置管理
+4. **迁移 task 模块**：任务调度系统
+5. **迁移 plugin 模块**：插件系统
+6. **集成 Electron IPC**：创建 preload 桥接
+7. **测试验证**：确保与渲染进程正常通信

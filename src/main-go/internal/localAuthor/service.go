@@ -28,11 +28,6 @@ func NewService(repo Repository) *Service {
 
 // Save 保存作者
 func (s *Service) Save(ctx context.Context, author *domain.LocalAuthor) error {
-	now := util.GetCurrentTimestamp()
-	if author.ID == 0 {
-		author.CreateTime = now
-	}
-	author.UpdateTime = now
 	return s.repo.Save(ctx, author)
 }
 
@@ -41,7 +36,6 @@ func (s *Service) UpdateById(ctx context.Context, author *domain.LocalAuthor) er
 	if author.ID == 0 {
 		return ErrAuthorIdRequired
 	}
-	author.UpdateTime = util.GetCurrentTimestamp()
 	return s.repo.Update(ctx, author)
 }
 

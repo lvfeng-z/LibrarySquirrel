@@ -3,9 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"library-squirrel/internal/util"
 	"library-squirrel/pkg/model"
 )
 
@@ -22,6 +24,8 @@ func NewBaseRepository[T model.BaseEntity](db *gorm.DB) *BaseRepositoryImpl[T] {
 
 // Save 保存单个实体
 func (r *BaseRepositoryImpl[T]) Save(ctx context.Context, entity *T) error {
+	now := util.GetCurrentTimestamp()
+	r.setTimestamps(entity, now)
 	return r.db.WithContext(ctx).Create(entity).Error
 }
 
@@ -30,7 +34,27 @@ func (r *BaseRepositoryImpl[T]) SaveBatch(ctx context.Context, entities []*T) er
 	if len(entities) == 0 {
 		return nil
 	}
+	now := util.GetCurrentTimestamp()
+	for _, entity := range entities {
+		r.setTimestamps(entity, now)
+	}
 	return r.db.WithContext(ctx).Create(entities).Error
+}
+
+// setTimestamps 设置时间戳（使用反射调用接口方法）
+func (r *BaseRepositoryImpl[T]) setTimestamps(entity *T, now int64) {
+	v := reflect.ValueOf(entity).Elem()
+	idField := v.FieldByName("ID")
+	if idField.IsValid() && idField.Int() == 0 {
+		createTimeField := v.FieldByName("CreateTime")
+		if createTimeField.IsValid() && createTimeField.CanSet() {
+			createTimeField.SetInt(now)
+		}
+	}
+	updateTimeField := v.FieldByName("UpdateTime")
+	if updateTimeField.IsValid() && updateTimeField.CanSet() {
+		updateTimeField.SetInt(now)
+	}
 }
 
 // Delete 根据ID删除
@@ -48,6 +72,7 @@ func (r *BaseRepositoryImpl[T]) DeleteBatch(ctx context.Context, ids []int64) er
 
 // Update 更新实体
 func (r *BaseRepositoryImpl[T]) Update(ctx context.Context, entity *T) error {
+	r.setUpdateTime(entity, util.GetCurrentTimestamp())
 	return r.db.WithContext(ctx).Save(entity).Error
 }
 
@@ -56,7 +81,20 @@ func (r *BaseRepositoryImpl[T]) UpdateBatch(ctx context.Context, entities []*T) 
 	if len(entities) == 0 {
 		return nil
 	}
+	now := util.GetCurrentTimestamp()
+	for _, entity := range entities {
+		r.setUpdateTime(entity, now)
+	}
 	return r.db.WithContext(ctx).Save(entities).Error
+}
+
+// setUpdateTime 设置更新时间（使用反射调用接口方法）
+func (r *BaseRepositoryImpl[T]) setUpdateTime(entity *T, now int64) {
+	v := reflect.ValueOf(entity).Elem()
+	updateTimeField := v.FieldByName("UpdateTime")
+	if updateTimeField.IsValid() && updateTimeField.CanSet() {
+		updateTimeField.SetInt(now)
+	}
 }
 
 // GetById 根据ID获取

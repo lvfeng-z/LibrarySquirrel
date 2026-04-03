@@ -6,6 +6,8 @@ import (
 
 	"library-squirrel/internal/localAuthor"
 	"library-squirrel/internal/localTag"
+	"library-squirrel/internal/siteAuthor"
+	"library-squirrel/internal/siteTag"
 	"library-squirrel/internal/work"
 )
 
@@ -13,6 +15,8 @@ import (
 type Modules struct {
 	LocalTag    *localTag.Handler
 	LocalAuthor *localAuthor.Handler
+	SiteTag     *siteTag.Handler
+	SiteAuthor  *siteAuthor.Handler
 	Work        *work.Handler
 }
 
@@ -40,6 +44,20 @@ func InitModules(db *gorm.DB, r *gin.Engine) *Modules {
 	workHandler := work.NewHandler(workSvc)
 	workHandler.RegisterRoutes(r)
 	modules.Work = workHandler
+
+	// siteTag 模块
+	siteTagRepo := siteTag.NewRepository(db)
+	siteTagSvc := siteTag.NewService(siteTagRepo)
+	siteTagHandler := siteTag.NewHandler(siteTagSvc)
+	siteTagHandler.RegisterRoutes(r)
+	modules.SiteTag = siteTagHandler
+
+	// siteAuthor 模块
+	siteAuthorRepo := siteAuthor.NewRepository(db)
+	siteAuthorSvc := siteAuthor.NewService(siteAuthorRepo)
+	siteAuthorHandler := siteAuthor.NewHandler(siteAuthorSvc)
+	siteAuthorHandler.RegisterRoutes(r)
+	modules.SiteAuthor = siteAuthorHandler
 
 	return modules
 }

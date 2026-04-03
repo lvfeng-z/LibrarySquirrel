@@ -24,3 +24,19 @@ func (Work) TableName() string {
 func (e Work) GetID() int64 {
 	return e.ID
 }
+
+func (e Work) GetCreateTime() int64 {
+	return e.CreateTime
+}
+
+func (e Work) GetUpdateTime() int64 {
+	return e.UpdateTime
+}
+
+func (e Work) SetCreateTime(time int64) {
+	e.CreateTime = time
+}
+
+func (e Work) SetUpdateTime(time int64) {
+	e.UpdateTime = time
+}
